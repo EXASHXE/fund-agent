@@ -1,0 +1,21 @@
+# 个人数据
+fund-portfolio.yaml
+fund-portfolio.yaml.*.bak
+fund-info.txt
+report.md
+新建 文本文档.txt
+
+# 数据库
+data/
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+
+# 环境
+.env
