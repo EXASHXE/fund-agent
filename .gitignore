@@ -5,6 +5,10 @@ fund-info.txt
 report.md
 新建 文本文档.txt
 
+# 本地 Agent 配置
+CLAUDE.md
+.claude/
+
 # 数据库
 data/
 
