@@ -139,19 +139,17 @@ def _next_weekly(d: date, day_of_week: Optional[str]) -> date:
 
 
 def _next_monthly(d: date) -> date:
-    nxt = d + timedelta(days=31)
-    return nxt.replace(day=d.day)
+    import calendar as cal
+    month = d.month + 1
+    year = d.year
+    if month > 12:
+        month = 1
+        year += 1
+    last_day = cal.monthrange(year, month)[1]
+    day = min(d.day, last_day)
+    return date(year, month, day)
 
 
 def _to_date(d) -> Optional[date]:
-    if d is None:
-        return None
-    if isinstance(d, date):
-        return d
-    if isinstance(d, str):
-        from datetime import datetime
-        try:
-            return datetime.strptime(str(d)[:10], "%Y-%m-%d").date()
-        except ValueError:
-            return None
-    return None
+    from src.config.shared import to_date as _td
+    return _td(d)

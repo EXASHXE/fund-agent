@@ -134,36 +134,30 @@ def render_overview(config: PortfolioConfig):
     st.subheader("组合总览")
 
     cols = st.columns(4)
-    total_value = 0.0
     total_cost = 0.0
     total_pending = 0.0
 
     for h in config.holdings:
         if h.shares and h.avg_cost:
-            nav = h.avg_cost
-            total_value += h.shares * nav
             total_cost += h.shares * h.avg_cost
         total_pending += h.pending_amount
 
-        profit = total_value - total_cost
-        return_pct = (profit / total_cost * 100) if total_cost > 0 else 0
-
     cols[0].metric("基金数量", len(config.holdings))
-    cols[1].metric("持仓市值(估算)", f"¥{total_value:,.2f}")
-    cols[2].metric("总投入成本", f"¥{total_cost:,.2f}")
-    cols[3].metric("待确认金额", f"¥{total_pending:,.2f}")
+    cols[1].metric("总投入成本", f"¥{total_cost:,.2f}")
+    cols[2].metric("待确认金额", f"¥{total_pending:,.2f}")
+    cols[3].metric("持仓份额(估算)", f"{sum(h.shares or 0 for h in config.holdings):,.0f}")
 
     st.subheader("资产分布")
     fund_names = []
-    fund_values = []
+    fund_costs = []
     for h in config.holdings:
         fund_names.append(f"{h.name} ({h.code})")
         if h.shares and h.avg_cost:
-            fund_values.append(round(h.shares * h.avg_cost, 2))
+            fund_costs.append(round(h.shares * h.avg_cost, 2))
         else:
-            fund_values.append(0.01)
+            fund_costs.append(0.01)
 
-    df_pie = {"基金": fund_names, "市值": fund_values}
+    df_pie = {"基金": fund_names, "投入成本": fund_costs}
     st.dataframe(df_pie, width='stretch', hide_index=True)
 
     st.subheader("基金详情表")
@@ -177,7 +171,7 @@ def render_overview(config: PortfolioConfig):
             "费率": f"{h.fee_rate:.2%}",
             "成本价": h.avg_cost if h.avg_cost else "-",
             "份额": f"{h.shares:,.2f}" if h.shares else "-",
-            "市值(估算)": f"¥{value:,.2f}",
+            "投入成本": f"¥{value:,.2f}",
             "待确认": f"¥{h.pending_amount:,.0f}",
             "结算延迟": f"T+{h.settle_delay}",
             "定投": "启用" if (h.dca and h.dca.enabled) else "关闭",
@@ -202,23 +196,29 @@ def render_fund_detail(config: PortfolioConfig):
 
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        holding.fee_rate = st.number_input("手续费率", value=float(holding.fee_rate),
-                                            min_value=0.0, max_value=0.1, step=0.0001,
-                                            format="%.4f", key=f"fee_{selected_code}") or holding.fee_rate
+        new_fee = st.number_input("手续费率", value=float(holding.fee_rate),
+                                   min_value=0.0, max_value=0.1, step=0.0001,
+                                   format="%.4f", key=f"fee_{selected_code}")
+        if new_fee is not None:
+            holding.fee_rate = new_fee
     with col2:
         new_avg = st.number_input("成本价", value=float(holding.avg_cost or 0),
                                    min_value=0.0, step=0.0001, format="%.4f",
                                    key=f"avg_{selected_code}")
-        holding.avg_cost = new_avg if new_avg > 0 else holding.avg_cost
+        if new_avg is not None and new_avg > 0:
+            holding.avg_cost = new_avg
     with col3:
         new_shares = st.number_input("持有份额", value=float(holding.shares or 0),
                                       min_value=0.0, step=0.01, format="%.2f",
                                       key=f"shares_{selected_code}")
-        holding.shares = new_shares if new_shares > 0 else holding.shares
+        if new_shares is not None and new_shares > 0:
+            holding.shares = new_shares
     with col4:
-        holding.pending_amount = st.number_input("待确认金额(元)", value=float(holding.pending_amount),
-                                                  min_value=0.0, step=1.0,
-                                                  key=f"pending_{selected_code}") or holding.pending_amount
+        new_pending = st.number_input("待确认金额(元)", value=float(holding.pending_amount),
+                                       min_value=0.0, step=1.0,
+                                       key=f"pending_{selected_code}")
+        if new_pending is not None:
+            holding.pending_amount = new_pending
 
     st.caption(f"结算延迟: T+{holding.settle_delay} | 类型: {FUND_TYPE_LABELS.get(holding.type.value, holding.type.value)}")
 

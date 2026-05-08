@@ -243,29 +243,13 @@ def generate_report(
             )
         lines.append("")
 
-    # === 新闻分析 ===
+    # === 新闻资讯分析 ===
     if news_data:
         lines.append("---")
         lines.append("## 新闻资讯分析")
         lines.append("")
-        for news_item in news_data:
-            lines.append(f"### {news_item['fund_name']}（{news_item['fund_code']}）")
-            lines.append(f"- 相关新闻数：{news_item.get('news_count', 0)} 条")
-            lines.append(f"- 情绪均值：{news_item.get('sentiment_mean', 0):.2f}")
-
-            # Display recent news titles
-            news_list = news_item.get("news_list", [])
-            if news_list:
-                lines.append("")
-                lines.append("**近期新闻：**")
-                for n in news_list[:5]:
-                    title = n.get("title", "").strip()
-                    date_str = n.get("date", "")
-                    label = n.get("sentiment_label", "neutral")
-                    emoji = {"positive": "+", "negative": "-", "neutral": "○"}.get(label, "○")
-                    if title:
-                        lines.append(f"- {emoji} [{date_str}] {title[:80]}")
-            lines.append("")
+        lines.append(_render_news_section(news_data, scores))
+        lines.append("")
 
     # === 推荐基金 ===
     if recommendations:
@@ -286,3 +270,117 @@ def generate_report(
     lines.append(risk_disclaimer())
 
     return "\n".join(lines)
+
+
+def _render_news_section(news_data: List[Dict], scores: List[Dict]) -> str:
+    """渲染新闻资讯分析板块。"""
+    result = []
+
+    # --- 市场情绪总览 ---
+    total_news = sum(n.get("news_count", 0) for n in news_data)
+    sentiments = [n.get("sentiment_mean", 0.5) for n in news_data if n.get("sentiment_mean")]
+    avg_sentiment = sum(sentiments) / len(sentiments) if sentiments else 0.5
+
+    result.append("### 市场情绪总览")
+    result.append("")
+    if avg_sentiment > 0.55:
+        market_mood = "偏乐观"
+        advice = "市场整体情绪积极，可适度保持仓位，关注利好兑现后的回调风险。"
+    elif avg_sentiment < 0.45:
+        market_mood = "偏悲观"
+        advice = "市场整体情绪谨慎，可关注恐慌性下跌中的布局机会，控制仓位等待企稳信号。"
+    else:
+        market_mood = "中性"
+        advice = "市场情绪平衡，维持当前策略，根据各基金评分差异化操作。"
+
+    result.append(f"- **总新闻数**：{total_news} 条")
+    result.append(f"- **整体情绪均值**：{avg_sentiment:.2f}（{market_mood}）")
+    result.append(f"- **综合判断**：{advice}")
+    result.append("")
+
+    # --- 逐基金新闻分析 ---
+    result.append("### 逐基金新闻分析")
+    result.append("")
+
+    for news_item in news_data:
+        code = news_item.get("fund_code", "")
+        name = news_item.get("fund_name", code)
+
+        score = next((s for s in scores if s.get("fund_code") == code), None)
+        score_emoji = score.get("score_level_emoji", "") if score else ""
+
+        result.append(f"#### {name}（{code}）{score_emoji}")
+        result.append("")
+
+        # 情绪统计
+        n_count = news_item.get("news_count", 0)
+        sent_mean = news_item.get("sentiment_mean", 0.5)
+        daily_aggs = news_item.get("daily_aggregates", [])
+
+        pos_rate = 0
+        neg_rate = 0
+        if daily_aggs:
+            latest = daily_aggs[-1]
+            pos_rate = latest.get("positive_rate", 0) * 100
+            neg_rate = latest.get("negative_rate", 0) * 100
+            top_kw = latest.get("top_keywords", [])[:5]
+
+        result.append(f"| 指标 | 数值 |")
+        result.append(f"|------|------|")
+        result.append(f"| 相关新闻数 | {n_count} 条 |")
+        result.append(f"| 情绪均值 | {sent_mean:.2f} |")
+        result.append(f"| 正面率 | {pos_rate:.0f}% |")
+        result.append(f"| 负面率 | {neg_rate:.0f}% |")
+        if daily_aggs and top_kw:
+            result.append(f"| 热门关键词 | {'、'.join(top_kw)} |")
+        result.append("")
+
+        # 情绪趋势（最近 7 天）
+        if daily_aggs and len(daily_aggs) >= 2:
+            result.append("**情绪趋势：**")
+            trend_words = []
+            for da in daily_aggs[-7:]:
+                d = da.get("date", "")
+                sm = da.get("sentiment_mean", 0.5)
+                if sm > 0.55:
+                    bar = "█" * max(1, int((sm - 0.5) * 20)) + "↗"
+                elif sm < 0.45:
+                    bar = "█" * max(1, int((0.5 - sm) * 20)) + "↘"
+                else:
+                    bar = "— →"
+                trend_words.append(f"  {d}: {sm:.2f} {bar}")
+            result.extend(trend_words)
+            result.append("")
+
+        # 情绪解读
+        if sent_mean > 0.55:
+            interpretation = "近期相关新闻偏正面，市场对该基金关注度高、舆论环境良好，有助于短期净值表现。"
+        elif sent_mean < 0.45:
+            interpretation = "近期相关新闻偏负面，需警惕情绪传导至净值的风险。若持仓中已有盈利，可考虑设好止损；定投可适当降低单期金额。"
+        else:
+            interpretation = "近期新闻情绪中性，无明显利好或利空信号。关注后续是否有行业催化事件。"
+
+        result.append(f"**解读：**{interpretation}")
+        result.append("")
+
+        # 近期新闻精选
+        news_list = news_item.get("news_list", [])
+        if news_list:
+            result.append("**近期新闻精选：**")
+            for n in news_list[:5]:
+                title = n.get("title", "").strip()
+                date_str = n.get("date", "")
+                label = n.get("sentiment_label", "neutral")
+                emoji = {"positive": "+", "negative": "-", "neutral": "○"}.get(label, "○")
+                if title:
+                    result.append(f"- {emoji} [{date_str}] {title[:80]}")
+            result.append("")
+
+        # 新闻-净值相关性（如可用）
+        corr_val = news_item.get("correlation", 0)
+        if abs(corr_val) > 0.3:
+            corr_desc = "正相关" if corr_val > 0 else "负相关"
+            result.append(f"- 新闻情绪与净值相关性：{corr_val:.2f}（{corr_desc}），新闻情绪对基金净值有一定关联。")
+            result.append("")
+
+    return "\n".join(result)

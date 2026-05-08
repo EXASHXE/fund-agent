@@ -7,7 +7,6 @@ from typing import Set
 
 
 def _fetch_trade_dates() -> Set[date]:
-    """从 AKShare 拉取全量交易日历。"""
     try:
         import akshare as ak
         import pandas as pd
@@ -26,7 +25,20 @@ def _fetch_trade_dates() -> Set[date]:
             dates.add(d)
         return dates
     except Exception:
-        return set()
+        import warnings
+        warnings.warn("AKShare 交易日历获取失败，降级为周一至周五推算")
+        return _fallback_trade_dates()
+
+
+def _fallback_trade_dates() -> Set[date]:
+    today = date.today()
+    dates = set()
+    cursor = today - timedelta(days=365 * 5)
+    while cursor <= today + timedelta(days=365):
+        if cursor.weekday() < 5:
+            dates.add(cursor)
+        cursor += timedelta(days=1)
+    return dates
 
 
 _trade_dates_cache: Set[date] = None

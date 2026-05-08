@@ -427,27 +427,36 @@ class FundAnalyzer:
         if len(returns) < 30:
             return {"近1年": {}, "近3年": {}}
 
-        # 年化波动率
-        annual_vol = np.std(returns[-252:]) * np.sqrt(252) * 100 if len(returns) >= 252 \
-            else np.std(returns) * np.sqrt(252) * 100
+        # 近1年指标（最后 252 个交易日）
+        if len(returns) >= 252:
+            returns_1y = returns[-252:]
+            vol_1y = np.std(returns_1y) * np.sqrt(252) * 100
+            excess_1y = returns_1y - (0.025 / 252)
+            sharpe_1y = (np.mean(excess_1y) / np.std(excess_1y)) * np.sqrt(252) if np.std(excess_1y) > 0 else 0
+            cum_1y = (1 + pd.Series(returns_1y)).cumprod()
+            rolling_max_1y = cum_1y.expanding().max()
+            dd_1y = abs((cum_1y - rolling_max_1y / rolling_max_1y).min()) * 100 if len(cum_1y) > 0 else 0
+        else:
+            vol_1y = np.std(returns) * np.sqrt(252) * 100
+            excess_1y = returns - (0.025 / 252)
+            sharpe_1y = (np.mean(excess_1y) / np.std(excess_1y)) * np.sqrt(252) if np.std(excess_1y) > 0 else 0
+            dd_1y = 0
 
-        # 最大回撤
-        cum = (1 + pd.Series(returns)).cumprod()
-        rolling_max = cum.expanding().max()
-        drawdowns = (cum - rolling_max) / rolling_max
-        max_dd = abs(drawdowns.min()) * 100
-
-        # 近似夏普（假设无风险利率 2.5%）
-        excess_daily = returns[-252:] - (0.025 / 252) if len(returns) >= 252 else returns - (0.025 / 252)
-        sharpe = (np.mean(excess_daily) / np.std(excess_daily)) * np.sqrt(252) if np.std(excess_daily) > 0 else 0
+        # 近3年指标（全量数据）
+        vol_3y = np.std(returns) * np.sqrt(252) * 100
+        excess_3y = returns - (0.025 / 252)
+        sharpe_3y = (np.mean(excess_3y) / np.std(excess_3y)) * np.sqrt(252) if np.std(excess_3y) > 0 else 0
+        cum_all = (1 + pd.Series(returns)).cumprod()
+        rolling_max_all = cum_all.expanding().max()
+        dd_3y = abs((cum_all - rolling_max_all) / rolling_max_all).min() * 100 if len(cum_all) > 0 else 0
 
         result = {
-            "近1年": {"annual_volatility": round(annual_vol, 2),
-                       "sharpe_ratio": round(float(sharpe), 2),
-                       "max_drawdown": round(float(max_dd), 2)},
-            "近3年": {"annual_volatility": round(annual_vol, 2),
-                       "sharpe_ratio": round(float(sharpe), 2),
-                       "max_drawdown": round(float(max_dd), 2)},
+            "近1年": {"annual_volatility": round(vol_1y, 2),
+                       "sharpe_ratio": round(float(sharpe_1y), 2),
+                       "max_drawdown": round(float(dd_1y), 2)},
+            "近3年": {"annual_volatility": round(vol_3y, 2),
+                       "sharpe_ratio": round(float(sharpe_3y), 2),
+                       "max_drawdown": round(float(dd_3y), 2)},
         }
         self.funds[code]["perf"] = result
         return result

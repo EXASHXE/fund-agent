@@ -104,11 +104,9 @@ def cmd_analyze(args):
     # 持仓分析
     holdings_data = _compute_holdings(store, config, codes, analyzer)
 
-    # 新闻分析
-    news_data = []
-    if not args.skip_news:
-        print("\n[新闻] 采集与分析...")
-        news_data = _run_news_analysis(config, analyzer)
+    # 新闻分析（必选：新闻收集/情绪分析是报告核心组成部分）
+    print("\n[Layer 3] 新闻采集与分析...")
+    news_data = _run_news_analysis(config, analyzer)
 
     # 推荐
     recommendations = []
@@ -116,7 +114,7 @@ def cmd_analyze(args):
         print("\n[推荐] 搜索推荐基金...")
         recommendations = _run_recommendations(news_data, codes, analyzer)
 
-    print("\n[Layer 3] 生成报告...")
+    print("\n[Layer 4] 生成报告...")
     report = generate_report(
         analyzer, scores, correlations, stress_results,
         holdings_data=holdings_data,
@@ -311,6 +309,10 @@ def _match_nav_from_map(nav_map: dict, target) -> float:
         return nav_map[d]
     for i in range(1, 6):
         nd = d + timedelta(days=i)
+        if nd in nav_map:
+            return nav_map[nd]
+    for i in range(1, 4):
+        nd = d - timedelta(days=i)
         if nd in nav_map:
             return nav_map[nd]
     return None
@@ -603,22 +605,8 @@ def _perform_snapshot(config_path):
 
 
 def _cleanup_bak_files(config_path: str, keep: int = 1):
-    """保留最近 N 个 .bak 备份文件，删除其余（按文件名日期排序）。"""
-    import glob as _glob
-    import re as _re
-    pattern = f"{config_path}.*.bak"
-    files = _glob.glob(pattern)
-    files_with_date = []
-    for f in files:
-        m = _re.search(r'(\d{4}-\d{2}-\d{2})\.bak$', f)
-        if m:
-            files_with_date.append((m.group(1), f))
-    files_with_date.sort(key=lambda x: x[0], reverse=True)
-    for _, old in files_with_date[keep:]:
-        try:
-            os.remove(old)
-        except OSError:
-            pass
+    from src.config.shared import cleanup_bak_files
+    cleanup_bak_files(config_path, keep)
 
 
 def cmd_snapshot(args):
@@ -652,7 +640,6 @@ def main():
     p_analyze = sub.add_parser("analyze", help="完整分析流程")
     p_analyze.add_argument("-c", "--config", required=True)
     p_analyze.add_argument("-o", "--output", default="report.md")
-    p_analyze.add_argument("--skip-news", action="store_true")
     p_analyze.add_argument("--skip-recommend", action="store_true")
 
     p_fetch = sub.add_parser("fetch", help="仅拉取净值数据")
