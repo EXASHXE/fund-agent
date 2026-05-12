@@ -204,13 +204,6 @@ def _compute_holdings(store, config, codes, analyzer=None):
                     last_nav_date = max(nav_map.keys())
                     current_nav = nav_map[last_nav_date]
 
-            if last_nav_date and (today - last_nav_date).days > 1:
-                from src.analysis.holdings import estimate_current_nav
-                est = estimate_current_nav(code, current_nav, last_nav_date, today)
-                if est and est > 0 and est != current_nav:
-                    nav_map[today] = est
-                    current_nav = est
-
             events = generate_events(purchases, dca_strategy, calibrations, today)
 
             result = compute_fund(events, nav_map, fee_rate, settle_delay, today)
