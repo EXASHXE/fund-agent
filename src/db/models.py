@@ -23,6 +23,7 @@ class Fund(Base):
     manager_return_pct = Column(Float, comment="经理任职回报(%)")
     is_holding = Column(Boolean, default=False, comment="是否持有")
     is_watching = Column(Boolean, default=False, comment="是否关注(推荐)清单")
+    pending_amount = Column(Float, default=0.0, comment="待确认金额(元)")
     watch_reason = Column(String(500), comment="关注/推荐原因")
     data_freshness = Column(String(4), default="D", comment="数据新鲜度 A/B/C/D")
     last_updated = Column(DateTime, server_default=func.now(), onupdate=func.now())

@@ -140,8 +140,12 @@ def generate_report(
                 f"- 累计投入：¥{fund_detail['total_cost']:,.0f} "
                 f"| 当前市值：¥{fund_detail['current_value']:,.0f} "
                 f"| 浮动盈亏：¥{fund_detail['profit']:+,.0f}（{fund_detail['return_pct']:+.1f}%）"
-                f"| 年化收益：{fund_detail['annual_return']:+.1f}%"
             )
+            days = fund_detail.get("days_held", 0)
+            if days >= 365:
+                lines.append(f"- 年化收益：{fund_detail['annual_return']:+.1f}% (XIRR)")
+            else:
+                lines.append(f"- 年化收益：短期不适用（持有 {days} 天 < 1 年）")
             if fund_detail.get("dca_avg_cost", 0) > 0:
                 lines.append(f"- 定投成本均线：¥{fund_detail['dca_avg_cost']:.4f}")
 

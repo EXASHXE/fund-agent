@@ -386,6 +386,7 @@ class FundStorage:
             "manager_return_pct": fund.manager_return_pct,
             "is_holding": fund.is_holding,
             "is_watching": fund.is_watching,
+            "pending_amount": fund.pending_amount or 0.0,
             "watch_reason": fund.watch_reason,
             "data_freshness": fund.data_freshness,
             "last_updated": fund.last_updated.isoformat()

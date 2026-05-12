@@ -10,17 +10,21 @@ from datetime import date, timedelta
 from typing import Dict, List, Optional, Tuple
 
 from src.engine.events import FundEvent, EventType, resolve_nav_date
-from src.engine.calendar import next_trade_day
 
 CALIBRATION_MAX_DELTA_PCT = 0.03
 
 
 def _settlement_date(purchase_date: date, settle_delay: int) -> date:
-    """计算买入的份额确认到账日。
+    """计算买入的份额确认到账日（交易日顺延）。
 
-    国内 (settle_delay=1): T+1 到账（下一个交易日）
-    QDII (settle_delay=2): T+2 到账（两个交易日后）
+    国内 (settle_delay=1): T+1 交易日到账
+    QDII (settle_delay=2): T+2 交易日到账
+
+    示例：
+    - 周四 QDII 买入 → 周五+1T → 周一+1T → 周二到账
+    - 周五 QDII 买入 → 周一+1T → 周二+1T → 周三到账
     """
+    from src.engine.calendar import next_trade_day
     result = purchase_date
     for _ in range(settle_delay):
         result = next_trade_day(result + timedelta(days=1))
@@ -150,7 +154,7 @@ def compute_fund(
 
     return {
         "total_cost": round(total_cost, 2),
-        "total_shares": round(total_shares, 4),
+        "total_shares": round(total_shares, 2),
         "current_nav": round(current_nav, 4),
         "current_asset": current_asset,
         "profit": profit,
