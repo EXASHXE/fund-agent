@@ -34,21 +34,21 @@ def screen_funds(
     """全市场基金筛选：收益动量 + 规模 + 申购状态。"""
     candidates = []
 
-    for rank_type in ["近1月", "近3月", "近6月"]:
-        try:
-            import akshare as ak
-            df = ak.fund_ranking_em(symbol=rank_type)
-            if df is None or df.empty:
-                continue
-
+    try:
+        import akshare as ak
+        df = ak.fund_exchange_rank_em()
+        if df is not None and not df.empty:
             for _, row in df.iterrows():
                 code = str(row.get("基金代码", ""))
                 name = str(row.get("基金简称", ""))
-                ret_1m = _safe_float(row.get("近1月", row.get("近一月", 0)))
-                ret_3m = _safe_float(row.get("近3月", row.get("近三月", 0)))
-                size = _safe_float(row.get("基金规模", row.get("最新规模", 0)))
+                ret_1m = _safe_float(row.get("近1月", 0))
+                ret_3m = _safe_float(row.get("近3月", 0))
+                ret_6m = _safe_float(row.get("近6月", 0))
+                fund_type = str(row.get("类型", ""))
+                # fund_exchange_rank_em 不含规模和申购状态，跳过这些过滤
+                size = _safe_float(row.get("基金规模", row.get("最新规模", None)))
 
-                if size is None or size < min_size:
+                if size is not None and size < min_size:
                     continue
 
                 status = str(row.get("申购状态", "开放申购"))
@@ -58,13 +58,14 @@ def screen_funds(
                 candidates.append({
                     "code": code,
                     "name": name,
-                    "type": str(row.get("基金类型", "")),
+                    "type": fund_type,
                     "return_1m": ret_1m,
                     "return_3m": ret_3m,
+                    "return_6m": ret_6m,
                     "size": size,
                 })
-        except Exception:
-            continue
+    except Exception:
+        pass
 
     seen = set()
     unique = []

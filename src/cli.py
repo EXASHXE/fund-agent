@@ -229,26 +229,14 @@ def _compute_holdings(store, config, codes, analyzer=None):
                         "rejected": rej,
                     })
 
-            # QDII 净值日期修正：AKShare 标注"计算日"，券商 App 显示"公布日(+1天)"
-            # 不影响申购份额计算（引擎内 NAV 匹配正确），仅修正展示口径
-            display_value = result["current_asset"]
-            display_profit = result["profit"]
-            if settle_delay == 2:
-                sorted_dates = sorted(nav_map.keys())
-                if len(sorted_dates) >= 2 and last_nav_date:
-                    prev_nav_date = max(d for d in sorted_dates if d < last_nav_date)
-                    display_nav = nav_map[prev_nav_date]
-                    display_value = round(result["total_shares"] * display_nav, 2)
-                    display_profit = round(display_value - result["total_cost"], 2)
-
             analysis = {
                 "fund_code": code,
                 "fund_name": fund.get("name", code),
                 "total_cost": result["total_cost"],
                 "total_shares": result["total_shares"],
-                "current_value": display_value,
-                "profit": display_profit,
-                "return_pct": round(display_profit / result["total_cost"] * 100, 2) if result["total_cost"] > 0 else 0.0,
+                "current_value": result["current_asset"],
+                "profit": result["profit"],
+                "return_pct": result["return_pct"],
                 "annual_return": round(result["xirr"] * 100, 1),
                 "dca_records": dca_records,
                 "dca_enabled": bool(dca_strategy),
