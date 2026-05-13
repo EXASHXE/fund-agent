@@ -154,13 +154,21 @@ def compute_fund(
                     "delta_pct": round(delta_pct * 100, 2),
                 })
             else:
+                prev_shares = total_shares
                 total_shares = event.actual_shares
+                if prev_shares > 0:
+                    prev_cost = total_cost
+                    total_cost = round(total_cost * (total_shares / prev_shares), 2)
+                    cost_delta = round(total_cost - prev_cost, 2)
+                else:
+                    cost_delta = 0.0
                 calibrations_applied.append({
                     "date": event.event_date.isoformat(),
                     "actual_shares": event.actual_shares,
                     "computed_shares": round(event.actual_shares - delta, 4),
                     "delta": round(delta, 4),
                     "delta_pct": round(delta_pct * 100, 2),
+                    "cost_adjusted": cost_delta,
                 })
                 events_detail.append({
                     "type": "CALIBRATE",
