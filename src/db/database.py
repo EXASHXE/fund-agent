@@ -4,6 +4,7 @@
 """
 import os
 from datetime import date, datetime
+from src.config.shared import now as _shared_now
 from typing import Optional, List, Dict, Any
 
 from sqlalchemy import create_engine, func, and_
@@ -49,7 +50,7 @@ def upsert_fund(session: Session, code: str, **kwargs) -> Fund:
         for k, v in kwargs.items():
             if hasattr(fund, k):
                 setattr(fund, k, v)
-        fund.last_updated = datetime.now()
+        fund.last_updated = _shared_now()
     else:
         fund = Fund(code=code, **kwargs)
         session.add(fund)

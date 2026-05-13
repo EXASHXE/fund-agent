@@ -81,9 +81,9 @@ def generate_report(
                     adjust = 0
                     action = "数据不足"
                 lines.append(
-                    f"| {fund['name']}（{code}） | ¥{fund['value']:,.0f} "
-                    f"| {current_pct:.1f}% | {target_pct:.1f}% "
-                    f"| ¥{adjust:+,.0f} | {action} |"
+                    f"| {fund['name']}（{code}） | ¥{fund['value']:,.2f} "
+                    f"| {current_pct:.2f}% | {target_pct:.2f}% "
+                    f"| ¥{adjust:+,.2f} | {action} |"
                 )
             lines.append("")
 
@@ -117,15 +117,15 @@ def generate_report(
         lines.append("|------|------|")
         lines.append(f"| **结论** | {s['recommendation']} |")
         if fund_detail:
-            lines.append(f"| **持仓市值** | ¥{fund_detail['current_value']:,.0f} |")
-            lines.append(f"| **浮动盈亏** | ¥{fund_detail['profit']:+,.0f}（{fund_detail['return_pct']:+.1f}%）|")
-        lines.append(f"| **止盈线** | +{s['stop_profit_pct']}% |")
-        lines.append(f"| **止损线** | {s['stop_loss_pct']}% |")
+            lines.append(f"| **持仓市值** | ¥{fund_detail['current_value']:,.2f} |")
+            lines.append(f"| **浮动盈亏** | ¥{fund_detail['profit']:+,.2f}（{fund_detail['return_pct']:+.2f}%）|")
+        lines.append(f"| **止盈线** | +{s['stop_profit_pct']:.2f}% |")
+        lines.append(f"| **止损线** | {s['stop_loss_pct']:.2f}% |")
         lines.append(f"| **行动逻辑** | {s['action_logic']} |")
         if s.get("annual_volatility"):
-            lines.append(f"| **年化波动率** | {s['annual_volatility']:.1f}% |")
+            lines.append(f"| **年化波动率** | {s['annual_volatility']:.2f}% |")
         if s.get("max_drawdown_3y"):
-            lines.append(f"| **最大回撤(3年)** | {s['max_drawdown_3y']}% |")
+            lines.append(f"| **最大回撤(3年)** | {s['max_drawdown_3y']:.2f}% |")
         if s.get("sharpe_1y"):
             lines.append(f"| **夏普比率(1年)** | {s['sharpe_1y']:.2f} |")
         if s.get("manager"):
@@ -137,13 +137,13 @@ def generate_report(
             lines.append("#### 持仓趋势分析")
             lines.append("")
             lines.append(
-                f"- 累计投入：¥{fund_detail['total_cost']:,.0f} "
-                f"| 当前市值：¥{fund_detail['current_value']:,.0f} "
-                f"| 浮动盈亏：¥{fund_detail['profit']:+,.0f}（{fund_detail['return_pct']:+.1f}%）"
+                f"- 累计投入：¥{fund_detail['total_cost']:,.2f} "
+                f"| 当前市值：¥{fund_detail['current_value']:,.2f} "
+                f"| 浮动盈亏：¥{fund_detail['profit']:+,.2f}（{fund_detail['return_pct']:+.2f}%）"
             )
             days = fund_detail.get("days_held", 0)
             if days >= 365:
-                lines.append(f"- 年化收益：{fund_detail['annual_return']:+.1f}% (XIRR)")
+                lines.append(f"- 年化收益：{fund_detail['annual_return']:+.2f}% (XIRR)")
             else:
                 lines.append(f"- 年化收益：短期不适用（持有 {days} 天 < 1 年）")
             if fund_detail.get("dca_avg_cost", 0) > 0:
@@ -160,7 +160,7 @@ def generate_report(
                     if hasattr(d, 'isoformat'):
                         d = d.isoformat()
                     lines.append(
-                        f"| {i+1} | {d} | ¥{rec['amount']:.0f} "
+                        f"| {i+1} | {d} | ¥{rec['amount']:,.2f} "
                         f"| ¥{rec.get('fee', 0):.2f} | {rec['nav']:.4f} | {rec['shares']:.4f} "
                         f"| {rec['cum_shares']:.4f} | {rec.get('period_return', 'N/A')} |"
                     )
@@ -180,7 +180,7 @@ def generate_report(
             if holdings_data and "by_fund" in holdings_data:
                 fund_detail = holdings_data["by_fund"].get(u["code"])
             if fund_detail and fund_detail["current_value"] > 0:
-                lines.append(f"- 累计投入：¥{fund_detail['total_cost']:,.0f} | 当前市值：¥{fund_detail['current_value']:,.0f}")
+                lines.append(f"- 累计投入：¥{fund_detail['total_cost']:,.2f} | 当前市值：¥{fund_detail['current_value']:,.2f}")
             lines.append("")
 
     # === 相关性矩阵 ===
@@ -243,7 +243,7 @@ def generate_report(
         for st in stress_tests:
             lines.append(
                 f"| {st['scenario_id']}: {st['scenario_desc']} "
-                f"| {st['fund_name']} | {st['estimated_drawdown_pct']:.1f}% |"
+                f"| {st['fund_name']} | {st['estimated_drawdown_pct']:.2f}% |"
             )
         lines.append("")
 

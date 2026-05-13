@@ -1,10 +1,10 @@
 """报告模板片段 — 可复用的 Markdown 片段"""
-from datetime import date
+from src.config.shared import today
 
 
 def report_header(scores_count: int) -> str:
     return f"""# 基金组合诊断报告
-> 分析日期: {date.today().isoformat()}
+> 分析日期: {today().isoformat()}
 > 分析基金数量: {scores_count} 只
 """
 
@@ -14,21 +14,21 @@ def portfolio_overview_table(portfolio_data: dict) -> str:
     lines = []
     lines.append("## 一、持仓总览")
     lines.append("")
-    lines.append(f"> 评估日期：{date.today().isoformat()}")
+    lines.append(f"> 评估日期：{today().isoformat()}")
     lines.append("")
     lines.append("| 基金代码 | 基金名称 | 持有市值(¥) | 占比 | 成本价 | 累计收益(¥) | 累计收益率 | 年化收益率 | 待确认(¥) | 定投状态 |")
     lines.append("|----------|---------|-----------|------|------|-----------|----------|-----------|----------|---------|")
 
     total_value = portfolio_data.get("total_value", 0)
     for fund in portfolio_data.get("funds", []):
-        pct = f"{fund['value'] / total_value * 100:.1f}%" if total_value else "N/A"
+        pct = f"{fund['value'] / total_value * 100:.2f}%" if total_value else "N/A"
         avg_cost = f"{fund.get('avg_cost', 0):.4f}" if fund.get('avg_cost') else "-"
         pending = fund.get("pending_amount", 0)
         lines.append(
-            f"| {fund['code']} | {fund['name']} | {fund['value']:,.0f} "
-            f"| {pct} | {avg_cost} | {fund['profit']:+,.0f} "
-            f"| {fund['return_pct']:+.1f}% | {fund['annual_return']:+.1f}% "
-            f"| {pending:,.0f} "
+            f"| {fund['code']} | {fund['name']} | {fund['value']:,.2f} "
+            f"| {pct} | {avg_cost} | {fund['profit']:+,.2f} "
+            f"| {fund['return_pct']:+.2f}% | {fund['annual_return']:+.2f}% "
+            f"| {pending:,.2f} "
             f"| {fund.get('dca_status', '未设置')} |"
         )
 
@@ -39,11 +39,11 @@ def portfolio_overview_table(portfolio_data: dict) -> str:
 
     lines.append("")
     lines.append("**组合汇总**（含 0.15% 申购费）")
-    lines.append(f"- 总投入：¥{total_cost:,.0f}")
-    lines.append(f"- 总市值：¥{total_value:,.0f}")
-    lines.append(f"- 总收益：¥{total_profit:+,.0f}")
+    lines.append(f"- 总投入：¥{total_cost:,.2f}")
+    lines.append(f"- 总市值：¥{total_value:,.2f}")
+    lines.append(f"- 总收益：¥{total_profit:+,.2f}")
     lines.append(f"- 总收益率：{total_return:+.2f}%")
-    lines.append(f"- 待确认金额：¥{total_pending:,.0f}")
+    lines.append(f"- 待确认金额：¥{total_pending:,.2f}")
     lines.append(f"- 持有基金数：{portfolio_data.get('fund_count', 0)} 只")
     lines.append("")
 

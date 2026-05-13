@@ -16,6 +16,8 @@ import os
 import sys
 from datetime import date, datetime
 
+from src.config.shared import today as _shared_today, now as _shared_now
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
@@ -143,7 +145,7 @@ def _compute_holdings(store, config, codes, analyzer=None):
     from datetime import timedelta
 
     session = get_session()
-    today = date.today()
+    today = _shared_today()
     analyses = []
     calibration_warnings = []
 
@@ -422,7 +424,7 @@ def _save_snapshot(store, scores, stress_tests, correlations):
                     })
 
         snapshot_id = store.save_analysis({
-            "analysis_date": datetime.now(),
+            "analysis_date": _shared_now(),
             "market_summary": "请参考 report.md",
             "scores": score_data,
             "stress_tests": stress_tests,
@@ -565,7 +567,7 @@ def _perform_snapshot(config_path):
     from src.analysis.holdings import _is_business_day, _next_dca_date
 
     config = load_portfolio_config(config_path)
-    today = date.today()
+    today = _shared_today()
 
     backup_path = f"{config_path}.{today.isoformat()}.bak"
     shutil.copy2(config_path, backup_path)

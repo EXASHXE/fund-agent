@@ -11,6 +11,8 @@ import shutil
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
+from src.config.shared import today as _shared_today, now as _shared_now
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from src.config.schema import (
@@ -71,7 +73,7 @@ def save_config(config: PortfolioConfig):
                 c["cal_date"] = fmt_date(c["cal_date"])
 
     config_path = str(CONFIG_PATH)
-    backup_path = f"{config_path}.{datetime.now().strftime('%Y-%m-%d')}.bak"
+    backup_path = f"{config_path}.{_shared_now().strftime('%Y-%m-%d')}.bak"
     if os.path.exists(config_path):
         shutil.copy2(config_path, backup_path)
 
@@ -311,7 +313,7 @@ def render_dca_management(config: PortfolioConfig):
                     frequency=DCAFrequency.WEEKLY,
                     amount=100.0,
                     day_of_week="mon",
-                    start_date=date.today(),
+                    start_date=_shared_today(),
                 )
                 save_config(config)
                 st.session_state.config = load_config()

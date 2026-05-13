@@ -34,6 +34,7 @@ from contextlib import contextmanager
 from .database import get_session, init_db
 from .models import AnalysisSnapshot
 from . import database as db
+from src.config.shared import now as _shared_now
 
 # 自定义 JSON 编码器，处理 date/datetime
 class _JSONEncoder(json.JSONEncoder):
@@ -243,7 +244,7 @@ class FundStorage:
         with self._session() as s:
             snapshot = db.create_snapshot(
                 s,
-                analysis_date=analysis.get("analysis_date", datetime.now()),
+                analysis_date=analysis.get("analysis_date", _shared_now()),
                 market_summary=analysis.get("market_summary"),
                 portfolio_total_value=analysis.get("portfolio_total_value"),
                 portfolio_total_cost=analysis.get("portfolio_total_cost"),
@@ -348,7 +349,7 @@ class FundStorage:
         """将整个数据库导出为 JSON 文件"""
         with self._session() as s:
             data = {
-                "exported_at": datetime.now().isoformat(),
+                "exported_at": _shared_now().isoformat(),
                 "funds": [self._fund_to_dict(f) for f in db.get_all_funds(s)],
             }
             # 为了简洁，暂不导出完整 NAV，需要时单独调用

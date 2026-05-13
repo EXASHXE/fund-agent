@@ -4,6 +4,29 @@ from datetime import date, datetime
 from typing import Optional
 
 
+def today() -> date:
+    """返回当前日期，支持 FUND_MOCK_DATE 环境变量注入（用于回测/重放）。"""
+    mock = os.environ.get("FUND_MOCK_DATE")
+    if mock:
+        try:
+            return datetime.strptime(mock[:10], "%Y-%m-%d").date()
+        except ValueError:
+            pass
+    return date.today()
+
+
+def now() -> datetime:
+    """返回当前时间，支持 FUND_MOCK_DATE 注入。"""
+    mock = os.environ.get("FUND_MOCK_DATE")
+    if mock:
+        try:
+            d = datetime.strptime(mock[:10], "%Y-%m-%d").date()
+            return datetime(d.year, d.month, d.day, 23, 0, 0)
+        except ValueError:
+            pass
+    return datetime.now()
+
+
 def to_date(d) -> Optional[date]:
     if d is None:
         return None

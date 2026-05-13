@@ -1,5 +1,6 @@
 """AKShare 新闻采集 — 按基金重仓股票和关键词获取相关新闻"""
 from datetime import date, timedelta
+from src.config.shared import today as _shared_today
 from typing import List, Dict
 import hashlib
 
@@ -90,7 +91,7 @@ def fetch_fund_news(
                     news_date = _parse_date(date_raw)
 
                     if news_date:
-                        cutoff = date.today() - timedelta(days=days)
+                        cutoff = _shared_today() - timedelta(days=days)
                         if news_date < cutoff:
                             continue
 

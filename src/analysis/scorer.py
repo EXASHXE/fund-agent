@@ -322,9 +322,11 @@ class FundAnalyzer:
             level, emoji, tendency = "red", "🔴", "止盈/止损离场"
 
         perf_1y = fund.get("perf", {}).get("近1年", {})
-        vol = perf_1y.get("annual_volatility", 20) or 20
+        vol = round(perf_1y.get("annual_volatility", 20) or 20, 2)
         stop_profit = max(15, min(60, vol * 2.0))
         stop_loss = max(10, min(40, vol * 1.5))
+        max_dd_3y = fund.get("perf", {}).get("近3年", {}).get("max_drawdown")
+        sharpe_1y = fund.get("perf", {}).get("近1年", {}).get("sharpe_ratio")
 
         recommendation = self._deduce_recommendation(composite, name, completeness)
 
@@ -347,11 +349,11 @@ class FundAnalyzer:
             "micro_detail": micro_detail,
             "recommendation": recommendation["label"],
             "action_logic": recommendation["logic"],
-            "stop_profit_pct": round(stop_profit, 1),
-            "stop_loss_pct": round(-stop_loss, 1),
+            "stop_profit_pct": round(stop_profit, 2),
+            "stop_loss_pct": round(-stop_loss, 2),
             "annual_volatility": vol,
-            "max_drawdown_3y": fund.get("perf", {}).get("近3年", {}).get("max_drawdown"),
-            "sharpe_1y": fund.get("perf", {}).get("近1年", {}).get("sharpe_ratio"),
+            "max_drawdown_3y": round(max_dd_3y, 2) if max_dd_3y is not None else None,
+            "sharpe_1y": round(sharpe_1y, 2) if sharpe_1y is not None else None,
             "fund_type": basic.get("fund_type", ""),
             "manager": basic.get("manager", ""),
         }

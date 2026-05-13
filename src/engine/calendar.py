@@ -2,6 +2,7 @@
 交易日历模块：基于 AKShare 获取 A 股有效交易日，缓存 2 小时。
 """
 from datetime import date, datetime, timedelta
+from src.config.shared import today as _shared_today, now as _shared_now
 from functools import lru_cache
 from typing import Set
 
@@ -31,7 +32,7 @@ def _fetch_trade_dates() -> Set[date]:
 
 
 def _fallback_trade_dates() -> Set[date]:
-    today = date.today()
+    today = _shared_today()
     dates = set()
     cursor = today - timedelta(days=365 * 5)
     while cursor <= today + timedelta(days=365):
@@ -49,7 +50,7 @@ _CACHE_TTL = 7200  # 2 小时
 def get_trade_calendar() -> Set[date]:
     """获取交易日集合（带缓存）。"""
     global _trade_dates_cache, _cache_time
-    now = datetime.now()
+    now = _shared_now()
     if _trade_dates_cache is None or _cache_time is None or (now - _cache_time).total_seconds() > _CACHE_TTL:
         _trade_dates_cache = _fetch_trade_dates()
         _cache_time = now
