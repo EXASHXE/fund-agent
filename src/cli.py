@@ -212,16 +212,8 @@ def _compute_holdings(store, config, codes, analyzer=None):
             result = compute_fund(events, nav_map, fee_rate, settle_delay, today)
 
             display_value = result["current_asset"]
-            display_profit = result["profit"]
-            if settle_delay > 1:
-                from src.engine.calculator import _settlement_date as _stl
-                vis_nav = current_nav
-                for nd in reversed(sorted(nav_map.keys())):
-                    if _stl(nd, settle_delay) <= today:
-                        vis_nav = nav_map[nd]
-                        break
-                display_value = round(result["total_shares"] * vis_nav, 2)
-                display_profit = round(display_value - result["total_cost"], 2)
+            display_profit = result["confirmed_pnl"]
+            display_return_pct = result["confirmed_return_pct"]
 
             dca_records = []
             if dca_strategy:
@@ -244,7 +236,8 @@ def _compute_holdings(store, config, codes, analyzer=None):
                 "total_shares": result["total_shares"],
                 "current_value": display_value,
                 "profit": display_profit,
-                "return_pct": round(display_profit / result["total_cost"] * 100, 2) if result["total_cost"] > 0 else 0.0,
+                "return_pct": display_return_pct,
+                "portfolio_pnl": result["portfolio_pnl"],
                 "annual_return": round(result["xirr"] * 100, 1),
                 "avg_cost": result["avg_cost"],
                 "pending_amount": result["pending_amount"],

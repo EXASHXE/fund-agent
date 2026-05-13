@@ -4,9 +4,12 @@
 处理 BUY/CALIBRATE 事件。
 净值匹配统一用 settle_delay=1（AKShare 净值日期即为有效申购净值日，与结算延迟无关）。
   - _match_nav 前瞻 5 天兜底，确保 QDII T+1 净值缺失时能自动匹配到次日数据。
-PENDING 判断基于 effective trade date + fund settle_delay：若结算日 >= 今天，标记为 PENDING。
+PENDING 判断基于 effective trade date + fund settle_delay：若结算日 > 今天（未到确认日），标记为 PENDING。
+  - settle_date == today 表示今日确认到账，计入已确认份额。
   - effective trade date = 实际交易日期（非交易日顺延，after_1500 顺延）
   - settle_delay = 1（T+1 到账，国内）/ 2（T+2 到账，QDII）
+所有买入均计入现金流（钱已从账户扣除），XIRR 基于全口径现金流计算。
+返回双口径收益：confirmed_pnl（已确认份额浮盈）/ portfolio_pnl（含待确认资金的整体盈亏）。
 校准偏差超过 3% 时拒绝并报警。
 """
 from datetime import date, timedelta
@@ -74,9 +77,12 @@ def compute_fund(
             if event.amount <= 0:
                 continue
 
+            # 所有买入均计入现金流（钱已从账户扣除）
+            cashflows.append((event.event_date, -event.amount))
+
             trade_date = _effective_trade_date(event.event_date, event.after_1500)
             settle_date = _settlement_date(trade_date, settle_delay)
-            if settle_date >= today:
+            if settle_date > today:
                 pending_amount += event.amount
                 events_detail.append({
                     "type": "BUY",
@@ -107,7 +113,6 @@ def compute_fund(
 
             total_shares += new_shares
             total_cost += event.amount
-            cashflows.append((event.event_date, -event.amount))
 
             events_detail.append({
                 "type": "BUY",
@@ -168,9 +173,11 @@ def compute_fund(
                 })
 
     current_asset = round(total_shares * current_nav, 2)
-    profit = round(current_asset - total_cost, 2)
-    return_pct = round(profit / total_cost * 100, 2) if total_cost > 0 else 0.0
+    confirmed_pnl = round(current_asset - total_cost, 2)
+    confirmed_return_pct = round(confirmed_pnl / total_cost * 100, 2) if total_cost > 0 else 0.0
+    portfolio_pnl = round(current_asset - (total_cost + pending_amount), 2)
 
+    # XIRR: 所有现金流（含 pending）+ 当前市值作为终值
     xirr_val = _calc_xirr(cashflows, current_asset, today)
 
     avg_cost = round(total_cost / total_shares, 4) if total_shares > 0 else 0.0
@@ -180,8 +187,9 @@ def compute_fund(
         "total_shares": round(total_shares, 2),
         "current_nav": round(current_nav, 4),
         "current_asset": current_asset,
-        "profit": profit,
-        "return_pct": return_pct,
+        "confirmed_pnl": confirmed_pnl,
+        "confirmed_return_pct": confirmed_return_pct,
+        "portfolio_pnl": portfolio_pnl,
         "xirr": round(xirr_val, 4),
         "avg_cost": avg_cost,
         "pending_amount": round(pending_amount, 2),
