@@ -140,6 +140,7 @@ def _compute_holdings(store, config, codes, analyzer=None):
     from src.engine.calculator import compute_fund
     from src.analysis.holdings import portfolio_summary
     from src.db.database import get_session, get_holdings
+    from datetime import timedelta
 
     session = get_session()
     today = date.today()
@@ -208,6 +209,18 @@ def _compute_holdings(store, config, codes, analyzer=None):
 
             result = compute_fund(events, nav_map, fee_rate, settle_delay, today)
 
+            # QDII 展示净值：AKShare 最新净值可能未同步到券商（需过 2 天）
+            display_value = result["current_asset"]
+            display_profit = result["profit"]
+            if settle_delay == 2:
+                vis_nav = current_nav
+                for nd in reversed(sorted(nav_map.keys())):
+                    if nd + timedelta(days=2) <= today:
+                        vis_nav = nav_map[nd]
+                        break
+                display_value = round(result["total_shares"] * vis_nav, 2)
+                display_profit = round(display_value - result["total_cost"], 2)
+
             dca_records = []
             if dca_strategy:
                 dca_records = _simulate_dca_for_report(dca_strategy, nav_map, today)
@@ -227,9 +240,9 @@ def _compute_holdings(store, config, codes, analyzer=None):
                 "fund_name": fund.get("name", code),
                 "total_cost": result["total_cost"],
                 "total_shares": result["total_shares"],
-                "current_value": result["current_asset"],
-                "profit": result["profit"],
-                "return_pct": result["return_pct"],
+                "current_value": display_value,
+                "profit": display_profit,
+                "return_pct": round(display_profit / result["total_cost"] * 100, 2) if result["total_cost"] > 0 else 0.0,
                 "annual_return": round(result["xirr"] * 100, 1),
                 "dca_records": dca_records,
                 "dca_enabled": bool(dca_strategy),

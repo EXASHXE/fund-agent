@@ -55,7 +55,7 @@ def compute_fund(
                 continue
 
             settle_date = _settlement_date(event.event_date, settle_delay)
-            if settle_date >= today:
+            if settle_date > today:
                 events_detail.append({
                     "type": "BUY",
                     "status": "PENDING",
