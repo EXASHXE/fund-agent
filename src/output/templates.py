@@ -16,22 +16,26 @@ def portfolio_overview_table(portfolio_data: dict) -> str:
     lines.append("")
     lines.append(f"> 评估日期：{date.today().isoformat()}")
     lines.append("")
-    lines.append("| 基金代码 | 基金名称 | 持有市值(¥) | 占比 | 累计收益(¥) | 累计收益率 | 年化收益率 | 定投状态 |")
-    lines.append("|----------|---------|-----------|------|-----------|----------|-----------|---------|")
+    lines.append("| 基金代码 | 基金名称 | 持有市值(¥) | 占比 | 成本价 | 累计收益(¥) | 累计收益率 | 年化收益率 | 待确认(¥) | 定投状态 |")
+    lines.append("|----------|---------|-----------|------|------|-----------|----------|-----------|----------|---------|")
 
     total_value = portfolio_data.get("total_value", 0)
     for fund in portfolio_data.get("funds", []):
         pct = f"{fund['value'] / total_value * 100:.1f}%" if total_value else "N/A"
+        avg_cost = f"{fund.get('avg_cost', 0):.4f}" if fund.get('avg_cost') else "-"
+        pending = fund.get("pending_amount", 0)
         lines.append(
             f"| {fund['code']} | {fund['name']} | {fund['value']:,.0f} "
-            f"| {pct} | {fund['profit']:+,.0f} "
+            f"| {pct} | {avg_cost} | {fund['profit']:+,.0f} "
             f"| {fund['return_pct']:+.1f}% | {fund['annual_return']:+.1f}% "
+            f"| {pending:,.0f} "
             f"| {fund.get('dca_status', '未设置')} |"
         )
 
     total_cost = portfolio_data.get("total_cost", 0)
     total_profit = total_value - total_cost
     total_return = (total_profit / total_cost * 100) if total_cost else 0
+    total_pending = portfolio_data.get("total_pending", 0)
 
     lines.append("")
     lines.append("**组合汇总**（含 0.15% 申购费）")
@@ -39,6 +43,7 @@ def portfolio_overview_table(portfolio_data: dict) -> str:
     lines.append(f"- 总市值：¥{total_value:,.0f}")
     lines.append(f"- 总收益：¥{total_profit:+,.0f}")
     lines.append(f"- 总收益率：{total_return:+.2f}%")
+    lines.append(f"- 待确认金额：¥{total_pending:,.0f}")
     lines.append(f"- 持有基金数：{portfolio_data.get('fund_count', 0)} 只")
     lines.append("")
 

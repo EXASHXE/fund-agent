@@ -209,13 +209,13 @@ def _compute_holdings(store, config, codes, analyzer=None):
 
             result = compute_fund(events, nav_map, fee_rate, settle_delay, today)
 
-            # QDII 展示净值：AKShare 最新净值可能未同步到券商（需过 2 天）
             display_value = result["current_asset"]
             display_profit = result["profit"]
-            if settle_delay == 2:
+            if settle_delay > 1:
+                from src.engine.calculator import _settlement_date as _stl
                 vis_nav = current_nav
                 for nd in reversed(sorted(nav_map.keys())):
-                    if nd + timedelta(days=2) <= today:
+                    if _stl(nd, settle_delay) <= today:
                         vis_nav = nav_map[nd]
                         break
                 display_value = round(result["total_shares"] * vis_nav, 2)
@@ -244,6 +244,8 @@ def _compute_holdings(store, config, codes, analyzer=None):
                 "profit": display_profit,
                 "return_pct": round(display_profit / result["total_cost"] * 100, 2) if result["total_cost"] > 0 else 0.0,
                 "annual_return": round(result["xirr"] * 100, 1),
+                "avg_cost": result["avg_cost"],
+                "pending_amount": result["pending_amount"],
                 "dca_records": dca_records,
                 "dca_enabled": bool(dca_strategy),
                 "dca_avg_cost": 0.0,

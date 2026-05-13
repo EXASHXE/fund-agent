@@ -407,6 +407,7 @@ def portfolio_summary(holding_analyses: List[Dict]) -> Dict:
     total_cost = sum(h["total_cost"] for h in holding_analyses)
     total_value = sum(h["current_value"] for h in holding_analyses)
     total_profit = total_value - total_cost
+    total_pending = sum(h.get("pending_amount", 0) for h in holding_analyses)
 
     funds = []
     for h in holding_analyses:
@@ -419,6 +420,8 @@ def portfolio_summary(holding_analyses: List[Dict]) -> Dict:
             "profit": h["profit"],
             "return_pct": h["return_pct"],
             "annual_return": h["annual_return"],
+            "avg_cost": h.get("avg_cost", 0),
+            "pending_amount": h.get("pending_amount", 0),
             "dca_status": dca_status,
         })
 
@@ -426,6 +429,7 @@ def portfolio_summary(holding_analyses: List[Dict]) -> Dict:
         "total_value": total_value,
         "total_cost": total_cost,
         "total_profit": total_profit,
+        "total_pending": round(total_pending, 2),
         "total_return_pct": round(total_profit / total_cost * 100, 2) if total_cost else 0,
         "fund_count": len(holding_analyses),
         "funds": funds,

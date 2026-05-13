@@ -2,20 +2,39 @@
 核心计算引擎：事件驱动状态机 + XIRR + 校准平账。
 
 处理 BUY/CALIBRATE 事件。
-净值匹配始终用 settle_delay=1（AKShare 净值日期即为有效申购净值日）。
-PENDING 判断基于 fund settle_delay（1=T+1国内, 2=T+2 QDII）：若结算日尚未到达，标记为 PENDING。
+净值匹配统一用 settle_delay=1（AKShare 净值日期即为有效申购净值日，与结算延迟无关）。
+  - _match_nav 前瞻 5 天兜底，确保 QDII T+1 净值缺失时能自动匹配到次日数据。
+PENDING 判断基于 effective trade date + fund settle_delay：若结算日 >= 今天，标记为 PENDING。
+  - effective trade date = 实际交易日期（非交易日顺延，after_1500 顺延）
+  - settle_delay = 1（T+1 到账，国内）/ 2（T+2 到账，QDII）
 校准偏差超过 3% 时拒绝并报警。
 """
 from datetime import date, timedelta
 from typing import Dict, List, Optional, Tuple
 
+from src.engine.calendar import is_trade_day, next_trade_day
 from src.engine.events import FundEvent, EventType, resolve_nav_date
 
 CALIBRATION_MAX_DELTA_PCT = 0.03
 
 
-def _settlement_date(purchase_date: date, settle_delay: int) -> date:
-    """计算买入的份额确认到账日（交易日顺延）。
+def _effective_trade_date(purchase_date: date, after_1500: bool) -> date:
+    """计算实际交易日（处理非交易日和15:00截止规则）。
+
+    - 非交易日 → 顺延至下一交易日
+    - 交易日 + after_1500 → 顺延至下一交易日
+    - 交易日 + before_1500 → 当天即为交易日
+    """
+    if not is_trade_day(purchase_date):
+        return next_trade_day(purchase_date)
+    elif after_1500:
+        return next_trade_day(purchase_date + timedelta(days=1))
+    else:
+        return purchase_date
+
+
+def _settlement_date(trade_date: date, settle_delay: int) -> date:
+    """计算买入的份额确认到账日（从实际交易日起算，交易日顺延）。
 
     国内 (settle_delay=1): T+1 交易日到账
     QDII (settle_delay=2): T+2 交易日到账
@@ -24,8 +43,7 @@ def _settlement_date(purchase_date: date, settle_delay: int) -> date:
     - 周四 QDII 买入 → 周五+1T → 周一+1T → 周二到账
     - 周五 QDII 买入 → 周一+1T → 周二+1T → 周三到账
     """
-    from src.engine.calendar import next_trade_day
-    result = purchase_date
+    result = trade_date
     for _ in range(settle_delay):
         result = next_trade_day(result + timedelta(days=1))
     return result
@@ -49,24 +67,27 @@ def compute_fund(
     last_nav_date = sorted_nav_dates[-1] if sorted_nav_dates else None
     current_nav = nav_map[last_nav_date] if last_nav_date else 1.0
 
+    pending_amount = 0.0
+
     for event in events:
         if event.event_type == EventType.BUY:
             if event.amount <= 0:
                 continue
 
-            settle_date = _settlement_date(event.event_date, settle_delay)
-            if settle_date > today:
+            trade_date = _effective_trade_date(event.event_date, event.after_1500)
+            settle_date = _settlement_date(trade_date, settle_delay)
+            if settle_date >= today:
+                pending_amount += event.amount
                 events_detail.append({
                     "type": "BUY",
                     "status": "PENDING",
                     "purchase_date": event.event_date.isoformat(),
+                    "trade_date": trade_date.isoformat(),
                     "amount": event.amount,
                     "reason": f"尚未到账 (预计 {settle_date}, sett_delay={settle_delay})",
                 })
                 continue
 
-            # 净值匹配：所有基金统一用 settle_delay=1
-            # AKShare 净值日期即为申购有效净值日，不受结算延迟影响
             nav_date = resolve_nav_date(event.event_date, event.after_1500, settle_delay=1)
 
             nav = _match_nav(nav_map, nav_date)
@@ -152,6 +173,8 @@ def compute_fund(
 
     xirr_val = _calc_xirr(cashflows, current_asset, today)
 
+    avg_cost = round(total_cost / total_shares, 4) if total_shares > 0 else 0.0
+
     return {
         "total_cost": round(total_cost, 2),
         "total_shares": round(total_shares, 2),
@@ -160,6 +183,8 @@ def compute_fund(
         "profit": profit,
         "return_pct": return_pct,
         "xirr": round(xirr_val, 4),
+        "avg_cost": avg_cost,
+        "pending_amount": round(pending_amount, 2),
         "cashflows": [(d.isoformat(), v) for d, v in cashflows],
         "calibrations_applied": calibrations_applied,
         "calibrations_rejected": calibrations_rejected,
@@ -214,6 +239,7 @@ def compute_portfolio(fund_results: Dict[str, Dict]) -> Dict:
     total_asset = sum(r["current_asset"] for r in fund_results.values())
     total_profit = total_asset - total_cost
     total_return = round(total_profit / total_cost * 100, 2) if total_cost > 0 else 0.0
+    total_pending = sum(r["pending_amount"] for r in fund_results.values())
     calibration_errors = []
     for code, r in fund_results.items():
         if r.get("calibrations_rejected"):
@@ -223,6 +249,7 @@ def compute_portfolio(fund_results: Dict[str, Dict]) -> Dict:
         "total_asset": round(total_asset, 2),
         "total_profit": round(total_profit, 2),
         "total_return_pct": total_return,
+        "total_pending": round(total_pending, 2),
         "fund_count": len(fund_results),
         "calibration_errors": calibration_errors,
     }
