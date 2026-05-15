@@ -69,3 +69,12 @@ def next_trade_day(d: date) -> date:
     while cursor not in cal:
         cursor += timedelta(days=1)
     return cursor
+
+
+def previous_trade_day(d: date) -> date:
+    """返回 d 当天或之前第一个交易日（含当日）。"""
+    cal = get_trade_calendar()
+    cursor = d
+    while cursor not in cal:
+        cursor -= timedelta(days=1)
+    return cursor

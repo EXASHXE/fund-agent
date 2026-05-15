@@ -72,7 +72,8 @@ def generate_events(
                 actual_shares=float(c.get("actual_shares", 0)),
             ))
 
-    events.sort(key=lambda e: e.event_date)
+    priority = {EventType.BUY: 0, EventType.CALIBRATE: 1}
+    events.sort(key=lambda e: (e.event_date, priority.get(e.event_type, 99)))
     return events
 
 

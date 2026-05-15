@@ -2,8 +2,8 @@
 核心计算引擎：事件驱动状态机 + XIRR + 校准平账。
 
 处理 BUY/CALIBRATE 事件。
-净值匹配统一用 settle_delay=1（AKShare 净值日期即为有效申购净值日，与结算延迟无关）。
-  - _match_nav 前瞻 5 天兜底，确保 QDII T+1 净值缺失时能自动匹配到次日数据。
+净值匹配按基金 settle_delay 计算：国内 T 日净值，QDII 通常 T+1 净值。
+  - _match_nav 前瞻 5 天兜底，确保节假日或数据缺失时能自动匹配到后续有效净值。
 PENDING 判断基于 effective trade date + fund settle_delay：若结算日 > 今天（未到确认日），标记为 PENDING。
   - settle_date == today 表示今日确认到账，计入已确认份额。
   - effective trade date = 实际交易日期（非交易日顺延，after_1500 顺延）
@@ -94,7 +94,7 @@ def compute_fund(
                 })
                 continue
 
-            nav_date = resolve_nav_date(event.event_date, event.after_1500, settle_delay=1)
+            nav_date = resolve_nav_date(event.event_date, event.after_1500, settle_delay=settle_delay)
 
             nav = _match_nav(nav_map, nav_date)
             if nav is None or nav <= 0:

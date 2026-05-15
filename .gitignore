@@ -11,7 +11,7 @@ SUPERPOWERS.md
 .claude/
 
 # 数据库
-data/
+/data/
 
 # Python
 __pycache__/

@@ -27,6 +27,45 @@ def now() -> datetime:
     return datetime.now()
 
 
+def report_cutoff_hour() -> int:
+    """基金净值基本完成更新后的保守报告截点（北京时间）。"""
+    raw = os.environ.get("FUND_REPORT_CUTOFF_HOUR", "22")
+    try:
+        return int(raw)
+    except ValueError:
+        return 22
+
+
+def report_cutoff_minute() -> int:
+    raw = os.environ.get("FUND_REPORT_CUTOFF_MINUTE", "30")
+    try:
+        return int(raw)
+    except ValueError:
+        return 30
+
+
+def effective_report_date(current: datetime = None) -> date:
+    """返回应出具报告的交易日。
+
+    交易日 22:30 前，公募基金尤其 QDII 净值通常尚未完全更新，使用上一交易日口径。
+    22:30 后或非交易日，使用最近一个已完成披露的交易日。
+    """
+    from datetime import timedelta
+    from src.engine.calendar import is_trade_day, previous_trade_day
+
+    current = current or now()
+    cutoff = current.replace(
+        hour=report_cutoff_hour(),
+        minute=report_cutoff_minute(),
+        second=0,
+        microsecond=0,
+    )
+    candidate = current.date()
+    if is_trade_day(candidate) and current < cutoff:
+        candidate = candidate - timedelta(days=1)
+    return previous_trade_day(candidate)
+
+
 def to_date(d) -> Optional[date]:
     if d is None:
         return None

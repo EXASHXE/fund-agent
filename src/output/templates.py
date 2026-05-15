@@ -1,10 +1,10 @@
 """报告模板片段 — 可复用的 Markdown 片段"""
-from src.config.shared import today
+from src.config.shared import effective_report_date
 
 
 def report_header(scores_count: int) -> str:
     return f"""# 基金组合诊断报告
-> 分析日期: {today().isoformat()}
+> 分析日期: {effective_report_date().isoformat()}
 > 分析基金数量: {scores_count} 只
 """
 
@@ -14,7 +14,7 @@ def portfolio_overview_table(portfolio_data: dict) -> str:
     lines = []
     lines.append("## 一、持仓总览")
     lines.append("")
-    lines.append(f"> 评估日期：{today().isoformat()}")
+    lines.append(f"> 评估日期：{effective_report_date().isoformat()}")
     lines.append("")
     lines.append("| 基金代码 | 基金名称 | 持有市值(¥) | 占比 | 成本价 | 累计收益(¥) | 累计收益率 | 年化收益率 | 待确认(¥) | 定投状态 |")
     lines.append("|----------|---------|-----------|------|------|-----------|----------|-----------|----------|---------|")

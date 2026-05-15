@@ -27,15 +27,13 @@ description: 当用户提供基金持仓数据（基金代码/名称、买入历
 ```bash
 # 步骤1: 检查 fund-portfolio.yaml 是否存在，不存在则从用户输入创建
 
-# 步骤2: 导入持仓到数据库
-python3 -m src.cli import -c fund-portfolio.yaml
-
-# 步骤3: 完整分析（导入 + 数据采集 + 多因子评分 + 持仓分析 + 新闻 + 推荐 + 报告）
+# 步骤2: 完整分析（配置校验 + 元数据同步 + 数据采集 + 多因子评分 + 持仓分析 + 新闻 + 推荐 + 报告）
+# 默认只读 fund-portfolio.yaml，不在报告生成前滚动定投或追加买入记录
 python3 -m src.cli analyze -c fund-portfolio.yaml -o report.md
 
-# 步骤4: 读取 report.md 向用户展示结果
+# 步骤3: 读取 report.md 向用户展示结果
 
-# 步骤5: 更新 DCA 定投日期供下次使用
+# 步骤4: 用户确认后再更新 DCA 定投日期供下次使用
 python3 -m src.cli snapshot -c fund-portfolio.yaml
 ```
 
@@ -75,10 +73,21 @@ python3 -m src.cli init -o fund-portfolio.yaml
 python3 -m src.cli ui -c fund-portfolio.yaml -p 8501
 ```
 
+打开 `http://localhost:8501`。UI 使用 `fund-portfolio.yaml` 作为当前持仓真源，可维护真实份额、成本价、pending、定投策略，并可从“分析报告”页生成报告或执行定投滚动。
+
+### 数据存储口径
+
+- 当前持仓与策略：`fund-portfolio.yaml`，保持 YAML，便于人工维护和审查。
+- 当前持仓计算：优先使用 YAML 中的 `shares`、`avg_cost`、`pending_amount`。
+- 历史分析：SQLite `data/fund_agent.db`，用于评分趋势、快照和缓存。
+- 报告输出：Markdown，不作为输入真源。
+
 ### 内部管道
 
 ```
-Layer 1: 数据采集 → Layer 2: 分析评分 → Layer 3: 新闻分析 → Layer 4: 报告生成
+配置校验 → 元数据同步 → Layer 1 数据采集 → Layer 2 分析评分
+→ 持仓计算 → Layer 3 新闻分析 → 推荐/压力测试 → Layer 4 报告生成
+→ 分析快照保存 → 可选 snapshot 配置滚动
 ```
 
 ### Layer 1 — 数据采集与验证
@@ -117,6 +126,9 @@ Layer 1: 数据采集 → Layer 2: 分析评分 → Layer 3: 新闻分析 → La
 
 - AKShare QDII 净值日期标注为"计算日"，券商 App 显示为"公布日(+1天)"。展示时需使用前一日净值匹配券商口径。
 - QDII 买入后 T+2 交易日才结算到账（周五买入→下周三到账），待确认份额需标记 PENDING 不入计算。
+- QDII 买入份额使用基金配置的 `settle_delay` 匹配申购净值：15:00 前下单通常按下一交易日净值，15:00 后再顺延一交易日。
+- 若配置中维护了券商/App 展示的 `shares` 与 `avg_cost`，报告市值、收益、成本价优先使用真实持仓口径；买入流水只用于审计、现金流和 pending 推算。
+- 交易日北京时间 22:30 前生成报告时，默认使用上一交易日作为评估日，避免净值和收益尚未全部更新造成混合口径。
 - 标注汇率敞口：美元 / 港币 / 多币种
 - 提醒近期海外休市日对确认和定投执行的影响
 - 不做 QDII 净值指数外推，保证与券商持仓口径一致

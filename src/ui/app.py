@@ -8,10 +8,15 @@ import yaml
 import sys
 import os
 import shutil
+import subprocess
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-from src.config.shared import today as _shared_today, now as _shared_now
+from src.config.shared import (
+    effective_report_date,
+    today as _shared_today,
+    now as _shared_now,
+)
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
@@ -21,6 +26,7 @@ from src.config.schema import (
 )
 from src.config.loader import load_portfolio_config
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CONFIG_PATH = Path(os.environ.get("FUND_CONFIG", "fund-portfolio.yaml"))
 
 FUND_TYPE_LABELS = {
@@ -117,7 +123,7 @@ def main():
 
     config = st.session_state.config
 
-    tabs = st.tabs(["持仓总览", "基金详情", "定投管理", "新增/删除"])
+    tabs = st.tabs(["持仓总览", "基金详情", "定投管理", "分析报告", "新增/删除"])
 
     with tabs[0]:
         render_overview(config)
@@ -129,6 +135,9 @@ def main():
         render_dca_management(config)
 
     with tabs[3]:
+        render_analysis_actions()
+
+    with tabs[4]:
         render_add_delete(config)
 
 
@@ -147,7 +156,7 @@ def render_overview(config: PortfolioConfig):
     cols[0].metric("基金数量", len(config.holdings))
     cols[1].metric("总投入成本", f"¥{total_cost:,.2f}")
     cols[2].metric("待确认金额", f"¥{total_pending:,.2f}")
-    cols[3].metric("持仓份额(估算)", f"{sum(h.shares or 0 for h in config.holdings):,.0f}")
+    cols[3].metric("报告口径日", effective_report_date().isoformat())
 
     st.subheader("资产分布")
     fund_names = []
@@ -179,6 +188,68 @@ def render_overview(config: PortfolioConfig):
             "定投": "启用" if (h.dca and h.dca.enabled) else "关闭",
         })
     st.dataframe(rows, width='stretch', hide_index=True)
+
+
+def render_analysis_actions():
+    st.subheader("分析报告")
+
+    report_path = st.text_input("报告路径", value="report.md")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        skip_recommend = st.checkbox("跳过推荐", value=True)
+    with col2:
+        snapshot_after = st.checkbox("生成后滚动定投", value=False)
+    with col3:
+        st.metric("报告口径日", effective_report_date().isoformat())
+
+    if st.button("生成报告", type="primary"):
+        cmd = [
+            sys.executable,
+            "-m",
+            "src.cli",
+            "analyze",
+            "-c",
+            str(CONFIG_PATH),
+            "-o",
+            report_path,
+        ]
+        if skip_recommend:
+            cmd.append("--skip-recommend")
+        if snapshot_after:
+            cmd.append("--snapshot-after")
+        _run_ui_command(cmd, "报告生成完成")
+
+    if st.button("滚动定投记录"):
+        _run_ui_command(
+            [sys.executable, "-m", "src.cli", "snapshot", "-c", str(CONFIG_PATH)],
+            "定投记录已更新",
+        )
+        st.session_state.config = load_config()
+
+    path = Path(report_path)
+    if not path.is_absolute():
+        path = PROJECT_ROOT / path
+    if path.exists():
+        st.subheader("报告预览")
+        st.markdown(path.read_text(encoding="utf-8"))
+
+
+def _run_ui_command(cmd: list[str], success_message: str):
+    with st.spinner("执行中..."):
+        proc = subprocess.run(
+            cmd,
+            cwd=str(PROJECT_ROOT),
+            text=True,
+            capture_output=True,
+        )
+    if proc.returncode == 0:
+        st.success(success_message)
+    else:
+        st.error("执行失败")
+    if proc.stdout:
+        st.code(proc.stdout[-6000:])
+    if proc.stderr:
+        st.code(proc.stderr[-6000:])
 
 
 def render_fund_detail(config: PortfolioConfig):

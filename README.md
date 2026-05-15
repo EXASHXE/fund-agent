@@ -23,12 +23,27 @@ python3 -m src.cli init -o fund-portfolio.yaml
 
 # 编辑 fund-portfolio.yaml 填入你的持仓数据
 
-# 运行完整分析
+# 运行完整分析（默认不改写持仓配置）
 python3 -m src.cli analyze -c fund-portfolio.yaml -o report.md
+
+# 如需在报告生成后滚动定投记录，再显式执行
+python3 -m src.cli snapshot -c fund-portfolio.yaml
+
+# 或在 analyze 成功后自动滚动
+python3 -m src.cli analyze -c fund-portfolio.yaml -o report.md --snapshot-after
 
 # 或启动交互式界面
 python3 -m src.cli ui -c fund-portfolio.yaml -p 8501
 ```
+
+浏览器打开 `http://localhost:8501`。UI 中可以维护持仓、定投、生成报告，也可以手动执行定投滚动。
+
+## 数据口径
+
+- `fund-portfolio.yaml` 是当前持仓和策略的人工维护真源，保留 YAML 格式，便于手工审阅和小规模修改。
+- SQLite 只保存基金元数据、净值缓存和分析快照，不作为当前持仓流水真源。
+- Markdown 报告是输出产物，不回写持仓。
+- 定投滚动不会在默认分析前自动执行，只通过 `snapshot` 或 `analyze --snapshot-after` 写回 YAML。
 
 ## 技术架构
 
@@ -64,9 +79,19 @@ src/
     └── app.py          # Streamlit 交互界面
 ```
 
-## 计算引擎
+## 分析流水线
 
-事件驱动流水线：事件生成 → 净值匹配 + PENDING 检查 → 校准平账，详见 `CLAUDE.md`。
+`analyze` 使用只读持仓配置生成报告：
+
+1. 加载并校验 `fund-portfolio.yaml`
+2. 同步基金基础元数据到 SQLite
+3. 按当前配置中的持仓基金采集 AKShare 数据
+4. 以报告口径日计算持仓：交易日 22:30 前使用上一交易日
+5. 事件驱动计算份额、pending、XIRR，并在有 `shares`/`avg_cost` 时优先使用真实持仓口径
+6. 生成评分、新闻、推荐、压力测试和 Markdown 报告
+7. 保存分析快照，用于后续评分趋势对比
+
+`snapshot` 是独立的配置滚动步骤，只在你确认需要把已执行定投写回 YAML 时运行。
 
 ## License
 

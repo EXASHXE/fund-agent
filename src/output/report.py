@@ -121,6 +121,12 @@ def generate_report(
             lines.append(f"| **浮动盈亏** | ¥{fund_detail['profit']:+,.2f}（{fund_detail['return_pct']:+.2f}%）|")
         lines.append(f"| **止盈线** | +{s['stop_profit_pct']:.2f}% |")
         lines.append(f"| **止损线** | {s['stop_loss_pct']:.2f}% |")
+        if s.get("previous_score") is not None:
+            lines.append(
+                f"| **评分趋势** | 本次 {s['composite_score']}；上次 {s['previous_score']} "
+                f"({s.get('score_delta', 0):+d})；历史峰值 {s.get('peak_score')}，"
+                f"较峰值回落 {s.get('drop_from_peak', 0)} 分 |"
+            )
         lines.append(f"| **行动逻辑** | {s['action_logic']} |")
         if s.get("annual_volatility"):
             lines.append(f"| **年化波动率** | {s['annual_volatility']:.2f}% |")

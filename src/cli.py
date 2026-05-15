@@ -16,7 +16,7 @@ import os
 import sys
 from datetime import date, datetime
 
-from src.config.shared import today as _shared_today, now as _shared_now
+from src.config.shared import effective_report_date, today as _shared_today, now as _shared_now
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -38,28 +38,30 @@ def cmd_import(args):
 
 
 def cmd_analyze(args):
-    """完整分析流程：快照更新 → 导入 → 采集 → 分析 → 报告"""
+    """完整分析流程：加载配置 → 同步元数据 → 采集 → 分析 → 报告 → 保存分析快照。
+
+    analyze 保持只读持仓配置，不在报告生成前滚动定投日期或追加买入记录。
+    配置滚动由 snapshot 子命令显式执行，避免当天未结算定投污染报告口径。
+    """
     from src.config.loader import load_portfolio_config, import_to_database
     from src.analysis.scorer import FundAnalyzer
     from src.analysis.correlation import compute_correlations
     from src.analysis.stress import stress_test
-    from src.analysis.holdings import analyze_holding, portfolio_summary
     from src.output.report import generate_report
     from src.db.storage import FundStorage
-    from src.db.database import get_session, get_holdings, get_nav_history
 
-    _perform_snapshot(args.config)
     config = load_portfolio_config(args.config)
     import_to_database(config)
 
     store = FundStorage()
-    holding_funds = store.list_holding_funds()
-    if not holding_funds:
+    if not config.holdings:
         print("[ERROR] 无持仓数据")
         return
 
-    codes = [f["code"] for f in holding_funds]
+    codes = [h.code for h in config.holdings]
+    report_date = effective_report_date()
     print(f"\n持仓基金 {len(codes)} 只: {codes}")
+    print(f"报告口径日: {report_date.isoformat()}")
 
     print("\n[Layer 1] 数据采集...")
     analyzer = FundAnalyzer()
@@ -103,6 +105,8 @@ def cmd_analyze(args):
     correlations = compute_correlations(analyzer.funds)
     stress_results = stress_test(analyzer.funds)
 
+    _attach_score_trends(store, scores)
+
     # 持仓分析
     holdings_data = _compute_holdings(store, config, codes, analyzer)
 
@@ -131,6 +135,32 @@ def cmd_analyze(args):
     print(f"报告已保存: {report_path}")
 
     _save_snapshot(store, scores, stress_results, correlations)
+    if getattr(args, "snapshot_after", False):
+        _perform_snapshot(args.config)
+
+
+def _attach_score_trends(store, scores):
+    """Attach previous score and peak drawdown from saved snapshots."""
+    for s in scores:
+        history = store.get_fund_score_history(s["fund_code"], limit=50)
+        valid_scores = [
+            h.get("composite_score")
+            for h in history
+            if h.get("composite_score") is not None
+        ]
+        if not valid_scores:
+            s["previous_score"] = None
+            s["score_delta"] = None
+            s["peak_score"] = s["composite_score"]
+            s["drop_from_peak"] = 0
+            continue
+
+        previous = valid_scores[0]
+        peak = max(valid_scores + [s["composite_score"]])
+        s["previous_score"] = previous
+        s["score_delta"] = s["composite_score"] - previous
+        s["peak_score"] = peak
+        s["drop_from_peak"] = peak - s["composite_score"]
 
 
 def _compute_holdings(store, config, codes, analyzer=None):
@@ -141,26 +171,33 @@ def _compute_holdings(store, config, codes, analyzer=None):
     from src.engine.events import generate_events
     from src.engine.calculator import compute_fund
     from src.analysis.holdings import portfolio_summary
-    from src.db.database import get_session, get_holdings
-    from datetime import timedelta
+    from src.db.database import get_session
 
     session = get_session()
-    today = _shared_today()
+    today = effective_report_date()
     analyses = []
     calibration_warnings = []
 
     for code in codes:
         try:
-            fund = store.get_fund(code)
-            if not fund:
+            holding_config = next((h for h in config.holdings if h.code == code), None)
+            if not holding_config:
                 continue
 
-            holdings = get_holdings(session, fund["id"])
-            purchases = [{"date": h.buy_date, "amount": h.amount,
-                          "nav": h.nav, "after_1500": h.after_1500 if hasattr(h, 'after_1500') else False}
-                         for h in holdings]
-
-            holding_config = next((h for h in config.holdings if h.code == code), None)
+            fund = store.get_fund(code) or {
+                "id": None,
+                "code": code,
+                "name": holding_config.name or code,
+            }
+            purchases = [
+                {
+                    "date": p.date,
+                    "amount": p.amount,
+                    "nav": p.nav,
+                    "after_1500": p.after_1500,
+                }
+                for p in holding_config.purchases
+            ]
 
             dca_strategy = None
             if holding_config and holding_config.dca and holding_config.dca.enabled:
@@ -200,12 +237,13 @@ def _compute_holdings(store, config, codes, analyzer=None):
 
             if not nav_map:
                 from src.db.database import get_nav_history
-                nav_list = get_nav_history(session, fund["id"])
-                for n in nav_list:
-                    nav_map[n.date] = float(n.nav)
-                if nav_map:
-                    last_nav_date = max(nav_map.keys())
-                    current_nav = nav_map[last_nav_date]
+                if fund.get("id"):
+                    nav_list = get_nav_history(session, fund["id"])
+                    for n in nav_list:
+                        nav_map[n.date] = float(n.nav)
+                    if nav_map:
+                        last_nav_date = max(nav_map.keys())
+                        current_nav = nav_map[last_nav_date]
 
             events = generate_events(purchases, dca_strategy, calibrations, today)
 
@@ -214,6 +252,23 @@ def _compute_holdings(store, config, codes, analyzer=None):
             display_value = result["current_asset"]
             display_profit = result["confirmed_pnl"]
             display_return_pct = result["confirmed_return_pct"]
+            total_cost = result["total_cost"]
+            total_shares = result["total_shares"]
+            avg_cost = result["avg_cost"]
+            pending_amount = max(
+                result["pending_amount"],
+                float(getattr(holding_config, "pending_amount", 0) or 0) if holding_config else 0.0,
+            )
+
+            explicit_shares = float(getattr(holding_config, "shares", 0) or 0) if holding_config else 0.0
+            explicit_avg_cost = float(getattr(holding_config, "avg_cost", 0) or 0) if holding_config else 0.0
+            if explicit_shares > 0 and explicit_avg_cost > 0:
+                total_shares = round(explicit_shares, 2)
+                avg_cost = round(explicit_avg_cost, 4)
+                total_cost = round(total_shares * avg_cost, 2)
+                display_value = round(total_shares * result["current_nav"], 2)
+                display_profit = round(display_value - total_cost, 2)
+                display_return_pct = round(display_profit / total_cost * 100, 2) if total_cost > 0 else 0.0
 
             dca_records = []
             if dca_strategy:
@@ -232,15 +287,15 @@ def _compute_holdings(store, config, codes, analyzer=None):
             analysis = {
                 "fund_code": code,
                 "fund_name": fund.get("name", code),
-                "total_cost": result["total_cost"],
-                "total_shares": result["total_shares"],
+                "total_cost": total_cost,
+                "total_shares": total_shares,
                 "current_value": display_value,
                 "profit": display_profit,
                 "return_pct": display_return_pct,
                 "portfolio_pnl": result["portfolio_pnl"],
                 "annual_return": round(result["xirr"] * 100, 1),
-                "avg_cost": result["avg_cost"],
-                "pending_amount": result["pending_amount"],
+                "avg_cost": avg_cost,
+                "pending_amount": round(pending_amount, 2),
                 "dca_records": dca_records,
                 "dca_enabled": bool(dca_strategy),
                 "dca_avg_cost": 0.0,
@@ -645,6 +700,11 @@ def main():
     p_analyze.add_argument("-c", "--config", required=True)
     p_analyze.add_argument("-o", "--output", default="report.md")
     p_analyze.add_argument("--skip-recommend", action="store_true")
+    p_analyze.add_argument(
+        "--snapshot-after",
+        action="store_true",
+        help="报告生成后滚动定投记录并更新配置文件",
+    )
 
     p_fetch = sub.add_parser("fetch", help="仅拉取净值数据")
     p_fetch.add_argument("-c", "--config", required=True)
