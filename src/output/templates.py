@@ -47,6 +47,23 @@ def portfolio_overview_table(portfolio_data: dict) -> str:
     lines.append(f"- 持有基金数：{portfolio_data.get('fund_count', 0)} 只")
     lines.append("")
 
+    calibration_warnings = portfolio_data.get("calibration_warnings") or []
+    if calibration_warnings:
+        lines.append("**份额校准提示**")
+        lines.append("")
+        lines.append("| 基金代码 | 基金名称 | 真实份额 | 流水模拟份额 | 偏差 | 说明 |")
+        lines.append("|----------|---------|---------:|-------------:|-----:|------|")
+        for item in calibration_warnings:
+            rej = item.get("rejected", {})
+            lines.append(
+                f"| {item.get('code', '')} | {item.get('name', '')} "
+                f"| {rej.get('actual_shares', 0):,.2f} "
+                f"| {rej.get('computed_shares', 0):,.2f} "
+                f"| {rej.get('delta_pct', 0):.2f}% "
+                f"| 已按配置真实份额展示，流水需补齐或校准 |"
+            )
+        lines.append("")
+
     return "\n".join(lines)
 
 
