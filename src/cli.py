@@ -177,6 +177,7 @@ def _compute_holdings(store, config, codes, analyzer=None):
     today = effective_report_date()
     analyses = []
     calibration_warnings = []
+    ledger_warnings = []
 
     for code in codes:
         try:
@@ -252,6 +253,7 @@ def _compute_holdings(store, config, codes, analyzer=None):
             display_value = result["current_asset"]
             display_profit = result["confirmed_pnl"]
             display_return_pct = result["confirmed_return_pct"]
+            purchase_amount = round(sum(float(p.get("amount", 0) or 0) for p in purchases), 2)
             total_cost = result["total_cost"]
             total_shares = result["total_shares"]
             avg_cost = result["avg_cost"]
@@ -262,6 +264,7 @@ def _compute_holdings(store, config, codes, analyzer=None):
 
             explicit_shares = float(getattr(holding_config, "shares", 0) or 0) if holding_config else 0.0
             explicit_avg_cost = float(getattr(holding_config, "avg_cost", 0) or 0) if holding_config else 0.0
+            ledger_warning = None
             if explicit_shares > 0 and explicit_avg_cost > 0:
                 total_shares = round(explicit_shares, 2)
                 avg_cost = round(explicit_avg_cost, 4)
@@ -269,6 +272,18 @@ def _compute_holdings(store, config, codes, analyzer=None):
                 display_value = round(total_shares * result["current_nav"], 2)
                 display_profit = round(display_value - total_cost, 2)
                 display_return_pct = round(display_profit / total_cost * 100, 2) if total_cost > 0 else 0.0
+                ledger_delta = round(total_cost - purchase_amount, 2)
+                threshold = max(1.0, total_cost * 0.005)
+                if abs(ledger_delta) > threshold:
+                    ledger_warning = {
+                        "code": code,
+                        "name": fund.get("name", code),
+                        "actual_cost": total_cost,
+                        "purchase_amount": purchase_amount,
+                        "delta": ledger_delta,
+                        "reason": "真实份额×成本价 与买入流水合计不一致",
+                    }
+                    ledger_warnings.append(ledger_warning)
 
             dca_records = []
             if dca_strategy:
@@ -296,6 +311,8 @@ def _compute_holdings(store, config, codes, analyzer=None):
                 "annual_return": round(result["xirr"] * 100, 1),
                 "avg_cost": avg_cost,
                 "pending_amount": round(pending_amount, 2),
+                "purchase_amount": purchase_amount,
+                "ledger_warning": ledger_warning,
                 "dca_records": dca_records,
                 "dca_enabled": bool(dca_strategy),
                 "dca_avg_cost": 0.0,
@@ -316,6 +333,8 @@ def _compute_holdings(store, config, codes, analyzer=None):
     result = portfolio_summary(analyses)
     if calibration_warnings:
         result["calibration_warnings"] = calibration_warnings
+    if ledger_warnings:
+        result["ledger_warnings"] = ledger_warnings
     return result
 
 

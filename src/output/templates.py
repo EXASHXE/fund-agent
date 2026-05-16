@@ -64,6 +64,22 @@ def portfolio_overview_table(portfolio_data: dict) -> str:
             )
         lines.append("")
 
+    ledger_warnings = portfolio_data.get("ledger_warnings") or []
+    if ledger_warnings:
+        lines.append("**流水对账提示**")
+        lines.append("")
+        lines.append("| 基金代码 | 基金名称 | 真实成本(¥) | 流水合计(¥) | 差额(¥) | 说明 |")
+        lines.append("|----------|---------|------------:|------------:|--------:|------|")
+        for item in ledger_warnings:
+            lines.append(
+                f"| {item.get('code', '')} | {item.get('name', '')} "
+                f"| {item.get('actual_cost', 0):,.2f} "
+                f"| {item.get('purchase_amount', 0):,.2f} "
+                f"| {item.get('delta', 0):+,.2f} "
+                f"| {item.get('reason', '')} |"
+            )
+        lines.append("")
+
     return "\n".join(lines)
 
 
