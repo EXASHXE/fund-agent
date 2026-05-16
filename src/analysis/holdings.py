@@ -419,6 +419,8 @@ def portfolio_summary(holding_analyses: List[Dict]) -> Dict:
             "cost": h["total_cost"],
             "profit": h["profit"],
             "return_pct": h["return_pct"],
+            "week_profit": h.get("week_profit"),
+            "week_return_pct": h.get("week_return_pct"),
             "annual_return": h["annual_return"],
             "avg_cost": h.get("avg_cost", 0),
             "pending_amount": h.get("pending_amount", 0),

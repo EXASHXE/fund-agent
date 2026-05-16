@@ -14,7 +14,7 @@
 import argparse
 import os
 import sys
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from src.config.shared import effective_report_date, today as _shared_today, now as _shared_now
 
@@ -109,10 +109,12 @@ def cmd_analyze(args):
 
     # 持仓分析
     holdings_data = _compute_holdings(store, config, codes, analyzer)
+    workflow_context = _build_workflow_context(config, holdings_data, news_data=None)
 
     # 新闻分析（必选：新闻收集/情绪分析是报告核心组成部分）
     print("\n[Layer 3] 新闻采集与分析...")
     news_data = _run_news_analysis(config, analyzer)
+    workflow_context = _build_workflow_context(config, holdings_data, news_data=news_data)
 
     # 推荐
     recommendations = []
@@ -127,6 +129,7 @@ def cmd_analyze(args):
         news_data=news_data,
         recommendations=recommendations,
         unscores=unscores,
+        workflow_context=workflow_context,
     )
 
     report_path = args.output or "report.md"
@@ -134,7 +137,7 @@ def cmd_analyze(args):
         f.write(report)
     print(f"报告已保存: {report_path}")
 
-    _save_snapshot(store, scores, stress_results, correlations)
+    _save_snapshot(store, scores, stress_results, correlations, holdings_data=holdings_data)
     if getattr(args, "snapshot_after", False):
         _perform_snapshot(args.config)
 
@@ -285,6 +288,11 @@ def _compute_holdings(store, config, codes, analyzer=None):
                     }
                     ledger_warnings.append(ledger_warning)
 
+            week_start_nav = _match_nav_on_or_before(nav_map, today - timedelta(days=7))
+            week_start_value = round(total_shares * week_start_nav, 2) if week_start_nav else None
+            week_profit = round(display_value - week_start_value, 2) if week_start_value else None
+            week_return_pct = round(week_profit / week_start_value * 100, 2) if week_start_value else None
+
             dca_records = []
             if dca_strategy:
                 dca_records = _simulate_dca_for_report(dca_strategy, nav_map, today)
@@ -304,6 +312,9 @@ def _compute_holdings(store, config, codes, analyzer=None):
                 "fund_name": fund.get("name", code),
                 "total_cost": total_cost,
                 "total_shares": total_shares,
+                "simulated_shares": result["total_shares"],
+                "current_nav": result["current_nav"],
+                "nav_date": max(nav_map.keys()).isoformat() if nav_map else None,
                 "current_value": display_value,
                 "profit": display_profit,
                 "return_pct": display_return_pct,
@@ -313,6 +324,9 @@ def _compute_holdings(store, config, codes, analyzer=None):
                 "pending_amount": round(pending_amount, 2),
                 "purchase_amount": purchase_amount,
                 "ledger_warning": ledger_warning,
+                "week_start_value": week_start_value,
+                "week_profit": week_profit,
+                "week_return_pct": week_return_pct,
                 "dca_records": dca_records,
                 "dca_enabled": bool(dca_strategy),
                 "dca_avg_cost": 0.0,
@@ -323,6 +337,7 @@ def _compute_holdings(store, config, codes, analyzer=None):
                 "calibrations_rejected": result.get("calibrations_rejected", []),
                 "xirr": result["xirr"],
                 "settle_delay": settle_delay,
+                "fund_type": getattr(holding_config, "type", ""),
                 "days_held": (today - min(p["date"] for p in purchases if p.get("date"))).days if purchases else 0,
             }
             analyses.append(analysis)
@@ -336,6 +351,100 @@ def _compute_holdings(store, config, codes, analyzer=None):
     if ledger_warnings:
         result["ledger_warnings"] = ledger_warnings
     return result
+
+
+def _match_nav_on_or_before(nav_map: dict, target: date):
+    if not nav_map:
+        return None
+    candidates = [d for d in nav_map.keys() if d <= target]
+    if not candidates:
+        return None
+    return nav_map[max(candidates)]
+
+
+def _build_workflow_context(config, holdings_data, news_data=None):
+    """Build report sections that depend on trading-day workflow."""
+    from src.engine.calendar import is_trade_day
+    from src.engine.calculator import _effective_trade_date, _settlement_date
+    from src.engine.events import resolve_nav_date
+
+    run_date = _shared_today()
+    report_date = effective_report_date()
+    is_run_trade_day = is_trade_day(run_date)
+    by_fund = (holdings_data or {}).get("by_fund", {})
+
+    dca_rows = []
+    for holding in config.holdings:
+        if not holding.dca or not holding.dca.enabled:
+            continue
+
+        scheduled_date = holding.dca.start_date
+        status = "今日执行" if scheduled_date == run_date and is_run_trade_day else "等待下次"
+        if scheduled_date and scheduled_date < run_date:
+            status = "待滚动/待确认"
+        trade_date = None
+        nav_date = None
+        settle_date = None
+        if scheduled_date:
+            trade_date = _effective_trade_date(scheduled_date, after_1500=False)
+            nav_date = resolve_nav_date(scheduled_date, after_1500=False, settle_delay=holding.settle_delay)
+            settle_date = _settlement_date(trade_date, holding.settle_delay)
+
+        dca_rows.append({
+            "code": holding.code,
+            "name": holding.name,
+            "frequency": holding.dca.frequency.value,
+            "amount": holding.dca.amount,
+            "scheduled_date": scheduled_date.isoformat() if scheduled_date else "",
+            "status": status,
+            "trade_date": trade_date.isoformat() if trade_date else "",
+            "nav_date": nav_date.isoformat() if nav_date else "",
+            "settle_date": settle_date.isoformat() if settle_date else "",
+            "earnings_visible_after": f"{settle_date.isoformat()} 21:30后" if settle_date else "",
+        })
+
+    qdii_rows = []
+    for fund in (holdings_data or {}).get("funds", []):
+        detail = by_fund.get(fund["code"], {})
+        if int(detail.get("settle_delay", 1)) < 2:
+            continue
+        pending_events = [
+            e for e in detail.get("engine_events", [])
+            if e.get("type") == "BUY" and e.get("status") == "PENDING"
+        ]
+        qdii_rows.append({
+            "code": fund["code"],
+            "name": fund["name"],
+            "current_nav": detail.get("current_nav", 0),
+            "nav_date": detail.get("nav_date", ""),
+            "shares": detail.get("total_shares", 0),
+            "simulated_shares": detail.get("simulated_shares", 0),
+            "pending_amount": detail.get("pending_amount", 0),
+            "pending_events": pending_events,
+            "settlement_status": "有待确认交易" if pending_events or detail.get("pending_amount", 0) > 0 else "已确认",
+        })
+
+    top_news = []
+    for item in news_data or []:
+        news_list = item.get("news_list", [])
+        if news_list:
+            top_news.append({
+                "code": item.get("fund_code", ""),
+                "name": item.get("fund_name", ""),
+                "sentiment": item.get("sentiment_mean", 0.5),
+                "headline": news_list[0].get("title", ""),
+                "date": news_list[0].get("date", ""),
+            })
+
+    return {
+        "run_date": run_date.isoformat(),
+        "report_date": report_date.isoformat(),
+        "is_trade_day": is_run_trade_day,
+        "mode": "trade_day" if is_run_trade_day else "non_trade_day",
+        "dca_rows": dca_rows,
+        "qdii_rows": qdii_rows,
+        "top_news": top_news[:8],
+    }
 
 
 def _simulate_dca_for_report(dca_strategy: dict, nav_map: dict, today) -> list:
@@ -454,7 +563,7 @@ def _run_recommendations(news_data, codes, analyzer):
     return generate_recommendation_reasons(ranked)
 
 
-def _save_snapshot(store, scores, stress_tests, correlations):
+def _save_snapshot(store, scores, stress_tests, correlations, holdings_data=None):
     """保存分析快照到数据库"""
     try:
         score_data = []
@@ -493,6 +602,8 @@ def _save_snapshot(store, scores, stress_tests, correlations):
         snapshot_id = store.save_analysis({
             "analysis_date": _shared_now(),
             "market_summary": "请参考 report.md",
+            "portfolio_total_value": (holdings_data or {}).get("total_value"),
+            "portfolio_total_cost": (holdings_data or {}).get("total_cost"),
             "scores": score_data,
             "stress_tests": stress_tests,
             "correlations": corr_data,

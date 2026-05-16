@@ -20,6 +20,7 @@ def generate_report(
     news_data: List[Dict] = None,
     recommendations: List[Dict] = None,
     unscores: List[Dict] = None,
+    workflow_context: Dict = None,
 ) -> str:
     """生成完整的 Markdown 诊断报告。"""
     lines = []
@@ -47,6 +48,9 @@ def generate_report(
                 f"| {s['recommendation']} |"
             )
         lines.append("")
+
+    if workflow_context:
+        lines.append(_render_workflow_focus(workflow_context, holdings_data, scores, news_data))
 
     # === 资金分配总览 ===
     if holdings_data:
@@ -279,6 +283,213 @@ def generate_report(
     # === 风险提示 ===
     lines.append(risk_disclaimer())
 
+    return "\n".join(lines)
+
+
+def _render_workflow_focus(
+    workflow_context: Dict,
+    holdings_data: Dict = None,
+    scores: List[Dict] = None,
+    news_data: List[Dict] = None,
+) -> str:
+    if workflow_context.get("is_trade_day"):
+        return _render_trade_day_focus(workflow_context, holdings_data, scores, news_data)
+    return _render_non_trade_day_focus(workflow_context, holdings_data, scores, news_data)
+
+
+def _render_trade_day_focus(
+    workflow_context: Dict,
+    holdings_data: Dict = None,
+    scores: List[Dict] = None,
+    news_data: List[Dict] = None,
+) -> str:
+    lines = ["---", "## 交易日跟踪重点", ""]
+    lines.append(
+        f"> 运行日期：{workflow_context.get('run_date')}；"
+        f"报告口径日：{workflow_context.get('report_date')}。"
+    )
+    lines.append("")
+
+    qdii_rows = workflow_context.get("qdii_rows") or []
+    if qdii_rows:
+        lines.append("### QDII 结算状态")
+        lines.append("")
+        lines.append("| 基金代码 | 基金名称 | 净值日期 | 当前净值 | 真实份额 | 流水模拟份额 | 待确认(¥) | 状态 |")
+        lines.append("|----------|---------|----------|---------:|---------:|-------------:|----------:|------|")
+        for row in qdii_rows:
+            lines.append(
+                f"| {row['code']} | {row['name']} | {row.get('nav_date') or '-'} "
+                f"| {row.get('current_nav', 0):.4f} "
+                f"| {row.get('shares', 0):,.2f} "
+                f"| {row.get('simulated_shares', 0):,.2f} "
+                f"| {row.get('pending_amount', 0):,.2f} "
+                f"| {row.get('settlement_status', '')} |"
+            )
+        pending_rows = [
+            (row, event)
+            for row in qdii_rows
+            for event in row.get("pending_events", [])
+        ]
+        if pending_rows:
+            lines.append("")
+            lines.append("| 待确认基金 | 申购日 | 交易日 | 预计确认日 | 金额(¥) |")
+            lines.append("|------------|--------|--------|------------|--------:|")
+            for row, event in pending_rows:
+                lines.append(
+                    f"| {row['name']}（{row['code']}） | {event.get('purchase_date', '')} "
+                    f"| {event.get('trade_date', '')} | {event.get('settle_date', '')} "
+                    f"| {event.get('amount', 0):,.2f} |"
+                )
+        lines.append("")
+
+    dca_rows = workflow_context.get("dca_rows") or []
+    if dca_rows:
+        lines.append("### 定投执行与确认预估")
+        lines.append("")
+        lines.append("| 基金代码 | 基金名称 | 策略 | 金额(¥) | 下次/当日定投 | 状态 | 交易日 | 净值日 | 预计确认 | 预计收益可见 |")
+        lines.append("|----------|---------|------|--------:|---------------|------|--------|--------|----------|--------------|")
+        for row in dca_rows:
+            lines.append(
+                f"| {row['code']} | {row['name']} | {row['frequency']} "
+                f"| {row['amount']:,.2f} | {row.get('scheduled_date', '')} "
+                f"| {row.get('status', '')} | {row.get('trade_date', '')} "
+                f"| {row.get('nav_date', '')} | {row.get('settle_date', '')} "
+                f"| {row.get('earnings_visible_after', '')} |"
+            )
+        lines.append("")
+
+    lines.append("### 大盘环境与当日根因")
+    lines.append("")
+    lines.append(_render_market_brief(scores, news_data))
+    lines.append("")
+    lines.append(_render_daily_reasoning(workflow_context, holdings_data, scores))
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _render_non_trade_day_focus(
+    workflow_context: Dict,
+    holdings_data: Dict = None,
+    scores: List[Dict] = None,
+    news_data: List[Dict] = None,
+) -> str:
+    lines = ["---", "## 非交易日组合复盘", ""]
+    lines.append(
+        f"> 运行日期：{workflow_context.get('run_date')}；"
+        f"最近报告口径日：{workflow_context.get('report_date')}。"
+    )
+    lines.append("")
+
+    funds = sorted(
+        (holdings_data or {}).get("funds", []),
+        key=lambda x: x.get("week_profit") if x.get("week_profit") is not None else x.get("profit", 0),
+        reverse=True,
+    )
+    if funds:
+        has_week_data = any(f.get("week_profit") is not None for f in funds)
+        total_profit = sum(
+            (f.get("week_profit") if f.get("week_profit") is not None else 0)
+            for f in funds
+        ) if has_week_data else sum(f.get("profit", 0) for f in funds)
+        lines.append("### 本周收益与基金贡献")
+        lines.append("")
+        profit_label = "本周收益(¥)" if has_week_data else "当前累计收益(¥)"
+        lines.append(f"| 基金代码 | 基金名称 | {profit_label} | 收益贡献 | 当前占比 |")
+        lines.append("|----------|---------|------------:|---------:|---------:|")
+        total_value = (holdings_data or {}).get("total_value", 0)
+        for fund in funds:
+            profit_value = fund.get("week_profit") if fund.get("week_profit") is not None else fund.get("profit", 0)
+            contribution = profit_value / total_profit * 100 if total_profit else 0
+            position = fund.get("value", 0) / total_value * 100 if total_value else 0
+            lines.append(
+                f"| {fund['code']} | {fund['name']} | {profit_value:+,.2f} "
+                f"| {contribution:+.2f}% | {position:.2f}% |"
+            )
+        lines.append("")
+
+    lines.append("### 风险暴露与再平衡")
+    lines.append("")
+    lines.append(_render_rebalance_brief(holdings_data, scores))
+    lines.append("")
+
+    lines.append("### 定投质量分析")
+    lines.append("")
+    lines.append(_render_dca_quality(workflow_context, holdings_data, scores))
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _render_market_brief(scores: List[Dict], news_data: List[Dict]) -> str:
+    scores = scores or []
+    news_data = news_data or []
+    avg_score = sum(s.get("composite_score", 0) for s in scores) / len(scores) if scores else 0
+    qdii_count = sum(1 for s in scores if "QDII" in s.get("fund_type", ""))
+    sentiments = [n.get("sentiment_mean", 0.5) for n in news_data if n.get("sentiment_mean") is not None]
+    avg_sent = sum(sentiments) / len(sentiments) if sentiments else 0.5
+    mood = "偏正面" if avg_sent > 0.55 else "偏谨慎" if avg_sent < 0.45 else "中性"
+    return (
+        f"- 组合平均评分：{avg_score:.1f}/100；QDII 覆盖 {qdii_count} 只。\n"
+        f"- 新闻情绪均值：{avg_sent:.2f}（{mood}）。\n"
+        "- 今日重点先看净值口径、QDII 确认状态和 pending 金额，再解读涨跌原因。"
+    )
+
+
+def _render_daily_reasoning(workflow_context: Dict, holdings_data: Dict, scores: List[Dict]) -> str:
+    top_news = workflow_context.get("top_news") or []
+    if not top_news:
+        return "- 暂无足够新闻数据解释当日资产变化；优先参考基金净值更新和持仓行业暴露。"
+    lines = []
+    for item in top_news[:5]:
+        sentiment = item.get("sentiment", 0.5)
+        tone = "利好/支撑" if sentiment > 0.55 else "利空/拖累" if sentiment < 0.45 else "中性"
+        lines.append(
+            f"- {item.get('name')}（{item.get('code')}）：{tone}，"
+            f"{item.get('date', '')} {item.get('headline', '')[:80]}"
+        )
+    return "\n".join(lines)
+
+
+def _render_rebalance_brief(holdings_data: Dict, scores: List[Dict]) -> str:
+    if not holdings_data:
+        return "- 暂无持仓数据。"
+    total_value = holdings_data.get("total_value", 0)
+    score_map = {s.get("fund_code"): s for s in scores or []}
+    lines = []
+    for fund in sorted(holdings_data.get("funds", []), key=lambda x: x.get("value", 0), reverse=True):
+        pct = fund.get("value", 0) / total_value * 100 if total_value else 0
+        score = score_map.get(fund["code"], {})
+        level = score.get("score_level", "unknown")
+        if pct > 30:
+            action = "单基金占比偏高，优先控制新增资金"
+        elif level in ("orange", "red"):
+            action = "评分偏弱，周末复盘是否降低仓位或暂停定投"
+        else:
+            action = "维持观察"
+        lines.append(f"- {fund['name']}（{fund['code']}）：占比 {pct:.2f}%，{action}。")
+    return "\n".join(lines)
+
+
+def _render_dca_quality(workflow_context: Dict, holdings_data: Dict, scores: List[Dict]) -> str:
+    rows = workflow_context.get("dca_rows") or []
+    if not rows:
+        return "- 当前没有启用定投策略。"
+    score_map = {s.get("fund_code"): s for s in scores or []}
+    lines = []
+    for row in rows:
+        score = score_map.get(row["code"], {})
+        composite = score.get("composite_score")
+        if composite is None:
+            advice = "数据不足，先维持小额或暂停新增。"
+        elif composite >= 60:
+            advice = "评分尚可，定投可维持；回撤加深时可考虑小幅增额。"
+        elif composite >= 45:
+            advice = "评分中性偏弱，维持但不建议加码。"
+        else:
+            advice = "评分偏弱，建议暂停或降低定投金额。"
+        lines.append(
+            f"- {row['name']}（{row['code']}）：{row['frequency']} ¥{row['amount']:,.2f}，"
+            f"下次 {row.get('scheduled_date', '')}，{advice}"
+        )
     return "\n".join(lines)
 
 

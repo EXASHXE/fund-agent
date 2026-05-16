@@ -89,6 +89,7 @@ def compute_fund(
                     "status": "PENDING",
                     "purchase_date": event.event_date.isoformat(),
                     "trade_date": trade_date.isoformat(),
+                    "settle_date": settle_date.isoformat(),
                     "amount": event.amount,
                     "reason": f"尚未到账 (预计 {settle_date}, sett_delay={settle_delay})",
                 })
