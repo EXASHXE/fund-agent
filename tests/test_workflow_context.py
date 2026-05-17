@@ -16,7 +16,7 @@ class WorkflowContextTest(unittest.TestCase):
 
         self.assertTrue(ctx["run_is_trade_day"])
         self.assertFalse(ctx["is_trade_day"])
-        self.assertEqual(ctx["mode"], "non_trade_day")
+        self.assertEqual(ctx["mode"], "prior_settlement")
 
 
 if __name__ == "__main__":

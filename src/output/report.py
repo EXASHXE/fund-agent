@@ -292,9 +292,17 @@ def _render_workflow_focus(
     scores: List[Dict] = None,
     news_data: List[Dict] = None,
 ) -> str:
-    if workflow_context.get("is_trade_day"):
-        return _render_trade_day_focus(workflow_context, holdings_data, scores, news_data)
-    return _render_non_trade_day_focus(workflow_context, holdings_data, scores, news_data)
+    lines = ["---", "## 完整工作流分析", ""]
+    lines.append(
+        f"> 运行日期：{workflow_context.get('run_date')}；"
+        f"报告口径日：{workflow_context.get('report_date')}；"
+        f"{workflow_context.get('mode_reason', '')}。"
+    )
+    lines.append("")
+    lines.append(_render_trade_day_focus(workflow_context, holdings_data, scores, news_data))
+    lines.append("")
+    lines.append(_render_non_trade_day_focus(workflow_context, holdings_data, scores, news_data))
+    return "\n".join(lines)
 
 
 def _render_trade_day_focus(
@@ -303,12 +311,7 @@ def _render_trade_day_focus(
     scores: List[Dict] = None,
     news_data: List[Dict] = None,
 ) -> str:
-    lines = ["---", "## 交易日跟踪重点", ""]
-    lines.append(
-        f"> 运行日期：{workflow_context.get('run_date')}；"
-        f"报告口径日：{workflow_context.get('report_date')}。"
-    )
-    lines.append("")
+    lines = ["### 交易相关跟踪", ""]
 
     qdii_rows = workflow_context.get("qdii_rows") or []
     if qdii_rows:
@@ -373,13 +376,7 @@ def _render_non_trade_day_focus(
     scores: List[Dict] = None,
     news_data: List[Dict] = None,
 ) -> str:
-    lines = ["---", "## 非交易日组合复盘", ""]
-    lines.append(
-        f"> 运行日期：{workflow_context.get('run_date')}；"
-        f"最近报告口径日：{workflow_context.get('report_date')}；"
-        f"{workflow_context.get('mode_reason', '')}。"
-    )
-    lines.append("")
+    lines = ["### 组合复盘与质量检查", ""]
 
     funds = sorted(
         (holdings_data or {}).get("funds", []),
@@ -392,7 +389,7 @@ def _render_non_trade_day_focus(
             (f.get("week_profit") if f.get("week_profit") is not None else 0)
             for f in funds
         ) if has_week_data else sum(f.get("profit", 0) for f in funds)
-        lines.append("### 本周收益与基金贡献")
+        lines.append("#### 本周收益与基金贡献")
         lines.append("")
         profit_label = "本周收益(¥)" if has_week_data else "当前累计收益(¥)"
         lines.append(f"| 基金代码 | 基金名称 | {profit_label} | 收益贡献 | 当前占比 |")
@@ -408,12 +405,12 @@ def _render_non_trade_day_focus(
             )
         lines.append("")
 
-    lines.append("### 风险暴露与再平衡")
+    lines.append("#### 风险暴露与再平衡")
     lines.append("")
     lines.append(_render_rebalance_brief(holdings_data, scores))
     lines.append("")
 
-    lines.append("### 定投质量分析")
+    lines.append("#### 定投质量分析")
     lines.append("")
     lines.append(_render_dca_quality(workflow_context, holdings_data, scores))
     lines.append("")
