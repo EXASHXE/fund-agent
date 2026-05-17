@@ -376,7 +376,8 @@ def _render_non_trade_day_focus(
     lines = ["---", "## 非交易日组合复盘", ""]
     lines.append(
         f"> 运行日期：{workflow_context.get('run_date')}；"
-        f"最近报告口径日：{workflow_context.get('report_date')}。"
+        f"最近报告口径日：{workflow_context.get('report_date')}；"
+        f"{workflow_context.get('mode_reason', '')}。"
     )
     lines.append("")
 

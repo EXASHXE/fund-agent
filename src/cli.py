@@ -278,13 +278,17 @@ def _compute_holdings(store, config, codes, analyzer=None):
                 ledger_delta = round(total_cost - purchase_amount, 2)
                 threshold = max(1.0, total_cost * 0.005)
                 if abs(ledger_delta) > threshold:
+                    dca_delta_match = pending_amount > 0 and abs(abs(ledger_delta) - pending_amount) <= 1.0
+                    reason = f"差额 ¥{abs(ledger_delta):,.2f} 来自待确认定投申购，到账后将平账" if dca_delta_match else "真实份额×成本价 与买入流水合计不一致"
                     ledger_warning = {
                         "code": code,
                         "name": fund.get("name", code),
                         "actual_cost": total_cost,
                         "purchase_amount": purchase_amount,
                         "delta": ledger_delta,
-                        "reason": "真实份额×成本价 与买入流水合计不一致",
+                        "pending_amount": pending_amount,
+                        "reason": reason,
+                        "is_dca_pending": dca_delta_match,
                     }
                     ledger_warnings.append(ledger_warning)
 
@@ -371,6 +375,8 @@ def _build_workflow_context(config, holdings_data, news_data=None):
     run_date = _shared_today()
     report_date = effective_report_date()
     is_run_trade_day = is_trade_day(run_date)
+    is_report_current = report_date == run_date
+    is_trade_report = is_run_trade_day and is_report_current
     by_fund = (holdings_data or {}).get("by_fund", {})
 
     dca_rows = []
@@ -379,7 +385,7 @@ def _build_workflow_context(config, holdings_data, news_data=None):
             continue
 
         scheduled_date = holding.dca.start_date
-        status = "今日执行" if scheduled_date == run_date and is_run_trade_day else "等待下次"
+        status = "今日执行" if scheduled_date == run_date and is_trade_report else "等待下次"
         if scheduled_date and scheduled_date < run_date:
             status = "待滚动/待确认"
         trade_date = None
@@ -439,8 +445,10 @@ def _build_workflow_context(config, holdings_data, news_data=None):
     return {
         "run_date": run_date.isoformat(),
         "report_date": report_date.isoformat(),
-        "is_trade_day": is_run_trade_day,
-        "mode": "trade_day" if is_run_trade_day else "non_trade_day",
+        "run_is_trade_day": is_run_trade_day,
+        "is_trade_day": is_trade_report,
+        "mode": "trade_day" if is_trade_report else "non_trade_day",
+        "mode_reason": "当前交易日数据已过分界点" if is_trade_report else "使用上一口径日数据，按非交易日复盘",
         "dca_rows": dca_rows,
         "qdii_rows": qdii_rows,
         "top_news": top_news[:8],
