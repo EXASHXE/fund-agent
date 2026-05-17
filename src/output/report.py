@@ -19,6 +19,7 @@ def generate_report(
     holdings_data: Dict = None,
     news_data: List[Dict] = None,
     recommendations: List[Dict] = None,
+    recommendation_status: str = None,
     unscores: List[Dict] = None,
     workflow_context: Dict = None,
 ) -> str:
@@ -258,18 +259,17 @@ def generate_report(
         lines.append("")
 
     # === 新闻资讯分析 ===
-    if news_data:
-        lines.append("---")
-        lines.append("## 新闻资讯分析")
-        lines.append("")
-        lines.append(_render_news_section(news_data, scores))
-        lines.append("")
+    lines.append("---")
+    lines.append("## 新闻资讯分析")
+    lines.append("")
+    lines.append(_render_news_section(news_data or [], scores))
+    lines.append("")
 
     # === 推荐基金 ===
+    lines.append("---")
+    lines.append("## 推荐基金")
+    lines.append("")
     if recommendations:
-        lines.append("---")
-        lines.append("## 推荐基金")
-        lines.append("")
         lines.append("| # | 代码 | 名称 | 类型 | 与持仓平均相关 | 推荐理由 |")
         lines.append("|------|------|------|------|---------------|---------|")
         for i, rec in enumerate(recommendations):
@@ -278,6 +278,12 @@ def generate_report(
                 f"| {rec.get('type', '')} | {rec.get('avg_corr', 0):.2f} "
                 f"| {rec.get('reason', '')} |"
             )
+        lines.append("")
+    else:
+        if recommendation_status == "skipped":
+            lines.append("- 本次分析跳过推荐模块。若从 UI 生成报告，请取消“跳过推荐”；CLI 请不要传 `--skip-recommend`。")
+        else:
+            lines.append("- 本次未生成推荐候选。可能原因：新闻热点不足、AKShare 候选基金接口无结果、网络受限或候选与持仓过滤后为空。")
         lines.append("")
 
     # === 风险提示 ===
@@ -502,6 +508,10 @@ def _render_news_section(news_data: List[Dict], scores: List[Dict]) -> str:
 
     result.append("### 市场情绪总览")
     result.append("")
+    if not news_data:
+        result.append("- 未运行到有效新闻结果。请检查新闻接口、网络或分析日志。")
+        return "\n".join(result)
+
     if avg_sentiment > 0.55:
         market_mood = "偏乐观"
         advice = "市场整体情绪积极，可适度保持仓位，关注利好兑现后的回调风险。"
@@ -553,6 +563,11 @@ def _render_news_section(news_data: List[Dict], scores: List[Dict]) -> str:
         if daily_aggs and top_kw:
             result.append(f"| 热门关键词 | {'、'.join(top_kw)} |")
         result.append("")
+
+        if news_item.get("status") == "empty":
+            result.append(f"- {news_item.get('message', '未获取到相关新闻。')}")
+            result.append("")
+            continue
 
         # 情绪趋势（最近 7 天）
         if daily_aggs and len(daily_aggs) >= 2:

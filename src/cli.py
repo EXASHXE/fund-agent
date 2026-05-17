@@ -118,9 +118,11 @@ def cmd_analyze(args):
 
     # 推荐
     recommendations = []
+    recommendation_status = "skipped" if args.skip_recommend else "empty"
     if not args.skip_recommend:
         print("\n[推荐] 搜索推荐基金...")
         recommendations = _run_recommendations(news_data, codes, analyzer)
+        recommendation_status = "ok" if recommendations else "empty"
 
     print("\n[Layer 4] 生成报告...")
     report = generate_report(
@@ -128,6 +130,7 @@ def cmd_analyze(args):
         holdings_data=holdings_data,
         news_data=news_data,
         recommendations=recommendations,
+        recommendation_status=recommendation_status,
         unscores=unscores,
         workflow_context=workflow_context,
     )
@@ -527,6 +530,17 @@ def _run_news_analysis(config, analyzer):
 
         news_list = fetch_fund_news(code, name, days=7)
         if not news_list:
+            results.append({
+                "fund_code": code,
+                "fund_name": name,
+                "news_count": 0,
+                "sentiment_mean": 0.5,
+                "daily_aggregates": [],
+                "correlation": 0.0,
+                "news_list": [],
+                "status": "empty",
+                "message": "近 7 天未获取到相关新闻，可能是接口无结果、关键词未命中或网络受限。",
+            })
             continue
 
         news_with_sent = analyze_sentiment(news_list)
@@ -552,6 +566,7 @@ def _run_news_analysis(config, analyzer):
             "daily_aggregates": daily_agg,
             "correlation": corr.get(1, (0.0, 1.0))[0],
             "news_list": news_with_sent,
+            "status": "ok",
         })
 
     return results

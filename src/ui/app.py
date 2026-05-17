@@ -196,7 +196,7 @@ def render_analysis_actions():
     report_path = st.text_input("报告路径", value="report.md")
     col1, col2, col3 = st.columns(3)
     with col1:
-        skip_recommend = st.checkbox("跳过推荐", value=True)
+        skip_recommend = st.checkbox("跳过推荐", value=False)
     with col2:
         snapshot_after = st.checkbox("生成后滚动定投", value=False)
     with col3:
