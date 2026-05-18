@@ -22,6 +22,7 @@ def generate_report(
     recommendation_status: str = None,
     unscores: List[Dict] = None,
     workflow_context: Dict = None,
+    inter_recommendation_correlations: Dict = None,
 ) -> str:
     """生成完整的 Markdown 诊断报告。"""
     lines = []
@@ -133,6 +134,8 @@ def generate_report(
                 f"较峰值回落 {s.get('drop_from_peak', 0)} 分 |"
             )
         lines.append(f"| **行动逻辑** | {s['action_logic']} |")
+        if s.get("agent_review_required"):
+            lines.append("| **评分性质** | 规则初稿；接入 skill 的 agent 需结合新闻、大盘和持仓成本做最终校准 |")
         if s.get("annual_volatility"):
             lines.append(f"| **年化波动率** | {s['annual_volatility']:.2f}% |")
         if s.get("max_drawdown_3y"):
@@ -247,15 +250,18 @@ def generate_report(
     # === 压力测试 ===
     if stress_tests:
         lines.append("")
-        lines.append("### 情景压力测试")
+        lines.append("### 压力测试风险线索")
         lines.append("")
-        lines.append("| 情景 | 受影响基金 | 预估回撤 |")
-        lines.append("|------|-----------|---------|")
+        lines.append("| 风险线索 | 受影响基金 | 初始回撤假设 | 风险驱动 |")
+        lines.append("|----------|-----------|-------------|----------|")
         for st in stress_tests:
             lines.append(
                 f"| {st['scenario_id']}: {st['scenario_desc']} "
-                f"| {st['fund_name']} | {st['estimated_drawdown_pct']:.2f}% |"
+                f"| {st['fund_name']} | {st['estimated_drawdown_pct']:.2f}% "
+                f"| {st.get('risk_driver', '待 agent 结合当前局势判断')} |"
             )
+        lines.append("")
+        lines.append("> 上表是基于持仓暴露生成的压力测试初稿，不是最终结论；agent 需结合当前宏观、行业新闻和仓位金额重估冲击幅度。")
         lines.append("")
 
     # === 新闻资讯分析 ===
@@ -284,6 +290,9 @@ def generate_report(
                 f"| {rec.get('reason', '')} |"
             )
         lines.append("")
+        if inter_recommendation_correlations and inter_recommendation_correlations.get("warnings"):
+            lines.append("> 推荐候选已做内部相似度约束；高相关矩阵不展示，避免把内部筛选工具误读为投资结论。")
+            lines.append("")
     else:
         if recommendation_status == "skipped":
             lines.append("- 本次分析跳过推荐模块。若从 UI 生成报告，请取消“跳过推荐”；CLI 请不要传 `--skip-recommend`。")
@@ -573,6 +582,10 @@ def _render_news_section(news_data: List[Dict], scores: List[Dict]) -> str:
             result.append(f"- {news_item.get('message', '未获取到相关新闻。')}")
             result.append("")
             continue
+
+        if news_item.get("agent_news_context"):
+            result.append("> 新闻情绪为规则初稿；agent 需要结合重仓公司、产业链位置和最新事件做最终研判。")
+            result.append("")
 
         # 情绪趋势（最近 7 天）
         if daily_aggs and len(daily_aggs) >= 2:

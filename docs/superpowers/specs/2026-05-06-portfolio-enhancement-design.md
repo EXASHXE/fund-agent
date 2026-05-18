@@ -11,7 +11,7 @@
 | 持仓输入 | `fund-info.txt` 自由文本 → `seed_fund_info.py` 正则解析 | `fund-portfolio.yaml` → `config/loader.py` Pydantic 校验 |
 | 代码结构 | `src/analyze.py` 984行单体 + `src/seed_fund_info.py` | 按职责拆分为 `config/` `data/` `analysis/` `news/` `recommend/` `output/` |
 | 持仓分析 | 无 | 新增：收益计算、趋势分析、定投明细、组合汇总 |
-| 新闻资讯 | 无 | 新增：AKShare采集 → SnowNLP情绪 → 相关性 → LLM推理 |
+| 新闻资讯 | 无 | 新增：AKShare采集 → SnowNLP情绪 → 相关性 → agent 自主研判 |
 | 基金推荐 | 无 | 新增：新闻驱动 + 因子筛选 + 相关性过滤 |
 
 ---
@@ -40,7 +40,7 @@ src/
 ├── news/
 │   ├── __init__.py
 │   ├── sentiment.py       # SnowNLP 情绪分析 + 关键词提取
-│   ├── llm.py             # LLM 接口（新闻摘要 + 推理 + 预测）
+│   ├── agent_context.py   # agent 判断上下文（新闻、评分、推荐证据包）
 │   └── correlate.py       # 新闻情绪与净值变化的相关性分析
 ├── recommend/
 │   ├── __init__.py
@@ -333,7 +333,7 @@ correlate.py: 新闻情绪 vs 净值变化 相关性分析
    └─ 输出："新闻情绪对 T+1 净值的解释力 r=0.XX, p=0.XX"
         │
         ▼
-llm.py: LLM 综合推理
+agent_context.py: agent 综合研判上下文
    ├─ 输入：情绪分数序列 + Top关键词 + 净值走势摘要 + 基金基础信息
    ├─ Prompt 模板注入 SKILL.md 分析约束
    ├─ 要求结构化 JSON 输出：
@@ -397,38 +397,17 @@ def news_nav_correlation(
     """
 ```
 
-### 5.5 LLM 接口设计
+### 5.5 Agent 判断上下文设计
 
 ```python
-# news/llm.py
+# news/agent_context.py
 
-from abc import ABC, abstractmethod
-
-class LLMClient(ABC):
-    @abstractmethod
-    def chat(self, system_prompt: str, user_prompt: str) -> str: ...
-
-class OpenAICompatibleClient(LLMClient):
-    def __init__(self, base_url: str, api_key: str, model: str): ...
-
-class NewsLLMAnalyzer:
-    def __init__(self, client: LLMClient): ...
-
-    def analyze(
-        self,
-        fund_name: str,
-        fund_code: str,
-        sentiment_data: dict,
-        nav_summary: str,
-        holding_context: str
-    ) -> dict:
-        """
-        调用 LLM 对某只基金的新闻进行综合推理，
-        返回结构化 JSON。
-        """
+def build_news_judgment_context(...): ...
+def build_score_judgment_context(...): ...
+def build_recommendation_judgment_context(...): ...
 ```
 
-LLM 调用失败时不阻塞流程，降级为仅输出情绪分析结果。
+Python 不调用模型 API；接入 skill 的 agent 读取上下文后直接完成综合研判。
 
 ---
 
@@ -459,7 +438,7 @@ LLM 调用失败时不阻塞流程，降级为仅输出情绪分析结果。
    └─ 输出 Top-N
         │
         ▼
-LLM 生成推荐理由
+agent 基于候选证据生成最终推荐理由
    └─ 每个推荐基金附带 2-3 句自然语言推荐理由
 ```
 
@@ -502,7 +481,7 @@ LLM 生成推荐理由
    4.1 近期相关新闻摘要
    4.2 情绪趋势分析
    4.3 新闻-净值相关性
-   4.4 LLM 趋势判断
+   4.4 agent 趋势判断
 5. 推荐基金               【新增】
    5.1 新闻热点行业
    5.2 推荐列表
@@ -568,7 +547,6 @@ pydantic>=2.0
 snownlp>=0.12.3
 jieba>=0.42.1
 scipy>=1.10.0          # Spearman 相关系数
-openai>=1.0.0           # LLM 接口（可选，无 key 时降级）
 ```
 
 ### requirements.txt 终版
@@ -581,7 +559,6 @@ pydantic>=2.0
 snownlp>=0.12.3
 jieba>=0.42.1
 scipy>=1.10.0
-openai>=1.0.0
 ```
 
 ---
@@ -593,7 +570,7 @@ openai>=1.0.0
 | 1 | 创建 `config/schema.py` + `loader.py` + `defaults.py` | YAML 加载校验可用 | 无 |
 | 2 | 迁移 `analyze.py` → `data/` + `analysis/` + `output/` 子模块 | 现有功能无退化 | Phase 1 |
 | 3 | 新增 `analysis/holdings.py` 持仓分析 | 收益/趋势/定投分析 | Phase 2 |
-| 4 | 新增 `news/` 模块（fetcher + sentiment + correlate + llm） | 新闻采集与分析 | Phase 2 |
+| 4 | 新增 `news/` 模块（fetcher + sentiment + correlate + agent_context） | 新闻采集与分析 | Phase 2 |
 | 5 | 新增 `recommend/engine.py` | 基金推荐 | Phase 4 |
 | 6 | 集成 `cli.py` 入口 + 报告生成全链路打通 | 整合 | Phase 3+4+5 |
 | 7 | 删除 `seed_fund_info.py`，清理 `analyze.py` | 代码清理 | Phase 6 |
@@ -617,7 +594,7 @@ openai>=1.0.0
 ## 十、风险与注意事项
 
 1. **SnowNLP 中文情绪模型精度有限**，金融领域文本可能有偏差。需要标注"情绪分析结果仅供参考"
-2. **LLM 调用依赖外部 API**，需配置 `OPENAI_BASE_URL` + `OPENAI_API_KEY` 环境变量。无 key 时整个 LLM 推理链路降级为仅输出情绪量化结果
+2. **模型推理不在脚本内通过外部 API 完成**。脚本只生成证据包；接入 skill 的 agent 负责最终判断
 3. **AKShare 新闻接口稳定性**，需做好超时重试 + 降级策略
 4. **XIRR 计算**依赖至少 2 笔现金流，单笔买入降级为简单收益率
 5. **全市场基金推荐**可能返回大量数据，需要分页 + 缓存策略

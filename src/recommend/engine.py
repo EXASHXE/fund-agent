@@ -195,9 +195,9 @@ def rank_recommendations(
     candidates: List[Dict],
     hot_sectors: Dict[str, float],
     top_n: int = 5,
-    max_theme_ratio: float = 0.40,
+    max_theme_ratio: float = 0.35,
 ) -> List[Dict]:
-    """综合排序：机会(40%) + 热点(20%) + 分散度(30%) + 稳健性(10%)。"""
+    """综合排序：机会 + 热点 + 分散度 + 稳健性，并控制同质化。"""
     if not candidates:
         return []
 
@@ -210,14 +210,18 @@ def rank_recommendations(
         momentum_score = max(0.0, min(1.0, momentum / max_abs_momentum))
         diversification = max(0.0, 1.0 - c.get("max_similarity", 0))
         stability = _stability_score(c)
+        cluster = infer_exposure_cluster(c)
+        crowded_growth_penalty = 0.08 if cluster == "growth_manufacturing" and c.get("max_similarity", 0) > 0.45 else 0
         score = (
-            momentum_score * 0.40
-            + heat * 0.20
-            + diversification * 0.30
-            + stability * 0.10
+            momentum_score * 0.32
+            + heat * 0.15
+            + diversification * 0.38
+            + stability * 0.15
+            - crowded_growth_penalty
         )
         ranked.append({
             **c,
+            "exposure_cluster": cluster,
             "heat_score": round(heat, 4),
             "momentum_score": round(momentum_score, 4),
             "diversification_score": round(diversification, 4),
@@ -228,11 +232,42 @@ def rank_recommendations(
     return _apply_diversity_constraint(ranked, top_n, max_theme_ratio)
 
 
+def compute_inter_recommendation_correlations(
+    recommendations: List[Dict],
+) -> Dict:
+    """计算推荐基金之间的两两相似度矩阵。
+
+    返回:
+        dict with:
+            "matrix": List[List[float]] — 两两相似度矩阵
+            "labels": List[str] — 代码标签
+            "warnings": List[str] — 高度相关 (>0.85) 的配对警告
+    """
+    n = len(recommendations)
+    labels = [r.get("code", str(i)) for i, r in enumerate(recommendations)]
+    matrix = [[1.0 if i == j else 0.0 for j in range(n)] for i in range(n)]
+    warnings = []
+    for i in range(n):
+        for j in range(i + 1, n):
+            sim = compute_fund_similarity(recommendations[i], recommendations[j])
+            matrix[i][j] = sim["composite"]
+            matrix[j][i] = sim["composite"]
+            if sim["composite"] > 0.85:
+                warnings.append(
+                    f"⚠️ {labels[i]} {recommendations[i].get('name','')} ↔ "
+                    f"{labels[j]} {recommendations[j].get('name','')} "
+                    f"相似度 {sim['composite']:.2f}，推荐组合内高度相关，建议只选其一"
+                )
+    return {"matrix": matrix, "labels": labels, "warnings": warnings}
+
+
 def generate_recommendation_reasons(
     recommendations: List[Dict],
-    llm_analyzer=None,
 ) -> List[Dict]:
-    """为推荐基金生成自然语言推荐理由，并用 Pydantic 校验输出结构。"""
+    """为推荐基金生成推荐理由，并用 Pydantic 校验输出结构。
+
+    最终推荐取舍由接入 skill 的 agent 完成；这里负责生成稳定的候选理由。
+    """
     validated = []
     for rec in recommendations:
         ret_1m = rec.get("return_1m", 0) or 0
@@ -321,6 +356,26 @@ def infer_style_tags(name: str, fund_type: str = "") -> List[str]:
     return tags or ["balanced"]
 
 
+def infer_exposure_cluster(candidate: Dict) -> str:
+    """更粗粒度的暴露簇，用于防止推荐全挤在半导体/新能源/电池链条。"""
+    text = f"{candidate.get('name', '')} {candidate.get('type', '')} {candidate.get('theme', '')}"
+    if any(kw in text for kw in ["债", "固收", "货币", "短债"]):
+        return "defensive_income"
+    if any(kw in text for kw in ["红利", "价值", "银行", "低波", "股息"]):
+        return "value_dividend"
+    if any(kw in text for kw in ["QDII", "纳斯达克", "标普", "海外", "全球", "新兴市场"]):
+        return "overseas"
+    if any(kw in text for kw in ["黄金", "石油", "原油", "商品", "能源"]):
+        return "commodity"
+    if any(kw in text for kw in ["医药", "医疗", "创新药", "生物"]):
+        return "healthcare"
+    if any(kw in text for kw in ["半导体", "芯片", "新能源", "电池", "光伏", "储能", "AI", "人工智能", "科技"]):
+        return "growth_manufacturing"
+    if any(kw in text for kw in ["沪深300", "中证500", "中证1000", "上证50", "宽基"]):
+        return "broad_beta"
+    return "balanced_other"
+
+
 def _attach_similarity(candidate: Dict, holding_profiles: List[Dict]) -> Dict:
     if not holding_profiles:
         return {
@@ -345,15 +400,19 @@ def _attach_similarity(candidate: Dict, holding_profiles: List[Dict]) -> Dict:
 
 def _apply_diversity_constraint(candidates: List[Dict], top_n: int, max_theme_ratio: float) -> List[Dict]:
     max_per_theme = max(1, ceil(top_n * max_theme_ratio))
+    max_per_cluster = max(1, ceil(top_n * 0.35))
     selected = []
     theme_counts = Counter()
+    cluster_counts = Counter()
     deferred = []
 
     for c in candidates:
         theme = c.get("theme", "其他")
-        if theme_counts[theme] < max_per_theme:
+        cluster = c.get("exposure_cluster") or infer_exposure_cluster(c)
+        if theme_counts[theme] < max_per_theme and cluster_counts[cluster] < max_per_cluster:
             selected.append(c)
             theme_counts[theme] += 1
+            cluster_counts[cluster] += 1
         else:
             deferred.append(c)
         if len(selected) >= top_n:
@@ -361,7 +420,11 @@ def _apply_diversity_constraint(candidates: List[Dict], top_n: int, max_theme_ra
 
     # 若候选不足，再放宽主题约束补满。
     for c in deferred:
+        cluster = c.get("exposure_cluster") or infer_exposure_cluster(c)
+        if len(selected) >= max(2, top_n // 2) and cluster_counts[cluster] >= max_per_cluster + 1:
+            continue
         selected.append(c)
+        cluster_counts[cluster] += 1
         if len(selected) >= top_n:
             break
     return selected

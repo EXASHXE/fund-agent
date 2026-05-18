@@ -64,6 +64,8 @@ def cmd_analyze(args):
     print(f"报告口径日: {report_date.isoformat()}")
 
     print("\n[Layer 1] 数据采集...")
+    print("Agent 模式: 脚本生成数据证据包；最终评分/新闻/压力测试/推荐由接入 skill 的模型判断")
+
     analyzer = FundAnalyzer()
     for code in codes:
         try:
@@ -119,9 +121,10 @@ def cmd_analyze(args):
     # 推荐
     recommendations = []
     recommendation_status = "skipped" if args.skip_recommend else "empty"
+    inter_recommendation_correlations = None
     if not args.skip_recommend:
         print("\n[推荐] 搜索推荐基金...")
-        recommendations = _run_recommendations(news_data, codes, analyzer)
+        recommendations, inter_recommendation_correlations = _run_recommendations(news_data, codes, analyzer)
         recommendation_status = "ok" if recommendations else "empty"
 
     print("\n[Layer 4] 生成报告...")
@@ -133,6 +136,7 @@ def cmd_analyze(args):
         recommendation_status=recommendation_status,
         unscores=unscores,
         workflow_context=workflow_context,
+        inter_recommendation_correlations=inter_recommendation_correlations,
     )
 
     report_path = args.output or "report.md"
@@ -528,7 +532,7 @@ def _run_news_analysis(config, analyzer):
         name = holding.name
         fund_data = analyzer.funds.get(code, {})
 
-        news_list = fetch_fund_news(code, name, days=7)
+        news_list = fetch_fund_news(code, name, days=7, fund_type=getattr(holding, "type", ""))
         if not news_list:
             results.append({
                 "fund_code": code,
@@ -557,19 +561,56 @@ def _run_news_analysis(config, analyzer):
                         nav_returns.append((d, float(ret)))
 
         corr = news_nav_correlation(daily_agg, nav_returns) if nav_returns else {}
+        nav_summary = _build_nav_summary(nav_returns)
+        sentiment_mean = daily_agg[-1]["sentiment_mean"] if daily_agg else 0.5
+        from src.news.agent_context import build_news_judgment_context
+        agent_news_context = build_news_judgment_context(
+            fund_name=name,
+            fund_code=code,
+            news_list=news_with_sent,
+            daily_aggregates=daily_agg,
+            nav_summary=nav_summary,
+            holding_context=_holding_context_for_news(config, code),
+        )
 
         results.append({
             "fund_code": code,
             "fund_name": name,
             "news_count": len(news_list),
-            "sentiment_mean": daily_agg[-1]["sentiment_mean"] if daily_agg else 0.5,
+            "sentiment_mean": sentiment_mean,
             "daily_aggregates": daily_agg,
             "correlation": corr.get(1, (0.0, 1.0))[0],
             "news_list": news_with_sent,
             "status": "ok",
+            "agent_news_context": agent_news_context,
+            "sentiment_source": "rules_seed",
         })
 
     return results
+
+
+def _build_nav_summary(nav_returns):
+    if not nav_returns:
+        return "无净值收益率数据"
+    latest = nav_returns[-1]
+    recent = [r for _, r in nav_returns[-20:]]
+    avg = sum(recent) / len(recent) if recent else 0
+    return (
+        f"最近净值日 {latest[0]}，日增长率 {latest[1]:+.2f}%；"
+        f"近20个可用交易日平均日增长率 {avg:+.2f}%"
+    )
+
+
+def _holding_context_for_news(config, code: str) -> str:
+    holding = next((h for h in config.holdings if h.code == code), None)
+    if not holding:
+        return ""
+    return (
+        f"类型={getattr(holding.type, 'value', holding.type)}; "
+        f"币种={holding.currency}; settle_delay={holding.settle_delay}; "
+        f"定投={'启用' if holding.dca and holding.dca.enabled else '未启用'}; "
+        f"待确认金额={holding.pending_amount}"
+    )
 
 
 def _run_recommendations(news_data, codes, analyzer):
@@ -577,7 +618,7 @@ def _run_recommendations(news_data, codes, analyzer):
     from src.recommend.engine import (
         extract_hot_sectors, screen_funds, filter_by_correlation,
         rank_recommendations, generate_recommendation_reasons,
-        build_holding_profiles,
+        build_holding_profiles, compute_inter_recommendation_correlations,
     )
 
     hot_sectors = extract_hot_sectors(news_data)
@@ -586,7 +627,15 @@ def _run_recommendations(news_data, codes, analyzer):
     holding_profiles = build_holding_profiles(analyzer, holding_codes)
     filtered = filter_by_correlation(candidates, holding_codes, holding_profiles)
     ranked = rank_recommendations(filtered, hot_sectors, top_n=5)
-    return generate_recommendation_reasons(ranked)
+    final_recs = generate_recommendation_reasons(ranked)
+    from src.news.agent_context import build_recommendation_judgment_context
+    rec_context = build_recommendation_judgment_context(final_recs, holding_profiles, hot_sectors)
+    for rec in final_recs:
+        rec["agent_review_required"] = True
+    if final_recs:
+        final_recs[0]["agent_recommendation_context"] = rec_context
+    inter_corr = compute_inter_recommendation_correlations(final_recs)
+    return final_recs, inter_corr
 
 
 def _save_snapshot(store, scores, stress_tests, correlations, holdings_data=None):
@@ -688,7 +737,7 @@ def cmd_news(args):
     config = load_portfolio_config(args.config)
     for holding in config.holdings:
         print(f"\n=== {holding.code} {holding.name} ===")
-        news = fetch_fund_news(holding.code, holding.name, days=args.days)
+        news = fetch_fund_news(holding.code, holding.name, days=args.days, fund_type=getattr(holding, "type", ""))
         print(f"获取 {len(news)} 条新闻")
 
         if news:
@@ -708,14 +757,14 @@ def cmd_recommend(args):
     from src.recommend.engine import (
         extract_hot_sectors, screen_funds, rank_recommendations,
         generate_recommendation_reasons, filter_by_correlation,
-        infer_style_tags, infer_theme,
+        infer_style_tags, infer_theme, compute_inter_recommendation_correlations,
     )
 
     config = load_portfolio_config(args.config)
 
     all_news_results = []
     for holding in config.holdings:
-        news = fetch_fund_news(holding.code, holding.name, days=args.days)
+        news = fetch_fund_news(holding.code, holding.name, days=args.days, fund_type=getattr(holding, "type", ""))
         if news:
             sent = analyze_sentiment(news)
             daily = daily_sentiment_aggregate(sent)
@@ -746,6 +795,12 @@ def cmd_recommend(args):
         print(f"  {i+1}. {rec.get('code', '')} {rec.get('name', '')} "
               f"| 得分: {rec.get('score', 0):.3f} | {rec.get('reason', '')}")
 
+    inter_corr = compute_inter_recommendation_correlations(with_reasons)
+    if inter_corr.get("warnings"):
+        print("\n⚠️ 推荐基金间相关性警告:")
+        for w in inter_corr["warnings"]:
+            print(f"  {w}")
+
 
 def cmd_diagnose(args):
     """单基金快速诊断"""
@@ -765,6 +820,7 @@ def cmd_diagnose(args):
     print(f"综合评分: {s['composite_score']}/100（{s['score_level_emoji']}）")
     print(f"宏观: {s['macro_score']}/20 | 中观: {s['meso_score']}/30 | 微观: {s['micro_score']}/50")
     print(f"建议: {s['recommendation']}")
+    print("评分来源: 规则初稿；最终判断请由接入 skill 的 agent 结合证据校准")
     print(f"止盈: +{s['stop_profit_pct']}% | 止损: {s['stop_loss_pct']}%")
     print(f"依据: {s['action_logic']}")
 

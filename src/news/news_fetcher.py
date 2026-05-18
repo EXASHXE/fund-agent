@@ -3,13 +3,16 @@ from datetime import date, timedelta
 from src.config.shared import today as _shared_today
 from typing import List, Dict, Tuple
 import hashlib
+import json
+import os
 import re
 
 
 def extract_holding_keywords(fund_code: str, limit: int = 10) -> Tuple[List[str], List[str]]:
-    """从基金持仓中提取股票代码和名称关键词。"""
+    """从基金真实重仓中提取股票代码和名称关键词，并缓存持仓画像。"""
     stock_codes = []
     keywords = []
+    holding_rows = []
     for year in ["2025", "2024"]:
         try:
             import akshare as ak
@@ -19,20 +22,32 @@ def extract_holding_keywords(fund_code: str, limit: int = 10) -> Tuple[List[str]
                     code = str(row.get("股票代码", "")).strip()
                     if re.fullmatch(r"\d{6}", code):
                         stock_codes.append(code)
-                    name = str(row.get("股票名称", ""))
-                    # 提取核心名称：去掉括号中的代码、去掉后缀
-                    if "(" in name:
-                        name = name.split("(")[0].strip()
-                    if "（" in name:
-                        name = name.split("（")[0].strip()
-                    # 去掉常见后缀
-                    for suffix in ["-A", "-B", "-C", "-W", " Inc", " Co", " Ltd", " Holdings"]:
-                        if name.endswith(suffix):
-                            name = name[:-len(suffix)].strip()
+                    name = _normalize_company_name(str(row.get("股票名称", "")))
+                    weight = _pick_first(row, ["占净值比例", "持仓占比", "占比", "持股占比"])
+                    holding_rows.append({
+                        "stock_code": code,
+                        "stock_name": name,
+                        "weight": weight,
+                    })
                     if name and len(name) >= 2:
                         keywords.append(name)
+                _update_holding_profile_cache(fund_code, year, holding_rows)
                 break  # 使用最新可用的数据
         except Exception:
+            cached = _load_holding_profile_cache(fund_code)
+            if cached:
+                holding_rows = cached.get("holdings", [])[:limit]
+                stock_codes = [
+                    h.get("stock_code", "")
+                    for h in holding_rows
+                    if re.fullmatch(r"\d{6}", str(h.get("stock_code", "")))
+                ]
+                keywords = [
+                    h.get("stock_name", "")
+                    for h in holding_rows
+                    if len(str(h.get("stock_name", ""))) >= 2
+                ]
+                break
             continue
 
     # 去重且限制数量，优先保留前 limit 个（按持仓权重排序）
@@ -45,11 +60,45 @@ def extract_holding_keywords(fund_code: str, limit: int = 10) -> Tuple[List[str]
     return stock_codes[:limit], result[:8]
 
 
+def build_news_search_profile(
+    fund_code: str,
+    fund_name: str,
+    fund_type: str = "",
+    agent_keywords: List[str] = None,
+    limit: int = 10,
+) -> Dict:
+    """构造新闻搜索画像。
+
+    代码只提供真实重仓、基金名和少量兜底词；行业链条和扩展关键词应由
+    接入 skill 的 agent 基于这些证据自主判断后通过 keywords 传入。
+    """
+    stock_codes, stock_keywords = extract_holding_keywords(fund_code, limit=limit)
+    profile = {
+        "fund_code": fund_code,
+        "fund_name": fund_name,
+        "fund_type": fund_type,
+        "stock_codes": stock_codes,
+        "holding_keywords": stock_keywords,
+        "agent_keywords": agent_keywords or [],
+        "fallback_keywords": _fallback_fund_keywords(fund_name, fund_type),
+    }
+    terms = []
+    for group in ["holding_keywords", "agent_keywords", "fallback_keywords"]:
+        for kw in profile[group]:
+            if kw and kw not in terms:
+                terms.append(kw)
+    if fund_code not in terms:
+        terms.append(fund_code)
+    profile["search_terms"] = terms
+    return profile
+
+
 def fetch_fund_news(
     fund_code: str,
     fund_name: str,
     keywords: List[str] = None,
     days: int = 7,
+    fund_type: str = "",
 ) -> List[Dict]:
     """获取与基金相关的近期新闻。优先按重仓股票搜索，次选基金名称/代码。"""
     try:
@@ -60,32 +109,14 @@ def fetch_fund_news(
     all_news = []
     seen = set()
 
-    # 构建搜索词：优先持仓股票 > 用户提供的关键词 > 基金简称
-    search_terms = []
-    stock_codes = []
-
-    # 1. 持仓股票关键词（最相关）
-    holding_stock_codes, stock_keywords = extract_holding_keywords(fund_code)
-    stock_codes.extend(holding_stock_codes)
-    for kw in stock_keywords:
-        if kw not in search_terms:
-            search_terms.append(kw)
-
-    # 2. 用户提供的关键词
-    if keywords:
-        for kw in keywords:
-            if kw and kw not in search_terms:
-                search_terms.append(kw)
-
-    # 3. 基金代码和名称（兜底）
-    search_terms.append(fund_code)
-    if fund_name:
-        core_name = fund_name.split("(")[0].split("（")[0].strip()
-        if core_name not in search_terms:
-            search_terms.append(core_name)
-        for kw in _infer_fund_theme_keywords(fund_name):
-            if kw not in search_terms:
-                search_terms.append(kw)
+    profile = build_news_search_profile(
+        fund_code=fund_code,
+        fund_name=fund_name,
+        fund_type=fund_type,
+        agent_keywords=keywords,
+    )
+    search_terms = profile["search_terms"]
+    stock_codes = profile["stock_codes"]
 
     cutoff = _shared_today() - timedelta(days=days)
 
@@ -198,22 +229,77 @@ def _matches_terms(text: str, terms: List[str]) -> bool:
     return False
 
 
-def _infer_fund_theme_keywords(fund_name: str) -> List[str]:
-    name = fund_name or ""
-    mapping = {
-        "纳斯达克": ["纳斯达克", "美股", "科技股", "人工智能", "英伟达", "微软", "苹果"],
-        "QDII": ["美股", "港股", "海外市场", "美元", "人民币汇率"],
-        "新兴市场": ["新兴市场", "美元", "汇率", "全球市场"],
-        "石油": ["石油", "原油", "天然气", "OPEC"],
-        "天然气": ["天然气", "原油", "能源"],
-        "新能源": ["新能源", "锂电", "电池", "汽车"],
-        "电池": ["电池", "锂电", "新能源车"],
-    }
+def _fallback_fund_keywords(fund_name: str, fund_type: str = "") -> List[str]:
+    text = f"{fund_name or ''} {fund_type or ''}"
     terms = []
-    for key, values in mapping.items():
-        if key in name:
-            terms.extend(values)
+    core_name = (fund_name or "").split("(")[0].split("（")[0].strip()
+    if core_name:
+        terms.append(core_name)
+    if "QDII" in text or "qdii" in text.lower():
+        terms.extend(["海外市场", "汇率"])
+    for literal in ["纳斯达克", "标普", "恒生", "黄金", "石油", "半导体", "新能源", "医药", "消费"]:
+        if literal in text:
+            terms.append(literal)
+    if "债" in text:
+        terms.extend(["利率", "信用债"])
+    if "指数" in text or "ETF" in text:
+        terms.append("指数")
     return terms
+
+
+def _normalize_company_name(name: str) -> str:
+    if "(" in name:
+        name = name.split("(")[0].strip()
+    if "（" in name:
+        name = name.split("（")[0].strip()
+    for suffix in ["-A", "-B", "-C", "-W", " Inc", " Co", " Ltd", " Holdings"]:
+        if name.endswith(suffix):
+            name = name[:-len(suffix)].strip()
+    return name
+
+
+def _holding_cache_file() -> str:
+    root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    path = os.path.join(root, "data", "cache")
+    os.makedirs(path, exist_ok=True)
+    return os.path.join(path, "fund_holding_profiles.json")
+
+
+def _load_all_holding_profiles() -> Dict:
+    path = _holding_cache_file()
+    if not os.path.exists(path):
+        return {}
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def _load_holding_profile_cache(fund_code: str) -> Dict:
+    return _load_all_holding_profiles().get(str(fund_code).zfill(6), {})
+
+
+def _update_holding_profile_cache(fund_code: str, year: str, holdings: List[Dict]):
+    if not holdings:
+        return
+    profiles = _load_all_holding_profiles()
+    key = str(fund_code).zfill(6)
+    signature = hashlib.md5(
+        json.dumps(holdings, ensure_ascii=False, sort_keys=True).encode()
+    ).hexdigest()
+    old = profiles.get(key, {})
+    if old.get("signature") == signature:
+        return
+    profiles[key] = {
+        "fund_code": key,
+        "year": year,
+        "updated_at": _shared_today().isoformat(),
+        "signature": signature,
+        "holdings": holdings,
+    }
+    with open(_holding_cache_file(), "w", encoding="utf-8") as f:
+        json.dump(profiles, f, ensure_ascii=False, indent=2)
 
 
 def _parse_date(date_str: str) -> date:

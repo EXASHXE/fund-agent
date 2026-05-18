@@ -330,7 +330,7 @@ class FundAnalyzer:
 
         recommendation = self._deduce_recommendation(composite, name, completeness)
 
-        return {
+        score = {
             "fund_code": code,
             "fund_name": name,
             "data_completeness": completeness,
@@ -357,6 +357,10 @@ class FundAnalyzer:
             "fund_type": basic.get("fund_type", ""),
             "manager": basic.get("manager", ""),
         }
+        score["score_source"] = "rules_seed"
+        score["agent_review_required"] = True
+        score["agent_score_context"] = self.build_agent_score_context(code, score)
+        return score
 
     def _deduce_recommendation(self, score: int, name: str,
                                 completeness: str) -> Dict:
@@ -390,6 +394,58 @@ class FundAnalyzer:
                 "label": "止损离场",
                 "logic": f"综合评分{score}分，处于危险区间。建议尽快止损离场，将资金配置到评分≥75的优质标的上。"
             }
+
+    def build_agent_score_context(self, code: str, rule_score: Dict) -> Dict:
+        """构造 agent 自主评分需要的证据包。"""
+        from src.news.agent_context import build_score_judgment_context
+
+        return build_score_judgment_context(
+            fund_context=self._build_fund_context(code),
+            rule_score={k: v for k, v in rule_score.items() if k != "agent_score_context"},
+        )
+
+    def _build_fund_context(self, code: str) -> Dict:
+        fund = self.funds.get(code, {})
+        nav_df = fund.get("nav")
+        nav_summary = {}
+        if isinstance(nav_df, pd.DataFrame) and not nav_df.empty:
+            returns = nav_df["日增长率"].dropna() if "日增长率" in nav_df.columns else pd.Series(dtype=float)
+            nav_summary = {
+                "rows": len(nav_df),
+                "start": str(nav_df.index.min()),
+                "end": str(nav_df.index.max()),
+                "latest_nav": float(nav_df["单位净值"].iloc[-1]) if "单位净值" in nav_df.columns else None,
+                "return_mean": round(float(returns.tail(60).mean()), 4) if not returns.empty else None,
+                "return_std": round(float(returns.tail(60).std()), 4) if len(returns) > 1 else None,
+            }
+        holdings = fund.get("holdings")
+        holding_rows = []
+        if isinstance(holdings, pd.DataFrame) and not holdings.empty:
+            for _, row in holdings.head(10).iterrows():
+                holding_rows.append({k: row.get(k) for k in list(row.index)[:6]})
+        sectors = fund.get("sectors")
+        sector_rows = []
+        if isinstance(sectors, pd.DataFrame) and not sectors.empty:
+            for _, row in sectors.head(10).iterrows():
+                sector_rows.append({k: row.get(k) for k in list(row.index)[:6]})
+        return {
+            "code": code,
+            "basic": fund.get("basic", {}),
+            "performance": fund.get("perf", {}),
+            "data_completeness": fund.get("completeness"),
+            "nav_summary": nav_summary,
+            "top_holdings": holding_rows,
+            "sectors": sector_rows,
+        }
+
+    def _level_from_score(self, composite: int) -> Tuple[str, str, str]:
+        if composite >= 75:
+            return "green", "🟢", "维持或加仓"
+        if composite >= 50:
+            return "yellow", "🟡", "持有观察，可继续定投"
+        if composite >= 30:
+            return "orange", "🟠", "减仓或暂停定投"
+        return "red", "🔴", "止盈/止损离场"
 
     def compute_correlations(self):
         return compute_correlations(self.funds)
@@ -437,7 +493,7 @@ class FundAnalyzer:
             sharpe_1y = (np.mean(excess_1y) / np.std(excess_1y)) * np.sqrt(252) if np.std(excess_1y) > 0 else 0
             cum_1y = (1 + pd.Series(returns_1y)).cumprod()
             rolling_max_1y = cum_1y.expanding().max()
-            dd_1y = abs((cum_1y - rolling_max_1y / rolling_max_1y).min()) * 100 if len(cum_1y) > 0 else 0
+            dd_1y = abs(((cum_1y - rolling_max_1y) / rolling_max_1y).min()) * 100 if len(cum_1y) > 0 else 0
         else:
             vol_1y = np.std(returns) * np.sqrt(252) * 100
             excess_1y = returns - (0.025 / 252)
@@ -450,7 +506,7 @@ class FundAnalyzer:
         sharpe_3y = (np.mean(excess_3y) / np.std(excess_3y)) * np.sqrt(252) if np.std(excess_3y) > 0 else 0
         cum_all = (1 + pd.Series(returns)).cumprod()
         rolling_max_all = cum_all.expanding().max()
-        dd_3y = abs((cum_all - rolling_max_all) / rolling_max_all).min() * 100 if len(cum_all) > 0 else 0
+        dd_3y = abs(((cum_all - rolling_max_all) / rolling_max_all).min()) * 100 if len(cum_all) > 0 else 0
 
         result = {
             "近1年": {"annual_volatility": round(vol_1y, 2),
