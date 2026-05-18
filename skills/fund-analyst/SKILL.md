@@ -239,8 +239,9 @@ python3 -m src.cli ui -c fund-portfolio.yaml -p 8501
 
 | 数据来源 | 方式 | 说明 |
 |---------|------|------|
-| AKShare | `ak.stock_news_em` | 按基金重仓股票关键词搜索 |
-| 基金名称/代码 | 兜底搜索 | 确保即使无持仓数据也能获取相关新闻 |
+| AKShare | `ak.stock_news_em` | 仅用于基金重仓股的 6 位股票代码新闻 |
+| AKShare | `stock_info_global_cls` / `stock_news_main_cx` / `news_cctv` | 抓取全市场新闻后按基金、行业、QDII 关键词本地过滤 |
+| 基金名称/代码 | 兜底关键词 | 确保即使无持仓数据也能给出新闻状态说明 |
 
 #### 3.2 情绪分析
 
