@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 COOKIE_FILE = ".alipay-cookies.json"
+AUTH_STATE_FILE = ".alipay-auth-state.json"
 BILL_URL = "https://consumeprod.alipay.com/record/standard.htm"
 SEARCH_KEYWORD = "蚂蚁财富"
 DAYS_LOOKBACK = 30
@@ -169,47 +170,23 @@ def merge_purchases_to_yaml(
     return stats
 
 
-# ── Cookie management ──
+# ── Auth state management (Playwright storage_state) ──
 
 
-def _load_cookies() -> Optional[List[Dict[str, Any]]]:
-    """从本地文件加载支付宝 cookies。"""
-    if not os.path.exists(COOKIE_FILE):
-        return None
+def _has_auth_state() -> bool:
+    """检查是否有有效的登录状态文件。"""
+    f = Path(AUTH_STATE_FILE)
+    if not f.exists():
+        return False
     try:
-        with open(COOKIE_FILE, "r") as f:
-            data = json.load(f)
-        return data.get("cookies", [])
+        mtime = datetime.fromtimestamp(f.stat().st_mtime)
+        return (datetime.now() - mtime) < timedelta(hours=24)
     except Exception:
-        return None
+        return False
 
 
-def _save_cookies(cookies: List[Dict[str, Any]]):
-    """保存 cookies 到本地文件。"""
-    data = {"updated_at": datetime.now().isoformat(), "cookies": cookies}
-    with open(COOKIE_FILE, "w") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-    os.chmod(COOKIE_FILE, 0o600)
-
-
-def _cookies_expired() -> bool:
-    """检查本地 cookie 文件是否存在且未过期（最后一次更新在 24h 内）。"""
-    if not os.path.exists(COOKIE_FILE):
-        return True
-    try:
-        with open(COOKIE_FILE, "r") as f:
-            data = json.load(f)
-        updated = datetime.fromisoformat(data.get("updated_at", "2000-01-01"))
-        return (datetime.now() - updated) > timedelta(hours=24)
-    except Exception:
-        return True
-
-
-# ── Browser automation ──
-
-
-def _qr_login() -> Optional[List[Dict[str, Any]]]:
-    """启动有头浏览器，让用户扫码登录支付宝。"""
+def _qr_login() -> Optional[str]:
+    """启动有头浏览器，让用户扫码登录，返回 auth state 文件路径。"""
     try:
         from playwright.sync_api import sync_playwright
     except ImportError:
@@ -220,69 +197,79 @@ def _qr_login() -> Optional[List[Dict[str, Any]]]:
         browser = p.chromium.launch(headless=False)
         context = browser.new_context()
         page = context.new_page()
-        page.goto("https://auth.alipay.com/login", timeout=30000, wait_until="domcontentloaded")
+        page.goto(BILL_URL, timeout=30000, wait_until="domcontentloaded")
         page.wait_for_timeout(3000)
 
-        print("[支付宝] 等待登录完成（最多 120 秒）...")
-        try:
-            page.wait_for_url("**/record/**", timeout=120000)
-        except Exception:
-            try:
-                page.wait_for_url("**consumeprod**", timeout=60000)
-            except Exception:
-                pass
+        print("[支付宝] 等待扫码登录完成（最多 180 秒）...")
+        for _ in range(180):
+            page.wait_for_timeout(1000)
+            current_url = page.url
+            if "consumeprod" in current_url:
+                break
+            if "record" in current_url and "alipay" in current_url:
+                break
+            if "my.alipay.com" in current_url or "personal" in current_url:
+                break
 
         page.wait_for_timeout(2000)
-        cookies = context.cookies()
+        print(f"[支付宝] 登录后 URL: {page.url[:120]}")
+        context.storage_state(path=AUTH_STATE_FILE)
         browser.close()
-        print("[支付宝] 登录成功，已保存 cookies。")
-        return cookies
+        print("[支付宝] 登录成功，已保存登录状态。")
+        return AUTH_STATE_FILE
+
+
+def _ensure_auth() -> Optional[str]:
+    """确保有有效的登录状态，过期或不存在则触发扫码登录。返回 auth state 文件路径或 None。"""
+    if _has_auth_state():
+        return AUTH_STATE_FILE
+
+    if os.path.exists(AUTH_STATE_FILE):
+        os.remove(AUTH_STATE_FILE)
+
+    print("[支付宝] 登录状态不存在或已过期，启动扫码登录...")
+    auth_path = _qr_login()
+    if auth_path is None:
+        print("[支付宝] 扫码登录失败或被取消，跳过抓取。")
+    return auth_path
 
 
 def _scrape_alipay_bills(
     config_holdings: List[Dict[str, str]],
 ) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
-    """使用 Playwright 抓取支付宝账单中近 30 天的蚂蚁财富交易记录。
-    
-    Returns:
-        (records, scrape_stats) where records is list of parsed records and
-        scrape_stats has keys "unmapped" (list of fund names that couldn't be mapped).
-    """
+    """使用 Playwright 抓取支付宝账单中近 30 天的蚂蚁财富交易记录。"""
     try:
         from playwright.sync_api import sync_playwright
     except ImportError:
         print("[支付宝] Playwright 未安装。安装: pip install playwright && python3 -m playwright install chromium")
         return [], {}
 
-    cookies = _load_cookies()
-    if cookies is None:
-        print("[支付宝] Cookie 文件不存在，启动扫码登录...")
-        cookies = _qr_login()
-        if cookies is None:
-            print("[支付宝] 扫码登录失败或被取消，跳过抓取。")
-            return [], {}
-        _save_cookies(cookies)
+    auth_state_path = _ensure_auth()
+    if auth_state_path is None:
+        return [], {}
 
     records: List[Dict[str, Any]] = []
     unmapped: set = set()
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
-        context = browser.new_context()
-        context.add_cookies(cookies)
+        try:
+            context = browser.new_context(storage_state=auth_state_path)
+        except Exception:
+            context = browser.new_context()
+
         page = context.new_page()
 
         try:
             page.goto(BILL_URL, timeout=30000, wait_until="domcontentloaded")
             page.wait_for_timeout(3000)
 
-            if "auth" in page.url or "login" in page.url:
-                print("[支付宝] Cookie 已过期，重新扫码登录...")
-                context.close()
-                browser.close()
-                if os.path.exists(COOKIE_FILE):
-                    os.remove(COOKIE_FILE)
-                return _scrape_alipay_bills(config_holdings)
+            current_url = page.url
+            if "auth" in current_url or "login" in current_url or "consumeprod" not in current_url:
+                print("[支付宝] 登录状态已过期，将在下次运行时重新扫码登录。")
+                if os.path.exists(AUTH_STATE_FILE):
+                    os.remove(AUTH_STATE_FILE)
+                return [], {"unmapped": [], "auth_expired": True}
 
             page.wait_for_timeout(2000)
 
@@ -348,11 +335,39 @@ def _scrape_alipay_bills(
 # ── Main entry ──
 
 
-def fetch_and_merge(config_path: str) -> Dict[str, Any]:
+def _save_auth_from_cookie_string(cookie_string: str):
+    """将 cookie 字符串 (key=value; ...) 转换为 Playwright storage_state 格式并保存。"""
+    import time
+    cookies = []
+    future_expiry = int(time.time()) + 86400
+    for pair in cookie_string.split("; "):
+        if "=" not in pair:
+            continue
+        name, _, value = pair.partition("=")
+        value = value.strip().strip('"')
+        cookies.append({
+            "name": name.strip(),
+            "value": value,
+            "domain": ".alipay.com",
+            "path": "/",
+            "httpOnly": False,
+            "secure": True,
+            "sameSite": "Lax",
+            "expires": future_expiry,
+        })
+    state = {"cookies": cookies, "origins": []}
+    with open(AUTH_STATE_FILE, "w") as f:
+        json.dump(state, f, ensure_ascii=False, indent=2)
+    os.chmod(AUTH_STATE_FILE, 0o600)
+    print(f"[支付宝] 已从 cookie 字符串保存 {len(cookies)} 个 cookies。")
+
+
+def fetch_and_merge(config_path: str, cookie_string: Optional[str] = None) -> Dict[str, Any]:
     """主入口：抓取支付宝流水并合并到 YAML。
     
-    Returns:
-        {"status": "ok"|"skipped", "new_total": int, "by_fund": {...}, "unmapped": [...]}
+    Args:
+        config_path: fund-portfolio.yaml 路径
+        cookie_string: 可选，直接提供 cookie 字符串（key=value; ...）跳过 QR 登录
     """
     result: Dict[str, Any] = {
         "status": "skipped",
@@ -360,6 +375,9 @@ def fetch_and_merge(config_path: str) -> Dict[str, Any]:
         "by_fund": {},
         "unmapped": [],
     }
+
+    if cookie_string:
+        _save_auth_from_cookie_string(cookie_string)
 
     yaml_path = Path(config_path)
     if not yaml_path.exists():

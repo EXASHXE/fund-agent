@@ -57,7 +57,7 @@ def cmd_analyze(args):
     if not getattr(args, "skip_alipay", False):
         try:
             from src.data.alipay_fetcher import fetch_and_merge
-            fetch_and_merge(args.config)
+            fetch_and_merge(args.config, cookie_string=getattr(args, "alipay_cookie", None))
             config = load_portfolio_config(args.config)
         except Exception as e:
             print(f"[支付宝] 抓取失败（不阻断后续流程）: {e}")
@@ -1239,7 +1239,7 @@ def cmd_snapshot(args):
 def cmd_fetch_alipay(args):
     """从支付宝抓取基金交易流水并合并到 YAML。"""
     from src.data.alipay_fetcher import fetch_and_merge
-    result = fetch_and_merge(args.config)
+    result = fetch_and_merge(args.config, cookie_string=args.alipay_cookie)
     if result["status"] == "ok":
         print(f"\n[fetch-alipay] 成功新增 {result['new_total']} 条交易记录。")
     else:
@@ -1274,6 +1274,7 @@ def main():
     p_analyze.add_argument("-o", "--output", default="report.md")
     p_analyze.add_argument("--skip-recommend", action="store_true")
     p_analyze.add_argument("--skip-alipay", action="store_true", help="跳过支付宝流水抓取")
+    p_analyze.add_argument("--alipay-cookie", default=None, help="支付宝 Cookie 字符串，提供后跳过扫码登录")
     p_analyze.add_argument(
         "--require-agent-decisions",
         action="store_true",
@@ -1353,6 +1354,7 @@ def main():
 
     p_fetch_alipay = sub.add_parser("fetch-alipay", help="从支付宝抓取基金交易流水并合并到 YAML")
     p_fetch_alipay.add_argument("-c", "--config", required=True, help="YAML 配置文件路径")
+    p_fetch_alipay.add_argument("--alipay-cookie", default=None, help="支付宝 Cookie 字符串 (key=value; ...)，提供后跳过扫码登录")
 
     p_ui = sub.add_parser("ui", help="启动交互式管理界面 (Streamlit)")
     p_ui.add_argument("-c", "--config", default="fund-portfolio.yaml", help="YAML 配置文件路径")
