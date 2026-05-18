@@ -576,12 +576,15 @@ def _run_recommendations(news_data, codes, analyzer):
     """运行基金推荐"""
     from src.recommend.engine import (
         extract_hot_sectors, screen_funds, filter_by_correlation,
-        rank_recommendations, generate_recommendation_reasons
+        rank_recommendations, generate_recommendation_reasons,
+        build_holding_profiles,
     )
 
     hot_sectors = extract_hot_sectors(news_data)
     candidates = screen_funds(hot_sectors)
-    filtered = filter_by_correlation(candidates, set(codes))
+    holding_codes = set(codes)
+    holding_profiles = build_holding_profiles(analyzer, holding_codes)
+    filtered = filter_by_correlation(candidates, holding_codes, holding_profiles)
     ranked = rank_recommendations(filtered, hot_sectors, top_n=5)
     return generate_recommendation_reasons(ranked)
 
@@ -705,6 +708,7 @@ def cmd_recommend(args):
     from src.recommend.engine import (
         extract_hot_sectors, screen_funds, rank_recommendations,
         generate_recommendation_reasons, filter_by_correlation,
+        infer_style_tags, infer_theme,
     )
 
     config = load_portfolio_config(args.config)
@@ -726,7 +730,14 @@ def cmd_recommend(args):
 
     candidates = screen_funds(hot_sectors)
     holding_codes = {h.code for h in config.holdings}
-    filtered = filter_by_correlation(candidates, holding_codes)
+    holding_profiles = [{
+        "code": h.code,
+        "name": h.name,
+        "type": getattr(h.type, "value", str(h.type)),
+        "theme": infer_theme(h.name, getattr(h.type, "value", str(h.type))),
+        "style_tags": infer_style_tags(h.name, getattr(h.type, "value", str(h.type))),
+    } for h in config.holdings]
+    filtered = filter_by_correlation(candidates, holding_codes, holding_profiles)
     ranked = rank_recommendations(filtered, hot_sectors, top_n=args.top)
     with_reasons = generate_recommendation_reasons(ranked)
 

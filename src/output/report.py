@@ -270,12 +270,17 @@ def generate_report(
     lines.append("## 推荐基金")
     lines.append("")
     if recommendations:
-        lines.append("| # | 代码 | 名称 | 类型 | 与持仓平均相关 | 推荐理由 |")
-        lines.append("|------|------|------|------|---------------|---------|")
+        lines.append("| # | 代码 | 名称 | 主题 | 综合分 | 近1月 | 持仓相似度 | 分散度 | 推荐理由 |")
+        lines.append("|------|------|------|------|------|------|-----------|--------|---------|")
         for i, rec in enumerate(recommendations):
+            ret_1m = rec.get("return_1m")
+            ret_text = f"{ret_1m:+.2f}%" if isinstance(ret_1m, (int, float)) else "N/A"
             lines.append(
                 f"| {i+1} | {rec.get('code', '')} | {rec.get('name', '')} "
-                f"| {rec.get('type', '')} | {rec.get('avg_corr', 0):.2f} "
+                f"| {rec.get('theme', rec.get('type', ''))} "
+                f"| {rec.get('score', 0):.3f} | {ret_text} "
+                f"| {rec.get('max_similarity', 0):.2f} "
+                f"| {rec.get('diversification_score', 0):.2f} "
                 f"| {rec.get('reason', '')} |"
             )
         lines.append("")
