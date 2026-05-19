@@ -1,6 +1,8 @@
 import unittest
 
-from src.cli import _sanitize_stress_tests_for_snapshot
+from types import SimpleNamespace
+
+from src.cli import _sanitize_stress_tests_for_snapshot, _should_snapshot_after_analyze
 
 
 class SnapshotSanitizeTest(unittest.TestCase):
@@ -22,6 +24,11 @@ class SnapshotSanitizeTest(unittest.TestCase):
         self.assertNotIn("fund_name", sanitized[0])
         self.assertNotIn("risk_driver", sanitized[0])
         self.assertNotIn("agent_instruction", sanitized[0])
+
+    def test_analyze_snapshot_is_enabled_by_default(self):
+        self.assertTrue(_should_snapshot_after_analyze(SimpleNamespace()))
+        self.assertFalse(_should_snapshot_after_analyze(SimpleNamespace(snapshot_after=False)))
+        self.assertTrue(_should_snapshot_after_analyze(SimpleNamespace(snapshot_after=True)))
 
 
 if __name__ == "__main__":

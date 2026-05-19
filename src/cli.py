@@ -113,9 +113,31 @@ def cmd_analyze(args):
     holdings_data = _compute_holdings(store, config, codes, analyzer)
     workflow_context = _build_workflow_context(config, holdings_data, news_data=None)
 
+    from src.news.keyword_cache import (
+        build_keyword_request,
+        default_keyword_cache_path,
+        load_valid_keyword_cache,
+        write_keyword_request,
+    )
+    keyword_cache_path = (
+        getattr(args, "news_keyword_cache", None)
+        or default_keyword_cache_path()
+    )
+    news_keyword_plan = load_valid_keyword_cache(keyword_cache_path, codes, today=_shared_today())
+    if not news_keyword_plan:
+        keyword_request_path = (
+            getattr(args, "news_keyword_request_output", None)
+            or f"{args.output or 'report.md'}.news_keywords_request.json"
+        )
+        keyword_request = build_keyword_request(config, analyzer, report_date=report_date)
+        write_keyword_request(keyword_request_path, keyword_request)
+        print(f"Agent 新闻关键词请求已保存: {keyword_request_path}")
+        print(f"未找到有效新闻关键词缓存，已停止：请由当前 agent 生成 {keyword_cache_path} 后重新运行。")
+        return
+
     # 新闻分析（必选：新闻收集/情绪分析是报告核心组成部分）
     print("\n[Layer 3] 新闻采集与分析...")
-    news_data = _run_news_analysis(config, analyzer)
+    news_data = _run_news_analysis(config, analyzer, agent_news_plan=news_keyword_plan)
     workflow_context = _build_workflow_context(config, holdings_data, news_data=news_data)
 
     # 推荐
@@ -145,7 +167,7 @@ def cmd_analyze(args):
     print(f"报告已保存: {report_path}")
 
     _save_snapshot(store, scores, stress_results, correlations, holdings_data=holdings_data)
-    if getattr(args, "snapshot_after", False):
+    if _should_snapshot_after_analyze(args):
         _perform_snapshot(args.config)
 
 
@@ -221,8 +243,10 @@ def _compute_holdings(store, config, codes, analyzer=None):
                     "day_of_week": d.day_of_week,
                 }
 
-            fee_rate = float(getattr(holding_config, 'fee_rate', None) or 0.0015)
-            settle_delay = int(getattr(holding_config, 'settle_delay', None) or 1)
+            configured_fee_rate = getattr(holding_config, 'fee_rate', None)
+            fee_rate = float(0.0015 if configured_fee_rate is None else configured_fee_rate)
+            configured_settle_delay = getattr(holding_config, 'settle_delay', None)
+            settle_delay = int(1 if configured_settle_delay is None else configured_settle_delay)
 
             calibrations = []
             if holding_config and hasattr(holding_config, 'calibrations'):
@@ -267,35 +291,39 @@ def _compute_holdings(store, config, codes, analyzer=None):
             total_cost = result["total_cost"]
             total_shares = result["total_shares"]
             avg_cost = result["avg_cost"]
-            pending_amount = max(
-                result["pending_amount"],
-                float(getattr(holding_config, "pending_amount", 0) or 0) if holding_config else 0.0,
-            )
+            pending_amount = result["pending_amount"]
 
             explicit_shares = float(getattr(holding_config, "shares", 0) or 0) if holding_config else 0.0
             explicit_avg_cost = float(getattr(holding_config, "avg_cost", 0) or 0) if holding_config else 0.0
             ledger_warning = None
             if explicit_shares > 0 and explicit_avg_cost > 0:
-                total_shares = round(explicit_shares, 2)
-                avg_cost = round(explicit_avg_cost, 4)
-                total_cost = round(total_shares * avg_cost, 2)
-                display_value = round(total_shares * result["current_nav"], 2)
-                display_profit = round(display_value - total_cost, 2)
-                display_return_pct = round(display_profit / total_cost * 100, 2) if total_cost > 0 else 0.0
-                ledger_delta = round(total_cost - purchase_amount, 2)
-                threshold = max(1.0, total_cost * 0.005)
-                if abs(ledger_delta) > threshold:
-                    dca_delta_match = pending_amount > 0 and abs(abs(ledger_delta) - pending_amount) <= 1.0
-                    reason = f"差额 ¥{abs(ledger_delta):,.2f} 来自待确认定投申购，到账后将平账" if dca_delta_match else "真实份额×成本价 与买入流水合计不一致"
+                explicit_cost = round(explicit_shares * explicit_avg_cost, 2)
+                share_delta = round(explicit_shares - total_shares, 4)
+                cost_delta = round(explicit_cost - total_cost, 2)
+                share_threshold = max(0.01, max(explicit_shares, total_shares) * 0.001)
+                cost_threshold = max(1.0, max(explicit_cost, total_cost) * 0.005)
+                config_pending = float(getattr(holding_config, "pending_amount", 0) or 0) if holding_config else 0.0
+                pending_delta = round(config_pending - pending_amount, 2)
+                if (
+                    abs(share_delta) > share_threshold
+                    or abs(cost_delta) > cost_threshold
+                    or abs(pending_delta) > 1.0
+                ):
                     ledger_warning = {
                         "code": code,
                         "name": fund.get("name", code),
-                        "actual_cost": total_cost,
+                        "computed_shares": total_shares,
+                        "configured_shares": explicit_shares,
+                        "share_delta": share_delta,
+                        "computed_cost": total_cost,
+                        "configured_cost": explicit_cost,
+                        "cost_delta": cost_delta,
+                        "computed_pending_amount": pending_amount,
+                        "configured_pending_amount": config_pending,
+                        "pending_delta": pending_delta,
                         "purchase_amount": purchase_amount,
-                        "delta": ledger_delta,
-                        "pending_amount": pending_amount,
-                        "reason": reason,
-                        "is_dca_pending": dca_delta_match,
+                        "reason": "配置中的 shares/avg_cost/pending_amount 只用于诊断；报告口径以交易流水计算结果为准",
+                        "is_dca_pending": pending_amount > 0,
                     }
                     ledger_warnings.append(ledger_warning)
 
@@ -520,7 +548,7 @@ def _match_nav_from_map(nav_map: dict, target) -> float:
     return None
 
 
-def _run_news_analysis(config, analyzer):
+def _run_news_analysis(config, analyzer, agent_news_plan=None):
     """运行新闻分析"""
     from src.news.news_fetcher import fetch_fund_news
     from src.news.sentiment import analyze_sentiment, daily_sentiment_aggregate
@@ -532,7 +560,14 @@ def _run_news_analysis(config, analyzer):
         name = holding.name
         fund_data = analyzer.funds.get(code, {})
 
-        news_list = fetch_fund_news(code, name, days=7, fund_type=getattr(holding, "type", ""))
+        planned_keywords = _planned_news_keywords(agent_news_plan, code)
+        news_list = fetch_fund_news(
+            code,
+            name,
+            keywords=planned_keywords,
+            days=7,
+            fund_type=getattr(holding, "type", ""),
+        )
         if not news_list:
             results.append({
                 "fund_code": code,
@@ -542,6 +577,7 @@ def _run_news_analysis(config, analyzer):
                 "daily_aggregates": [],
                 "correlation": 0.0,
                 "news_list": [],
+                "agent_news_search_plan": _planned_news_profile(agent_news_plan, code),
                 "status": "empty",
                 "message": "近 7 天未获取到相关新闻，可能是接口无结果、关键词未命中或网络受限。",
             })
@@ -581,12 +617,30 @@ def _run_news_analysis(config, analyzer):
             "daily_aggregates": daily_agg,
             "correlation": corr.get(1, (0.0, 1.0))[0],
             "news_list": news_with_sent,
+            "agent_news_search_plan": _planned_news_profile(agent_news_plan, code),
             "status": "ok",
             "agent_news_context": agent_news_context,
             "sentiment_source": "rules_seed",
         })
 
     return results
+
+
+def _planned_news_profile(agent_news_plan, code: str):
+    if not agent_news_plan:
+        return {}
+    funds = agent_news_plan.get("funds") or {}
+    return funds.get(code) or funds.get(str(code).zfill(6)) or {}
+
+
+def _planned_news_keywords(agent_news_plan, code: str):
+    profile = _planned_news_profile(agent_news_plan, code)
+    keywords = []
+    for key in ("keywords", "search_terms", "expanded_keywords"):
+        for kw in profile.get(key, []) or []:
+            if kw and kw not in keywords:
+                keywords.append(str(kw))
+    return keywords or None
 
 
 def _build_nav_summary(nav_returns):
@@ -680,12 +734,31 @@ def _save_snapshot(store, scores, stress_tests, correlations, holdings_data=None
             "portfolio_total_value": (holdings_data or {}).get("total_value"),
             "portfolio_total_cost": (holdings_data or {}).get("total_cost"),
             "scores": score_data,
-            "stress_tests": stress_tests,
+            "stress_tests": _sanitize_stress_tests_for_snapshot(stress_tests),
             "correlations": corr_data,
         })
         print(f"快照已保存: ID={snapshot_id}")
     except Exception as e:
         print(f"[WARN] 快照保存失败: {e}")
+
+
+def _sanitize_stress_tests_for_snapshot(stress_tests):
+    allowed = {
+        "scenario_id",
+        "scenario_desc",
+        "fund_code",
+        "estimated_drawdown_pct",
+        "portfolio_drawdown_pct",
+        "impact_amount",
+    }
+    return [
+        {k: v for k, v in (item or {}).items() if k in allowed}
+        for item in (stress_tests or [])
+    ]
+
+
+def _should_snapshot_after_analyze(args) -> bool:
+    return getattr(args, "snapshot_after", True)
 
 
 def cmd_fetch(args):
@@ -826,9 +899,8 @@ def cmd_diagnose(args):
 
 
 def _perform_snapshot(config_path):
-    """更新当前持仓 YAML：加入已执行定投、更新下次定投日，同时保存备份。"""
+    """更新当前持仓 YAML：加入已执行定投、更新下次定投日。"""
     import yaml
-    import shutil
     from datetime import date
     from src.config.loader import load_portfolio_config
     from src.config.schema import Purchase
@@ -836,11 +908,6 @@ def _perform_snapshot(config_path):
 
     config = load_portfolio_config(config_path)
     today = _shared_today()
-
-    backup_path = f"{config_path}.{today.isoformat()}.bak"
-    shutil.copy2(config_path, backup_path)
-    _cleanup_bak_files(config_path, keep=1)
-    print(f"已备份: {backup_path}")
 
     for holding in config.holdings:
         if holding.dca and holding.dca.enabled:
@@ -883,11 +950,6 @@ def _perform_snapshot(config_path):
     print(f"持仓已更新: {config_path}")
 
 
-def _cleanup_bak_files(config_path: str, keep: int = 1):
-    from src.config.shared import cleanup_bak_files
-    cleanup_bak_files(config_path, keep)
-
-
 def cmd_snapshot(args):
     """更新当前持仓 YAML（独立子命令入口）"""
     _perform_snapshot(args.config)
@@ -923,7 +985,24 @@ def main():
     p_analyze.add_argument(
         "--snapshot-after",
         action="store_true",
+        default=True,
         help="报告生成后滚动定投记录并更新配置文件",
+    )
+    p_analyze.add_argument(
+        "--no-snapshot-after",
+        dest="snapshot_after",
+        action="store_false",
+        help="报告生成后不滚动 fund-portfolio.yaml",
+    )
+    p_analyze.add_argument(
+        "--news-keyword-cache",
+        default=None,
+        help="Agent 生成的新闻关键词缓存路径，默认 data/cache/news_keyword_profiles.json",
+    )
+    p_analyze.add_argument(
+        "--news-keyword-request-output",
+        default=None,
+        help="新闻关键词请求 JSON 输出路径，默认 <report>.news_keywords_request.json",
     )
 
     p_fetch = sub.add_parser("fetch", help="仅拉取净值数据")

@@ -115,6 +115,39 @@ class EngineCalculatorTest(unittest.TestCase):
             [EventType.BUY, EventType.CALIBRATE],
         )
 
+    def test_calibration_events_do_not_change_computed_shares_or_cost(self):
+        events = [
+            FundEvent(
+                event_type=EventType.BUY,
+                event_date=date(2026, 5, 11),
+                amount=1000,
+                nav=2.0,
+            ),
+            FundEvent(
+                event_type=EventType.CALIBRATE,
+                event_date=date(2026, 5, 12),
+                actual_shares=400.0,
+            ),
+        ]
+
+        with patch("src.engine.calculator.is_trade_day", _is_weekday), \
+             patch("src.engine.calculator.next_trade_day", _next_weekday), \
+             patch("src.engine.events.is_trade_day", _is_weekday), \
+             patch("src.engine.events.next_trade_day", _next_weekday):
+            result = compute_fund(
+                events=events,
+                nav_map={date(2026, 5, 12): 3.0},
+                fee_rate=0,
+                settle_delay=1,
+                today=date(2026, 5, 12),
+            )
+
+        self.assertEqual(result["total_shares"], 500.0)
+        self.assertEqual(result["total_cost"], 1000.0)
+        self.assertEqual(result["avg_cost"], 2.0)
+        self.assertEqual(result["calibrations_applied"], [])
+        self.assertEqual(result["events_detail"][-1]["status"], "DIAGNOSTIC_ONLY")
+
     def test_compute_holdings_keeps_transaction_ledger_as_truth(self):
         store = SimpleNamespace(
             get_fund=lambda code: {"id": None, "code": code, "name": "测试基金"}

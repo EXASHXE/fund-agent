@@ -79,32 +79,9 @@ def save_config(config: PortfolioConfig):
                 c["cal_date"] = fmt_date(c["cal_date"])
 
     config_path = str(CONFIG_PATH)
-    backup_path = f"{config_path}.{_shared_now().strftime('%Y-%m-%d')}.bak"
-    if os.path.exists(config_path):
-        shutil.copy2(config_path, backup_path)
 
     with open(config_path, "w", encoding="utf-8") as f:
         yaml.dump(raw, f, allow_unicode=True, sort_keys=False, default_flow_style=False)
-
-    _cleanup_bak_files(config_path)
-
-
-def _cleanup_bak_files(config_path: str, keep: int = 1):
-    import glob
-    import re
-    pattern = f"{config_path}.*.bak"
-    files = glob.glob(pattern)
-    files_with_date = []
-    for f in files:
-        m = re.search(r'(\d{4}-\d{2}-\d{2})\.bak$', f)
-        if m:
-            files_with_date.append((m.group(1), f))
-    files_with_date.sort(key=lambda x: x[0], reverse=True)
-    for _, old in files_with_date[keep:]:
-        try:
-            os.remove(old)
-        except OSError:
-            pass
 
 
 def find_holding(config: PortfolioConfig, code: str) -> tuple:

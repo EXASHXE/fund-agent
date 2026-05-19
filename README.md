@@ -26,10 +26,13 @@ python3 -m src.cli init -o fund-portfolio.yaml
 # 运行完整分析（默认不改写持仓配置）
 python3 -m src.cli analyze -c fund-portfolio.yaml -o report.md
 
-# 如需在报告生成后滚动定投记录，再显式执行
+# analyze 成功后默认滚动 fund-portfolio.yaml；如需单独滚动也可显式执行
 python3 -m src.cli snapshot -c fund-portfolio.yaml
 
-# 或在 analyze 成功后自动滚动
+# 如本次只想生成报告、不更新配置
+python3 -m src.cli analyze -c fund-portfolio.yaml -o report.md --no-snapshot-after
+
+# 兼容旧习惯：该参数仍可显式打开滚动
 python3 -m src.cli analyze -c fund-portfolio.yaml -o report.md --snapshot-after
 
 # 或启动交互式界面
@@ -43,7 +46,7 @@ python3 -m src.cli ui -c fund-portfolio.yaml -p 8501
 - `fund-portfolio.yaml` 是当前持仓和策略的人工维护真源，保留 YAML 格式，便于手工审阅和小规模修改。
 - SQLite 只保存基金元数据、净值缓存和分析快照，不作为当前持仓流水真源。
 - Markdown 报告是输出产物，不回写持仓。
-- 定投滚动不会在默认分析前自动执行，只通过 `snapshot` 或 `analyze --snapshot-after` 写回 YAML。
+- `analyze` 成功生成报告后默认滚动定投记录并写回 YAML；可用 `--no-snapshot-after` 关闭。`snapshot` 子命令仍可单独执行。
 
 ## 技术架构
 
@@ -93,7 +96,7 @@ src/
 8. 生成评分、新闻、推荐、压力测试和 Markdown 规则初稿
 9. 保存分析快照，用于后续评分趋势对比
 
-`snapshot` 是独立的配置滚动步骤，只在你确认需要把已执行定投写回 YAML 时运行。
+`analyze` 默认会在成功生成报告后滚动已执行定投并写回 YAML；`snapshot` 仍可作为独立配置滚动步骤单独运行。
 
 报告会按口径日计算数据，但输出不再区分交易日/非交易日模板，而是合并展示完整工作流：
 

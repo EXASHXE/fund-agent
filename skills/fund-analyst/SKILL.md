@@ -43,7 +43,7 @@ python3 -m src.cli analyze -c fund-portfolio.yaml -o report.md
 ```
 
 该模式仍要求有效新闻关键词缓存；缓存缺失时同样会先输出关键词请求并停止。缓存有效时会输出 `report.md.evidence.json`，并额外生成规则初稿 `report.md`。
-8. 只有用户确认后，才滚动定投或更新配置：
+8. `analyze` 成功生成报告后默认滚动定投并更新 `fund-portfolio.yaml`；如本次只想试算，运行时加 `--no-snapshot-after`。也可以单独执行：
 
 ```bash
 python3 -m src.cli snapshot -c fund-portfolio.yaml
