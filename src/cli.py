@@ -37,6 +37,18 @@ def cmd_import(args):
     print("导入完成。")
 
 
+def request_agent_keywords_inline(
+    holding_codes: list,
+    fund_profiles: list,
+) -> dict | None:
+    """标准 Agent 关键词请求回调。上层 runtime 可 monkey-patch 此函数。
+
+    返回格式: {"fund_code": ["kw1", "kw2", ...], ...}
+    若 Agent 不可用（纯 CLI），返回 None 触发降级兜底。
+    """
+    return None  # 默认无 Agent，降级到重仓股名+默认词
+
+
 def cmd_analyze(args):
     """完整分析流程：加载配置 → 同步元数据 → 采集 → 分析 → 报告 → 保存分析快照。
 
@@ -123,7 +135,29 @@ def cmd_analyze(args):
     )
     news_keyword_plan = load_valid_keyword_cache(keyword_cache_path, codes, today=_shared_today())
     if not news_keyword_plan:
-        print(f"[WARN] 新闻关键词缓存无效或不存在，降级使用基金名称/类型推导关键词。")
+        # 尝试 Agent inline 回调获取实时关键词
+        fund_profiles = []
+        for code in codes:
+            fund_data = analyzer.funds.get(code, {})
+            basic = fund_data.get("basic", {})
+            fund_profiles.append({
+                "code": code,
+                "name": basic.get("name", code),
+                "type": basic.get("fund_type", ""),
+            })
+        agent_kw = request_agent_keywords_inline(codes, fund_profiles)
+        if agent_kw:
+            news_keyword_plan = {
+                "cache_version": "news_keyword_profiles.v1",
+                "holding_codes": sorted(codes),
+                "generated_at": _shared_today().isoformat(),
+                "funds": {
+                    code: {"keywords": agent_kw.get(code, [])}
+                    for code in codes
+                },
+            }
+        else:
+            print(f"[INFO] Agent 不可用，降级使用基金重仓股名 + 默认词组推导关键词。")
 
     # 新闻分析
     print("\n[Layer 3] 新闻采集与分析...")
@@ -394,8 +428,8 @@ def _match_nav_on_or_before(nav_map: dict, target: date):
 def _build_workflow_context(config, holdings_data, news_data=None):
     """Build report sections that depend on trading-day workflow."""
     from src.engine.calendar import is_trade_day
-    from src.engine.calculator import _effective_trade_date, _settlement_date
-    from src.engine.events import resolve_nav_date
+    from src.engine.calculator import _settlement_date
+    from src.engine.events import resolve_nav_date, _effective_trade_date
 
     run_date = _shared_today()
     report_date = effective_report_date()
