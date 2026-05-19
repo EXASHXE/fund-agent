@@ -347,7 +347,11 @@ def _scrape_alipay_bills(
         page = context.new_page()
 
         try:
-            page.goto(BILL_URL, timeout=30000, wait_until="domcontentloaded")
+        page.goto(
+            "https://auth.alipay.com/login/index.htm"
+            "?goto=https%3A%2F%2Fconsumeprod.alipay.com%2Frecord%2Fstandard.htm",
+            timeout=30000, wait_until="networkidle",
+        )
             page.wait_for_timeout(3000)
 
             current_url = page.url
