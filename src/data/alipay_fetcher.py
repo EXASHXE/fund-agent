@@ -260,35 +260,55 @@ def _sms_login() -> Optional[str]:
         try:
             sms_tab = page.locator("text=验证码登录").first
             sms_tab.click()
-            page.wait_for_timeout(1000)
+            page.wait_for_timeout(2000)
         except Exception:
             print("[支付宝] 未找到「验证码登录」入口")
             browser.close()
             return None
 
-        # Enter phone number
+        # Enter phone number — find the visible input in SMS form
         try:
-            phone_input = page.locator("input[type=tel], input[placeholder*=手机], input[placeholder*=号码]").first
+            # After clicking SMS tab, the visible phone input should be in SMS form
+            phone_input = page.locator("input:visible[placeholder*=手机], input:visible[placeholder*=号码], input:visible[type=tel]").first
             phone_input.fill(phone)
             page.wait_for_timeout(500)
         except Exception as e:
-            print(f"[支付宝] 输入手机号失败: {e}")
-            browser.close()
-            return None
+            # Fallback: try any visible input in the current form
+            try:
+                sms_form_inputs = page.locator("form input:visible").all()
+                for inp in sms_form_inputs:
+                    ph = inp.get_attribute("placeholder") or ""
+                    if "手机" in ph or "号码" in ph or "phone" in ph.lower():
+                        inp.fill(phone)
+                        break
+                else:
+                    raise Exception("no visible phone input found")
+            except Exception as e2:
+                print(f"[支付宝] 输入手机号失败: {e2}")
+                browser.close()
+                return None
 
         # Click "获取短信验证码"
         try:
-            send_btn = page.locator("text=获取短信验证码").first
-            if send_btn.is_visible():
+            send_btn = page.locator(
+                "text=获取短信验证码, text=发送验证码, button:has-text('获取'), button:has-text('发送')"
+            ).first
+            if send_btn.is_visible(timeout=5000):
                 send_btn.click()
                 page.wait_for_timeout(1000)
             else:
-                # Fallback: any button/link with "获取" or "发送"
-                send_btn = page.locator("button:has-text('获取'), button:has-text('发送'), a:has-text('获取')").first
-                send_btn.click()
-                page.wait_for_timeout(1000)
+                raise Exception("button not visible")
         except Exception as e:
             print(f"[支付宝] 发送验证码失败: {e}")
+            # Debug: print visible buttons
+            try:
+                btns = page.locator("button:visible, a:visible").all()
+                for b in btns[:5]:
+                    text = b.inner_text()[:30]
+                    if text.strip():
+                        print(f"  可见按钮: {text}")
+            except Exception:
+                pass
             browser.close()
             return None
 
@@ -300,7 +320,9 @@ def _sms_login() -> Optional[str]:
 
         # Enter verification code
         try:
-            code_input = page.locator("input[placeholder*=验证码], input[placeholder*=6位], input[maxlength='6']").first
+            code_input = page.locator(
+                "input:visible[placeholder*=验证码], input:visible[maxlength='6'], input:visible[type=number]"
+            ).first
             code_input.fill(sms_code)
             page.wait_for_timeout(500)
         except Exception as e:
