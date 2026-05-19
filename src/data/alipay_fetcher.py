@@ -199,9 +199,8 @@ def _qr_login() -> Optional[str]:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page(viewport={"width": 800, "height": 1000}, device_scale_factor=3)
         page.goto(BILL_URL, timeout=30000, wait_until="domcontentloaded")
-        page.wait_for_timeout(3000)
+        page.wait_for_timeout(5000)
 
-        # Extract QR code URL from canvas element
         qr_url = _extract_qr_url_from_page(page)
         if qr_url is None:
             browser.close()
@@ -240,7 +239,12 @@ def _extract_qr_url_from_page(page) -> Optional[str]:
     """从支付宝登录页面提取二维码 URL。"""
     from PIL import Image
 
-    canvas = page.locator("canvas").first
+    try:
+        canvas = page.locator("canvas").first
+        canvas.wait_for(state="attached", timeout=10000)
+    except Exception:
+        return None
+
     box = canvas.bounding_box()
     if box is None:
         return None

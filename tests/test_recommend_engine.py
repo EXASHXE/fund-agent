@@ -3,6 +3,7 @@ import unittest
 from src.recommend.engine import (
     compute_fund_similarity,
     filter_by_correlation,
+    infer_exposure_cluster,
     rank_recommendations,
 )
 
@@ -91,6 +92,37 @@ class RecommendEngineTest(unittest.TestCase):
 
         self.assertEqual(len(ranked), 5)
         self.assertLessEqual(sum(1 for c in ranked if c["theme"] == "美股科技"), 2)
+
+
+    def test_rank_recommendations_limits_growth_manufacturing_cluster(self):
+        growth_candidates = [
+            {
+                "code": f"30000{idx}",
+                "name": name,
+                "theme": theme,
+                "return_1m": 12 - idx,
+                "return_3m": 18 - idx,
+                "return_6m": 25 - idx,
+                "max_similarity": 0.1,
+            }
+            for idx, (name, theme) in enumerate([
+                ("半导体芯片基金", "半导体"),
+                ("新能源电池基金", "新能源"),
+                ("人工智能科技基金", "美股科技"),
+                ("光伏储能基金", "新能源"),
+            ])
+        ]
+        diversifiers = [
+            {"code": "400001", "name": "中短债债券基金", "theme": "债券固收", "return_1m": 2, "return_3m": 3, "return_6m": 5, "max_similarity": 0.1},
+            {"code": "400002", "name": "红利低波基金", "theme": "红利价值", "return_1m": 2, "return_3m": 4, "return_6m": 6, "max_similarity": 0.1},
+            {"code": "400003", "name": "黄金商品基金", "theme": "能源商品", "return_1m": 1, "return_3m": 3, "return_6m": 4, "max_similarity": 0.1},
+        ]
+
+        ranked = rank_recommendations(growth_candidates + diversifiers, {"半导体": 1.0}, top_n=5)
+
+        growth_count = sum(1 for c in ranked if infer_exposure_cluster(c) == "growth_manufacturing")
+        self.assertLessEqual(growth_count, 2)
+        self.assertTrue(any(c.get("portfolio_role") for c in ranked))
 
 
 if __name__ == "__main__":

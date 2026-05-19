@@ -57,8 +57,8 @@ def portfolio_overview_table(portfolio_data: dict) -> str:
             rej = item.get("rejected", {})
             lines.append(
                 f"| {item.get('code', '')} | {item.get('name', '')} "
-                f"| {rej.get('actual_shares', 0):,.2f} "
-                f"| {rej.get('computed_shares', 0):,.2f} "
+                f"| {rej.get('actual_shares', 0):,.4f} "
+                f"| {rej.get('computed_shares', 0):,.4f} "
                 f"| {rej.get('delta_pct', 0):.2f}% "
                 f"| 已按配置真实份额展示，流水需补齐或校准 |"
             )

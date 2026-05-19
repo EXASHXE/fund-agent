@@ -87,9 +87,11 @@ src/
 2. 同步基金基础元数据到 SQLite
 3. 按当前配置中的持仓基金采集 AKShare 数据
 4. 以报告口径日计算持仓：交易日 21:30 前使用上一交易日
-5. 事件驱动计算份额、pending、XIRR，并在有 `shares`/`avg_cost` 时优先使用真实持仓口径
-6. 生成评分、新闻、推荐、压力测试和 Markdown 报告
-7. 保存分析快照，用于后续评分趋势对比
+5. 事件驱动计算份额、pending、XIRR；`shares`/`avg_cost` 只做偏差诊断，不覆盖交易流水计算结果
+6. 检查 `data/cache/news_keyword_profiles.json`：持仓基金集合一致且 90 天内才复用；否则输出 `report.md.news_keywords_request.json` 并停止，等待 agent 生成关键词缓存
+7. 使用 agent 关键词缓存抓取新闻，输出单文件 `report.md.evidence.json`，供 agent 直接生成最终分析报告
+8. 生成评分、新闻、推荐、压力测试和 Markdown 规则初稿
+9. 保存分析快照，用于后续评分趋势对比
 
 `snapshot` 是独立的配置滚动步骤，只在你确认需要把已执行定投写回 YAML 时运行。
 

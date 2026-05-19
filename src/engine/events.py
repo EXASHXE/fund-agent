@@ -24,6 +24,7 @@ class FundEvent:
     amount: float = 0.0
     after_1500: bool = False
     actual_shares: float = 0.0
+    nav: Optional[float] = None
 
 
 def generate_events(
@@ -43,6 +44,7 @@ def generate_events(
             event_date=d,
             amount=float(p.get("amount", 0)),
             after_1500=bool(p.get("after_1500", False)),
+            nav=float(p["nav"]) if p.get("nav") not in (None, "") else None,
         ))
 
     if dca_strategy and dca_strategy.get("enabled"):

@@ -576,6 +576,8 @@ scipy>=1.10.0
 | 7 | 删除 `seed_fund_info.py`，清理 `analyze.py` | 代码清理 | Phase 6 |
 | 8 | 更新 `skills/fund-analyst/` 文档、更新 `requirements.txt` | 文档同步 | Phase 6 |
 
+当前实现补充：`analyze` 会同时生成 `report.md` 与 `report.md.context.json`，Markdown 负责阅读，JSON context 负责 agent 继续推理和 UI/ViewModel 消费。
+
 ### Phase 2 拆分细节
 
 `analyze.py` (984行) → 拆分为：

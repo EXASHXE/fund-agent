@@ -32,8 +32,12 @@ class RecommendationCandidate(BaseModel):
     heat_score: float = 0.0
     momentum_score: float = 0.0
     diversification_score: float = 1.0
+    exposure_cluster: str = "balanced_other"
+    portfolio_role: str = "待判断"
+    marginal_benefit: float = 0.0
     score: float = 0.0
     reason: str = ""
+    risks: list[str] = Field(default_factory=list)
 
 
 THEME_KEYWORDS = {
@@ -65,13 +69,19 @@ def extract_hot_sectors(news_results: List[Dict]) -> Dict[str, float]:
     """从多只基金的新闻分析结果中提取热点行业及热度得分。"""
     from src.news.sentiment import extract_sector_keywords
 
+    event_heat = Counter()
     all_news = []
     for nr in news_results or []:
+        for event in nr.get("events", []) or []:
+            weight = abs(float(event.get("impact_score", 0) or 0)) + float(event.get("decay_weight", 0) or 0) * 0.2
+            for asset in event.get("affected_assets", [])[:5]:
+                event_heat[asset] += weight
         for item in nr.get("news_list", []):
             all_news.append(item)
 
     sectors = extract_sector_keywords(all_news)
     sector_counts = Counter(sectors)
+    sector_counts.update(event_heat)
     max_count = max(sector_counts.values()) if sector_counts else 1
     return {s: c / max_count for s, c in sector_counts.most_common(10)}
 
@@ -222,9 +232,11 @@ def rank_recommendations(
         ranked.append({
             **c,
             "exposure_cluster": cluster,
+            "portfolio_role": _portfolio_role(cluster),
             "heat_score": round(heat, 4),
             "momentum_score": round(momentum_score, 4),
             "diversification_score": round(diversification, 4),
+            "marginal_benefit": round(diversification * 0.65 + stability * 0.20 + heat * 0.15, 4),
             "score": round(score, 4),
         })
 
@@ -285,8 +297,11 @@ def generate_recommendation_reasons(
             reasons.append("与现有持仓相似度偏高，仅适合作为替代观察")
         if rec.get("diversification_score", 0) >= 0.6:
             reasons.append("分散度评分较好")
+        if rec.get("portfolio_role"):
+            reasons.append(f"组合角色：{rec.get('portfolio_role')}")
 
         rec["reason"] = "；".join(reasons) if reasons else "综合因子得分较高"
+        rec["risks"] = _candidate_risks(rec)
         model = RecommendationCandidate.model_validate(rec)
         validated.append(model.model_dump())
 
@@ -374,6 +389,33 @@ def infer_exposure_cluster(candidate: Dict) -> str:
     if any(kw in text for kw in ["沪深300", "中证500", "中证1000", "上证50", "宽基"]):
         return "broad_beta"
     return "balanced_other"
+
+
+def _portfolio_role(cluster: str) -> str:
+    return {
+        "defensive_income": "防守现金流/降低波动",
+        "value_dividend": "红利价值/低波补充",
+        "overseas": "海外资产/币种分散",
+        "commodity": "商品或通胀对冲",
+        "healthcare": "医药消费防守成长",
+        "growth_manufacturing": "成长制造进攻仓位",
+        "broad_beta": "宽基底仓",
+        "balanced_other": "均衡补充",
+    }.get(cluster, "均衡补充")
+
+
+def _candidate_risks(candidate: Dict) -> List[str]:
+    cluster = candidate.get("exposure_cluster") or infer_exposure_cluster(candidate)
+    risks = {
+        "defensive_income": ["利率上行", "信用利差扩大"],
+        "value_dividend": ["高股息拥挤", "经济修复低于预期"],
+        "overseas": ["海外估值回撤", "汇率波动"],
+        "commodity": ["商品价格反转", "地缘事件降温"],
+        "healthcare": ["政策监管", "研发或集采不确定性"],
+        "growth_manufacturing": ["估值收缩", "交易拥挤", "业绩兑现压力"],
+        "broad_beta": ["市场系统性回撤"],
+    }
+    return risks.get(cluster, ["风格轮动风险"])
 
 
 def _attach_similarity(candidate: Dict, holding_profiles: List[Dict]) -> Dict:

@@ -96,8 +96,7 @@ def compute_fund(
                 continue
 
             nav_date = resolve_nav_date(event.event_date, event.after_1500, settle_delay=settle_delay)
-
-            nav = _match_nav(nav_map, nav_date)
+            nav = float(event.nav) if event.nav else _match_nav(nav_map, nav_date)
             if nav is None or nav <= 0:
                 events_detail.append({
                     "type": "BUY",
@@ -110,7 +109,7 @@ def compute_fund(
                 continue
 
             net_amount = event.amount / (1.0 + fee_rate)
-            new_shares = round(net_amount / nav, 2)
+            new_shares = round(net_amount / nav, 4)
 
             total_shares += new_shares
             total_cost += event.amount
@@ -125,6 +124,7 @@ def compute_fund(
                 "fee_rate": fee_rate,
                 "net_amount": round(net_amount, 2),
                 "nav": round(nav, 4),
+                "nav_source": "transaction" if event.nav else "nav_map",
                 "new_shares": new_shares,
                 "after_1500": event.after_1500,
             })
@@ -193,7 +193,7 @@ def compute_fund(
 
     return {
         "total_cost": round(total_cost, 2),
-        "total_shares": round(total_shares, 2),
+        "total_shares": round(total_shares, 4),
         "current_nav": round(current_nav, 4),
         "current_asset": current_asset,
         "confirmed_pnl": confirmed_pnl,
@@ -244,6 +244,10 @@ def _calc_xirr(cashflows, current_value, today, guess=0.1):
         if abs(dnpv) < 1e-12:
             break
         new_rate = rate - npv / dnpv
+        if isinstance(new_rate, complex):
+            return -0.99
+        if new_rate <= -0.999999:
+            new_rate = -0.99
         if abs(new_rate - rate) < 1e-8:
             rate = new_rate
             break

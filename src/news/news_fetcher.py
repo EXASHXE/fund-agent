@@ -3,13 +3,11 @@ from datetime import date, timedelta
 from src.config.shared import today as _shared_today
 from typing import List, Dict, Tuple
 import hashlib
-import json
-import os
 import re
 
 
 def extract_holding_keywords(fund_code: str, limit: int = 10) -> Tuple[List[str], List[str]]:
-    """从基金真实重仓中提取股票代码和名称关键词，并缓存持仓画像。"""
+    """从基金最新重仓中提取股票代码和名称关键词。"""
     stock_codes = []
     keywords = []
     holding_rows = []
@@ -31,23 +29,8 @@ def extract_holding_keywords(fund_code: str, limit: int = 10) -> Tuple[List[str]
                     })
                     if name and len(name) >= 2:
                         keywords.append(name)
-                _update_holding_profile_cache(fund_code, year, holding_rows)
                 break  # 使用最新可用的数据
         except Exception:
-            cached = _load_holding_profile_cache(fund_code)
-            if cached:
-                holding_rows = cached.get("holdings", [])[:limit]
-                stock_codes = [
-                    h.get("stock_code", "")
-                    for h in holding_rows
-                    if re.fullmatch(r"\d{6}", str(h.get("stock_code", "")))
-                ]
-                keywords = [
-                    h.get("stock_name", "")
-                    for h in holding_rows
-                    if len(str(h.get("stock_name", ""))) >= 2
-                ]
-                break
             continue
 
     # 去重且限制数量，优先保留前 limit 个（按持仓权重排序）
@@ -72,7 +55,10 @@ def build_news_search_profile(
     代码只提供真实重仓、基金名和少量兜底词；行业链条和扩展关键词应由
     接入 skill 的 agent 基于这些证据自主判断后通过 keywords 传入。
     """
-    stock_codes, stock_keywords = extract_holding_keywords(fund_code, limit=limit)
+    if agent_keywords:
+        stock_codes, stock_keywords = [], []
+    else:
+        stock_codes, stock_keywords = extract_holding_keywords(fund_code, limit=limit)
     profile = {
         "fund_code": fund_code,
         "fund_name": fund_name,
@@ -256,50 +242,6 @@ def _normalize_company_name(name: str) -> str:
         if name.endswith(suffix):
             name = name[:-len(suffix)].strip()
     return name
-
-
-def _holding_cache_file() -> str:
-    root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-    path = os.path.join(root, "data", "cache")
-    os.makedirs(path, exist_ok=True)
-    return os.path.join(path, "fund_holding_profiles.json")
-
-
-def _load_all_holding_profiles() -> Dict:
-    path = _holding_cache_file()
-    if not os.path.exists(path):
-        return {}
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception:
-        return {}
-
-
-def _load_holding_profile_cache(fund_code: str) -> Dict:
-    return _load_all_holding_profiles().get(str(fund_code).zfill(6), {})
-
-
-def _update_holding_profile_cache(fund_code: str, year: str, holdings: List[Dict]):
-    if not holdings:
-        return
-    profiles = _load_all_holding_profiles()
-    key = str(fund_code).zfill(6)
-    signature = hashlib.md5(
-        json.dumps(holdings, ensure_ascii=False, sort_keys=True).encode()
-    ).hexdigest()
-    old = profiles.get(key, {})
-    if old.get("signature") == signature:
-        return
-    profiles[key] = {
-        "fund_code": key,
-        "year": year,
-        "updated_at": _shared_today().isoformat(),
-        "signature": signature,
-        "holdings": holdings,
-    }
-    with open(_holding_cache_file(), "w", encoding="utf-8") as f:
-        json.dump(profiles, f, ensure_ascii=False, indent=2)
 
 
 def _parse_date(date_str: str) -> date:

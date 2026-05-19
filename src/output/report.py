@@ -23,6 +23,8 @@ def generate_report(
     unscores: List[Dict] = None,
     workflow_context: Dict = None,
     inter_recommendation_correlations: Dict = None,
+    agent_decisions: Dict = None,
+    agent_request: Dict = None,
 ) -> str:
     """生成完整的 Markdown 诊断报告。"""
     lines = []
@@ -32,6 +34,7 @@ def generate_report(
         all_funds = all_funds + unscores
 
     lines.append(report_header(len(all_funds)))
+    lines.append(_render_tldr(scores, holdings_data, news_data, recommendations, agent_decisions))
 
     # === 持仓总览 ===
     if holdings_data:
@@ -52,7 +55,7 @@ def generate_report(
         lines.append("")
 
     if workflow_context:
-        lines.append(_render_workflow_focus(workflow_context, holdings_data, scores, news_data))
+        lines.append(_render_workflow_focus(workflow_context, holdings_data, scores, news_data, agent_decisions))
 
     # === 资金分配总览 ===
     if holdings_data:
@@ -100,8 +103,12 @@ def generate_report(
 
     for s in scores:
         lines.append(f"### {s['fund_name']}（{s['fund_code']}）")
+        decision = (agent_decisions or {}).get("fund_scores", {}).get(s["fund_code"], {})
+        display_score = decision.get("final_score", s["composite_score"])
+        display_recommendation = decision.get("recommendation", s["recommendation"])
+        display_action = decision.get("action", s["action_logic"])
         lines.append(f"- **数据完整度**：{s['data_completeness']}")
-        lines.append(f"- **综合评分**：{s['composite_score']}/100（{s['score_level_emoji']}）")
+        lines.append(f"- **综合评分**：{display_score}/100（{_decision_level_emoji(decision.get('level'), s['score_level_emoji'])}）")
         lines.append("")
 
         meso = str(s["meso_score"]) if s["meso_score"] is not None else "N/A"
@@ -109,9 +116,9 @@ def generate_report(
 
         lines.append("| 维度 | 得分 | 满分 | 权重 | 关键依据 |")
         lines.append("|------|------|------|------|---------|")
-        lines.append(f"| 宏观 | {s['macro_score']} | 20 | 20% | {s['macro_basis']} |")
-        lines.append(f"| 中观 | {meso} | 30 | 30% | {meso_basis} |")
-        lines.append(f"| 微观 | {s['micro_score']} | 50 | 50% | {s['micro_basis']} |")
+        lines.append(f"| 宏观 | {decision.get('macro_score', s['macro_score'])} | 20 | 20% | {s['macro_basis']} |")
+        lines.append(f"| 中观 | {decision.get('meso_score', meso)} | 30 | 30% | {meso_basis} |")
+        lines.append(f"| 微观 | {decision.get('micro_score', s['micro_score'])} | 50 | 50% | {s['micro_basis']} |")
         lines.append("")
 
         # 操作建议 + 具体金额
@@ -121,7 +128,7 @@ def generate_report(
 
         lines.append("| 项目 | 内容 |")
         lines.append("|------|------|")
-        lines.append(f"| **结论** | {s['recommendation']} |")
+        lines.append(f"| **结论** | {display_recommendation} |")
         if fund_detail:
             lines.append(f"| **持仓市值** | ¥{fund_detail['current_value']:,.2f} |")
             lines.append(f"| **浮动盈亏** | ¥{fund_detail['profit']:+,.2f}（{fund_detail['return_pct']:+.2f}%）|")
@@ -133,9 +140,14 @@ def generate_report(
                 f"({s.get('score_delta', 0):+d})；历史峰值 {s.get('peak_score')}，"
                 f"较峰值回落 {s.get('drop_from_peak', 0)} 分 |"
             )
-        lines.append(f"| **行动逻辑** | {s['action_logic']} |")
-        if s.get("agent_review_required"):
-            lines.append("| **评分性质** | 规则初稿；接入 skill 的 agent 需结合新闻、大盘和持仓成本做最终校准 |")
+        lines.append(f"| **行动逻辑** | {display_action} |")
+        if decision:
+            if decision.get("rationale"):
+                lines.append(f"| **Agent评定依据** | {'；'.join(decision.get('rationale', [])[:4])} |")
+            if decision.get("triggers"):
+                lines.append(f"| **触发条件** | {'；'.join(decision.get('triggers', [])[:4])} |")
+        elif s.get("agent_review_required"):
+            lines.append("| **评分性质** | 规则初稿；尚未提供 agent 前置决策 JSON |")
         if s.get("annual_volatility"):
             lines.append(f"| **年化波动率** | {s['annual_volatility']:.2f}% |")
         if s.get("max_drawdown_3y"):
@@ -261,24 +273,36 @@ def generate_report(
                 f"| {st.get('risk_driver', '待 agent 结合当前局势判断')} |"
             )
         lines.append("")
-        lines.append("> 上表是基于持仓暴露生成的压力测试初稿，不是最终结论；agent 需结合当前宏观、行业新闻和仓位金额重估冲击幅度。")
+        if agent_decisions and agent_decisions.get("stress_tests"):
+            lines.append("")
+            lines.append("**Agent 压力测试结论：**")
+            for item in agent_decisions.get("stress_tests", []):
+                lines.append(
+                    f"- {item.get('scenario', '')}：影响 {', '.join(item.get('affected_funds', []))}，"
+                    f"回撤区间 {item.get('impact_range_pct', '')}，金额区间 {item.get('impact_amount_range', '')}；"
+                    f"{item.get('action', '')}"
+                )
+        else:
+            lines.append("> 上表是基于持仓暴露生成的压力测试初稿；尚未提供 agent 前置压力测试决策。")
         lines.append("")
 
     # === 新闻资讯分析 ===
     lines.append("---")
     lines.append("## 新闻资讯分析")
     lines.append("")
-    lines.append(_render_news_section(news_data or [], scores))
+    lines.append(_render_news_section(news_data or [], scores, agent_decisions))
     lines.append("")
 
     # === 推荐基金 ===
     lines.append("---")
     lines.append("## 推荐基金")
     lines.append("")
-    if recommendations:
+    has_agent_recommendations = agent_decisions is not None and "recommendations" in agent_decisions
+    final_recs = agent_decisions.get("recommendations", []) if has_agent_recommendations else recommendations
+    if final_recs:
         lines.append("| # | 代码 | 名称 | 主题 | 综合分 | 近1月 | 持仓相似度 | 分散度 | 推荐理由 |")
         lines.append("|------|------|------|------|------|------|-----------|--------|---------|")
-        for i, rec in enumerate(recommendations):
+        for i, rec in enumerate(final_recs):
             ret_1m = rec.get("return_1m")
             ret_text = f"{ret_1m:+.2f}%" if isinstance(ret_1m, (int, float)) else "N/A"
             lines.append(
@@ -287,14 +311,16 @@ def generate_report(
                 f"| {rec.get('score', 0):.3f} | {ret_text} "
                 f"| {rec.get('max_similarity', 0):.2f} "
                 f"| {rec.get('diversification_score', 0):.2f} "
-                f"| {rec.get('reason', '')} |"
+                f"| {rec.get('reason', rec.get('portfolio_role', ''))} |"
             )
         lines.append("")
         if inter_recommendation_correlations and inter_recommendation_correlations.get("warnings"):
             lines.append("> 推荐候选已做内部相似度约束；高相关矩阵不展示，避免把内部筛选工具误读为投资结论。")
             lines.append("")
     else:
-        if recommendation_status == "skipped":
+        if has_agent_recommendations:
+            lines.append("- 本次 agent 未给出最终推荐；规则候选未自动回填，避免违背组合去同质化判断。")
+        elif recommendation_status == "skipped":
             lines.append("- 本次分析跳过推荐模块。若从 UI 生成报告，请取消“跳过推荐”；CLI 请不要传 `--skip-recommend`。")
         else:
             lines.append("- 本次未生成推荐候选。可能原因：新闻热点不足、AKShare 候选基金接口无结果、网络受限或候选与持仓过滤后为空。")
@@ -306,11 +332,59 @@ def generate_report(
     return "\n".join(lines)
 
 
+def _render_tldr(
+    scores: List[Dict],
+    holdings_data: Dict = None,
+    news_data: List[Dict] = None,
+    recommendations: List[Dict] = None,
+    agent_decisions: Dict = None,
+) -> str:
+    if agent_decisions and agent_decisions.get("portfolio"):
+        p = agent_decisions["portfolio"]
+        lines = ["## TL;DR", ""]
+        if p.get("tldr"):
+            lines.append(f"- {p['tldr']}")
+        if p.get("stance"):
+            lines.append(f"- 组合姿态：{p['stance']}")
+        for action in p.get("key_actions", [])[:4]:
+            lines.append(f"- 动作：{action}")
+        for risk in p.get("risk_focus", [])[:3]:
+            lines.append(f"- 风险：{risk}")
+        lines.append("")
+        return "\n".join(lines)
+    scores = scores or []
+    news_data = news_data or []
+    recommendations = recommendations or []
+    avg_score = sum(s.get("composite_score", 0) for s in scores) / len(scores) if scores else 0
+    weak = [s for s in scores if s.get("score_level") in ("orange", "red")]
+    event_count = sum(len(n.get("events", []) or []) for n in news_data)
+    total_value = (holdings_data or {}).get("total_value", 0)
+    lines = ["## TL;DR", ""]
+    lines.append(
+        f"- 组合规则初评分均值 {avg_score:.1f}/100；"
+        f"偏弱基金 {len(weak)} 只；当前市值 ¥{total_value:,.2f}。"
+    )
+    lines.append(f"- 新闻事件聚类 {event_count} 个；需由 agent 结合重仓链条做最终归因。")
+    lines.append(f"- 推荐候选 {len(recommendations)} 只；已做内部去同质化约束，最终推荐需按组合角色筛选。")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _decision_level_emoji(level, fallback):
+    return {
+        "green": "🟢",
+        "yellow": "🟡",
+        "orange": "🟠",
+        "red": "🔴",
+    }.get(level, fallback)
+
+
 def _render_workflow_focus(
     workflow_context: Dict,
     holdings_data: Dict = None,
     scores: List[Dict] = None,
     news_data: List[Dict] = None,
+    agent_decisions: Dict = None,
 ) -> str:
     lines = ["---", "## 完整工作流分析", ""]
     lines.append(
@@ -319,7 +393,7 @@ def _render_workflow_focus(
         f"{workflow_context.get('mode_reason', '')}。"
     )
     lines.append("")
-    lines.append(_render_trade_day_focus(workflow_context, holdings_data, scores, news_data))
+    lines.append(_render_trade_day_focus(workflow_context, holdings_data, scores, news_data, agent_decisions))
     lines.append("")
     lines.append(_render_non_trade_day_focus(workflow_context, holdings_data, scores, news_data))
     return "\n".join(lines)
@@ -330,6 +404,7 @@ def _render_trade_day_focus(
     holdings_data: Dict = None,
     scores: List[Dict] = None,
     news_data: List[Dict] = None,
+    agent_decisions: Dict = None,
 ) -> str:
     lines = ["### 交易相关跟踪", ""]
 
@@ -385,7 +460,7 @@ def _render_trade_day_focus(
     lines.append("")
     lines.append(_render_market_brief(scores, news_data))
     lines.append("")
-    lines.append(_render_daily_reasoning(workflow_context, holdings_data, scores))
+    lines.append(_render_daily_reasoning(workflow_context, holdings_data, scores, agent_decisions))
     lines.append("")
     return "\n".join(lines)
 
@@ -417,11 +492,11 @@ def _render_non_trade_day_focus(
         total_value = (holdings_data or {}).get("total_value", 0)
         for fund in funds:
             profit_value = fund.get("week_profit") if fund.get("week_profit") is not None else fund.get("profit", 0)
-            contribution = profit_value / total_profit * 100 if total_profit else 0
+            contribution = _format_profit_contribution(profit_value, total_profit)
             position = fund.get("value", 0) / total_value * 100 if total_value else 0
             lines.append(
                 f"| {fund['code']} | {fund['name']} | {profit_value:+,.2f} "
-                f"| {contribution:+.2f}% | {position:.2f}% |"
+                f"| {contribution} | {position:.2f}% |"
             )
         lines.append("")
 
@@ -452,12 +527,34 @@ def _render_market_brief(scores: List[Dict], news_data: List[Dict]) -> str:
     )
 
 
-def _render_daily_reasoning(workflow_context: Dict, holdings_data: Dict, scores: List[Dict]) -> str:
+def _render_daily_reasoning(
+    workflow_context: Dict,
+    holdings_data: Dict,
+    scores: List[Dict],
+    agent_decisions: Dict = None,
+) -> str:
     top_news = workflow_context.get("top_news") or []
     if not top_news:
         return "- 暂无足够新闻数据解释当日资产变化；优先参考基金净值更新和持仓行业暴露。"
     lines = []
     for item in top_news[:5]:
+        code = item.get("code")
+        decision = (agent_decisions or {}).get("news", {}).get(code, {})
+        if decision:
+            relevance = decision.get("relevance", "")
+            summary = decision.get("summary", "")
+            if relevance == "low":
+                lines.append(
+                    f"- {item.get('name')}（{code}）：Agent判断相关新闻相关性低；"
+                    f"{summary or '不使用规则情绪解释该基金。'}"
+                )
+                continue
+            if summary:
+                impact = decision.get("impact", "mixed")
+                lines.append(
+                    f"- {item.get('name')}（{code}）：Agent研判 {impact}；{summary}"
+                )
+                continue
         sentiment = item.get("sentiment", 0.5)
         tone = "利好/支撑" if sentiment > 0.55 else "利空/拖累" if sentiment < 0.45 else "中性"
         lines.append(
@@ -465,6 +562,13 @@ def _render_daily_reasoning(workflow_context: Dict, holdings_data: Dict, scores:
             f"{item.get('date', '')} {item.get('headline', '')[:80]}"
         )
     return "\n".join(lines)
+
+
+def _format_profit_contribution(profit_value: float, total_profit: float) -> str:
+    if not total_profit:
+        return "+0.00%"
+    contribution = profit_value / abs(total_profit) * 100
+    return f"{contribution:+.2f}%"
 
 
 def _render_rebalance_brief(holdings_data: Dict, scores: List[Dict]) -> str:
@@ -511,7 +615,7 @@ def _render_dca_quality(workflow_context: Dict, holdings_data: Dict, scores: Lis
     return "\n".join(lines)
 
 
-def _render_news_section(news_data: List[Dict], scores: List[Dict]) -> str:
+def _render_news_section(news_data: List[Dict], scores: List[Dict], agent_decisions: Dict = None) -> str:
     """渲染新闻资讯分析板块。"""
     result = []
 
@@ -583,8 +687,32 @@ def _render_news_section(news_data: List[Dict], scores: List[Dict]) -> str:
             result.append("")
             continue
 
+        decision = (agent_decisions or {}).get("news", {}).get(code, {})
         if news_item.get("agent_news_context"):
-            result.append("> 新闻情绪为规则初稿；agent 需要结合重仓公司、产业链位置和最新事件做最终研判。")
+            if decision:
+                result.append("**Agent 新闻研判：**")
+                result.append(f"- 结论：{decision.get('summary', '')}")
+                result.append(f"- 影响：{decision.get('impact', '')}；相关性：{decision.get('relevance', '')}")
+                if decision.get("watch_items"):
+                    result.append(f"- 观察项：{'；'.join(decision.get('watch_items', [])[:4])}")
+            else:
+                result.append("> 新闻情绪为规则初稿；尚未提供 agent 前置新闻研判。")
+            result.append("")
+
+        events = news_item.get("events") or []
+        if events:
+            result.append("**事件聚类：**")
+            result.append("")
+            result.append("| 事件 | 方向 | 影响分 | 时间衰减 | 置信度 | 样本标题 |")
+            result.append("|------|------|-------:|---------:|-------:|----------|")
+            for event in events[:5]:
+                title = "；".join(event.get("sample_titles", [])[:2])
+                result.append(
+                    f"| {event.get('event_name', '')} | {event.get('direction', '')} "
+                    f"| {event.get('impact_score', 0):+.2f} "
+                    f"| {event.get('decay_weight', 0):.2f} "
+                    f"| {event.get('confidence', 0):.2f} | {title[:120]} |"
+                )
             result.append("")
 
         # 情绪趋势（最近 7 天）
@@ -605,7 +733,11 @@ def _render_news_section(news_data: List[Dict], scores: List[Dict]) -> str:
             result.append("")
 
         # 情绪解读
-        if sent_mean > 0.55:
+        if decision and decision.get("relevance") == "low":
+            interpretation = "Agent判断本组新闻与该基金相关性低，不使用规则情绪解读该基金。"
+        elif decision and decision.get("summary"):
+            interpretation = f"Agent综合判断：{decision.get('summary')}"
+        elif sent_mean > 0.55:
             interpretation = "近期相关新闻偏正面，市场对该基金关注度高、舆论环境良好，有助于短期净值表现。"
         elif sent_mean < 0.45:
             interpretation = "近期相关新闻偏负面，需警惕情绪传导至净值的风险。若持仓中已有盈利，可考虑设好止损；定投可适当降低单期金额。"
