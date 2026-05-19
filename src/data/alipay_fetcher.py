@@ -198,7 +198,11 @@ def _qr_login() -> Optional[str]:
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page(viewport={"width": 800, "height": 1000}, device_scale_factor=3)
-        page.goto(BILL_URL, timeout=30000, wait_until="domcontentloaded")
+        page.goto(
+            "https://auth.alipay.com/login/index.htm"
+            "?goto=https%3A%2F%2Fconsumeprod.alipay.com%2Frecord%2Fstandard.htm",
+            timeout=30000, wait_until="networkidle",
+        )
         page.wait_for_timeout(5000)
 
         qr_url = _extract_qr_url_from_page(page)
@@ -347,11 +351,7 @@ def _scrape_alipay_bills(
         page = context.new_page()
 
         try:
-        page.goto(
-            "https://auth.alipay.com/login/index.htm"
-            "?goto=https%3A%2F%2Fconsumeprod.alipay.com%2Frecord%2Fstandard.htm",
-            timeout=30000, wait_until="networkidle",
-        )
+            page.goto(BILL_URL, timeout=30000, wait_until="domcontentloaded")
             page.wait_for_timeout(3000)
 
             current_url = page.url
