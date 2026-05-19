@@ -1,7 +1,9 @@
 """支付宝账单流水抓取、解析、映射与 YAML 合并。"""
+import io
 import json
 import os
 import re
+import subprocess
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -186,37 +188,122 @@ def _has_auth_state() -> bool:
 
 
 def _qr_login() -> Optional[str]:
-    """启动有头浏览器，让用户扫码登录，返回 auth state 文件路径。"""
+    """无头浏览器获取支付宝登录二维码，终端显示，用户扫码后保存登录状态。"""
     try:
         from playwright.sync_api import sync_playwright
     except ImportError:
         return None
 
-    print("[支付宝] 正在启动浏览器，请用支付宝 App 扫描页面二维码登录...")
+    print("[支付宝] 正在获取登录二维码...")
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
-        context = browser.new_context()
-        page = context.new_page()
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page(viewport={"width": 800, "height": 1000}, device_scale_factor=3)
         page.goto(BILL_URL, timeout=30000, wait_until="domcontentloaded")
         page.wait_for_timeout(3000)
 
-        print("[支付宝] 等待扫码登录完成（最多 180 秒）...")
-        for _ in range(180):
+        # Extract QR code URL from canvas element
+        qr_url = _extract_qr_url_from_page(page)
+        if qr_url is None:
+            browser.close()
+            print("[支付宝] 无法获取二维码。请在有桌面的环境运行 fetch-alipay 触发浏览器扫码。")
+            return None
+
+        _display_qr_terminal(qr_url)
+        print("[支付宝] 请用支付宝 App 扫描上方二维码（最多 180 秒）...")
+
+        logged_in = False
+        for seconds in range(180):
             page.wait_for_timeout(1000)
             current_url = page.url
             if "consumeprod" in current_url:
+                logged_in = True
                 break
             if "record" in current_url and "alipay" in current_url:
+                logged_in = True
                 break
-            if "my.alipay.com" in current_url or "personal" in current_url:
+            if "auth" not in current_url and "login" not in current_url and "alipay.com" in current_url:
+                logged_in = True
                 break
+            if seconds % 15 == 14:
+                print(f"  等待中... ({seconds + 1}s)")
+
+        if not logged_in:
+            browser.close()
+            print("[支付宝] 登录超时，未检测到扫码。")
+            return None
 
         page.wait_for_timeout(2000)
         print(f"[支付宝] 登录后 URL: {page.url[:120]}")
+        context = page.context
         context.storage_state(path=AUTH_STATE_FILE)
         browser.close()
         print("[支付宝] 登录成功，已保存登录状态。")
         return AUTH_STATE_FILE
+
+
+def _extract_qr_url_from_page(page) -> Optional[str]:
+    """从支付宝登录页面提取二维码 URL。"""
+    from PIL import Image
+
+    canvas = page.locator("canvas").first
+    box = canvas.bounding_box()
+    if box is None:
+        return None
+
+    clip = {
+        "x": box["x"] - 5,
+        "y": box["y"] - 5,
+        "width": box["width"] + 10,
+        "height": box["height"] + 10,
+    }
+    ss = page.screenshot(clip=clip)
+    img = Image.open(io.BytesIO(ss))
+
+    from pyzbar.pyzbar import decode
+
+    for scale in (2, 3, 4):
+        scaled = img.resize((img.width * scale, img.height * scale), Image.NEAREST)
+        decoded = decode(scaled)
+        if decoded:
+            return decoded[0].data.decode("utf-8")
+
+    gray = img.convert("L")
+    for threshold in (100, 128, 150):
+        binary = gray.point(lambda p: 255 if p > threshold else 0)
+        decoded = decode(binary.resize((480, 480), Image.NEAREST))
+        if decoded:
+            return decoded[0].data.decode("utf-8")
+
+    return None
+
+
+def _display_qr_terminal(qr_url: str):
+    """在终端用 qrencode 显示二维码。"""
+    # Try qrencode CLI first
+    try:
+        proc = subprocess.run(
+            ["qrencode", "-t", "ANSIUTF8", qr_url],
+            capture_output=True, text=True, timeout=5,
+        )
+        if proc.returncode == 0 and proc.stdout.strip():
+            print("\n" + proc.stdout + "\n")
+            return
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        pass
+
+    # Fallback: Python qrcode library terminal output
+    try:
+        import qrcode
+        qr = qrcode.QRCode()
+        qr.add_data(qr_url)
+        qr.make(fit=True)
+        qr.print_ascii()
+        return
+    except ImportError:
+        pass
+
+    # Last resort: just print the URL
+    print(f"[支付宝] 请手动复制以下链接到浏览器打开: {qr_url}")
 
 
 def _ensure_auth() -> Optional[str]:
