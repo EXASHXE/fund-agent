@@ -95,7 +95,7 @@ def compute_fund(
                 })
                 continue
 
-            nav_date = resolve_nav_date(event.event_date, event.after_1500, settle_delay=settle_delay)
+            nav_date = resolve_nav_date(event.event_date, event.after_1500, settle_delay=1)
             nav = float(event.nav) if event.nav else _match_nav(nav_map, nav_date)
             if nav is None or nav <= 0:
                 events_detail.append({
@@ -135,51 +135,16 @@ def compute_fund(
 
             delta = event.actual_shares - total_shares
             delta_pct = abs(delta) / event.actual_shares if event.actual_shares > 0 else 0
-
-            if delta_pct > CALIBRATION_MAX_DELTA_PCT:
-                calibrations_rejected.append({
-                    "date": event.event_date.isoformat(),
-                    "actual_shares": event.actual_shares,
-                    "computed_shares": round(total_shares, 4),
-                    "delta": round(delta, 4),
-                    "delta_pct": round(delta_pct * 100, 2),
-                    "reason": f"偏差 {delta_pct:.2%} 超过 {CALIBRATION_MAX_DELTA_PCT:.0%} 阈值，引擎计算与真实份额不符",
-                })
-                events_detail.append({
-                    "type": "CALIBRATE",
-                    "status": "REJECTED",
-                    "date": event.event_date.isoformat(),
-                    "actual_shares": event.actual_shares,
-                    "computed_shares": round(total_shares, 4),
-                    "delta": round(delta, 4),
-                    "delta_pct": round(delta_pct * 100, 2),
-                })
-            else:
-                prev_shares = total_shares
-                total_shares = event.actual_shares
-                if prev_shares > 0:
-                    prev_cost = total_cost
-                    total_cost = round(total_cost * (total_shares / prev_shares), 2)
-                    cost_delta = round(total_cost - prev_cost, 2)
-                else:
-                    cost_delta = 0.0
-                calibrations_applied.append({
-                    "date": event.event_date.isoformat(),
-                    "actual_shares": event.actual_shares,
-                    "computed_shares": round(event.actual_shares - delta, 4),
-                    "delta": round(delta, 4),
-                    "delta_pct": round(delta_pct * 100, 2),
-                    "cost_adjusted": cost_delta,
-                })
-                events_detail.append({
-                    "type": "CALIBRATE",
-                    "status": "APPLIED",
-                    "date": event.event_date.isoformat(),
-                    "actual_shares": event.actual_shares,
-                    "prev_shares": round(event.actual_shares - delta, 4),
-                    "delta": round(delta, 4),
-                    "delta_pct": round(delta_pct * 100, 2),
-                })
+            events_detail.append({
+                "type": "CALIBRATE",
+                "status": "DIAGNOSTIC_ONLY",
+                "date": event.event_date.isoformat(),
+                "actual_shares": event.actual_shares,
+                "computed_shares": round(total_shares, 4),
+                "delta": round(delta, 4),
+                "delta_pct": round(delta_pct * 100, 2),
+                "reason": "真实份额只用于诊断偏差，不参与份额或成本计算",
+            })
 
     current_asset = round(total_shares * current_nav, 2)
     confirmed_pnl = round(current_asset - total_cost, 2)
