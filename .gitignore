@@ -1,6 +1,6 @@
 # 个人数据
-.alipay-cookies.json
 .alipay-auth-state.json
+.alipay-config.json
 fund-portfolio.yaml
 fund-portfolio.yaml.*.bak
 fund-info.txt

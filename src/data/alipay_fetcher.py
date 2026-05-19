@@ -1,18 +1,17 @@
 """支付宝账单流水抓取、解析、映射与 YAML 合并。"""
-import io
 import json
 import os
 import re
-import subprocess
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-COOKIE_FILE = ".alipay-cookies.json"
 AUTH_STATE_FILE = ".alipay-auth-state.json"
+ALIPAY_CONFIG_FILE = ".alipay-config.json"
 BILL_URL = "https://consumeprod.alipay.com/record/standard.htm"
 SEARCH_KEYWORD = "蚂蚁财富"
 DAYS_LOOKBACK = 30
+SMS_CODE_FILE = "/tmp/alipay_sms.txt"
 
 
 def _extract_core_name(full_name: str) -> str:
@@ -21,6 +20,9 @@ def _extract_core_name(full_name: str) -> str:
     if m:
         return m.group(1).strip()
     return full_name.strip()
+
+
+# ── Record parsing ──
 
 
 def parse_transaction_record(text: str, today: date) -> Optional[Dict[str, Any]]:
@@ -87,6 +89,9 @@ def parse_transaction_record(text: str, today: date) -> Optional[Dict[str, Any]]
         "status": status,
         "after_1500": hour >= 15,
     }
+
+
+# ── Fund mapping ──
 
 
 def map_fund_name_to_code(
@@ -172,11 +177,11 @@ def merge_purchases_to_yaml(
     return stats
 
 
-# ── Auth state management (Playwright storage_state) ──
+# ── Auth state management ──
 
 
 def _has_auth_state() -> bool:
-    """检查是否有有效的登录状态文件。"""
+    """检查是否有有效的登录状态文件（24h 内）。"""
     f = Path(AUTH_STATE_FILE)
     if not f.exists():
         return False
@@ -187,141 +192,158 @@ def _has_auth_state() -> bool:
         return False
 
 
-def _qr_login() -> Optional[str]:
-    """无头浏览器获取支付宝登录二维码，终端显示，用户扫码后保存登录状态。"""
+def _load_phone() -> Optional[str]:
+    """从配置文件读取手机号。"""
+    if not os.path.exists(ALIPAY_CONFIG_FILE):
+        print(f"[支付宝] 缺少 {ALIPAY_CONFIG_FILE}，请创建: {{\"phone\": \"138xxxx1234\"}}")
+        return None
+    try:
+        with open(ALIPAY_CONFIG_FILE, "r") as f:
+            data = json.load(f)
+        phone = data.get("phone", "").strip()
+        if not phone:
+            print(f"[支付宝] {ALIPAY_CONFIG_FILE} 中 phone 为空")
+        return phone if phone else None
+    except Exception as e:
+        print(f"[支付宝] 读取 {ALIPAY_CONFIG_FILE} 失败: {e}")
+        return None
+
+
+def _wait_for_sms_code(timeout_seconds: int = 120) -> Optional[str]:
+    """轮询 /tmp/alipay_sms.txt 直到用户写入验证码。"""
+    if os.path.exists(SMS_CODE_FILE):
+        os.remove(SMS_CODE_FILE)
+
+    print(f"[支付宝] 验证码已发送，请在 {SMS_CODE_FILE} 中写入验证码（或直接告知 agent）")
+    print(f"[支付宝] 等待验证码...")
+
+    for _ in range(timeout_seconds):
+        if os.path.exists(SMS_CODE_FILE):
+            try:
+                with open(SMS_CODE_FILE, "r") as f:
+                    code = f.read().strip()
+                if code:
+                    os.remove(SMS_CODE_FILE)
+                    return code
+            except Exception:
+                pass
+        from time import sleep
+        sleep(2)
+
+    print("[支付宝] 验证码输入超时")
+    return None
+
+
+def _sms_login() -> Optional[str]:
+    """短信验证码登录支付宝，返回 auth state 文件路径或 None。"""
     try:
         from playwright.sync_api import sync_playwright
     except ImportError:
         return None
 
-    print("[支付宝] 正在获取登录二维码...")
+    phone = _load_phone()
+    if phone is None:
+        return None
+
+    print(f"[支付宝] 正在登录（手机号 {phone[:3]}****{phone[-4:]}）...")
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
-        page = browser.new_page(viewport={"width": 800, "height": 1000}, device_scale_factor=3)
+        page = browser.new_page(viewport={"width": 800, "height": 1000})
         page.goto(
             "https://auth.alipay.com/login/index.htm"
-            "?goto=https%3A%2F%2Fconsumeprod.alipay.com%2Frecord%2Fstandard.htm",
+            "?goto=https://consumeprod.alipay.com/record/standard.htm",
             timeout=30000, wait_until="networkidle",
         )
-        page.wait_for_timeout(5000)
+        page.wait_for_timeout(3000)
 
-        qr_url = _extract_qr_url_from_page(page)
-        if qr_url is None:
+        # Click "验证码登录" tab
+        try:
+            sms_tab = page.locator("text=验证码登录").first
+            sms_tab.click()
+            page.wait_for_timeout(1000)
+        except Exception:
+            print("[支付宝] 未找到「验证码登录」入口")
             browser.close()
-            print("[支付宝] 无法获取二维码。请在有桌面的环境运行 fetch-alipay 触发浏览器扫码。")
             return None
 
-        _display_qr_terminal(qr_url)
-        print("[支付宝] 请用支付宝 App 扫描上方二维码（最多 180 秒）...")
+        # Enter phone number
+        try:
+            phone_input = page.locator("input[type=tel], input[placeholder*=手机], input[placeholder*=号码]").first
+            phone_input.fill(phone)
+            page.wait_for_timeout(500)
+        except Exception as e:
+            print(f"[支付宝] 输入手机号失败: {e}")
+            browser.close()
+            return None
 
-        logged_in = False
-        for seconds in range(180):
+        # Click "获取短信验证码"
+        try:
+            send_btn = page.locator("text=获取短信验证码").first
+            if send_btn.is_visible():
+                send_btn.click()
+                page.wait_for_timeout(1000)
+            else:
+                # Fallback: any button/link with "获取" or "发送"
+                send_btn = page.locator("button:has-text('获取'), button:has-text('发送'), a:has-text('获取')").first
+                send_btn.click()
+                page.wait_for_timeout(1000)
+        except Exception as e:
+            print(f"[支付宝] 发送验证码失败: {e}")
+            browser.close()
+            return None
+
+        # Wait for SMS code
+        sms_code = _wait_for_sms_code(timeout_seconds=120)
+        if sms_code is None:
+            browser.close()
+            return None
+
+        # Enter verification code
+        try:
+            code_input = page.locator("input[placeholder*=验证码], input[placeholder*=6位], input[maxlength='6']").first
+            code_input.fill(sms_code)
+            page.wait_for_timeout(500)
+        except Exception as e:
+            print(f"[支付宝] 输入验证码失败: {e}")
+            browser.close()
+            return None
+
+        # Click login button
+        try:
+            login_btn = page.locator("button:has-text('登录'), button[type=submit]").first
+            login_btn.click()
+        except Exception:
+            pass
+
+        # Wait for redirect
+        for s in range(30):
             page.wait_for_timeout(1000)
             current_url = page.url
-            # Login succeeds when URL leaves auth.alipay.com/login
             if "auth.alipay.com/login" not in current_url:
-                logged_in = True
-                break
-            if seconds % 15 == 14:
-                print(f"  等待中... ({seconds + 1}s)")
+                page.wait_for_timeout(1000)
+                page.context.storage_state(path=AUTH_STATE_FILE)
+                browser.close()
+                print(f"[支付宝] 登录成功！URL: {current_url[:120]}")
+                return AUTH_STATE_FILE
 
-        if not logged_in:
-            browser.close()
-            print("[支付宝] 登录超时，未检测到扫码。")
-            return None
-
-        page.wait_for_timeout(2000)
-        print(f"[支付宝] 登录后 URL: {page.url[:120]}")
-        context = page.context
-        context.storage_state(path=AUTH_STATE_FILE)
         browser.close()
-        print("[支付宝] 登录成功，已保存登录状态。")
-        return AUTH_STATE_FILE
-
-
-def _extract_qr_url_from_page(page) -> Optional[str]:
-    """从支付宝登录页面提取二维码 URL。"""
-    from PIL import Image
-
-    try:
-        canvas = page.locator("canvas").first
-        canvas.wait_for(state="attached", timeout=10000)
-    except Exception:
+        print("[支付宝] 登录失败（页面未跳转），可能验证码错误")
         return None
-
-    box = canvas.bounding_box()
-    if box is None:
-        return None
-
-    clip = {
-        "x": box["x"] - 5,
-        "y": box["y"] - 5,
-        "width": box["width"] + 10,
-        "height": box["height"] + 10,
-    }
-    ss = page.screenshot(clip=clip)
-    img = Image.open(io.BytesIO(ss))
-
-    from pyzbar.pyzbar import decode
-
-    for scale in (2, 3, 4):
-        scaled = img.resize((img.width * scale, img.height * scale), Image.NEAREST)
-        decoded = decode(scaled)
-        if decoded:
-            return decoded[0].data.decode("utf-8")
-
-    gray = img.convert("L")
-    for threshold in (100, 128, 150):
-        binary = gray.point(lambda p: 255 if p > threshold else 0)
-        decoded = decode(binary.resize((480, 480), Image.NEAREST))
-        if decoded:
-            return decoded[0].data.decode("utf-8")
-
-    return None
-
-
-def _display_qr_terminal(qr_url: str):
-    """在终端用 qrencode 显示二维码。"""
-    # Try qrencode CLI first
-    try:
-        proc = subprocess.run(
-            ["qrencode", "-t", "ANSIUTF8", qr_url],
-            capture_output=True, text=True, timeout=5,
-        )
-        if proc.returncode == 0 and proc.stdout.strip():
-            print("\n" + proc.stdout + "\n")
-            return
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        pass
-
-    # Fallback: Python qrcode library terminal output
-    try:
-        import qrcode
-        qr = qrcode.QRCode()
-        qr.add_data(qr_url)
-        qr.make(fit=True)
-        qr.print_ascii()
-        return
-    except ImportError:
-        pass
-
-    # Last resort: just print the URL
-    print(f"[支付宝] 请手动复制以下链接到浏览器打开: {qr_url}")
 
 
 def _ensure_auth() -> Optional[str]:
-    """确保有有效的登录状态，过期或不存在则触发扫码登录。返回 auth state 文件路径或 None。"""
+    """确保有有效的登录状态，过期或不存在则触发短信登录。"""
     if _has_auth_state():
         return AUTH_STATE_FILE
 
     if os.path.exists(AUTH_STATE_FILE):
         os.remove(AUTH_STATE_FILE)
 
-    print("[支付宝] 登录状态不存在或已过期，启动扫码登录...")
-    auth_path = _qr_login()
-    if auth_path is None:
-        print("[支付宝] 扫码登录失败或被取消，跳过抓取。")
-    return auth_path
+    print("[支付宝] 登录状态不存在或已过期，启动短信验证码登录...")
+    return _sms_login()
+
+
+# ── Browser scraping ──
 
 
 def _scrape_alipay_bills(
@@ -354,9 +376,8 @@ def _scrape_alipay_bills(
             page.goto(BILL_URL, timeout=30000, wait_until="domcontentloaded")
             page.wait_for_timeout(3000)
 
-            current_url = page.url
-            if "auth.alipay.com/login" in current_url:
-                print("[支付宝] 登录状态已过期，将在下次运行时重新扫码登录。")
+            if "auth.alipay.com/login" in page.url:
+                print("[支付宝] 登录状态已过期，将在下次运行时重新登录。")
                 if os.path.exists(AUTH_STATE_FILE):
                     os.remove(AUTH_STATE_FILE)
                 return [], {"unmapped": [], "auth_expired": True}
@@ -364,7 +385,9 @@ def _scrape_alipay_bills(
             page.wait_for_timeout(2000)
 
             try:
-                search_input = page.locator("input[placeholder*=搜索], input[type=search], input.search-input").first
+                search_input = page.locator(
+                    "input[placeholder*=搜索], input[type=search], input.search-input"
+                ).first
                 if search_input.is_visible():
                     search_input.fill(SEARCH_KEYWORD)
                     page.wait_for_timeout(1500)
@@ -376,13 +399,14 @@ def _scrape_alipay_bills(
             today = date.today()
             cutoff = today - timedelta(days=DAYS_LOOKBACK)
             page_num = 0
-            max_pages = 200
 
-            while page_num < max_pages:
+            while page_num < 200:
                 page_num += 1
                 page.wait_for_timeout(1500)
 
-                rows = page.locator("tr, .record-item, .bill-item, .list-item, li[class*=record]").all()
+                rows = page.locator(
+                    "tr, .record-item, .bill-item, .list-item, li[class*=record]"
+                ).all()
                 for row in rows:
                     try:
                         text_content = row.inner_text().strip()
@@ -418,15 +442,14 @@ def _scrape_alipay_bills(
             context.close()
             browser.close()
 
-    stats: Dict[str, Any] = {"unmapped": list(unmapped) if unmapped else []}
-    return records, stats
+    return records, {"unmapped": list(unmapped) if unmapped else []}
 
 
-# ── Main entry ──
+# ── Cookie string auth (fallback) ──
 
 
 def _save_auth_from_cookie_string(cookie_string: str):
-    """将 cookie 字符串 (key=value; ...) 转换为 Playwright storage_state 格式并保存。"""
+    """将 cookie 字符串转为 Playwright storage_state 格式并保存。"""
     import time
     cookies = []
     future_expiry = int(time.time()) + 86400
@@ -452,13 +475,11 @@ def _save_auth_from_cookie_string(cookie_string: str):
     print(f"[支付宝] 已从 cookie 字符串保存 {len(cookies)} 个 cookies。")
 
 
+# ── Main entry ──
+
+
 def fetch_and_merge(config_path: str, cookie_string: Optional[str] = None) -> Dict[str, Any]:
-    """主入口：抓取支付宝流水并合并到 YAML。
-    
-    Args:
-        config_path: fund-portfolio.yaml 路径
-        cookie_string: 可选，直接提供 cookie 字符串（key=value; ...）跳过 QR 登录
-    """
+    """主入口：抓取支付宝流水并合并到 YAML。"""
     result: Dict[str, Any] = {
         "status": "skipped",
         "new_total": 0,
@@ -483,7 +504,10 @@ def fetch_and_merge(config_path: str, cookie_string: Optional[str] = None) -> Di
     if not holdings:
         return result
 
-    config_holdings = [{"code": str(h.get("code", "")), "name": str(h.get("name", ""))} for h in holdings]
+    config_holdings = [
+        {"code": str(h.get("code", "")), "name": str(h.get("name", ""))}
+        for h in holdings
+    ]
 
     print("\n[Layer 0] 支付宝流水抓取...")
     records, scrape_stats = _scrape_alipay_bills(config_holdings)
