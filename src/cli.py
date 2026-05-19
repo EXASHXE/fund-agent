@@ -126,6 +126,7 @@ def cmd_analyze(args):
     workflow_context = _build_workflow_context(config, holdings_data, news_data=None)
 
     from src.news.keyword_cache import (
+        CACHE_VERSION,
         default_keyword_cache_path,
         load_valid_keyword_cache,
     )
@@ -148,7 +149,7 @@ def cmd_analyze(args):
         agent_kw = request_agent_keywords_inline(codes, fund_profiles)
         if agent_kw:
             news_keyword_plan = {
-                "cache_version": "news_keyword_profiles.v1",
+                "cache_version": CACHE_VERSION,
                 "holding_codes": sorted(codes),
                 "generated_at": _shared_today().isoformat(),
                 "funds": {
@@ -184,6 +185,10 @@ def cmd_analyze(args):
         workflow_context=workflow_context,
         inter_recommendation_correlations=inter_recommendation_correlations,
     )
+
+    # 后置校验：止盈止损校准 + 合规声明追加
+    from src.output.validator import post_process_report
+    report = post_process_report(report, scores)
 
     report_path = args.output or "report.md"
     with open(report_path, "w", encoding="utf-8") as f:
@@ -1022,11 +1027,6 @@ def main():
         "--news-keyword-cache",
         default=None,
         help="Agent 生成的新闻关键词缓存路径，默认 data/cache/news_keyword_profiles.json",
-    )
-    p_analyze.add_argument(
-        "--news-keyword-request-output",
-        default=None,
-        help="新闻关键词请求 JSON 输出路径，默认 <report>.news_keywords_request.json",
     )
 
     p_fetch = sub.add_parser("fetch", help="仅拉取净值数据")
