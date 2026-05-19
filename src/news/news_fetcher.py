@@ -115,7 +115,8 @@ def fetch_fund_news(
             continue
 
     # 全市场新闻兜底：先抓通用新闻，再用基金/行业/持仓关键词本地过滤。
-    for df, source_hint in _fetch_market_news_frames(ak, days):
+    market_frames = list(_fetch_market_news_frames(ak, days))
+    for df, source_hint in market_frames:
         _append_news_from_df(
             all_news,
             seen,
@@ -125,18 +126,18 @@ def fetch_fund_news(
             include_terms=search_terms,
         )
 
-    # 降级匹配：首轮关键词无命中时，自动缩短关键词重试
+    # 降级匹配：首轮关键词无命中时，缩短关键词复用已缓存帧重试
     if not all_news:
         degraded_terms = _degrade_keywords(search_terms)
         if degraded_terms and degraded_terms != search_terms:
-            for df, source_hint in _fetch_market_news_frames(ak, days):
+            for df, source_hint in market_frames:
                 _append_news_from_df(
                     all_news, seen, df, cutoff,
                     source_hint=source_hint,
                     include_terms=degraded_terms,
                 )
-            all_news.sort(key=lambda x: x.get("date", ""), reverse=True)
 
+    all_news.sort(key=lambda x: x.get("date", ""), reverse=True)
     return all_news
 
 
@@ -231,7 +232,7 @@ def _pick_first(row, names: List[str]) -> str:
 
 
 def _matches_terms(text: str, terms: List[str]) -> bool:
-    """统一字符级关键词匹配。中文按单字包含，英文按小写包含。"""
+    """中英文统一子串匹配。"""
     if not text:
         return False
     text_lower = text.lower()
@@ -245,12 +246,14 @@ def _matches_terms(text: str, terms: List[str]) -> bool:
 
 
 def _degrade_keywords(terms: List[str]) -> List[str]:
-    """关键词降级：截取前2字用于二次扫描。"""
+    """关键词降级：截取前3字用于二次扫描。"""
     degraded = []
     for t in terms:
         t = str(t).strip()
-        if len(t) >= 2:
-            degraded.append(t[:2])
+        if len(t) >= 3:
+            degraded.append(t[:3])
+        elif len(t) == 2:
+            degraded.append(t)
     seen = set()
     result = []
     for kw in degraded:

@@ -117,6 +117,15 @@ class NewsFetcherTest(unittest.TestCase):
         self.assertFalse(_matches_terms("正常文章内容", ["芯片"]))
         self.assertFalse(_matches_terms("regular text no match", ["AI"]))
 
+    def test_degrade_keywords_truncates_to_three_chars(self):
+        from src.news.news_fetcher import _degrade_keywords
+        result = _degrade_keywords(["英伟达", "寒武纪", "消费", "AI"])
+        self.assertIn("英伟达", result)  # 3-char stays intact
+        self.assertIn("寒武纪", result)
+        self.assertIn("消费", result)  # exact 2-char stays intact
+        self.assertIn("AI", result)  # 2-char stays intact
+        self.assertEqual(len(result), 4)
+
 
 if __name__ == "__main__":
     unittest.main()
