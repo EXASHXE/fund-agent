@@ -125,29 +125,57 @@ def fetch_fund_news(
             include_terms=search_terms,
         )
 
-    all_news.sort(key=lambda x: x.get("date", ""), reverse=True)
+    # 降级匹配：首轮关键词无命中时，自动缩短关键词重试
+    if not all_news:
+        degraded_terms = _degrade_keywords(search_terms)
+        if degraded_terms and degraded_terms != search_terms:
+            for df, source_hint in _fetch_market_news_frames(ak, days):
+                _append_news_from_df(
+                    all_news, seen, df, cutoff,
+                    source_hint=source_hint,
+                    include_terms=degraded_terms,
+                )
+            all_news.sort(key=lambda x: x.get("date", ""), reverse=True)
+
     return all_news
 
 
 def _fetch_market_news_frames(ak, days: int):
     frames = []
+
+    # 财联社电报全量流（时效性更强、数据量更大）
+    try:
+        frames.append((ak.stock_telegraph_cls(), "财联社电报全量"))
+    except Exception:
+        pass
+
+    # 财联社分类电报
     for symbol in ["全部", "重点"]:
         try:
             frames.append((ak.stock_info_global_cls(symbol=symbol), f"财联社电报:{symbol}"))
         except Exception:
             pass
+
+    # 行业新闻兜底（申万一级行业覆盖）
+    for industry in ["半导体", "新能源", "医药", "消费", "科技"]:
+        try:
+            frames.append((ak.stock_info_global_cls(symbol=industry), f"行业新闻:{industry}"))
+        except Exception:
+            pass
+
     try:
         frames.append((ak.stock_news_main_cx(), "财新数据通"))
     except Exception:
         pass
 
-    # 央视新闻联播作为宏观兜底，最多回看 3 天，避免请求过多。
+    # 新闻联播（最多回看 3 天）
     for i in range(min(days, 3)):
         d = (_shared_today() - timedelta(days=i)).strftime("%Y%m%d")
         try:
             frames.append((ak.news_cctv(date=d), f"新闻联播:{d}"))
         except Exception:
             pass
+
     return frames
 
 
@@ -203,6 +231,7 @@ def _pick_first(row, names: List[str]) -> str:
 
 
 def _matches_terms(text: str, terms: List[str]) -> bool:
+    """统一字符级关键词匹配。中文按单字包含，英文按小写包含。"""
     if not text:
         return False
     text_lower = text.lower()
@@ -210,14 +239,25 @@ def _matches_terms(text: str, terms: List[str]) -> bool:
         term = str(term).strip()
         if len(term) < 2:
             continue
-        term_lower = term.lower()
-        if len(term) <= 2 and term_lower.isascii():
-            # 1-2 char English terms: boundary via ASCII-only lookbehind/lookahead
-            if re.search(r'(?<![a-z])' + re.escape(term_lower) + r'(?![a-z])', text_lower):
-                return True
-        elif term_lower in text_lower:
+        if term.lower() in text_lower:
             return True
     return False
+
+
+def _degrade_keywords(terms: List[str]) -> List[str]:
+    """关键词降级：截取前2字用于二次扫描。"""
+    degraded = []
+    for t in terms:
+        t = str(t).strip()
+        if len(t) >= 2:
+            degraded.append(t[:2])
+    seen = set()
+    result = []
+    for kw in degraded:
+        if kw not in seen:
+            seen.add(kw)
+            result.append(kw)
+    return result
 
 
 def _fallback_fund_keywords(fund_name: str, fund_type: str = "") -> List[str]:

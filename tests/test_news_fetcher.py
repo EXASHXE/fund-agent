@@ -101,6 +101,22 @@ class NewsFetcherTest(unittest.TestCase):
         self.assertIn("寒武纪", news[0]["title"])
         self.assertEqual(calls, [])
 
+    def test_matches_terms_chinese_short(self):
+        from src.news.news_fetcher import _matches_terms
+        self.assertTrue(_matches_terms("芯片行业迎来利好", ["芯片"]))
+        self.assertTrue(_matches_terms("半导体板块大涨", ["半导体"]))
+        self.assertTrue(_matches_terms("白酒消费回暖", ["白酒"]))
+
+    def test_matches_terms_english_short(self):
+        from src.news.news_fetcher import _matches_terms
+        self.assertTrue(_matches_terms("AI芯片需求爆发", ["AI"]))
+        self.assertTrue(_matches_terms("NVIDIA股价创新高", ["NV"]))
+
+    def test_matches_terms_no_false_positive(self):
+        from src.news.news_fetcher import _matches_terms
+        self.assertFalse(_matches_terms("正常文章内容", ["芯片"]))
+        self.assertFalse(_matches_terms("regular text no match", ["AI"]))
+
 
 if __name__ == "__main__":
     unittest.main()
