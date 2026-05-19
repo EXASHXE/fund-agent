@@ -213,7 +213,7 @@ def _matches_terms(text: str, terms: List[str]) -> bool:
         term_lower = term.lower()
         # Short terms (≤3 chars): require word-boundary match to avoid false positives
         if len(term) <= 3:
-            if _re.search(r'\b' + _re.escape(term_lower) + r'\b', text_lower):
+            if re.search(r'\b' + re.escape(term_lower) + r'\b', text_lower):
                 return True
         elif term_lower in text_lower:
             return True
