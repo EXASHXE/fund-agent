@@ -1239,7 +1239,7 @@ def cmd_snapshot(args):
 def cmd_fetch_alipay(args):
     """从支付宝抓取基金交易流水并合并到 YAML。"""
     from src.data.alipay_fetcher import fetch_and_merge
-    result = fetch_and_merge(args.config, cookie_string=args.alipay_cookie)
+    result = fetch_and_merge(args.config, cookie_string=args.alipay_cookie, debug=args.debug)
     if result["status"] == "ok":
         print(f"\n[fetch-alipay] 成功新增 {result['new_total']} 条交易记录。")
     else:
@@ -1355,6 +1355,7 @@ def main():
     p_fetch_alipay = sub.add_parser("fetch-alipay", help="从支付宝抓取基金交易流水并合并到 YAML")
     p_fetch_alipay.add_argument("-c", "--config", required=True, help="YAML 配置文件路径")
     p_fetch_alipay.add_argument("--alipay-cookie", default=None, help="支付宝 Cookie 字符串 (key=value; ...)，提供后跳过扫码登录")
+    p_fetch_alipay.add_argument("--debug", action="store_true", help="有头浏览器模式（WSLg），可在浏览器中手动输入验证码")
 
     p_ui = sub.add_parser("ui", help="启动交互式管理界面 (Streamlit)")
     p_ui.add_argument("-c", "--config", default="fund-portfolio.yaml", help="YAML 配置文件路径")
