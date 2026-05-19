@@ -215,13 +215,8 @@ def _qr_login() -> Optional[str]:
         for seconds in range(180):
             page.wait_for_timeout(1000)
             current_url = page.url
-            if "consumeprod" in current_url:
-                logged_in = True
-                break
-            if "record" in current_url and "alipay" in current_url:
-                logged_in = True
-                break
-            if "auth" not in current_url and "login" not in current_url and "alipay.com" in current_url:
+            # Login succeeds when URL leaves auth.alipay.com/login
+            if "auth.alipay.com/login" not in current_url:
                 logged_in = True
                 break
             if seconds % 15 == 14:
@@ -352,7 +347,7 @@ def _scrape_alipay_bills(
             page.wait_for_timeout(3000)
 
             current_url = page.url
-            if "auth" in current_url or "login" in current_url or "consumeprod" not in current_url:
+            if "auth.alipay.com/login" in current_url:
                 print("[支付宝] 登录状态已过期，将在下次运行时重新扫码登录。")
                 if os.path.exists(AUTH_STATE_FILE):
                     os.remove(AUTH_STATE_FILE)
