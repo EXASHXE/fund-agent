@@ -1,0 +1,573 @@
+{
+  "request_version": "news_keyword_request.v1",
+  "generated_at": "2026-05-19",
+  "instructions": [
+    "请基于每只基金的真实重仓、行业、基金类型和主题标签，为新闻搜索生成关键词缓存。",
+    "输出必须写入 news_keyword_profiles.json 结构，cache_version 为 news_keyword_profiles.v1。",
+    "每只基金给出 5-12 个高价值关键词，优先公司、产业链、政策、资金、估值和风险事件词。",
+    "不要只使用基金名称里的宽泛行业词；数据缺失时在 rationale 中说明。"
+  ],
+  "holding_codes": [
+    "001198",
+    "008253",
+    "017436",
+    "018380",
+    "021620",
+    "378006"
+  ],
+  "funds": [
+    {
+      "fund_code": "008253",
+      "fund_name": "华宝致远混合(QDII)A",
+      "fund_type": "qdii",
+      "theme": "其他",
+      "style_tags": [
+        "overseas"
+      ],
+      "top_holdings": [
+        {
+          "stock_code": "NVDA",
+          "stock_name": "英伟达",
+          "weight": "7.79"
+        },
+        {
+          "stock_code": "LITE",
+          "stock_name": "Lumentum Holdings Inc",
+          "weight": "7.07"
+        },
+        {
+          "stock_code": "SNDK",
+          "stock_name": "闪迪",
+          "weight": "5.47"
+        },
+        {
+          "stock_code": "MU",
+          "stock_name": "美光科技",
+          "weight": "4.53"
+        },
+        {
+          "stock_code": "AVGO",
+          "stock_name": "博通",
+          "weight": "4.15"
+        },
+        {
+          "stock_code": "GOOG",
+          "stock_name": "谷歌-C",
+          "weight": "3.96"
+        },
+        {
+          "stock_code": "TSM",
+          "stock_name": "台积电",
+          "weight": "3.89"
+        },
+        {
+          "stock_code": "GLW",
+          "stock_name": "康宁",
+          "weight": "2.96"
+        },
+        {
+          "stock_code": "COHR",
+          "stock_name": "Coherent Corp",
+          "weight": "2.66"
+        },
+        {
+          "stock_code": "ASML",
+          "stock_name": "阿斯麦",
+          "weight": "2.36"
+        }
+      ],
+      "sectors": [
+        {
+          "sector": "",
+          "weight": "61.24"
+        },
+        {
+          "sector": "",
+          "weight": "6.55"
+        },
+        {
+          "sector": "",
+          "weight": "3.67"
+        },
+        {
+          "sector": "",
+          "weight": "3.14"
+        },
+        {
+          "sector": "",
+          "weight": "1.52"
+        },
+        {
+          "sector": "",
+          "weight": "1.07"
+        },
+        {
+          "sector": "",
+          "weight": "0.49"
+        }
+      ],
+      "expected_cache_entry": {
+        "keywords": [
+          "重仓公司、产业链、政策、资金、估值关键词"
+        ],
+        "research_lenses": [
+          "这些关键词为什么会影响该基金净值"
+        ],
+        "tags": [
+          "主题或风险标签"
+        ],
+        "rationale": "基于重仓、行业和基金类型的推导说明"
+      }
+    },
+    {
+      "fund_code": "017436",
+      "fund_name": "华宝纳斯达克精选股票(QDII)A",
+      "fund_type": "qdii",
+      "theme": "美股科技",
+      "style_tags": [
+        "overseas"
+      ],
+      "top_holdings": [
+        {
+          "stock_code": "NFLX",
+          "stock_name": "奈飞",
+          "weight": "9.32"
+        },
+        {
+          "stock_code": "NVDA",
+          "stock_name": "英伟达",
+          "weight": "9.28"
+        },
+        {
+          "stock_code": "AAPL",
+          "stock_name": "苹果",
+          "weight": "7.76"
+        },
+        {
+          "stock_code": "MSFT",
+          "stock_name": "微软",
+          "weight": "7.5"
+        },
+        {
+          "stock_code": "AVGO",
+          "stock_name": "博通",
+          "weight": "7.43"
+        },
+        {
+          "stock_code": "TSLA",
+          "stock_name": "特斯拉",
+          "weight": "7.33"
+        },
+        {
+          "stock_code": "GOOG",
+          "stock_name": "谷歌-C",
+          "weight": "6.82"
+        },
+        {
+          "stock_code": "AMZN",
+          "stock_name": "亚马逊",
+          "weight": "6.34"
+        },
+        {
+          "stock_code": "META",
+          "stock_name": "Meta Platforms Inc-A",
+          "weight": "5.77"
+        },
+        {
+          "stock_code": "MRVL",
+          "stock_name": "迈威尔科技",
+          "weight": "4.96"
+        }
+      ],
+      "sectors": [
+        {
+          "sector": "",
+          "weight": "43.44"
+        },
+        {
+          "sector": "",
+          "weight": "28.37"
+        },
+        {
+          "sector": "",
+          "weight": "19.24"
+        },
+        {
+          "sector": "",
+          "weight": "0.83"
+        },
+        {
+          "sector": "",
+          "weight": "0.33"
+        }
+      ],
+      "expected_cache_entry": {
+        "keywords": [
+          "重仓公司、产业链、政策、资金、估值关键词"
+        ],
+        "research_lenses": [
+          "这些关键词为什么会影响该基金净值"
+        ],
+        "tags": [
+          "主题或风险标签"
+        ],
+        "rationale": "基于重仓、行业和基金类型的推导说明"
+      }
+    },
+    {
+      "fund_code": "001198",
+      "fund_name": "东方惠灵活配置混合A",
+      "fund_type": "domestic",
+      "theme": "其他",
+      "style_tags": [
+        "balanced"
+      ],
+      "top_holdings": [
+        {
+          "stock_code": "688256",
+          "stock_name": "寒武纪",
+          "weight": "8.98"
+        },
+        {
+          "stock_code": "300567",
+          "stock_name": "精测电子",
+          "weight": "8.82"
+        },
+        {
+          "stock_code": "688072",
+          "stock_name": "拓荆科技",
+          "weight": "8.77"
+        },
+        {
+          "stock_code": "688123",
+          "stock_name": "聚辰股份",
+          "weight": "7.94"
+        },
+        {
+          "stock_code": "002371",
+          "stock_name": "北方华创",
+          "weight": "7.91"
+        },
+        {
+          "stock_code": "603986",
+          "stock_name": "兆易创新",
+          "weight": "7.42"
+        },
+        {
+          "stock_code": "688766",
+          "stock_name": "普冉股份",
+          "weight": "7.29"
+        },
+        {
+          "stock_code": "688012",
+          "stock_name": "中微公司",
+          "weight": "6.25"
+        },
+        {
+          "stock_code": "688120",
+          "stock_name": "华海清科",
+          "weight": "5.84"
+        },
+        {
+          "stock_code": "688409",
+          "stock_name": "富创精密",
+          "weight": "5.59"
+        }
+      ],
+      "sectors": [
+        {
+          "sector": "",
+          "weight": "85.44"
+        },
+        {
+          "sector": "",
+          "weight": "8.98"
+        },
+        {
+          "sector": "",
+          "weight": "0.01"
+        },
+        {
+          "sector": "",
+          "weight": "0.01"
+        }
+      ],
+      "expected_cache_entry": {
+        "keywords": [
+          "重仓公司、产业链、政策、资金、估值关键词"
+        ],
+        "research_lenses": [
+          "这些关键词为什么会影响该基金净值"
+        ],
+        "tags": [
+          "主题或风险标签"
+        ],
+        "rationale": "基于重仓、行业和基金类型的推导说明"
+      }
+    },
+    {
+      "fund_code": "378006",
+      "fund_name": "摩根全球新兴市场混合(QDII)",
+      "fund_type": "qdii",
+      "theme": "新兴市场",
+      "style_tags": [
+        "overseas"
+      ],
+      "top_holdings": [
+        {
+          "stock_code": "TSM",
+          "stock_name": "台积电",
+          "weight": "10.3"
+        },
+        {
+          "stock_code": "005930",
+          "stock_name": "三星电子",
+          "weight": "7.55"
+        },
+        {
+          "stock_code": "00700",
+          "stock_name": "腾讯控股",
+          "weight": "6.59"
+        },
+        {
+          "stock_code": "000660",
+          "stock_name": "SK海力士",
+          "weight": "4.4"
+        },
+        {
+          "stock_code": "09988",
+          "stock_name": "阿里巴巴-W",
+          "weight": "2.9"
+        },
+        {
+          "stock_code": "SBID",
+          "stock_name": "印度国家银行",
+          "weight": "2.23"
+        },
+        {
+          "stock_code": "RIGD",
+          "stock_name": "印度瑞来斯实业",
+          "weight": "1.8"
+        },
+        {
+          "stock_code": "ITUB4",
+          "stock_name": "ITAU UNIBANCO HOLDING S-PREF",
+          "weight": "1.68"
+        },
+        {
+          "stock_code": "HDB",
+          "stock_name": "HDFC银行",
+          "weight": "1.6"
+        },
+        {
+          "stock_code": "01398",
+          "stock_name": "工商银行",
+          "weight": "1.57"
+        }
+      ],
+      "sectors": [
+        {
+          "sector": "",
+          "weight": "27.2"
+        },
+        {
+          "sector": "",
+          "weight": "26.83"
+        },
+        {
+          "sector": "",
+          "weight": "10.98"
+        },
+        {
+          "sector": "",
+          "weight": "9.04"
+        },
+        {
+          "sector": "",
+          "weight": "8.62"
+        },
+        {
+          "sector": "",
+          "weight": "6.24"
+        },
+        {
+          "sector": "",
+          "weight": "2.92"
+        },
+        {
+          "sector": "",
+          "weight": "2.42"
+        },
+        {
+          "sector": "",
+          "weight": "0.75"
+        }
+      ],
+      "expected_cache_entry": {
+        "keywords": [
+          "重仓公司、产业链、政策、资金、估值关键词"
+        ],
+        "research_lenses": [
+          "这些关键词为什么会影响该基金净值"
+        ],
+        "tags": [
+          "主题或风险标签"
+        ],
+        "rationale": "基于重仓、行业和基金类型的推导说明"
+      }
+    },
+    {
+      "fund_code": "021620",
+      "fund_name": "天弘石油天然气指数C",
+      "fund_type": "index",
+      "theme": "能源商品",
+      "style_tags": [
+        "commodity"
+      ],
+      "top_holdings": [
+        {
+          "stock_code": "600938",
+          "stock_name": "中国海油",
+          "weight": "10.32"
+        },
+        {
+          "stock_code": "601857",
+          "stock_name": "中国石油",
+          "weight": "9.11"
+        },
+        {
+          "stock_code": "002353",
+          "stock_name": "杰瑞股份",
+          "weight": "8.58"
+        },
+        {
+          "stock_code": "601872",
+          "stock_name": "招商轮船",
+          "weight": "7.63"
+        },
+        {
+          "stock_code": "600028",
+          "stock_name": "中国石化",
+          "weight": "7.26"
+        },
+        {
+          "stock_code": "600026",
+          "stock_name": "中远海能",
+          "weight": "5.3"
+        },
+        {
+          "stock_code": "600256",
+          "stock_name": "广汇能源",
+          "weight": "4.31"
+        },
+        {
+          "stock_code": "600759",
+          "stock_name": "洲际油气",
+          "weight": "3.39"
+        },
+        {
+          "stock_code": "601975",
+          "stock_name": "招商南油",
+          "weight": "2.4"
+        },
+        {
+          "stock_code": "600346",
+          "stock_name": "恒力石化",
+          "weight": "2.15"
+        }
+      ],
+      "sectors": [
+        {
+          "sector": "",
+          "weight": "47.24"
+        },
+        {
+          "sector": "",
+          "weight": "27.38"
+        },
+        {
+          "sector": "",
+          "weight": "15.98"
+        },
+        {
+          "sector": "",
+          "weight": "1.73"
+        },
+        {
+          "sector": "",
+          "weight": "1.55"
+        },
+        {
+          "sector": "",
+          "weight": "0.59"
+        },
+        {
+          "sector": "",
+          "weight": "0.41"
+        }
+      ],
+      "expected_cache_entry": {
+        "keywords": [
+          "重仓公司、产业链、政策、资金、估值关键词"
+        ],
+        "research_lenses": [
+          "这些关键词为什么会影响该基金净值"
+        ],
+        "tags": [
+          "主题或风险标签"
+        ],
+        "rationale": "基于重仓、行业和基金类型的推导说明"
+      }
+    },
+    {
+      "fund_code": "018380",
+      "fund_name": "万家国证新能源车电池ETF联接C",
+      "fund_type": "etf",
+      "theme": "能源商品",
+      "style_tags": [
+        "growth"
+      ],
+      "top_holdings": [],
+      "sectors": [],
+      "expected_cache_entry": {
+        "keywords": [
+          "重仓公司、产业链、政策、资金、估值关键词"
+        ],
+        "research_lenses": [
+          "这些关键词为什么会影响该基金净值"
+        ],
+        "tags": [
+          "主题或风险标签"
+        ],
+        "rationale": "基于重仓、行业和基金类型的推导说明"
+      }
+    }
+  ],
+  "expected_cache_schema": {
+    "cache_version": "news_keyword_profiles.v1",
+    "generated_at": "2026-05-19",
+    "holding_codes": [
+      "001198",
+      "008253",
+      "017436",
+      "018380",
+      "021620",
+      "378006"
+    ],
+    "funds": {
+      "基金代码": {
+        "keywords": [
+          "关键词1",
+          "关键词2"
+        ],
+        "research_lenses": [
+          "分析视角"
+        ],
+        "tags": [
+          "主题标签"
+        ],
+        "rationale": "生成理由"
+      }
+    }
+  }
+}

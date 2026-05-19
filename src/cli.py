@@ -12,7 +12,6 @@
     python -m src.cli diagnose 008253
 """
 import argparse
-import json
 import os
 import sys
 from datetime import date, datetime, timedelta
@@ -52,16 +51,6 @@ def cmd_analyze(args):
     from src.db.storage import FundStorage
 
     config = load_portfolio_config(args.config)
-
-    # Layer 0: 支付宝流水抓取
-    if not getattr(args, "skip_alipay", False):
-        try:
-            from src.data.alipay_fetcher import fetch_and_merge
-            fetch_and_merge(args.config, cookie_string=getattr(args, "alipay_cookie", None))
-            config = load_portfolio_config(args.config)
-        except Exception as e:
-            print(f"[支付宝] 抓取失败（不阻断后续流程）: {e}")
-
     import_to_database(config)
 
     store = FundStorage()
@@ -124,48 +113,9 @@ def cmd_analyze(args):
     holdings_data = _compute_holdings(store, config, codes, analyzer)
     workflow_context = _build_workflow_context(config, holdings_data, news_data=None)
 
-    news_plan = _load_agent_news_plan(getattr(args, "agent_news_plan", None))
-    if not news_plan:
-        from src.news.keyword_cache import (
-            build_keyword_request,
-            default_keyword_cache_path,
-            load_valid_keyword_cache,
-            write_keyword_request,
-        )
-        keyword_cache_path = (
-            getattr(args, "news_keyword_cache", None)
-            or default_keyword_cache_path()
-        )
-        news_plan = load_valid_keyword_cache(keyword_cache_path, codes, today=_shared_today())
-        if not news_plan:
-            keyword_request_path = (
-                getattr(args, "news_keyword_request_output", None)
-                or f"{args.output or 'report.md'}.news_keywords_request.json"
-            )
-            keyword_request = build_keyword_request(config, analyzer, report_date=report_date)
-            write_keyword_request(keyword_request_path, keyword_request)
-            print(f"Agent 新闻关键词请求已保存: {keyword_request_path}")
-            print(f"未找到有效新闻关键词缓存，已停止：请由当前 agent 生成 {keyword_cache_path} 后重新运行。")
-            return
-
-    news_request_path = getattr(args, "agent_news_request_output", None)
-    if news_request_path or getattr(args, "require_agent_news_plan", False):
-        news_request_path = news_request_path or f"{args.output or 'report.md'}.news_request.json"
-        _write_agent_news_request(
-            request_path=news_request_path,
-            report_date=report_date,
-            config=config,
-            scores=scores,
-            holdings_data=holdings_data,
-        )
-        print(f"Agent 新闻检索请求已保存: {news_request_path}")
-    if getattr(args, "require_agent_news_plan", False) and not news_plan:
-        print("已按 --require-agent-news-plan 停止：请由当前 agent 读取请求文件，生成新闻检索计划 JSON 后使用 --agent-news-plan 继续。")
-        return
-
     # 新闻分析（必选：新闻收集/情绪分析是报告核心组成部分）
     print("\n[Layer 3] 新闻采集与分析...")
-    news_data = _run_news_analysis(config, analyzer, agent_news_plan=news_plan)
+    news_data = _run_news_analysis(config, analyzer)
     workflow_context = _build_workflow_context(config, holdings_data, news_data=news_data)
 
     # 推荐
@@ -177,43 +127,6 @@ def cmd_analyze(args):
         recommendations, inter_recommendation_correlations = _run_recommendations(news_data, codes, analyzer)
         recommendation_status = "ok" if recommendations else "empty"
 
-    recommendation_context = recommendations[0].get("agent_recommendation_context", {}) if recommendations else {}
-    agent_decisions = _load_agent_decisions(getattr(args, "agent_decisions", None))
-    request_path = getattr(args, "agent_request_output", None)
-    agent_request = None
-    if request_path or getattr(args, "require_agent_decisions", False) or agent_decisions:
-        request_path = request_path or f"{args.output or 'report.md'}.agent_request.json"
-        agent_request = _write_agent_decision_request(
-            request_path=request_path,
-            report_date=report_date,
-            scores=scores,
-            holdings_data=holdings_data,
-            news_data=news_data,
-            stress_results=stress_results,
-            recommendations=recommendations,
-            recommendation_context=recommendation_context,
-        )
-        print(f"Agent 决策请求已保存: {request_path}")
-    if getattr(args, "require_agent_decisions", False) and not agent_decisions:
-        print("已按 --require-agent-decisions 停止：请由当前 agent 读取请求文件，生成决策 JSON 后使用 --agent-decisions 继续渲染。")
-        return
-
-    evidence_path = getattr(args, "agent_evidence_output", None) or f"{args.output or 'report.md'}.evidence.json"
-    _write_agent_evidence_pack(
-        evidence_path=evidence_path,
-        report_date=report_date,
-        holdings_data=holdings_data,
-        workflow_context=workflow_context,
-        scores=scores,
-        news_data=news_data,
-        stress_results=stress_results,
-        recommendations=recommendations,
-    )
-    print(f"Agent evidence pack 已保存: {evidence_path}")
-    if getattr(args, "require_agent_report", False):
-        print("已按 --require-agent-report 停止：请由当前 agent 读取 evidence pack 后直接输出最终分析报告。")
-        return
-
     print("\n[Layer 4] 生成报告...")
     report = generate_report(
         analyzer, scores, correlations, stress_results,
@@ -224,8 +137,6 @@ def cmd_analyze(args):
         unscores=unscores,
         workflow_context=workflow_context,
         inter_recommendation_correlations=inter_recommendation_correlations,
-        agent_decisions=agent_decisions,
-        agent_request=agent_request,
     )
 
     report_path = args.output or "report.md"
@@ -260,210 +171,6 @@ def _attach_score_trends(store, scores):
         s["score_delta"] = s["composite_score"] - previous
         s["peak_score"] = peak
         s["drop_from_peak"] = peak - s["composite_score"]
-
-
-def _build_report_context(report_date, scores, holdings_data, news_data, recommendations):
-    """Build JSON-level context for agent/report consumers."""
-    from src.analysis.schemas import (
-        FundFeature, PortfolioSnapshot, RecommendationItem, ReportContext
-    )
-
-    funds = []
-    for s in scores or []:
-        funds.append(FundFeature(
-            code=s.get("fund_code", ""),
-            name=s.get("fund_name", ""),
-            fund_type=s.get("fund_type", ""),
-            data_completeness=s.get("data_completeness", ""),
-            score_seed=s.get("composite_score"),
-            risk_metrics={
-                "annual_volatility": s.get("annual_volatility"),
-                "max_drawdown_3y": s.get("max_drawdown_3y"),
-                "sharpe_1y": s.get("sharpe_1y"),
-            },
-            exposure={
-                "score_level": s.get("score_level"),
-                "recommendation_seed": s.get("recommendation"),
-            },
-        ))
-
-    news_events = []
-    for item in news_data or []:
-        news_events.extend(item.get("events", []) or [])
-
-    rec_items = []
-    for rec in recommendations or []:
-        try:
-            rec_items.append(RecommendationItem.model_validate(rec))
-        except Exception:
-            pass
-
-    snapshot = PortfolioSnapshot(
-        report_date=report_date.isoformat() if hasattr(report_date, "isoformat") else str(report_date),
-        holdings=(holdings_data or {}).get("funds", []),
-        funds=funds,
-        portfolio_metrics={
-            "total_value": (holdings_data or {}).get("total_value"),
-            "total_cost": (holdings_data or {}).get("total_cost"),
-            "total_profit": (holdings_data or {}).get("total_profit"),
-        },
-        warnings=(holdings_data or {}).get("warnings", []),
-    )
-    return ReportContext(
-        portfolio_snapshot=snapshot,
-        news_events=news_events,
-        recommendations=rec_items,
-        agent_tasks=[
-            {"task": "final_score_calibration", "status": "required"},
-            {"task": "event_impact_reasoning", "status": "required"},
-            {"task": "portfolio_gain_recommendation", "status": "required"},
-        ],
-    ).model_dump(mode="json")
-
-
-def _write_agent_decision_request(
-    request_path,
-    report_date,
-    scores,
-    holdings_data,
-    news_data,
-    stress_results,
-    recommendations,
-    recommendation_context=None,
-):
-    """Write the pre-report decision request consumed by the skill agent."""
-    from src.agent.contracts import build_agent_decision_request
-
-    portfolio_context = {
-        "report_date": report_date.isoformat() if hasattr(report_date, "isoformat") else str(report_date),
-        "holdings": (holdings_data or {}).get("funds", []),
-        "portfolio_metrics": {
-            "total_value": (holdings_data or {}).get("total_value"),
-            "total_cost": (holdings_data or {}).get("total_cost"),
-            "total_profit": (holdings_data or {}).get("total_profit"),
-            "pending_amount": (holdings_data or {}).get("pending_amount"),
-        },
-        "ledger_warnings": (holdings_data or {}).get("ledger_warnings", []),
-        "calibration_warnings": (holdings_data or {}).get("calibration_warnings", []),
-    }
-    request = build_agent_decision_request(
-        portfolio_context=portfolio_context,
-        scores=scores,
-        news_data=news_data,
-        stress_tests=stress_results,
-        recommendations=recommendations,
-        recommendation_context=recommendation_context or {},
-    )
-    with open(request_path, "w", encoding="utf-8") as f:
-        json.dump(request, f, ensure_ascii=False, indent=2, default=str)
-    return request
-
-
-def _write_agent_evidence_pack(
-    evidence_path,
-    report_date,
-    holdings_data,
-    workflow_context,
-    scores,
-    news_data,
-    stress_results,
-    recommendations,
-):
-    """Write the single evidence artifact consumed by the fund-analyst skill."""
-    from src.agent.contracts import build_agent_evidence_pack
-
-    portfolio_context = {
-        "report_date": report_date.isoformat() if hasattr(report_date, "isoformat") else str(report_date),
-        "holdings": (holdings_data or {}).get("funds", []),
-        "portfolio_metrics": {
-            "total_value": (holdings_data or {}).get("total_value"),
-            "total_cost": (holdings_data or {}).get("total_cost"),
-            "total_profit": (holdings_data or {}).get("total_profit"),
-            "total_pending": (holdings_data or {}).get("total_pending"),
-            "total_return_pct": (holdings_data or {}).get("total_return_pct"),
-        },
-        "ledger_warnings": (holdings_data or {}).get("ledger_warnings", []),
-        "calibration_warnings": (holdings_data or {}).get("calibration_warnings", []),
-    }
-    pack = build_agent_evidence_pack(
-        report_date=report_date,
-        portfolio_context=portfolio_context,
-        workflow_context=workflow_context or {},
-        scores=scores,
-        holdings_data=holdings_data,
-        news_data=news_data,
-        stress_results=stress_results,
-        recommendations=recommendations,
-    )
-    with open(evidence_path, "w", encoding="utf-8") as f:
-        json.dump(pack, f, ensure_ascii=False, indent=2, default=str)
-    return pack
-
-
-def _write_agent_news_request(request_path, report_date, config, scores, holdings_data):
-    """Write the pre-news-search request consumed by the skill agent."""
-    from src.agent.contracts import build_news_search_request
-    from src.news.news_fetcher import build_news_search_profile
-
-    score_map = {s.get("fund_code"): s for s in scores or []}
-    by_fund = (holdings_data or {}).get("by_fund", {})
-    profiles = []
-    for holding in config.holdings:
-        profile = build_news_search_profile(
-            fund_code=holding.code,
-            fund_name=holding.name,
-            fund_type=getattr(holding, "type", ""),
-        )
-        profiles.append({
-            "fund_code": holding.code,
-            "fund_name": holding.name,
-            "fund_type": getattr(getattr(holding, "type", ""), "value", getattr(holding, "type", "")),
-            "holding_context": _holding_context_for_news(config, holding.code),
-            "position": by_fund.get(holding.code, {}),
-            "rule_score_seed": {
-                "composite_score": score_map.get(holding.code, {}).get("composite_score"),
-                "score_level": score_map.get(holding.code, {}).get("score_level"),
-                "recommendation": score_map.get(holding.code, {}).get("recommendation"),
-            },
-            "holding_keywords": profile.get("holding_keywords", []),
-            "stock_codes": profile.get("stock_codes", []),
-            "fallback_keywords": profile.get("fallback_keywords", []),
-            "rule_seed_search_terms": profile.get("search_terms", []),
-        })
-
-    portfolio_context = {
-        "report_date": report_date.isoformat() if hasattr(report_date, "isoformat") else str(report_date),
-        "portfolio_metrics": {
-            "total_value": (holdings_data or {}).get("total_value"),
-            "total_cost": (holdings_data or {}).get("total_cost"),
-            "total_profit": (holdings_data or {}).get("total_profit"),
-            "pending_amount": (holdings_data or {}).get("pending_amount"),
-        },
-    }
-    request = build_news_search_request(portfolio_context=portfolio_context, fund_profiles=profiles)
-    with open(request_path, "w", encoding="utf-8") as f:
-        json.dump(request, f, ensure_ascii=False, indent=2, default=str)
-    return request
-
-
-def _load_agent_news_plan(path):
-    if not path:
-        return None
-    from src.agent.contracts import validate_agent_news_plan
-
-    with open(path, "r", encoding="utf-8") as f:
-        payload = json.load(f)
-    return validate_agent_news_plan(payload)
-
-
-def _load_agent_decisions(path):
-    if not path:
-        return None
-    from src.agent.contracts import validate_agent_decisions
-
-    with open(path, "r", encoding="utf-8") as f:
-        payload = json.load(f)
-    return validate_agent_decisions(payload)
 
 
 def _compute_holdings(store, config, codes, analyzer=None):
@@ -514,10 +221,8 @@ def _compute_holdings(store, config, codes, analyzer=None):
                     "day_of_week": d.day_of_week,
                 }
 
-            configured_fee_rate = getattr(holding_config, 'fee_rate', None)
-            fee_rate = float(0.0015 if configured_fee_rate is None else configured_fee_rate)
-            configured_settle_delay = getattr(holding_config, 'settle_delay', None)
-            settle_delay = int(1 if configured_settle_delay is None else configured_settle_delay)
+            fee_rate = float(getattr(holding_config, 'fee_rate', None) or 0.0015)
+            settle_delay = int(getattr(holding_config, 'settle_delay', None) or 1)
 
             calibrations = []
             if holding_config and hasattr(holding_config, 'calibrations'):
@@ -562,39 +267,35 @@ def _compute_holdings(store, config, codes, analyzer=None):
             total_cost = result["total_cost"]
             total_shares = result["total_shares"]
             avg_cost = result["avg_cost"]
-            pending_amount = result["pending_amount"]
+            pending_amount = max(
+                result["pending_amount"],
+                float(getattr(holding_config, "pending_amount", 0) or 0) if holding_config else 0.0,
+            )
 
             explicit_shares = float(getattr(holding_config, "shares", 0) or 0) if holding_config else 0.0
             explicit_avg_cost = float(getattr(holding_config, "avg_cost", 0) or 0) if holding_config else 0.0
             ledger_warning = None
             if explicit_shares > 0 and explicit_avg_cost > 0:
-                explicit_cost = round(explicit_shares * explicit_avg_cost, 2)
-                share_delta = round(explicit_shares - total_shares, 4)
-                cost_delta = round(explicit_cost - total_cost, 2)
-                share_threshold = max(0.01, max(explicit_shares, total_shares) * 0.001)
-                cost_threshold = max(1.0, max(explicit_cost, total_cost) * 0.005)
-                config_pending = float(getattr(holding_config, "pending_amount", 0) or 0) if holding_config else 0.0
-                pending_delta = round(config_pending - pending_amount, 2)
-                if (
-                    abs(share_delta) > share_threshold
-                    or abs(cost_delta) > cost_threshold
-                    or abs(pending_delta) > 1.0
-                ):
+                total_shares = round(explicit_shares, 2)
+                avg_cost = round(explicit_avg_cost, 4)
+                total_cost = round(total_shares * avg_cost, 2)
+                display_value = round(total_shares * result["current_nav"], 2)
+                display_profit = round(display_value - total_cost, 2)
+                display_return_pct = round(display_profit / total_cost * 100, 2) if total_cost > 0 else 0.0
+                ledger_delta = round(total_cost - purchase_amount, 2)
+                threshold = max(1.0, total_cost * 0.005)
+                if abs(ledger_delta) > threshold:
+                    dca_delta_match = pending_amount > 0 and abs(abs(ledger_delta) - pending_amount) <= 1.0
+                    reason = f"差额 ¥{abs(ledger_delta):,.2f} 来自待确认定投申购，到账后将平账" if dca_delta_match else "真实份额×成本价 与买入流水合计不一致"
                     ledger_warning = {
                         "code": code,
                         "name": fund.get("name", code),
-                        "computed_shares": total_shares,
-                        "configured_shares": explicit_shares,
-                        "share_delta": share_delta,
-                        "computed_cost": total_cost,
-                        "configured_cost": explicit_cost,
-                        "cost_delta": cost_delta,
-                        "computed_pending_amount": pending_amount,
-                        "configured_pending_amount": config_pending,
-                        "pending_delta": pending_delta,
+                        "actual_cost": total_cost,
                         "purchase_amount": purchase_amount,
-                        "reason": "配置中的 shares/avg_cost/pending_amount 仅用于诊断；报告口径以交易流水计算结果为准",
-                        "is_dca_pending": pending_amount > 0,
+                        "delta": ledger_delta,
+                        "pending_amount": pending_amount,
+                        "reason": reason,
+                        "is_dca_pending": dca_delta_match,
                     }
                     ledger_warnings.append(ledger_warning)
 
@@ -819,12 +520,11 @@ def _match_nav_from_map(nav_map: dict, target) -> float:
     return None
 
 
-def _run_news_analysis(config, analyzer, agent_news_plan=None):
+def _run_news_analysis(config, analyzer):
     """运行新闻分析"""
     from src.news.news_fetcher import fetch_fund_news
     from src.news.sentiment import analyze_sentiment, daily_sentiment_aggregate
     from src.news.correlate import news_nav_correlation
-    from src.news.events import extract_news_events
 
     results = []
     for holding in config.holdings:
@@ -832,14 +532,7 @@ def _run_news_analysis(config, analyzer, agent_news_plan=None):
         name = holding.name
         fund_data = analyzer.funds.get(code, {})
 
-        planned_keywords = _planned_news_keywords(agent_news_plan, code)
-        news_list = fetch_fund_news(
-            code,
-            name,
-            keywords=planned_keywords,
-            days=7,
-            fund_type=getattr(holding, "type", ""),
-        )
+        news_list = fetch_fund_news(code, name, days=7, fund_type=getattr(holding, "type", ""))
         if not news_list:
             results.append({
                 "fund_code": code,
@@ -849,7 +542,6 @@ def _run_news_analysis(config, analyzer, agent_news_plan=None):
                 "daily_aggregates": [],
                 "correlation": 0.0,
                 "news_list": [],
-                "agent_news_search_plan": _planned_news_profile(agent_news_plan, code),
                 "status": "empty",
                 "message": "近 7 天未获取到相关新闻，可能是接口无结果、关键词未命中或网络受限。",
             })
@@ -857,7 +549,6 @@ def _run_news_analysis(config, analyzer, agent_news_plan=None):
 
         news_with_sent = analyze_sentiment(news_list)
         daily_agg = daily_sentiment_aggregate(news_with_sent)
-        news_events = extract_news_events(news_with_sent)
 
         nav_df = fund_data.get("nav", None)
         nav_returns = []
@@ -890,31 +581,12 @@ def _run_news_analysis(config, analyzer, agent_news_plan=None):
             "daily_aggregates": daily_agg,
             "correlation": corr.get(1, (0.0, 1.0))[0],
             "news_list": news_with_sent,
-            "events": news_events,
-            "agent_news_search_plan": _planned_news_profile(agent_news_plan, code),
             "status": "ok",
             "agent_news_context": agent_news_context,
             "sentiment_source": "rules_seed",
         })
 
     return results
-
-
-def _planned_news_profile(agent_news_plan, code: str):
-    if not agent_news_plan:
-        return {}
-    funds = agent_news_plan.get("funds") or {}
-    return funds.get(code) or funds.get(str(code).zfill(6)) or {}
-
-
-def _planned_news_keywords(agent_news_plan, code: str):
-    profile = _planned_news_profile(agent_news_plan, code)
-    keywords = []
-    for key in ("keywords", "search_terms", "expanded_keywords"):
-        for kw in profile.get(key, []) or []:
-            if kw and kw not in keywords:
-                keywords.append(str(kw))
-    return keywords or None
 
 
 def _build_nav_summary(nav_returns):
@@ -1008,27 +680,12 @@ def _save_snapshot(store, scores, stress_tests, correlations, holdings_data=None
             "portfolio_total_value": (holdings_data or {}).get("total_value"),
             "portfolio_total_cost": (holdings_data or {}).get("total_cost"),
             "scores": score_data,
-            "stress_tests": _sanitize_stress_tests_for_snapshot(stress_tests),
+            "stress_tests": stress_tests,
             "correlations": corr_data,
         })
         print(f"快照已保存: ID={snapshot_id}")
     except Exception as e:
         print(f"[WARN] 快照保存失败: {e}")
-
-
-def _sanitize_stress_tests_for_snapshot(stress_tests):
-    allowed = {
-        "scenario_id",
-        "scenario_desc",
-        "fund_code",
-        "estimated_drawdown_pct",
-        "portfolio_drawdown_pct",
-        "impact_amount",
-    }
-    return [
-        {k: v for k, v in (item or {}).items() if k in allowed}
-        for item in (stress_tests or [])
-    ]
 
 
 def cmd_fetch(args):
@@ -1236,16 +893,6 @@ def cmd_snapshot(args):
     _perform_snapshot(args.config)
 
 
-def cmd_fetch_alipay(args):
-    """从支付宝抓取基金交易流水并合并到 YAML。"""
-    from src.data.alipay_fetcher import fetch_and_merge
-    result = fetch_and_merge(args.config, cookie_string=args.alipay_cookie, debug=args.debug)
-    if result["status"] == "ok":
-        print(f"\n[fetch-alipay] 成功新增 {result['new_total']} 条交易记录。")
-    else:
-        print("[fetch-alipay] 无新记录或抓取被跳过。")
-
-
 def cmd_ui(args):
     """启动交互式 Streamlit 管理界面"""
     import subprocess
@@ -1273,58 +920,6 @@ def main():
     p_analyze.add_argument("-c", "--config", required=True)
     p_analyze.add_argument("-o", "--output", default="report.md")
     p_analyze.add_argument("--skip-recommend", action="store_true")
-    p_analyze.add_argument("--skip-alipay", action="store_true", help="跳过支付宝流水抓取")
-    p_analyze.add_argument("--alipay-cookie", default=None, help="支付宝 Cookie 字符串，提供后跳过扫码登录")
-    p_analyze.add_argument(
-        "--require-agent-decisions",
-        action="store_true",
-        help="在最终报告前停止，要求 agent 先生成决策 JSON",
-    )
-    p_analyze.add_argument(
-        "--require-agent-news-plan",
-        action="store_true",
-        help="在新闻抓取前停止，要求 agent 先生成新闻检索计划 JSON",
-    )
-    p_analyze.add_argument(
-        "--agent-news-request-output",
-        default=None,
-        help="Agent 新闻检索请求 JSON 输出路径，默认 <report>.news_request.json",
-    )
-    p_analyze.add_argument(
-        "--agent-news-plan",
-        default=None,
-        help="Agent 前置新闻检索计划 JSON；提供后用于决定新闻搜索关键词",
-    )
-    p_analyze.add_argument(
-        "--agent-request-output",
-        default=None,
-        help="Agent 决策请求 JSON 输出路径，默认 <report>.agent_request.json",
-    )
-    p_analyze.add_argument(
-        "--agent-decisions",
-        default=None,
-        help="Agent 前置决策 JSON；提供后用于渲染最终报告",
-    )
-    p_analyze.add_argument(
-        "--agent-evidence-output",
-        default=None,
-        help="单文件 Agent 证据包输出路径，默认 <report>.evidence.json",
-    )
-    p_analyze.add_argument(
-        "--news-keyword-cache",
-        default=None,
-        help="Agent 生成的新闻关键词缓存路径，默认 data/cache/news_keyword_profiles.json",
-    )
-    p_analyze.add_argument(
-        "--news-keyword-request-output",
-        default=None,
-        help="新闻关键词请求 JSON 输出路径，默认 <report>.news_keywords_request.json",
-    )
-    p_analyze.add_argument(
-        "--require-agent-report",
-        action="store_true",
-        help="生成单文件 evidence pack 后停止，由当前 agent 直接输出最终分析报告",
-    )
     p_analyze.add_argument(
         "--snapshot-after",
         action="store_true",
@@ -1352,11 +947,6 @@ def main():
     p_snap = sub.add_parser("snapshot", help="更新持仓 YAML（含定投记录+备份）")
     p_snap.add_argument("-c", "--config", required=True, help="YAML 配置文件路径")
 
-    p_fetch_alipay = sub.add_parser("fetch-alipay", help="从支付宝抓取基金交易流水并合并到 YAML")
-    p_fetch_alipay.add_argument("-c", "--config", required=True, help="YAML 配置文件路径")
-    p_fetch_alipay.add_argument("--alipay-cookie", default=None, help="支付宝 Cookie 字符串 (key=value; ...)，提供后跳过扫码登录")
-    p_fetch_alipay.add_argument("--debug", action="store_true", help="有头浏览器模式（WSLg），可在浏览器中手动输入验证码")
-
     p_ui = sub.add_parser("ui", help="启动交互式管理界面 (Streamlit)")
     p_ui.add_argument("-c", "--config", default="fund-portfolio.yaml", help="YAML 配置文件路径")
     p_ui.add_argument("-p", "--port", type=int, default=8501, help="端口号 (默认: 8501)")
@@ -1381,8 +971,6 @@ def main():
         cmd_diagnose(args)
     elif args.command == "snapshot":
         cmd_snapshot(args)
-    elif args.command == "fetch-alipay":
-        cmd_fetch_alipay(args)
     elif args.command == "ui":
         cmd_ui(args)
     else:
