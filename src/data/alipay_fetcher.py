@@ -289,6 +289,11 @@ def _sms_login() -> Optional[str]:
             send_btn = page.locator("text=获取短信验证码").first
             send_btn.click()
             page.wait_for_timeout(1000)
+        except Exception as e:
+            print(f"[支付宝] 获取验证码按钮不可用: {e}")
+            page.screenshot(path="/tmp/sms_debug_err.png")
+            browser.close()
+            return None
 
         # Wait for SMS code
         sms_code = _wait_for_sms_code(timeout_seconds=120)
