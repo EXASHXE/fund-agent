@@ -12,6 +12,7 @@ from src.data.fetcher import (
 )
 from src.analysis.correlation import compute_correlations
 from src.analysis.stress import stress_test
+from src.analysis.holdings import compute_hhi
 
 
 class FundAnalyzer:
@@ -428,6 +429,9 @@ class FundAnalyzer:
         if isinstance(sectors, pd.DataFrame) and not sectors.empty:
             for _, row in sectors.head(10).iterrows():
                 sector_rows.append({k: row.get(k) for k in list(row.index)[:6]})
+        hhi_val = None
+        if isinstance(holdings, pd.DataFrame) and not holdings.empty:
+            hhi_val = compute_hhi(holdings)
         return {
             "code": code,
             "basic": fund.get("basic", {}),
@@ -436,6 +440,8 @@ class FundAnalyzer:
             "nav_summary": nav_summary,
             "top_holdings": holding_rows,
             "sectors": sector_rows,
+            "hhi": hhi_val,
+            "advanced_metrics": self._compute_advanced_metrics(code),
         }
 
     def _level_from_score(self, composite: int) -> Tuple[str, str, str]:
@@ -518,3 +524,65 @@ class FundAnalyzer:
         }
         self.funds[code]["perf"] = result
         return result
+
+    def _compute_advanced_metrics(self, code: str) -> dict:
+        """计算信息比率、詹森 Alpha、特雷诺比率。
+
+        基准: QDII 用纳斯达克 (.IXIC)，国内用沪深300 (sh000300)。
+        无风险利率: 2.5%。
+        """
+        import numpy as np
+
+        nav_df = self.funds[code].get("nav")
+        if nav_df is None or nav_df.empty or "日增长率" not in nav_df.columns:
+            return {}
+
+        returns = nav_df["日增长率"].dropna().values / 100.0
+        if len(returns) < 60:
+            return {}
+
+        basic = self.funds[code].get("basic", {})
+        ftype = basic.get("fund_type", "")
+        is_qdii = "QDII" in ftype
+
+        try:
+            import akshare as ak
+            if is_qdii:
+                bench_df = ak.index_us_stock_sina(symbol=".IXIC")
+                bench_df["date"] = pd.to_datetime(bench_df["date"])
+                bench_df["return"] = bench_df["close"].pct_change()
+            else:
+                bench_df = ak.stock_zh_index_daily(symbol="sh000300")
+                bench_df["date"] = pd.to_datetime(bench_df["date"])
+                bench_df["return"] = bench_df["close"].pct_change()
+            bench_returns = bench_df["return"].dropna().values
+            bench_returns = bench_returns[-len(returns):] if len(bench_returns) > len(returns) else bench_returns
+        except Exception:
+            return {}
+
+        if len(bench_returns) < 30:
+            return {}
+
+        min_len = min(len(returns), len(bench_returns))
+        fund_r = returns[-min_len:]
+        bench_r = bench_returns[-min_len:]
+
+        rf_daily = 0.025 / 252
+
+        cov = np.cov(fund_r, bench_r)[0][1]
+        var = np.var(bench_r)
+        beta = cov / var if var > 0 else 1.0
+
+        excess = fund_r - bench_r
+        ir = (np.mean(excess) / np.std(excess)) * np.sqrt(252) if np.std(excess) > 0 else 0
+
+        alpha = (np.mean(fund_r - rf_daily) - beta * np.mean(bench_r - rf_daily)) * 252
+
+        treynor = (np.mean(fund_r - rf_daily) * 252) / beta if abs(beta) > 1e-6 else 0
+
+        return {
+            "information_ratio": round(float(ir), 4),
+            "jensen_alpha": round(float(alpha), 4),
+            "treynor_ratio": round(float(treynor), 4),
+            "beta": round(float(beta), 4),
+        }

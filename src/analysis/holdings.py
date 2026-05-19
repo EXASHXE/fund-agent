@@ -7,7 +7,7 @@
 """
 import pandas as pd
 from datetime import date, timedelta
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 FEE_RATE = 0.0015  # 0.15% 购买手续费
 
@@ -437,3 +437,28 @@ def portfolio_summary(holding_analyses: List[Dict]) -> Dict:
         "funds": funds,
         "by_fund": {h["fund_code"]: h for h in holding_analyses},
     }
+
+
+def compute_hhi(holdings_df: Any) -> Optional[float]:
+    """计算赫芬达尔-赫施曼指数（HHI）。
+
+    HHI = sum((weight_i * 100)^2) for top 10 holdings.
+    范围: 0（完全分散）~ 10000（完全集中）。
+    > 2500 = 高度集中，< 1500 = 分散。
+    """
+    if holdings_df is None or getattr(holdings_df, "empty", True):
+        return None
+    try:
+        hhi = 0.0
+        for _, row in holdings_df.head(10).iterrows():
+            weight_col = None
+            for col in ["占净值比例", "持仓占比", "占比", "持股占比"]:
+                if col in row and row.get(col) is not None:
+                    weight_col = col
+                    break
+            if weight_col:
+                w = float(row[weight_col])
+                hhi += (w * 100) ** 2
+        return round(hhi, 2)
+    except Exception:
+        return None
