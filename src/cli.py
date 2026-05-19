@@ -114,10 +114,8 @@ def cmd_analyze(args):
     workflow_context = _build_workflow_context(config, holdings_data, news_data=None)
 
     from src.news.keyword_cache import (
-        build_keyword_request,
         default_keyword_cache_path,
         load_valid_keyword_cache,
-        write_keyword_request,
     )
     keyword_cache_path = (
         getattr(args, "news_keyword_cache", None)
@@ -125,17 +123,9 @@ def cmd_analyze(args):
     )
     news_keyword_plan = load_valid_keyword_cache(keyword_cache_path, codes, today=_shared_today())
     if not news_keyword_plan:
-        keyword_request_path = (
-            getattr(args, "news_keyword_request_output", None)
-            or f"{args.output or 'report.md'}.news_keywords_request.json"
-        )
-        keyword_request = build_keyword_request(config, analyzer, report_date=report_date)
-        write_keyword_request(keyword_request_path, keyword_request)
-        print(f"Agent 新闻关键词请求已保存: {keyword_request_path}")
-        print(f"未找到有效新闻关键词缓存，已停止：请由当前 agent 生成 {keyword_cache_path} 后重新运行。")
-        return
+        print(f"[WARN] 新闻关键词缓存无效或不存在，降级使用基金名称/类型推导关键词。")
 
-    # 新闻分析（必选：新闻收集/情绪分析是报告核心组成部分）
+    # 新闻分析
     print("\n[Layer 3] 新闻采集与分析...")
     news_data = _run_news_analysis(config, analyzer, agent_news_plan=news_keyword_plan)
     workflow_context = _build_workflow_context(config, holdings_data, news_data=news_data)
