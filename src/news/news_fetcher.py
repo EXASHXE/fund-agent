@@ -211,9 +211,9 @@ def _matches_terms(text: str, terms: List[str]) -> bool:
         if len(term) < 2:
             continue
         term_lower = term.lower()
-        # Short terms (≤3 chars): require word-boundary match to avoid false positives
-        if len(term) <= 3:
-            if re.search(r'\b' + re.escape(term_lower) + r'\b', text_lower):
+        if len(term) <= 2 and term_lower.isascii():
+            # 1-2 char English terms: boundary via ASCII-only lookbehind/lookahead
+            if re.search(r'(?<![a-z])' + re.escape(term_lower) + r'(?![a-z])', text_lower):
                 return True
         elif term_lower in text_lower:
             return True
