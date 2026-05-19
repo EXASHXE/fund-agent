@@ -266,51 +266,29 @@ def _sms_login() -> Optional[str]:
             browser.close()
             return None
 
-        # Enter phone number — find the visible input in SMS form
+        # Enter phone number
         try:
-            # After clicking SMS tab, the visible phone input should be in SMS form
-            phone_input = page.locator("input:visible[placeholder*=手机], input:visible[placeholder*=号码], input:visible[type=tel]").first
+            phone_input = page.locator("input:visible[placeholder*=手机], input:visible[placeholder*=号码]").first
             phone_input.fill(phone)
             page.wait_for_timeout(500)
         except Exception as e:
-            # Fallback: try any visible input in the current form
-            try:
-                sms_form_inputs = page.locator("form input:visible").all()
-                for inp in sms_form_inputs:
-                    ph = inp.get_attribute("placeholder") or ""
-                    if "手机" in ph or "号码" in ph or "phone" in ph.lower():
-                        inp.fill(phone)
-                        break
-                else:
-                    raise Exception("no visible phone input found")
-            except Exception as e2:
-                print(f"[支付宝] 输入手机号失败: {e2}")
-                browser.close()
-                return None
+            print(f"[支付宝] 输入手机号失败: {e}")
+            browser.close()
+            return None
+
+        # Click the verifyCode input to trigger "获取短信验证码" to appear
+        try:
+            code_input = page.locator("input[name=verifyCode], input[placeholder*=验证码]").first
+            code_input.click()
+            page.wait_for_timeout(2000)
+        except Exception:
+            pass
 
         # Click "获取短信验证码"
         try:
-            send_btn = page.locator(
-                "text=获取短信验证码, text=发送验证码, button:has-text('获取'), button:has-text('发送')"
-            ).first
-            if send_btn.is_visible(timeout=5000):
-                send_btn.click()
-                page.wait_for_timeout(1000)
-            else:
-                raise Exception("button not visible")
-        except Exception as e:
-            print(f"[支付宝] 发送验证码失败: {e}")
-            # Debug: print visible buttons
-            try:
-                btns = page.locator("button:visible, a:visible").all()
-                for b in btns[:5]:
-                    text = b.inner_text()[:30]
-                    if text.strip():
-                        print(f"  可见按钮: {text}")
-            except Exception:
-                pass
-            browser.close()
-            return None
+            send_btn = page.locator("text=获取短信验证码").first
+            send_btn.click()
+            page.wait_for_timeout(1000)
 
         # Wait for SMS code
         sms_code = _wait_for_sms_code(timeout_seconds=120)
