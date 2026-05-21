@@ -244,6 +244,7 @@ def _compute_holdings(store, config, codes, analyzer=None):
     session = get_session()
     today = effective_report_date()
     dca_today = dca_effective_date()  # 10:00 前当日定投未执行
+    settle_today = _shared_today()  # 结算 PENDING 判断用实际日期，不受报告分界影响
     analyses = []
     calibration_warnings = []
     ledger_warnings = []
@@ -319,7 +320,7 @@ def _compute_holdings(store, config, codes, analyzer=None):
 
             events = generate_events(purchases, dca_strategy, calibrations, dca_today)
 
-            result = compute_fund(events, nav_map, fee_rate, settle_delay, today)
+            result = compute_fund(events, nav_map, fee_rate, settle_delay, settle_today)
 
             display_value = result["current_asset"]
             display_profit = result["confirmed_pnl"]
