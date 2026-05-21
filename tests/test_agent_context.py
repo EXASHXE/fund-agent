@@ -41,6 +41,43 @@ class AgentContextTest(unittest.TestCase):
         self.assertEqual(score["agent_score_context"]["task"], "agent_score_judgment")
         self.assertEqual(score["agent_score_context"]["rule_score_seed"]["composite_score"], 70)
 
+    def test_score_fund_includes_news_context_when_provided_before_scoring(self):
+        analyzer = FundAnalyzer()
+        start = date(2025, 1, 1)
+        nav = pd.DataFrame(
+            {
+                "单位净值": [1 + i * 0.001 for i in range(260)],
+                "日增长率": [0.1 for _ in range(260)],
+            },
+            index=[start + timedelta(days=i) for i in range(260)],
+        )
+        analyzer.funds["000001"] = {
+            "basic": {"name": "测试混合基金", "fund_type": "混合型", "manager": "张三"},
+            "perf": {
+                "近1年": {"sharpe_ratio": 1.2, "annual_volatility": 12.0},
+                "近3年": {"sharpe_ratio": 1.1, "max_drawdown": 18.0},
+            },
+            "nav": nav,
+            "holdings": pd.DataFrame([{"股票名称": "寒武纪", "占净值比例": "8.2%"}]),
+            "sectors": pd.DataFrame([{"行业": "半导体", "占比": "35%"}]),
+            "holders": pd.DataFrame(),
+            "completeness": "A",
+        }
+
+        score = analyzer.score_fund("000001", news_context={
+            "fund_code": "000001",
+            "sentiment_mean": 0.68,
+            "brief": {
+                "trend": "bullish",
+                "weighted_catalyst_score": 0.24,
+                "top_events": [{"event_type": "订单增长", "score": 0.31}],
+            },
+        })
+
+        fund_context = score["agent_score_context"]["fund_context"]
+        self.assertEqual(fund_context["news_context"]["brief"]["trend"], "bullish")
+        self.assertEqual(fund_context["news_context"]["sentiment_mean"], 0.68)
+
     def test_news_context_contains_samples_and_instruction(self):
         context = build_news_judgment_context(
             fund_name="测试基金",

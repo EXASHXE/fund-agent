@@ -377,9 +377,10 @@ def _render_workflow_focus(
         f"{workflow_context.get('mode_reason', '')}。"
     )
     lines.append("")
-    lines.append(_render_trade_day_focus(workflow_context, holdings_data, scores, news_data, agent_decisions))
-    lines.append("")
-    lines.append(_render_non_trade_day_focus(workflow_context, holdings_data, scores, news_data))
+    if workflow_context.get("is_trade_day"):
+        lines.append(_render_trade_day_focus(workflow_context, holdings_data, scores, news_data, agent_decisions))
+    else:
+        lines.append(_render_non_trade_day_focus(workflow_context, holdings_data, scores, news_data))
     return "\n".join(lines)
 
 
@@ -391,6 +392,49 @@ def _render_trade_day_focus(
     agent_decisions: Dict = None,
 ) -> str:
     lines = ["### 交易相关跟踪", ""]
+
+    funds = sorted(
+        (holdings_data or {}).get("funds", []),
+        key=lambda x: x.get("day_profit") if x.get("day_profit") is not None else 0,
+        reverse=True,
+    )
+    if funds:
+        total_abs_profit = sum(abs(f.get("day_profit") or 0) for f in funds)
+        total_value = (holdings_data or {}).get("total_value", 0)
+        lines.append("#### 当日盈亏与归因")
+        lines.append("")
+        lines.append("| 基金代码 | 基金名称 | 当日盈亏(¥) | 当日涨跌 | 收益贡献 | 当前占比 |")
+        lines.append("|----------|---------|------------:|---------:|---------:|---------:|")
+        for fund in funds:
+            day_profit = fund.get("day_profit") or 0
+            day_return = fund.get("day_return_pct")
+            day_return_text = f"{day_return:+.2f}%" if day_return is not None else "N/A"
+            contribution = _format_profit_contribution(day_profit, total_abs_profit)
+            position = fund.get("value", 0) / total_value * 100 if total_value else 0
+            lines.append(
+                f"| {fund['code']} | {fund['name']} | {day_profit:+,.2f} "
+                f"| {day_return_text} | {contribution} | {position:.2f}% |"
+            )
+        lines.append("")
+
+    top_news = workflow_context.get("top_news") or []
+    if top_news:
+        lines.append("#### 当日新闻线索")
+        lines.append("")
+        lines.append("| 基金 | 情绪 | 线索 | 日期 |")
+        lines.append("|------|------:|------|------|")
+        for item in top_news:
+            lines.append(
+                f"| {item.get('name', item.get('code', ''))} "
+                f"| {item.get('sentiment', 0.5):.2f} "
+                f"| {item.get('headline', '')[:80]} "
+                f"| {item.get('date', '')} |"
+            )
+        lines.append("")
+    lines.append("#### 当日归因")
+    lines.append("")
+    lines.append("<!-- AGENT: 大盘归因 -->")
+    lines.append("")
 
     qdii_rows = workflow_context.get("qdii_rows") or []
     if qdii_rows:
@@ -643,10 +687,17 @@ def _render_news_section(news_data: List[Dict], scores: List[Dict], agent_decisi
             result.append("")
 
         # 新闻-净值相关性（如可用）
-        corr_val = news_item.get("correlation", 0)
-        if abs(corr_val) > 0.3:
-            corr_desc = "正相关" if corr_val > 0 else "负相关"
-            result.append(f"- 新闻情绪与净值相关性：{corr_val:.2f}（{corr_desc}），新闻情绪对基金净值有一定关联。")
+        raw_corr = news_item.get("correlation", {})
+        best_r, best_p = 0.0, 1.0
+        if isinstance(raw_corr, dict):
+            for lag, (r, p) in raw_corr.items():
+                if abs(r) > abs(best_r) and p < 0.1:
+                    best_r, best_p = r, p
+        elif isinstance(raw_corr, (int, float)):
+            best_r = raw_corr
+        if abs(best_r) > 0.3:
+            corr_desc = "正相关" if best_r > 0 else "负相关"
+            result.append(f"- 新闻情绪与净值相关性：{best_r:.2f}（{corr_desc}），新闻情绪对基金净值有一定关联。")
             result.append("")
 
     return "\n".join(result)

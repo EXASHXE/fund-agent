@@ -50,12 +50,11 @@ def compute_fund(
     calibrations_applied = []
     calibrations_rejected = []
     events_detail = []
+    pending_amount = 0.0
 
     sorted_nav_dates = sorted(nav_map.keys())
     last_nav_date = sorted_nav_dates[-1] if sorted_nav_dates else None
     current_nav = nav_map[last_nav_date] if last_nav_date else 1.0
-
-    pending_amount = 0.0
 
     for event in events:
         if event.event_type == EventType.BUY:
@@ -131,10 +130,10 @@ def compute_fund(
                 "reason": "真实份额只用于诊断偏差，不参与份额或成本计算",
             })
 
-    current_asset = round(total_shares * current_nav, 2)
-    confirmed_pnl = round(current_asset - total_cost, 2)
+    current_asset = total_shares * current_nav
+    confirmed_pnl = current_asset - total_cost
     confirmed_return_pct = round(confirmed_pnl / total_cost * 100, 2) if total_cost > 0 else 0.0
-    portfolio_pnl = round(current_asset - (total_cost + pending_amount), 2)
+    portfolio_pnl = current_asset - (total_cost + pending_amount)
 
     # XIRR: 所有现金流（含 pending）+ 当前市值作为终值，终端日对齐最新净值日
     terminal_date = last_nav_date if last_nav_date else today

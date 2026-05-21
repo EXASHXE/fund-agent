@@ -85,51 +85,6 @@ def cmd_analyze(args):
         except Exception as e:
             print(f"  [ERROR] {code}: {e}")
 
-    print("\n[Layer 2] 分析打分...")
-    scores = []
-    unscores = []
-    for code in codes:
-        if code in analyzer.funds:
-            fund = analyzer.funds[code]
-            if fund["completeness"] != "D":
-                s = analyzer.score_fund(code)
-                scores.append(s)
-                print(f"  {code}: {s['composite_score']}/100 ({s['score_level_emoji']})")
-            else:
-                basic = fund.get("basic", {})
-                unscores.append({
-                    "code": code,
-                    "name": basic.get("name", code),
-                    "fund_name": basic.get("name", code),
-                    "fund_code": code,
-                    "data_completeness": "D",
-                    "error": basic.get("error", "核心数据获取失败"),
-                })
-                print(f"  {code}: D (数据不足) — {basic.get('error', '核心数据获取失败')[:60]}")
-        else:
-            unscores.append({
-                "code": code,
-                "name": code,
-                "fund_name": code,
-                "fund_code": code,
-                "data_completeness": "D",
-                "error": "数据采集失败",
-            })
-
-    correlations = compute_correlations(analyzer.funds)
-    if getattr(args, "stress", False):
-        stress_results = stress_test(analyzer.funds)
-        print(f"\n  压力测试: {len(stress_results)} 条风险线索")
-    else:
-        stress_results = []
-        print("\n  [默认跳过] 压力测试（--stress 启用）")
-
-    _attach_score_trends(store, scores)
-
-    # 持仓分析
-    holdings_data = _compute_holdings(store, config, codes, analyzer)
-    workflow_context = _build_workflow_context(config, holdings_data, news_data=None)
-
     from src.news.keyword_cache import (
         CACHE_VERSION,
         default_keyword_cache_path,
@@ -167,9 +122,54 @@ def cmd_analyze(args):
             _write_keyword_request_and_exit(config, codes, analyzer, args.output or "report.md")
             return  # unreachable, _write_keyword_request_and_exit calls sys.exit
 
-    # 新闻分析
-    print("\n[Layer 3] 新闻采集与分析...")
+    # 新闻分析前置：新闻催化与情绪作为评分系统的输入证据。
+    print("\n[Layer 2] 新闻采集与分析...")
     news_data = _run_news_analysis(config, analyzer, agent_news_plan=news_keyword_plan)
+    news_contexts = _news_context_by_code(news_data)
+
+    print("\n[Layer 3] 分析打分...")
+    scores = []
+    unscores = []
+    for code in codes:
+        if code in analyzer.funds:
+            fund = analyzer.funds[code]
+            if fund["completeness"] != "D":
+                s = analyzer.score_fund(code, news_context=news_contexts.get(code))
+                scores.append(s)
+                print(f"  {code}: {s['composite_score']}/100 ({s['score_level_emoji']})")
+            else:
+                basic = fund.get("basic", {})
+                unscores.append({
+                    "code": code,
+                    "name": basic.get("name", code),
+                    "fund_name": basic.get("name", code),
+                    "fund_code": code,
+                    "data_completeness": "D",
+                    "error": basic.get("error", "核心数据获取失败"),
+                })
+                print(f"  {code}: D (数据不足) — {basic.get('error', '核心数据获取失败')[:60]}")
+        else:
+            unscores.append({
+                "code": code,
+                "name": code,
+                "fund_name": code,
+                "fund_code": code,
+                "data_completeness": "D",
+                "error": "数据采集失败",
+            })
+
+    correlations = compute_correlations(analyzer.funds)
+    if getattr(args, "stress", False):
+        stress_results = stress_test(analyzer.funds)
+        print(f"\n  压力测试: {len(stress_results)} 条风险线索")
+    else:
+        stress_results = []
+        print("\n  [默认跳过] 压力测试（--stress 启用）")
+
+    _attach_score_trends(store, scores)
+
+    # 持仓分析
+    holdings_data = _compute_holdings(store, config, codes, analyzer)
     workflow_context = _build_workflow_context(config, holdings_data, news_data=news_data)
 
     # 推荐（默认关闭，--recommend 启用）
@@ -229,6 +229,41 @@ def _attach_score_trends(store, scores):
         s["score_delta"] = s["composite_score"] - previous
         s["peak_score"] = peak
         s["drop_from_peak"] = peak - s["composite_score"]
+
+
+def _news_context_by_code(news_data):
+    """Build compact per-fund news context for scoring and agent review."""
+    contexts = {}
+    for item in news_data or []:
+        code = item.get("fund_code")
+        if not code:
+            continue
+        catalyst_news = item.get("catalyst_news") or []
+        top_catalysts = sorted(
+            catalyst_news,
+            key=lambda n: abs((n.get("catalyst") or {}).get("weighted_score", 0)),
+            reverse=True,
+        )[:5]
+        contexts[code] = {
+            "fund_code": code,
+            "fund_name": item.get("fund_name", code),
+            "status": item.get("status", ""),
+            "news_count": item.get("news_count", 0),
+            "sentiment_mean": item.get("sentiment_mean", 0.5),
+            "daily_aggregates": (item.get("daily_aggregates") or [])[-5:],
+            "brief": item.get("brief") or {},
+            "top_catalysts": [
+                {
+                    "title": n.get("title", "")[:120],
+                    "date": n.get("date", ""),
+                    "event_type": (n.get("catalyst") or {}).get("event_type", ""),
+                    "weighted_score": (n.get("catalyst") or {}).get("weighted_score", 0),
+                    "relevance": (n.get("catalyst") or {}).get("relevance", 0),
+                }
+                for n in top_catalysts
+            ],
+        }
+    return contexts
 
 
 def _compute_holdings(store, config, codes, analyzer=None):
@@ -370,6 +405,16 @@ def _compute_holdings(store, config, codes, analyzer=None):
             week_profit = round(display_value - week_start_value, 2) if week_start_value else None
             week_return_pct = round(week_profit / week_start_value * 100, 2) if week_start_value else None
 
+            day_profit = None
+            day_return_pct = None
+            if nav_map and last_nav_date:
+                previous_nav_dates = [d for d in nav_map.keys() if d < last_nav_date]
+                if previous_nav_dates:
+                    previous_nav = nav_map[max(previous_nav_dates)]
+                    previous_value = round(total_shares * previous_nav, 2)
+                    day_profit = round(display_value - previous_value, 2)
+                    day_return_pct = round(day_profit / previous_value * 100, 2) if previous_value else None
+
             dca_records = []
             if dca_strategy:
                 dca_records = _simulate_dca_for_report(dca_strategy, nav_map, today)
@@ -404,6 +449,8 @@ def _compute_holdings(store, config, codes, analyzer=None):
                 "week_start_value": week_start_value,
                 "week_profit": week_profit,
                 "week_return_pct": week_return_pct,
+                "day_profit": day_profit,
+                "day_return_pct": day_return_pct,
                 "dca_records": dca_records,
                 "dca_enabled": bool(dca_strategy),
                 "dca_avg_cost": 0.0,

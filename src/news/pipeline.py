@@ -47,16 +47,20 @@ def run_news_pipeline(
         fund_data = analyzer.funds.get(code, {})
 
         # === Step 1: 构建实体画像 ===
-        holdings_raw = fund_data.get("holdings", []) or []
+        holdings_raw = fund_data.get("holdings", [])
         holdings_list = []
-        if hasattr(holdings_raw, "to_dict"):
+        if holdings_raw is None:
+            holdings_list = []
+        elif hasattr(holdings_raw, "to_dict"):
             holdings_list = holdings_raw.to_dict("records")
         elif isinstance(holdings_raw, list):
             holdings_list = holdings_raw
 
-        sectors_raw = fund_data.get("sectors", []) or []
+        sectors_raw = fund_data.get("sectors", [])
         sectors_list = []
-        if hasattr(sectors_raw, "to_dict"):
+        if sectors_raw is None:
+            sectors_list = []
+        elif hasattr(sectors_raw, "to_dict"):
             sectors_list = sectors_raw.to_dict("records")
         elif isinstance(sectors_raw, list):
             sectors_list = sectors_raw

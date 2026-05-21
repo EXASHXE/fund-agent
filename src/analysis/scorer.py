@@ -298,8 +298,10 @@ class FundAnalyzer:
         micro_total = min(50, manager_score + alpha_score + drawdown_score + sharpe_score + inst_score)
         return micro_total, details, ""
 
-    def score_fund(self, code: str) -> Dict:
+    def score_fund(self, code: str, news_context: Dict = None) -> Dict:
         fund = self.funds[code]
+        if news_context is not None:
+            fund["news_context"] = news_context
         basic = fund["basic"]
         completeness = fund["completeness"]
         name = basic.get("name", code)
@@ -504,6 +506,7 @@ class FundAnalyzer:
             "sectors": sector_rows,
             "hhi": hhi_val,
             "advanced_metrics": self._compute_advanced_metrics(code),
+            "news_context": fund.get("news_context", {}),
         }
 
     def _level_from_score(self, composite: int) -> Tuple[str, str, str]:
