@@ -8,7 +8,7 @@ LLM_CONFIG = {
     ),
     "model": os.environ.get(
         "FUND_NEWS_LLM_MODEL",
-        "deepseek-v4-flash-free",
+        "deepseek-v4-flash",
     ),
     "api_key": os.environ.get(
         "FUND_NEWS_LLM_KEY",

@@ -113,6 +113,8 @@ def _llm_event_distill(title: str, content: str = "") -> Optional[Dict]:
             headers={
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {LLM_CONFIG['api_key']}",
+                "User-Agent": "fund-agent/1.0",
+                "Accept": "application/json",
             },
         )
         with urllib.request.urlopen(req, timeout=LLM_CONFIG["timeout"]) as resp:
