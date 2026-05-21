@@ -23,3 +23,12 @@ __pycache__/
 
 # 环境
 .env
+
+# 新闻关键词缓存
+data/cache/
+*.news_keywords_request.json
+
+# 日报卡片
+daily_report_card.py
+daily_card*.py
+scratchpad_*.py
