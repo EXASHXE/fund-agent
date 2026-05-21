@@ -587,83 +587,9 @@ def _match_nav_from_map(nav_map: dict, target) -> float:
 
 
 def _run_news_analysis(config, analyzer, agent_news_plan=None):
-    """运行新闻分析"""
-    from src.news.news_fetcher import fetch_fund_news
-    from src.news.sentiment import analyze_sentiment, daily_sentiment_aggregate
-    from src.news.correlate import news_nav_correlation
-
-    results = []
-    global_seen = set()  # 跨基金去重：同一新闻只分配给首只匹配的基金
-    for holding in config.holdings:
-        code = holding.code
-        name = holding.name
-        fund_data = analyzer.funds.get(code, {})
-
-        planned_keywords = _planned_news_keywords(agent_news_plan, code)
-        news_list = fetch_fund_news(
-            code,
-            name,
-            keywords=planned_keywords,
-            days=7,
-            fund_type=getattr(holding, "type", ""),
-            shared_seen=global_seen,
-        )
-        if not news_list:
-            results.append({
-                "fund_code": code,
-                "fund_name": name,
-                "news_count": 0,
-                "sentiment_mean": 0.5,
-                "daily_aggregates": [],
-                "correlation": 0.0,
-                "news_list": [],
-                "agent_news_search_plan": _planned_news_profile(agent_news_plan, code),
-                "status": "empty",
-                "message": "近 7 天未获取到相关新闻，可能是接口无结果、关键词未命中或网络受限。",
-            })
-            continue
-
-        news_with_sent = analyze_sentiment(news_list)
-        daily_agg = daily_sentiment_aggregate(news_with_sent)
-
-        nav_df = fund_data.get("nav", None)
-        nav_returns = []
-        if nav_df is not None and not (hasattr(nav_df, 'empty') and nav_df.empty):
-            if hasattr(nav_df, 'index'):
-                for idx, row in nav_df.iterrows():
-                    d = idx.date() if hasattr(idx, 'date') else idx
-                    ret = row.get("日增长率", 0)
-                    if ret and not (hasattr(ret, '__isnan__') and ret != ret):
-                        nav_returns.append((d, float(ret)))
-
-        corr = news_nav_correlation(daily_agg, nav_returns) if nav_returns else {}
-        nav_summary = _build_nav_summary(nav_returns)
-        sentiment_mean = daily_agg[-1]["sentiment_mean"] if daily_agg else 0.5
-        from src.news.agent_context import build_news_judgment_context
-        agent_news_context = build_news_judgment_context(
-            fund_name=name,
-            fund_code=code,
-            news_list=news_with_sent,
-            daily_aggregates=daily_agg,
-            nav_summary=nav_summary,
-            holding_context=_holding_context_for_news(config, code),
-        )
-
-        results.append({
-            "fund_code": code,
-            "fund_name": name,
-            "news_count": len(news_list),
-            "sentiment_mean": sentiment_mean,
-            "daily_aggregates": daily_agg,
-            "correlation": corr.get(1, (0.0, 1.0))[0],
-            "news_list": news_with_sent,
-            "agent_news_search_plan": _planned_news_profile(agent_news_plan, code),
-            "status": "ok",
-            "agent_news_context": agent_news_context,
-            "sentiment_source": "rules_seed",
-        })
-
-    return results
+    """运行新闻分析 —— 持仓驱动定向采集 → 去重 → 蒸馏 → 简报"""
+    from src.news.pipeline import run_news_pipeline
+    return run_news_pipeline(analyzer, config, agent_news_plan, days=7)
 
 
 def _planned_news_profile(agent_news_plan, code: str):
