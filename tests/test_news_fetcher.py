@@ -129,6 +129,39 @@ class NewsFetcherTest(unittest.TestCase):
         self.assertNotIn("比亚迪股份", result)  # full >3 char dropped
         self.assertEqual(len(result), 5)
 
+    def test_fetch_fund_news_adds_match_metadata_and_limits_results(self):
+        fake_ak = types.SimpleNamespace()
+        fake_ak.fund_portfolio_hold_em = lambda symbol, date: pd.DataFrame()
+        fake_ak.stock_news_em = lambda symbol: pd.DataFrame()
+        fake_ak.stock_telegraph_cls = lambda: pd.DataFrame([
+            {"标题": "寒武纪订单增长", "内容": "AI芯片景气", "时间": "2026-05-18"},
+            {"标题": "普通新闻", "内容": "寒武纪供应链改善", "时间": "2026-05-18"},
+            {"标题": "寒武纪业绩预增", "内容": "半导体复苏", "时间": "2026-05-18"},
+        ])
+        fake_ak.stock_info_global_cls = lambda symbol="全部": pd.DataFrame()
+        fake_ak.stock_news_main_cx = lambda: pd.DataFrame()
+        fake_ak.news_cctv = lambda date: pd.DataFrame()
+
+        old = sys.modules.get("akshare")
+        sys.modules["akshare"] = fake_ak
+        try:
+            news = fetch_fund_news(
+                "001198",
+                "东方惠灵活配置混合A",
+                keywords=["寒武纪"],
+                days=7,
+                max_items=2,
+            )
+        finally:
+            if old is not None:
+                sys.modules["akshare"] = old
+            else:
+                sys.modules.pop("akshare", None)
+
+        self.assertEqual(len(news), 2)
+        self.assertIn("寒武纪", news[0]["matched_terms"])
+        self.assertEqual(news[0]["match_scope"], "title")
+
 
 if __name__ == "__main__":
     unittest.main()

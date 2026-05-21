@@ -90,6 +90,7 @@ def fetch_fund_news(
     days: int = 7,
     fund_type: str = "",
     shared_seen: set = None,
+    max_items: int = 50,
 ) -> List[Dict]:
     """获取与基金相关的近期新闻。优先按重仓股票搜索，次选基金名称/代码。
 
@@ -146,8 +147,8 @@ def fetch_fund_news(
                     include_terms=degraded_terms,
                 )
 
-    all_news.sort(key=lambda x: x.get("date", ""), reverse=True)
-    return all_news
+    all_news.sort(key=lambda x: (x.get("date", ""), x.get("match_score", 0)), reverse=True)
+    return all_news[:max_items]
 
 
 def _fetch_market_news_frames(ak, days: int, fund_profile: Dict = None):
@@ -213,11 +214,22 @@ def _append_news_from_df(
             continue
 
         # 关键词过滤：优先匹配标题（精准），标题无命中再降级到全文
+        matched_terms = []
+        match_scope = ""
+        match_score = 0
         if include_terms:
-            title_match = _matches_terms(title or "", include_terms)
-            content_match = _matches_terms(content or "", include_terms) if not title_match else False
-            if not title_match and not content_match:
+            title_matches = _matched_terms(title or "", include_terms)
+            content_matches = _matched_terms(content or "", include_terms) if not title_matches else []
+            if not title_matches and not content_matches:
                 continue
+            if title_matches:
+                matched_terms = title_matches
+                match_scope = "title"
+                match_score = 2
+            else:
+                matched_terms = content_matches
+                match_scope = "content"
+                match_score = 1
 
         news_date = _parse_date(date_raw)
         if news_date and news_date < cutoff:
@@ -235,6 +247,9 @@ def _append_news_from_df(
             "date": news_date.isoformat() if news_date else "",
             "source": source,
             "url": url,
+            "matched_terms": matched_terms,
+            "match_scope": match_scope,
+            "match_score": match_score,
         })
 
 
@@ -249,16 +264,22 @@ def _pick_first(row, names: List[str]) -> str:
 
 def _matches_terms(text: str, terms: List[str]) -> bool:
     """中英文统一子串匹配。"""
+    return bool(_matched_terms(text, terms))
+
+
+def _matched_terms(text: str, terms: List[str]) -> List[str]:
+    """Return matched search terms in stable order."""
     if not text:
-        return False
+        return []
     text_lower = text.lower()
+    matched = []
     for term in terms:
         term = str(term).strip()
         if len(term) < 2:
             continue
         if term.lower() in text_lower:
-            return True
-    return False
+            matched.append(term)
+    return matched
 
 
 def _degrade_keywords(terms: List[str]) -> List[str]:

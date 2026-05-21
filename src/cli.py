@@ -170,6 +170,7 @@ def cmd_analyze(args):
 
     # 持仓分析
     holdings_data = _compute_holdings(store, config, codes, analyzer)
+    _attach_trends_and_advice(scores, news_contexts, holdings_data)
     workflow_context = _build_workflow_context(config, holdings_data, news_data=news_data)
 
     # 推荐（默认关闭，--recommend 启用）
@@ -252,6 +253,7 @@ def _news_context_by_code(news_data):
             "sentiment_mean": item.get("sentiment_mean", 0.5),
             "daily_aggregates": (item.get("daily_aggregates") or [])[-5:],
             "brief": item.get("brief") or {},
+            "news_evaluation": item.get("news_evaluation") or {},
             "top_catalysts": [
                 {
                     "title": n.get("title", "")[:120],
@@ -264,6 +266,30 @@ def _news_context_by_code(news_data):
             ],
         }
     return contexts
+
+
+def _attach_trends_and_advice(scores, news_contexts, holdings_data):
+    """Attach trend forecasts and operation advice to scored funds."""
+    from src.decision.engine import build_operation_advice
+    from src.forecast.engine import build_trend_matrix
+
+    total_value = (holdings_data or {}).get("total_value", 0) or 0
+    by_fund = (holdings_data or {}).get("by_fund", {}) or {}
+    for score in scores:
+        code = score.get("fund_code")
+        trend = build_trend_matrix(score, news_contexts.get(code, {}))
+        detail = by_fund.get(code, {}) or {}
+        current_value = float(detail.get("current_value", 0) or 0)
+        position_context = {
+            "current_value": current_value,
+            "total_value": total_value,
+            "current_weight": current_value / total_value if total_value else 0.0,
+            "pending_amount": float(detail.get("pending_amount", 0) or 0),
+            "is_qdii": int(detail.get("settle_delay", 1) or 1) >= 2 or "QDII" in str(score.get("fund_type", "")).upper(),
+            "dca_enabled": bool(detail.get("dca_enabled")),
+        }
+        score["trend_matrix"] = trend
+        score["operation_advice"] = build_operation_advice(score, trend, position_context)
 
 
 def _compute_holdings(store, config, codes, analyzer=None):

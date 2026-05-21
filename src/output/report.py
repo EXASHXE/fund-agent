@@ -57,6 +57,10 @@ def generate_report(
     if workflow_context:
         lines.append(_render_workflow_focus(workflow_context, holdings_data, scores, news_data, agent_decisions))
 
+    trend_section = _render_trend_operation_matrix(scores)
+    if trend_section:
+        lines.append(trend_section)
+
     # === 资金分配与仓位调整 ===
     if holdings_data:
         total_value = holdings_data.get("total_value", 0)
@@ -313,6 +317,39 @@ def generate_report(
     # === 风险提示 ===
     lines.append(risk_disclaimer())
 
+    return "\n".join(lines)
+
+
+def _render_trend_operation_matrix(scores: List[Dict]) -> str:
+    rows = []
+    for s in scores or []:
+        trend = s.get("trend_matrix") or {}
+        advice = s.get("operation_advice") or {}
+        if not trend and not advice:
+            continue
+        short = trend.get("short_term") or {}
+        mid = trend.get("mid_term") or {}
+        target_weight = advice.get("target_weight")
+        target_text = f"{target_weight * 100:.2f}%" if isinstance(target_weight, (int, float)) else "N/A"
+        adjust = advice.get("adjust_amount")
+        adjust_text = f"¥{adjust:+,.2f}" if isinstance(adjust, (int, float)) else "N/A"
+        rows.append(
+            f"| {s.get('fund_name', '')}（{s.get('fund_code', '')}） "
+            f"| {short.get('direction', 'N/A')} / {short.get('score', 0):.2f} "
+            f"| {mid.get('direction', 'N/A')} / {mid.get('score', 0):.2f} "
+            f"| {short.get('confidence', 0):.2f} "
+            f"| {advice.get('action', 'N/A')} "
+            f"| {target_text} "
+            f"| {adjust_text} "
+            f"| {'；'.join((trend.get('drivers') or [])[:3])} |"
+        )
+    if not rows:
+        return ""
+    lines = ["---", "## 趋势预测与操作矩阵", ""]
+    lines.append("| 基金 | 短期趋势 | 中期趋势 | 置信度 | 建议动作 | 目标占比 | 调整金额 | 主要驱动 |")
+    lines.append("|------|---------|---------|-------:|---------|---------:|---------:|---------|")
+    lines.extend(rows)
+    lines.append("")
     return "\n".join(lines)
 
 

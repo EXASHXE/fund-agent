@@ -10,6 +10,7 @@ from typing import List, Dict
 from src.news.entity_mapper import entity_profile_from_fund, all_search_terms
 from src.news.deduplicator import exact_dedup, semantic_dedup, event_level_dedup
 from src.news.catalyst import compute_catalyst_score, aggregate_fund_brief
+from src.news.evaluator import evaluate_news_result, filter_relevant_catalysts
 from src.news.schemas import EntityProfile
 
 
@@ -92,6 +93,7 @@ def run_news_pipeline(
                 "entity_profile": entity,
                 "catalyst_news": [],
                 "brief": None,
+                "news_evaluation": evaluate_news_result({"news_list": [], "catalyst_news": []}),
                 "status": "empty",
             })
             continue
@@ -107,8 +109,13 @@ def run_news_pipeline(
 
         # === Step 5: 催化分析（新模块）===
         catalyst_news = compute_catalyst_score(news_list, entity)
+        scoring_catalyst_news = filter_relevant_catalysts(catalyst_news, min_relevance=0.2)
         today_str = date.today().isoformat()
-        brief = aggregate_fund_brief(code, name, catalyst_news, today_str)
+        brief = aggregate_fund_brief(code, name, scoring_catalyst_news, today_str)
+        news_evaluation = evaluate_news_result({
+            "news_list": news_with_sent,
+            "catalyst_news": catalyst_news,
+        }, as_of=today_str)
 
         # === 兼容旧输出 ===
         nav_df = fund_data.get("nav", None)
@@ -143,6 +150,7 @@ def run_news_pipeline(
             "news_list": news_with_sent,
             "catalyst_news": catalyst_news,
             "brief": brief,
+            "news_evaluation": news_evaluation,
             "entity_profile": entity,
             "agent_news_context": agent_news_context,
             "status": "ok",

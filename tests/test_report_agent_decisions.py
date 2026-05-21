@@ -111,6 +111,48 @@ class ReportAgentDecisionTest(unittest.TestCase):
         self.assertIn("不使用规则情绪解读", report)
         self.assertNotIn("近期相关新闻偏正面", report)
 
+    def test_report_renders_trend_and_operation_matrix_when_available(self):
+        report = generate_report(
+            analyzer=None,
+            scores=[{
+                "fund_code": "000001",
+                "fund_name": "测试基金",
+                "data_completeness": "A",
+                "composite_score": 76,
+                "score_level": "green",
+                "score_level_emoji": "🟢",
+                "macro_score": 15,
+                "macro_basis": "",
+                "meso_score": 22,
+                "meso_basis": "",
+                "micro_score": 39,
+                "micro_basis": "",
+                "recommendation": "买入",
+                "action_logic": "",
+                "stop_profit_pct": 20,
+                "stop_loss_pct": -15,
+                "trend_matrix": {
+                    "short_term": {"direction": "up", "score": 0.72, "confidence": 0.8},
+                    "mid_term": {"direction": "flat", "score": 0.58, "confidence": 0.7},
+                    "drivers": ["新闻催化偏正"],
+                },
+                "operation_advice": {
+                    "action": "buy",
+                    "target_weight": 0.18,
+                    "adjust_amount": 1000,
+                    "confidence": 0.75,
+                },
+            }],
+            correlations=pd.DataFrame(),
+            stress_tests=[],
+            holdings_data={"total_value": 10000, "funds": []},
+        )
+
+        self.assertIn("趋势预测与操作矩阵", report)
+        self.assertIn("测试基金", report)
+        self.assertIn("buy", report)
+        self.assertIn("18.00%", report)
+
 
 if __name__ == "__main__":
     unittest.main()
