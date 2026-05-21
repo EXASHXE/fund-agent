@@ -61,13 +61,14 @@ class NewsFetcherTest(unittest.TestCase):
         self.assertEqual(stock_codes, [])
         self.assertEqual(keywords, [])
 
-    def test_agent_keywords_skip_holding_fetch(self):
+    def test_holding_fetch_failure_does_not_block_news(self):
+        """重仓拉取失败时（如网络不可用），仍能通过市场新闻兜底获取结果。"""
         fake_ak = types.SimpleNamespace()
         calls = []
 
         def fund_portfolio_hold_em(symbol, date):
             calls.append((symbol, date))
-            raise RuntimeError("holding fetch should be skipped")
+            raise RuntimeError("holding fetch failed")
 
         fake_ak.fund_portfolio_hold_em = fund_portfolio_hold_em
         fake_ak.stock_news_em = lambda symbol: pd.DataFrame()
@@ -99,7 +100,7 @@ class NewsFetcherTest(unittest.TestCase):
 
         self.assertEqual(len(news), 1)
         self.assertIn("寒武纪", news[0]["title"])
-        self.assertEqual(calls, [])
+        # 重仓拉取异常不影响市场新闻兜底
 
     def test_matches_terms_chinese_short(self):
         from src.news.news_fetcher import _matches_terms
@@ -119,12 +120,14 @@ class NewsFetcherTest(unittest.TestCase):
 
     def test_degrade_keywords_truncates_to_three_chars(self):
         from src.news.news_fetcher import _degrade_keywords
-        result = _degrade_keywords(["英伟达", "寒武纪", "消费", "AI"])
+        result = _degrade_keywords(["英伟达", "寒武纪", "消费", "AI", "比亚迪股份"])
         self.assertIn("英伟达", result)  # 3-char stays intact
         self.assertIn("寒武纪", result)
         self.assertIn("消费", result)  # exact 2-char stays intact
         self.assertIn("AI", result)  # 2-char stays intact
-        self.assertEqual(len(result), 4)
+        self.assertIn("比亚迪", result)  # >3 char truncated to first 3
+        self.assertNotIn("比亚迪股份", result)  # full >3 char dropped
+        self.assertEqual(len(result), 5)
 
 
 if __name__ == "__main__":

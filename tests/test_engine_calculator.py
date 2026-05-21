@@ -21,7 +21,12 @@ def _next_weekday(d):
 
 
 class EngineCalculatorTest(unittest.TestCase):
-    def test_qdii_buy_uses_t_plus_1_nav_for_shares(self):
+    def test_qdii_settle_delay_affects_pending_not_nav_date(self):
+        """QDII settle_delay=2 仅影响 PENDING 截止日，不影响净值日期匹配。
+
+        NAV 匹配统一使用 settle_delay=1（T 日净值）。
+        settle_delay=2 只影响 _settlement_date 的计算。
+        """
         events = [
             FundEvent(
                 event_type=EventType.BUY,
@@ -46,8 +51,9 @@ class EngineCalculatorTest(unittest.TestCase):
                 today=date(2026, 5, 13),
             )
 
-        self.assertEqual(result["total_shares"], 500.0)
-        self.assertEqual(result["current_asset"], 1000.0)
+        # 净值日期应为 T 日 (5-11), NAV=1.0, 份额=1000/1.0=1000
+        self.assertEqual(result["total_shares"], 1000.0)
+        self.assertEqual(result["current_asset"], 2000.0)
 
     def test_buy_shares_keep_four_decimal_precision(self):
         events = [

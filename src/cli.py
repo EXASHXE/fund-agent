@@ -158,7 +158,9 @@ def cmd_analyze(args):
                 },
             }
         else:
-            print(f"[INFO] Agent 不可用，降级使用基金重仓股名 + 默认词组推导关键词。")
+            # 无 Agent：按 SKILL.md 输出关键词请求 JSON 并停止
+            _write_keyword_request_and_exit(config, codes, analyzer, args.output or "report.md")
+            return  # unreachable, _write_keyword_request_and_exit calls sys.exit
 
     # 新闻分析
     print("\n[Layer 3] 新闻采集与分析...")
@@ -584,6 +586,7 @@ def _run_news_analysis(config, analyzer, agent_news_plan=None):
     from src.news.correlate import news_nav_correlation
 
     results = []
+    global_seen = set()  # 跨基金去重：同一新闻只分配给首只匹配的基金
     for holding in config.holdings:
         code = holding.code
         name = holding.name
@@ -596,6 +599,7 @@ def _run_news_analysis(config, analyzer, agent_news_plan=None):
             keywords=planned_keywords,
             days=7,
             fund_type=getattr(holding, "type", ""),
+            shared_seen=global_seen,
         )
         if not news_list:
             results.append({
@@ -669,7 +673,15 @@ def _planned_news_keywords(agent_news_plan, code: str):
         for kw in profile.get(key, []) or []:
             if kw and kw not in keywords:
                 keywords.append(str(kw))
-    return keywords or None
+    # 防御性拆分：将复合关键词（如 "英伟达 NVDA 财报"）按空格拆为原子词
+    split_keywords = []
+    for kw in keywords:
+        parts = kw.split()
+        for part in parts:
+            part = part.strip()
+            if len(part) >= 2 and part not in split_keywords:
+                split_keywords.append(part)
+    return split_keywords or None
 
 
 def _build_nav_summary(nav_returns):

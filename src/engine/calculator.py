@@ -2,8 +2,8 @@
 核心计算引擎：事件驱动状态机 + XIRR + 校准平账。
 
 处理 BUY/CALIBRATE 事件。
-净值匹配按基金 settle_delay 计算：国内 T 日净值，QDII 通常 T+1 净值。
-  - _match_nav 前瞻 5 天兜底，确保节假日或数据缺失时能自动匹配到后续有效净值。
+净值匹配统一使用 settle_delay=1（所有基金 T 日净值），与结算到账时间无关。
+  - _match_nav 前瞻 5 天兜底；近 3 天目标不向后搜索（防 QDII 净值滞后误配历史数据）。
 PENDING 判断基于 effective trade date + fund settle_delay：若结算日 > 今天（未到确认日），标记为 PENDING。
   - settle_date == today 表示今日确认到账，计入已确认份额。
   - effective trade date = 实际交易日期（非交易日顺延，after_1500 顺延）
@@ -16,24 +16,9 @@ from datetime import date, timedelta
 from typing import Dict, List, Optional, Tuple
 
 from src.engine.calendar import is_trade_day, next_trade_day
-from src.engine.events import FundEvent, EventType, resolve_nav_date
+from src.engine.events import FundEvent, EventType, resolve_nav_date, _effective_trade_date
 
 CALIBRATION_MAX_DELTA_PCT = 0.03
-
-
-def _effective_trade_date(purchase_date: date, after_1500: bool) -> date:
-    """计算实际交易日（处理非交易日和15:00截止规则）。
-
-    - 非交易日 → 顺延至下一交易日
-    - 交易日 + after_1500 → 顺延至下一交易日
-    - 交易日 + before_1500 → 当天即为交易日
-    """
-    if not is_trade_day(purchase_date):
-        return next_trade_day(purchase_date)
-    elif after_1500:
-        return next_trade_day(purchase_date + timedelta(days=1))
-    else:
-        return purchase_date
 
 
 def _settlement_date(trade_date: date, settle_delay: int) -> date:
@@ -96,7 +81,7 @@ def compute_fund(
                 continue
 
             nav_date = resolve_nav_date(event.event_date, event.after_1500, settle_delay=1)
-            nav = float(event.nav) if event.nav else _match_nav(nav_map, nav_date)
+            nav = float(event.nav) if event.nav else _match_nav(nav_map, nav_date, today)
             if nav is None or nav <= 0:
                 events_detail.append({
                     "type": "BUY",
@@ -151,8 +136,9 @@ def compute_fund(
     confirmed_return_pct = round(confirmed_pnl / total_cost * 100, 2) if total_cost > 0 else 0.0
     portfolio_pnl = round(current_asset - (total_cost + pending_amount), 2)
 
-    # XIRR: 所有现金流（含 pending）+ 当前市值作为终值
-    xirr_val = _calc_xirr(cashflows, current_asset, today)
+    # XIRR: 所有现金流（含 pending）+ 当前市值作为终值，终端日对齐最新净值日
+    terminal_date = last_nav_date if last_nav_date else today
+    xirr_val = _calc_xirr(cashflows, current_asset, terminal_date)
 
     avg_cost = round(total_cost / total_shares, 4) if total_shares > 0 else 0.0
 
@@ -175,13 +161,15 @@ def compute_fund(
     }
 
 
-def _match_nav(nav_map: Dict[date, float], target: date) -> Optional[float]:
+def _match_nav(nav_map: Dict[date, float], target: date, today: Optional[date] = None) -> Optional[float]:
     if target in nav_map:
         return nav_map[target]
     for i in range(1, 6):
         d = target + timedelta(days=i)
         if d in nav_map:
             return nav_map[d]
+    if today and (today - target).days <= 3:
+        return None
     for i in range(1, 4):
         d = target - timedelta(days=i)
         if d in nav_map:

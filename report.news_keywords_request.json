@@ -1,0 +1,300 @@
+{
+  "request_version": "news_keyword_request.v1",
+  "generated_at": "2026-05-20",
+  "cache_path": "data/cache/news_keyword_profiles.json",
+  "holding_codes": [
+    "001198",
+    "008253",
+    "017436",
+    "018380",
+    "021620",
+    "378006"
+  ],
+  "funds": {
+    "008253": {
+      "name": "华宝致远混合A",
+      "type": "QDII-混合",
+      "top_holdings": [
+        {
+          "stock_name": "英伟达",
+          "stock_code": "NVDA",
+          "weight": "7.79"
+        },
+        {
+          "stock_name": "Lumentum Holdings Inc",
+          "stock_code": "LITE",
+          "weight": "7.07"
+        },
+        {
+          "stock_name": "闪迪",
+          "stock_code": "SNDK",
+          "weight": "5.47"
+        },
+        {
+          "stock_name": "美光科技",
+          "stock_code": "MU",
+          "weight": "4.53"
+        },
+        {
+          "stock_name": "博通",
+          "stock_code": "AVGO",
+          "weight": "4.15"
+        },
+        {
+          "stock_name": "谷歌-C",
+          "stock_code": "GOOG",
+          "weight": "3.96"
+        },
+        {
+          "stock_name": "台积电",
+          "stock_code": "TSM",
+          "weight": "3.89"
+        },
+        {
+          "stock_name": "康宁",
+          "stock_code": "GLW",
+          "weight": "2.96"
+        },
+        {
+          "stock_name": "Coherent Corp",
+          "stock_code": "COHR",
+          "weight": "2.66"
+        },
+        {
+          "stock_name": "阿斯麦",
+          "stock_code": "ASML",
+          "weight": "2.36"
+        }
+      ]
+    },
+    "017436": {
+      "name": "华宝纳斯达克精选股票发起式(QDII)A",
+      "type": "QDII-股票",
+      "top_holdings": [
+        {
+          "stock_name": "奈飞",
+          "stock_code": "NFLX",
+          "weight": "9.32"
+        },
+        {
+          "stock_name": "英伟达",
+          "stock_code": "NVDA",
+          "weight": "9.28"
+        },
+        {
+          "stock_name": "苹果",
+          "stock_code": "AAPL",
+          "weight": "7.76"
+        },
+        {
+          "stock_name": "微软",
+          "stock_code": "MSFT",
+          "weight": "7.5"
+        },
+        {
+          "stock_name": "博通",
+          "stock_code": "AVGO",
+          "weight": "7.43"
+        },
+        {
+          "stock_name": "特斯拉",
+          "stock_code": "TSLA",
+          "weight": "7.33"
+        },
+        {
+          "stock_name": "谷歌-C",
+          "stock_code": "GOOG",
+          "weight": "6.82"
+        },
+        {
+          "stock_name": "亚马逊",
+          "stock_code": "AMZN",
+          "weight": "6.34"
+        },
+        {
+          "stock_name": "Meta Platforms Inc-A",
+          "stock_code": "META",
+          "weight": "5.77"
+        },
+        {
+          "stock_name": "迈威尔科技",
+          "stock_code": "MRVL",
+          "weight": "4.96"
+        }
+      ]
+    },
+    "001198": {
+      "name": "东方惠新灵活配置混合A",
+      "type": "混合型-灵活配置",
+      "top_holdings": [
+        {
+          "stock_name": "寒武纪",
+          "stock_code": "688256",
+          "weight": "8.98"
+        },
+        {
+          "stock_name": "精测电子",
+          "stock_code": "300567",
+          "weight": "8.82"
+        },
+        {
+          "stock_name": "拓荆科技",
+          "stock_code": "688072",
+          "weight": "8.77"
+        },
+        {
+          "stock_name": "聚辰股份",
+          "stock_code": "688123",
+          "weight": "7.94"
+        },
+        {
+          "stock_name": "北方华创",
+          "stock_code": "002371",
+          "weight": "7.91"
+        },
+        {
+          "stock_name": "兆易创新",
+          "stock_code": "603986",
+          "weight": "7.42"
+        },
+        {
+          "stock_name": "普冉股份",
+          "stock_code": "688766",
+          "weight": "7.29"
+        },
+        {
+          "stock_name": "中微公司",
+          "stock_code": "688012",
+          "weight": "6.25"
+        },
+        {
+          "stock_name": "华海清科",
+          "stock_code": "688120",
+          "weight": "5.84"
+        },
+        {
+          "stock_name": "富创精密",
+          "stock_code": "688409",
+          "weight": "5.59"
+        }
+      ]
+    },
+    "378006": {
+      "name": "摩根全球新兴市场混合(QDII)",
+      "type": "QDII-混合",
+      "top_holdings": [
+        {
+          "stock_name": "台积电",
+          "stock_code": "TSM",
+          "weight": "10.3"
+        },
+        {
+          "stock_name": "三星电子",
+          "stock_code": "005930",
+          "weight": "7.55"
+        },
+        {
+          "stock_name": "腾讯控股",
+          "stock_code": "00700",
+          "weight": "6.59"
+        },
+        {
+          "stock_name": "SK海力士",
+          "stock_code": "000660",
+          "weight": "4.4"
+        },
+        {
+          "stock_name": "阿里巴巴-W",
+          "stock_code": "09988",
+          "weight": "2.9"
+        },
+        {
+          "stock_name": "印度国家银行",
+          "stock_code": "SBID",
+          "weight": "2.23"
+        },
+        {
+          "stock_name": "印度瑞来斯实业",
+          "stock_code": "RIGD",
+          "weight": "1.8"
+        },
+        {
+          "stock_name": "ITAU UNIBANCO HOLDING S-PREF",
+          "stock_code": "ITUB4",
+          "weight": "1.68"
+        },
+        {
+          "stock_name": "HDFC银行",
+          "stock_code": "HDB",
+          "weight": "1.6"
+        },
+        {
+          "stock_name": "工商银行",
+          "stock_code": "01398",
+          "weight": "1.57"
+        }
+      ]
+    },
+    "021620": {
+      "name": "天弘中证油气产业指数发起C",
+      "type": "股票型-标准指数",
+      "top_holdings": [
+        {
+          "stock_name": "中国海油",
+          "stock_code": "600938",
+          "weight": "10.32"
+        },
+        {
+          "stock_name": "中国石油",
+          "stock_code": "601857",
+          "weight": "9.11"
+        },
+        {
+          "stock_name": "杰瑞股份",
+          "stock_code": "002353",
+          "weight": "8.58"
+        },
+        {
+          "stock_name": "招商轮船",
+          "stock_code": "601872",
+          "weight": "7.63"
+        },
+        {
+          "stock_name": "中国石化",
+          "stock_code": "600028",
+          "weight": "7.26"
+        },
+        {
+          "stock_name": "中远海能",
+          "stock_code": "600026",
+          "weight": "5.3"
+        },
+        {
+          "stock_name": "广汇能源",
+          "stock_code": "600256",
+          "weight": "4.31"
+        },
+        {
+          "stock_name": "洲际油气",
+          "stock_code": "600759",
+          "weight": "3.39"
+        },
+        {
+          "stock_name": "招商南油",
+          "stock_code": "601975",
+          "weight": "2.4"
+        },
+        {
+          "stock_name": "恒力石化",
+          "stock_code": "600346",
+          "weight": "2.15"
+        }
+      ]
+    },
+    "018380": {
+      "name": "万家国证新能源车电池ETF发起式联接C",
+      "type": "股票型-标准指数",
+      "top_holdings": []
+    }
+  }
+}

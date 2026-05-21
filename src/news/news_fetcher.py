@@ -18,7 +18,7 @@ def extract_holding_keywords(fund_code: str, limit: int = 10) -> Tuple[List[str]
             if df is not None and not df.empty:
                 for _, row in df.head(limit).iterrows():
                     code = str(row.get("股票代码", "")).strip()
-                    if re.fullmatch(r"\d{6}", code):
+                    if code and code.lower() != "nan":
                         stock_codes.append(code)
                     name = _normalize_company_name(str(row.get("股票名称", "")))
                     weight = _pick_first(row, ["占净值比例", "持仓占比", "占比", "持股占比"])
@@ -55,10 +55,8 @@ def build_news_search_profile(
     代码只提供真实重仓、基金名和少量兜底词；行业链条和扩展关键词应由
     接入 skill 的 agent 基于这些证据自主判断后通过 keywords 传入。
     """
-    if agent_keywords:
-        stock_codes, stock_keywords = [], []
-    else:
-        stock_codes, stock_keywords = extract_holding_keywords(fund_code, limit=limit)
+    # 重仓股始终提取（个股新闻路径需要 stock_codes，不受 agent_keywords 影响）
+    stock_codes, stock_keywords = extract_holding_keywords(fund_code, limit=limit)
     profile = {
         "fund_code": fund_code,
         "fund_name": fund_name,
@@ -69,8 +67,14 @@ def build_news_search_profile(
         "fallback_keywords": _fallback_fund_keywords(fund_name, fund_type),
     }
     terms = []
-    for group in ["holding_keywords", "agent_keywords", "fallback_keywords"]:
+    # 优先用重仓股名和 Agent 关键词（精准匹配）
+    for group in ["holding_keywords", "agent_keywords"]:
         for kw in profile[group]:
+            if kw and kw not in terms:
+                terms.append(kw)
+    # 仅当持仓关键词不足 3 个时才启用兜底词（防止泛词污染）
+    if len(terms) < 3:
+        for kw in profile["fallback_keywords"]:
             if kw and kw not in terms:
                 terms.append(kw)
     if fund_code not in terms:
@@ -85,15 +89,19 @@ def fetch_fund_news(
     keywords: List[str] = None,
     days: int = 7,
     fund_type: str = "",
+    shared_seen: set = None,
 ) -> List[Dict]:
-    """获取与基金相关的近期新闻。优先按重仓股票搜索，次选基金名称/代码。"""
+    """获取与基金相关的近期新闻。优先按重仓股票搜索，次选基金名称/代码。
+
+    shared_seen: 跨基金去重集合。传入后同一新闻不会在不同基金间重复出现。
+    """
     try:
         import akshare as ak
     except ImportError:
         return []
 
     all_news = []
-    seen = set()
+    seen = shared_seen if shared_seen is not None else set()
 
     profile = build_news_search_profile(
         fund_code=fund_code,
@@ -115,7 +123,8 @@ def fetch_fund_news(
             continue
 
     # 全市场新闻兜底：先抓通用新闻，再用基金/行业/持仓关键词本地过滤。
-    market_frames = list(_fetch_market_news_frames(ak, days))
+    fund_profile = {"name": fund_name, "type": fund_type, "keywords": search_terms}
+    market_frames = list(_fetch_market_news_frames(ak, days, fund_profile=fund_profile))
     for df, source_hint in market_frames:
         _append_news_from_df(
             all_news,
@@ -141,7 +150,7 @@ def fetch_fund_news(
     return all_news
 
 
-def _fetch_market_news_frames(ak, days: int):
+def _fetch_market_news_frames(ak, days: int, fund_profile: Dict = None):
     frames = []
 
     # 财联社电报全量流（时效性更强、数据量更大）
@@ -157,8 +166,9 @@ def _fetch_market_news_frames(ak, days: int):
         except Exception:
             pass
 
-    # 行业新闻兜底（申万一级行业覆盖）
-    for industry in ["半导体", "新能源", "医药", "消费", "科技"]:
+    # 行业新闻：只拉与该基金主题相关的行业，避免泛匹配
+    industries = _fund_industries(fund_profile) if fund_profile else []
+    for industry in industries:
         try:
             frames.append((ak.stock_info_global_cls(symbol=industry), f"行业新闻:{industry}"))
         except Exception:
@@ -201,17 +211,23 @@ def _append_news_from_df(
         text = f"{title} {content}".strip()
         if not title and not content:
             continue
-        if include_terms and not _matches_terms(text, include_terms):
-            continue
+
+        # 关键词过滤：优先匹配标题（精准），标题无命中再降级到全文
+        if include_terms:
+            title_match = _matches_terms(title or "", include_terms)
+            content_match = _matches_terms(content or "", include_terms) if not title_match else False
+            if not title_match and not content_match:
+                continue
 
         news_date = _parse_date(date_raw)
         if news_date and news_date < cutoff:
             continue
 
-        digest = hashlib.md5(f"{title}|{source}|{url}".encode()).hexdigest()
-        if digest in seen:
+        # 去重：以标准化标题为 key（不同来源的同标题新闻只保留一条）
+        dedup_key = hashlib.md5(title.encode() if title else content[:80].encode()).hexdigest()
+        if dedup_key in seen:
             continue
-        seen.add(digest)
+        seen.add(dedup_key)
 
         all_news.append({
             "title": title or content[:80],
@@ -269,16 +285,120 @@ def _fallback_fund_keywords(fund_name: str, fund_type: str = "") -> List[str]:
     core_name = (fund_name or "").split("(")[0].split("（")[0].strip()
     if core_name:
         terms.append(core_name)
-    if "QDII" in text or "qdii" in text.lower():
-        terms.extend(["海外市场", "汇率"])
-    for literal in ["纳斯达克", "标普", "恒生", "黄金", "石油", "半导体", "新能源", "医药", "消费"]:
-        if literal in text:
-            terms.append(literal)
+
+    # 公募主题词 → 行业关键词映射（只保留高相关性词组，避免泛词污染）
+    _THEME_MAP = {
+        "纳斯达克": ["纳斯达克", "美股科技", "AI"],
+        "标普": ["标普500", "美股"],
+        "恒生": ["恒生指数", "港股"],
+        "黄金": ["黄金", "贵金属"],
+        "石油": ["原油", "石油", "能源"],
+        "天然气": ["天然气", "能源"],
+        "新兴市场": ["新兴市场经济体"],
+        "半导体": ["半导体", "芯片"],
+        "新能源": ["新能源", "锂电池", "光伏"],
+        "医药": ["医药", "创新药"],
+        "消费": ["消费", "白酒"],
+        "电池": ["锂电池", "新能源车"],
+        "油气": ["原油", "石油"],
+    }
+    matched_themes = set()
+    for theme, kws in _THEME_MAP.items():
+        if theme in text:
+            matched_themes.add(theme)
+            for kw in kws:
+                if kw not in terms:
+                    terms.append(kw)
+
+    # 无具体主题的 QDII 兜底（不含"汇率"——太泛，误配率高）
+    if ("QDII" in text or "qdii" in text.lower()) and not matched_themes:
+        terms.append("QDII")
+
     if "债" in text:
-        terms.extend(["利率", "信用债"])
-    if "指数" in text or "ETF" in text:
-        terms.append("指数")
+        terms.extend(["利率债", "信用债"])
     return terms
+
+
+def _fund_industries(fund_profile: Dict) -> List[str]:
+    """从基金画像提取相关申万行业名，用于定向拉取行业新闻。"""
+    if not fund_profile:
+        return []
+    text = f"{fund_profile.get('name', '')} {fund_profile.get('type', '')}"
+    kws = fund_profile.get("keywords", [])
+    kw_text = " ".join(str(k) for k in kws)
+
+    industries = set()
+    _INDUSTRY_THEME_MAP = {
+        # 半导体链条
+        "半导体": "半导体",
+        "芯片": "半导体",
+        "AI芯片": "半导体",
+        "光刻机": "半导体",
+        "刻蚀机": "半导体",
+        "光刻": "半导体",
+        "闪存": "半导体",
+        "HBM": "半导体",
+        "先进封装": "半导体",
+        "CMP": "半导体",
+        "薄膜沉积": "半导体",
+        "晶圆": "半导体",
+        "国产替代": "半导体",
+        "ASIC": "半导体",
+        "检测设备": "半导体",
+        "存储": "半导体",
+        # 科技
+        "科技": "科技",
+        "AI": "科技",
+        "美股科技": "科技",
+        "数据中心": "科技",
+        "光模块": "科技",
+        "自动驾驶": "科技",
+        "人工智能": "科技",
+        "纳斯达克": "科技",
+        "AWS": "科技",
+        "Copilot": "科技",
+        # 新能源
+        "新能源": "新能源",
+        "锂电池": "新能源",
+        "光伏": "新能源",
+        "电池": "新能源",
+        "新能源车": "新能源",
+        "固态电池": "新能源",
+        "储能": "新能源",
+        "锂电": "新能源",
+        "动力电池": "新能源",
+        "碳酸锂": "新能源",
+        "换电": "新能源",
+        # 能源
+        "石油": "能源",
+        "原油": "能源",
+        "天然气": "能源",
+        "能源": "能源",
+        "LNG": "能源",
+        "油服": "能源",
+        "石化": "能源",
+        "钻井平台": "能源",
+        "油气": "能源",
+        # 医药
+        "医药": "医药",
+        "创新药": "医药",
+        # 消费
+        "消费": "消费",
+        "白酒": "消费",
+        # 有色
+        "黄金": "有色",
+        "贵金属": "有色",
+        # 全球/新兴
+        "新兴市场": "全球",
+        "港股": "全球",
+        "韩国半导体": "半导体",
+    }
+    full_text = f"{text} {kw_text}"
+    for theme, industry in _INDUSTRY_THEME_MAP.items():
+        if theme in full_text:
+            industries.add(industry)
+
+    return sorted(industries) if industries else []
 
 
 def _normalize_company_name(name: str) -> str:

@@ -56,8 +56,12 @@ def generate_events(
         if dca_amount > 0 and dca_start:
             dca_dates = _generate_dca_dates(dca_start, today, dca_freq, dca_dow)
             for dd in dca_dates:
-                if not any(e.event_date == dd and abs(e.amount - dca_amount) < 0.01
-                           for e in events if e.event_type == EventType.BUY):
+                # 比较有效交易日（处理非交易日顺延后的查重）
+                if not any(
+                    _effective_trade_date(e.event_date, e.after_1500) == dd
+                    and abs(e.amount - dca_amount) < 0.01
+                    for e in events if e.event_type == EventType.BUY
+                ):
                     events.append(FundEvent(
                         event_type=EventType.BUY,
                         event_date=dd,
@@ -80,16 +84,14 @@ def generate_events(
 
 
 def resolve_nav_date(event_date: date, after_1500: bool, settle_delay: int = 1) -> date:
-    """根据 T 日规则 + 结算延迟计算实际净值日。
+    """计算申购生效净值日。
 
-    settle_delay: 1 = T+1 确认 (国内/混合/ETF/指数)
-                 2 = T+2 确认 (QDII 海外基金)
+    settle_delay 影响净值日偏移量：
+      1 → 当日/下一交易日净值（默认，NAV 匹配统一使用此值）
+      2 → 延后 1 个交易日净值（仅用于展示推算，不用于 NAV 匹配）
 
-    示例（均为交易日）：
-    - 国内, 15:00 前: settle_delay=1 → 当日净值
-    - 国内, 15:00 后: settle_delay=1 → 下一交易日净值
-    - QDII, 15:00 前: settle_delay=2 → 下一交易日净值 (T+1)
-    - QDII, 15:00 后: settle_delay=2 → 下两个交易日净值 (T+2)
+    注意：NAV 匹配按 CLAUDE.md 设计统一使用 settle_delay=1，
+    基金自身 settle_delay 仅用于 _settlement_date（PENDING 判断）。
     """
     if not is_trade_day(event_date):
         base = next_trade_day(event_date)
@@ -156,3 +158,18 @@ def _next_monthly(d: date) -> date:
 def _to_date(d) -> Optional[date]:
     from src.config.shared import to_date as _td
     return _td(d)
+
+
+def _effective_trade_date(purchase_date: date, after_1500: bool) -> date:
+    """计算实际交易日（处理非交易日和15:00截止规则）。
+
+    - 非交易日 → 顺延至下一交易日
+    - 交易日 + after_1500 → 顺延至下一交易日
+    - 交易日 + before_1500 → 当天即为交易日
+    """
+    if not is_trade_day(purchase_date):
+        return next_trade_day(purchase_date)
+    elif after_1500:
+        return next_trade_day(purchase_date + timedelta(days=1))
+    else:
+        return purchase_date

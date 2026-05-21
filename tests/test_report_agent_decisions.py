@@ -3,7 +3,7 @@ import unittest
 import pandas as pd
 
 from src.output.report import generate_report
-from src.output.report import _format_profit_contribution, _render_daily_reasoning
+from src.output.report import _format_profit_contribution
 
 
 class ReportAgentDecisionTest(unittest.TestCase):
@@ -29,31 +29,37 @@ class ReportAgentDecisionTest(unittest.TestCase):
         self.assertEqual(_format_profit_contribution(50, -200), "+25.00%")
         self.assertEqual(_format_profit_contribution(-250, -200), "-125.00%")
 
-    def test_daily_reasoning_uses_agent_low_relevance_news_judgment(self):
-        text = _render_daily_reasoning(
-            workflow_context={
-                "top_news": [{
-                    "code": "021620",
-                    "name": "天弘石油天然气指数C",
-                    "headline": "美股纳指高开0.2% 芯片股反弹",
-                    "sentiment": 0.8,
-                }]
-            },
-            holdings_data={},
-            scores=[],
-            agent_decisions={
-                "news": {
-                    "021620": {
-                        "summary": "本次新闻样本对油气基金直接相关性不足",
-                        "impact": "neutral",
-                        "relevance": "low",
-                    }
-                }
-            },
+    def test_daily_reasoning_slot_present_in_report(self):
+        """Verify the report contains Agent analysis markers."""
+        report = generate_report(
+            analyzer=None,
+            scores=[{
+                "fund_code": "021620",
+                "fund_name": "天弘石油天然气指数C",
+                "data_completeness": "B",
+                "composite_score": 67,
+                "score_level": "yellow",
+                "score_level_emoji": "🟡",
+                "macro_score": 13, "macro_basis": "",
+                "meso_score": 15, "meso_basis": "",
+                "micro_score": 39, "micro_basis": "",
+                "recommendation": "持有", "action_logic": "",
+                "stop_profit_pct": 10, "stop_loss_pct": -10,
+            }],
+            correlations=pd.DataFrame(),
+            stress_tests=[],
+            news_data=[{
+                "fund_code": "021620",
+                "fund_name": "天弘石油天然气指数C",
+                "news_count": 1, "sentiment_mean": 0.5,
+                "daily_aggregates": [],
+                "news_list": [], "status": "ok",
+            }],
+            recommendations=[],
+            agent_decisions={},
         )
-
-        self.assertIn("相关性低", text)
-        self.assertNotIn("利好/支撑", text)
+        self.assertIn("AGENT: 诊断分析", report)
+        self.assertIn("AGENT: 新闻穿透分析", report)
 
     def test_news_section_low_relevance_does_not_render_rule_positive_interpretation(self):
         report = generate_report(

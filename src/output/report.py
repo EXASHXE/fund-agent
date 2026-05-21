@@ -57,7 +57,7 @@ def generate_report(
     if workflow_context:
         lines.append(_render_workflow_focus(workflow_context, holdings_data, scores, news_data, agent_decisions))
 
-    # === 资金分配总览 ===
+    # === 资金分配与仓位调整 ===
     if holdings_data:
         total_value = holdings_data.get("total_value", 0)
         if total_value > 0:
@@ -68,32 +68,12 @@ def generate_report(
             lines.append("|------|-----------|---------|---------|-----------|------|")
             for fund in holdings_data.get("funds", []):
                 current_pct = fund["value"] / total_value * 100 if total_value else 0
-                code = fund["code"]
-                # Match with score
-                score = next((s for s in scores if s["fund_code"] == code), None)
-                if score:
-                    if score["score_level"] == "green":
-                        target_pct = min(25, current_pct + 5)
-                        action = "逢低加仓"
-                    elif score["score_level"] == "yellow":
-                        target_pct = current_pct
-                        action = "持有"
-                    elif score["score_level"] == "orange":
-                        target_pct = max(5, current_pct * 0.5)
-                        action = "减仓50%"
-                    else:
-                        target_pct = 0
-                        action = "止损清仓"
-                    adjust = (target_pct - current_pct) / 100 * total_value
-                else:
-                    target_pct = current_pct
-                    adjust = 0
-                    action = "数据不足"
                 lines.append(
-                    f"| {fund['name']}（{code}） | ¥{fund['value']:,.2f} "
-                    f"| {current_pct:.2f}% | {target_pct:.2f}% "
-                    f"| ¥{adjust:+,.2f} | {action} |"
+                    f"| {fund['name']}（{fund['code']}） | ¥{fund['value']:,.2f} "
+                    f"| {current_pct:.2f}% | <!-- AGENT_FILL --> | <!-- AGENT_FILL --> | <!-- AGENT_FILL --> |"
                 )
+            lines.append("")
+            lines.append("<!-- AGENT: 再平衡逻辑 -->")
             lines.append("")
 
     # === 单基金诊断 ===
@@ -190,6 +170,8 @@ def generate_report(
                         f"| ¥{rec.get('fee', 0):.2f} | {rec['nav']:.4f} | {rec['shares']:.4f} "
                         f"| {rec['cum_shares']:.4f} | {rec.get('period_return', 'N/A')} |"
                     )
+        lines.append("")
+        lines.append("<!-- AGENT: 诊断分析 -->")
         lines.append("")
 
     # === D级基金提示 ===
@@ -460,7 +442,7 @@ def _render_trade_day_focus(
     lines.append("")
     lines.append(_render_market_brief(scores, news_data))
     lines.append("")
-    lines.append(_render_daily_reasoning(workflow_context, holdings_data, scores, agent_decisions))
+    lines.append("<!-- AGENT: 大盘归因 -->")
     lines.append("")
     return "\n".join(lines)
 
@@ -502,12 +484,12 @@ def _render_non_trade_day_focus(
 
     lines.append("#### 风险暴露与再平衡")
     lines.append("")
-    lines.append(_render_rebalance_brief(holdings_data, scores))
+    lines.append("<!-- AGENT: 风险与再平衡 -->")
     lines.append("")
 
     lines.append("#### 定投质量分析")
     lines.append("")
-    lines.append(_render_dca_quality(workflow_context, holdings_data, scores))
+    lines.append("<!-- AGENT: 定投评估 -->")
     lines.append("")
     return "\n".join(lines)
 
@@ -527,92 +509,11 @@ def _render_market_brief(scores: List[Dict], news_data: List[Dict]) -> str:
     )
 
 
-def _render_daily_reasoning(
-    workflow_context: Dict,
-    holdings_data: Dict,
-    scores: List[Dict],
-    agent_decisions: Dict = None,
-) -> str:
-    top_news = workflow_context.get("top_news") or []
-    if not top_news:
-        return "- 暂无足够新闻数据解释当日资产变化；优先参考基金净值更新和持仓行业暴露。"
-    lines = []
-    for item in top_news[:5]:
-        code = item.get("code")
-        decision = (agent_decisions or {}).get("news", {}).get(code, {})
-        if decision:
-            relevance = decision.get("relevance", "")
-            summary = decision.get("summary", "")
-            if relevance == "low":
-                lines.append(
-                    f"- {item.get('name')}（{code}）：Agent判断相关新闻相关性低；"
-                    f"{summary or '不使用规则情绪解释该基金。'}"
-                )
-                continue
-            if summary:
-                impact = decision.get("impact", "mixed")
-                lines.append(
-                    f"- {item.get('name')}（{code}）：Agent研判 {impact}；{summary}"
-                )
-                continue
-        sentiment = item.get("sentiment", 0.5)
-        tone = "利好/支撑" if sentiment > 0.55 else "利空/拖累" if sentiment < 0.45 else "中性"
-        lines.append(
-            f"- {item.get('name')}（{item.get('code')}）：{tone}，"
-            f"{item.get('date', '')} {item.get('headline', '')[:80]}"
-        )
-    return "\n".join(lines)
-
-
 def _format_profit_contribution(profit_value: float, total_profit: float) -> str:
     if not total_profit:
         return "+0.00%"
     contribution = profit_value / abs(total_profit) * 100
     return f"{contribution:+.2f}%"
-
-
-def _render_rebalance_brief(holdings_data: Dict, scores: List[Dict]) -> str:
-    if not holdings_data:
-        return "- 暂无持仓数据。"
-    total_value = holdings_data.get("total_value", 0)
-    score_map = {s.get("fund_code"): s for s in scores or []}
-    lines = []
-    for fund in sorted(holdings_data.get("funds", []), key=lambda x: x.get("value", 0), reverse=True):
-        pct = fund.get("value", 0) / total_value * 100 if total_value else 0
-        score = score_map.get(fund["code"], {})
-        level = score.get("score_level", "unknown")
-        if pct > 30:
-            action = "单基金占比偏高，优先控制新增资金"
-        elif level in ("orange", "red"):
-            action = "评分偏弱，周末复盘是否降低仓位或暂停定投"
-        else:
-            action = "维持观察"
-        lines.append(f"- {fund['name']}（{fund['code']}）：占比 {pct:.2f}%，{action}。")
-    return "\n".join(lines)
-
-
-def _render_dca_quality(workflow_context: Dict, holdings_data: Dict, scores: List[Dict]) -> str:
-    rows = workflow_context.get("dca_rows") or []
-    if not rows:
-        return "- 当前没有启用定投策略。"
-    score_map = {s.get("fund_code"): s for s in scores or []}
-    lines = []
-    for row in rows:
-        score = score_map.get(row["code"], {})
-        composite = score.get("composite_score")
-        if composite is None:
-            advice = "数据不足，先维持小额或暂停新增。"
-        elif composite >= 60:
-            advice = "评分尚可，定投可维持；回撤加深时可考虑小幅增额。"
-        elif composite >= 45:
-            advice = "评分中性偏弱，维持但不建议加码。"
-        else:
-            advice = "评分偏弱，建议暂停或降低定投金额。"
-        lines.append(
-            f"- {row['name']}（{row['code']}）：{row['frequency']} ¥{row['amount']:,.2f}，"
-            f"下次 {row.get('scheduled_date', '')}，{advice}"
-        )
-    return "\n".join(lines)
 
 
 def _render_news_section(news_data: List[Dict], scores: List[Dict], agent_decisions: Dict = None) -> str:
@@ -630,19 +531,10 @@ def _render_news_section(news_data: List[Dict], scores: List[Dict], agent_decisi
         result.append("- 未运行到有效新闻结果。请检查新闻接口、网络或分析日志。")
         return "\n".join(result)
 
-    if avg_sentiment > 0.55:
-        market_mood = "偏乐观"
-        advice = "市场整体情绪积极，可适度保持仓位，关注利好兑现后的回调风险。"
-    elif avg_sentiment < 0.45:
-        market_mood = "偏悲观"
-        advice = "市场整体情绪谨慎，可关注恐慌性下跌中的布局机会，控制仓位等待企稳信号。"
-    else:
-        market_mood = "中性"
-        advice = "市场情绪平衡，维持当前策略，根据各基金评分差异化操作。"
-
     result.append(f"- **总新闻数**：{total_news} 条")
-    result.append(f"- **整体情绪均值**：{avg_sentiment:.2f}（{market_mood}）")
-    result.append(f"- **综合判断**：{advice}")
+    result.append(f"- **整体情绪均值**：{avg_sentiment:.2f}")
+    result.append("")
+    result.append("<!-- AGENT: 新闻穿透分析 -->")
     result.append("")
 
     # --- 逐基金新闻分析 ---
@@ -737,12 +629,8 @@ def _render_news_section(news_data: List[Dict], scores: List[Dict], agent_decisi
             interpretation = "Agent判断本组新闻与该基金相关性低，不使用规则情绪解读该基金。"
         elif decision and decision.get("summary"):
             interpretation = f"Agent综合判断：{decision.get('summary')}"
-        elif sent_mean > 0.55:
-            interpretation = "近期相关新闻偏正面，市场对该基金关注度高、舆论环境良好，有助于短期净值表现。"
-        elif sent_mean < 0.45:
-            interpretation = "近期相关新闻偏负面，需警惕情绪传导至净值的风险。若持仓中已有盈利，可考虑设好止损；定投可适当降低单期金额。"
         else:
-            interpretation = "近期新闻情绪中性，无明显利好或利空信号。关注后续是否有行业催化事件。"
+            interpretation = "<!-- AGENT_FILL: 基于以上新闻数据，给出该基金的新闻影响判断 -->"
 
         result.append(f"**解读：**{interpretation}")
         result.append("")
