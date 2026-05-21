@@ -117,12 +117,12 @@ def cmd_analyze(args):
             })
 
     correlations = compute_correlations(analyzer.funds)
-    if not getattr(args, "skip_stress", False):
+    if getattr(args, "stress", False):
         stress_results = stress_test(analyzer.funds)
         print(f"\n  压力测试: {len(stress_results)} 条风险线索")
     else:
         stress_results = []
-        print("\n  [跳过] 压力测试（--skip-stress）")
+        print("\n  [默认跳过] 压力测试（--stress 启用）")
 
     _attach_score_trends(store, scores)
 
@@ -172,11 +172,11 @@ def cmd_analyze(args):
     news_data = _run_news_analysis(config, analyzer, agent_news_plan=news_keyword_plan)
     workflow_context = _build_workflow_context(config, holdings_data, news_data=news_data)
 
-    # 推荐
+    # 推荐（默认关闭，--recommend 启用）
     recommendations = []
-    recommendation_status = "skipped" if args.skip_recommend else "empty"
+    recommendation_status = "skipped" if not args.recommend else "empty"
     inter_recommendation_correlations = None
-    if not args.skip_recommend:
+    if args.recommend:
         print("\n[推荐] 搜索推荐基金...")
         recommendations, inter_recommendation_correlations = _run_recommendations(news_data, codes, analyzer)
         recommendation_status = "ok" if recommendations else "empty"
@@ -840,7 +840,7 @@ def cmd_score(args):
     scores = [analyzer.score_fund(c) for c in codes
               if analyzer.funds[c]["completeness"] != "D"]
     correlations = compute_correlations(analyzer.funds)
-    if not getattr(args, "skip_stress", False):
+    if getattr(args, "stress", False):
         stress_results = stress_test(analyzer.funds)
     else:
         stress_results = []
@@ -1032,8 +1032,8 @@ def main():
     p_analyze = sub.add_parser("analyze", help="完整分析流程")
     p_analyze.add_argument("-c", "--config", required=True)
     p_analyze.add_argument("-o", "--output", default="report.md")
-    p_analyze.add_argument("--skip-recommend", action="store_true")
-    p_analyze.add_argument("--skip-stress", action="store_true", help="跳过情景压力测试")
+    p_analyze.add_argument("--recommend", action="store_true", help="启用基金推荐（默认关闭）")
+    p_analyze.add_argument("--stress", action="store_true", help="启用情景压力测试（默认关闭）")
     p_analyze.add_argument(
         "--snapshot-after",
         action="store_true",
@@ -1057,7 +1057,7 @@ def main():
 
     p_score = sub.add_parser("score", help="仅对数据库现有持仓评分")
     p_score.add_argument("-o", "--output", default="report.md")
-    p_score.add_argument("--skip-stress", action="store_true", help="跳过情景压力测试")
+    p_score.add_argument("--stress", action="store_true", help="启用情景压力测试（默认关闭）")
 
     p_news = sub.add_parser("news", help="新闻采集与分析")
     p_news.add_argument("-c", "--config", required=True)

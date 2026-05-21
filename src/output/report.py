@@ -92,13 +92,15 @@ def generate_report(
         lines.append("")
 
         meso = str(s["meso_score"]) if s["meso_score"] is not None else "N/A"
-        meso_basis = s.get("meso_basis", "") or "中观数据缺失"
+        macro_basis = s.get("macro_basis") or f"宏观适配: {s.get('macro_score', 0)}/20"
+        meso_basis = s.get("meso_basis") or (f"中观得分: {meso}/30" if s["meso_score"] is not None else "中观数据不足，跳过评分")
+        micro_basis = s.get("micro_basis") or f"微观因子: {s.get('micro_score', 0)}/50"
 
         lines.append("| 维度 | 得分 | 满分 | 权重 | 关键依据 |")
         lines.append("|------|------|------|------|---------|")
-        lines.append(f"| 宏观 | {decision.get('macro_score', s['macro_score'])} | 20 | 20% | {s['macro_basis']} |")
+        lines.append(f"| 宏观 | {decision.get('macro_score', s['macro_score'])} | 20 | 20% | {macro_basis} |")
         lines.append(f"| 中观 | {decision.get('meso_score', meso)} | 30 | 30% | {meso_basis} |")
-        lines.append(f"| 微观 | {decision.get('micro_score', s['micro_score'])} | 50 | 50% | {s['micro_basis']} |")
+        lines.append(f"| 微观 | {decision.get('micro_score', s['micro_score'])} | 50 | 50% | {micro_basis} |")
         lines.append("")
 
         # 操作建议 + 具体金额
@@ -438,23 +440,8 @@ def _render_trade_day_focus(
             )
         lines.append("")
 
-    # 大盘环境：仅输出数字事实，文本归因留给 Agent
-    lines.append(f"\n### 大盘环境与当日根因\n")
-    
-    avg_score = sum(s.get("composite_score", 0) for s in scores) / len(scores) if scores else 0
-    lines.append(f"- 组合平均评分：{avg_score:.1f}/100；QDII 覆盖 {len(qdii_rows)} 只。")
-    
-    if news_data:
-        valid_sent = [n.get("sentiment_mean", 0) for n in news_data if n.get("sentiment_mean") is not None]
-        if valid_sent:
-            avg_sent = sum(valid_sent) / len(valid_sent)
-            mood = "偏正面" if avg_sent > 0.55 else ("偏谨慎" if avg_sent < 0.45 else "中性")
-            lines.append(f"- 新闻情绪均值：{avg_sent:.2f}（{mood}）。")
-    
-    lines.append(f"- 今日重点先看净值口径、QDII 确认状态和 pending 金额，再解读涨跌原因。")
-    lines.append(f"")
-    lines.append(f"<!-- AGENT: 大盘归因 -->")
-    lines.append(f"")
+    lines.append("")
+
     return "\n".join(lines)
 
 
@@ -473,19 +460,19 @@ def _render_non_trade_day_focus(
     )
     if funds:
         has_week_data = any(f.get("week_profit") is not None for f in funds)
-        total_profit = sum(
+        profit_values = [
             (f.get("week_profit") if f.get("week_profit") is not None else 0)
             for f in funds
-        ) if has_week_data else sum(f.get("profit", 0) for f in funds)
+        ] if has_week_data else [f.get("profit", 0) for f in funds]
+        total_abs_profit = sum(abs(p) for p in profit_values)
         lines.append("#### 本周收益与基金贡献")
         lines.append("")
         profit_label = "本周收益(¥)" if has_week_data else "当前累计收益(¥)"
         lines.append(f"| 基金代码 | 基金名称 | {profit_label} | 收益贡献 | 当前占比 |")
         lines.append("|----------|---------|------------:|---------:|---------:|")
         total_value = (holdings_data or {}).get("total_value", 0)
-        for fund in funds:
-            profit_value = fund.get("week_profit") if fund.get("week_profit") is not None else fund.get("profit", 0)
-            contribution = _format_profit_contribution(profit_value, total_profit)
+        for fund, profit_value in zip(funds, profit_values):
+            contribution = _format_profit_contribution(profit_value, total_abs_profit)
             position = fund.get("value", 0) / total_value * 100 if total_value else 0
             lines.append(
                 f"| {fund['code']} | {fund['name']} | {profit_value:+,.2f} "
@@ -502,14 +489,24 @@ def _render_non_trade_day_focus(
     lines.append("")
     lines.append("<!-- AGENT: 定投评估 -->")
     lines.append("")
+
+    lines.append("#### 本周归因")
+    lines.append("")
+    lines.append("<!-- AGENT: 大盘归因 -->")
+    lines.append("")
     return "\n".join(lines)
 
 
 
-def _format_profit_contribution(profit_value: float, total_profit: float) -> str:
-    if not total_profit:
+def _format_profit_contribution(profit_value: float, total_abs_profit: float) -> str:
+    """计算收益贡献百分比，分母使用各基金利润绝对值之和。
+
+    确保每只基金的贡献率在 [-100%, +100%] 区间内，
+    避免正负抵消、总利润接近零时产生极端百分比。
+    """
+    if not total_abs_profit:
         return "+0.00%"
-    contribution = profit_value / abs(total_profit) * 100
+    contribution = profit_value / total_abs_profit * 100
     return f"{contribution:+.2f}%"
 
 

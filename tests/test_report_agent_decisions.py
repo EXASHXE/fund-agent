@@ -25,9 +25,11 @@ class ReportAgentDecisionTest(unittest.TestCase):
         self.assertNotIn("588710", report)
         self.assertIn("本次 agent 未给出最终推荐", report)
 
-    def test_profit_contribution_keeps_gain_positive_when_total_week_loss(self):
-        self.assertEqual(_format_profit_contribution(50, -200), "+25.00%")
-        self.assertEqual(_format_profit_contribution(-250, -200), "-125.00%")
+    def test_profit_contribution_keeps_gain_positive_when_total_abs_denom(self):
+        # 分母 = 绝对值之和，贡献率在 [-100%, +100%] 区间
+        self.assertEqual(_format_profit_contribution(50, 250), "+20.00%")
+        self.assertEqual(_format_profit_contribution(-250, 250), "-100.00%")
+        self.assertEqual(_format_profit_contribution(0, 250), "+0.00%")
 
     def test_daily_reasoning_slot_present_in_report(self):
         """Verify the report contains Agent analysis markers."""
