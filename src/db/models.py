@@ -189,6 +189,7 @@ class FundScore(Base):
     data_completeness = Column(String(1), comment="数据完整度 A/B/C/D")
     composite_score = Column(Integer, comment="综合评分 0-100")
     score_level = Column(String(10), comment="等级: green/yellow/orange/red")
+    score_confidence = Column(Float, comment="评分置信度 0-1")
     # 三大维度得分
     macro_score = Column(Integer, comment="宏观得分")
     macro_basis = Column(Text, comment="宏观依据摘要")
@@ -200,6 +201,10 @@ class FundScore(Base):
     macro_detail = Column(JSON, comment="宏观详细: {market_cycle, liquidity, valuation}")
     meso_detail = Column(JSON, comment="中观详细: {sector_prosperity, sector_pe, policy, rotation}")
     micro_detail = Column(JSON, comment="微观详细: {manager, alpha, drawdown, sharpe, institution}")
+    feature_matrix = Column(JSON, comment="量化特征矩阵")
+    factor_matrix = Column(JSON, comment="评分因子拆解矩阵")
+    trend_matrix = Column(JSON, comment="趋势预测矩阵")
+    operation_advice = Column(JSON, comment="操作建议矩阵")
     # 操作建议
     recommendation = Column(String(20), comment="买入/持有/减仓/止盈/止损/暂停定投/恢复定投/逢低加仓")
     current_position_pct = Column(Float, comment="当前仓位%")

@@ -61,6 +61,14 @@ def generate_report(
     if trend_section:
         lines.append(trend_section)
 
+    score_breakdown = _render_score_breakdown(scores)
+    if score_breakdown:
+        lines.append(score_breakdown)
+
+    operation_triggers = _render_operation_triggers(scores)
+    if operation_triggers:
+        lines.append(operation_triggers)
+
     # === 资金分配与仓位调整 ===
     if holdings_data:
         total_value = holdings_data.get("total_value", 0)
@@ -70,11 +78,18 @@ def generate_report(
             lines.append("")
             lines.append("| 基金 | 当前市值(¥) | 当前占比 | 建议占比 | 调整金额(¥) | 操作 |")
             lines.append("|------|-----------|---------|---------|-----------|------|")
+            score_by_code = {s.get("fund_code"): s for s in scores or []}
             for fund in holdings_data.get("funds", []):
                 current_pct = fund["value"] / total_value * 100 if total_value else 0
+                advice = (score_by_code.get(fund["code"], {}) or {}).get("operation_advice") or {}
+                target = advice.get("target_weight")
+                target_text = f"{target * 100:.2f}%" if isinstance(target, (int, float)) else "N/A"
+                adjust = advice.get("adjust_amount")
+                adjust_text = f"¥{adjust:+,.2f}" if isinstance(adjust, (int, float)) else "N/A"
+                action_text = advice.get("action") or "N/A"
                 lines.append(
                     f"| {fund['name']}（{fund['code']}） | ¥{fund['value']:,.2f} "
-                    f"| {current_pct:.2f}% | <!-- AGENT_FILL --> | <!-- AGENT_FILL --> | <!-- AGENT_FILL --> |"
+                    f"| {current_pct:.2f}% | {target_text} | {adjust_text} | {action_text} |"
                 )
             lines.append("")
             lines.append("<!-- AGENT: 再平衡逻辑 -->")
@@ -353,6 +368,53 @@ def _render_trend_operation_matrix(scores: List[Dict]) -> str:
     return "\n".join(lines)
 
 
+def _render_score_breakdown(scores: List[Dict]) -> str:
+    rows = []
+    for s in scores or []:
+        factors = s.get("factor_matrix") or {}
+        for dimension, items in factors.items():
+            for factor in items or []:
+                rows.append(
+                    f"| {s.get('fund_name', '')}（{s.get('fund_code', '')}） "
+                    f"| {dimension} "
+                    f"| {factor.get('name', '')} "
+                    f"| {factor.get('value', 'N/A')} "
+                    f"| {factor.get('score', 'N/A')} "
+                    f"| {factor.get('weight', 'N/A')} "
+                    f"| {factor.get('source', '')} |"
+                )
+    if not rows:
+        return ""
+    lines = ["---", "## 量化评分拆解", ""]
+    lines.append("| 基金 | 维度 | 因子 | 数值 | 因子分 | 权重 | 来源 |")
+    lines.append("|------|------|------|------|-------:|------:|------|")
+    lines.extend(rows[:60])
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _render_operation_triggers(scores: List[Dict]) -> str:
+    rows = []
+    for s in scores or []:
+        advice = s.get("operation_advice") or {}
+        triggers = advice.get("triggers") or []
+        if not triggers:
+            continue
+        rows.append(
+            f"| {s.get('fund_name', '')}（{s.get('fund_code', '')}） "
+            f"| {advice.get('action', s.get('recommendation', ''))} "
+            f"| {'；'.join(triggers[:5])} |"
+        )
+    if not rows:
+        return ""
+    lines = ["---", "## 操作触发条件", ""]
+    lines.append("| 基金 | 建议动作 | 触发条件 |")
+    lines.append("|------|---------|---------|")
+    lines.extend(rows)
+    lines.append("")
+    return "\n".join(lines)
+
+
 def _render_tldr(
     scores: List[Dict],
     holdings_data: Dict = None,
@@ -563,6 +625,18 @@ def _render_non_trade_day_focus(
 
     lines.append("#### 风险暴露与再平衡")
     lines.append("")
+    risk = workflow_context.get("portfolio_risk_matrix") or {}
+    exposures = risk.get("cluster_exposures") or {}
+    if exposures:
+        lines.append("| 暴露簇 | 当前占比 |")
+        lines.append("|--------|---------:|")
+        for cluster, exposure in sorted(exposures.items(), key=lambda x: x[1], reverse=True):
+            lines.append(f"| {cluster} | {exposure * 100:.2f}% |")
+        lines.append("")
+    for warning in (risk.get("warnings") or [])[:6]:
+        lines.append(f"- {warning}")
+    if risk.get("warnings"):
+        lines.append("")
     lines.append("<!-- AGENT: 风险与再平衡 -->")
     lines.append("")
 

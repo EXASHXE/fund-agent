@@ -171,7 +171,11 @@ def cmd_analyze(args):
     # 持仓分析
     holdings_data = _compute_holdings(store, config, codes, analyzer)
     _attach_trends_and_advice(scores, news_contexts, holdings_data)
+    from src.analysis.portfolio_risk import build_portfolio_risk_matrix
+    portfolio_risk_matrix = build_portfolio_risk_matrix(holdings_data, scores, correlations)
     workflow_context = _build_workflow_context(config, holdings_data, news_data=news_data)
+    if isinstance(workflow_context, dict):
+        workflow_context["portfolio_risk_matrix"] = portfolio_risk_matrix
 
     # 推荐（默认关闭，--recommend 启用）
     recommendations = []
@@ -179,7 +183,12 @@ def cmd_analyze(args):
     inter_recommendation_correlations = None
     if args.recommend:
         print("\n[推荐] 搜索推荐基金...")
-        recommendations, inter_recommendation_correlations = _run_recommendations(news_data, codes, analyzer)
+        recommendations, inter_recommendation_correlations = _run_recommendations(
+            news_data,
+            codes,
+            analyzer,
+            portfolio_risk_matrix=portfolio_risk_matrix,
+        )
         recommendation_status = "ok" if recommendations else "empty"
 
     print("\n[Layer 4] 生成报告...")
@@ -512,7 +521,7 @@ def _match_nav_on_or_before(nav_map: dict, target: date):
     return nav_map[max(candidates)]
 
 
-def _build_workflow_context(config, holdings_data, news_data=None):
+def _build_workflow_context(config, holdings_data, news_data=None, portfolio_risk_matrix=None):
     """Build report sections that depend on trading-day workflow."""
     from src.engine.calendar import is_trade_day
     from src.engine.calculator import _settlement_date
@@ -598,6 +607,7 @@ def _build_workflow_context(config, holdings_data, news_data=None):
         "dca_rows": dca_rows,
         "qdii_rows": qdii_rows,
         "top_news": top_news[:8],
+        "portfolio_risk_matrix": portfolio_risk_matrix or {},
     }
 
 
@@ -714,11 +724,12 @@ def _holding_context_for_news(config, code: str) -> str:
     )
 
 
-def _run_recommendations(news_data, codes, analyzer):
+def _run_recommendations(news_data, codes, analyzer, portfolio_risk_matrix=None):
     """运行基金推荐"""
     from src.recommend.engine import (
         extract_hot_sectors, screen_funds, filter_by_correlation,
-        rank_recommendations, generate_recommendation_reasons,
+        rank_recommendations, rank_recommendations_with_portfolio,
+        generate_recommendation_reasons,
         build_holding_profiles, compute_inter_recommendation_correlations,
     )
 
@@ -727,7 +738,15 @@ def _run_recommendations(news_data, codes, analyzer):
     holding_codes = set(codes)
     holding_profiles = build_holding_profiles(analyzer, holding_codes)
     filtered = filter_by_correlation(candidates, holding_codes, holding_profiles)
-    ranked = rank_recommendations(filtered, hot_sectors, top_n=5)
+    if portfolio_risk_matrix:
+        ranked = rank_recommendations_with_portfolio(
+            filtered,
+            hot_sectors,
+            portfolio_risk_matrix,
+            top_n=5,
+        )
+    else:
+        ranked = rank_recommendations(filtered, hot_sectors, top_n=5)
     final_recs = generate_recommendation_reasons(ranked)
     from src.news.agent_context import build_recommendation_judgment_context
     rec_context = build_recommendation_judgment_context(final_recs, holding_profiles, hot_sectors)
@@ -742,26 +761,7 @@ def _run_recommendations(news_data, codes, analyzer):
 def _save_snapshot(store, scores, stress_tests, correlations, holdings_data=None):
     """保存分析快照到数据库"""
     try:
-        score_data = []
-        for s in scores:
-            score_data.append({
-                "fund_code": s["fund_code"],
-                "data_completeness": s["data_completeness"],
-                "composite_score": s["composite_score"],
-                "score_level": s["score_level"],
-                "macro_score": s["macro_score"], "macro_basis": s["macro_basis"],
-                "macro_detail": s["macro_detail"],
-                "meso_score": s["meso_score"],
-                "meso_basis": s.get("meso_basis", ""),
-                "meso_detail": s["meso_detail"],
-                "micro_score": s["micro_score"], "micro_basis": s["micro_basis"],
-                "micro_detail": s["micro_detail"],
-                "recommendation": s["recommendation"],
-                "stop_profit_pct": s["stop_profit_pct"],
-                "stop_loss_pct": s["stop_loss_pct"],
-                "action_logic": s["action_logic"],
-                "key_metrics": f"波动率:{s.get('annual_volatility','N/A')}; 夏普:{s.get('sharpe_1y','N/A')}",
-            })
+        score_data = [_score_snapshot_payload(s) for s in scores]
 
         corr_data = []
         if not correlations.empty:
@@ -787,6 +787,35 @@ def _save_snapshot(store, scores, stress_tests, correlations, holdings_data=None
         print(f"快照已保存: ID={snapshot_id}")
     except Exception as e:
         print(f"[WARN] 快照保存失败: {e}")
+
+
+def _score_snapshot_payload(s):
+    """Build the database-safe score payload used by analysis snapshots."""
+    return {
+        "fund_code": s["fund_code"],
+        "data_completeness": s["data_completeness"],
+        "composite_score": s["composite_score"],
+        "score_level": s["score_level"],
+        "score_confidence": s.get("score_confidence"),
+        "macro_score": s["macro_score"],
+        "macro_basis": s.get("macro_basis", ""),
+        "macro_detail": s.get("macro_detail", {}),
+        "meso_score": s.get("meso_score"),
+        "meso_basis": s.get("meso_basis", ""),
+        "meso_detail": s.get("meso_detail", {}),
+        "micro_score": s["micro_score"],
+        "micro_basis": s.get("micro_basis", ""),
+        "micro_detail": s.get("micro_detail", {}),
+        "feature_matrix": s.get("feature_matrix"),
+        "factor_matrix": s.get("factor_matrix"),
+        "trend_matrix": s.get("trend_matrix"),
+        "operation_advice": s.get("operation_advice"),
+        "recommendation": s["recommendation"],
+        "stop_profit_pct": s["stop_profit_pct"],
+        "stop_loss_pct": s["stop_loss_pct"],
+        "action_logic": s["action_logic"],
+        "key_metrics": f"波动率:{s.get('annual_volatility','N/A')}; 夏普:{s.get('sharpe_1y','N/A')}",
+    }
 
 
 def _sanitize_stress_tests_for_snapshot(stress_tests):

@@ -153,6 +153,54 @@ class ReportAgentDecisionTest(unittest.TestCase):
         self.assertIn("buy", report)
         self.assertIn("18.00%", report)
 
+    def test_report_renders_score_breakdown_and_operation_triggers(self):
+        report = generate_report(
+            analyzer=None,
+            scores=[{
+                "fund_code": "000001",
+                "fund_name": "测试基金",
+                "data_completeness": "A",
+                "composite_score": 76,
+                "score_confidence": 0.88,
+                "score_level": "green",
+                "score_level_emoji": "🟢",
+                "macro_score": 15,
+                "macro_basis": "",
+                "meso_score": 22,
+                "meso_basis": "",
+                "micro_score": 39,
+                "micro_basis": "",
+                "recommendation": "买入",
+                "action_logic": "",
+                "stop_profit_pct": 20,
+                "stop_loss_pct": -15,
+                "factor_matrix": {
+                    "micro": [{
+                        "name": "sortino_ratio",
+                        "value": 1.2,
+                        "score": 8,
+                        "weight": 0.2,
+                        "source": "feature_matrix",
+                        "missing_policy": "neutral",
+                    }]
+                },
+                "operation_advice": {
+                    "action": "buy",
+                    "target_weight": 0.18,
+                    "adjust_amount": 1000,
+                    "confidence": 0.75,
+                    "triggers": ["高评分且短期趋势上行"],
+                },
+            }],
+            correlations=pd.DataFrame(),
+            stress_tests=[],
+        )
+
+        self.assertIn("量化评分拆解", report)
+        self.assertIn("sortino_ratio", report)
+        self.assertIn("操作触发条件", report)
+        self.assertIn("高评分且短期趋势上行", report)
+
 
 if __name__ == "__main__":
     unittest.main()

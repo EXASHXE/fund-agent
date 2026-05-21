@@ -5,6 +5,7 @@ from src.recommend.engine import (
     filter_by_correlation,
     infer_exposure_cluster,
     rank_recommendations,
+    rank_recommendations_with_portfolio,
 )
 
 
@@ -123,6 +124,22 @@ class RecommendEngineTest(unittest.TestCase):
         growth_count = sum(1 for c in ranked if infer_exposure_cluster(c) == "growth_manufacturing")
         self.assertLessEqual(growth_count, 2)
         self.assertTrue(any(c.get("portfolio_role") for c in ranked))
+
+    def test_rank_recommendations_with_portfolio_prefers_defensive_gap(self):
+        candidates = [
+            {"code": "100001", "name": "半导体芯片基金", "theme": "半导体", "return_1m": 8, "return_3m": 12, "return_6m": 20, "max_similarity": 0.2},
+            {"code": "200001", "name": "中短债债券基金", "theme": "债券固收", "return_1m": 1, "return_3m": 2, "return_6m": 4, "max_similarity": 0.1},
+        ]
+        portfolio_risk = {
+            "cluster_exposures": {"growth_manufacturing": 0.75, "defensive_income": 0.0},
+            "warnings": ["成长制造暴露过高"],
+        }
+
+        ranked = rank_recommendations_with_portfolio(candidates, {}, portfolio_risk, top_n=2)
+
+        self.assertEqual(ranked[0]["code"], "200001")
+        self.assertEqual(ranked[0]["entry_plan"], "分批买入")
+        self.assertIn("risk_budget_impact", ranked[0])
 
 
 if __name__ == "__main__":

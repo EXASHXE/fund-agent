@@ -244,6 +244,59 @@ def rank_recommendations(
     return _apply_diversity_constraint(ranked, top_n, max_theme_ratio)
 
 
+def rank_recommendations_with_portfolio(
+    candidates: List[Dict],
+    hot_sectors: Dict[str, float],
+    portfolio_risk: Dict = None,
+    top_n: int = 5,
+    max_theme_ratio: float = 0.35,
+) -> List[Dict]:
+    """Rank candidates with portfolio exposure gaps and crowding penalties."""
+    ranked = rank_recommendations(
+        candidates,
+        hot_sectors,
+        top_n=max(len(candidates), top_n),
+        max_theme_ratio=1.0,
+    )
+    if not ranked:
+        return []
+
+    exposures = (portfolio_risk or {}).get("cluster_exposures") or {}
+    adjusted = []
+    for rec in ranked:
+        cluster = rec.get("exposure_cluster") or infer_exposure_cluster(rec)
+        exposure = float(exposures.get(cluster, 0.0) or 0.0)
+        portfolio_adjustment = 0.0
+        risk_budget_impact = "neutral"
+
+        if cluster == "defensive_income" and exposure < 0.10:
+            portfolio_adjustment += 0.35
+            risk_budget_impact = "补足防守资产，降低组合波动"
+        elif cluster in ("value_dividend", "commodity", "overseas") and exposure < 0.08:
+            portfolio_adjustment += 0.12
+            risk_budget_impact = "补足低相关暴露"
+
+        if cluster == "growth_manufacturing" and exposures.get("growth_manufacturing", 0.0) > 0.50:
+            portfolio_adjustment -= 0.25
+            risk_budget_impact = "成长制造已拥挤，新增会提高回撤风险"
+        elif exposure > 0.35:
+            portfolio_adjustment -= 0.10
+            risk_budget_impact = "同类暴露偏高，适合替代观察"
+
+        adjusted_score = round(float(rec.get("score", 0) or 0) + portfolio_adjustment, 4)
+        adjusted.append({
+            **rec,
+            "score": adjusted_score,
+            "portfolio_adjustment": round(portfolio_adjustment, 4),
+            "risk_budget_impact": risk_budget_impact,
+            "entry_plan": _entry_plan(rec, cluster, portfolio_adjustment),
+        })
+
+    adjusted.sort(key=lambda x: x.get("score", 0), reverse=True)
+    constrained = _apply_diversity_constraint(adjusted, top_n, max_theme_ratio)
+    return constrained[:top_n]
+
+
 def compute_inter_recommendation_correlations(
     recommendations: List[Dict],
 ) -> Dict:
@@ -380,12 +433,12 @@ def infer_exposure_cluster(candidate: Dict) -> str:
         return "value_dividend"
     if any(kw in text for kw in ["QDII", "纳斯达克", "标普", "海外", "全球", "新兴市场"]):
         return "overseas"
-    if any(kw in text for kw in ["黄金", "石油", "原油", "商品", "能源"]):
-        return "commodity"
     if any(kw in text for kw in ["医药", "医疗", "创新药", "生物"]):
         return "healthcare"
     if any(kw in text for kw in ["半导体", "芯片", "新能源", "电池", "光伏", "储能", "AI", "人工智能", "科技"]):
         return "growth_manufacturing"
+    if any(kw in text for kw in ["黄金", "石油", "原油", "商品", "能源"]):
+        return "commodity"
     if any(kw in text for kw in ["沪深300", "中证500", "中证1000", "上证50", "宽基"]):
         return "broad_beta"
     return "balanced_other"
@@ -416,6 +469,16 @@ def _candidate_risks(candidate: Dict) -> List[str]:
         "broad_beta": ["市场系统性回撤"],
     }
     return risks.get(cluster, ["风格轮动风险"])
+
+
+def _entry_plan(candidate: Dict, cluster: str, portfolio_adjustment: float) -> str:
+    if cluster == "defensive_income" and portfolio_adjustment > 0:
+        return "分批买入"
+    if candidate.get("max_similarity", 0) >= 0.65:
+        return "替代观察"
+    if cluster == "growth_manufacturing":
+        return "回调小额试仓"
+    return "分批建仓"
 
 
 def _attach_similarity(candidate: Dict, holding_profiles: List[Dict]) -> Dict:
@@ -460,12 +523,21 @@ def _apply_diversity_constraint(candidates: List[Dict], top_n: int, max_theme_ra
         if len(selected) >= top_n:
             return selected
 
-    # 若候选不足，再放宽主题约束补满。
+    # 若候选不足，先用未超主题上限的候选补位，再逐步放宽约束。
+    deferred.sort(key=lambda c: theme_counts[c.get("theme", "其他")] >= max_per_theme)
     for c in deferred:
+        theme = c.get("theme", "其他")
+        if theme_counts[theme] >= max_per_theme and any(
+            theme_counts[item.get("theme", "其他")] < max_per_theme
+            for item in deferred
+            if item is not c
+        ):
+            continue
         cluster = c.get("exposure_cluster") or infer_exposure_cluster(c)
         if len(selected) >= max(2, top_n // 2) and cluster_counts[cluster] >= max_per_cluster + 1:
             continue
         selected.append(c)
+        theme_counts[theme] += 1
         cluster_counts[cluster] += 1
         if len(selected) >= top_n:
             break

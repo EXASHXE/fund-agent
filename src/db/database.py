@@ -7,7 +7,7 @@ from datetime import date, datetime
 from src.config.shared import now as _shared_now
 from typing import Optional, List, Dict, Any
 
-from sqlalchemy import create_engine, func, and_
+from sqlalchemy import create_engine, func, and_, inspect, text
 from sqlalchemy.orm import sessionmaker, Session
 
 from .models import Base, Fund, FundHolding, FundDCA, FundNAV, FundPerformance
@@ -29,7 +29,27 @@ def init_db(db_path: str = None):
     """初始化数据库，创建所有表"""
     engine = get_engine(db_path)
     Base.metadata.create_all(engine)
+    _ensure_fund_score_columns(engine)
     return engine
+
+
+def _ensure_fund_score_columns(engine):
+    """Lightweight SQLite migration for newly added score JSON columns."""
+    inspector = inspect(engine)
+    if "fund_score" not in inspector.get_table_names():
+        return
+    existing = {col["name"] for col in inspector.get_columns("fund_score")}
+    additions = {
+        "score_confidence": "FLOAT",
+        "feature_matrix": "JSON",
+        "factor_matrix": "JSON",
+        "trend_matrix": "JSON",
+        "operation_advice": "JSON",
+    }
+    with engine.begin() as conn:
+        for name, sql_type in additions.items():
+            if name not in existing:
+                conn.execute(text(f"ALTER TABLE fund_score ADD COLUMN {name} {sql_type}"))
 
 
 def get_session(db_path: str = None) -> Session:
