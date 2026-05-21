@@ -16,7 +16,7 @@ import os
 import sys
 from datetime import date, datetime, timedelta
 
-from src.config.shared import effective_report_date, today as _shared_today, now as _shared_now
+from src.config.shared import effective_report_date, today as _shared_today, now as _shared_now, dca_effective_date
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -117,7 +117,12 @@ def cmd_analyze(args):
             })
 
     correlations = compute_correlations(analyzer.funds)
-    stress_results = stress_test(analyzer.funds)
+    if not getattr(args, "skip_stress", False):
+        stress_results = stress_test(analyzer.funds)
+        print(f"\n  压力测试: {len(stress_results)} 条风险线索")
+    else:
+        stress_results = []
+        print("\n  [跳过] 压力测试（--skip-stress）")
 
     _attach_score_trends(store, scores)
 
@@ -238,6 +243,7 @@ def _compute_holdings(store, config, codes, analyzer=None):
 
     session = get_session()
     today = effective_report_date()
+    dca_today = dca_effective_date()  # 10:00 前当日定投未执行
     analyses = []
     calibration_warnings = []
     ledger_warnings = []
@@ -311,7 +317,7 @@ def _compute_holdings(store, config, codes, analyzer=None):
                         last_nav_date = max(nav_map.keys())
                         current_nav = nav_map[last_nav_date]
 
-            events = generate_events(purchases, dca_strategy, calibrations, today)
+            events = generate_events(purchases, dca_strategy, calibrations, dca_today)
 
             result = compute_fund(events, nav_map, fee_rate, settle_delay, today)
 
@@ -833,7 +839,10 @@ def cmd_score(args):
     scores = [analyzer.score_fund(c) for c in codes
               if analyzer.funds[c]["completeness"] != "D"]
     correlations = compute_correlations(analyzer.funds)
-    stress_results = stress_test(analyzer.funds)
+    if not getattr(args, "skip_stress", False):
+        stress_results = stress_test(analyzer.funds)
+    else:
+        stress_results = []
 
     report = generate_report(analyzer, scores, correlations, stress_results)
     report_path = args.output or "report.md"
@@ -948,7 +957,7 @@ def _perform_snapshot(config_path):
     from src.analysis.holdings import _is_business_day, _next_dca_date
 
     config = load_portfolio_config(config_path)
-    today = _shared_today()
+    today = dca_effective_date()  # 10:00 前当日定投未执行
 
     for holding in config.holdings:
         if holding.dca and holding.dca.enabled:
@@ -1023,6 +1032,7 @@ def main():
     p_analyze.add_argument("-c", "--config", required=True)
     p_analyze.add_argument("-o", "--output", default="report.md")
     p_analyze.add_argument("--skip-recommend", action="store_true")
+    p_analyze.add_argument("--skip-stress", action="store_true", help="跳过情景压力测试")
     p_analyze.add_argument(
         "--snapshot-after",
         action="store_true",
@@ -1046,6 +1056,7 @@ def main():
 
     p_score = sub.add_parser("score", help="仅对数据库现有持仓评分")
     p_score.add_argument("-o", "--output", default="report.md")
+    p_score.add_argument("--skip-stress", action="store_true", help="跳过情景压力测试")
 
     p_news = sub.add_parser("news", help="新闻采集与分析")
     p_news.add_argument("-c", "--config", required=True)

@@ -438,12 +438,23 @@ def _render_trade_day_focus(
             )
         lines.append("")
 
-    lines.append("### 大盘环境与当日根因")
-    lines.append("")
-    lines.append(_render_market_brief(scores, news_data))
-    lines.append("")
-    lines.append("<!-- AGENT: 大盘归因 -->")
-    lines.append("")
+    # 大盘环境：仅输出数字事实，文本归因留给 Agent
+    lines.append(f"\n### 大盘环境与当日根因\n")
+    
+    avg_score = sum(s.get("composite_score", 0) for s in scores) / len(scores) if scores else 0
+    lines.append(f"- 组合平均评分：{avg_score:.1f}/100；QDII 覆盖 {len(qdii_rows)} 只。")
+    
+    if news_data:
+        valid_sent = [n.get("sentiment_mean", 0) for n in news_data if n.get("sentiment_mean") is not None]
+        if valid_sent:
+            avg_sent = sum(valid_sent) / len(valid_sent)
+            mood = "偏正面" if avg_sent > 0.55 else ("偏谨慎" if avg_sent < 0.45 else "中性")
+            lines.append(f"- 新闻情绪均值：{avg_sent:.2f}（{mood}）。")
+    
+    lines.append(f"- 今日重点先看净值口径、QDII 确认状态和 pending 金额，再解读涨跌原因。")
+    lines.append(f"")
+    lines.append(f"<!-- AGENT: 大盘归因 -->")
+    lines.append(f"")
     return "\n".join(lines)
 
 
@@ -493,20 +504,6 @@ def _render_non_trade_day_focus(
     lines.append("")
     return "\n".join(lines)
 
-
-def _render_market_brief(scores: List[Dict], news_data: List[Dict]) -> str:
-    scores = scores or []
-    news_data = news_data or []
-    avg_score = sum(s.get("composite_score", 0) for s in scores) / len(scores) if scores else 0
-    qdii_count = sum(1 for s in scores if "QDII" in s.get("fund_type", ""))
-    sentiments = [n.get("sentiment_mean", 0.5) for n in news_data if n.get("sentiment_mean") is not None]
-    avg_sent = sum(sentiments) / len(sentiments) if sentiments else 0.5
-    mood = "偏正面" if avg_sent > 0.55 else "偏谨慎" if avg_sent < 0.45 else "中性"
-    return (
-        f"- 组合平均评分：{avg_score:.1f}/100；QDII 覆盖 {qdii_count} 只。\n"
-        f"- 新闻情绪均值：{avg_sent:.2f}（{mood}）。\n"
-        "- 今日重点先看净值口径、QDII 确认状态和 pending 金额，再解读涨跌原因。"
-    )
 
 
 def _format_profit_contribution(profit_value: float, total_profit: float) -> str:

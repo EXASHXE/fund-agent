@@ -2,7 +2,7 @@
 单基金评分卡 + 组合分析引擎。
 权重: 宏观 20% / 中观 30% / 微观 50%
 """
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 import pandas as pd
 import numpy as np
 
@@ -13,6 +13,60 @@ from src.data.fetcher import (
 from src.analysis.correlation import compute_correlations
 from src.analysis.stress import stress_test
 from src.analysis.holdings import compute_hhi
+from src.config.defaults import QUANT_CONFIG, RISK_FREE_RATE
+
+
+def _compute_sortino_ratio(daily_returns: list, mar_annual: float = None) -> float:
+    """计算索提诺比率（Sortino Ratio）
+
+    Sortino = (Mean(R_i - MAR_daily) * 252) / DownsideDeviation_annual
+    DownsideDeviation_annual = sqrt(mean(min(0, R_i - MAR_daily)^2)) * sqrt(252)
+
+    仅惩罚下行波动，上行波动不计入风险。
+    """
+    if not daily_returns or len(daily_returns) < 20:
+        return 0.0
+
+    if mar_annual is None:
+        mar_annual = QUANT_CONFIG.get("SORTINO_MAR", 0.025)
+
+    returns = np.array(daily_returns, dtype=float)
+    mar_daily = (1 + mar_annual) ** (1 / 252) - 1
+
+    downside = np.minimum(returns - mar_daily, 0)
+    downside_deviation_daily = np.sqrt(np.mean(downside ** 2))
+    downside_deviation_annual = downside_deviation_daily * np.sqrt(252)
+
+    if downside_deviation_annual == 0:
+        return 0.0
+
+    mean_excess_daily = np.mean(returns - mar_daily)
+    sortino = mean_excess_daily * 252 / downside_deviation_annual
+
+    return round(float(sortino), 4)
+
+
+def _compute_hhi(holdings: list) -> float:
+    """计算赫芬达尔-赫希曼指数（HHI）
+
+    HHI = sum(weight_i^2) * 10000, range [0, 10000]
+    > 2500: 高度集中 | 1500-2500: 中度集中 | < 1500: 分散
+    """
+    if not holdings:
+        return 0.0
+
+    weights = []
+    for h in holdings:
+        w = h.get("weight", 0) or h.get("ratio", 0) or h.get("proportion", 0) or 0
+        weights.append(float(w))
+
+    if not weights or sum(weights) == 0:
+        return 0.0
+
+    total = sum(weights)
+    normalized = [w / total for w in weights]
+    hhi = sum(w * w for w in normalized) * 10000
+    return round(float(hhi), 2)
 
 
 class FundAnalyzer:
@@ -83,67 +137,52 @@ class FundAnalyzer:
         return "D"
 
     def _score_macro(self, code: str) -> Tuple[int, Dict, str]:
-        fund = self.funds[code]
-        basic = fund["basic"]
-        ftype = basic.get("fund_type", "")
-        details = {}
+        fund = self.funds.get(code, {})
+        ft = fund.get("basic", {})
+        fund_type = ft.get("fund_type", "domestic") if ft else "domestic"
+        fund_name = ft.get("name", "") if ft else ""
 
-        # 1. 市场周期适配度 (8)
-        if "QDII" in ftype:
-            if "纳斯达克" in basic.get("name", "") or "科技" in basic.get("name", ""):
+        # 周期适配 (0-8)
+        if "QDII" in str(fund_type).upper() or fund_type == "qdii":
+            if "纳斯达克" in fund_name or "科技" in fund_name:
                 cycle_score = 3
-                details["market_cycle"] = "美股科技高位震荡，成长型估值偏高"
-            elif "新兴市场" in basic.get("name", ""):
+            elif "新兴市场" in fund_name:
                 cycle_score = 5
-                details["market_cycle"] = "新兴市场估值合理，外资流入有所回暖"
             else:
                 cycle_score = 4
-                details["market_cycle"] = "QDII基金，海外市场不确定性较高"
-        elif "指数" in ftype or "ETF" in ftype:
-            if "石油" in basic.get("name", "") or "能源" in basic.get("name", ""):
+        elif "指数" in fund_type or "ETF" in fund_type:
+            if "石油" in fund_name or "能源" in fund_name:
                 cycle_score = 4
-                details["market_cycle"] = "原油需求预期走弱，能源板块承压"
-            elif "新能源" in basic.get("name", "") or "电池" in basic.get("name", ""):
+            elif "新能源" in fund_name or "电池" in fund_name:
                 cycle_score = 3
-                details["market_cycle"] = "新能源车产业链产能出清中，行业底部震荡"
             else:
                 cycle_score = 4
-                details["market_cycle"] = "行业ETF，受板块轮动影响"
-        elif "混合" in ftype or "灵活" in ftype:
+        elif "混合" in fund_type or "灵活" in fund_type:
             cycle_score = 5
-            details["market_cycle"] = "灵活配置型基金在缓复苏期可跨资产调仓"
         else:
             cycle_score = 4
-            details["market_cycle"] = "需要更多信息评估"
 
-        # 2. 利率/流动性环境 (6)
-        if "QDII" in ftype:
+        # 利率/流动性 (0-6)
+        if "QDII" in str(fund_type).upper() or fund_type == "qdii":
             liquidity_score = 5
-            details["liquidity"] = "美联储降息周期中，海外流动性中性偏松"
         else:
             liquidity_score = 5
-            details["liquidity"] = "国内货币政策适度宽松，央行维持流动性合理充裕"
 
-        # 3. 大盘估值水位 (6)
-        if "QDII" in ftype:
-            if "纳斯达克" in basic.get("name", ""):
-                val_score = 2
-                details["valuation"] = "纳斯达克PE处于历史70%+分位，估值偏高"
-            elif "新兴市场" in basic.get("name", ""):
-                val_score = 5
-                details["valuation"] = "新兴市场PE处于历史30-50%分位，估值合理"
+        # 大盘估值 (0-6)
+        if "QDII" in str(fund_type).upper() or fund_type == "qdii":
+            if "纳斯达克" in fund_name:
+                valuation_score = 2
+            elif "新兴市场" in fund_name:
+                valuation_score = 5
             else:
-                val_score = 4
-                details["valuation"] = "海外市场估值中性"
-        elif "指数" in ftype or "ETF" in ftype:
-            val_score = 4
-            details["valuation"] = "行业ETF估值关注行业PE分位"
+                valuation_score = 4
+        elif "指数" in fund_type or "ETF" in fund_type:
+            valuation_score = 4
         else:
-            val_score = 5
-            details["valuation"] = "沪深300 PE约12.5x，处于历史40-50%分位，估值中性偏低"
+            valuation_score = 5
 
-        total = cycle_score + liquidity_score + val_score
-        return total, details, self._macro_basis(details)
+        macro_total = min(20, cycle_score + liquidity_score + valuation_score)
+        return macro_total, {}, ""
 
     def _macro_basis(self, details: Dict) -> str:
         parts = []
@@ -153,54 +192,33 @@ class FundAnalyzer:
             parts.append(f"{label.get(k, k)}: {v}")
         return "; ".join(parts)
 
-    def _score_meso(self, code: str, completeness: str) -> Tuple[int, Dict, str]:
-        fund = self.funds[code]
-        basic = fund["basic"]
-        name = basic.get("name", "")
-        details = {}
+    def _score_meso(self, code: str, completeness: str) -> Tuple[Optional[int], Dict, str]:
+        if completeness in ("C", "D"):
+            return None, {}, ""
 
-        if "QDII" in basic.get("fund_type", "") and "纳斯达克" in name:
-            details["sector_prosperity"] = "美股科技盈利增速放缓，AI投资回报尚未充分兑现"
-            details["sector_pe"] = "纳斯达克PE高于历史70%分位"
-            details["policy"] = "AI政策利好持续但边际效应递减"
-            details["rotation"] = "科技板块从过热向分化过渡"
-            return (13, details, "行业景气度4+估值2+政策4+轮动3=13")
-        elif "QDII" in basic.get("fund_type", "") and "新兴市场" in name:
-            details["sector_prosperity"] = "新兴市场制造业PMI回升至50以上"
-            details["sector_pe"] = "新兴市场PE处于历史30-50%分位"
-            details["policy"] = "美元走弱利好新兴市场资金流入"
-            details["rotation"] = "新兴市场处于复苏确认期"
-            return (23, details, "行业景气度7+估值6+政策5+轮动5=23")
-        elif "QDII" in basic.get("fund_type", ""):
-            details["sector_prosperity"] = "海外市场整体景气度中性"
-            details["sector_pe"] = "海外市场估值中性偏高"
-            details["policy"] = "海外政策面中性"
-            details["rotation"] = "全球资金轮动方向不明确"
-            return (15, details, "行业景气度5+估值4+政策3+轮动3=15")
-        elif "石油" in name or "能源" in name:
-            details["sector_prosperity"] = "OPEC+博弈加剧，原油需求预期走弱"
-            details["sector_pe"] = "能源板块PE处于历史60-70%分位"
-            details["policy"] = "新能源替代政策压制传统能源长期需求"
-            details["rotation"] = "能源板块从过热向退潮过渡"
-            return (10, details, "行业景气度3+估值3+政策2+轮动2=10")
-        elif "新能源" in name or "电池" in name:
-            details["sector_prosperity"] = "新能源车销量增速放缓，产业链产能过剩"
-            details["sector_pe"] = "新能源板块PE处于历史20-30%分位，估值偏低"
-            details["policy"] = "新能源补贴政策边际减弱，但长期方向不变"
-            details["rotation"] = "新能源板块处于底部震荡，等待反转信号"
-            return (16, details, "行业景气度3+估值6+政策4+轮动3=16")
-        elif "混合" in basic.get("fund_type", "") or "灵活" in basic.get("fund_type", ""):
-            details["sector_prosperity"] = "A股各行业分化，整体景气度中性"
-            details["sector_pe"] = "沪深300 PE处于历史40-50%分位"
-            details["policy"] = "国内稳增长政策持续发力"
-            details["rotation"] = "A股行业轮动加速，板块切换频繁"
-            return (19, details, "行业景气度5+估值5+政策5+轮动4=19")
+        fund = self.funds.get(code, {})
+        ft = fund.get("basic", {})
+        fund_name = ft.get("name", "") if ft else ""
+        fund_type = ft.get("fund_type", "domestic") if ft else "domestic"
 
-        details["sector_prosperity"] = "行业景气度中性"
-        details["sector_pe"] = "行业估值中性"
-        details["policy"] = "政策面中性"
-        details["rotation"] = "板块轮动位置中性"
-        return (15, details, "行业景气度5+估值4+政策3+轮动3=15")
+        if "QDII" in str(fund_type).upper() or fund_type == "qdii":
+            if "纳斯达克" in fund_name or "科技" in fund_name:
+                prosperity, pe_score, policy, rotation = 4, 2, 4, 3
+            elif "新兴市场" in fund_name:
+                prosperity, pe_score, policy, rotation = 7, 6, 5, 5
+            else:
+                prosperity, pe_score, policy, rotation = 5, 4, 3, 3
+        elif "石油" in fund_name or "能源" in fund_name:
+            prosperity, pe_score, policy, rotation = 3, 3, 2, 2
+        elif "新能源" in fund_name or "电池" in fund_name:
+            prosperity, pe_score, policy, rotation = 3, 6, 4, 3
+        elif "混合" in fund_type or "灵活" in fund_type:
+            prosperity, pe_score, policy, rotation = 5, 5, 5, 4
+        else:
+            prosperity, pe_score, policy, rotation = 5, 4, 3, 3
+
+        meso_total = min(30, prosperity + pe_score + policy + rotation)
+        return meso_total, {}, ""
 
     def _score_micro(self, code: str) -> Tuple[int, Dict, str]:
         fund = self.funds[code]
@@ -213,39 +231,33 @@ class FundAnalyzer:
             perf = self._compute_perf_from_nav(code)
             fund["perf"] = perf
 
-        # 1. 经理任职稳定性 (10)
-        manager_str = basic.get("manager", "")
-        if manager_str and len(manager_str) > 1:
-            manager_score = 8
-            details["manager"] = f"现任经理: {manager_str}，任职稳定"
-        else:
-            manager_score = 5
-            details["manager"] = "经理信息不完整 [经理-无数据]"
-
-        # 2. Alpha 超额持续性 (12)
         perf_3y = perf.get("近3年", {})
         perf_1y = perf.get("近1年", {})
-        sharpe_3y = perf_3y.get("sharpe_ratio", 0) or 0
+        ftype = basic.get("fund_type", "")
 
+        # 1. 经理稳定性 (0-10)
+        manager_name = basic.get("manager", "")
+        if manager_name:
+            manager_score = 8
+            details["manager"] = manager_name
+        else:
+            manager_score = 5
+
+        # 2. Alpha 持续性 (0-12)
+        sharpe_3y = perf_3y.get("sharpe_ratio", 0) or 0
         if sharpe_3y > 1.5:
             alpha_score = 11
-            details["alpha"] = "近3年夏普>1.5，超额收益持续性优秀"
         elif sharpe_3y > 1.0:
             alpha_score = 9
-            details["alpha"] = "近3年夏普1.0-1.5，超额收益较好"
         elif sharpe_3y > 0.5:
             alpha_score = 7
-            details["alpha"] = "近3年夏普0.5-1.0，超额收益一般"
         elif sharpe_3y > 0:
             alpha_score = 4
-            details["alpha"] = "近3年夏普偏低，超额收益有限"
         else:
             alpha_score = 3
-            details["alpha"] = "超额收益能力不足 [风险指标-数据有限]"
 
-        # 3. 最大回撤 vs 同类均值 (10)
+        # 3. 最大回撤 vs 同类 (0-10)
         max_dd = perf_3y.get("max_drawdown", 30) or 30
-        ftype = basic.get("fund_type", "")
         if "QDII" in ftype:
             peer_dd = 28
         elif "指数" in ftype or "ETF" in ftype:
@@ -254,19 +266,15 @@ class FundAnalyzer:
             peer_dd = 22
 
         if max_dd < peer_dd * 0.8:
-            dd_score = 9
-            details["drawdown"] = f"最大回撤{max_dd}%显著低于同类均值{peer_dd}%"
+            drawdown_score = 9
         elif max_dd < peer_dd * 1.1:
-            dd_score = 7
-            details["drawdown"] = f"最大回撤{max_dd}%与同类均值{peer_dd}%接近"
+            drawdown_score = 7
         elif max_dd < peer_dd * 1.3:
-            dd_score = 5
-            details["drawdown"] = f"最大回撤{max_dd}%略高于同类均值{peer_dd}%"
+            drawdown_score = 5
         else:
-            dd_score = 3
-            details["drawdown"] = f"最大回撤{max_dd}%显著高于同类均值{peer_dd}%"
+            drawdown_score = 3
 
-        # 4. 夏普比率 (10)
+        # 4. 夏普比率 (0-10)
         sharpe_1y = perf_1y.get("sharpe_ratio", 0) or 0
         sharpe_annual = sharpe_1y if sharpe_1y else sharpe_3y
         if sharpe_annual > 1.5:
@@ -279,22 +287,16 @@ class FundAnalyzer:
             sharpe_score = 4
         else:
             sharpe_score = 2
-        details["sharpe"] = f"年化夏普比率{sharpe_annual:.2f}"
 
-        # 5. 机构持有变化 (8)
+        # 5. 机构持有变化 (0-8)
         holders = fund.get("holders", pd.DataFrame())
         if not holders.empty and len(holders) > 0:
             inst_score = 5
-            details["institution"] = "机构持有数据可用，近期变化需更多数据点判断"
         else:
             inst_score = 4
-            details["institution"] = "[机构-无数据]"
 
-        total = manager_score + alpha_score + dd_score + sharpe_score + inst_score
-        return total, details, (
-            f"经理{manager_score}+Alpha{alpha_score}+回撤{dd_score}"
-            f"+夏普{sharpe_score}+机构{inst_score}={total}"
-        )
+        micro_total = min(50, manager_score + alpha_score + drawdown_score + sharpe_score + inst_score)
+        return micro_total, details, ""
 
     def score_fund(self, code: str) -> Dict:
         fund = self.funds[code]
@@ -331,6 +333,39 @@ class FundAnalyzer:
 
         recommendation = self._deduce_recommendation(composite, name, completeness)
 
+        # 计算 Sortino 比率（从净值日收益率）
+        sortino_val = 0.0
+        nav_df = fund.get("nav")
+        if isinstance(nav_df, pd.DataFrame) and not nav_df.empty and "日增长率" in nav_df.columns:
+            daily_returns = nav_df["日增长率"].dropna().values / 100.0
+            if len(daily_returns) >= 20:
+                sortino_val = _compute_sortino_ratio(daily_returns.tolist())
+
+        # 计算 HHI
+        hhi_val = 0.0
+        funds_holdings = fund.get("holdings", pd.DataFrame())
+        if isinstance(funds_holdings, pd.DataFrame) and not funds_holdings.empty:
+            weight_col = None
+            for col in ["占净值比例", "持仓占比", "占比", "持股占比"]:
+                if col in funds_holdings.columns:
+                    weight_col = col
+                    break
+            if weight_col:
+                raw_weights = []
+                for _, row in funds_holdings.head(10).iterrows():
+                    try:
+                        raw_weights.append(float(str(row[weight_col]).replace("%", "")))
+                    except (ValueError, TypeError):
+                        pass
+                if raw_weights:
+                    hhi_val = _compute_hhi([{"weight": w} for w in raw_weights])
+
+        # 获取高级指标
+        adv = self._compute_advanced_metrics(code) if completeness in ("A", "B") else {}
+        alpha_val = adv.get("jensen_alpha", 0.0) if adv else 0.0
+        ir_val = adv.get("information_ratio", 0.0) if adv else 0.0
+        beta_val = adv.get("beta", 1.0) if adv else 1.0
+
         score = {
             "fund_code": code,
             "fund_name": name,
@@ -357,6 +392,33 @@ class FundAnalyzer:
             "sharpe_1y": round(sharpe_1y, 2) if sharpe_1y is not None else None,
             "fund_type": basic.get("fund_type", ""),
             "manager": basic.get("manager", ""),
+            "scoring_matrix": {
+                "quant_baseline": {
+                    "macro_score": int(macro_total),
+                    "meso_score": int(meso_total) if meso_total is not None else None,
+                    "micro_score": int(micro_total),
+                    "total_baseline_score": int(composite),
+                },
+                "agent_overlay": {
+                    "macro_adjustment": 0,
+                    "meso_adjustment": 0,
+                    "micro_adjustment": 0,
+                    "total_adjustment": 0,
+                    "overlay_rationale": "",
+                },
+                "final_score": int(composite),
+                "score_tendency": tendency,
+            },
+            "feature_matrix": {
+                "hhi_index": hhi_val,
+                "jensen_alpha": round(float(alpha_val), 4),
+                "sortino_ratio": sortino_val,
+                "information_ratio": round(float(ir_val), 4),
+                "beta": round(float(beta_val), 4),
+                "max_drawdown_3y_pct": round(float(max_dd_3y), 2) if max_dd_3y else None,
+                "annual_volatility": round(float(vol), 2),
+                "sharpe_1y": round(float(sharpe_1y), 2) if sharpe_1y else None,
+            },
         }
         score["score_source"] = "rules_seed"
         score["agent_review_required"] = True
