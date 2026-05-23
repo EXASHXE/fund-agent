@@ -86,10 +86,12 @@ def event_level_dedup(
     for item in news_list:
         title = item.get("title", "")
         date_key = item.get("date", "") or item.get("publish_date", "") or ""
-        entity_hits = item.get("entity_hits", [])
-        if not entity_hits:
-            entity_hits = []
-        key = (date_key, tuple(sorted(entity_hits[:3])))
+        entity_hits = item.get("entity_hits", []) or item.get("matched_terms", [])
+        if entity_hits:
+            key = (date_key, tuple(sorted(entity_hits[:3])))
+        else:
+            # No known shared entity: do not collapse unrelated same-day headlines.
+            key = (date_key, normalize_title(title))
         grouped[key].append(item)
 
     result = []

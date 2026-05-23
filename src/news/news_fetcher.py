@@ -180,6 +180,7 @@ def fetch_fund_news(
     fund_type: str = "",
     shared_seen: set = None,
     max_items: int = 50,
+    as_of: date = None,
 ) -> List[Dict]:
     """获取与基金相关的近期新闻。优先按重仓股票搜索，次选基金名称/代码。
 
@@ -202,12 +203,17 @@ def fetch_fund_news(
     search_terms = profile["search_terms"]
     stock_codes = profile["stock_codes"]
 
-    cutoff = _shared_today() - timedelta(days=days)
+    reference_date = as_of or _shared_today()
+    cutoff = reference_date - timedelta(days=days)
 
     # 基金自身的新闻：使用 stock_news_em 获取基金级别新闻
     try:
         df = _cached_ak_call("stock_news_em", symbol=fund_code)
-        _append_news_from_df(all_news, seen, df, cutoff, source_hint=f"东方财富基金新闻:{fund_code}")
+        _append_news_from_df(
+            all_news, seen, df, cutoff,
+            source_hint=f"东方财富基金新闻:{fund_code}",
+            max_date=reference_date,
+        )
     except Exception:
         pass
 
@@ -215,13 +221,17 @@ def fetch_fund_news(
     for code in stock_codes:
         try:
             df = _cached_ak_call("stock_news_em", symbol=code)
-            _append_news_from_df(all_news, seen, df, cutoff, source_hint=f"东方财富个股新闻:{code}")
+            _append_news_from_df(
+                all_news, seen, df, cutoff,
+                source_hint=f"东方财富个股新闻:{code}",
+                max_date=reference_date,
+            )
         except Exception:
             continue
 
     # 全市场新闻兜底：先抓通用新闻，再用基金/行业/持仓关键词本地过滤。
     fund_profile = {"name": fund_name, "type": fund_type, "keywords": search_terms}
-    market_frames = list(_fetch_market_news_frames(days, fund_profile=fund_profile))
+    market_frames = list(_fetch_market_news_frames(days, fund_profile=fund_profile, as_of=reference_date))
     for df, source_hint in market_frames:
         _append_news_from_df(
             all_news,
@@ -230,6 +240,7 @@ def fetch_fund_news(
             cutoff,
             source_hint=source_hint,
             include_terms=search_terms,
+            max_date=reference_date,
         )
 
     # 降级匹配：首轮关键词无命中时，缩短关键词复用已缓存帧重试
@@ -241,13 +252,14 @@ def fetch_fund_news(
                     all_news, seen, df, cutoff,
                     source_hint=source_hint,
                     include_terms=degraded_terms,
+                    max_date=reference_date,
                 )
 
     all_news.sort(key=lambda x: (x.get("date", ""), x.get("match_score", 0)), reverse=True)
     return all_news[:max_items]
 
 
-def _fetch_market_news_frames(days: int, fund_profile: Dict = None):
+def _fetch_market_news_frames(days: int, fund_profile: Dict = None, as_of: date = None):
     frames = []
 
     # 财联社电报全量流（时效性更强、数据量更大）
@@ -278,7 +290,7 @@ def _fetch_market_news_frames(days: int, fund_profile: Dict = None):
 
     # 新闻联播（最多回看 3 天）
     for i in range(min(days, 3)):
-        d = (_shared_today() - timedelta(days=i)).strftime("%Y%m%d")
+        d = ((as_of or _shared_today()) - timedelta(days=i)).strftime("%Y%m%d")
         try:
             frames.append((_cached_ak_call("news_cctv", date=d), f"新闻联播:{d}"))
         except Exception:
@@ -294,6 +306,7 @@ def _append_news_from_df(
     cutoff: date,
     source_hint: str = "",
     include_terms: List[str] = None,
+    max_date: date = None,
 ):
     if df is None or getattr(df, "empty", True):
         return
@@ -329,6 +342,8 @@ def _append_news_from_df(
 
         news_date = _parse_date(date_raw)
         if news_date and news_date < cutoff:
+            continue
+        if news_date and max_date and news_date > max_date:
             continue
 
         # 去重：以标准化标题为 key（不同来源的同标题新闻只保留一条）

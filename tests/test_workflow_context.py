@@ -28,7 +28,7 @@ class WorkflowContextTest(unittest.TestCase):
             "mode_reason": "当前交易日数据已过分界点",
             "is_trade_day": True,
             "dca_rows": [],
-            "qdii_rows": [],
+            "settlement_rows": [],
             "top_news": [{"name": "测试基金", "headline": "半导体订单增长", "sentiment": 0.7}],
         }
         holdings = {
@@ -55,7 +55,7 @@ class WorkflowContextTest(unittest.TestCase):
             "mode_reason": "使用上一口径日数据",
             "is_trade_day": False,
             "dca_rows": [],
-            "qdii_rows": [],
+            "settlement_rows": [],
             "top_news": [],
         }
         holdings = {
@@ -72,6 +72,49 @@ class WorkflowContextTest(unittest.TestCase):
 
         self.assertIn("周期多维收益贡献", report)
         self.assertNotIn("当日盈亏与贡献分布", report)
+
+    def test_settlement_table_covers_all_funds_after_dca_table(self):
+        holding_a = SimpleNamespace(code="000001", name="国内基金", type="domestic", dca=None)
+        holding_b = SimpleNamespace(code="017436", name="海外基金(QDII)", type="qdii", dca=None)
+        config = SimpleNamespace(holdings=[holding_a, holding_b])
+        holdings = {
+            "funds": [
+                {"code": "000001", "name": "国内基金"},
+                {"code": "017436", "name": "海外基金(QDII)"},
+            ],
+            "by_fund": {
+                "000001": {"settle_delay": 1, "nav_date": "2026-05-22", "current_nav": 1, "total_shares": 10, "engine_events": []},
+                "017436": {"settle_delay": 2, "nav_date": "2026-05-21", "current_nav": 2, "total_shares": 20, "engine_events": []},
+            },
+        }
+        with patch("src.cli._shared_today", lambda: date(2026, 5, 22)), \
+             patch("src.cli.effective_report_date", lambda: date(2026, 5, 22)), \
+             patch("src.engine.calendar.is_trade_day", lambda d: True):
+            ctx = _build_workflow_context(config, holdings)
+
+        self.assertEqual(len(ctx["settlement_rows"]), 2)
+        rendered = _render_workflow_focus(ctx, holdings)
+        self.assertIn("申购与净值结算状态", rendered)
+        self.assertNotIn("QDII 结算状态", rendered)
+
+    def test_workflow_excludes_news_after_report_date_from_daily_clues(self):
+        config = SimpleNamespace(holdings=[])
+        news_data = [{
+            "fund_code": "000001",
+            "fund_name": "测试基金",
+            "sentiment_mean": 0.7,
+            "news_list": [
+                {"title": "盘后消息", "date": "2026-05-23"},
+                {"title": "口径内消息", "date": "2026-05-22"},
+            ],
+        }]
+        with patch("src.cli._shared_today", lambda: date(2026, 5, 23)), \
+             patch("src.cli.effective_report_date", lambda: date(2026, 5, 22)), \
+             patch("src.engine.calendar.is_trade_day", lambda d: True):
+            ctx = _build_workflow_context(config, {"by_fund": {}, "funds": []}, news_data)
+
+        self.assertEqual(ctx["top_news"][0]["headline"], "口径内消息")
+        self.assertTrue(all(item["date"] <= "2026-05-22" for item in ctx["top_news"]))
 
     def test_analyze_runs_news_before_scoring_and_passes_context(self):
         calls = []
@@ -121,7 +164,7 @@ class WorkflowContextTest(unittest.TestCase):
             snapshot_after=False,
         )
 
-        def fake_news(config, analyzer, agent_news_plan=None):
+        def fake_news(config, analyzer, agent_news_plan=None, report_date=None):
             calls.append("news")
             return [{"fund_code": "000001", "sentiment_mean": 0.6, "brief": {"trend": "bullish"}}]
 
@@ -179,7 +222,7 @@ class WorkflowContextTest(unittest.TestCase):
 
         plan_passed_to_news = []
 
-        def fake_news(config, analyzer, agent_news_plan=None):
+        def fake_news(config, analyzer, agent_news_plan=None, report_date=None):
             plan_passed_to_news.append(agent_news_plan)
             return [{"fund_code": "000001", "sentiment_mean": 0.6, "brief": {"trend": "bullish"}}]
 

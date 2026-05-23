@@ -4,10 +4,10 @@
 
 ## 使用原则
 
-- CLI 输出的 `report.md` 是最终研判的唯一事实源。
+- CLI 输出的 `report.evidence.json` 是最终研判的结构化事实输入；最终报告由经校验的 Agent decisions 渲染。
 - AKShare 接口只用于底层采集、问题定位或代码开发，不用于在报告阶段临时补编数据。
 - AKShare 字段可能变化，任何接口异常都应降级为 `[数据缺失-无法评估]` 或 NAV 自算指标，不得编造。
-- 新闻、评分、趋势和操作建议已经由 pipeline 串联；Agent 只解释结构化结果。
+- 新闻、评分与趋势证据由 pipeline 串联；Agent 基于结构化证据形成最终动作并接受合同校验。
 
 ---
 
@@ -46,7 +46,7 @@ df = ak.fund_open_fund_info_em(symbol="110011", indicator="单位净值走势")
 
 - 计算年化波动率、最大回撤、Sharpe、Sortino。
 - 在绩效接口失败时，作为最可靠的降级数据源。
-- 支撑 `trend_matrix` 中净值动量和风险状态。
+- 支撑 `trend_evidence` 中净值动量和风险状态。
 
 注意：
 
@@ -157,10 +157,10 @@ df = ak.fund_hold_structure_em()
 | 数据 | 进入模块 | 报告解释 |
 |------|----------|----------|
 | 基本信息 | `FundAnalyzer.load_fund` | 类型适配、经理稳定性 |
-| 净值历史 | `feature_matrix`、`trend_matrix` | 波动率、回撤、Sortino、趋势 |
+| 净值历史 | `feature_matrix`、`trend_evidence` | 波动率、回撤、Sortino、趋势证据 |
 | 绩效指标 | `factor_matrix.micro` | Alpha、Beta、IR、Sharpe |
 | 重仓 | 新闻关键词、HHI、中观暴露 | 新闻穿透、拥挤度 |
 | 行业配置 | `portfolio_risk_matrix` | 暴露簇、组合风险预算 |
 | 持有人结构 | 微观因子 | 机构资金行为 |
 
-Agent 在报告阶段必须优先引用 CLI 已渲染的这些结果，而不是重新调用接口。
+Agent 在决策阶段必须优先引用 evidence 中的这些结果，而不是重新调用接口。

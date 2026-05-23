@@ -51,13 +51,14 @@ class SnapshotSanitizeTest(unittest.TestCase):
             "action_logic": "",
             "feature_matrix": {"sortino_ratio": 1.2},
             "trend_matrix": {"short_term": {"direction": "up"}},
+            "trend_evidence": {"short_term": {"direction": "flat"}},
             "operation_advice": {"action": "buy"},
             "factor_matrix": {"macro": []},
             "score_confidence": 0.8,
         })
 
         self.assertEqual(payload["feature_matrix"]["sortino_ratio"], 1.2)
-        self.assertEqual(payload["trend_matrix"]["short_term"]["direction"], "up")
+        self.assertEqual(payload["trend_matrix"]["short_term"]["direction"], "flat")
         self.assertEqual(payload["operation_advice"]["action"], "buy")
         self.assertEqual(payload["score_confidence"], 0.8)
 

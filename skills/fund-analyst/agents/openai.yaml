@@ -1,0 +1,4 @@
+interface:
+  display_name: "基金战略投研与配置决策"
+  short_description: "基于证据 JSON 形成可审计的基金配置最终决策报告"
+  default_prompt: "使用 $fund-analyst 分析当前基金组合证据，生成可对账的最终配置报告。"

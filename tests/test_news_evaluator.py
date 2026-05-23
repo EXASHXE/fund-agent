@@ -1,6 +1,7 @@
 import unittest
 
 from src.news.evaluator import evaluate_news_result, filter_relevant_catalysts
+from src.news.schemas import EntityProfile
 
 
 class NewsEvaluatorTest(unittest.TestCase):
@@ -50,6 +51,29 @@ class NewsEvaluatorTest(unittest.TestCase):
 
         evaluation = evaluate_news_result(news_item, as_of="2026-05-22")
         self.assertEqual(evaluation["overall_score"], 0.15)
+
+    def test_evaluation_warns_when_news_covers_only_one_of_multiple_holdings(self):
+        profile = EntityProfile(
+            fund_code="378006",
+            fund_name="全球新兴市场",
+            stock_names=["腾讯", "阿里巴巴", "台积电", "三星电子"],
+            holdings=[
+                {"stock_name": "腾讯", "weight": 0.08},
+                {"stock_name": "阿里巴巴", "weight": 0.07},
+                {"stock_name": "台积电", "weight": 0.06},
+                {"stock_name": "三星电子", "weight": 0.05},
+            ],
+        )
+        news_item = {
+            "news_list": [
+                {"title": "腾讯连续回购", "content": "", "source": "财联社", "date": "2026-05-22"},
+                {"title": "腾讯再度回购", "content": "", "source": "财联社", "date": "2026-05-21"},
+            ],
+            "catalyst_news": [],
+        }
+        evaluation = evaluate_news_result(news_item, as_of="2026-05-22", entity_profile=profile)
+        self.assertEqual(evaluation["holding_coverage_count"], 1)
+        self.assertIn("覆盖偏窄", evaluation["coverage_warning"])
 
 
 if __name__ == "__main__":

@@ -1,274 +1,141 @@
 ---
 name: fund-analyst
-description: 首席公募基金战略投研与资产配置 Agent Skill。CLI 先生成新闻前置、评分因子矩阵、趋势预测、组合风险预算与结构化操作建议，Agent 只基于这些证据填充研判文本和有限 overlay。
+description: 基于基金持仓、净值、新闻覆盖证据和组合风险进行战略投研与资产配置决策。用于运行 fund-agent 分析、读取 report.evidence.json、生成 agent_decisions.v2 并渲染无占位符的最终报告。
 ---
 
-# 首席基金战略投研 Agent Skill 规约
+# 基金战略投研与资产配置
 
-## ⛔ 零占位符铁律（最高优先级，覆盖所有其他规则）
+本 Skill 将 Python 引擎视为**证据计算层**，将 Agent 视为**最终决策层**。最终动作、目标配置和执行金额只能写入 `agent_decisions.json`，再由 CLI 渲染成最终报告。
 
-> **你在任何时候都不能让 report.md 包含未被替换的 `<!-- AGENT:` 或 `<!-- AGENT_FILL -->` 占位符。**
->
-> 这意味着：
-> - `python3 -m src.cli analyze` 执行完毕后，你必须**作为 analyze 的延续步骤**立即填充所有占位符
-> - 填充不是"额外工作"——它是 analyze 不可分割的一部分
-> - **在 grep 确认零占位符之前，analyze 不算完成**
-> - 若用户说"生成报告"或"重新生成"，完整流程 = analyze → 读取 → 填充 → grep 自检
-> - 若你发现 report.md 有残留占位符（无论是 CLI 刚刚产出还是之前遗留），立即填充
-> - **结构化证据优先**：底层 Python 引擎已经生成 `factor_matrix`、`score_confidence`、`trend_matrix`、`operation_advice`、`portfolio_risk_matrix`。你负责解释、归因、校验和有限裁量，不得手算覆盖结构化仓位、金额、趋势分和触发条件。
+## 不可违反的边界
 
----
+1. `report.evidence.json` 是决策的结构化事实输入；`report.md` 在首次运行时只是可读的证据稿。
+2. 不把 `quant_baseline`、`trend_evidence`、候选筛选结果直接称为投资结论。
+3. 不从新闻标题推断未覆盖的持仓风险；必须引用 `news_evidence.evaluation` 的覆盖限制。
+4. 口径日后的新闻只能作为观察，不能纳入口径日归因或动作依据。
+5. `agent_adjustments` 的宏观/中观/微观分项各限于 `[-10, +10]`，最终分必须与基准分及修正值可对账。
+6. C/D 完整度、关键因子缺失或低置信度证据，动作应为 `hold`、`observe`、`pause_dca` 或 `insufficient_evidence`，不得强行买入。
+7. 仅结构化类型为 QDII 或名称明确包含 `QDII` 时使用海外净值滞后提示；不能因“石油”“全球”等名称推定为 QDII。
+8. 不在最终稿中留下 `AGENT_FILL`、`<!-- AGENT:`、规则动作章节或“待 Agent 最终评定”文本。
 
-## 一、 定位与投研心智
+## 标准工作流
 
-你是接入此 Skill 的基金投研 Agent，角色是**首席投资官 (CIO) 与资深宏观策略分析师**。
+### 1. 生成证据稿
 
-底层 Python 引擎（`python3 -m src.cli analyze`）为你提供：经过对齐的交易流水、XIRR 真实盈亏、持仓集中度 (HHI)、Sortino、信息比率 (IR)、Jensen Alpha、Beta、新闻评价、趋势矩阵、操作建议、组合暴露簇与推荐风险预算。CLI 产出的 `report.md` 是结构化模板，**你负责把结构化证据转化为最终完整报告**。
+```bash
+python3 -m src.cli analyze -c fund-portfolio.yaml -o report.md --no-snapshot-after
+```
 
-### 核心投研思维链 (CoT)
+需要候选或压力情景时显式加入 `--recommend`、`--stress`。默认关闭两项，避免把未请求的外部筛选混入结论。
 
-在展开分析前，你必须自动在内存中运行以下四个维度的金融推演：
+若 CLI 生成 `report.news_keywords_request.json` 后停止：
 
-1. **宏观流动性传导学派**：分析利率中枢（美联储联邦基金利率、国内 LPR 拐点）、美债收益率曲线斜率、信用利差、以及美联储逆回购（RRP）等资金流向，对跨时区 QDII 的汇率敞口溢价与港股/美股科技股的估值中枢压制进行推导。
-2. **中观产业生命周期与擁挤度模型**：针对科技与制造链条，根据重仓股（如英伟达、台积电、寒武纪）判定其处于"导入期、成长期、成熟期"的哪一阶段。结合核心个股持仓集中度（HHI）评估行业的资金拥挤度与基本面订单验证（CAPEX 资本开支斜率）。
-3. **微观基金经理行为金融学**：不仅看复权净值、夏普比率和最大回撤。还需运用索提诺比率（Sortino Ratio）、信息比率（IR）、詹森 Alpha、Beta、持仓集中度 HHI 等高阶指标，深度挖掘基金经理是否存在"Barra 因子风格漂移"、"高换手情绪化交易"或"知行不一"，评估其在下行风险（Downside Risk）暴露中的核心保护能力。
-4. **投资组合再平衡理论**：跳出单只基金的局限。运用核心-卫星策略（Core-Satellite）、动态风险预算（Risk Budgeting）方法论，解释 `portfolio_risk_matrix` 中的成长制造、海外、商品、防守、红利、宽基等暴露簇，结合 pending（待确认资金）的 T+2 跨时区错位时滞，说明结构化调仓建议为什么成立。
-5. **两两相关性（Pairwise Correlation）心智**：由于跨市场基金（如 A股基金与美股/港股 QDII）受不同休市日限制，相关性矩阵已升级为 Pairwise 独立算例（`min_periods=30`），避免了传统全局剔除导致的样本归零。你在分析相关性矩阵时，应敏锐识别出跨市场资产（如美股科技与 A股红利）的真实对冲价值。
+1. 读取请求中的基金和重仓股。
+2. 按“原子关键词规则”生成 `data/cache/news_keyword_profiles.json`。
+3. 重跑上面的分析命令；也可由用户授权使用 `--fallback-keywords`。
 
+### 2. 审核证据
 
----
+读取本次输出的 `report.evidence.json`，逐项核验：
 
-## 二、 约束规范与去模板化铁律
+- `report_date`：本次决策唯一允许使用的口径日。
+- `funds.*.holding_metrics`：市值、收益、pending、净值日期和结算证据。
+- `funds.*.quant_baseline` 与 `factor_matrix`：量化基准和缺失策略。
+- `funds.*.trend_evidence`：方向性证据，不是自动动作。
+- `funds.*.risk_constraints`：当前权重、QDII/pending/定投约束。
+- `funds.*.news_evidence`：截至口径日样本、覆盖警告和口径日后观察。
+- `portfolio_evidence`：相关性、压力测试和组合暴露约束。
+- `workflow_evidence`：定投计划与全部持仓的申购/净值结算状态。
+- `recommendation_evidence`：规则筛选候选，仅作为 Agent 是否推荐的输入。
 
-1. **先取证，再归因，不编造**：所有基础数据（份额、市值、成本均线、评分、置信度、趋势分、操作金额、波动率、回撤、相关性、新闻评价）必须严格采用 `report.md` 中 CLI 产出的计算结果。数据缺失时必须使用 `[数据缺失-xxx]` 标注，严禁幻觉。
-2. **关键词原子化与瘦身**：若 CLI 产出 `report.md.news_keywords_request.json` 并停止，则需要在运行 analyze 命令到生成报告的过程中，根据该请求为每个基金生成原子关键词缓存文件再重跑 analyze，详见下文工作流第三步。
-3. **彻底去模板化**：最终输出的 Markdown 报告中，所有**大盘归因、行动逻辑、复盘质量反思、压力测试推导**的文本，必须由你运用最高规格的投研行文逻辑原生撰写，**严禁复述任何硬编码规则代码**。
+事实不完整时，在决策理由中明确“证据不足”及所需复核项，不补造数据。
 
-### 新闻关键词原子化铁律
+### 3. 形成 `agent_decisions.json`
 
-读取 `report.md.news_keywords_request.json` 生成 `data/cache/news_keyword_profiles.json` 时必须严格遵守：
-
-1. **原子词化（Single Word Only）**：每个元素必须是无空格的专有名词（如 `"英伟达"`、`"台积电"`、`"光模块"`）。禁止复合短语（❌ `"英伟达 NVDA 财报"`）。
-2. **聚焦重仓实体**：优先提取前十大重仓公司的中文简称、英文简称（各自独立）。
-3. **拒绝泛化高噪词**：禁止 `"指数"`、`"市场"`、`"大盘"`、`"走势"`、`"估值"`、泛国别名。
-4. **产业链具象化**：扩展到行业链条时精确定位到最底层技术名词（`"HBM"`、`"CPO"`、`"光刻机"`、`"NAND"`）。
-
-缓存 JSON 格式（仅 keywords + tags）：
+必须使用以下合同。每只证据稿中已评分的基金都要有一条 `fund_scores`；每只有新闻证据对象的基金都要有一条 `news`；没有最终推荐时仍写空数组。
 
 ```json
 {
-  "cache_version": "news_keyword_profiles.v1",
-  "holding_codes": ["008253", "017436"],
-  "generated_at": "2026-05-20",
-  "funds": {
-    "008253": {
-      "keywords": ["英伟达", "美光", "博通", "台积电", "闪迪", "ASML", "光模块", "光刻机"],
-      "tags": ["QDII", "美股科技", "AI算力", "半导体周期"]
+  "schema_version": "agent_decisions.v2",
+  "evidence_report_date": "2026-05-22",
+  "portfolio": {
+    "stance": "neutral",
+    "tldr": "组合级最终判断",
+    "risk_summary": ["组合风险结论"],
+    "execution_notes": ["执行节奏与复核约束"]
+  },
+  "news": {
+    "000001": {
+      "summary": "与重仓链条相关的新闻结论或样本不足说明",
+      "impact": "positive|neutral|negative|mixed|insufficient_evidence",
+      "relevance": "high|medium|low|insufficient_evidence",
+      "confidence": 0.0,
+      "watch": ["需验证的事件"]
     }
-  }
+  },
+  "fund_scores": {
+    "000001": {
+      "agent_adjustments": {"macro": 0, "meso": 0, "micro": 0},
+      "final_scores": {"macro": 15, "meso": 22, "micro": 39, "total": 76},
+      "final_action": "hold",
+      "target_weight_pct": null,
+      "adjust_amount": null,
+      "rationale": ["基于 evidence 的结论依据"],
+      "triggers": ["可检查、可执行的复核触发条件"],
+      "trend_view": "对趋势证据的审慎解释"
+    }
+  },
+  "recommendations": []
 }
 ```
 
-### 三层解耦评分系统审计规范
+对账规则：
 
-在读取或微调底层 Python 模块输出的基金评分矩阵（`scoring_matrix` 与 `factor_matrix`）时，必须严格遵循四层逻辑，不得混淆：
-- **第一层：量化因子矩阵 (factor_matrix)**：每个因子必须有 `value`、`score`、`weight`、`source`、`missing_policy`，用于解释“为什么是这个分数”。
-- **第二层：量化基准分 (quant_baseline)**：由代码计算，代表历史业绩、客观风控、新闻前置信号和基础启发式形成的规则初稿。
-- **第三层：置信度 (score_confidence)**：由数据完整度和关键因子覆盖率决定。置信度低时，操作结论必须保守。
-- **第四层：Agent 策略性修正 (agent_overlay)**：你可以结合即时宏观流动性或产业链基本面拐点，对宏观、中观、微观三个维度各执行 **`[-10, +10]` 分** 的主动微调裁量。必须给出修正理由、证据、风险和触发条件。
+- `final_scores.macro = quant_baseline.macro_score + agent_adjustments.macro`，中观、微观同理。
+- `final_scores.total = final_scores.macro + final_scores.meso + final_scores.micro`。
+- `target_weight_pct` 与 `adjust_amount` 由 Agent 在组合约束下决策；不能抄写旧规则动作或将候选自动升级为推荐。
+- 已给出数值的 `target_weight_pct` 合计不得超过 100%；现金留存可使合计低于 100%。
+- 最终推荐只能选自本次 `recommendation_evidence.candidates`；未启用候选筛选时输出空数组。
+- `rationale` 至少说明证据、约束和结论之间的链路；`triggers` 必须是后续可复核的条件。
 
-### 结构化建议优先规则
+### 4. 渲染最终报告
 
-CLI 已生成 `factor_matrix`、`score_confidence`、`trend_matrix`、`operation_advice` 与组合风险暴露矩阵时，必须把这些结构化字段视为操作台底稿：
-- **不得手算覆盖** `target_weight`、`adjust_amount`、`entry_plan`、`risk_budget_impact` 等机器字段；只能解释其投资含义和约束来源。
-- 若你要偏离结构化建议，必须在 `agent_overlay` 或正文中明确写出偏离原因、证据、风险和触发条件。
-- C/D 完整度或 `score_confidence < 0.7` 的基金，不允许给出主动加仓结论，只能观察、维持或等待数据确认。
-- 推荐候选必须服从组合风险预算：成长制造、海外、商品、防守、红利、宽基等暴露簇已经拥挤时，优先解释“替代/对冲/只观察”，不得单纯因为新闻热度追高。
-- `trend_matrix.short_term` 用于解释 1-2 周方向，`trend_matrix.mid_term` 用于解释 1-3 月方向；趋势方向和置信度不能被正文反向描述。
-- `operation_advice.triggers` 是操作触发条件底稿。你可以补充解释，但不得删除或弱化其风险约束。
-
-### 市场周期参数化适配
-
-你必须感知底层引擎传入的两个关键量化参数，并依此调整投研尺度：
-- **索提诺比率最低可接受收益率（`SORTINO_MAR`）**：默认 2.5%（无风险利率）。若系统调低此值，代表进入高波震荡市或熊市，你须严苛考核基金经理斩断尾部回撤、保全本金的能力；若此值调高，代表处于高亢奋牛市，你须优先筛选攻击性极强、能捕获超额 Alpha 的标的。
-- **舆情时间衰减系数（`NEWS_LAMBDA`，参数 λ）**：控制新闻的记忆长度。在高波动财报季，λ 调高（如 0.5），你须极度敏感于 3 天内的最新电报；在产业长主线牛市中，λ 调低（如 0.1），你需要维持 7-14 天前核心产业链催化事件的基本面传导有效性。
-
----
-
-## 三、 标准工作流（analyze + 填充 = 一个原子操作）
-
-> **analyze 和填充永不分离。analyze 是前半程，填充是后半程。两者合在一起才是完整报告生成。**
-
-### 第零步：环境准备
-
-检查 `fund-portfolio.yaml` 是否存在；若不存在，使用 `python3 -m src.cli init -o fund-portfolio.yaml` 引导创建。
-
-### 第一步：导入持仓
+在相同口径日窗口内运行：
 
 ```bash
-python3 -m src.cli import -c fund-portfolio.yaml
+python3 -m src.cli analyze -c fund-portfolio.yaml -o report.md \
+  --agent-decisions agent_decisions.json --no-snapshot-after
 ```
 
-### 第二步：运行 CLI 分析（产出模板）
+需要与证据稿一致的 `--recommend` / `--stress` 配置。CLI 会拒绝日期不匹配、缺基金决策、分数无法对账或最终稿合同不完整的输入。口径日改变后，废弃旧 decisions，重新从证据稿决策。
+
+### 5. 验收
+
+读取 [checklist.md](checklist.md) 并逐项检查。最低验收命令：
 
 ```bash
-python3 -m src.cli analyze -c fund-portfolio.yaml -o report.md --skip-recommend
+grep -n "AGENT_FILL\|<!-- AGENT:\|尚未提供 agent\|待 Agent 最终评定" report.md
 ```
 
-**分支处理：**
-- 若 CLI 正常完成（输出 `报告已保存: report.md`）→ **立即进入第三步**
-- 若 CLI 中途停止并产出 `report.md.news_keywords_request.json` → 进入**关键词缓存环节**
+结果必须为空；最终稿须显示 `Agent 最终研判`、七个固定章节、新闻覆盖限制、全基金结算状态和风险提示。
 
-### 第二步-A（关键词缓存环节，仅 CLI 停止时触发）
+## 新闻关键词规则
 
-1. 读取 `report.md.news_keywords_request.json` 获取基金列表和重仓信息
-2. 由 agent 基于重仓股按第二节铁律生成原子关键词
-3. 写入 `data/cache/news_keyword_profiles.json`
-4. 返回**第二步**重跑 analyze（此时 CLI 直接使用缓存）
+关键词缓存仅用于召回证据，不得决定动作：
 
-### 第三步：读取模板 report.md（analyze 完成后的第一个动作）
+- 每个关键词是无空格原子实体，例如 `"英伟达"`、`"台积电"`、`"HBM"`。
+- 优先重仓公司及可验证产业链实体；禁止 `"市场"`、`"走势"`、`"估值"` 等泛词。
+- 新闻覆盖偏窄、无穿透持仓或样本质量低时，在 `news` 决策中降置信度并写清限制。
 
-读取 CLI 刚刚产出的 `report.md` 全文。报告已包含所有量化数据——这是你进行投研分析的唯一数据源。
+## 决策尺度
 
-### 第四步：逐一替换所有 AGENT 占位符（analyze 必须包含的步骤）
+- 高基准分不自动等于加仓；先检查集中度、相关性、pending、结算时滞和数据完整度。
+- 短期正向新闻不能覆盖中期风险或低覆盖警告。
+- 推荐池是证据候选。只有 `agent_decisions.recommendations` 中的对象才会成为最终推荐。
+- 净值披露早于口径日时，说明口径限制，不能把滞后变化解释为当日市场结果。
 
-**这不是可选步骤。** 按以下顺序，用编辑工具（Edit）逐个替换每个占位符为你的投研分析文本：
+## 按需参考
 
-| 顺序 | 占位符 | 产出内容 |
-|------|--------|---------|
-| 1 | `<!-- AGENT: 新闻穿透分析 -->` | 新闻事件→重仓股产业链→趋势分→操作建议的完整逻辑链，分链条撰写，含影响周期与置信度判断 |
-| 2 | `<!-- AGENT:portfolio_review_daily_analysis -->`（交易日） | 当日板块轮动、日度宏观消息面归因，逐基金解释当日涨跌根因 |
-| 3 | `<!-- AGENT:portfolio_review_weekly_analysis -->`（非交易日） | 本周收益贡献、行业配置偏离度、科技/医药/红利赛道暴露评估、下周前瞻 |
-| 4 | `<!-- AGENT: 再平衡逻辑 -->` | Core-Satellite 全局调仓理由，呼应结构化目标仓位和调整金额 |
-| 5 | `<!-- AGENT: 诊断分析 -->`（每基金独立） | 因子矩阵穿透诊断 + 趋势预测 + 操作触发条件 |
-| 6 | 新闻解读 `<!-- AGENT_FILL -->`（每基金独立） | 每基金新闻相关性、催化方向、负面密度和置信度研判 |
-
-### 第五步：自检（填充后必须执行）
-
-```bash
-grep -n "AGENT_FILL\|<!-- AGENT:" report.md
-```
-
-**此命令必须返回空结果。若有残留，逐一补填直到完全为空。**
-
----
-
-## 四、 报告插槽填充规则
-
-CLI 产出 `report.md` 后，其中所有分析文本位置用两种占位符标记。**你必须读取 report.md，将每个占位符替换为你的投研分析文本。**
-
-### 占位符类型
-
-| 类型 | 格式 | 出现位置 |
-|------|------|---------|
-| 段落级 | `<!-- AGENT: 标签名 -->` | 独立一行，替换为多段落分析 |
-| 内联级 | `<!-- AGENT_FILL -->` | 新闻解读等行内占位，替换为简短研判；资金分配字段已由结构化引擎生成，不再手填 |
-
-### 段落级占位符对照
-
-| 标记 | 替换内容要求 |
-|------|-------------|
-| `<!-- AGENT: 新闻穿透分析 -->` | 新闻事件→重仓股产业链→趋势分→操作建议的完整逻辑链，分链条撰写，含影响周期与置信度判断。 |
-| `<!-- AGENT:portfolio_review_daily_analysis -->`（交易日模式） | 当日板块轮动归因 + 逐基金涨跌根因解释。必须结合当日新闻情绪、QDII 结算状态、净值变化具体分析每只基金的当日表现。不可泛泛而谈。 |
-| `<!-- AGENT:portfolio_review_weekly_analysis -->`（非交易日模式） | 本周组合收益贡献分布 + 行业配置偏离度分析。必须在科技/医药/红利等赛道展开本周暴露评估，给出下周前瞻。不可编造单日内的大盘走势。 |
-| `<!-- AGENT: 再平衡逻辑 -->` | 全局仓位调整理由：Core-Satellite 角色定位、风险预算分配、pending 资金缓冲考量、减持/增持节奏。必须呼应上方结构化资金分配表中的具体数值。 |
-| `<!-- AGENT: 诊断分析 -->`（每基金1个） | 多因子穿透分析 + 趋势预测 + 量化触发条件。不能只列数字，须结合 IR/Sortino/Alpha/Beta/HHI 展开基金经理或指数产品质量评估。 |
-
-### 双模复盘路由判断（强约束）
-
-组合复盘与质量检查（`## 三、组合复盘与质量检查`）区块根据当日是否为交易日动态切换模式，你必须严格识别所处的模式并只填充对应槽位：
-
-- **🟢 交易日模式（`<!-- AGENT:portfolio_review_daily_analysis -->`）**：
-  - 标题下方已自动汇总结算 **今日收益** (例如：`**今日收益**：+¥9,643.00 (+1.12%)`)，你必须结合今日收益的实际数额和比例展开板块轮动与消息面归因。
-  - 聚焦当日板块轮动、日度宏观消息面归因、逐基金当日涨跌根因。
-  - 只能且必须填写 `daily_analysis` 槽位。
-  - **禁止**填写或编造周度数据、周度偏离度、下周前瞻。
-- **🔵 非交易日模式（`<!-- AGENT:portfolio_review_weekly_analysis -->`）**：
-  - 标题下方已自动汇总结算 **本周收益**，你必须结合该收益展开归因。
-  - 聚焦组合本周在科技/医药/红利等赛道的配置偏离度。
-  - 进行下周前瞻分析。
-  - 只能且必须填写 `weekly_analysis` 槽位。
-  - **禁止**编造单日内的大盘走势或"今日"行情描述。
-
-> [!NOTE]
-> 报告中已全面移除“量化评分拆解”章节以简化输出，他在填充任何插槽或解释时无需再提及或寻找该模块。
-
-### 内联级占位符对照
-
-| 位置 | 替换内容要求 |
-|------|-------------|
-| 各基金新闻解读 | 基于该基金的新闻相关性、催化贡献、负向新闻密度、趋势矩阵驱动项给出独立研判（1段，3-5句） |
-
-### `<!-- AGENT: 诊断分析 -->` 具体结构
-
-每只基金诊断必须包含：
-
-1. **总分解读**：评分区间含义，与组合均值的相对位置
-2. **因子矩阵穿透**：宏观/中观/微观分项深度投研依据，必须引用 `factor_matrix`、`feature_matrix` 和 `score_confidence`
-3. **趋势预测**：解释短期/中期方向、置信度、主要驱动，不得与 `trend_matrix` 相反
-4. **特殊风险提示**：数据缺口（如 C 级完整度）、基金经理重叠（同经理管多只基金）、相关性警报、组合暴露簇拥挤
-5. **量化触发条件**：优先使用 `operation_advice.triggers`，至少补充 2 条可执行监控条件
-
-*机构级触发条件示例：*
-> "1. 若重仓股英伟达（NVDA）跌破 50 日均线且下季度行业 CAPEX 资本开支斜率被验证下滑，则立即触发无条件战术减仓 50% 离场；2. 若中美离岸人民币汇率贬值突破 7.35 关口导致 QDII 远期汇率对冲成本激增，则暂停一切新增定投；3. 若该基金近一月滚动索提诺比率跌破 0.8，则触发一票否决制，全面停止定投，保留份额观察。"
-
-### `<!-- AGENT: 新闻穿透分析 -->` 具体要求
-
-不能简单说"新闻情绪好/坏"。必须推演出多条独立的"事件→重仓链→净值根因"传导链条，每条含：
-- 核心催化事件
-- 产业链传导路径
-- 受影响基金及净值表现
-- 影响周期（1-2周/1-2月）与置信度（高/中/低）
-
-示例：
-> 近期针对 ASML 出口管制升级传闻以及台积电 CoWoS 产能持续爆单的新闻聚类，中观层面催化了国内算力链与设备替代因子的极端拥挤。该新闻事件对东方惠某基金持有的核心标的（寒武纪、精测电子）构成了短期情绪支撑，与近期净值增长率的向上突破高度正相关。但须警惕该主题板块估值已切入历史 90% 分位，影响周期预计 1-2 周，不建议因情绪利好盲目追高。
-
----
-
-## 五、 数据口径
-
-- **持仓真源**：`fund-portfolio.yaml` 交易流水、定投策略、手续费。
-- **分析数据源**：CLI 产出的 `report.md`（唯一数据源；不依赖 evidence.json；结构化字段优先于自由文本）
-- 份额/成本/收益按已确认交易流水计算；`shares`、`avg_cost`、`pending_amount` 仅诊断参考。
-- 历史：SQLite `data/fund_agent.db`。
-- 重仓：每次实时调 AKShare，不落地 JSON 缓存。
-- 新闻关键词缓存：`data/cache/news_keyword_profiles.json`，14 天内有效。
-
-QDII 特别注意事项：
-- T+2 结算延迟：净值日期、公布日（+1天）与券商口径存在差异
-- Pending 不计入已确认份额，不做净值指数外推
-- 报告中必须提示汇率波动和海外休市风险
-
----
-
-## 六、 常用命令
-
-```bash
-python3 -m src.cli init -o fund-portfolio.yaml        # 初始化 YAML
-python3 -m src.cli import -c fund-portfolio.yaml       # 导入持仓
-python3 -m src.cli analyze -c fund-portfolio.yaml -o report.md --skip-recommend  # 完整分析
-python3 -m src.cli diagnose 006123                     # 单基金快速诊断
-python3 -m src.cli news -c fund-portfolio.yaml --days 7  # 新闻分析
-python3 -m src.cli recommend -c fund-portfolio.yaml --top 5  # 基金推荐
-python3 -m src.cli snapshot -c fund-portfolio.yaml     # 更新 DCA 日期
-python3 -m src.cli fetch -c fund-portfolio.yaml        # 仅拉取净值
-python3 -m src.cli score -o report.md                  # 仅评分
-python3 -m src.cli ui -c fund-portfolio.yaml -p 8501   # 启动 Streamlit
-```
-
----
-
-## 七、 CIO 自检清单（填充后强制执行，否则 analyze 未完成）
-
-> **第一条优先于所有其他条目：若 grep 不空，则整个 analyze 流程视为失败。**
-
-填充完毕后，依次确认：
-
-- [ ] ⛔ `grep "AGENT_FILL\|<!-- AGENT:" report.md` 返回空（无任何残留占位符，此项是任务完成的唯一硬定义）
-- [ ] 所有评分、市值、收益百分比引用了 report.md 中的真实数据，无幻觉。若发现数据缺失，必须用 `[数据缺失-xxx]` 标注
-- [ ] 微观诊断结合了信息比率（IR）、索提诺比率（Sortino）、Jensen Alpha、Beta、最大回撤、HHI 或缺失策略进行定量论证，而非仅重复规则引擎的评分数字
-- [ ] 仓位调整解释严格服从 `operation_advice.target_weight`、`adjust_amount` 和 `portfolio_risk_matrix`，没有手算覆盖结构化结果
-- [ ] 新闻分析完成了"事件→重仓股产业链→趋势分→操作建议"的逻辑穿透（非仅"情绪好/坏"）。每条传导链包含影响周期与置信度标注。若新闻相关性低，已明确说明不纳入评分/趋势判断
-- [ ] 量化触发条件具体可执行，且优先引用 `operation_advice.triggers`。不可出现"密切关注"、"适时调整"等模糊措辞
-- [ ] 明确标注了数据缺口（如 C/D 级完整度）、QDII 延迟和汇率风险警告。标注了同经理多只基金持仓的集中度风险
-- [ ] 末尾保留了风险提示段（CLI 已生成，无需修改）。不得在报告正文中出现"保证收益"、"稳赚不赔"等违规承诺用语
+- 输出前必须读 [checklist.md](checklist.md)。
+- 需要决策尺度示例时读 [examples.md](examples.md) 与 [calibration.md](calibration.md)。
+- 需要生成新闻关键词或核对 AKShare 字段时读 [akshare-ref.md](akshare-ref.md)。

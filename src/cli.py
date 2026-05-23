@@ -168,7 +168,9 @@ def cmd_analyze(args):
 
     # 新闻分析前置：新闻催化与情绪作为评分系统的输入证据。
     print("\n[Layer 2] 新闻采集与分析...")
-    news_data = _run_news_analysis(config, analyzer, agent_news_plan=news_keyword_plan)
+    news_data = _run_news_analysis(
+        config, analyzer, agent_news_plan=news_keyword_plan, report_date=report_date
+    )
     news_contexts = _news_context_by_code(news_data)
 
     print("\n[Layer 3] 分析打分...")
@@ -214,7 +216,7 @@ def cmd_analyze(args):
 
     # 持仓分析
     holdings_data = _compute_holdings(store, config, codes, analyzer)
-    _attach_trends_and_advice(scores, news_contexts, holdings_data)
+    _attach_decision_evidence(scores, news_contexts, holdings_data)
     from src.analysis.portfolio_risk import build_portfolio_risk_matrix
     portfolio_risk_matrix = build_portfolio_risk_matrix(holdings_data, scores, correlations)
     workflow_context = _build_workflow_context(config, holdings_data, news_data=news_data)
@@ -235,7 +237,18 @@ def cmd_analyze(args):
         )
         recommendation_status = "ok" if recommendations else "empty"
 
-    print("\n[Layer 4] 生成报告...")
+    agent_decisions = _load_agent_decisions(
+        getattr(args, "agent_decisions", None), report_date, scores=scores, news_data=news_data,
+        recommendation_candidates=recommendations,
+    )
+    evidence = _build_report_evidence(
+        report_date, scores, holdings_data, news_data, correlations, stress_results,
+        portfolio_risk_matrix, recommendations=recommendations,
+        recommendation_status=recommendation_status, workflow_context=workflow_context,
+    )
+    evidence_path = _write_report_evidence(args.output or "report.md", evidence)
+    print(f"\n[Layer 4] 报告证据已保存: {evidence_path}")
+    print("[Layer 5] 生成最终报告..." if agent_decisions else "[Layer 5] 生成待 Agent 研判的证据稿...")
     report = generate_report(
         analyzer, scores, correlations, stress_results,
         holdings_data=holdings_data,
@@ -245,11 +258,14 @@ def cmd_analyze(args):
         unscores=unscores,
         workflow_context=workflow_context,
         inter_recommendation_correlations=inter_recommendation_correlations,
+        agent_decisions=agent_decisions,
     )
 
     # 后置校验：止盈止损校准 + 合规声明追加
-    from src.output.validator import post_process_report
+    from src.output.validator import post_process_report, validate_final_report
     report = post_process_report(report, scores)
+    if agent_decisions:
+        validate_final_report(report, report_date.isoformat(), len(config.holdings))
 
     report_path = args.output or "report.md"
     with open(report_path, "w", encoding="utf-8") as f:
@@ -321,9 +337,213 @@ def _news_context_by_code(news_data):
     return contexts
 
 
-def _attach_trends_and_advice(scores, news_contexts, holdings_data):
-    """Attach trend forecasts and operation advice to scored funds."""
-    from src.decision.engine import build_operation_advice
+def _load_agent_decisions(
+    path, report_date, scores=None, news_data=None, recommendation_candidates=None,
+):
+    """Load and reconcile Agent judgments with this run's evidence contract."""
+    if not path:
+        return None
+    import json
+
+    with open(path, "r", encoding="utf-8") as handle:
+        decisions = json.load(handle)
+    if decisions.get("schema_version") != "agent_decisions.v2":
+        raise ValueError("Agent 决策 schema_version 必须为 agent_decisions.v2")
+    decision_date = decisions.get("evidence_report_date")
+    expected = report_date.isoformat()
+    if decision_date != expected:
+        raise ValueError(
+            f"Agent 决策口径日 {decision_date or '缺失'} 与报告口径日 {expected} 不一致"
+        )
+    if not decisions.get("fund_scores"):
+        raise ValueError("Agent 决策缺少 fund_scores，不能生成最终报告")
+    portfolio = decisions.get("portfolio")
+    if not isinstance(portfolio, dict) or not portfolio.get("tldr") or not portfolio.get("stance"):
+        raise ValueError("Agent 决策缺少 portfolio.tldr 或 portfolio.stance")
+    if not isinstance(decisions.get("recommendations"), list):
+        raise ValueError("Agent 决策必须显式提供 recommendations 数组（允许为空）")
+
+    score_lookup = {
+        str(item.get("fund_code", "")): item for item in (scores or [])
+    }
+    missing_funds = sorted(set(score_lookup) - set(decisions["fund_scores"]))
+    if missing_funds:
+        raise ValueError(f"Agent 决策未覆盖全部评分基金: {', '.join(missing_funds)}")
+    for code, baseline in score_lookup.items():
+        _validate_fund_decision(code, baseline, decisions["fund_scores"].get(code))
+    target_sum = sum(
+        decision.get("target_weight_pct")
+        for decision in decisions["fund_scores"].values()
+        if isinstance(decision.get("target_weight_pct"), (int, float))
+    )
+    if target_sum > 100 + 1e-6:
+        raise ValueError(f"Agent 目标配置合计超过 100%: {target_sum:.2f}%")
+
+    news_codes = {
+        str(item.get("fund_code", "")) for item in (news_data or []) if item.get("fund_code")
+    }
+    missing_news = sorted(news_codes - set(decisions.get("news") or {}))
+    if missing_news:
+        raise ValueError(f"Agent 决策未覆盖全部新闻研判对象: {', '.join(missing_news)}")
+    for code in news_codes:
+        _validate_news_decision(code, decisions["news"][code])
+    candidate_codes = {
+        str(item.get("code") or item.get("fund_code", ""))
+        for item in (recommendation_candidates or [])
+    }
+    recommended_codes = {
+        str(item.get("code") or item.get("fund_code", ""))
+        for item in decisions["recommendations"]
+    }
+    if "" in recommended_codes:
+        raise ValueError("Agent 推荐对象必须提供基金代码")
+    unsupported = sorted(recommended_codes - candidate_codes)
+    if unsupported:
+        raise ValueError(f"Agent 最终推荐缺少本次候选证据: {', '.join(unsupported)}")
+    return decisions
+
+
+def _validate_fund_decision(code, baseline, decision):
+    if not isinstance(decision, dict):
+        raise ValueError(f"Agent 基金决策缺失或格式错误: {code}")
+    final_scores = decision.get("final_scores")
+    adjustments = decision.get("agent_adjustments")
+    if not isinstance(final_scores, dict) or not isinstance(adjustments, dict):
+        raise ValueError(f"Agent 基金决策缺少 final_scores/agent_adjustments: {code}")
+
+    baseline_keys = {"macro": "macro_score", "meso": "meso_score", "micro": "micro_score"}
+    for dimension, baseline_key in baseline_keys.items():
+        final = final_scores.get(dimension)
+        adjustment = adjustments.get(dimension)
+        if not isinstance(final, (int, float)) or not isinstance(adjustment, (int, float)):
+            raise ValueError(f"Agent 基金决策分项必须为数值: {code}.{dimension}")
+        if not -10 <= adjustment <= 10:
+            raise ValueError(f"Agent 调整分超出 [-10, +10]: {code}.{dimension}")
+        base = baseline.get(baseline_key)
+        if isinstance(base, (int, float)) and abs(final - (base + adjustment)) > 1e-6:
+            raise ValueError(f"Agent 最终分无法与量化基准及调整分对账: {code}.{dimension}")
+
+    final_total = final_scores.get("total")
+    calculated_total = sum(final_scores[key] for key in ("macro", "meso", "micro"))
+    if not isinstance(final_total, (int, float)) or abs(final_total - calculated_total) > 1e-6:
+        raise ValueError(f"Agent 综合分无法与分项合计对账: {code}")
+    if not 0 <= final_total <= 100:
+        raise ValueError(f"Agent 综合分超出 [0, 100]: {code}")
+    if not decision.get("final_action"):
+        raise ValueError(f"Agent 基金决策缺少 final_action: {code}")
+    if not isinstance(decision.get("rationale"), list) or not decision["rationale"]:
+        raise ValueError(f"Agent 基金决策缺少 rationale: {code}")
+    if not isinstance(decision.get("triggers"), list) or not decision["triggers"]:
+        raise ValueError(f"Agent 基金决策缺少 triggers: {code}")
+    for field in ("target_weight_pct", "adjust_amount"):
+        if field not in decision:
+            raise ValueError(f"Agent 基金决策缺少 {field}: {code}")
+    target = decision.get("target_weight_pct")
+    if target is not None and (not isinstance(target, (int, float)) or not 0 <= target <= 100):
+        raise ValueError(f"Agent 目标占比超出 [0, 100]: {code}")
+
+
+def _validate_news_decision(code, decision):
+    if not isinstance(decision, dict):
+        raise ValueError(f"Agent 新闻研判缺失或格式错误: {code}")
+    for field in ("summary", "impact", "relevance"):
+        if not decision.get(field):
+            raise ValueError(f"Agent 新闻研判缺少 {field}: {code}")
+    confidence = decision.get("confidence")
+    if not isinstance(confidence, (int, float)) or not 0 <= confidence <= 1:
+        raise ValueError(f"Agent 新闻研判置信度必须在 [0, 1]: {code}")
+
+
+def _build_report_evidence(
+    report_date,
+    scores,
+    holdings_data,
+    news_data,
+    correlations,
+    stress_results,
+    portfolio_risk_matrix,
+    recommendations=None,
+    recommendation_status="skipped",
+    workflow_context=None,
+):
+    """Build serializable evidence consumed by the fund-analyst Agent."""
+    by_fund = (holdings_data or {}).get("by_fund", {})
+    funds = {}
+    for score in scores or []:
+        code = score.get("fund_code")
+        news = next((item for item in (news_data or []) if item.get("fund_code") == code), {})
+        funds[code] = {
+            "identity": {
+                "code": code,
+                "name": score.get("fund_name"),
+                "fund_type": score.get("fund_type"),
+                "data_completeness": score.get("data_completeness"),
+            },
+            "holding_metrics": by_fund.get(code, {}),
+            "quant_baseline": {
+                "macro_score": score.get("macro_score"),
+                "meso_score": score.get("meso_score"),
+                "micro_score": score.get("micro_score"),
+                "total_score": score.get("composite_score"),
+                "score_confidence": score.get("score_confidence"),
+            },
+            "factor_matrix": score.get("factor_matrix") or {},
+            "trend_evidence": score.get("trend_evidence") or {},
+            "risk_constraints": score.get("risk_constraints") or {},
+            "news_evidence": {
+                "news_count": news.get("news_count", 0),
+                "decayed_lexicon_signal": news.get("sentiment_mean"),
+                "brief": news.get("brief") or {},
+                "evaluation": news.get("news_evaluation") or {},
+                "samples": (news.get("news_list") or [])[:10],
+                "post_cutoff_news": news.get("post_cutoff_news") or [],
+            },
+        }
+    corr_payload = correlations.to_dict() if hasattr(correlations, "to_dict") else {}
+    return {
+        "schema_version": "report_evidence.v2",
+        "report_date": report_date.isoformat(),
+        "report_status": "awaiting_agent_decisions",
+        "portfolio": {
+            "total_value": (holdings_data or {}).get("total_value", 0),
+            "total_cost": (holdings_data or {}).get("total_cost", 0),
+            "total_profit": (holdings_data or {}).get("total_profit", 0),
+            "daily_profit": (holdings_data or {}).get("total_day_profit", 0),
+            "daily_return_pct": (holdings_data or {}).get("total_day_return_pct", 0),
+        },
+        "funds": funds,
+        "portfolio_evidence": {
+            "correlations": corr_payload,
+            "stress_tests": stress_results or [],
+            "risk_matrix": portfolio_risk_matrix or {},
+        },
+        "workflow_evidence": {
+            "dca_rows": (workflow_context or {}).get("dca_rows") or [],
+            "settlement_rows": (workflow_context or {}).get("settlement_rows") or [],
+            "top_news": (workflow_context or {}).get("top_news") or [],
+        },
+        "recommendation_evidence": {
+            "status": recommendation_status,
+            "candidates": recommendations or [],
+        },
+    }
+
+
+def _write_report_evidence(output_path, evidence):
+    import json
+    import os
+
+    base, ext = os.path.splitext(output_path)
+    if base.endswith(".evidence"):
+        base = base[:-9]
+    path = f"{base}.evidence.json" if ext else f"{output_path}.evidence.json"
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump(evidence, handle, ensure_ascii=False, indent=2, default=str)
+    return path
+
+
+def _attach_decision_evidence(scores, news_contexts, holdings_data):
+    """Attach trend and position evidence without publishing an automatic action."""
     from src.forecast.engine import build_trend_matrix
 
     total_value = (holdings_data or {}).get("total_value", 0) or 0
@@ -341,40 +561,14 @@ def _attach_trends_and_advice(scores, news_contexts, holdings_data):
             "is_qdii": int(detail.get("settle_delay", 1) or 1) >= 2 or "QDII" in str(score.get("fund_type", "")).upper(),
             "dca_enabled": bool(detail.get("dca_enabled")),
         }
-        score["trend_matrix"] = trend
-        score["operation_advice"] = build_operation_advice(score, trend, position_context)
-
-    # 目标仓位比例比例按 95% 限制进行等比例缩放（防止资金超配）
-    sum_target_weights = sum(s["operation_advice"]["target_weight"] for s in scores)
-    if sum_target_weights > 0.95:
-        scale_factor = 0.95 / sum_target_weights
-        print(f"\n[CLI] 目标仓位总比例为 {sum_target_weights*100:.2f}%，超过 95% 限制。进行等比例缩放（缩放系数 {scale_factor:.4f}）...")
-        for score in scores:
-            adv = score["operation_advice"]
-            old_tw = adv["target_weight"]
-            new_tw = old_tw * scale_factor
-            adv["target_weight"] = round(new_tw, 4)
-
-            # 重新计算调整金额
-            code = score.get("fund_code")
-            detail = by_fund.get(code, {}) or {}
-            current_value = float(detail.get("current_value", 0) or 0)
-            current_weight = current_value / total_value if total_value else 0.0
-
-            completeness = score.get("data_completeness", "C")
-            if completeness == "D":
-                adv["target_weight"] = min(adv["target_weight"], current_weight)
-                adv["adjust_amount"] = 0.0
-            else:
-                new_adjust = (adv["target_weight"] - current_weight) * total_value
-                adv["adjust_amount"] = round(new_adjust, 2)
-
-                # 若调整金额为买入，但金额低于阈值，则降级为 hold 并归零 adjust_amount
-                buy_threshold = max(300.0, total_value * 0.02)
-                if adv["action"] == "buy" and adv["adjust_amount"] <= buy_threshold:
-                    adv["action"] = "hold"
-                    adv["adjust_amount"] = 0.0
-                    adv["triggers"].append(f"目标仓位缩放后，买入金额 {new_adjust:.2f} 不足起购阈值 {buy_threshold:.2f}，操作降级为持有")
+        score["trend_evidence"] = trend
+        score["risk_constraints"] = {
+            "current_weight": round(position_context["current_weight"], 4),
+            "pending_amount": position_context["pending_amount"],
+            "is_qdii": position_context["is_qdii"],
+            "dca_enabled": position_context["dca_enabled"],
+            "requires_agent_decision": True,
+        }
 
 
 def _write_keyword_request_and_exit(config, codes, analyzer, output_path):
@@ -666,37 +860,47 @@ def _build_workflow_context(config, holdings_data, news_data=None, portfolio_ris
             "earnings_visible_after": f"{settle_date.isoformat()} 21:30后" if settle_date else "",
         })
 
-    qdii_rows = []
+    settlement_rows = []
     for fund in (holdings_data or {}).get("funds", []):
         detail = by_fund.get(fund["code"], {})
-        if int(detail.get("settle_delay", 1)) < 2:
-            continue
         pending_events = [
             e for e in detail.get("engine_events", [])
             if e.get("type") == "BUY" and e.get("status") == "PENDING"
         ]
-        qdii_rows.append({
+        settle_delay = int(detail.get("settle_delay", 1) or 1)
+        next_settle = min(
+            (event.get("settle_date", "") for event in pending_events),
+            default="",
+        )
+        settlement_rows.append({
             "code": fund["code"],
             "name": fund["name"],
+            "fund_type": str(getattr(detail.get("fund_type", ""), "value", detail.get("fund_type", ""))),
             "current_nav": detail.get("current_nav", 0),
             "nav_date": detail.get("nav_date", ""),
             "shares": detail.get("total_shares", 0),
             "simulated_shares": detail.get("simulated_shares", 0),
             "pending_amount": detail.get("pending_amount", 0),
             "pending_events": pending_events,
+            "next_settle_date": next_settle,
+            "nav_status": "披露日期早于口径日" if detail.get("nav_date", "") and detail.get("nav_date", "") < report_date.isoformat() else "口径日已覆盖",
+            "settle_delay": settle_delay,
             "settlement_status": "有待确认交易" if pending_events or detail.get("pending_amount", 0) > 0 else "已确认",
         })
 
     top_news = []
     for item in news_data or []:
-        news_list = item.get("news_list", [])
-        if news_list:
+        eligible_news = [
+            news for news in item.get("news_list", [])
+            if news.get("date") and news.get("date") <= report_date.isoformat()
+        ]
+        if eligible_news:
             top_news.append({
                 "code": item.get("fund_code", ""),
                 "name": item.get("fund_name", ""),
                 "sentiment": item.get("sentiment_mean", 0.5),
-                "headline": news_list[0].get("title", ""),
-                "date": news_list[0].get("date", ""),
+                "headline": eligible_news[0].get("title", ""),
+                "date": eligible_news[0].get("date", ""),
             })
 
     return {
@@ -707,7 +911,7 @@ def _build_workflow_context(config, holdings_data, news_data=None, portfolio_ris
         "mode": "current_trade_day" if is_trade_report else "prior_settlement",
         "mode_reason": "当前交易日数据已过分界点" if is_trade_report else "使用上一口径日数据",
         "dca_rows": dca_rows,
-        "qdii_rows": qdii_rows,
+        "settlement_rows": settlement_rows,
         "top_news": top_news[:8],
         "portfolio_risk_matrix": portfolio_risk_matrix or {},
     }
@@ -771,10 +975,12 @@ def _match_nav_from_map(nav_map: dict, target) -> float:
     return None
 
 
-def _run_news_analysis(config, analyzer, agent_news_plan=None):
+def _run_news_analysis(config, analyzer, agent_news_plan=None, report_date=None):
     """运行新闻分析 —— 持仓驱动定向采集 → 去重 → 蒸馏 → 简报"""
     from src.news.pipeline import run_news_pipeline
-    return run_news_pipeline(analyzer, config, agent_news_plan, days=7)
+    return run_news_pipeline(
+        analyzer, config, agent_news_plan, days=7, report_date=report_date
+    )
 
 
 def _planned_news_profile(agent_news_plan, code: str):
@@ -910,7 +1116,8 @@ def _score_snapshot_payload(s):
         "micro_detail": s.get("micro_detail", {}),
         "feature_matrix": s.get("feature_matrix"),
         "factor_matrix": s.get("factor_matrix"),
-        "trend_matrix": s.get("trend_matrix"),
+        # Persist new neutral evidence in the legacy JSON column for backward-compatible snapshots.
+        "trend_matrix": s.get("trend_evidence") or s.get("trend_matrix"),
         "operation_advice": s.get("operation_advice"),
         "recommendation": s["recommendation"],
         "stop_profit_pct": s["stop_profit_pct"],
@@ -1313,6 +1520,11 @@ def main():
         "--fallback-keywords",
         action="store_true",
         help="当缺失新闻关键词缓存时，自动使用重仓股和行业词作为兜底，并缓存，而不是生成请求并退出",
+    )
+    p_analyze.add_argument(
+        "--agent-decisions",
+        default=None,
+        help="与本次 evidence 口径日一致的 Agent 最终决策 JSON；提供后生成最终报告",
     )
 
     p_fetch = sub.add_parser("fetch", help="仅拉取净值数据")

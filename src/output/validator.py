@@ -1,4 +1,5 @@
 """报告后置校验器：止盈止损线自动校准 + 合规声明强制追加。"""
+from datetime import date
 import re
 from typing import Dict, List
 
@@ -70,3 +71,65 @@ def post_process_report(raw_markdown: str, scores: List[Dict]) -> str:
     result = result.rstrip() + "\n\n" + COMPLIANCE_TEXT + "\n"
 
     return result
+
+
+def validate_final_report(markdown: str, report_date: str, holding_count: int) -> None:
+    """Reject final reports that violate the Agent decision output contract."""
+    forbidden_fragments = [
+        "<!-- AGENT:",
+        "AGENT_FILL",
+        "尚未提供 agent",
+        "趋势预测与操作矩阵",
+        "操作触发条件",
+        "本报告为证据稿",
+        "待 Agent 最终评定",
+    ]
+    violations = [fragment for fragment in forbidden_fragments if fragment in markdown]
+    if violations:
+        raise ValueError(f"最终报告包含禁用的旧输出内容: {', '.join(violations)}")
+
+    required_chapters = [
+        "## 一、新闻资讯与 Agent 舆情研判",
+        "## 二、持仓总览与收益口径",
+        "## 三、定投执行与申购结算状态",
+        "## 四、单基金深度诊断",
+        "## 五、组合研判与执行方案",
+        "## 六、组合风险、相关性与压力测试",
+        "## 七、推荐候选与观察池",
+    ]
+    missing = [heading for heading in required_chapters if heading not in markdown]
+    if missing:
+        raise ValueError(f"最终报告缺少固定章节: {', '.join(missing)}")
+
+    if markdown.count("<details>") != markdown.count("</details>"):
+        raise ValueError("最终报告存在未闭合的 details 折叠块")
+
+    cutoff = date.fromisoformat(report_date)
+    news_segment = _section_between(markdown, "#### 当日新闻线索", "### ")
+    for value in re.findall(r"\|\s*(\d{4}-\d{2}-\d{2})\s*\|", news_segment):
+        if date.fromisoformat(value) > cutoff:
+            raise ValueError(f"当日新闻线索包含口径日后的新闻: {value} > {report_date}")
+
+    if holding_count > 0:
+        settlement = _section_between(markdown, "### 申购与净值结算状态", "## ")
+        row_count = 0
+        for line in settlement.splitlines():
+            stripped = line.strip()
+            if not stripped.startswith("|"):
+                continue
+            if "基金 | 类型" in stripped or re.match(r"^\|[-:\s|]+\|$", stripped):
+                continue
+            row_count += 1
+        if row_count < holding_count:
+            raise ValueError(
+                f"申购与净值结算状态未覆盖全部持仓: {row_count}/{holding_count}"
+            )
+
+
+def _section_between(markdown: str, heading: str, next_heading_prefix: str) -> str:
+    start = markdown.find(heading)
+    if start < 0:
+        return ""
+    search_from = start + len(heading)
+    end = markdown.find(f"\n{next_heading_prefix}", search_from)
+    return markdown[start:] if end < 0 else markdown[start:end]

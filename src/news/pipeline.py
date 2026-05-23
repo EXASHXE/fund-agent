@@ -19,6 +19,7 @@ def run_news_pipeline(
     config,
     agent_news_plan: Dict = None,
     days: int = 7,
+    report_date=None,
 ) -> List[Dict]:
     """运行完整新闻流水线：持仓画像 → 定向采集 → 去重 → 蒸馏 → 简报。
 
@@ -37,10 +38,12 @@ def run_news_pipeline(
     from src.news.correlate import news_nav_correlation
     from src.cli import _planned_news_keywords, _build_nav_summary
     from src.news.agent_context import build_news_judgment_context
-    from datetime import date
+    from datetime import date, datetime
 
     results = []
-    global_seen = set()
+    as_of_date = report_date or date.today()
+    if not isinstance(as_of_date, date):
+        as_of_date = datetime.strptime(str(as_of_date)[:10], "%Y-%m-%d").date()
 
     for holding in config.holdings:
         code = holding.code
@@ -73,13 +76,14 @@ def run_news_pipeline(
         stock_keywords = all_search_terms(entity)
         combined_keywords = list(dict.fromkeys((planned_keywords or []) + stock_keywords[:15]))
 
-        news_list = fetch_fund_news(
+        fetched_news = fetch_fund_news(
             code, name,
             keywords=combined_keywords if combined_keywords else None,
             days=days,
             fund_type=getattr(holding, "type", ""),
-            shared_seen=global_seen,
+            as_of=as_of_date,
         )
+        news_list, post_cutoff_news, undated_news = _partition_news_as_of(fetched_news, as_of_date)
 
         if not news_list:
             results.append({
@@ -90,32 +94,38 @@ def run_news_pipeline(
                 "daily_aggregates": [],
                 "correlation": 0.0,
                 "news_list": [],
+                "post_cutoff_news": post_cutoff_news,
+                "undated_news": undated_news,
                 "entity_profile": entity,
                 "catalyst_news": [],
                 "brief": None,
-                "news_evaluation": evaluate_news_result({"news_list": [], "catalyst_news": []}),
+                "news_evaluation": evaluate_news_result(
+                    {"news_list": [], "catalyst_news": []},
+                    as_of=as_of_date,
+                    entity_profile=entity,
+                ),
                 "status": "empty",
             })
             continue
 
         # === Step 3: 多层去重 ===
-        news_list = exact_dedup(news_list, global_seen)
+        news_list = exact_dedup(news_list)
         news_list = semantic_dedup(news_list)
         news_list = event_level_dedup(news_list)
 
         # === Step 4: 情绪分析（兼容旧模块）===
-        news_with_sent = analyze_sentiment(news_list)
+        news_with_sent = analyze_sentiment(news_list, holding_keywords=stock_keywords)
         daily_agg = daily_sentiment_aggregate(news_with_sent)
 
         # === Step 5: 催化分析（新模块）===
         catalyst_news = compute_catalyst_score(news_list, entity)
         scoring_catalyst_news = filter_relevant_catalysts(catalyst_news, min_relevance=0.2)
-        today_str = date.today().isoformat()
+        today_str = as_of_date.isoformat()
         brief = aggregate_fund_brief(code, name, scoring_catalyst_news, today_str)
         news_evaluation = evaluate_news_result({
             "news_list": news_with_sent,
             "catalyst_news": catalyst_news,
-        }, as_of=today_str)
+        }, as_of=today_str, entity_profile=entity)
 
         # === 兼容旧输出 ===
         nav_df = fund_data.get("nav", None)
@@ -129,7 +139,10 @@ def run_news_pipeline(
                         nav_returns.append((d, float(r)))
 
         corr = news_nav_correlation(daily_agg, nav_returns) if nav_returns else {}
-        sentiment_mean = daily_agg[-1]["sentiment_mean"] if daily_agg else 0.5
+        sentiment_mean = (
+            daily_agg[-1].get("decayed_sentiment_final", daily_agg[-1]["sentiment_mean"])
+            if daily_agg else 0.5
+        )
         nav_summary = _build_nav_summary(nav_returns)
 
         agent_news_context = build_news_judgment_context(
@@ -148,6 +161,8 @@ def run_news_pipeline(
             "daily_aggregates": daily_agg,
             "correlation": corr,
             "news_list": news_with_sent,
+            "post_cutoff_news": post_cutoff_news,
+            "undated_news": undated_news,
             "catalyst_news": catalyst_news,
             "brief": brief,
             "news_evaluation": news_evaluation,
@@ -157,3 +172,24 @@ def run_news_pipeline(
         })
 
     return results
+
+
+def _partition_news_as_of(news_list: List[Dict], as_of_date) -> tuple:
+    """Split news into report evidence, future observations and undated samples."""
+    from datetime import datetime
+
+    as_of_news = []
+    post_cutoff_news = []
+    undated_news = []
+    for item in news_list or []:
+        raw = str(item.get("date") or item.get("publish_date") or "")[:10]
+        try:
+            item_date = datetime.strptime(raw, "%Y-%m-%d").date()
+        except ValueError:
+            undated_news.append(item)
+            continue
+        if item_date <= as_of_date:
+            as_of_news.append(item)
+        else:
+            post_cutoff_news.append(item)
+    return as_of_news, post_cutoff_news, undated_news

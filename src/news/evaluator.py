@@ -11,7 +11,12 @@ def filter_relevant_catalysts(catalyst_news: List[Dict], min_relevance: float = 
     ]
 
 
-def evaluate_news_result(news_item: Dict, as_of=None, min_relevance: float = 0.2) -> Dict:
+def evaluate_news_result(
+    news_item: Dict,
+    as_of=None,
+    min_relevance: float = 0.2,
+    entity_profile=None,
+) -> Dict:
     """Evaluate whether fetched news is fresh, relevant, and usable for scoring."""
     if as_of is None:
         as_of_date = date.today()
@@ -59,6 +64,7 @@ def evaluate_news_result(news_item: Dict, as_of=None, min_relevance: float = 0.2
         for item in relevant
     ]
     overall_score = round(sum(relevant_scores) / len(relevant_scores), 4) if relevant_scores else 0.0
+    coverage = _holding_coverage(news_list, entity_profile)
 
     warnings = []
     if not news_list:
@@ -67,6 +73,8 @@ def evaluate_news_result(news_item: Dict, as_of=None, min_relevance: float = 0.2
         warnings.append("高影响新闻中负向事件占比较高")
     if quality_score < 0.35:
         warnings.append("新闻样本质量偏低，评分参考权重应降低")
+    if coverage["coverage_warning"]:
+        warnings.append(coverage["coverage_warning"])
 
     return {
         "quality_score": quality_score,
@@ -78,8 +86,56 @@ def evaluate_news_result(news_item: Dict, as_of=None, min_relevance: float = 0.2
         "high_impact_negative_count": len(high_impact_negative),
         "negative_density": round(negative_density, 4),
         "overall_score": overall_score,
+        **coverage,
         "warnings": warnings,
     }
+
+
+def _holding_coverage(news_list: List[Dict], entity_profile) -> Dict:
+    """Return portfolio-holding coverage evidence for an agent decision."""
+    holdings = getattr(entity_profile, "holdings", []) if entity_profile else []
+    if not holdings:
+        return {
+            "holding_coverage_count": 0,
+            "holding_coverage_pct": None,
+            "covered_holdings": [],
+            "coverage_warning": "未取得持仓穿透数据，新闻覆盖度不可验证",
+        }
+
+    covered = []
+    total_weight = 0.0
+    covered_weight = 0.0
+    texts = [
+        f"{item.get('title', '')} {item.get('content', '')}".lower()
+        for item in news_list
+    ]
+    for holding in holdings:
+        name = str(holding.get("stock_name", "") or "").strip()
+        weight = _parse_weight(holding.get("weight", 0))
+        total_weight += weight
+        if name and any(name.lower() in text for text in texts):
+            covered.append(name)
+            covered_weight += weight
+    coverage_pct = covered_weight / total_weight if total_weight else len(covered) / len(holdings)
+    warning = ""
+    if len(covered) < min(3, len(holdings)) or coverage_pct < 0.30:
+        warning = "新闻覆盖偏窄，不能代表基金已披露重仓敞口"
+    return {
+        "holding_coverage_count": len(covered),
+        "holding_coverage_pct": round(coverage_pct, 4),
+        "covered_holdings": covered,
+        "coverage_warning": warning,
+    }
+
+
+def _parse_weight(value) -> float:
+    try:
+        raw = str(value).strip()
+        if raw.endswith("%"):
+            return float(raw[:-1]) / 100.0
+        return float(raw or 0)
+    except (TypeError, ValueError):
+        return 0.0
 
 
 def _freshness_score(news_list: List[Dict], as_of_date: date) -> float:
