@@ -7,7 +7,8 @@ import pandas as pd
 
 from src.analysis.scorer import FundAnalyzer
 from src.output.templates import (
-    report_header, portfolio_overview_table, risk_disclaimer
+    report_header, portfolio_overview_table, risk_disclaimer,
+    is_qdii_fund, qdii_hint,
 )
 
 
@@ -36,7 +37,14 @@ def generate_report(
     lines.append(report_header(len(all_funds)))
     lines.append(_render_tldr(scores, holdings_data, news_data, recommendations, agent_decisions))
 
-    # === 持仓总览 ===
+    # === 一、新闻资讯分析 [前置强化] ===
+    lines.append("---")
+    lines.append("## 一、新闻资讯分析")
+    lines.append("")
+    lines.append(_render_news_section(news_data or [], scores, agent_decisions))
+    lines.append("")
+
+    # === 二、持仓总览 ===
     if holdings_data:
         lines.append(portfolio_overview_table(holdings_data))
     else:
@@ -61,10 +69,6 @@ def generate_report(
     if trend_section:
         lines.append(trend_section)
 
-    score_breakdown = _render_score_breakdown(scores)
-    if score_breakdown:
-        lines.append(score_breakdown)
-
     operation_triggers = _render_operation_triggers(scores)
     if operation_triggers:
         lines.append(operation_triggers)
@@ -74,7 +78,7 @@ def generate_report(
         total_value = holdings_data.get("total_value", 0)
         if total_value > 0:
             lines.append("---")
-            lines.append("## 资金分配与仓位调整")
+            lines.append("## 七、资金分配与仓位调整")
             lines.append("")
             lines.append("| 基金 | 当前市值(¥) | 当前占比 | 建议占比 | 调整金额(¥) | 操作 |")
             lines.append("|------|-----------|---------|---------|-----------|------|")
@@ -97,17 +101,28 @@ def generate_report(
 
     # === 单基金诊断 ===
     lines.append("---")
-    lines.append("## 单基金诊断")
+    lines.append("## 八、单基金深度诊断")
     lines.append("")
 
+    previous_scores = _load_previous_scores()
     for s in scores:
-        lines.append(f"### {s['fund_name']}（{s['fund_code']}）")
+        code = s.get("fund_code", "")
+        if code in previous_scores:
+            prev = previous_scores[code]
+            s["previous_score"] = prev
+            s["score_delta"] = s["composite_score"] - prev
+        lines.append(f"### {s['fund_name']}（{s['fund_code']}）{qdii_hint(s.get('fund_name', ''), s.get('fund_type', ''))}")
         decision = (agent_decisions or {}).get("fund_scores", {}).get(s["fund_code"], {})
+        has_agent_decision = (
+            agent_decisions is not None
+            and "fund_scores" in agent_decisions
+            and s["fund_code"] in agent_decisions["fund_scores"]
+        )
         display_score = decision.get("final_score", s["composite_score"])
         display_recommendation = decision.get("recommendation", s["recommendation"])
         display_action = decision.get("action", s["action_logic"])
         lines.append(f"- **数据完整度**：{s['data_completeness']}")
-        lines.append(f"- **综合评分**：{display_score}/100（{_decision_level_emoji(decision.get('level'), s['score_level_emoji'])}）")
+        lines.append(f"- **综合评分**：{display_score}/100（{_decision_level_emoji(decision.get('level'), s['score_level_emoji'])}）{_delta_marker(s)}")
         lines.append("")
 
         meso = str(s["meso_score"]) if s["meso_score"] is not None else "N/A"
@@ -142,7 +157,7 @@ def generate_report(
                 f"较峰值回落 {s.get('drop_from_peak', 0)} 分 |"
             )
         lines.append(f"| **行动逻辑** | {display_action} |")
-        if decision:
+        if has_agent_decision:
             if decision.get("rationale"):
                 lines.append(f"| **Agent评定依据** | {'；'.join(decision.get('rationale', [])[:4])} |")
             if decision.get("triggers"):
@@ -178,7 +193,7 @@ def generate_report(
 
                 if fund_detail.get("dca_records"):
                     lines.append("")
-                    lines.append("**定投明细**（含0.15%申购费）")
+                    lines.append("<details><summary>📋 定投明细（含0.15%申购费，点击展开/折叠）</summary>")
                     lines.append("")
                     lines.append("| 期数 | 日期 | 金额 | 手续费 | 买入净值 | 获得份额 | 累计份额 | 该期收益率 |")
                     lines.append("|------|------|------|------|---------|---------|---------|----------|")
@@ -215,7 +230,7 @@ def generate_report(
     # === 相关性矩阵 ===
     if not correlations.empty:
         lines.append("---")
-        lines.append("## 组合层面分析")
+        lines.append("## 九、组合层面相关性与压力测试")
         lines.append("")
         lines.append("### 持仓相关性矩阵")
         lines.append("")
@@ -289,16 +304,9 @@ def generate_report(
             lines.append("> 上表是基于持仓暴露生成的压力测试初稿；尚未提供 agent 前置压力测试决策。")
         lines.append("")
 
-    # === 新闻资讯分析 ===
-    lines.append("---")
-    lines.append("## 新闻资讯分析")
-    lines.append("")
-    lines.append(_render_news_section(news_data or [], scores, agent_decisions))
-    lines.append("")
-
     # === 推荐基金 ===
     lines.append("---")
-    lines.append("## 推荐基金")
+    lines.append("## 十、推荐基金候选")
     lines.append("")
     has_agent_recommendations = agent_decisions is not None and "recommendations" in agent_decisions
     final_recs = agent_decisions.get("recommendations", []) if has_agent_recommendations else recommendations
@@ -332,6 +340,7 @@ def generate_report(
     # === 风险提示 ===
     lines.append(risk_disclaimer())
 
+    _save_current_scores(scores)
     return "\n".join(lines)
 
 
@@ -360,37 +369,13 @@ def _render_trend_operation_matrix(scores: List[Dict]) -> str:
         )
     if not rows:
         return ""
-    lines = ["---", "## 趋势预测与操作矩阵", ""]
+    lines = ["---", "## 四、趋势预测与操作矩阵", ""]
     lines.append("| 基金 | 短期趋势 | 中期趋势 | 置信度 | 建议动作 | 目标占比 | 调整金额 | 主要驱动 |")
     lines.append("|------|---------|---------|-------:|---------|---------:|---------:|---------|")
     lines.extend(rows)
     lines.append("")
     return "\n".join(lines)
 
-
-def _render_score_breakdown(scores: List[Dict]) -> str:
-    rows = []
-    for s in scores or []:
-        factors = s.get("factor_matrix") or {}
-        for dimension, items in factors.items():
-            for factor in items or []:
-                rows.append(
-                    f"| {s.get('fund_name', '')}（{s.get('fund_code', '')}） "
-                    f"| {dimension} "
-                    f"| {factor.get('name', '')} "
-                    f"| {factor.get('value', 'N/A')} "
-                    f"| {factor.get('score', 'N/A')} "
-                    f"| {factor.get('weight', 'N/A')} "
-                    f"| {factor.get('source', '')} |"
-                )
-    if not rows:
-        return ""
-    lines = ["---", "## 量化评分拆解", ""]
-    lines.append("| 基金 | 维度 | 因子 | 数值 | 因子分 | 权重 | 来源 |")
-    lines.append("|------|------|------|------|-------:|------:|------|")
-    lines.extend(rows[:60])
-    lines.append("")
-    return "\n".join(lines)
 
 
 def _render_operation_triggers(scores: List[Dict]) -> str:
@@ -407,7 +392,7 @@ def _render_operation_triggers(scores: List[Dict]) -> str:
         )
     if not rows:
         return ""
-    lines = ["---", "## 操作触发条件", ""]
+    lines = ["---", "## 六、操作触发条件", ""]
     lines.append("| 基金 | 建议动作 | 触发条件 |")
     lines.append("|------|---------|---------|")
     lines.extend(rows)
@@ -469,11 +454,17 @@ def _render_workflow_focus(
     news_data: List[Dict] = None,
     agent_decisions: Dict = None,
 ) -> str:
-    lines = ["---", "## 完整工作流分析", ""]
+    lines = ["---", "## 三、组合复盘与质量检查", ""]
+    profit_text = ""
+    if holdings_data:
+        total_day_profit = holdings_data.get("total_day_profit", 0.0)
+        total_day_return_pct = holdings_data.get("total_day_return_pct", 0.0)
+        profit_text = f"；当日收益：{_format_colored_amount(total_day_profit)}（{_format_colored_pct(total_day_return_pct)}）"
+
     lines.append(
-        f"> 运行日期：{workflow_context.get('run_date')}；"
-        f"报告口径日：{workflow_context.get('report_date')}；"
-        f"{workflow_context.get('mode_reason', '')}。"
+        f"> 口径日：{workflow_context.get('report_date')}；"
+        f"{'🟢 交易日' if workflow_context.get('is_trade_day') else '🔵 非交易日'}；"
+        f"{workflow_context.get('mode_reason', '')}{profit_text}"
     )
     lines.append("")
     if workflow_context.get("is_trade_day"):
@@ -490,7 +481,7 @@ def _render_trade_day_focus(
     news_data: List[Dict] = None,
     agent_decisions: Dict = None,
 ) -> str:
-    lines = ["### 交易相关跟踪", ""]
+    lines = ["### 🟢 [交易日模式] 当日收益与根因归因分析", ""]
 
     funds = sorted(
         (holdings_data or {}).get("funds", []),
@@ -500,18 +491,18 @@ def _render_trade_day_focus(
     if funds:
         total_abs_profit = sum(abs(f.get("day_profit") or 0) for f in funds)
         total_value = (holdings_data or {}).get("total_value", 0)
-        lines.append("#### 当日盈亏与归因")
+        lines.append("#### 当日盈亏与贡献分布")
         lines.append("")
-        lines.append("| 基金代码 | 基金名称 | 当日盈亏(¥) | 当日涨跌 | 收益贡献 | 当前占比 |")
+        lines.append("| 基金代码 | 基金名称 | 当日盈亏(¥) | 当日涨跌幅 | 收益贡献 | 当前占比 |")
         lines.append("|----------|---------|------------:|---------:|---------:|---------:|")
         for fund in funds:
             day_profit = fund.get("day_profit") or 0
             day_return = fund.get("day_return_pct")
-            day_return_text = f"{day_return:+.2f}%" if day_return is not None else "N/A"
+            day_return_text = _format_colored_pct(day_return) if day_return is not None else "N/A"
             contribution = _format_profit_contribution(day_profit, total_abs_profit)
             position = fund.get("value", 0) / total_value * 100 if total_value else 0
             lines.append(
-                f"| {fund['code']} | {fund['name']} | {day_profit:+,.2f} "
+                f"| {fund['code']} | {fund['name']} | {_format_colored_amount(day_profit)} "
                 f"| {day_return_text} | {contribution} | {position:.2f}% |"
             )
         lines.append("")
@@ -532,7 +523,7 @@ def _render_trade_day_focus(
         lines.append("")
     lines.append("#### 当日归因")
     lines.append("")
-    lines.append("<!-- AGENT: 大盘归因 -->")
+    lines.append("<!-- AGENT:portfolio_review_daily_analysis -->")
     lines.append("")
 
     qdii_rows = workflow_context.get("qdii_rows") or []
@@ -594,7 +585,7 @@ def _render_non_trade_day_focus(
     scores: List[Dict] = None,
     news_data: List[Dict] = None,
 ) -> str:
-    lines = ["### 组合复盘与质量检查", ""]
+    lines = ["### 🔵 [非交易日模式] 本周收益与周期偏离度分析", ""]
 
     funds = sorted(
         (holdings_data or {}).get("funds", []),
@@ -608,7 +599,7 @@ def _render_non_trade_day_focus(
             for f in funds
         ] if has_week_data else [f.get("profit", 0) for f in funds]
         total_abs_profit = sum(abs(p) for p in profit_values)
-        lines.append("#### 本周收益与基金贡献")
+        lines.append("#### 周期多维收益贡献")
         lines.append("")
         profit_label = "本周收益(¥)" if has_week_data else "当前累计收益(¥)"
         lines.append(f"| 基金代码 | 基金名称 | {profit_label} | 收益贡献 | 当前占比 |")
@@ -618,7 +609,7 @@ def _render_non_trade_day_focus(
             contribution = _format_profit_contribution(profit_value, total_abs_profit)
             position = fund.get("value", 0) / total_value * 100 if total_value else 0
             lines.append(
-                f"| {fund['code']} | {fund['name']} | {profit_value:+,.2f} "
+                f"| {fund['code']} | {fund['name']} | {_format_colored_amount(profit_value)} "
                 f"| {contribution} | {position:.2f}% |"
             )
         lines.append("")
@@ -637,18 +628,9 @@ def _render_non_trade_day_focus(
         lines.append(f"- {warning}")
     if risk.get("warnings"):
         lines.append("")
-    lines.append("<!-- AGENT: 风险与再平衡 -->")
+    lines.append("<!-- AGENT:portfolio_review_weekly_analysis -->")
     lines.append("")
 
-    lines.append("#### 定投质量分析")
-    lines.append("")
-    lines.append("<!-- AGENT: 定投评估 -->")
-    lines.append("")
-
-    lines.append("#### 本周归因")
-    lines.append("")
-    lines.append("<!-- AGENT: 大盘归因 -->")
-    lines.append("")
     return "\n".join(lines)
 
 
@@ -663,6 +645,67 @@ def _format_profit_contribution(profit_value: float, total_abs_profit: float) ->
         return "+0.00%"
     contribution = profit_value / total_abs_profit * 100
     return f"{contribution:+.2f}%"
+
+
+def _format_colored_amount(value: float) -> str:
+    """带颜色的金额格式化。"""
+    if value > 0:
+        return f"🟢 {value:+,.2f}"
+    elif value < 0:
+        return f"🔴 {value:+,.2f}"
+    return f"{value:+,.2f}"
+
+
+def _format_colored_pct(value: float) -> str:
+    """带颜色的百分比格式化。"""
+    if value > 0:
+        return f"🟢 {value:+.2f}%"
+    elif value < 0:
+        return f"🔴 {value:+.2f}%"
+    return f"{value:+.2f}%"
+
+
+def _load_previous_scores() -> dict:
+    """加载上次分析的评分快照，返回 {fund_code: composite_score}。"""
+    import json as _json
+    import os as _os
+    path = "data/last_snapshot_metrics.json"
+    if not _os.path.exists(path):
+        return {}
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = _json.load(f)
+        return data.get("scores", {})
+    except Exception:
+        return {}
+
+
+def _save_current_scores(scores: list):
+    """保存本次评分快照到 data/last_snapshot_metrics.json。"""
+    import json as _json
+    import os as _os
+    from datetime import date as _date
+    out = {
+        "generated_at": _date.today().isoformat(),
+        "scores": {s["fund_code"]: s["composite_score"] for s in scores if s.get("fund_code")}
+    }
+    _os.makedirs("data", exist_ok=True)
+    with open("data/last_snapshot_metrics.json", "w", encoding="utf-8") as f:
+        _json.dump(out, f, ensure_ascii=False, indent=2)
+
+
+def _delta_marker(s: dict) -> str:
+    """返回评分趋势标记：🟢(↑N) / 🔴(↓N) / (首次建立档案)"""
+    prev = s.get("previous_score")
+    if prev is None:
+        return " (首次建立档案)"
+    delta = s.get("score_delta", 0)
+    if delta > 0:
+        return f" 🟢(↑{delta:+.1f})"
+    elif delta < 0:
+        return f" 🔴(↓{delta:+.1f})"
+    else:
+        return " (持平)"
 
 
 def _render_news_section(news_data: List[Dict], scores: List[Dict], agent_decisions: Dict = None) -> str:
@@ -742,7 +785,8 @@ def _render_news_section(news_data: List[Dict], scores: List[Dict], agent_decisi
 
         events = news_item.get("events") or []
         if events:
-            result.append("**事件聚类：**")
+            result.append("<details>")
+            result.append(f"<summary>📊 事件聚类详情（{len(events)} 条）</summary>")
             result.append("")
             result.append("| 事件 | 方向 | 影响分 | 时间衰减 | 置信度 | 样本标题 |")
             result.append("|------|------|-------:|---------:|-------:|----------|")
@@ -754,6 +798,8 @@ def _render_news_section(news_data: List[Dict], scores: List[Dict], agent_decisi
                     f"| {event.get('decay_weight', 0):.2f} "
                     f"| {event.get('confidence', 0):.2f} | {title[:120]} |"
                 )
+            result.append("")
+            result.append("</details>")
             result.append("")
 
         # 情绪趋势（最近 7 天）
@@ -787,7 +833,8 @@ def _render_news_section(news_data: List[Dict], scores: List[Dict], agent_decisi
         # 近期新闻精选
         news_list = news_item.get("news_list", [])
         if news_list:
-            result.append("**近期新闻精选：**")
+            result.append("<details>")
+            result.append(f"<summary>📰 近期新闻精选（{min(5, len(news_list))} 条）</summary>")
             for n in news_list[:5]:
                 title = n.get("title", "").strip()
                 date_str = n.get("date", "")
@@ -795,6 +842,8 @@ def _render_news_section(news_data: List[Dict], scores: List[Dict], agent_decisi
                 emoji = {"positive": "+", "negative": "-", "neutral": "○"}.get(label, "○")
                 if title:
                     result.append(f"- {emoji} [{date_str}] {title[:80]}")
+            result.append("")
+            result.append("</details>")
             result.append("")
 
         # 新闻-净值相关性（如可用）

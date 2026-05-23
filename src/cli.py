@@ -20,6 +20,12 @@ from src.config.shared import effective_report_date, today as _shared_today, now
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+try:
+    import pandas as pd
+    pd.options.mode.string_storage = "python"
+except ImportError:
+    pass
+
 
 def cmd_init(args):
     """生成示例 YAML 配置文件"""
@@ -117,6 +123,44 @@ def cmd_analyze(args):
                     for code in codes
                 },
             }
+        elif getattr(args, "fallback_keywords", False):
+            print("\n[CLI] 未找到有效的新闻关键词缓存且无 Agent，启用 --fallback-keywords 模式自动生成在途关键词进行分析...")
+            from src.news.news_fetcher import extract_holding_keywords, _fallback_fund_keywords
+            import json
+            import os
+            
+            fallback_plan_funds = {}
+            for code in codes:
+                fund_data = analyzer.funds.get(code, {})
+                basic = fund_data.get("basic", {})
+                name = basic.get("name", code)
+                fund_type = basic.get("fund_type", "")
+                
+                # 提取重仓股关键词
+                _, stock_kws = extract_holding_keywords(code, limit=10)
+                # 提取主题/兜底词
+                theme_kws = _fallback_fund_keywords(name, fund_type)
+                # 合并去重并保留顺序
+                kws = list(dict.fromkeys(stock_kws + theme_kws))
+                fallback_plan_funds[code] = {
+                    "keywords": kws
+                }
+                print(f"  {code} ({name}) 自动提取关键词: {kws}")
+                
+            news_keyword_plan = {
+                "cache_version": CACHE_VERSION,
+                "holding_codes": sorted(codes),
+                "generated_at": _shared_today().isoformat(),
+                "funds": fallback_plan_funds,
+            }
+            # 自动保存到缓存文件，以便后续使用
+            try:
+                os.makedirs(os.path.dirname(os.path.abspath(keyword_cache_path)), exist_ok=True)
+                with open(keyword_cache_path, "w", encoding="utf-8") as f:
+                    json.dump(news_keyword_plan, f, ensure_ascii=False, indent=2)
+                print(f"[CLI] 已将自动生成的关键词缓存保存至: {keyword_cache_path}")
+            except Exception as e:
+                print(f"[WARNING] 保存关键词缓存失败: {e}")
         else:
             # 无 Agent：按 SKILL.md 输出关键词请求 JSON 并停止
             _write_keyword_request_and_exit(config, codes, analyzer, args.output or "report.md")
@@ -300,6 +344,101 @@ def _attach_trends_and_advice(scores, news_contexts, holdings_data):
         score["trend_matrix"] = trend
         score["operation_advice"] = build_operation_advice(score, trend, position_context)
 
+    # 目标仓位比例比例按 95% 限制进行等比例缩放（防止资金超配）
+    sum_target_weights = sum(s["operation_advice"]["target_weight"] for s in scores)
+    if sum_target_weights > 0.95:
+        scale_factor = 0.95 / sum_target_weights
+        print(f"\n[CLI] 目标仓位总比例为 {sum_target_weights*100:.2f}%，超过 95% 限制。进行等比例缩放（缩放系数 {scale_factor:.4f}）...")
+        for score in scores:
+            adv = score["operation_advice"]
+            old_tw = adv["target_weight"]
+            new_tw = old_tw * scale_factor
+            adv["target_weight"] = round(new_tw, 4)
+
+            # 重新计算调整金额
+            code = score.get("fund_code")
+            detail = by_fund.get(code, {}) or {}
+            current_value = float(detail.get("current_value", 0) or 0)
+            current_weight = current_value / total_value if total_value else 0.0
+
+            completeness = score.get("data_completeness", "C")
+            if completeness == "D":
+                adv["target_weight"] = min(adv["target_weight"], current_weight)
+                adv["adjust_amount"] = 0.0
+            else:
+                new_adjust = (adv["target_weight"] - current_weight) * total_value
+                adv["adjust_amount"] = round(new_adjust, 2)
+
+                # 若调整金额为买入，但金额低于阈值，则降级为 hold 并归零 adjust_amount
+                buy_threshold = max(300.0, total_value * 0.02)
+                if adv["action"] == "buy" and adv["adjust_amount"] <= buy_threshold:
+                    adv["action"] = "hold"
+                    adv["adjust_amount"] = 0.0
+                    adv["triggers"].append(f"目标仓位缩放后，买入金额 {new_adjust:.2f} 不足起购阈值 {buy_threshold:.2f}，操作降级为持有")
+
+
+def _write_keyword_request_and_exit(config, codes, analyzer, output_path):
+    """生成 .news_keywords_request.json 请求文件，引导 Agent 生成关键词缓存后安全退出"""
+    import json
+    import sys
+    from src.news.news_fetcher import _cached_ak_call, _normalize_company_name, _pick_first
+
+    request_file = output_path
+    if request_file.endswith(".md"):
+        request_file = request_file[:-3] + ".news_keywords_request.json"
+    else:
+        request_file = request_file + ".news_keywords_request.json"
+
+    print(f"\n[CLI] 未找到有效的新闻关键词缓存，生成请求文件: {request_file}")
+
+    funds_data = {}
+    for code in codes:
+        fund_data = analyzer.funds.get(code, {})
+        basic = fund_data.get("basic", {})
+        name = basic.get("name", code)
+        fund_type = basic.get("fund_type", "")
+
+        # 提取重仓持股
+        top_holdings = []
+        for year in ["2025", "2024"]:
+            try:
+                df = _cached_ak_call("fund_portfolio_hold_em", symbol=code, date=year)
+                if df is not None and not df.empty:
+                    for _, row in df.head(10).iterrows():
+                        stock_code = str(row.get("股票代码", "")).strip()
+                        if not stock_code or stock_code.lower() == "nan":
+                            continue
+                        stock_name = _normalize_company_name(str(row.get("股票名称", "")))
+                        weight = _pick_first(row, ["占净值比例", "持仓占比", "占比", "持股占比"])
+                        top_holdings.append({
+                            "stock_name": stock_name,
+                            "stock_code": stock_code,
+                            "weight": str(weight) if weight is not None else "",
+                        })
+                    break
+            except Exception:
+                continue
+
+        funds_data[code] = {
+            "name": name,
+            "type": fund_type,
+            "top_holdings": top_holdings
+        }
+
+    request_payload = {
+        "request_version": "news_keyword_request.v1",
+        "generated_at": _shared_today().isoformat(),
+        "cache_path": "data/cache/news_keyword_profiles.json",
+        "holding_codes": sorted(codes),
+        "funds": funds_data
+    }
+
+    with open(request_file, "w", encoding="utf-8") as f:
+        json.dump(request_payload, f, ensure_ascii=False, indent=2)
+
+    print(f"[CLI] 请使用 Agent 为该请求文件生成对应的关键词缓存，然后重新运行。")
+    sys.exit(0)
+
 
 def _compute_holdings(store, config, codes, analyzer=None):
     """计算持仓分析数据 — 使用事件驱动引擎（支持 QDII T+2 + 校准 3% 阈值）。
@@ -317,7 +456,6 @@ def _compute_holdings(store, config, codes, analyzer=None):
     settle_today = _shared_today()  # 结算 PENDING 判断用实际日期，不受报告分界影响
     analyses = []
     calibration_warnings = []
-    ledger_warnings = []
 
     for code in codes:
         try:
@@ -401,40 +539,6 @@ def _compute_holdings(store, config, codes, analyzer=None):
             avg_cost = result["avg_cost"]
             pending_amount = result["pending_amount"]
 
-            explicit_shares = float(getattr(holding_config, "shares", 0) or 0) if holding_config else 0.0
-            explicit_avg_cost = float(getattr(holding_config, "avg_cost", 0) or 0) if holding_config else 0.0
-            ledger_warning = None
-            if explicit_shares > 0 and explicit_avg_cost > 0:
-                explicit_cost = round(explicit_shares * explicit_avg_cost, 2)
-                share_delta = round(explicit_shares - total_shares, 4)
-                cost_delta = round(explicit_cost - total_cost, 2)
-                share_threshold = max(0.01, max(explicit_shares, total_shares) * 0.001)
-                cost_threshold = max(1.0, max(explicit_cost, total_cost) * 0.005)
-                config_pending = float(getattr(holding_config, "pending_amount", 0) or 0) if holding_config else 0.0
-                pending_delta = round(config_pending - pending_amount, 2)
-                if (
-                    abs(share_delta) > share_threshold
-                    or abs(cost_delta) > cost_threshold
-                    or abs(pending_delta) > 1.0
-                ):
-                    ledger_warning = {
-                        "code": code,
-                        "name": fund.get("name", code),
-                        "computed_shares": total_shares,
-                        "configured_shares": explicit_shares,
-                        "share_delta": share_delta,
-                        "computed_cost": total_cost,
-                        "configured_cost": explicit_cost,
-                        "cost_delta": cost_delta,
-                        "computed_pending_amount": pending_amount,
-                        "configured_pending_amount": config_pending,
-                        "pending_delta": pending_delta,
-                        "purchase_amount": purchase_amount,
-                        "reason": "配置中的 shares/avg_cost/pending_amount 只用于诊断；报告口径以交易流水计算结果为准",
-                        "is_dca_pending": pending_amount > 0,
-                    }
-                    ledger_warnings.append(ledger_warning)
-
             week_start_nav = _match_nav_on_or_before(nav_map, today - timedelta(days=7))
             week_start_value = round(total_shares * week_start_nav, 2) if week_start_nav else None
             week_profit = round(display_value - week_start_value, 2) if week_start_value else None
@@ -480,7 +584,6 @@ def _compute_holdings(store, config, codes, analyzer=None):
                 "avg_cost": avg_cost,
                 "pending_amount": round(pending_amount, 2),
                 "purchase_amount": purchase_amount,
-                "ledger_warning": ledger_warning,
                 "week_start_value": week_start_value,
                 "week_profit": week_profit,
                 "week_return_pct": week_return_pct,
@@ -507,8 +610,6 @@ def _compute_holdings(store, config, codes, analyzer=None):
     result = portfolio_summary(analyses)
     if calibration_warnings:
         result["calibration_warnings"] = calibration_warnings
-    if ledger_warnings:
-        result["ledger_warnings"] = ledger_warnings
     return result
 
 
@@ -531,7 +632,8 @@ def _build_workflow_context(config, holdings_data, news_data=None, portfolio_ris
     report_date = effective_report_date()
     is_run_trade_day = is_trade_day(run_date)
     is_report_current = report_date == run_date
-    is_trade_report = is_run_trade_day and is_report_current
+    is_trade_report = is_trade_day(report_date)
+    is_actual_trade_report = is_run_trade_day and is_report_current
     by_fund = (holdings_data or {}).get("by_fund", {})
 
     dca_rows = []
@@ -540,7 +642,7 @@ def _build_workflow_context(config, holdings_data, news_data=None, portfolio_ris
             continue
 
         scheduled_date = holding.dca.start_date
-        status = "今日执行" if scheduled_date == run_date and is_trade_report else "等待下次"
+        status = "今日执行" if scheduled_date == run_date and is_actual_trade_report else "等待下次"
         if scheduled_date and scheduled_date < run_date:
             status = "待滚动/待确认"
         trade_date = None
@@ -957,6 +1059,7 @@ def cmd_recommend(args):
 def cmd_diagnose(args):
     """单基金快速诊断"""
     from src.analysis.scorer import FundAnalyzer
+    import pandas as pd
 
     code = args.code
     analyzer = FundAnalyzer()
@@ -967,14 +1070,141 @@ def cmd_diagnose(args):
         return
 
     s = analyzer.score_fund(code)
-    print(f"\n{s['fund_name']}（{code}）")
-    print(f"数据完整度: {s['data_completeness']}")
-    print(f"综合评分: {s['composite_score']}/100（{s['score_level_emoji']}）")
-    print(f"宏观: {s['macro_score']}/20 | 中观: {s['meso_score']}/30 | 微观: {s['micro_score']}/50")
-    print(f"建议: {s['recommendation']}")
-    print("评分来源: 规则初稿；最终判断请由接入 skill 的 agent 结合证据校准")
-    print(f"止盈: +{s['stop_profit_pct']}% | 止损: {s['stop_loss_pct']}%")
-    print(f"依据: {s['action_logic']}")
+    
+    # 提取最新单位净值和当日变动
+    nav_df = analyzer.funds[code].get("nav")
+    latest_nav = None
+    latest_nav_date = None
+    latest_return = None
+    if isinstance(nav_df, pd.DataFrame) and not nav_df.empty:
+        nav_df_sorted = nav_df.sort_index()
+        latest_date = nav_df_sorted.index[-1]
+        latest_nav_date = latest_date.date() if hasattr(latest_date, 'date') else latest_date
+        latest_nav = float(nav_df_sorted.loc[latest_date, "单位净值"])
+        if "日增长率" in nav_df_sorted.columns:
+            latest_return = float(nav_df_sorted.loc[latest_date, "日增长率"])
+
+    # 映射中文字段名称
+    CHINESE_FACTOR_NAMES = {
+        "fund_type_cycle_fit": "基金类型与周期匹配",
+        "sector_position": "行业估值与仓位水位",
+        "hhi_index": "持仓个股集中度",
+        "news_catalyst": "新闻舆情催化",
+        "sortino_ratio": "索提诺下行风险比",
+        "sharpe_1y": "夏普超额回报比",
+        "max_drawdown_3y_pct": "最大回撤控制能力",
+        "annual_volatility": "年化波动率适应度",
+        "jensen_alpha": "詹森超额收益 Alpha",
+        "information_ratio": "基金经理超额能力 IR",
+        "beta": "系统贝塔系数 Beta",
+    }
+
+    def format_value(key, val):
+        if val is None or val == "":
+            return "N/A"
+        try:
+            f_val = float(val)
+            if key in ("max_drawdown_3y_pct", "annual_volatility"):
+                # 如果最大回撤已带负号，不要重复添加
+                if key == "max_drawdown_3y_pct" and f_val > 0:
+                    return f"-{f_val:.2f}%"
+                return f"{f_val:.2f}%"
+            elif key in ("jensen_alpha", "beta", "sortino_ratio", "sharpe_1y", "information_ratio"):
+                return f"{f_val:.4f}" if key == "jensen_alpha" else f"{f_val:.2f}"
+            elif key == "hhi_index":
+                return f"{f_val:.4f}"
+            else:
+                return str(val)
+        except (ValueError, TypeError):
+            return str(val)
+
+    # 打印高端投研报告排版
+    print("=" * 80)
+    print("                    公募基金量化分析与深度诊断报告")
+    print("=" * 80)
+    print(" 【基金基本信息】")
+    print(f"   - 基金名称: {s['fund_name']}")
+    print(f"   - 基金代码: {code}")
+    print(f"   - 基金类型: {s.get('fund_type', 'N/A')} | 基金经理: {s.get('manager', 'N/A')}")
+    print(f"   - 数据完整度: {s['data_completeness']}  | 诊断置信度: {int(s.get('score_confidence', 0.5) * 100)}%")
+    print()
+    print(" 【最新业绩表现】")
+    nav_str = f"{latest_nav:.4f}" if latest_nav is not None else "N/A"
+    date_str = latest_nav_date.isoformat() if latest_nav_date else "N/A"
+    return_str = f"{latest_return:+.2f}%" if latest_return is not None else "N/A"
+    print(f"   - 最新单位净值: {nav_str} ({date_str}) | 当日涨跌幅: {return_str}")
+    print(f"   - 历史最大回撤 (3年): {format_value('max_drawdown_3y_pct', s.get('max_drawdown_3y'))}")
+    print(f"   - 年化波动率 (1年): {format_value('annual_volatility', s.get('annual_volatility'))}")
+    
+    fm = s.get("feature_matrix", {})
+    print(f"   - 夏普比率 (1年): {format_value('sharpe_1y', fm.get('sharpe_1y'))} | 索提诺比率: {format_value('sortino_ratio', fm.get('sortino_ratio'))}")
+    print(f"   - 詹森 Alpha: {format_value('jensen_alpha', fm.get('jensen_alpha'))} | 系统 Beta: {format_value('beta', fm.get('beta'))} | 持仓集中度(HHI): {format_value('hhi_index', fm.get('hhi_index'))}")
+    print()
+    print("=" * 80)
+    print(f" 基金综合评分: {s['composite_score']} / 100  （{s['score_level_emoji']} {s['score_tendency']}）")
+    print("=" * 80)
+    print(f" 评分建议: {s['recommendation']}")
+    print(f" 止盈触发线: +{s['stop_profit_pct']:.2f}% | 止损保护线: {s['stop_loss_pct']:.2f}%")
+    print(f" 宏观得分: {s['macro_score']}/20 | 中观得分: {s.get('meso_score') or 0}/30 | 微观得分: {s['micro_score']}/50")
+    print(f" 评分依据: {s['action_logic']}")
+    print("-" * 80)
+    print(" 评分性质: 规则种子分；最终评定请由接入 skill 的 agent 结合事件研判校准。")
+    print()
+    
+    # 打印因子打分拆解树状图
+    print(" 【因子打分拆解 (定量因子矩阵)】")
+    factors = s.get("factor_matrix", {})
+    
+    # 1. 宏观
+    macro_score_val = float(s['macro_score'])
+    print(f" ├─ 宏观维度 (得分: {macro_score_val:.2f} / 20.00 分)")
+    macro_factors = factors.get("macro", [])
+    for idx, f in enumerate(macro_factors):
+        is_last = (idx == len(macro_factors) - 1)
+        prefix = " │  └─" if is_last else " │  ├─"
+        name_zh = CHINESE_FACTOR_NAMES.get(f['name'], f['name'])
+        val_str = format_value(f['name'], f['value'])
+        weight_pct = f['weight'] * 100
+        factor_score = f['score'] * 100
+        actual_points = f['weight'] * f['score'] * 100
+        max_points = f['weight'] * 100
+        print(f"{prefix} {name_zh} ({f['name']})")
+        print(f" │     [值: {val_str} | 因子打分: {factor_score:.2f}% | 实际得分: {actual_points:.2f} / {max_points:.2f} 分]")
+    print(" │")
+    
+    # 2. 中观
+    meso_score_val = float(s.get('meso_score') or 0)
+    print(f" ├─ 中观维度 (得分: {meso_score_val:.2f} / 30.00 分)")
+    meso_factors = factors.get("meso", [])
+    for idx, f in enumerate(meso_factors):
+        is_last = (idx == len(meso_factors) - 1)
+        prefix = " │  └─" if is_last else " │  ├─"
+        name_zh = CHINESE_FACTOR_NAMES.get(f['name'], f['name'])
+        val_str = format_value(f['name'], f['value'])
+        weight_pct = f['weight'] * 100
+        factor_score = f['score'] * 100
+        actual_points = f['weight'] * f['score'] * 100
+        max_points = f['weight'] * 100
+        print(f"{prefix} {name_zh} ({f['name']})")
+        print(f" │     [值: {val_str} | 因子打分: {factor_score:.2f}% | 实际得分: {actual_points:.2f} / {max_points:.2f} 分]")
+    print(" │")
+    
+    # 3. 微观
+    micro_score_val = float(s['micro_score'])
+    print(f" └─ 微观维度 (得分: {micro_score_val:.2f} / 50.00 分)")
+    micro_factors = factors.get("micro", [])
+    for idx, f in enumerate(micro_factors):
+        is_last = (idx == len(micro_factors) - 1)
+        prefix = "    └─" if is_last else "    ├─"
+        name_zh = CHINESE_FACTOR_NAMES.get(f['name'], f['name'])
+        val_str = format_value(f['name'], f['value'])
+        weight_pct = f['weight'] * 100
+        factor_score = f['score'] * 100
+        actual_points = f['weight'] * f['score'] * 100
+        max_points = f['weight'] * 100
+        print(f"{prefix} {name_zh} ({f['name']})")
+        print(f"       [值: {val_str} | 因子打分: {factor_score:.2f}% | 实际得分: {actual_points:.2f} / {max_points:.2f} 分]")
+    print("=" * 80)
 
 
 def _perform_snapshot(config_path):
@@ -1078,6 +1308,11 @@ def main():
         "--news-keyword-cache",
         default=None,
         help="Agent 生成的新闻关键词缓存路径，默认 data/cache/news_keyword_profiles.json",
+    )
+    p_analyze.add_argument(
+        "--fallback-keywords",
+        action="store_true",
+        help="当缺失新闻关键词缓存时，自动使用重仓股和行业词作为兜底，并缓存，而不是生成请求并退出",
     )
 
     p_fetch = sub.add_parser("fetch", help="仅拉取净值数据")

@@ -140,7 +140,7 @@ def distill_event(
     content: str = "",
     use_llm: bool = False,
 ) -> Dict:
-    """统一事件蒸馏入口 —— 规则优先，LLM 兜底。
+    """统一事件蒸馏入口 —— LLM优先，规则兜底。
 
     Args:
         title: 新闻标题
@@ -150,16 +150,16 @@ def distill_event(
     Returns:
         {"event_type": str, "polarity": int, "severity": float, "summary": str}
     """
-    # 第一层：规则匹配
-    rule_result = _rule_event_distill(title + " " + (content or ""))
-    if rule_result:
-        return {**rule_result, "summary": ""}
-
-    # 第二层：LLM 蒸馏（仅对高价值新闻）
+    # 第一层：LLM 蒸馏（仅对高价值新闻且启用时优先）
     if use_llm:
         llm_result = _llm_event_distill(title, content)
         if llm_result:
             return llm_result
+
+    # 第二层：规则匹配
+    rule_result = _rule_event_distill(title + " " + (content or ""))
+    if rule_result:
+        return {**rule_result, "summary": ""}
 
     # 兜底
     return {

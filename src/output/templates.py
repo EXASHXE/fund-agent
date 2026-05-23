@@ -2,6 +2,18 @@
 from src.config.shared import effective_report_date
 
 
+def is_qdii_fund(name: str = "", fund_type: str = "") -> bool:
+    """检测是否为 QDII/海外基金。"""
+    keywords = ["QDII", "全球", "纳斯达克", "标普", "海外", "新兴市场", "石油"]
+    text = f"{name} {fund_type}".upper()
+    return any(kw.upper() in text for kw in keywords)
+
+
+def qdii_hint(name: str = "", fund_type: str = "") -> str:
+    """返回 QDII 基金的 T-1 延迟提示标记。"""
+    return " ⚠️*(T-1估算净值)*" if is_qdii_fund(name, fund_type) else ""
+
+
 def report_header(scores_count: int) -> str:
     return f"""# 基金组合诊断报告
 > 分析日期: {effective_report_date().isoformat()}
@@ -12,7 +24,7 @@ def report_header(scores_count: int) -> str:
 def portfolio_overview_table(portfolio_data: dict) -> str:
     """持仓总览表"""
     lines = []
-    lines.append("## 一、持仓总览")
+    lines.append("## 二、持仓总览与规则评分")
     lines.append("")
     lines.append(f"> 评估日期：{effective_report_date().isoformat()}")
     lines.append("")
@@ -25,7 +37,7 @@ def portfolio_overview_table(portfolio_data: dict) -> str:
         avg_cost = f"{fund.get('avg_cost', 0):.4f}" if fund.get('avg_cost') else "-"
         pending = fund.get("pending_amount", 0)
         lines.append(
-            f"| {fund['code']} | {fund['name']} | {fund['value']:,.2f} "
+            f"| {fund['code']} | {fund['name']}{qdii_hint(fund.get('name', ''), fund.get('fund_type', ''))} | {fund['value']:,.2f} "
             f"| {pct} | {avg_cost} | {fund['profit']:+,.2f} "
             f"| {fund['return_pct']:+.2f}% | {fund['annual_return']:+.2f}% "
             f"| {pending:,.2f} "
@@ -46,54 +58,6 @@ def portfolio_overview_table(portfolio_data: dict) -> str:
     lines.append(f"- 待确认金额：¥{total_pending:,.2f}")
     lines.append(f"- 持有基金数：{portfolio_data.get('fund_count', 0)} 只")
     lines.append("")
-
-    calibration_warnings = portfolio_data.get("calibration_warnings") or []
-    if calibration_warnings:
-        lines.append("**份额校准提示**")
-        lines.append("")
-        lines.append("| 基金代码 | 基金名称 | 真实份额 | 流水模拟份额 | 偏差 | 说明 |")
-        lines.append("|----------|---------|---------:|-------------:|-----:|------|")
-        for item in calibration_warnings:
-            rej = item.get("rejected", {})
-            lines.append(
-                f"| {item.get('code', '')} | {item.get('name', '')} "
-                f"| {rej.get('actual_shares', 0):,.4f} "
-                f"| {rej.get('computed_shares', 0):,.4f} "
-                f"| {rej.get('delta_pct', 0):.2f}% "
-                f"| 已按配置真实份额展示，流水需补齐或校准 |"
-            )
-        lines.append("")
-
-    ledger_warnings = portfolio_data.get("ledger_warnings") or []
-    if ledger_warnings:
-        has_pending = any(w.get("is_dca_pending") for w in ledger_warnings)
-        lines.append("**流水对账提示**")
-        lines.append("")
-        if has_pending:
-            lines.append("| 基金代码 | 基金名称 | 真实成本(¥) | 流水合计(¥) | 差额(¥) | 待确认(¥) | 说明 |")
-            lines.append("|----------|---------|------------:|------------:|--------:|----------:|------|")
-            for item in ledger_warnings:
-                pending_amt = item.get("pending_amount", 0)
-                lines.append(
-                    f"| {item.get('code', '')} | {item.get('name', '')} "
-                    f"| {item.get('actual_cost', 0):,.2f} "
-                    f"| {item.get('purchase_amount', 0):,.2f} "
-                    f"| {item.get('delta', 0):+,.2f} "
-                    f"| {pending_amt:,.2f} "
-                    f"| {item.get('reason', '')} |"
-                )
-        else:
-            lines.append("| 基金代码 | 基金名称 | 真实成本(¥) | 流水合计(¥) | 差额(¥) | 说明 |")
-            lines.append("|----------|---------|------------:|------------:|--------:|------|")
-            for item in ledger_warnings:
-                lines.append(
-                    f"| {item.get('code', '')} | {item.get('name', '')} "
-                    f"| {item.get('actual_cost', 0):,.2f} "
-                    f"| {item.get('purchase_amount', 0):,.2f} "
-                    f"| {item.get('delta', 0):+,.2f} "
-                    f"| {item.get('reason', '')} |"
-                )
-        lines.append("")
 
     return "\n".join(lines)
 

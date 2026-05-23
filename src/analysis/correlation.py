@@ -19,8 +19,13 @@ def compute_correlations(funds_data: Dict) -> pd.DataFrame:
         return pd.DataFrame()
 
     merged = pd.DataFrame(nav_series)
-    merged = merged.dropna()
-    if len(merged) < 30:
+    # Using pairwise correlation with a minimum threshold of 30 overlapping days.
+    # This prevents dropping all rows globally due to non-overlapping holidays.
+    corr_df = merged.corr(min_periods=30)
+    
+    # If the correlation matrix contains all NaNs, return an empty DataFrame for compatibility
+    if corr_df.empty or corr_df.isna().all().all():
         return pd.DataFrame()
+        
+    return corr_df
 
-    return merged.corr()

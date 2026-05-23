@@ -56,9 +56,9 @@ def generate_events(
         if dca_amount > 0 and dca_start:
             dca_dates = _generate_dca_dates(dca_start, today, dca_freq, dca_dow)
             for dd in dca_dates:
-                # 比较有效交易日（处理非交易日顺延后的查重）
+                # 比较记账日或有效交易日（处理非交易日顺延或15:00后下单带来的日期错位查重）
                 if not any(
-                    _effective_trade_date(e.event_date, e.after_1500) == dd
+                    (e.event_date == dd or _effective_trade_date(e.event_date, e.after_1500) == dd)
                     and abs(e.amount - dca_amount) < 0.01
                     for e in events if e.event_type == EventType.BUY
                 ):

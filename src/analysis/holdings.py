@@ -409,6 +409,10 @@ def portfolio_summary(holding_analyses: List[Dict]) -> Dict:
     total_profit = total_value - total_cost
     total_pending = sum(h.get("pending_amount", 0) for h in holding_analyses)
 
+    total_day_profit = sum(h.get("day_profit") or 0.0 for h in holding_analyses)
+    prev_total_value = sum((h["current_value"] - (h.get("day_profit") or 0.0)) for h in holding_analyses)
+    total_day_return_pct = round(total_day_profit / prev_total_value * 100, 2) if prev_total_value > 0 else 0.0
+
     funds = []
     for h in holding_analyses:
         dca_status = "启用中" if (h.get("dca_records") or h.get("dca_enabled")) else "未设置"
@@ -421,6 +425,8 @@ def portfolio_summary(holding_analyses: List[Dict]) -> Dict:
             "return_pct": h["return_pct"],
             "week_profit": h.get("week_profit"),
             "week_return_pct": h.get("week_return_pct"),
+            "day_profit": h.get("day_profit"),
+            "day_return_pct": h.get("day_return_pct"),
             "annual_return": h["annual_return"],
             "avg_cost": h.get("avg_cost", 0),
             "pending_amount": h.get("pending_amount", 0),
@@ -433,6 +439,8 @@ def portfolio_summary(holding_analyses: List[Dict]) -> Dict:
         "total_profit": total_profit,
         "total_pending": round(total_pending, 2),
         "total_return_pct": round(total_profit / total_cost * 100, 2) if total_cost else 0,
+        "total_day_profit": round(total_day_profit, 2),
+        "total_day_return_pct": total_day_return_pct,
         "fund_count": len(holding_analyses),
         "funds": funds,
         "by_fund": {h["fund_code"]: h for h in holding_analyses},

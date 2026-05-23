@@ -153,7 +153,7 @@ class ReportAgentDecisionTest(unittest.TestCase):
         self.assertIn("buy", report)
         self.assertIn("18.00%", report)
 
-    def test_report_renders_score_breakdown_and_operation_triggers(self):
+    def test_report_renders_operation_triggers(self):
         report = generate_report(
             analyzer=None,
             scores=[{
@@ -174,16 +174,6 @@ class ReportAgentDecisionTest(unittest.TestCase):
                 "action_logic": "",
                 "stop_profit_pct": 20,
                 "stop_loss_pct": -15,
-                "factor_matrix": {
-                    "micro": [{
-                        "name": "sortino_ratio",
-                        "value": 1.2,
-                        "score": 8,
-                        "weight": 0.2,
-                        "source": "feature_matrix",
-                        "missing_policy": "neutral",
-                    }]
-                },
                 "operation_advice": {
                     "action": "buy",
                     "target_weight": 0.18,
@@ -196,10 +186,39 @@ class ReportAgentDecisionTest(unittest.TestCase):
             stress_tests=[],
         )
 
-        self.assertIn("量化评分拆解", report)
-        self.assertIn("sortino_ratio", report)
+        self.assertNotIn("量化评分拆解", report)
         self.assertIn("操作触发条件", report)
         self.assertIn("高评分且短期趋势上行", report)
+
+    def test_post_process_report_with_qdii_hint(self):
+        from src.output.validator import post_process_report
+        
+        # Simulating a report containing a QDII fund header which includes " ⚠️*(T-1估算净值)*"
+        # and has the default values for stop profit and stop loss.
+        raw_markdown = """
+### 华宝纳斯达克精选股票(QDII)A（017436） ⚠️*(T-1估算净值)*
+
+| 指标 | 设定值 |
+|------|------|
+| **止盈线** | +20.00% |
+| **止损线** | -15.00% |
+
+## 风险提示
+- 原始风险提示
+"""
+        scores = [{
+            "fund_code": "017436",
+            "fund_name": "华宝纳斯达克精选股票(QDII)A",
+            "annual_volatility": 25.0, # Will result in stop_profit = vol * 2.0 = 50.00% and stop_loss = vol * 1.5 = 37.50%
+        }]
+        
+        processed = post_process_report(raw_markdown, scores)
+        
+        self.assertIn("| **止盈线** | +50.00%", processed)
+        self.assertIn("| **止损线** | -37.50%", processed)
+        self.assertIn("## 风险提示", processed)
+        # Verify the original risk disclaimer is replaced by COMPLIANCE_TEXT
+        self.assertNotIn("- 原始风险提示", processed)
 
 
 if __name__ == "__main__":

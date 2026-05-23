@@ -36,6 +36,21 @@ class NewsEvaluatorTest(unittest.TestCase):
 
         self.assertEqual([item["title"] for item in filtered], ["高相关"])
 
+    def test_evaluate_news_result_computes_overall_score(self):
+        news_item = {
+            "news_list": [
+                {"source": "证券时报", "date": "2026-05-22"},
+            ],
+            "catalyst_news": [
+                {"catalyst": {"relevance": 0.7, "weighted_score": 0.5}},
+                {"catalyst": {"relevance": 0.4, "weighted_score": -0.2}},
+                {"catalyst": {"relevance": 0.1, "weighted_score": 0.9}},  # low relevance, filtered out
+            ],
+        }
+
+        evaluation = evaluate_news_result(news_item, as_of="2026-05-22")
+        self.assertEqual(evaluation["overall_score"], 0.15)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -40,7 +40,7 @@ def post_process_report(raw_markdown: str, scores: List[Dict]) -> str:
 
         # 在 ### 基金名称（代码）段落内匹配并替换止盈线
         pattern_profit = re.compile(
-            rf'(###\s+{escaped_name}（{escaped_code}）\s*\n'
+            rf'(###\s+{escaped_name}（{escaped_code}）.*?\n'
             rf'.*?)\|\s*\*\*止盈线\*\*\s*\|\s*\+[\d.]+%',
             re.DOTALL,
         )
@@ -50,7 +50,7 @@ def post_process_report(raw_markdown: str, scores: List[Dict]) -> str:
 
         # 替换止损线
         pattern_loss = re.compile(
-            rf'(###\s+{escaped_name}（{escaped_code}）\s*\n'
+            rf'(###\s+{escaped_name}（{escaped_code}）.*?\n'
             rf'.*?)\|\s*\*\*止损线\*\*\s*\|\s*[+-]?[\d.]+%',
             re.DOTALL,
         )

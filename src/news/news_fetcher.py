@@ -4,6 +4,86 @@ from src.config.shared import today as _shared_today
 from typing import List, Dict, Tuple
 import hashlib
 import re
+import sys
+
+_AK_CACHE = {}
+_LAST_AK_MODULE = None
+
+def _cached_ak_call(func_name: str, *args, **kwargs):
+    """带缓存的 AKShare 调用，支持在 sys.modules['akshare'] 变更（如测试 Mock）时自动清空缓存。"""
+    global _LAST_AK_MODULE, _AK_CACHE
+    current_ak = sys.modules.get("akshare")
+    if current_ak is not _LAST_AK_MODULE:
+        _AK_CACHE.clear()
+        _LAST_AK_MODULE = current_ak
+
+    key = (func_name, str(args), str(sorted(kwargs.items())))
+    if key in _AK_CACHE:
+        return _AK_CACHE[key]
+
+    import akshare as ak
+    func = getattr(ak, func_name)
+    
+    import time
+    last_exc = None
+    for attempt in range(3):
+        try:
+            res = func(*args, **kwargs)
+            _AK_CACHE[key] = res
+            return res
+        except Exception as e:
+            last_exc = e
+            print(f"  [WARNING] AKShare.{func_name} 调用失败 (第 {attempt + 1}/3 次): {e}")
+            if attempt < 2:
+                time.sleep(1.0)
+                
+    raise last_exc
+
+
+_GLOBAL_STOCK_TRANSLATIONS = {
+    "NVIDIA": "英伟达",
+    "NVDA": "英伟达",
+    "TSMC": "台积电",
+    "ASML": "阿斯麦",
+    "Microsoft": "微软",
+    "MSFT": "微软",
+    "Apple": "苹果",
+    "AAPL": "苹果",
+    "Amazon": "亚马逊",
+    "AMZN": "亚马逊",
+    "Alphabet": "谷歌",
+    "Google": "谷歌",
+    "GOOG": "谷歌",
+    "GOOGL": "谷歌",
+    "Meta": "脸书",
+    "Facebook": "脸书",
+    "Broadcom": "博通",
+    "AVGO": "博通",
+    "Qualcomm": "高通",
+    "QCOM": "高通",
+    "Tesla": "特斯拉",
+    "TSLA": "特斯拉",
+    "AMD": "超威半导体",
+    "Intel": "英特尔",
+    "INTC": "英特尔",
+    "Netflix": "奈飞",
+    "NFLX": "奈飞",
+    "Micron": "美光",
+    "MU": "美光",
+    "Eli Lilly": "礼来",
+    "LLY": "礼来",
+    "Novo Nordisk": "诺和诺德",
+    "NVO": "诺和诺德",
+    "Lumentum": "路门特姆",
+    "LITE": "路门特姆",
+    "Coherent": "科赫特",
+    "COHR": "科赫特",
+    "Samsung": "三星",
+    "Tencent": "腾讯",
+    "Alibaba": "阿里巴巴",
+    "HDFC": "HDFC银行",
+    "ICICI": "ICICI银行",
+}
 
 
 def extract_holding_keywords(fund_code: str, limit: int = 10) -> Tuple[List[str], List[str]]:
@@ -13,14 +93,21 @@ def extract_holding_keywords(fund_code: str, limit: int = 10) -> Tuple[List[str]
     holding_rows = []
     for year in ["2025", "2024"]:
         try:
-            import akshare as ak
-            df = ak.fund_portfolio_hold_em(symbol=fund_code, date=year)
+            df = _cached_ak_call("fund_portfolio_hold_em", symbol=fund_code, date=year)
             if df is not None and not df.empty:
                 for _, row in df.head(limit).iterrows():
                     code = str(row.get("股票代码", "")).strip()
                     if code and code.lower() != "nan":
                         stock_codes.append(code)
                     name = _normalize_company_name(str(row.get("股票名称", "")))
+                    
+                    # 尝试匹配全球/美港股的中文简称
+                    translated_kw = None
+                    for eng_key, chi_val in _GLOBAL_STOCK_TRANSLATIONS.items():
+                        if eng_key.lower() in name.lower() or eng_key.lower() == code.lower():
+                            translated_kw = chi_val
+                            break
+                            
                     weight = _pick_first(row, ["占净值比例", "持仓占比", "占比", "持股占比"])
                     holding_rows.append({
                         "stock_code": code,
@@ -29,6 +116,8 @@ def extract_holding_keywords(fund_code: str, limit: int = 10) -> Tuple[List[str]
                     })
                     if name and len(name) >= 2:
                         keywords.append(name)
+                    if translated_kw and translated_kw not in keywords:
+                        keywords.append(translated_kw)
                 break  # 使用最新可用的数据
         except Exception:
             continue
@@ -115,17 +204,24 @@ def fetch_fund_news(
 
     cutoff = _shared_today() - timedelta(days=days)
 
+    # 基金自身的新闻：使用 stock_news_em 获取基金级别新闻
+    try:
+        df = _cached_ak_call("stock_news_em", symbol=fund_code)
+        _append_news_from_df(all_news, seen, df, cutoff, source_hint=f"东方财富基金新闻:{fund_code}")
+    except Exception:
+        pass
+
     # 个股新闻接口只适合股票代码，不适合中文关键词。
     for code in stock_codes:
         try:
-            df = ak.stock_news_em(symbol=code)
+            df = _cached_ak_call("stock_news_em", symbol=code)
             _append_news_from_df(all_news, seen, df, cutoff, source_hint=f"东方财富个股新闻:{code}")
         except Exception:
             continue
 
     # 全市场新闻兜底：先抓通用新闻，再用基金/行业/持仓关键词本地过滤。
     fund_profile = {"name": fund_name, "type": fund_type, "keywords": search_terms}
-    market_frames = list(_fetch_market_news_frames(ak, days, fund_profile=fund_profile))
+    market_frames = list(_fetch_market_news_frames(days, fund_profile=fund_profile))
     for df, source_hint in market_frames:
         _append_news_from_df(
             all_news,
@@ -151,19 +247,19 @@ def fetch_fund_news(
     return all_news[:max_items]
 
 
-def _fetch_market_news_frames(ak, days: int, fund_profile: Dict = None):
+def _fetch_market_news_frames(days: int, fund_profile: Dict = None):
     frames = []
 
     # 财联社电报全量流（时效性更强、数据量更大）
     try:
-        frames.append((ak.stock_telegraph_cls(), "财联社电报全量"))
+        frames.append((_cached_ak_call("stock_telegraph_cls"), "财联社电报全量"))
     except Exception:
         pass
 
     # 财联社分类电报
     for symbol in ["全部", "重点"]:
         try:
-            frames.append((ak.stock_info_global_cls(symbol=symbol), f"财联社电报:{symbol}"))
+            frames.append((_cached_ak_call("stock_info_global_cls", symbol=symbol), f"财联社电报:{symbol}"))
         except Exception:
             pass
 
@@ -171,12 +267,12 @@ def _fetch_market_news_frames(ak, days: int, fund_profile: Dict = None):
     industries = _fund_industries(fund_profile) if fund_profile else []
     for industry in industries:
         try:
-            frames.append((ak.stock_info_global_cls(symbol=industry), f"行业新闻:{industry}"))
+            frames.append((_cached_ak_call("stock_info_global_cls", symbol=industry), f"行业新闻:{industry}"))
         except Exception:
             pass
 
     try:
-        frames.append((ak.stock_news_main_cx(), "财新数据通"))
+        frames.append((_cached_ak_call("stock_news_main_cx"), "财新数据通"))
     except Exception:
         pass
 
@@ -184,7 +280,7 @@ def _fetch_market_news_frames(ak, days: int, fund_profile: Dict = None):
     for i in range(min(days, 3)):
         d = (_shared_today() - timedelta(days=i)).strftime("%Y%m%d")
         try:
-            frames.append((ak.news_cctv(date=d), f"新闻联播:{d}"))
+            frames.append((_cached_ak_call("news_cctv", date=d), f"新闻联播:{d}"))
         except Exception:
             pass
 

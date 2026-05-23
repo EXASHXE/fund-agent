@@ -119,16 +119,32 @@ def compute_fund(
 
             delta = event.actual_shares - total_shares
             delta_pct = abs(delta) / event.actual_shares if event.actual_shares > 0 else 0
-            events_detail.append({
-                "type": "CALIBRATE",
-                "status": "DIAGNOSTIC_ONLY",
+
+            cal_detail = {
                 "date": event.event_date.isoformat(),
                 "actual_shares": event.actual_shares,
                 "computed_shares": round(total_shares, 4),
                 "delta": round(delta, 4),
                 "delta_pct": round(delta_pct * 100, 2),
-                "reason": "真实份额只用于诊断偏差，不参与份额或成本计算",
-            })
+            }
+
+            if delta_pct <= CALIBRATION_MAX_DELTA_PCT:
+                total_shares = event.actual_shares
+                cal_detail["status"] = "CONFIRMED"
+                cal_detail["reason"] = "偏差在容忍范围内，成功校准份额"
+                calibrations_applied.append(cal_detail)
+                events_detail.append({
+                    "type": "CALIBRATE",
+                    **cal_detail
+                })
+            else:
+                cal_detail["status"] = "REJECTED"
+                cal_detail["reason"] = f"偏差大于 {CALIBRATION_MAX_DELTA_PCT * 100}%，校准被拒绝"
+                calibrations_rejected.append(cal_detail)
+                events_detail.append({
+                    "type": "CALIBRATE",
+                    **cal_detail
+                })
 
     current_asset = total_shares * current_nav
     confirmed_pnl = current_asset - total_cost

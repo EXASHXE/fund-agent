@@ -44,9 +44,9 @@ class WorkflowContextTest(unittest.TestCase):
 
         report = _render_workflow_focus(ctx, holdings, scores=[], news_data=[])
 
-        self.assertIn("当日盈亏与归因", report)
+        self.assertIn("当日盈亏与贡献分布", report)
         self.assertIn("半导体订单增长", report)
-        self.assertNotIn("本周收益与基金贡献", report)
+        self.assertNotIn("周期多维收益贡献", report)
 
     def test_non_trade_day_report_renders_weekly_review_not_daily_review(self):
         ctx = {
@@ -70,8 +70,8 @@ class WorkflowContextTest(unittest.TestCase):
 
         report = _render_workflow_focus(ctx, holdings, scores=[], news_data=[])
 
-        self.assertIn("本周收益与基金贡献", report)
-        self.assertNotIn("当日盈亏与归因", report)
+        self.assertIn("周期多维收益贡献", report)
+        self.assertNotIn("当日盈亏与贡献分布", report)
 
     def test_analyze_runs_news_before_scoring_and_passes_context(self):
         calls = []
@@ -141,6 +141,68 @@ class WorkflowContextTest(unittest.TestCase):
             cmd_analyze(args)
 
         self.assertEqual(calls[:2], ["news", "score"])
+
+    def test_fallback_keywords_option(self):
+        class FakeAnalyzer:
+            def __init__(self):
+                self.funds = {"000001": {"basic": {"name": "测试基金"}, "completeness": "A"}}
+
+            def load_fund(self, code):
+                pass
+
+            def score_fund(self, code, news_context=None):
+                return {
+                    "fund_code": code,
+                    "fund_name": "测试基金",
+                    "data_completeness": "A",
+                    "composite_score": 70,
+                    "score_level": "yellow",
+                    "score_level_emoji": "🟡",
+                    "macro_score": 14, "macro_basis": "",
+                    "meso_score": 20, "meso_basis": "",
+                    "micro_score": 36, "micro_basis": "",
+                    "recommendation": "持有", "action_logic": "",
+                    "stop_profit_pct": 20, "stop_loss_pct": -15,
+                }
+
+        config = SimpleNamespace(holdings=[SimpleNamespace(code="000001")])
+        store = SimpleNamespace(get_fund_score_history=lambda code, limit=50: [])
+        args = SimpleNamespace(
+            config="fund-portfolio.yaml",
+            output="/tmp/fund-agent-test-report.md",
+            recommend=False,
+            stress=False,
+            news_keyword_cache="/tmp/non_existent_cache.json",
+            fallback_keywords=True,
+            snapshot_after=False,
+        )
+
+        plan_passed_to_news = []
+
+        def fake_news(config, analyzer, agent_news_plan=None):
+            plan_passed_to_news.append(agent_news_plan)
+            return [{"fund_code": "000001", "sentiment_mean": 0.6, "brief": {"trend": "bullish"}}]
+
+        with patch("src.config.loader.load_portfolio_config", lambda path: config), \
+             patch("src.config.loader.import_to_database", lambda config: None), \
+             patch("src.db.storage.FundStorage", lambda: store), \
+             patch("src.analysis.scorer.FundAnalyzer", FakeAnalyzer), \
+             patch("src.analysis.correlation.compute_correlations", lambda funds: pd.DataFrame()), \
+             patch("src.cli._compute_holdings", lambda store, config, codes, analyzer: {"by_fund": {}, "funds": [], "total_value": 0}), \
+             patch("src.cli._build_workflow_context", lambda config, holdings_data, news_data=None: {"is_trade_day": True}), \
+             patch("src.news.keyword_cache.load_valid_keyword_cache", lambda path, codes, today=None: None), \
+             patch("src.news.news_fetcher.extract_holding_keywords", lambda code, limit: ([], ["重仓股A"])), \
+             patch("src.news.news_fetcher._fallback_fund_keywords", lambda name, fund_type: ["兜底词A"]), \
+             patch("src.cli._run_news_analysis", fake_news), \
+             patch("src.output.report.generate_report", lambda *args, **kwargs: "report"), \
+             patch("src.output.validator.post_process_report", lambda report, scores: report), \
+             patch("src.cli._save_snapshot", lambda *args, **kwargs: None), \
+             patch("builtins.open", unittest.mock.mock_open()):
+            cmd_analyze(args)
+
+        self.assertEqual(len(plan_passed_to_news), 1)
+        self.assertIn("重仓股A", plan_passed_to_news[0]["funds"]["000001"]["keywords"])
+        self.assertIn("兜底词A", plan_passed_to_news[0]["funds"]["000001"]["keywords"])
 
 
 if __name__ == "__main__":

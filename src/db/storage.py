@@ -297,6 +297,7 @@ class FundStorage:
             )
 
             s.commit()
+            self._write_snapshot_json(analysis)
             return snapshot.id
 
     def load_analysis(self, snapshot_id: int) -> Optional[Dict]:
@@ -400,6 +401,21 @@ class FundStorage:
             "analysis_date": snap.analysis_date.isoformat(),
             "portfolio_total_value": snap.portfolio_total_value,
         }
+
+    @staticmethod
+    def _write_snapshot_json(analysis: Dict[str, Any]):
+        import os
+        out = {
+            "generated_at": _shared_now().isoformat(),
+            "scores": {}
+        }
+        for s in analysis.get("scores", []):
+            code = s.get("fund_code")
+            if code:
+                out["scores"][code] = s.get("composite_score", 0)
+        os.makedirs("data", exist_ok=True)
+        with open("data/last_snapshot_metrics.json", "w", encoding="utf-8") as f:
+            json.dump(out, f, ensure_ascii=False, indent=2, cls=_JSONEncoder)
 
     def _build_analysis_dict(self, snap) -> Dict:
         """从 snapshot ORM 对象构建完整分析字典"""

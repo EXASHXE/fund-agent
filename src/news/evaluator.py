@@ -54,6 +54,12 @@ def evaluate_news_result(news_item: Dict, as_of=None, min_relevance: float = 0.2
         if high_impact else 0.0
     )
 
+    relevant_scores = [
+        float((item.get("catalyst") or {}).get("weighted_score", 0) or 0)
+        for item in relevant
+    ]
+    overall_score = round(sum(relevant_scores) / len(relevant_scores), 4) if relevant_scores else 0.0
+
     warnings = []
     if not news_list:
         warnings.append("未获取到有效新闻样本")
@@ -71,6 +77,7 @@ def evaluate_news_result(news_item: Dict, as_of=None, min_relevance: float = 0.2
         "relevant_news_count": len(relevant),
         "high_impact_negative_count": len(high_impact_negative),
         "negative_density": round(negative_density, 4),
+        "overall_score": overall_score,
         "warnings": warnings,
     }
 
