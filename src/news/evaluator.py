@@ -102,21 +102,63 @@ def _holding_coverage(news_list: List[Dict], entity_profile) -> Dict:
             "coverage_warning": "未取得持仓穿透数据，新闻覆盖度不可验证",
         }
 
+    import re
+    # Import translations to match English stock names to Chinese news terms
+    try:
+        from src.news.news_fetcher import _GLOBAL_STOCK_TRANSLATIONS
+    except ImportError:
+        _GLOBAL_STOCK_TRANSLATIONS = {}
+
     covered = []
     total_weight = 0.0
     covered_weight = 0.0
     texts = [
-        f"{item.get('title', '')} {item.get('content', '')}".lower()
+        f"{item.get('title', '')} {item.get('content', '')} {' '.join(item.get('matched_terms', []))}".lower()
         for item in news_list
     ]
     for holding in holdings:
-        name = str(holding.get("stock_name", "") or "").strip()
-        weight = _parse_weight(holding.get("weight", 0))
+        name = str(holding.get("stock_name") or holding.get("股票名称") or "").strip()
+        code = str(holding.get("stock_code") or holding.get("股票代码") or "").strip()
+        weight_val = holding.get("weight")
+        if weight_val is None:
+            weight_val = holding.get("占净值比例", 0)
+        weight = _parse_weight(weight_val)
         total_weight += weight
-        if name and any(name.lower() in text for text in texts):
+
+        if not name:
+            continue
+
+        # Generate match terms
+        match_terms = [name.lower()]
+        if code:
+            match_terms.append(code.lower())
+        
+        # Remove corporate suffixes to get the core name
+        norm_name = re.sub(r'\b(corp|inc|co|ltd|plc|ag|group|s\.a\.|class\s+[a-z]|adr)\b', '', name, flags=re.IGNORECASE)
+        norm_name = norm_name.replace(".", "").replace(",", "").strip()
+        if norm_name and norm_name.lower() not in match_terms:
+            match_terms.append(norm_name.lower())
+
+        # Match translation
+        for eng_key, chi_val in _GLOBAL_STOCK_TRANSLATIONS.items():
+            if eng_key.lower() in name.lower() or (code and eng_key.lower() == code.lower()):
+                if chi_val.lower() not in match_terms:
+                    match_terms.append(chi_val.lower())
+                if eng_key.lower() not in match_terms:
+                    match_terms.append(eng_key.lower())
+
+        # Check if any match term is in the texts
+        matched = False
+        for term in match_terms:
+            if any(term in text for text in texts):
+                matched = True
+                break
+
+        if matched:
             covered.append(name)
             covered_weight += weight
-    coverage_pct = covered_weight / total_weight if total_weight else len(covered) / len(holdings)
+
+    coverage_pct = covered_weight / total_weight if total_weight else (len(covered) / len(holdings) if holdings else 0.0)
     warning = ""
     if len(covered) < min(3, len(holdings)) or coverage_pct < 0.30:
         warning = "新闻覆盖偏窄，不能代表基金已披露重仓敞口"

@@ -40,27 +40,23 @@ def generate_report(
     lines.extend(_render_news_section(news_data, decisions))
 
     lines.append("")
+    lines.append("")
+    lines.extend(["", "## 二、持仓总览与当日归因分析", ""])
     if holdings_data:
         lines.append(portfolio_overview_table(holdings_data).rstrip())
     else:
-        lines.extend([
-            "## 二、持仓总览与收益口径",
-            "",
-            "未提供持仓计算结果；本章不输出配置判断。",
-        ])
-
+        lines.extend(["未提供持仓计算结果；本章不输出配置判断。"])
+    
     lines.append("")
     if workflow_context:
-        lines.append(_render_workflow_focus(
-            workflow_context, holdings_data, scores=scores, news_data=news_data,
-            agent_decisions=decisions,
-        ).rstrip())
+        lines.extend(_render_daily_attribution_section(workflow_context, holdings_data, decisions))
+
+    lines.append("")
+    lines.extend(["", "## 三、定投执行与申购结算状态", ""])
+    if workflow_context:
+        lines.append(_render_execution_status(workflow_context).rstrip())
     else:
-        lines.extend([
-            "## 三、定投执行与申购结算状态",
-            "",
-            "未提供定投与申购结算证据。",
-        ])
+        lines.extend(["未提供定投与申购结算证据。"])
 
     lines.extend(["", "## 四、单基金深度诊断", ""])
     lines.extend(_render_fund_diagnostics(scores, holdings_data, decisions))
@@ -85,20 +81,55 @@ def _render_tldr(
 ) -> List[str]:
     lines = ["## TL;DR", ""]
     portfolio = decisions.get("portfolio") or {}
+    
+    # 增加速览表格
+    if holdings_data:
+        lines.extend(_build_tldr_pnl_table(holdings_data))
+        
     if is_final:
-        lines.append(f"- Agent 组合立场：{portfolio.get('stance', '待说明')}")
-        lines.append(f"- Agent 摘要：{portfolio.get('tldr', '已形成逐基金决策，详见第五章。')}")
+        lines.append(f"### 组合研判与策略")
+        lines.append(f"- **立场**：{portfolio.get('stance', '待说明')}")
+        lines.append(f"- **整体分析**：{portfolio.get('tldr', '已形成逐基金决策，详见第五章。')}")
+        if portfolio.get('execution_notes'):
+            lines.append(f"- **调仓与执行**：{_join_value(portfolio.get('execution_notes'))}")
+        if portfolio.get('risk_summary'):
+            lines.append(f"- **风险提示**：{_join_value(portfolio.get('risk_summary'))}")
     else:
         valid_scores = [
             float(item.get("composite_score", 0) or 0)
             for item in scores if item.get("composite_score") is not None
         ]
         baseline = sum(valid_scores) / len(valid_scores) if valid_scores else 0.0
-        lines.append(f"- 量化基准分均值：{baseline:.2f}/100（仅为输入证据）")
-        lines.append("- 当前为证据稿，最终动作需由 Agent 结合风险约束判断。")
+        lines.append(f"- **量化基准**：{baseline:.2f}/100（仅为输入证据，待 Agent 最终评定）")
+
     if holdings_data.get("total_value") is not None:
-        lines.append(f"- 组合当前市值：¥{float(holdings_data.get('total_value', 0) or 0):,.2f}")
+        lines.append(f"- **当前总市值**：¥{float(holdings_data.get('total_value', 0) or 0):,.2f}")
     return lines
+
+
+def _build_tldr_pnl_table(holdings_data: Dict) -> List[str]:
+    lines = [
+        "### 盈亏速览",
+        "",
+        "| 基金 | 当日盈亏 | 当日收益率 | 累计收益 | 累计收益率 | 持仓市值 |",
+        "|------|---------:|-----------:|---------:|-----------:|---------:|",
+    ]
+    funds = holdings_data.get("funds") or []
+    for fund in funds:
+        day_profit = _as_float(fund.get("day_profit"))
+        day_ret = fund.get("day_return_pct")
+        profit = _as_float(fund.get("profit"))
+        ret_pct = fund.get("return_pct")
+        val = _as_float(fund.get("value", fund.get("current_value")))
+        lines.append(
+            f"| {fund.get('name', fund.get('code', '-'))} "
+            f"| {_format_colored_amount(day_profit)} | {_format_colored_pct(day_ret)} "
+            f"| {_format_colored_amount(profit)} | {_format_colored_pct(ret_pct)} "
+            f"| ¥{val:,.2f} |"
+        )
+    if not funds:
+        lines.append("| 暂无持仓数据 | - | - | - | - | - |")
+    return lines + [""]
 
 
 def _render_news_section(news_data: List[Dict], decisions: Dict) -> List[str]:
@@ -106,6 +137,7 @@ def _render_news_section(news_data: List[Dict], decisions: Dict) -> List[str]:
         return ["未提供截至口径日的有效新闻证据。"]
 
     news_decisions = decisions.get("news") or {}
+    is_final = bool(decisions.get("fund_scores"))
     lines = [
         "> 仅展示截至口径日有效新闻；衰减词典信号为辅助证据，不直接产生投资动作。",
         "",
@@ -143,35 +175,45 @@ def _render_news_section(news_data: List[Dict], decisions: Dict) -> List[str]:
             ])
             if agent_news.get("watch"):
                 body.append(f"- 观察事项：{_join_value(agent_news.get('watch'))}")
+
+            # Render key news if present
+            key_news_list = agent_news.get("key_news") or []
+            if key_news_list:
+                body.extend(["", "**AI 研判关键新闻**", ""])
+                for kn in key_news_list:
+                    body.append(f"- **{kn.get('title', '无标题')}**")
+                    body.append(f"  - *影响与未来趋势分析*: {kn.get('reason', '无原因')}")
         else:
             body.append("待 Agent 根据新闻证据与覆盖限制进行最终研判。")
 
-        daily = item.get("daily_aggregates") or []
-        if daily:
-            body.extend(["", "**逐日辅助信号**", "", "| 日期 | 新闻数 | 信号均值 |", "|------|------:|---------:|"])
-            for row in daily:
-                body.append(
-                    f"| {row.get('date', '-')} | {row.get('count', row.get('news_count', '-'))} "
-                    f"| {_as_float(row.get('sentiment_mean')):+.3f} |"
-                )
+        # Omit raw news tables in the final report to prevent clutter
+        if not is_final:
+            daily = item.get("daily_aggregates") or []
+            if daily:
+                body.extend(["", "**逐日辅助信号**", "", "| 日期 | 新闻数 | 信号均值 |", "|------|------:|---------:|"])
+                for row in daily:
+                    body.append(
+                        f"| {row.get('date', '-')} | {row.get('count', row.get('news_count', '-'))} "
+                        f"| {_as_float(row.get('sentiment_mean')):+.3f} |"
+                    )
 
-        sampled = item.get("news_list") or []
-        if sampled:
-            body.extend(["", "**证据样本**", "", "| 日期 | 标题 |", "|------|------|"])
-            for news in sampled[:8]:
-                body.append(f"| {news.get('date', '-')} | {news.get('title', '-')} |")
+            sampled = item.get("news_list") or []
+            if sampled:
+                body.extend(["", "**证据样本**", "", "| 日期 | 标题 |", "|------|------|"])
+                for news in sampled[:8]:
+                    body.append(f"| {news.get('date', '-')} | {news.get('title', '-')} |")
 
-        post_cutoff = item.get("post_cutoff_news") or []
-        if post_cutoff:
-            body.extend([
-                "",
-                "**口径日后观察（不纳入当日归因）**",
-                "",
-                "| 日期 | 标题 |",
-                "|------|------|",
-            ])
-            for news in post_cutoff[:5]:
-                body.append(f"| {news.get('date', '-')} | {news.get('title', '-')} |")
+            post_cutoff = item.get("post_cutoff_news") or []
+            if post_cutoff:
+                body.extend([
+                    "",
+                    "**口径日后观察（不纳入当日归因）**",
+                    "",
+                    "| 日期 | 标题 |",
+                    "|------|------|",
+                ])
+                for news in post_cutoff[:5]:
+                    body.append(f"| {news.get('date', '-')} | {news.get('title', '-')} |")
         lines.extend(_details(f"{name}（{code}）新闻证据", body))
     return lines
 
@@ -241,15 +283,20 @@ def _render_fund_diagnostics(
                 f"| 待确认金额 | ¥{_as_float(fund.get('pending_amount', detail.get('pending_amount'))):,.2f} |",
             ])
 
+        sp_pct = decision.get('suggested_stop_profit_pct') if decision else None
+        sl_pct = decision.get('suggested_stop_loss_pct') if decision else None
+        sp_agent = f"+{sp_pct:.2f}%" if sp_pct is not None else "待 Agent 设定"
+        sl_agent = f"{sl_pct:.2f}%" if sl_pct is not None else "待 Agent 设定"
+
         body.extend([
             "",
             "**风险边界证据**",
             "",
-            "| 指标 | 设定值 |",
-            "|------|------|",
-            f"| **止盈线** | +{_as_float(score.get('stop_profit_pct'), 20.0):.2f}% |",
-            f"| **止损线** | {_negative_pct(score.get('stop_loss_pct'), -15.0)} |",
-            f"| 年化波动率 | {_format_optional_pct(score.get('annual_volatility'))} |",
+            "| 指标 | 量化默认值 | Agent 建议值 |",
+            "|------|------------|--------------|",
+            f"| **止盈线** | +{_as_float(score.get('stop_profit_pct'), 20.0):.2f}% | {sp_agent} |",
+            f"| **止损线** | {_negative_pct(score.get('stop_loss_pct'), -15.0)} | {sl_agent} |",
+            f"| 年化波动率 | {_format_optional_pct(score.get('annual_volatility'))} | - |",
         ])
         lines.extend(_details(title, body))
     return lines
@@ -368,86 +415,71 @@ def _render_recommendations(
     return ["候选筛选未形成可供 Agent 复核的对象。"]
 
 
-def _render_workflow_focus(
-    workflow_context: Dict,
+def _render_daily_attribution_section(
+    ctx: Dict,
     holdings_data: Dict,
-    scores: Optional[List[Dict]] = None,
-    news_data: Optional[List[Dict]] = None,
-    agent_decisions: Optional[Dict] = None,
-) -> str:
-    del scores, news_data
-    ctx = workflow_context or {}
+    decisions: Dict,
+) -> List[str]:
     lines = [
-        "## 三、定投执行与申购结算状态",
-        "",
-        f"> 数据口径日：{ctx.get('report_date', '-')}；运行日：{ctx.get('run_date', '-')}；"
-        f"状态说明：{ctx.get('mode_reason', '未提供')}",
+        f"> 数据口径日：{ctx.get('report_date', '-')}；状态说明：{ctx.get('mode_reason', '未提供')}",
         "",
     ]
     if ctx.get("is_trade_day"):
-        lines.extend(_render_trade_day_focus(ctx, holdings_data, agent_decisions or {}))
+        lines.extend([
+            "### 归因分析",
+            "",
+            "| 基金 | 当日盈亏 | 当日收益率 | Agent 归因线索 |",
+            "|------|---------:|-----------:|----------------|",
+        ])
+        funds = holdings_data.get("funds") or []
+        fund_decisions = decisions.get("fund_scores") or {}
+        for fund in funds:
+            code = str(fund.get('code', ''))
+            day_profit = _as_float(fund.get("day_profit"))
+            attr = (fund_decisions.get(code) or {}).get("daily_attribution", "-")
+            lines.append(
+                f"| {fund.get('name', code)} | {_format_colored_amount(day_profit)} | "
+                f"{_format_colored_pct(fund.get('day_return_pct'))} | {attr} |"
+            )
+        if not funds:
+            lines.append("| 无持仓日收益证据 | - | - | - |")
+        
+        daily_analysis = (decisions.get("portfolio") or {}).get("daily_analysis")
+        lines.extend(["", "#### 当日组合研判总结", ""])
+        if daily_analysis:
+            lines.append(str(daily_analysis))
+        else:
+            lines.append("> 当日归因需由 Agent 结合口径内新闻和净值证据最终完成。")
+        lines.append("")
     else:
-        lines.extend(_render_non_trade_day_focus(ctx, holdings_data))
+        lines.extend([
+            "### 周期多维收益贡献",
+            "",
+            "| 基金 | 周期盈亏 | 贡献占比 |",
+            "|------|---------:|---------:|",
+        ])
+        funds = holdings_data.get("funds") or []
+        total_abs = sum(abs(_as_float(item.get("week_profit"))) for item in funds)
+        for fund in funds:
+            value = _as_float(fund.get("week_profit"))
+            lines.append(
+                f"| {fund.get('name', fund.get('code', '-'))} | {_format_colored_amount(value)} "
+                f"| {_format_profit_contribution(value, total_abs)} |"
+            )
+        if not funds:
+            lines.append("| 无周期收益证据 | - | - |")
+        lines.extend(["", "> 非交易日仅呈现最近结算口径证据，不推断当日交易动作。", ""])
+    return lines
+
+
+def _render_execution_status(ctx: Dict) -> str:
+    lines = [
+        f"> 运行日：{ctx.get('run_date', '-')}；"
+        f"状态说明：{ctx.get('mode_reason', '未提供')}",
+        "",
+    ]
     lines.extend(_render_execution_tables(ctx))
     return "\n".join(lines)
-
-
-def _render_trade_day_focus(ctx: Dict, holdings_data: Dict, decisions: Dict) -> List[str]:
-    lines = [
-        "### 当日盈亏与贡献分布",
-        "",
-        "| 基金 | 当日盈亏 | 当日收益率 | 当日盈亏贡献 |",
-        "|------|---------:|-----------:|-------------:|",
-    ]
-    funds = holdings_data.get("funds") or []
-    total_abs = sum(abs(_as_float(item.get("day_profit"))) for item in funds)
-    for fund in funds:
-        day_profit = _as_float(fund.get("day_profit"))
-        lines.append(
-            f"| {fund.get('name', fund.get('code', '-'))} | {_format_colored_amount(day_profit)} | "
-            f"{_format_colored_pct(fund.get('day_return_pct'))} | "
-            f"{_format_profit_contribution(day_profit, total_abs)} |"
-        )
-    if not funds:
-        lines.append("| 无持仓日收益证据 | - | - | - |")
-
-    daily_analysis = (decisions.get("portfolio") or {}).get("daily_analysis")
-    lines.extend(["", "#### 当日归因线索", ""])
-    if daily_analysis:
-        lines.append(str(daily_analysis))
-    else:
-        lines.append("> 当日归因需由 Agent 结合口径内新闻和净值证据最终完成。")
-
-    top_news = ctx.get("top_news") or []
-    if top_news:
-        lines.extend(["", "#### 当日新闻线索", "", "| 日期 | 基金 | 标题 | 衰减辅助信号 |", "|------|------|------|-------------:|"])
-        for item in top_news:
-            lines.append(
-                f"| {item.get('date', '-')} | {item.get('name', item.get('code', '-'))} | "
-                f"{item.get('headline', '-')} | {_as_float(item.get('sentiment')):+.3f} |"
-            )
-    return lines + [""]
-
-
-def _render_non_trade_day_focus(ctx: Dict, holdings_data: Dict) -> List[str]:
-    lines = [
-        "### 周期多维收益贡献",
-        "",
-        "| 基金 | 周期盈亏 | 贡献占比 |",
-        "|------|---------:|---------:|",
-    ]
-    funds = holdings_data.get("funds") or []
-    total_abs = sum(abs(_as_float(item.get("week_profit"))) for item in funds)
-    for fund in funds:
-        value = _as_float(fund.get("week_profit"))
-        lines.append(
-            f"| {fund.get('name', fund.get('code', '-'))} | {_format_colored_amount(value)} "
-            f"| {_format_profit_contribution(value, total_abs)} |"
-        )
-    if not funds:
-        lines.append("| 无周期收益证据 | - | - |")
-    lines.extend(["", "> 非交易日仅呈现最近结算口径证据，不推断当日交易动作。", ""])
-    return lines
 
 
 def _render_execution_tables(ctx: Dict) -> List[str]:
@@ -491,7 +523,7 @@ def _render_execution_tables(ctx: Dict) -> List[str]:
 
 
 def _details(summary: str, body_lines: Iterable[str]) -> List[str]:
-    return ["<details>", f"<summary>{summary}</summary>", "", *body_lines, "", "</details>", ""]
+    return ["<details>", f"<summary>{summary}</summary>", "", *body_lines, "</details>", ""]
 
 
 def _score_row(label: str, base, adjustment, final, basis) -> str:

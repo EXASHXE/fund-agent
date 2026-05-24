@@ -5,6 +5,10 @@ from typing import List, Dict, Tuple
 import hashlib
 import re
 import sys
+import requests
+import json
+import pandas as pd
+from datetime import datetime
 
 _AK_CACHE = {}
 _LAST_AK_MODULE = None
@@ -206,17 +210,6 @@ def fetch_fund_news(
     reference_date = as_of or _shared_today()
     cutoff = reference_date - timedelta(days=days)
 
-    # 基金自身的新闻：使用 stock_news_em 获取基金级别新闻
-    try:
-        df = _cached_ak_call("stock_news_em", symbol=fund_code)
-        _append_news_from_df(
-            all_news, seen, df, cutoff,
-            source_hint=f"东方财富基金新闻:{fund_code}",
-            max_date=reference_date,
-        )
-    except Exception:
-        pass
-
     # 个股新闻接口只适合股票代码，不适合中文关键词。
     for code in stock_codes:
         try:
@@ -225,6 +218,7 @@ def fetch_fund_news(
                 all_news, seen, df, cutoff,
                 source_hint=f"东方财富个股新闻:{code}",
                 max_date=reference_date,
+                forced_match_term=code,
             )
         except Exception:
             continue
@@ -261,6 +255,12 @@ def fetch_fund_news(
 
 def _fetch_market_news_frames(days: int, fund_profile: Dict = None, as_of: date = None):
     frames = []
+
+    # 扩展数据源：新浪财经滚动新闻兜底（比 AKShare 更稳定）
+    try:
+        frames.append((_fetch_sina_roll_news_df(pages=5), "新浪财经滚动"))
+    except Exception:
+        pass
 
     # 财联社电报全量流（时效性更强、数据量更大）
     try:
@@ -299,6 +299,30 @@ def _fetch_market_news_frames(days: int, fund_profile: Dict = None, as_of: date 
     return frames
 
 
+def _fetch_sina_roll_news_df(pages: int = 5):
+    """通过新浪财经API获取实时滚动新闻，作为坚实的数据源扩展。"""
+    rows = []
+    headers = {"User-Agent": "Mozilla/5.0"}
+    for page in range(1, pages + 1):
+        url = f"https://feed.mix.sina.com.cn/api/roll/get?pageid=153&lid=2509&k=&num=50&page={page}"
+        try:
+            resp = requests.get(url, headers=headers, timeout=5)
+            data = resp.json()
+            items = data.get('result', {}).get('data', [])
+            for item in items:
+                dt = datetime.fromtimestamp(int(item.get('ctime', 0)))
+                rows.append({
+                    "title": item.get('title', ''),
+                    "summary": item.get('summary', ''),
+                    "date": dt.strftime("%Y-%m-%d %H:%M:%S"),
+                    "source": "新浪财经",
+                    "url": item.get('url', '')
+                })
+        except Exception:
+            continue
+    return pd.DataFrame(rows) if rows else None
+
+
 def _append_news_from_df(
     all_news: List[Dict],
     seen: set,
@@ -307,6 +331,7 @@ def _append_news_from_df(
     source_hint: str = "",
     include_terms: List[str] = None,
     max_date: date = None,
+    forced_match_term: str = None,
 ):
     if df is None or getattr(df, "empty", True):
         return
@@ -314,7 +339,7 @@ def _append_news_from_df(
     for _, row in df.iterrows():
         title = _pick_first(row, ["新闻标题", "标题", "title", "内容标题", "事件标题"])
         content = _pick_first(row, ["新闻内容", "内容", "摘要", "summary", "事件内容", "详情"])
-        date_raw = _pick_first(row, ["发布时间", "发布日期", "时间", "日期", "date", "datetime"])
+        date_raw = _pick_first(row, ["发布时间", "发布日期", "时间", "日期", "date", "datetime", "新闻时间"])
         source = _pick_first(row, ["文章来源", "来源", "source"]) or source_hint
         url = _pick_first(row, ["新闻链接", "链接", "url", "网址"])
 
@@ -339,6 +364,10 @@ def _append_news_from_df(
                 matched_terms = content_matches
                 match_scope = "content"
                 match_score = 1
+        elif forced_match_term:
+            matched_terms = [forced_match_term]
+            match_scope = "forced"
+            match_score = 2
 
         news_date = _parse_date(date_raw)
         if news_date and news_date < cutoff:
