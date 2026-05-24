@@ -188,20 +188,25 @@ def _render_news_section(news_data: List[Dict], decisions: Dict) -> List[str]:
 
         # Omit raw news tables in the final report to prevent clutter
         if not is_final:
-            daily = item.get("daily_aggregates") or []
-            if daily:
-                body.extend(["", "**逐日辅助信号**", "", "| 日期 | 新闻数 | 信号均值 |", "|------|------:|---------:|"])
-                for row in daily:
-                    body.append(
-                        f"| {row.get('date', '-')} | {row.get('count', row.get('news_count', '-'))} "
-                        f"| {_as_float(row.get('sentiment_mean')):+.3f} |"
-                    )
-
             sampled = item.get("news_list") or []
             if sampled:
-                body.extend(["", "**证据样本**", "", "| 日期 | 标题 |", "|------|------|"])
-                for news in sampled[:8]:
-                    body.append(f"| {news.get('date', '-')} | {news.get('title', '-')} |")
+                body.extend([
+                    "",
+                    "<details>",
+                    f"<summary>新闻证据明细（共 {len(sampled)} 条）</summary>",
+                    "",
+                    "<table>",
+                    "<thead><tr><th>日期</th><th>标题</th></tr></thead>",
+                    "<tbody>"
+                ])
+                for news in sampled:
+                    body.append(f"<tr><td>{news.get('date', '-')}</td><td>{news.get('title', '-')}</td></tr>")
+                body.extend([
+                    "</tbody>",
+                    "</table>",
+                    "</details>",
+                    ""
+                ])
 
             post_cutoff = item.get("post_cutoff_news") or []
             if post_cutoff:
@@ -214,7 +219,8 @@ def _render_news_section(news_data: List[Dict], decisions: Dict) -> List[str]:
                 ])
                 for news in post_cutoff[:5]:
                     body.append(f"| {news.get('date', '-')} | {news.get('title', '-')} |")
-        lines.extend(_details(f"{name}（{code}）新闻证据", body))
+                    
+        lines.extend([f"### {name}（{code}）新闻证据", ""] + body)
     return lines
 
 
@@ -298,7 +304,7 @@ def _render_fund_diagnostics(
             f"| **止损线** | {_negative_pct(score.get('stop_loss_pct'), -15.0)} | {sl_agent} |",
             f"| 年化波动率 | {_format_optional_pct(score.get('annual_volatility'))} | - |",
         ])
-        lines.extend(_details(title, body))
+        lines.extend(body)
     return lines
 
 
@@ -520,7 +526,6 @@ def _render_execution_tables(ctx: Dict) -> List[str]:
             f"| {row.get('settlement_status', '-')} |"
         )
     return lines
-
 
 def _details(summary: str, body_lines: Iterable[str]) -> List[str]:
     return ["<details>", f"<summary>{summary}</summary>", "", *body_lines, "</details>", ""]
