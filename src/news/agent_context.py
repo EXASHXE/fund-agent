@@ -97,3 +97,60 @@ def build_recommendation_judgment_context(
             ]
         },
     }
+
+
+def build_news_relevance_task(
+    fund_name: str,
+    fund_code: str,
+    entity_profile,
+    news_with_catalyst: List[Dict],
+) -> Dict:
+    """构造新闻相关性判断任务，供 Agent 在执行 skill 时使用。
+
+    任务将持仓信息与候选新闻打包，Agent 需逐条判断是否有实质性投资关联。
+    """
+    holdings_payload = [
+        {
+            "name": h.get("stock_name", ""),
+            "code": h.get("stock_code", ""),
+            "weight_pct": round(h.get("weight", 0) * 100, 2),
+        }
+        for h in (getattr(entity_profile, "holdings", []) or [])[:10]
+    ]
+
+    candidate_news = []
+    for i, n in enumerate(news_with_catalyst[:20]):
+        catalyst = n.get("catalyst") or {}
+        candidate_news.append({
+            "id": i + 1,
+            "title": (n.get("title") or "")[:200],
+            "content": (n.get("content") or "")[:300],
+            "matched_terms": n.get("matched_terms") or [],
+            "rule_relevance": catalyst.get("relevance", 0),
+            "date": n.get("date", ""),
+            "source": n.get("source", ""),
+        })
+
+    return {
+        "task": "agent_news_relevance",
+        "fund_code": fund_code,
+        "fund_name": fund_name,
+        "instruction": (
+            "逐条判断以下新闻与基金持仓是否有实质性投资关联（非泛泛关联）。"
+            "实质性关联指：新闻事件直接影响其所持股票的基本面、估值、行业前景或市场情绪。"
+            "仅标记能够影响持仓的新闻为 relevant。"
+            "以下为泛泛关联（应标记为 irrelevant）："
+            "- 新闻提到某公司发布手机但基金持半导体设备和芯片股"
+            "- 新闻提到某车企发布新车但基金持上游半导体和材料股"
+            "- 泛消费电子新闻与基金持仓无直接产业链关联"
+        ),
+        "holdings": holdings_payload,
+        "candidate_news": candidate_news,
+        "expected_output": {
+            "relevant_news_ids": [1, 3, 5],
+            "per_news_reasons": {
+                "2": "小米手机发布与基金持有的美股半导体无直接关联",
+                "4": "YU7汽车发布与基金持仓无交集",
+            },
+        },
+    }

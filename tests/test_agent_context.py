@@ -104,5 +104,52 @@ class AgentContextTest(unittest.TestCase):
         self.assertEqual(context["rule_ranked_candidates"][0]["code"], "100001")
 
 
+    def test_build_news_relevance_task_includes_holdings_and_news(self):
+        from src.news.agent_context import build_news_relevance_task
+        from src.news.schemas import EntityProfile
+
+        entity = EntityProfile(
+            fund_code="008253",
+            fund_name="华宝致远混合A",
+            stock_codes=["NVDA", "MU"],
+            stock_names=["英伟达", "美光科技"],
+            holdings=[
+                {"stock_code": "NVDA", "stock_name": "英伟达", "weight": 0.0779},
+                {"stock_code": "MU", "stock_name": "美光科技", "weight": 0.0453},
+            ],
+            sector_keywords=["半导体"],
+            theme_keywords=["芯片"],
+        )
+
+        news_with_catalyst = [
+            {
+                "title": "英伟达Q1财报超预期",
+                "content": "英伟达发布强劲财报",
+                "date": "2026-05-22",
+                "source": "财联社",
+                "matched_terms": ["英伟达"],
+                "catalyst": {"relevance": 0.85, "weighted_score": 0.42},
+            },
+            {
+                "title": "雷军回应重新发布YU7标准版",
+                "content": "少了一款竞争产品特别不利",
+                "date": "2026-05-22",
+                "source": "财联社",
+                "matched_terms": ["AI"],
+                "catalyst": {"relevance": 0.20, "weighted_score": 0.02},
+            },
+        ]
+
+        task = build_news_relevance_task("华宝致远混合A", "008253", entity, news_with_catalyst)
+
+        self.assertEqual(task["task"], "agent_news_relevance")
+        self.assertEqual(len(task["holdings"]), 2)
+        self.assertEqual(task["holdings"][0]["name"], "英伟达")
+        self.assertEqual(len(task["candidate_news"]), 2)
+        self.assertEqual(task["candidate_news"][0]["rule_relevance"], 0.85)
+        self.assertEqual(task["candidate_news"][1]["rule_relevance"], 0.20)
+        self.assertIn("实质性投资关联", task["instruction"])
+
+
 if __name__ == "__main__":
     unittest.main()
