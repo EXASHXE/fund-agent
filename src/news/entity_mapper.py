@@ -11,7 +11,7 @@ _SECTOR_KEYWORD_MAP = {
     "消费": ["消费", "电商", "零售", "食品", "饮料", "家电"],
     "医药": ["医药", "创新药", "CXO", "医疗器械", "百济神州"],
     "银行": ["银行", "城商行", "农商行", "息差", "不良率"],
-    "科技": ["AI", "人工智能", "算力", "CPO", "光模块", "数据中心", "大模型"],
+    "算力": ["AI芯片", "数据中心", "光模块", "CPO", "英伟达", "算力"],
     "汽车": ["汽车", "智驾", "新能源车", "整车", "零部件"],
     "能源": ["石油", "原油", "天然气", "LNG", "OPEC", "煤炭"],
     "金融": ["券商", "保险", "非银", "资管"],
@@ -62,9 +62,24 @@ def entity_profile_from_fund(
     holding_entries = []
 
     for h in holdings[:10]:
-        code = str(h.get("stock_code", "")).strip()
-        name = str(h.get("stock_name", "")).strip()
-        weight = float(h.get("weight", 0) or 0)
+        code = str(h.get("stock_code") or h.get("股票代码") or "").strip()
+        name = str(h.get("stock_name") or h.get("股票名称") or "").strip()
+        
+        weight_val = h.get("weight")
+        if weight_val is None:
+            weight_val = h.get("占净值比例") or h.get("持仓占比") or h.get("占比") or h.get("持股占比") or 0.0
+        
+        # Safely parse weight
+        weight = 0.0
+        try:
+            raw_w = str(weight_val).strip()
+            if raw_w.endswith("%"):
+                weight = float(raw_w[:-1])
+            else:
+                weight = float(raw_w)
+        except (ValueError, TypeError):
+            weight = 0.0
+
         if code and code.lower() != "nan":
             stock_codes.append(code)
         if name and name.lower() != "nan":
@@ -81,7 +96,7 @@ def entity_profile_from_fund(
     # 行业关键词
     sector_keywords = set()
     for s in (sectors or [])[:5]:
-        sector_name = str(s.get("sector", "")).strip()
+        sector_name = str(s.get("sector") or s.get("行业名称") or s.get("行业分类") or "").strip()
         if sector_name:
             sector_keywords.add(sector_name)
             for kw in _SECTOR_KEYWORD_MAP.get(sector_name, []):
