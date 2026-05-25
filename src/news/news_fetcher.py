@@ -403,7 +403,7 @@ def _pick_first(row, names: List[str]) -> str:
 
 
 def _matches_terms(text: str, terms: List[str]) -> bool:
-    """中英文统一子串匹配。"""
+    """中英文匹配：英文启用词边界，中文保持子串匹配。"""
     return bool(_matched_terms(text, terms))
 
 
@@ -413,7 +413,6 @@ def _matched_terms(text: str, terms: List[str]) -> List[str]:
         return []
     text_lower = text.lower()
     matched = []
-    import re
     for term in terms:
         term = str(term).strip()
         if len(term) < 2:
