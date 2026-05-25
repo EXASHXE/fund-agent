@@ -37,7 +37,7 @@ def run_news_pipeline(
     from src.news.sentiment import analyze_sentiment, daily_sentiment_aggregate
     from src.news.correlate import news_nav_correlation
     from src.cli import _planned_news_keywords, _build_nav_summary
-    from src.news.agent_context import build_news_judgment_context
+    from src.news.agent_context import build_news_judgment_context, build_news_relevance_task
     from datetime import date, datetime
 
     results = []
@@ -168,6 +168,7 @@ def run_news_pipeline(
             "news_evaluation": news_evaluation,
             "entity_profile": entity,
             "agent_news_context": agent_news_context,
+            "relevance_task": build_news_relevance_task(name, code, entity, catalyst_news),
             "status": "ok",
         })
 

@@ -358,8 +358,8 @@ def _load_agent_decisions(
     if not decisions.get("fund_scores"):
         raise ValueError("Agent 决策缺少 fund_scores，不能生成最终报告")
     portfolio = decisions.get("portfolio")
-    if not isinstance(portfolio, dict) or not portfolio.get("tldr") or not portfolio.get("stance"):
-        raise ValueError("Agent 决策缺少 portfolio.tldr 或 portfolio.stance")
+    if not isinstance(portfolio, dict) or not portfolio.get("tldr") or not portfolio.get("stance") or not portfolio.get("daily_analysis"):
+        raise ValueError("Agent 决策缺少 portfolio.tldr 或 portfolio.stance 或 portfolio.daily_analysis")
     if not isinstance(decisions.get("recommendations"), list):
         raise ValueError("Agent 决策必须显式提供 recommendations 数组（允许为空）")
 
@@ -371,6 +371,16 @@ def _load_agent_decisions(
         raise ValueError(f"Agent 决策未覆盖全部评分基金: {', '.join(missing_funds)}")
     for code, baseline in score_lookup.items():
         _validate_fund_decision(code, baseline, decisions["fund_scores"].get(code))
+
+    total_abs_adjust = sum(
+        abs(adj)
+        for decision in decisions["fund_scores"].values()
+        for adj in decision.get("agent_adjustments", {}).values()
+        if isinstance(adj, (int, float))
+    )
+    if total_abs_adjust == 0:
+        raise ValueError("所有基金的 Agent 调整评分均未触发（全为 0），不符合投研决策要求。请根据重大新闻、趋势或持仓风险给出至少一个非零调整，并在 rationale 中解释说明。")
+
     target_sum = sum(
         decision.get("target_weight_pct")
         for decision in decisions["fund_scores"].values()
@@ -442,6 +452,14 @@ def _validate_fund_decision(code, baseline, decision):
     if target is not None and (not isinstance(target, (int, float)) or not 0 <= target <= 100):
         raise ValueError(f"Agent 目标占比超出 [0, 100]: {code}")
 
+    for pct_field in ("suggested_stop_profit_pct", "suggested_stop_loss_pct"):
+        val = decision.get(pct_field)
+        if val is not None and not isinstance(val, (int, float)):
+            raise ValueError(f"Agent {pct_field} 必须为数值: {code}")
+
+    if decision.get("daily_attribution") is not None and not isinstance(decision.get("daily_attribution"), str):
+        raise ValueError(f"Agent daily_attribution 必须为字符串: {code}")
+
 
 def _validate_news_decision(code, decision):
     if not isinstance(decision, dict):
@@ -452,6 +470,12 @@ def _validate_news_decision(code, decision):
     confidence = decision.get("confidence")
     if not isinstance(confidence, (int, float)) or not 0 <= confidence <= 1:
         raise ValueError(f"Agent 新闻研判置信度必须在 [0, 1]: {code}")
+    if "key_news" in decision:
+        if not isinstance(decision["key_news"], list):
+            raise ValueError(f"Agent 新闻研判 key_news 必须为列表: {code}")
+        for item in decision["key_news"]:
+            if not isinstance(item, dict) or "title" not in item or "reason" not in item:
+                raise ValueError(f"Agent 新闻研判 key_news 内项目必须包含 title 和 reason: {code}")
 
 
 def _build_report_evidence(
@@ -469,8 +493,11 @@ def _build_report_evidence(
     """Build serializable evidence consumed by the fund-analyst Agent."""
     by_fund = (holdings_data or {}).get("by_fund", {})
     funds = {}
+    daily_clues = {}
+
     for score in scores or []:
         code = score.get("fund_code")
+        metrics = by_fund.get(code, {})
         news = next((item for item in (news_data or []) if item.get("fund_code") == code), {})
         funds[code] = {
             "identity": {
@@ -479,7 +506,7 @@ def _build_report_evidence(
                 "fund_type": score.get("fund_type"),
                 "data_completeness": score.get("data_completeness"),
             },
-            "holding_metrics": by_fund.get(code, {}),
+            "holding_metrics": metrics,
             "quant_baseline": {
                 "macro_score": score.get("macro_score"),
                 "meso_score": score.get("meso_score"),
@@ -497,8 +524,17 @@ def _build_report_evidence(
                 "evaluation": news.get("news_evaluation") or {},
                 "samples": (news.get("news_list") or [])[:10],
                 "post_cutoff_news": news.get("post_cutoff_news") or [],
+                "relevance_task": news.get("relevance_task") or {},
             },
         }
+
+        daily_clues[code] = {
+            "fund_name": score.get("fund_name"),
+            "day_profit": metrics.get("day_profit"),
+            "day_return_pct": metrics.get("day_return_pct"),
+            "top_news_headlines": [n.get("title") for n in (news.get("news_list") or [])[:5]]
+        }
+
     corr_payload = correlations.to_dict() if hasattr(correlations, "to_dict") else {}
     return {
         "schema_version": "report_evidence.v2",
@@ -510,6 +546,7 @@ def _build_report_evidence(
             "total_profit": (holdings_data or {}).get("total_profit", 0),
             "daily_profit": (holdings_data or {}).get("total_day_profit", 0),
             "daily_return_pct": (holdings_data or {}).get("total_day_return_pct", 0),
+            "daily_attribution_clues": daily_clues,
         },
         "funds": funds,
         "portfolio_evidence": {
