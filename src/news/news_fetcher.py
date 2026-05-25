@@ -90,6 +90,17 @@ _GLOBAL_STOCK_TRANSLATIONS = {
 }
 
 
+def _parse_float_pct(value) -> float:
+    """Parse a percent value to float (e.g. '7.79' → 7.79, '5%' → 5.0)."""
+    try:
+        raw = str(value).strip()
+        if raw.endswith("%"):
+            return float(raw[:-1])
+        return float(raw or 0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
 def extract_holding_keywords(fund_code: str, limit: int = 10) -> Tuple[List[str], List[str]]:
     """从基金最新重仓中提取股票代码和名称关键词。"""
     stock_codes = []
@@ -150,6 +161,25 @@ def build_news_search_profile(
     """
     # 重仓股始终提取（个股新闻路径需要 stock_codes，不受 agent_keywords 影响）
     stock_codes, stock_keywords = extract_holding_keywords(fund_code, limit=limit)
+
+    # Extract weights for search budget
+    stock_weights = {}
+    try:
+        for year in ["2025", "2024"]:
+            try:
+                df = _cached_ak_call("fund_portfolio_hold_em", symbol=fund_code, date=year)
+                if df is not None and not df.empty:
+                    for _, row in df.head(limit).iterrows():
+                        code = str(row.get("股票代码", "")).strip()
+                        weight = _parse_float_pct(row.get("占净值比例", 0))
+                        if code and code.lower() != "nan":
+                            stock_weights[code] = weight
+                    break
+            except Exception:
+                continue
+    except Exception:
+        pass
+
     profile = {
         "fund_code": fund_code,
         "fund_name": fund_name,
@@ -158,6 +188,7 @@ def build_news_search_profile(
         "holding_keywords": stock_keywords,
         "agent_keywords": agent_keywords or [],
         "fallback_keywords": _fallback_fund_keywords(fund_name, fund_type),
+        "stock_weights": stock_weights,
     }
     terms = []
     # 优先用重仓股名和 Agent 关键词（精准匹配）
@@ -211,7 +242,11 @@ def fetch_fund_news(
     cutoff = reference_date - timedelta(days=days)
 
     # 个股新闻接口只适合股票代码，不适合中文关键词。
+    stock_weights = profile.get("stock_weights", {})
     for code in stock_codes:
+        weight = stock_weights.get(code, 0)
+        if weight < 2.0:
+            continue
         try:
             df = _cached_ak_call("stock_news_em", symbol=code)
             _append_news_from_df(
