@@ -1,6 +1,7 @@
 import sys
 import types
 import unittest
+from unittest.mock import patch
 
 import pandas as pd
 
@@ -8,7 +9,8 @@ from src.news.news_fetcher import extract_holding_keywords, fetch_fund_news
 
 
 class NewsFetcherTest(unittest.TestCase):
-    def test_fund_keyword_uses_market_news_fallback(self):
+    @patch("src.news.news_fetcher._fetch_sina_roll_news_df", return_value=None)
+    def test_fund_keyword_uses_market_news_fallback(self, mock_sina):
         fake_ak = types.SimpleNamespace()
         fake_ak.fund_portfolio_hold_em = lambda symbol, date: pd.DataFrame()
 
@@ -61,7 +63,8 @@ class NewsFetcherTest(unittest.TestCase):
         self.assertEqual(stock_codes, [])
         self.assertEqual(keywords, [])
 
-    def test_holding_fetch_failure_does_not_block_news(self):
+    @patch("src.news.news_fetcher._fetch_sina_roll_news_df", return_value=None)
+    def test_holding_fetch_failure_does_not_block_news(self, mock_sina):
         """重仓拉取失败时（如网络不可用），仍能通过市场新闻兜底获取结果。"""
         fake_ak = types.SimpleNamespace()
         calls = []
@@ -111,7 +114,6 @@ class NewsFetcherTest(unittest.TestCase):
     def test_matches_terms_english_short(self):
         from src.news.news_fetcher import _matches_terms
         self.assertTrue(_matches_terms("AI芯片需求爆发", ["AI"]))
-        self.assertTrue(_matches_terms("NVIDIA股价创新高", ["NV"]))
 
     def test_matches_terms_no_false_positive(self):
         from src.news.news_fetcher import _matches_terms
@@ -129,7 +131,33 @@ class NewsFetcherTest(unittest.TestCase):
         self.assertNotIn("比亚迪股份", result)  # full >3 char dropped
         self.assertEqual(len(result), 5)
 
-    def test_fetch_fund_news_adds_match_metadata_and_limits_results(self):
+    def test_matched_terms_english_word_boundary(self):
+        from src.news.news_fetcher import _matched_terms
+        result = _matched_terms("NVIDIA AI chip demand surges", ["AI"])
+        self.assertEqual(result, ["AI"])
+        result = _matched_terms("NVDA launches new AI, HBM products", ["AI"])
+        self.assertEqual(result, ["AI"])
+        result = _matched_terms("DAILY stock market update", ["AI"])
+        self.assertEqual(result, [])
+        result = _matched_terms("RAIL transportation news", ["AI"])
+        self.assertEqual(result, [])
+        result = _matched_terms("BAIC motor sales rise", ["AI"])
+        self.assertEqual(result, [])
+
+    def test_matched_terms_short_english_rejects_substring(self):
+        from src.news.news_fetcher import _matched_terms
+        result = _matched_terms("NVIDIA stock hits all-time high", ["NV"])
+        self.assertEqual(result, [])
+        result = _matched_terms("NV is a ticker symbol", ["NV"])
+        self.assertEqual(result, ["NV"])
+
+    def test_matched_terms_two_char_chinese(self):
+        from src.news.news_fetcher import _matched_terms
+        result = _matched_terms("台积电 Q1 财报超预期", ["台积"])
+        self.assertEqual(result, ["台积"])
+
+    @patch("src.news.news_fetcher._fetch_sina_roll_news_df", return_value=None)
+    def test_fetch_fund_news_adds_match_metadata_and_limits_results(self, mock_sina):
         fake_ak = types.SimpleNamespace()
         fake_ak.fund_portfolio_hold_em = lambda symbol, date: pd.DataFrame()
         fake_ak.stock_news_em = lambda symbol: pd.DataFrame()

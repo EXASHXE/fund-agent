@@ -408,17 +408,24 @@ def _matches_terms(text: str, terms: List[str]) -> bool:
 
 
 def _matched_terms(text: str, terms: List[str]) -> List[str]:
-    """Return matched search terms in stable order."""
+    """Return matched search terms with word-boundary awareness for English terms."""
     if not text:
         return []
     text_lower = text.lower()
     matched = []
+    import re
     for term in terms:
         term = str(term).strip()
         if len(term) < 2:
             continue
-        if term.lower() in text_lower:
-            matched.append(term)
+        term_lower = term.lower()
+        if term_lower.isascii():
+            pattern = re.compile(r'\b' + re.escape(term_lower) + r'\b', re.IGNORECASE | re.ASCII)
+            if pattern.search(text):
+                matched.append(term)
+        else:
+            if term_lower in text_lower:
+                matched.append(term)
     return matched
 
 
