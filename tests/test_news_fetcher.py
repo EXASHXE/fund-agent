@@ -191,5 +191,33 @@ class NewsFetcherTest(unittest.TestCase):
         self.assertEqual(news[0]["match_scope"], "title")
 
 
+    def test_build_search_profile_skips_fallback_when_sufficient_holdings(self):
+        import types
+        import sys
+        from src.news.news_fetcher import build_news_search_profile
+        import pandas as pd
+        
+        fake_ak = types.SimpleNamespace()
+        fake_ak.fund_portfolio_hold_em = lambda symbol, date: pd.DataFrame([
+            {"股票代码": "688256", "股票名称": "寒武纪", "占净值比例": "9.0%"},
+            {"股票代码": "688072", "股票名称": "拓荆科技", "占净值比例": "8.0%"},
+            {"股票代码": "688123", "股票名称": "聚辰股份", "占净值比例": "7.0%"},
+            {"股票代码": "002371", "股票名称": "北方华创", "占净值比例": "7.0%"},
+            {"股票代码": "688766", "股票名称": "普冉股份", "占净值比例": "6.0%"},
+        ])
+        old = sys.modules.get("akshare")
+        sys.modules["akshare"] = fake_ak
+        try:
+            profile = build_news_search_profile("001198", "半导体基金", fund_type="混合型")
+        finally:
+            if old is not None:
+                sys.modules["akshare"] = old
+            else:
+                sys.modules.pop("akshare", None)
+        # 5 holding keywords, fallback should NOT include broad theme words
+        terms = profile["search_terms"]
+        for bw in ["半导体", "芯片"]:
+            self.assertNotIn(bw, terms)
+
 if __name__ == "__main__":
     unittest.main()

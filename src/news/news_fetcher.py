@@ -196,8 +196,8 @@ def build_news_search_profile(
         for kw in profile[group]:
             if kw and kw not in terms:
                 terms.append(kw)
-    # 仅当持仓关键词不足 3 个时才启用兜底词（防止泛词污染）
-    if len(terms) < 3:
+    # 仅当持仓关键词不足 5 个时才启用兜底词（防止泛词污染）
+    if len(terms) < 5:
         for kw in profile["fallback_keywords"]:
             if kw and kw not in terms:
                 terms.append(kw)
