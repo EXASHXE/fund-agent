@@ -5,13 +5,10 @@
 from typing import Dict, List, Optional, Tuple
 import pandas as pd
 
-from src.data.fetcher import (
-    fetch_fund_basic, fetch_fund_performance, fetch_fund_nav,
-    fetch_fund_holdings, fetch_fund_sectors, fetch_holder_structure
-)
 from src.analysis.correlation import compute_correlations
 from src.analysis.stress import stress_test
 from src.analysis.holdings import compute_hhi
+from src.analysis.loader import FundDataLoader
 from src.analysis.metrics import MetricsCalculator
 
 
@@ -32,57 +29,15 @@ class FundAnalyzer:
 
     def __init__(self):
         self.funds = {}
+        self._loader = FundDataLoader()
         self._metrics = MetricsCalculator()
 
     def load_fund(self, code: str):
-        """采集单基金全部数据"""
         print(f"  [Layer 1] 采集 {code} 数据...")
-        basic = fetch_fund_basic(code)
-        perf = fetch_fund_performance(code)
-        nav = fetch_fund_nav(code)
-        holdings = fetch_fund_holdings(code)
-        sectors = fetch_fund_sectors(code)
-        holders = fetch_holder_structure(code)
-
-        self.funds[code] = {
-            "basic": basic,
-            "perf": perf,
-            "nav": nav,
-            "holdings": holdings,
-            "sectors": sectors,
-            "holders": holders,
-        }
-
-        completeness = self._assess_completeness(basic, perf, nav, holdings, sectors)
-        self.funds[code]["completeness"] = completeness
-        print(f"    完整度: {completeness}")
-        return completeness
-
-    def _assess_completeness(self, basic, perf, nav, holdings, sectors) -> str:
-        has_basic = bool(basic) and "error" not in basic
-        has_nav = isinstance(nav, pd.DataFrame) and len(nav) > 30
-        has_perf = bool(perf) and "error" not in perf
-
-        if not has_basic or not has_nav:
-            return "D"
-
-        core_ok = has_basic and has_nav  # perf可从NAV估算
-        enhanced_ok = (
-            isinstance(holdings, pd.DataFrame) and len(holdings) > 0 and
-            isinstance(sectors, pd.DataFrame) and len(sectors) > 0
-        )
-
-        if not core_ok:
-            return "D"
-        if has_perf and enhanced_ok:
-            return "A"
-        if has_perf:
-            return "B"
-        if core_ok and enhanced_ok:
-            return "B"  # 有NAV+增强数据，但perf缺失
-        if core_ok:
-            return "C"
-        return "D"
+        fund_data = self._loader.load_fund(code)
+        self.funds[code] = fund_data
+        print(f"    完整度: {fund_data['completeness']}")
+        return fund_data["completeness"]
 
     def _score_macro(self, code: str) -> Tuple[int, Dict, str]:
         fund = self.funds.get(code, {})
