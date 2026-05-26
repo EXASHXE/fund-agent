@@ -10,27 +10,20 @@ from src.analysis.stress import stress_test
 from src.analysis.holdings import compute_hhi
 from src.analysis.loader import FundDataLoader
 from src.analysis.metrics import MetricsCalculator
+from src.analysis.scoring import MacroScorer, MesoScorer, MicroScorer
 
 
 
 class FundAnalyzer:
     """单基金评分卡 + 组合分析"""
 
-    SECTOR_MAP = {
-        "信息技术": "Technology", "通信": "Telecom", "医疗": "Healthcare",
-        "医药": "Healthcare", "金融": "Finance", "消费": "Consumer",
-        "新能源": "New Energy", "能源": "Energy", "原材料": "Materials",
-        "工业": "Industrial", "房地产": "Real Estate", "公用事业": "Utilities",
-        "石油": "Oil", "天然气": "Natural Gas", "银行": "Banking",
-        "保险": "Insurance", "证券": "Securities", "汽车": "Automobile",
-        "电池": "Battery", "电子": "Electronics", "半导体": "Semiconductor",
-        "互联网": "Internet", "传媒": "Media",
-    }
-
     def __init__(self):
         self.funds = {}
         self._loader = FundDataLoader()
         self._metrics = MetricsCalculator()
+        self._macro = MacroScorer()
+        self._meso = MesoScorer()
+        self._micro = MicroScorer()
 
     def load_fund(self, code: str):
         print(f"  [Layer 1] 采集 {code} 数据...")
@@ -40,166 +33,18 @@ class FundAnalyzer:
         return fund_data["completeness"]
 
     def _score_macro(self, code: str) -> Tuple[int, Dict, str]:
-        fund = self.funds.get(code, {})
-        ft = fund.get("basic", {})
-        fund_type = ft.get("fund_type", "domestic") if ft else "domestic"
-        fund_name = ft.get("name", "") if ft else ""
-
-        # 周期适配 (0-8)
-        if "QDII" in str(fund_type).upper() or fund_type == "qdii":
-            if "纳斯达克" in fund_name or "科技" in fund_name:
-                cycle_score = 3
-            elif "新兴市场" in fund_name:
-                cycle_score = 5
-            else:
-                cycle_score = 4
-        elif "指数" in fund_type or "ETF" in fund_type:
-            if "石油" in fund_name or "能源" in fund_name:
-                cycle_score = 4
-            elif "新能源" in fund_name or "电池" in fund_name:
-                cycle_score = 3
-            else:
-                cycle_score = 4
-        elif "混合" in fund_type or "灵活" in fund_type:
-            cycle_score = 5
-        else:
-            cycle_score = 4
-
-        # 利率/流动性 (0-6)
-        if "QDII" in str(fund_type).upper() or fund_type == "qdii":
-            liquidity_score = 5
-        else:
-            liquidity_score = 5
-
-        # 大盘估值 (0-6)
-        if "QDII" in str(fund_type).upper() or fund_type == "qdii":
-            if "纳斯达克" in fund_name:
-                valuation_score = 2
-            elif "新兴市场" in fund_name:
-                valuation_score = 5
-            else:
-                valuation_score = 4
-        elif "指数" in fund_type or "ETF" in fund_type:
-            valuation_score = 4
-        else:
-            valuation_score = 5
-
-        macro_total = min(20, cycle_score + liquidity_score + valuation_score)
-        return macro_total, {}, ""
-
-    def _macro_basis(self, details: Dict) -> str:
-        parts = []
-        for k, v in details.items():
-            label = {"market_cycle": "周期适配", "liquidity": "利率/流动性",
-                     "valuation": "大盘估值"}
-            parts.append(f"{label.get(k, k)}: {v}")
-        return "; ".join(parts)
+        return self._macro.score(code, self.funds.get(code, {}))
 
     def _score_meso(self, code: str, completeness: str) -> Tuple[Optional[int], Dict, str]:
-        if completeness in ("C", "D"):
-            return None, {}, ""
-
-        fund = self.funds.get(code, {})
-        ft = fund.get("basic", {})
-        fund_name = ft.get("name", "") if ft else ""
-        fund_type = ft.get("fund_type", "domestic") if ft else "domestic"
-
-        if "QDII" in str(fund_type).upper() or fund_type == "qdii":
-            if "纳斯达克" in fund_name or "科技" in fund_name:
-                prosperity, pe_score, policy, rotation = 4, 2, 4, 3
-            elif "新兴市场" in fund_name:
-                prosperity, pe_score, policy, rotation = 7, 6, 5, 5
-            else:
-                prosperity, pe_score, policy, rotation = 5, 4, 3, 3
-        elif "石油" in fund_name or "能源" in fund_name:
-            prosperity, pe_score, policy, rotation = 3, 3, 2, 2
-        elif "新能源" in fund_name or "电池" in fund_name:
-            prosperity, pe_score, policy, rotation = 3, 6, 4, 3
-        elif "混合" in fund_type or "灵活" in fund_type:
-            prosperity, pe_score, policy, rotation = 5, 5, 5, 4
-        else:
-            prosperity, pe_score, policy, rotation = 5, 4, 3, 3
-
-        meso_total = min(30, prosperity + pe_score + policy + rotation)
-        return meso_total, {}, ""
+        return self._meso.score(code, self.funds.get(code, {}), completeness)
 
     def _score_micro(self, code: str) -> Tuple[int, Dict, str]:
         fund = self.funds[code]
-        basic = fund["basic"]
         perf = fund.get("perf", {})
-        details = {}
-
-        # perf API失败时，从NAV自算
         if not perf or "error" in perf or not perf.get("近1年") or not perf.get("近1年", {}).get("sharpe_ratio"):
             perf = self._compute_perf_from_nav(code)
             fund["perf"] = perf
-
-        perf_3y = perf.get("近3年", {})
-        perf_1y = perf.get("近1年", {})
-        ftype = basic.get("fund_type", "")
-
-        # 1. 经理稳定性 (0-10)
-        manager_name = basic.get("manager", "")
-        if manager_name:
-            manager_score = 8
-            details["manager"] = manager_name
-        else:
-            manager_score = 5
-
-        # 2. Alpha 持续性 (0-12)
-        sharpe_3y = perf_3y.get("sharpe_ratio", 0) or 0
-        if sharpe_3y > 1.5:
-            alpha_score = 11
-        elif sharpe_3y > 1.0:
-            alpha_score = 9
-        elif sharpe_3y > 0.5:
-            alpha_score = 7
-        elif sharpe_3y > 0:
-            alpha_score = 4
-        else:
-            alpha_score = 3
-
-        # 3. 最大回撤 vs 同类 (0-10)
-        max_dd = perf_3y.get("max_drawdown", 30) or 30
-        if "QDII" in ftype:
-            peer_dd = 28
-        elif "指数" in ftype or "ETF" in ftype:
-            peer_dd = 30
-        else:
-            peer_dd = 22
-
-        if max_dd < peer_dd * 0.8:
-            drawdown_score = 9
-        elif max_dd < peer_dd * 1.1:
-            drawdown_score = 7
-        elif max_dd < peer_dd * 1.3:
-            drawdown_score = 5
-        else:
-            drawdown_score = 3
-
-        # 4. 夏普比率 (0-10)
-        sharpe_1y = perf_1y.get("sharpe_ratio", 0) or 0
-        sharpe_annual = sharpe_1y if sharpe_1y else sharpe_3y
-        if sharpe_annual > 1.5:
-            sharpe_score = 10
-        elif sharpe_annual > 1.0:
-            sharpe_score = 8
-        elif sharpe_annual > 0.5:
-            sharpe_score = 6
-        elif sharpe_annual > 0.3:
-            sharpe_score = 4
-        else:
-            sharpe_score = 2
-
-        # 5. 机构持有变化 (0-8)
-        holders = fund.get("holders", pd.DataFrame())
-        if not holders.empty and len(holders) > 0:
-            inst_score = 5
-        else:
-            inst_score = 4
-
-        micro_total = min(50, manager_score + alpha_score + drawdown_score + sharpe_score + inst_score)
-        return micro_total, details, ""
+        return self._micro.score(code, fund)
 
     def score_fund(self, code: str, news_context: Dict = None) -> Dict:
         fund = self.funds[code]
