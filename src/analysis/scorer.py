@@ -2,7 +2,7 @@
 单基金评分卡 + 组合分析引擎。
 权重: 宏观 20% / 中观 30% / 微观 50%
 """
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional, Tuple
 import pandas as pd
 
 from src.analysis.correlation import compute_correlations
@@ -263,15 +263,6 @@ class FundAnalyzer:
             "advanced_metrics": self._compute_advanced_metrics(code),
             "news_context": fund.get("news_context", {}),
         }
-
-    def _level_from_score(self, composite: int) -> Tuple[str, str, str]:
-        if composite >= 75:
-            return "green", "🟢", "维持或加仓"
-        if composite >= 50:
-            return "yellow", "🟡", "持有观察，可继续定投"
-        if composite >= 30:
-            return "orange", "🟠", "减仓或暂停定投"
-        return "red", "🔴", "止盈/止损离场"
 
     def compute_correlations(self):
         return compute_correlations(self.funds)
