@@ -4,7 +4,6 @@
 """
 from typing import Dict, List, Optional, Tuple
 import pandas as pd
-import numpy as np
 
 from src.data.fetcher import (
     fetch_fund_basic, fetch_fund_performance, fetch_fund_nav,
@@ -13,60 +12,8 @@ from src.data.fetcher import (
 from src.analysis.correlation import compute_correlations
 from src.analysis.stress import stress_test
 from src.analysis.holdings import compute_hhi
-from src.config.defaults import QUANT_CONFIG, RISK_FREE_RATE
+from src.analysis.metrics import MetricsCalculator
 
-
-def _compute_sortino_ratio(daily_returns: list, mar_annual: float = None) -> float:
-    """计算索提诺比率（Sortino Ratio）
-
-    Sortino = (Mean(R_i - MAR_daily) * 252) / DownsideDeviation_annual
-    DownsideDeviation_annual = sqrt(mean(min(0, R_i - MAR_daily)^2)) * sqrt(252)
-
-    仅惩罚下行波动，上行波动不计入风险。
-    """
-    if not daily_returns or len(daily_returns) < 20:
-        return 0.0
-
-    if mar_annual is None:
-        mar_annual = QUANT_CONFIG.get("SORTINO_MAR", 0.025)
-
-    returns = np.array(daily_returns, dtype=float)
-    mar_daily = (1 + mar_annual) ** (1 / 252) - 1
-
-    downside = np.minimum(returns - mar_daily, 0)
-    downside_deviation_daily = np.sqrt(np.mean(downside ** 2))
-    downside_deviation_annual = downside_deviation_daily * np.sqrt(252)
-
-    if downside_deviation_annual == 0:
-        return 0.0
-
-    mean_excess_daily = np.mean(returns - mar_daily)
-    sortino = mean_excess_daily * 252 / downside_deviation_annual
-
-    return round(float(sortino), 4)
-
-
-def _compute_hhi(holdings: list) -> float:
-    """计算赫芬达尔-赫希曼指数（HHI）
-
-    HHI = sum(weight_i^2) * 10000, range [0, 10000]
-    > 2500: 高度集中 | 1500-2500: 中度集中 | < 1500: 分散
-    """
-    if not holdings:
-        return 0.0
-
-    weights = []
-    for h in holdings:
-        w = h.get("weight", 0) or h.get("ratio", 0) or h.get("proportion", 0) or 0
-        weights.append(float(w))
-
-    if not weights or sum(weights) == 0:
-        return 0.0
-
-    total = sum(weights)
-    normalized = [w / total for w in weights]
-    hhi = sum(w * w for w in normalized) * 10000
-    return round(float(hhi), 2)
 
 
 class FundAnalyzer:
@@ -85,6 +32,7 @@ class FundAnalyzer:
 
     def __init__(self):
         self.funds = {}
+        self._metrics = MetricsCalculator()
 
     def load_fund(self, code: str):
         """采集单基金全部数据"""
@@ -335,38 +283,25 @@ class FundAnalyzer:
 
         recommendation = self._deduce_recommendation(composite, name, completeness)
 
-        # 计算 Sortino 比率（从净值日收益率）
         sortino_val = 0.0
         nav_df = fund.get("nav")
         if isinstance(nav_df, pd.DataFrame) and not nav_df.empty and "日增长率" in nav_df.columns:
             daily_returns = nav_df["日增长率"].dropna().values / 100.0
             if len(daily_returns) >= 20:
-                sortino_val = _compute_sortino_ratio(daily_returns.tolist())
+                sortino_val = self._metrics.sortino_ratio(daily_returns.tolist())
 
-        # 计算 HHI
         hhi_val = 0.0
         funds_holdings = fund.get("holdings", pd.DataFrame())
         if isinstance(funds_holdings, pd.DataFrame) and not funds_holdings.empty:
-            weight_col = None
-            for col in ["占净值比例", "持仓占比", "占比", "持股占比"]:
-                if col in funds_holdings.columns:
-                    weight_col = col
-                    break
-            if weight_col:
-                raw_weights = []
-                for _, row in funds_holdings.head(10).iterrows():
-                    try:
-                        raw_weights.append(float(str(row[weight_col]).replace("%", "")))
-                    except (ValueError, TypeError):
-                        pass
-                if raw_weights:
-                    hhi_val = _compute_hhi([{"weight": w} for w in raw_weights])
+            hhi_val = compute_hhi(funds_holdings) or 0.0
 
-        # 获取高级指标
-        adv = self._compute_advanced_metrics(code) if completeness in ("A", "B") else {}
+        nav_df = fund.get("nav")
+        adv = self._metrics.advanced_metrics(nav_df, basic) if completeness in ("A", "B") else {}
         alpha_val = adv.get("jensen_alpha", 0.0) if adv else 0.0
         ir_val = adv.get("information_ratio", 0.0) if adv else 0.0
         beta_val = adv.get("beta", 1.0) if adv else 1.0
+        win_rate_val = adv.get("win_rate_1y", 0.0) if adv else 0.0
+        calmar_val = adv.get("calmar_ratio_1y", 0.0) if adv else 0.0
 
         score = {
             "fund_code": code,
@@ -417,6 +352,8 @@ class FundAnalyzer:
                 "sortino_ratio": sortino_val,
                 "information_ratio": round(float(ir_val), 4),
                 "beta": round(float(beta_val), 4),
+                "win_rate_1y": round(float(win_rate_val), 2),
+                "calmar_ratio_1y": round(float(calmar_val), 2),
                 "max_drawdown_3y_pct": round(float(max_dd_3y), 2) if max_dd_3y else None,
                 "annual_volatility": round(float(vol), 2),
                 "sharpe_1y": round(float(sharpe_1y), 2) if sharpe_1y else None,
@@ -506,6 +443,8 @@ class FundAnalyzer:
             factor("jensen_alpha", features.get("jensen_alpha"), self._score_positive_ratio(features.get("jensen_alpha"), 0.08), 0.06, "feature_matrix", "neutral_when_missing"),
             factor("information_ratio", features.get("information_ratio"), self._score_positive_ratio(features.get("information_ratio"), 0.8), 0.04, "feature_matrix", "neutral_when_missing"),
             factor("beta", features.get("beta"), self._score_beta_factor(features.get("beta")), 0.02, "feature_matrix", "neutral_when_missing"),
+            factor("win_rate_1y", features.get("win_rate_1y"), self._score_positive_ratio(features.get("win_rate_1y"), 0.6), 0.05, "feature_matrix", "neutral_when_missing"),
+            factor("calmar_ratio_1y", features.get("calmar_ratio_1y"), self._score_positive_ratio(features.get("calmar_ratio_1y"), 1.0), 0.05, "feature_matrix", "neutral_when_missing"),
         ]
 
         return {"macro": macro, "meso": meso, "micro": micro}
@@ -673,129 +612,13 @@ class FundAnalyzer:
         return stress_test(self.funds)
 
     def _compute_perf_from_nav(self, code: str) -> dict:
-        """
-        从净值数据自算波动率/最大回撤/夏普比率（perf API 失败时的降级方案）。
-
-        当前 AKShare 的 fund_individual_analysis_xq 对部分新成立基金（如 ETF 联接、
-        指数基金 C 类份额）返回 'index_data_list' KeyError，这些基金有净值历史但无
-        预先计算的绩效指标。本方法按以下公式从日频净值自算：
-
-        - 年化波动率 = std(日收益率) × sqrt(252) × 100
-        - 最大回撤 = 累计收益曲线中的最大峰值到谷值跌幅
-        - 夏普比率 ≈ (日超额收益均值 / 日超额收益标准差) × sqrt(252)
-          假定无风险利率 2.5%
-
-        数据源评估：
-        - AKShare: 覆盖 A 股/港股基金主力数据源，稳定性可接受
-        - tushare: 需要 token，专业版收费；暂不作为备选
-        - 东财/天天基金网页: 结构不稳定，频繁变更，维护成本高
-        - 来自 NAV 自算是最可靠的降级方案，无需额外数据源
-
-        当前不需额外数据源。若未来需要更多指标（如 Alpha/Beta/信息比率），
-        可用指数基准（沪深300/纳斯达克100）回归计算。
-        """
-        import numpy as np
-
         nav_df = self.funds[code].get("nav")
-        if nav_df is None or nav_df.empty or "日增长率" not in nav_df.columns:
-            return {"近1年": {}, "近3年": {}}
-
-        returns = nav_df["日增长率"].dropna().values / 100.0
-        if len(returns) < 30:
-            return {"近1年": {}, "近3年": {}}
-
-        # 近1年指标（最后 252 个交易日）
-        if len(returns) >= 252:
-            returns_1y = returns[-252:]
-            vol_1y = np.std(returns_1y) * np.sqrt(252) * 100
-            excess_1y = returns_1y - (0.025 / 252)
-            sharpe_1y = (np.mean(excess_1y) / np.std(excess_1y)) * np.sqrt(252) if np.std(excess_1y) > 0 else 0
-            cum_1y = (1 + pd.Series(returns_1y)).cumprod()
-            rolling_max_1y = cum_1y.expanding().max()
-            dd_1y = abs(((cum_1y - rolling_max_1y) / rolling_max_1y).min()) * 100 if len(cum_1y) > 0 else 0
-        else:
-            vol_1y = np.std(returns) * np.sqrt(252) * 100
-            excess_1y = returns - (0.025 / 252)
-            sharpe_1y = (np.mean(excess_1y) / np.std(excess_1y)) * np.sqrt(252) if np.std(excess_1y) > 0 else 0
-            dd_1y = 0
-
-        # 近3年指标（全量数据）
-        vol_3y = np.std(returns) * np.sqrt(252) * 100
-        excess_3y = returns - (0.025 / 252)
-        sharpe_3y = (np.mean(excess_3y) / np.std(excess_3y)) * np.sqrt(252) if np.std(excess_3y) > 0 else 0
-        cum_all = (1 + pd.Series(returns)).cumprod()
-        rolling_max_all = cum_all.expanding().max()
-        dd_3y = abs(((cum_all - rolling_max_all) / rolling_max_all).min()) * 100 if len(cum_all) > 0 else 0
-
-        result = {
-            "近1年": {"annual_volatility": round(vol_1y, 2),
-                       "sharpe_ratio": round(float(sharpe_1y), 2),
-                       "max_drawdown": round(float(dd_1y), 2)},
-            "近3年": {"annual_volatility": round(vol_3y, 2),
-                       "sharpe_ratio": round(float(sharpe_3y), 2),
-                       "max_drawdown": round(float(dd_3y), 2)},
-        }
+        result = self._metrics.compute_perf_from_nav(nav_df)
         self.funds[code]["perf"] = result
         return result
 
     def _compute_advanced_metrics(self, code: str) -> dict:
-        """计算信息比率、詹森 Alpha、特雷诺比率。
-
-        基准: QDII 用纳斯达克 (.IXIC)，国内用沪深300 (sh000300)。
-        无风险利率: 2.5%。
-        """
-        import numpy as np
-
-        nav_df = self.funds[code].get("nav")
-        if nav_df is None or nav_df.empty or "日增长率" not in nav_df.columns:
-            return {}
-
-        returns = nav_df["日增长率"].dropna().values / 100.0
-        if len(returns) < 60:
-            return {}
-
-        basic = self.funds[code].get("basic", {})
-        ftype = basic.get("fund_type", "")
-        is_qdii = "QDII" in ftype
-
-        try:
-            import akshare as ak
-            if is_qdii:
-                bench_df = ak.index_us_stock_sina(symbol=".IXIC")
-                bench_df["date"] = pd.to_datetime(bench_df["date"])
-                bench_df["return"] = bench_df["close"].pct_change()
-            else:
-                bench_df = ak.stock_zh_index_daily(symbol="sh000300")
-                bench_df["date"] = pd.to_datetime(bench_df["date"])
-                bench_df["return"] = bench_df["close"].pct_change()
-            bench_returns = bench_df["return"].dropna().values
-            bench_returns = bench_returns[-len(returns):] if len(bench_returns) > len(returns) else bench_returns
-        except Exception:
-            return {}
-
-        if len(bench_returns) < 30:
-            return {}
-
-        min_len = min(len(returns), len(bench_returns))
-        fund_r = returns[-min_len:]
-        bench_r = bench_returns[-min_len:]
-
-        rf_daily = 0.025 / 252
-
-        cov = np.cov(fund_r, bench_r)[0][1]
-        var = np.var(bench_r)
-        beta = cov / var if var > 0 else 1.0
-
-        excess = fund_r - bench_r
-        ir = (np.mean(excess) / np.std(excess)) * np.sqrt(252) if np.std(excess) > 0 else 0
-
-        alpha = (np.mean(fund_r - rf_daily) - beta * np.mean(bench_r - rf_daily)) * 252
-
-        treynor = (np.mean(fund_r - rf_daily) * 252) / beta if abs(beta) > 1e-6 else 0
-
-        return {
-            "information_ratio": round(float(ir), 4),
-            "jensen_alpha": round(float(alpha), 4),
-            "treynor_ratio": round(float(treynor), 4),
-            "beta": round(float(beta), 4),
-        }
+        fund = self.funds.get(code, {})
+        nav_df = fund.get("nav")
+        basic = fund.get("basic", {})
+        return self._metrics.advanced_metrics(nav_df, basic)
