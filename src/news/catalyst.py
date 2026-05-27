@@ -41,7 +41,7 @@ _EVENT_PATTERNS = [
 ]
 
 
-def _rule_event_distill(text: str) -> Optional[Dict]:
+def _rule_event_distill(text: str) -> dict | None:
     """规则层事件蒸馏 —— 基于关键词匹配。
 
     Returns:
@@ -75,7 +75,7 @@ def _rule_event_distill(text: str) -> Optional[Dict]:
     }
 
 
-def _llm_event_distill(title: str, content: str = "") -> Optional[Dict]:
+def _llm_event_distill(title: str, content: str = "") -> dict | None:
     """LLM 层事件蒸馏 —— 调用模型解析新闻事件。
 
     LLM 失败时静默降级，不阻塞主流程。
@@ -213,11 +213,11 @@ def compute_relevance(
 
 
 def compute_catalyst_score(
-    news_items: List[Dict],
+    news_items: list[Dict],
     entity_profile,
     today=None,
     lam: float = None,
-) -> List[Dict]:
+) -> list[Dict]:
     """对一组新闻计算催化评分（含事件蒸馏 + 相关度 + 时间衰减）。
 
     weighted_score = severity × impact × relevance × exp(-λ × Δt)
@@ -291,7 +291,7 @@ def compute_catalyst_score(
 def aggregate_fund_brief(
     fund_code: str,
     fund_name: str,
-    catalyst_news: List[Dict],
+    catalyst_news: list[Dict],
     date_str: str = "",
 ) -> Dict:
     """将多条新闻的催化评分聚合为基金级简报。

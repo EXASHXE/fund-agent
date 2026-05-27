@@ -3,7 +3,7 @@ from datetime import date, datetime
 from typing import Dict, List
 
 
-def filter_relevant_catalysts(catalyst_news: List[Dict], min_relevance: float = 0.2) -> List[Dict]:
+def filter_relevant_catalysts(catalyst_news: list[Dict], min_relevance: float = 0.2) -> list[Dict]:
     """Keep catalyst items that are directly relevant enough for scoring."""
     return [
         item for item in (catalyst_news or [])
@@ -91,7 +91,7 @@ def evaluate_news_result(
     }
 
 
-def _holding_coverage(news_list: List[Dict], entity_profile) -> Dict:
+def _holding_coverage(news_list: list[Dict], entity_profile) -> Dict:
     """Return portfolio-holding coverage evidence for an agent decision."""
     holdings = getattr(entity_profile, "holdings", []) if entity_profile else []
     if not holdings:
@@ -180,7 +180,7 @@ def _parse_weight(value) -> float:
         return 0.0
 
 
-def _freshness_score(news_list: List[Dict], as_of_date: date) -> float:
+def _freshness_score(news_list: list[Dict], as_of_date: date) -> float:
     dates = []
     for item in news_list:
         parsed = _parse_date(item.get("date") or item.get("publish_date"))
@@ -198,7 +198,7 @@ def _freshness_score(news_list: List[Dict], as_of_date: date) -> float:
     return 0.15
 
 
-def _relevance_score(catalysts: List[Dict]) -> float:
+def _relevance_score(catalysts: list[Dict]) -> float:
     if not catalysts:
         return 0.0
     values = [

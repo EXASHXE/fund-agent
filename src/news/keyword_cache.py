@@ -12,7 +12,7 @@ def default_keyword_cache_path() -> str:
     return str(Path(__file__).resolve().parents[2] / "data" / "cache" / "news_keyword_profiles.json")
 
 
-def load_valid_keyword_cache(path: str, holding_codes: List[str], today: date) -> Optional[Dict[str, Any]]:
+def load_valid_keyword_cache(path: str, holding_codes: list[str], today: date) -> dict[str, Any] | None:
     payload = _read_json(path)
     if not payload:
         return None
@@ -39,7 +39,7 @@ def load_valid_keyword_cache(path: str, holding_codes: List[str], today: date) -
     return payload
 
 
-def _read_json(path: str) -> Optional[Dict[str, Any]]:
+def _read_json(path: str) -> dict[str, Any] | None:
     if not path:
         return None
     p = Path(path)
@@ -51,7 +51,7 @@ def _read_json(path: str) -> Optional[Dict[str, Any]]:
         return None
 
 
-def _parse_date(value) -> Optional[date]:
+def _parse_date(value) -> date | None:
     if not value:
         return None
     if isinstance(value, date):

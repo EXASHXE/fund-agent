@@ -105,7 +105,7 @@ def _parse_float_pct(value) -> float:
         return 0.0
 
 
-def extract_holding_keywords(fund_code: str, limit: int = 10) -> Tuple[List[str], List[str]]:
+def extract_holding_keywords(fund_code: str, limit: int = 10) -> tuple[list[str], list[str]]:
     """从基金最新重仓中提取股票代码和名称关键词。"""
     stock_codes = []
     keywords = []
@@ -148,7 +148,7 @@ def build_news_search_profile(
     fund_code: str,
     fund_name: str,
     fund_type: str = "",
-    agent_keywords: List[str] = None,
+    agent_keywords: list[str] = None,
     limit: int = 10,
 ) -> Dict:
     """构造新闻搜索画像。
@@ -207,13 +207,13 @@ def build_news_search_profile(
 def fetch_fund_news(
     fund_code: str,
     fund_name: str,
-    keywords: List[str] = None,
+    keywords: list[str] = None,
     days: int = 7,
     fund_type: str = "",
     shared_seen: set = None,
     max_items: int = 50,
     as_of: date = None,
-) -> List[Dict]:
+) -> list[Dict]:
     """获取与基金相关的近期新闻。优先按重仓股票搜索，次选基金名称/代码。
 
     shared_seen: 跨基金去重集合。传入后同一新闻不会在不同基金间重复出现。
@@ -356,12 +356,12 @@ def _fetch_sina_roll_news_df(pages: int = 5):
 
 
 def _append_news_from_df(
-    all_news: List[Dict],
+    all_news: list[Dict],
     seen: set,
     df,
     cutoff: date,
     source_hint: str = "",
-    include_terms: List[str] = None,
+    include_terms: list[str] = None,
     max_date: date = None,
     forced_match_term: str = None,
 ):
@@ -425,7 +425,7 @@ def _append_news_from_df(
         })
 
 
-def _pick_first(row, names: List[str]) -> str:
+def _pick_first(row, names: list[str]) -> str:
     for name in names:
         if name in row and row.get(name) is not None:
             value = str(row.get(name)).strip()
@@ -434,12 +434,12 @@ def _pick_first(row, names: List[str]) -> str:
     return ""
 
 
-def _matches_terms(text: str, terms: List[str]) -> bool:
+def _matches_terms(text: str, terms: list[str]) -> bool:
     """中英文匹配：英文启用词边界，中文保持子串匹配。"""
     return bool(_matched_terms(text, terms))
 
 
-def _matched_terms(text: str, terms: List[str]) -> List[str]:
+def _matched_terms(text: str, terms: list[str]) -> list[str]:
     """Return matched search terms with word-boundary awareness for English terms."""
     if not text:
         return []
@@ -460,7 +460,7 @@ def _matched_terms(text: str, terms: List[str]) -> List[str]:
     return matched
 
 
-def _degrade_keywords(terms: List[str]) -> List[str]:
+def _degrade_keywords(terms: list[str]) -> list[str]:
     """关键词降级：截取前3字用于二次扫描。"""
     degraded = []
     for t in terms:
@@ -478,7 +478,7 @@ def _degrade_keywords(terms: List[str]) -> List[str]:
     return result
 
 
-def _fallback_fund_keywords(fund_name: str, fund_type: str = "") -> List[str]:
+def _fallback_fund_keywords(fund_name: str, fund_type: str = "") -> list[str]:
     text = f"{fund_name or ''} {fund_type or ''}"
     terms = []
     core_name = (fund_name or "").split("(")[0].split("（")[0].strip()
@@ -518,7 +518,7 @@ def _fallback_fund_keywords(fund_name: str, fund_type: str = "") -> List[str]:
     return terms
 
 
-def _fund_industries(fund_profile: Dict) -> List[str]:
+def _fund_industries(fund_profile: Dict) -> list[str]:
     """从基金画像提取相关申万行业名，用于定向拉取行业新闻。"""
     if not fund_profile:
         return []

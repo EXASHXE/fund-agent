@@ -24,7 +24,7 @@ def run_news_pipeline(
     days: int = 7,
     report_date=None,
     max_workers: int = None,
-) -> List[Dict]:
+) -> list[Dict]:
     """运行完整新闻流水线：持仓画像 → 定向采集 → 去重 → 蒸馏 → 简报。
 
     Args:
@@ -54,7 +54,7 @@ def run_news_pipeline(
             for holding in holdings
         ]
 
-    results: List[Dict] = [None] * len(holdings)
+    results: list[Dict] = [None] * len(holdings)
     with ThreadPoolExecutor(max_workers=worker_count) as executor:
         future_to_index = {
             executor.submit(
@@ -257,7 +257,7 @@ def _empty_news_result(
     return payload
 
 
-def _partition_news_as_of(news_list: List[Dict], as_of_date) -> tuple:
+def _partition_news_as_of(news_list: list[Dict], as_of_date) -> tuple:
     """Split news into report evidence, future observations and undated samples."""
     from datetime import datetime
 

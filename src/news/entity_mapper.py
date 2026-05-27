@@ -40,8 +40,8 @@ _STOCK_ALIAS = {
 def entity_profile_from_fund(
     fund_code: str,
     fund_name: str = "",
-    holdings: List[Dict] = None,
-    sectors: List[Dict] = None,
+    holdings: list[Dict] = None,
+    sectors: list[Dict] = None,
 ) -> EntityProfile:
     """从基金持仓和行业配置构建实体画像。
 
@@ -120,7 +120,7 @@ def entity_profile_from_fund(
     )
 
 
-def all_search_terms(profile: EntityProfile) -> List[str]:
+def all_search_terms(profile: EntityProfile) -> list[str]:
     """汇总所有可用于搜索的关键词（去重优先）"""
     terms = []
     seen = set()

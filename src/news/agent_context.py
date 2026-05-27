@@ -10,8 +10,8 @@ from typing import Dict, List
 def build_news_judgment_context(
     fund_name: str,
     fund_code: str,
-    news_list: List[Dict],
-    daily_aggregates: List[Dict],
+    news_list: list[Dict],
+    daily_aggregates: list[Dict],
     nav_summary: str,
     holding_context: str = "",
 ) -> Dict:
@@ -72,9 +72,9 @@ def build_score_judgment_context(fund_context: Dict, rule_score: Dict) -> Dict:
 
 
 def build_recommendation_judgment_context(
-    recommendations: List[Dict],
-    holding_profiles: List[Dict],
-    hot_sectors: Dict[str, float],
+    recommendations: list[Dict],
+    holding_profiles: list[Dict],
+    hot_sectors: dict[str, float],
 ) -> Dict:
     """整理推荐候选，供 agent 去同质化重排和取舍。"""
     return {
@@ -103,7 +103,7 @@ def build_news_relevance_task(
     fund_name: str,
     fund_code: str,
     entity_profile,
-    news_with_catalyst: List[Dict],
+    news_with_catalyst: list[Dict],
 ) -> Dict:
     """构造新闻相关性判断任务，供 Agent 在执行 skill 时使用。
 

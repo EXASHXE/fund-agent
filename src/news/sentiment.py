@@ -133,7 +133,7 @@ def _compute_news_impact(news_item: dict, holding_keywords: list = None) -> floa
     return round(base_impact, 2)
 
 
-def _extract_atomic_keywords(text: str) -> List[str]:
+def _extract_atomic_keywords(text: str) -> list[str]:
     """从文本中提取原子化产业关键词（白名单精确匹配）
     
     返回无空格、无泛化词的原子名词列表，去重保序。
@@ -154,9 +154,9 @@ def _extract_atomic_keywords(text: str) -> List[str]:
 # ============================================================
 
 def analyze_sentiment(
-    news_list: List[Dict],
+    news_list: list[Dict],
     holding_keywords: list = None
-) -> List[Dict]:
+) -> list[Dict]:
     """对新闻列表进行情感分析（基于金融极性词典）
     
     每项添加: sentiment_score, sentiment_label, severity, impact, keywords
@@ -197,9 +197,9 @@ def analyze_sentiment(
 
 
 def daily_sentiment_aggregate(
-    news_with_sentiment: List[Dict],
+    news_with_sentiment: list[Dict],
     lam: float = None
-) -> List[Dict]:
+) -> list[Dict]:
     """按日聚合情绪，并执行指数时间衰减加权归一
     
     Args:
@@ -277,7 +277,7 @@ def daily_sentiment_aggregate(
     return daily_aggs
 
 
-def extract_sector_keywords(news_list: List[Dict]) -> List[str]:
+def extract_sector_keywords(news_list: list[Dict]) -> list[str]:
     """从新闻列表提取行业关键词（兼容旧接口）
     
     使用原子化白名单匹配，按频率排序返回前 20。
