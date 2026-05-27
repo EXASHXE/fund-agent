@@ -7,14 +7,14 @@ import pandas as pd
 
 from src.output.report import _render_daily_attribution_section, _render_execution_status
 from src.cli import cmd_analyze
-from src.services.portfolio_service import build_workflow_context
+from src.services.workflow_context import build_workflow_context
 
 
 class WorkflowContextTest(unittest.TestCase):
     def test_monday_before_cutoff_uses_non_trade_day_mode(self):
         config = SimpleNamespace(holdings=[])
-        with patch("src.services.portfolio_service.shared_today", lambda: date(2026, 5, 18)), \
-             patch("src.services.portfolio_service.effective_report_date", lambda: date(2026, 5, 15)), \
+        with patch("src.services.workflow_context.shared_today", lambda: date(2026, 5, 18)), \
+             patch("src.services.workflow_context.effective_report_date", lambda: date(2026, 5, 15)), \
              patch("src.engine.calendar.is_trade_day", lambda d: d == date(2026, 5, 18)):
             ctx = build_workflow_context(config, {"by_fund": {}, "funds": []})
 
@@ -87,8 +87,8 @@ class WorkflowContextTest(unittest.TestCase):
                 "017436": {"settle_delay": 2, "nav_date": "2026-05-21", "current_nav": 2, "total_shares": 20, "engine_events": []},
             },
         }
-        with patch("src.services.portfolio_service.shared_today", lambda: date(2026, 5, 22)), \
-             patch("src.services.portfolio_service.effective_report_date", lambda: date(2026, 5, 22)), \
+        with patch("src.services.workflow_context.shared_today", lambda: date(2026, 5, 22)), \
+             patch("src.services.workflow_context.effective_report_date", lambda: date(2026, 5, 22)), \
              patch("src.engine.calendar.is_trade_day", lambda d: True):
             ctx = build_workflow_context(config, holdings)
 
@@ -108,8 +108,8 @@ class WorkflowContextTest(unittest.TestCase):
                 {"title": "口径内消息", "date": "2026-05-22"},
             ],
         }]
-        with patch("src.services.portfolio_service.shared_today", lambda: date(2026, 5, 23)), \
-             patch("src.services.portfolio_service.effective_report_date", lambda: date(2026, 5, 22)), \
+        with patch("src.services.workflow_context.shared_today", lambda: date(2026, 5, 23)), \
+             patch("src.services.workflow_context.effective_report_date", lambda: date(2026, 5, 22)), \
              patch("src.engine.calendar.is_trade_day", lambda d: True):
             ctx = build_workflow_context(config, {"by_fund": {}, "funds": []}, news_data)
 

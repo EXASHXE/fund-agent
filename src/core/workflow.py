@@ -11,7 +11,8 @@ from src.services.news_service import (
     news_context_by_code,
     write_keyword_request_and_exit,
 )
-from src.services.portfolio_service import build_workflow_context, compute_holdings
+from src.services.portfolio_service import compute_holdings
+from src.services.workflow_context import build_workflow_context
 
 from src.services.report_service import load_decisions_for_run, render_analysis_report
 from src.services.scoring_service import attach_decision_evidence, attach_score_trends
