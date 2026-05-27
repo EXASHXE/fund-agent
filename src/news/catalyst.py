@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import List, Dict, Optional
 from collections import defaultdict
 
-from src.news.config import LLM_CONFIG
+from src.news.schemas import LLM_CONFIG
 from src.config.defaults import QUANT_CONFIG
 
 
