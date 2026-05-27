@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 CACHE_VERSION = "news_keyword_profiles.v1"
-REQUEST_VERSION = "news_keyword_request.v1"
 MAX_CACHE_AGE_DAYS = 14
 
 

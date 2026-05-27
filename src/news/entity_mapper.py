@@ -1,5 +1,5 @@
 """持仓实体画像构建器 —— 从基金重仓/行业配置生成 EntityProfile"""
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict
 from src.news.schemas import EntityProfile
 
 

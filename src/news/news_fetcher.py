@@ -9,21 +9,24 @@ import requests
 import json
 import pandas as pd
 from datetime import datetime
+from threading import RLock
 
 _AK_CACHE = {}
 _LAST_AK_MODULE = None
+_AK_CACHE_LOCK = RLock()
 
 def _cached_ak_call(func_name: str, *args, **kwargs):
     """带缓存的 AKShare 调用，支持在 sys.modules['akshare'] 变更（如测试 Mock）时自动清空缓存。"""
     global _LAST_AK_MODULE, _AK_CACHE
     current_ak = sys.modules.get("akshare")
-    if current_ak is not _LAST_AK_MODULE:
-        _AK_CACHE.clear()
-        _LAST_AK_MODULE = current_ak
 
     key = (func_name, str(args), str(sorted(kwargs.items())))
-    if key in _AK_CACHE:
-        return _AK_CACHE[key]
+    with _AK_CACHE_LOCK:
+        if current_ak is not _LAST_AK_MODULE:
+            _AK_CACHE.clear()
+            _LAST_AK_MODULE = current_ak
+        if key in _AK_CACHE:
+            return _AK_CACHE[key]
 
     import akshare as ak
     func = getattr(ak, func_name)
@@ -33,7 +36,8 @@ def _cached_ak_call(func_name: str, *args, **kwargs):
     for attempt in range(3):
         try:
             res = func(*args, **kwargs)
-            _AK_CACHE[key] = res
+            with _AK_CACHE_LOCK:
+                _AK_CACHE[key] = res
             return res
         except Exception as e:
             last_exc = e
@@ -105,7 +109,6 @@ def extract_holding_keywords(fund_code: str, limit: int = 10) -> Tuple[List[str]
     """从基金最新重仓中提取股票代码和名称关键词。"""
     stock_codes = []
     keywords = []
-    holding_rows = []
     for year in ["2025", "2024"]:
         try:
             df = _cached_ak_call("fund_portfolio_hold_em", symbol=fund_code, date=year)
@@ -122,13 +125,7 @@ def extract_holding_keywords(fund_code: str, limit: int = 10) -> Tuple[List[str]
                         if eng_key.lower() in name.lower() or eng_key.lower() == code.lower():
                             translated_kw = chi_val
                             break
-                            
-                    weight = _pick_first(row, ["占净值比例", "持仓占比", "占比", "持股占比"])
-                    holding_rows.append({
-                        "stock_code": code,
-                        "stock_name": name,
-                        "weight": weight,
-                    })
+
                     if name and len(name) >= 2:
                         keywords.append(name)
                     if translated_kw and translated_kw not in keywords:

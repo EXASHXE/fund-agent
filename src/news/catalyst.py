@@ -7,7 +7,7 @@
 import json
 import numpy as np
 import urllib.request
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import List, Dict, Optional
 from collections import defaultdict
 

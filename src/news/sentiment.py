@@ -6,10 +6,9 @@
 日频聚合后执行指数时间衰减加权归一。
 """
 
-import re
 import numpy as np
 from collections import Counter
-from typing import List, Dict, Optional
+from typing import List, Dict
 from src.config.defaults import QUANT_CONFIG
 
 
