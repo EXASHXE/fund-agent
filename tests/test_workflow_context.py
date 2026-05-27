@@ -5,17 +5,18 @@ from unittest.mock import patch
 
 import pandas as pd
 
-from src.cli import _build_workflow_context, cmd_analyze
-from src.output.report import _render_workflow_focus
+from src.output.report import _render_daily_attribution_section, _render_execution_status
+from src.cli import cmd_analyze
+from src.services.portfolio_service import build_workflow_context
 
 
 class WorkflowContextTest(unittest.TestCase):
     def test_monday_before_cutoff_uses_non_trade_day_mode(self):
         config = SimpleNamespace(holdings=[])
-        with patch("src.cli._shared_today", lambda: date(2026, 5, 18)), \
-             patch("src.cli.effective_report_date", lambda: date(2026, 5, 15)), \
+        with patch("src.services.portfolio_service.shared_today", lambda: date(2026, 5, 18)), \
+             patch("src.services.portfolio_service.effective_report_date", lambda: date(2026, 5, 15)), \
              patch("src.engine.calendar.is_trade_day", lambda d: d == date(2026, 5, 18)):
-            ctx = _build_workflow_context(config, {"by_fund": {}, "funds": []})
+            ctx = build_workflow_context(config, {"by_fund": {}, "funds": []})
 
         self.assertTrue(ctx["run_is_trade_day"])
         self.assertFalse(ctx["is_trade_day"])
@@ -42,10 +43,9 @@ class WorkflowContextTest(unittest.TestCase):
             }],
         }
 
-        report = _render_workflow_focus(ctx, holdings, scores=[], news_data=[])
+        report = "\n".join(_render_daily_attribution_section(ctx, holdings, {}))
 
-        self.assertIn("当日盈亏与贡献分布", report)
-        self.assertIn("半导体订单增长", report)
+        self.assertIn("归因分析", report)
         self.assertNotIn("周期多维收益贡献", report)
 
     def test_non_trade_day_report_renders_weekly_review_not_daily_review(self):
@@ -68,10 +68,10 @@ class WorkflowContextTest(unittest.TestCase):
             }],
         }
 
-        report = _render_workflow_focus(ctx, holdings, scores=[], news_data=[])
+        report = "\n".join(_render_daily_attribution_section(ctx, holdings, {}))
 
         self.assertIn("周期多维收益贡献", report)
-        self.assertNotIn("当日盈亏与贡献分布", report)
+        self.assertNotIn("归因分析", report)
 
     def test_settlement_table_covers_all_funds_after_dca_table(self):
         holding_a = SimpleNamespace(code="000001", name="国内基金", type="domestic", dca=None)
@@ -87,13 +87,13 @@ class WorkflowContextTest(unittest.TestCase):
                 "017436": {"settle_delay": 2, "nav_date": "2026-05-21", "current_nav": 2, "total_shares": 20, "engine_events": []},
             },
         }
-        with patch("src.cli._shared_today", lambda: date(2026, 5, 22)), \
-             patch("src.cli.effective_report_date", lambda: date(2026, 5, 22)), \
+        with patch("src.services.portfolio_service.shared_today", lambda: date(2026, 5, 22)), \
+             patch("src.services.portfolio_service.effective_report_date", lambda: date(2026, 5, 22)), \
              patch("src.engine.calendar.is_trade_day", lambda d: True):
-            ctx = _build_workflow_context(config, holdings)
+            ctx = build_workflow_context(config, holdings)
 
         self.assertEqual(len(ctx["settlement_rows"]), 2)
-        rendered = _render_workflow_focus(ctx, holdings)
+        rendered = _render_execution_status(ctx)
         self.assertIn("申购与净值结算状态", rendered)
         self.assertNotIn("QDII 结算状态", rendered)
 
@@ -108,10 +108,10 @@ class WorkflowContextTest(unittest.TestCase):
                 {"title": "口径内消息", "date": "2026-05-22"},
             ],
         }]
-        with patch("src.cli._shared_today", lambda: date(2026, 5, 23)), \
-             patch("src.cli.effective_report_date", lambda: date(2026, 5, 22)), \
+        with patch("src.services.portfolio_service.shared_today", lambda: date(2026, 5, 23)), \
+             patch("src.services.portfolio_service.effective_report_date", lambda: date(2026, 5, 22)), \
              patch("src.engine.calendar.is_trade_day", lambda d: True):
-            ctx = _build_workflow_context(config, {"by_fund": {}, "funds": []}, news_data)
+            ctx = build_workflow_context(config, {"by_fund": {}, "funds": []}, news_data)
 
         self.assertEqual(ctx["top_news"][0]["headline"], "口径内消息")
         self.assertTrue(all(item["date"] <= "2026-05-22" for item in ctx["top_news"]))
@@ -164,7 +164,7 @@ class WorkflowContextTest(unittest.TestCase):
             snapshot_after=False,
         )
 
-        def fake_news(config, analyzer, agent_news_plan=None, report_date=None):
+        def fake_news(analyzer, config, agent_news_plan=None, days=7, report_date=None, max_workers=None):
             calls.append("news")
             return [{"fund_code": "000001", "sentiment_mean": 0.6, "brief": {"trend": "bullish"}}]
 
@@ -173,14 +173,14 @@ class WorkflowContextTest(unittest.TestCase):
              patch("src.db.storage.FundStorage", lambda: store), \
              patch("src.analysis.scorer.FundAnalyzer", FakeAnalyzer), \
              patch("src.analysis.correlation.compute_correlations", lambda funds: pd.DataFrame()), \
-             patch("src.cli._compute_holdings", lambda store, config, codes, analyzer: {"by_fund": {}, "funds": [], "total_value": 0}), \
-             patch("src.cli._build_workflow_context", lambda config, holdings_data, news_data=None: {"is_trade_day": True}), \
+             patch("src.core.workflow.compute_holdings", lambda store, config, codes, analyzer: {"by_fund": {}, "funds": [], "total_value": 0}), \
+             patch("src.core.workflow.build_workflow_context", lambda config, holdings_data, news_data=None: {"is_trade_day": True}), \
              patch("src.news.keyword_cache.load_valid_keyword_cache", lambda path, codes, today=None: {"funds": {"000001": {"keywords": ["测试"]}}}), \
              patch("src.news.keyword_cache.default_keyword_cache_path", lambda: "/tmp/cache.json"), \
-             patch("src.cli._run_news_analysis", fake_news), \
+             patch("src.news.pipeline.run_news_pipeline", fake_news), \
              patch("src.output.report.generate_report", lambda *args, **kwargs: "report"), \
              patch("src.output.validator.post_process_report", lambda report, scores: report), \
-             patch("src.cli._save_snapshot", lambda *args, **kwargs: None):
+             patch("src.core.workflow.save_snapshot", lambda *args, **kwargs: None):
             cmd_analyze(args)
 
         self.assertEqual(calls[:2], ["news", "score"])
@@ -222,7 +222,7 @@ class WorkflowContextTest(unittest.TestCase):
 
         plan_passed_to_news = []
 
-        def fake_news(config, analyzer, agent_news_plan=None, report_date=None):
+        def fake_news(analyzer, config, agent_news_plan=None, days=7, report_date=None, max_workers=None):
             plan_passed_to_news.append(agent_news_plan)
             return [{"fund_code": "000001", "sentiment_mean": 0.6, "brief": {"trend": "bullish"}}]
 
@@ -231,15 +231,15 @@ class WorkflowContextTest(unittest.TestCase):
              patch("src.db.storage.FundStorage", lambda: store), \
              patch("src.analysis.scorer.FundAnalyzer", FakeAnalyzer), \
              patch("src.analysis.correlation.compute_correlations", lambda funds: pd.DataFrame()), \
-             patch("src.cli._compute_holdings", lambda store, config, codes, analyzer: {"by_fund": {}, "funds": [], "total_value": 0}), \
-             patch("src.cli._build_workflow_context", lambda config, holdings_data, news_data=None: {"is_trade_day": True}), \
+             patch("src.core.workflow.compute_holdings", lambda store, config, codes, analyzer: {"by_fund": {}, "funds": [], "total_value": 0}), \
+             patch("src.core.workflow.build_workflow_context", lambda config, holdings_data, news_data=None: {"is_trade_day": True}), \
              patch("src.news.keyword_cache.load_valid_keyword_cache", lambda path, codes, today=None: None), \
              patch("src.news.news_fetcher.extract_holding_keywords", lambda code, limit: ([], ["重仓股A"])), \
              patch("src.news.news_fetcher._fallback_fund_keywords", lambda name, fund_type: ["兜底词A"]), \
-             patch("src.cli._run_news_analysis", fake_news), \
+             patch("src.news.pipeline.run_news_pipeline", fake_news), \
              patch("src.output.report.generate_report", lambda *args, **kwargs: "report"), \
              patch("src.output.validator.post_process_report", lambda report, scores: report), \
-             patch("src.cli._save_snapshot", lambda *args, **kwargs: None), \
+             patch("src.core.workflow.save_snapshot", lambda *args, **kwargs: None), \
              patch("builtins.open", unittest.mock.mock_open()):
             cmd_analyze(args)
 
