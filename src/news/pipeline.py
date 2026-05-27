@@ -6,11 +6,13 @@
     results = run_news_pipeline(analyzer, config, agent_news_plan=None)
 """
 
+import hashlib
+import re
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime
 from typing import List, Dict
 from src.news.entity_mapper import entity_profile_from_fund, all_search_terms
-from src.news.deduplicator import exact_dedup, semantic_dedup, event_level_dedup
 from src.news.catalyst import compute_catalyst_score, aggregate_fund_brief
 from src.news.evaluator import evaluate_news_result, filter_relevant_catalysts
 
@@ -91,7 +93,6 @@ def _run_single_fund_news_pipeline(
 ) -> Dict:
     from src.news.news_fetcher import fetch_fund_news
     from src.news.sentiment import analyze_sentiment, daily_sentiment_aggregate
-    from src.news.correlate import news_nav_correlation
     from src.news.agent_context import build_news_judgment_context, build_news_relevance_task
     from src.services.news_service import build_nav_summary, planned_news_keywords
 
@@ -146,9 +147,9 @@ def _run_single_fund_news_pipeline(
         )
 
     # === Step 3: 多层去重 ===
-    news_list = exact_dedup(news_list)
-    news_list = semantic_dedup(news_list)
-    news_list = event_level_dedup(news_list)
+    news_list = _exact_dedup(news_list)
+    news_list = _semantic_dedup(news_list)
+    news_list = _event_level_dedup(news_list)
 
     # === Step 4: 情绪分析（兼容旧模块）===
     news_with_sent = analyze_sentiment(news_list, holding_keywords=stock_keywords)
@@ -175,7 +176,7 @@ def _run_single_fund_news_pipeline(
                 if r and not (hasattr(r, "__isnan__") and r != r):
                     nav_returns.append((d, float(r)))
 
-    corr = news_nav_correlation(daily_agg, nav_returns) if nav_returns else {}
+    corr = _news_nav_correlation(daily_agg, nav_returns) if nav_returns else {}
     sentiment_mean = (
         daily_agg[-1].get("decayed_sentiment_final", daily_agg[-1]["sentiment_mean"])
         if daily_agg else 0.5
@@ -275,3 +276,108 @@ def _partition_news_as_of(news_list: List[Dict], as_of_date) -> tuple:
         else:
             post_cutoff_news.append(item)
     return as_of_news, post_cutoff_news, undated_news
+
+
+def _news_nav_correlation(
+    sentiment_daily: list,
+    nav_daily_returns: list,
+    lag_days: list | None = None,
+) -> dict:
+    if lag_days is None:
+        lag_days = [0, 1, 3, 5]
+
+    try:
+        from scipy.stats import spearmanr
+    except ImportError:
+        return {lag: (0.0, 1.0) for lag in lag_days}
+
+    from datetime import timedelta
+
+    sent_map = {item["date"]: item["sentiment_mean"] for item in sentiment_daily}
+
+    results = {}
+    for lag in lag_days:
+        pairs = []
+        for nav_date, nav_return in nav_daily_returns:
+            sent_date_str = (nav_date - timedelta(days=lag)).isoformat()
+            if sent_date_str in sent_map:
+                pairs.append((sent_map[sent_date_str], nav_return))
+
+        if len(pairs) >= 5:
+            r, p = spearmanr([p[0] for p in pairs], [p[1] for p in pairs])
+            results[lag] = (round(r, 4), round(p, 4))
+        else:
+            results[lag] = (0.0, 1.0)
+
+    return results
+
+
+def _normalize_title(title: str) -> str:
+    if not title:
+        return ""
+    t = title.strip()
+    t = re.sub(r"\s+", "", t)
+    t = re.sub(r"[，,。\.！!？?\s\"\"''「」『』【】\[\]{}()（）《》]", "", t)
+    return t.lower()
+
+
+def _exact_dedup(news_list: list, seen: set | None = None) -> list:
+    if seen is None:
+        seen = set()
+    result = []
+    for item in news_list:
+        title = _normalize_title(item.get("title", ""))
+        key = hashlib.md5(title.encode()).hexdigest()
+        if key not in seen:
+            seen.add(key)
+            result.append(item)
+    return result
+
+
+def _semantic_dedup(news_list: list, threshold: float = 0.85) -> list:
+    if len(news_list) <= 1:
+        return news_list
+
+    texts = [_normalize_title(item.get("title", "")) for item in news_list]
+    keep = [True] * len(news_list)
+
+    for i in range(len(texts)):
+        if not keep[i]:
+            continue
+        words_i = set(texts[i])
+        if not words_i:
+            continue
+        for j in range(i + 1, len(texts)):
+            if not keep[j]:
+                continue
+            words_j = set(texts[j])
+            if not words_j:
+                continue
+            intersection = words_i & words_j
+            union = words_i | words_j
+            sim = len(intersection) / len(union) if union else 0
+            if sim >= threshold:
+                keep[j] = False
+
+    return [item for item, kept in zip(news_list, keep) if kept]
+
+
+def _event_level_dedup(news_list: list, time_window_hours: int = 6) -> list:
+    if len(news_list) <= 1:
+        return news_list
+
+    grouped = defaultdict(list)
+    for item in news_list:
+        title = item.get("title", "")
+        date_key = item.get("date", "") or item.get("publish_date", "") or ""
+        entity_hits = item.get("entity_hits", []) or item.get("matched_terms", [])
+        if entity_hits:
+            key = (date_key, tuple(sorted(entity_hits[:3])))
+        else:
+            key = (date_key, _normalize_title(title))
+        grouped[key].append(item)
+
+    result = []
+    for items in grouped.values():
+        result.append(items[0])
+    return result
