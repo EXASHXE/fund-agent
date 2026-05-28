@@ -6,13 +6,11 @@ import sys
 from src.routes.cli_router import run_cli
 from src.routes.commands import (
     cmd_analyze as _cmd_analyze,
-    cmd_diagnose,
     cmd_fetch,
     cmd_import,
     cmd_init,
     cmd_news,
     cmd_recommend,
-    cmd_score,
     cmd_snapshot,
     cmd_ui,
     command_handlers,
@@ -27,21 +25,13 @@ except ImportError:
     pass
 
 
-def request_agent_keywords_inline(
-    holding_codes: list,
-    fund_profiles: list,
-) -> dict | None:
-    """Runtime hook for an embedding agent to provide news keywords inline."""
-    return None
-
-
 def cmd_analyze(args):
     """Run the core analyze workflow."""
-    return _cmd_analyze(args, keyword_callback=request_agent_keywords_inline)
+    return _cmd_analyze(args)
 
 
 def main(argv=None):
-    handlers = command_handlers(keyword_callback=request_agent_keywords_inline)
+    handlers = command_handlers()
     handlers["analyze"] = cmd_analyze
     return run_cli(handlers, argv=argv)
 

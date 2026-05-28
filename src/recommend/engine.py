@@ -65,10 +65,58 @@ STYLE_KEYWORDS = {
 }
 
 
+# ------------------------------------------------------------
+# 原子化产业关键词白名单（精确匹配，从旧 sentiment 模块内联）
+# ------------------------------------------------------------
+_ATOMIC_INDUSTRY_KEYWORDS = [
+    # 半导体
+    "半导体", "芯片", "光刻机", "光刻胶", "晶圆", "封装", "HBM", "NAND", "DRAM",
+    "台积电", "中芯国际", "华虹", "寒武纪", "海光", "英伟达", "AMD", "ASML",
+    # AI/科技
+    "人工智能", "AI", "大模型", "算力", "数据中心", "CPO", "光模块",
+    "Meta", "谷歌", "微软", "亚马逊", "苹果", "特斯拉",
+    # 新能源
+    "新能源", "光伏", "锂电", "电池", "固态电池", "钠离子", "储能", "充电桩",
+    "碳酸锂", "宁德时代", "比亚迪", "赣锋", "阳光电源", "先导智能",
+    # 油气/能源
+    "石油", "原油", "天然气", "LNG", "布伦特", "OPEC",
+    "中国海油", "中国石油", "中国石化",
+    # 消费
+    "消费", "白酒", "茅台", "五粮液", "家电", "汽车",
+    # 医药
+    "医药", "创新药", "CXO", "医疗器械", "百济神州",
+    # 金融/地产
+    "银行", "券商", "保险", "地产",
+    # 港股
+    "港股", "恒生", "腾讯", "阿里巴巴", "美团",
+    # 周期
+    "黄金", "铜", "铝", "钢铁", "煤炭", "化工",
+]
+
+
+def _extract_atomic_keywords(text: str) -> list[str]:
+    """从文本中提取原子化产业关键词（去重保序）。"""
+    if not text:
+        return []
+    found = []
+    for kw in _ATOMIC_INDUSTRY_KEYWORDS:
+        if kw in text:
+            found.append(kw)
+    return list(dict.fromkeys(found))
+
+
+def extract_sector_keywords(news_list: list[Dict]) -> list[str]:
+    """从新闻列表提取行业关键词，按频率排序返回前 20。"""
+    all_kw = []
+    for item in news_list:
+        text = (item.get("title", "") or "") + " " + (item.get("content", "") or "")
+        all_kw.extend(_extract_atomic_keywords(text))
+    counter = Counter(all_kw)
+    return [kw for kw, _ in counter.most_common(20)]
+
+
 def extract_hot_sectors(news_results: List[Dict]) -> Dict[str, float]:
     """从多只基金的新闻分析结果中提取热点行业及热度得分。"""
-    from src.news.sentiment import extract_sector_keywords
-
     event_heat = Counter()
     all_news = []
     for nr in news_results or []:
@@ -147,13 +195,13 @@ def screen_funds(
     return unique[:limit]
 
 
-def build_holding_profiles(analyzer=None, holding_codes: Set[str] = None) -> List[Dict]:
-    """从已加载的持仓基金数据中构造相似度画像。"""
+def build_holding_profiles(funds=None, holding_codes: Set[str] = None) -> List[Dict]:
+    """从已加载的持仓基金数据 dict 中构造相似度画像。"""
     profiles = []
-    if not analyzer or not getattr(analyzer, "funds", None):
+    if not funds:
         return profiles
 
-    for code, fund in analyzer.funds.items():
+    for code, fund in funds.items():
         if holding_codes and code not in holding_codes:
             continue
         basic = fund.get("basic", {}) or {}

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+from dataclasses import asdict, is_dataclass
 from typing import Any, Mapping, Sequence
 
 
@@ -113,6 +114,9 @@ def build_report_evidence(
     by_fund = (holdings_data or {}).get("by_fund", {})
     funds = {}
     daily_clues = {}
+    news_evidence_v3 = {}
+    score_evidence_v3 = {}
+    strategy_evidence_v3 = {}
 
     for score in scores or []:
         code = score.get("fund_code")
@@ -136,6 +140,12 @@ def build_report_evidence(
             "factor_matrix": score.get("factor_matrix") or {},
             "trend_evidence": score.get("trend_evidence") or {},
             "risk_constraints": score.get("risk_constraints") or {},
+            "strategy_advice": (
+                score.get("_strategy_advice")
+                or score.get("strategy_advice")
+                or None
+            ),
+            "agent_score_context": score.get("agent_score_context") or {},
             "news_evidence": {
                 "news_count": news.get("news_count", 0),
                 "decayed_lexicon_signal": news.get("sentiment_mean"),
@@ -152,6 +162,30 @@ def build_report_evidence(
             "day_profit": metrics.get("day_profit"),
             "day_return_pct": metrics.get("day_return_pct"),
             "top_news_headlines": [n.get("title") for n in (news.get("news_list") or [])[:5]],
+        }
+        score_evidence_v3[code] = _plain_data(
+            score.get("score_evidence")
+            or score.get("_score_evidence")
+            or {}
+        )
+        strategy_evidence_v3[code] = _plain_data(
+            score.get("_strategy_advice")
+            or score.get("strategy_advice")
+            or {}
+        )
+
+    for news in news_data or []:
+        code = str(news.get("fund_code", ""))
+        if not code:
+            continue
+        news_evidence_v3[code] = {
+            "classified_news": _plain_data(news.get("classified_news") or {}),
+            "research_summaries": _plain_data(news.get("research_summaries") or []),
+            "extracted_events": _plain_data(
+                news.get("extracted_events")
+                or news.get("events")
+                or []
+            ),
         }
 
     corr_payload = correlations.to_dict() if hasattr(correlations, "to_dict") else {}
@@ -182,6 +216,13 @@ def build_report_evidence(
             "status": recommendation_status,
             "candidates": recommendations or [],
         },
+        "kg_snapshot": _plain_data(
+            (workflow_context or {}).get("kg_snapshot")
+            or {"fund_exposure": {}, "impact_chains": {}}
+        ),
+        "news_evidence": news_evidence_v3,
+        "score_evidence": score_evidence_v3,
+        "strategy_evidence": strategy_evidence_v3,
     }
 
 
@@ -194,6 +235,17 @@ def write_report_evidence(output_path: str, evidence: Mapping[str, Any]) -> str:
     with open(path, "w", encoding="utf-8") as handle:
         json.dump(evidence, handle, ensure_ascii=False, indent=2, default=str)
     return path
+
+
+def _plain_data(value: Any) -> Any:
+    """Convert dataclasses and common containers to JSON-friendly data."""
+    if is_dataclass(value):
+        return asdict(value)
+    if isinstance(value, Mapping):
+        return {str(key): _plain_data(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_plain_data(item) for item in value]
+    return value
 
 
 def _validate_fund_decision(code: str, baseline: Mapping[str, Any], decision: Any) -> None:

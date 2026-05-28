@@ -12,9 +12,9 @@ from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime
 from typing import List, Dict
-from src.news.entity_mapper import entity_profile_from_fund, all_search_terms
-from src.news.catalyst import compute_catalyst_score, aggregate_fund_brief
-from src.news.evaluator import evaluate_news_result, filter_relevant_catalysts
+from src.deprecated.entity_mapper import entity_profile_from_fund, all_search_terms
+from src.deprecated.catalyst import compute_catalyst_score, aggregate_fund_brief
+from src.deprecated.evaluator import evaluate_news_result, filter_relevant_catalysts
 
 
 def run_news_pipeline(
@@ -92,7 +92,7 @@ def _run_single_fund_news_pipeline(
     as_of_date: date,
 ) -> Dict:
     from src.news.news_fetcher import fetch_fund_news
-    from src.news.sentiment import analyze_sentiment, daily_sentiment_aggregate
+    from src.deprecated.sentiment import analyze_sentiment, daily_sentiment_aggregate
     from src.news.agent_context import build_news_judgment_context, build_news_relevance_task
     from src.services.news_service import build_nav_summary, planned_news_keywords
 

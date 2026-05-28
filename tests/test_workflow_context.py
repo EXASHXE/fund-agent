@@ -3,8 +3,10 @@ from datetime import date
 from types import SimpleNamespace
 from unittest.mock import patch
 
+import networkx as nx
 import pandas as pd
 
+from src.analysis.scoring.types import ScoreComponent
 from src.output.report import _render_daily_attribution_section, _render_execution_status
 from src.cli import cmd_analyze
 from src.services.workflow_context import build_workflow_context
@@ -116,42 +118,219 @@ class WorkflowContextTest(unittest.TestCase):
         self.assertEqual(ctx["top_news"][0]["headline"], "口径内消息")
         self.assertTrue(all(item["date"] <= "2026-05-22" for item in ctx["top_news"]))
 
-    def test_analyze_runs_news_before_scoring_and_passes_context(self):
-        calls = []
+
+    def test_use_agents_invokes_langgraph_research_graph(self):
+        graph_calls = []
+        render_calls = []
 
         class FakeAnalyzer:
             def __init__(self):
                 self.funds = {}
 
             def load_fund(self, code):
-                self.funds[code] = {"basic": {"name": "测试基金"}, "completeness": "A"}
-
-            def score_fund(self, code, news_context=None):
-                calls.append("score")
-                assert "news" in calls
-                assert news_context is not None
-                assert news_context["fund_code"] == code
                 return {
-                    "fund_code": code,
-                    "fund_name": "测试基金",
-                    "data_completeness": "A",
-                    "composite_score": 70,
-                    "score_level": "yellow",
-                    "score_level_emoji": "🟡",
-                    "macro_score": 14,
-                    "macro_basis": "",
-                    "macro_detail": {},
-                    "meso_score": 20,
-                    "meso_basis": "",
-                    "meso_detail": {},
-                    "micro_score": 36,
-                    "micro_basis": "",
-                    "micro_detail": {},
-                    "recommendation": "持有",
-                    "stop_profit_pct": 20,
-                    "stop_loss_pct": -15,
-                    "action_logic": "",
+                    "code": code,
+                    "basic": {"name": "测试基金", "fund_type": "stock"},
+                    "completeness": "A",
+                    "nav": [1.0, 1.02, 1.04],
+                    "holdings": pd.DataFrame([{
+                        "股票代码": "600519",
+                        "股票名称": "贵州茅台",
+                        "占净值比例": 6.0,
+                        "行业": "食品饮料",
+                    }]),
+                    "sectors": pd.DataFrame([{"行业名称": "食品饮料", "占净值比例": 30.0}]),
                 }
+
+        class FakeResearchGraph:
+            def invoke(self, state):
+                graph_calls.append(state)
+                return {
+                    "search_plans": {"000001": {}},
+                    "scored_news": {"000001": []},
+                    "extracted_events": {"000001": []},
+                    "market_regime": "trending",
+                    "quant_scores": {"000001": ScoreComponent(
+                        score=81.0,
+                        detail={"sharpe": 1.2},
+                        weights={"sharpe": 0.4},
+                        confidence=0.82,
+                    )},
+                    "fundamental_scores": {"000001": ScoreComponent(
+                        score=73.0,
+                        detail={"industry": "positive"},
+                        weights={},
+                        confidence=0.75,
+                    )},
+                    "event_scores": {"000001": ScoreComponent(
+                        score=66.0,
+                        detail={"event_count": 1},
+                        weights={},
+                        confidence=0.61,
+                    )},
+                    "position_scores": {"000001": ScoreComponent(
+                        score=69.0,
+                        detail={"concentration": "moderate"},
+                        weights={},
+                        confidence=0.7,
+                    )},
+                    "timing_scores": {"000001": ScoreComponent(
+                        score=64.0,
+                        detail={"watch_signal": "wait"},
+                        weights={},
+                        confidence=0.68,
+                    )},
+                    "strategies": {"000001": SimpleNamespace(
+                        action=SimpleNamespace(value="hold"),
+                        confidence=0.7,
+                        risk_level="medium",
+                        reasons=["测试策略"],
+                        trigger_events=[],
+                        position_suggestion="hold",
+                        time_horizon="medium",
+                    )},
+                    "risk_assessments": {"000001": {}},
+                    "final_scores": {"000001": 70.0},
+                    "portfolio_strategy": {"fund_count": 1},
+                }
+
+        class FakeNewsPipeline:
+            def __init__(self, *args, **kwargs):
+                pass
+
+            def run(self, codes, graph):
+                return {code: {"scored_news": [], "events": []} for code in codes}
+
+        class FakeStrategyEngine:
+            def analyze_fund(self, code, fund_data, graph, events):
+                return SimpleNamespace(
+                    action=SimpleNamespace(value="hold"),
+                    confidence=0.7,
+                    risk_level="medium",
+                    reasons=["测试策略"],
+                    trigger_events=[],
+                    position_suggestion="hold",
+                    time_horizon="medium",
+                )
+
+        score = {
+            "fund_code": "000001",
+            "fund_name": "测试基金",
+            "data_completeness": "A",
+            "composite_score": 70,
+            "score_level": "yellow",
+            "score_level_emoji": "🟡",
+            "macro_score": 14,
+            "macro_basis": "",
+            "meso_score": 20,
+            "meso_basis": "",
+            "micro_score": 36,
+            "micro_basis": "",
+            "recommendation": "持有",
+            "stop_profit_pct": 20,
+            "stop_loss_pct": -15,
+            "action_logic": "",
+        }
+        config = SimpleNamespace(holdings=[SimpleNamespace(code="000001")])
+        store = SimpleNamespace(get_fund_score_history=lambda code, limit=50: [])
+        args = SimpleNamespace(
+            config="fund-portfolio.yaml",
+            output="/tmp/fund-agent-test-report.md",
+            recommend=False,
+            stress=False,
+            news_keyword_cache=None,
+            fallback_keywords=False,
+            agent_decisions=None,
+            snapshot_after=False,
+        )
+
+        kg = nx.DiGraph()
+        kg.add_node("fund:000001")
+
+        with patch("src.config.loader.load_portfolio_config", lambda path: config), \
+             patch("src.config.loader.import_to_database", lambda config: None), \
+             patch("src.db.storage.FundStorage", lambda: store), \
+             patch("src.analysis.loader.FundDataLoader", FakeAnalyzer), \
+             patch("src.analysis.correlation.compute_correlations", lambda funds: pd.DataFrame()), \
+             patch("src.core.workflow._build_unified_graph", lambda funds, codes: kg), \
+             patch("src.agents.graphs.supervisor.build_research_graph", lambda: FakeResearchGraph()), \
+             patch("src.news.news_pipeline.NewsPipeline", FakeNewsPipeline), \
+             patch("src.news.finnhub_client.FinnhubNewsClient", lambda: None), \
+             patch("src.news.tavily_client.TavilySearchClient", lambda: None), \
+             patch("src.strategy.engine.StrategyEngine", FakeStrategyEngine), \
+             patch("src.core.workflow._score_with_new_engine", lambda codes, funds, graph, news_results: ([dict(score)], [])), \
+             patch("src.core.workflow.compute_holdings", lambda store, config, codes, funds: {"by_fund": {}, "funds": [], "total_value": 0}), \
+             patch("src.core.workflow.build_workflow_context", lambda config, holdings_data, news_data=None: {"is_trade_day": True}), \
+             patch("src.core.workflow.render_analysis_report", lambda **kwargs: render_calls.append(kwargs) or SimpleNamespace(evidence_path="/tmp/report.evidence.json")), \
+             patch("src.core.workflow.save_snapshot", lambda *args, **kwargs: None):
+            cmd_analyze(args)
+
+        self.assertEqual(len(graph_calls), 1)
+        self.assertEqual(sorted(graph_calls[0]["funds_data"]), ["000001"])
+        self.assertIs(graph_calls[0]["knowledge_graph"], kg)
+        self.assertIn("kg_snapshot", render_calls[0]["workflow_context"])
+        self.assertEqual(
+            render_calls[0]["scores"][0]["agent_score_context"]["portfolio_strategy"],
+            {"fund_count": 1},
+        )
+        agent_state_evidence = render_calls[0]["scores"][0]["score_evidence"]["agent_state"]
+        self.assertEqual(agent_state_evidence["market_regime"], "trending")
+        self.assertEqual(agent_state_evidence["quant_score"]["score"], 81.0)
+        self.assertEqual(agent_state_evidence["fundamental_score"]["detail"]["industry"], "positive")
+        self.assertEqual(agent_state_evidence["final_score"], 70.0)
+
+    def test_use_agents_empty_kg_still_scores_and_renders(self):
+        scoring_calls = []
+        render_calls = []
+        strategy_calls = []
+
+        class FakeLoader:
+            def load_fund(self, code):
+                return {
+                    "basic": {"name": "测试基金", "fund_type": "stock"},
+                    "completeness": "A",
+                    "nav": [1.0, 1.01, 1.02],
+                }
+
+        score = {
+            "fund_code": "000001",
+            "fund_name": "测试基金",
+            "data_completeness": "A",
+            "composite_score": 68,
+            "score_level": "yellow",
+            "score_level_emoji": "🟡",
+            "macro_score": 13,
+            "macro_basis": "",
+            "meso_score": 19,
+            "meso_basis": "",
+            "micro_score": 36,
+            "micro_basis": "",
+            "recommendation": "持有",
+            "stop_profit_pct": 20,
+            "stop_loss_pct": -15,
+            "action_logic": "",
+        }
+
+        def fake_score(codes, funds, graph, news_results):
+            scoring_calls.append((codes, graph, news_results))
+            return [dict(score)], []
+
+        def fake_render(**kwargs):
+            render_calls.append(kwargs)
+            return SimpleNamespace(evidence_path="/tmp/report.evidence.json")
+
+        class FakeStrategyEngine:
+            def analyze_fund(self, code, fund_data, graph, events):
+                strategy_calls.append((code, graph, events))
+                return SimpleNamespace(
+                    action=SimpleNamespace(value="wait"),
+                    confidence=0.55,
+                    risk_level="medium",
+                    reasons=["KG 为空，等待数据确认"],
+                    trigger_events=["补齐持仓行业后复核"],
+                    position_suggestion="wait",
+                    time_horizon="short",
+                )
 
         config = SimpleNamespace(holdings=[SimpleNamespace(code="000001")])
         store = SimpleNamespace(get_fund_score_history=lambda code, limit=50: [])
@@ -161,91 +340,30 @@ class WorkflowContextTest(unittest.TestCase):
             recommend=False,
             stress=False,
             news_keyword_cache=None,
+            fallback_keywords=False,
+            agent_decisions=None,
             snapshot_after=False,
         )
-
-        def fake_news(analyzer, config, agent_news_plan=None, days=7, report_date=None, max_workers=None):
-            calls.append("news")
-            return [{"fund_code": "000001", "sentiment_mean": 0.6, "brief": {"trend": "bullish"}}]
 
         with patch("src.config.loader.load_portfolio_config", lambda path: config), \
              patch("src.config.loader.import_to_database", lambda config: None), \
              patch("src.db.storage.FundStorage", lambda: store), \
-             patch("src.analysis.scorer.FundAnalyzer", FakeAnalyzer), \
+             patch("src.analysis.loader.FundDataLoader", FakeLoader), \
              patch("src.analysis.correlation.compute_correlations", lambda funds: pd.DataFrame()), \
-             patch("src.core.workflow.compute_holdings", lambda store, config, codes, analyzer: {"by_fund": {}, "funds": [], "total_value": 0}), \
+             patch("src.core.workflow._build_unified_graph", lambda funds, codes: nx.DiGraph()), \
+             patch("src.core.workflow._score_with_new_engine", fake_score), \
+             patch("src.strategy.engine.StrategyEngine", lambda: FakeStrategyEngine()), \
+             patch("src.core.workflow.compute_holdings", lambda store, config, codes, funds: {"by_fund": {}, "funds": [], "total_value": 0}), \
              patch("src.core.workflow.build_workflow_context", lambda config, holdings_data, news_data=None: {"is_trade_day": True}), \
-             patch("src.news.keyword_cache.load_valid_keyword_cache", lambda path, codes, today=None: {"funds": {"000001": {"keywords": ["测试"]}}}), \
-             patch("src.news.keyword_cache.default_keyword_cache_path", lambda: "/tmp/cache.json"), \
-             patch("src.news.pipeline.run_news_pipeline", fake_news), \
-             patch("src.output.report.generate_report", lambda *args, **kwargs: "report"), \
-             patch("src.output.validator.post_process_report", lambda report, scores: report), \
+             patch("src.core.workflow.render_analysis_report", fake_render), \
              patch("src.core.workflow.save_snapshot", lambda *args, **kwargs: None):
             cmd_analyze(args)
 
-        self.assertEqual(calls[:2], ["news", "score"])
-
-    def test_fallback_keywords_option(self):
-        class FakeAnalyzer:
-            def __init__(self):
-                self.funds = {"000001": {"basic": {"name": "测试基金"}, "completeness": "A"}}
-
-            def load_fund(self, code):
-                pass
-
-            def score_fund(self, code, news_context=None):
-                return {
-                    "fund_code": code,
-                    "fund_name": "测试基金",
-                    "data_completeness": "A",
-                    "composite_score": 70,
-                    "score_level": "yellow",
-                    "score_level_emoji": "🟡",
-                    "macro_score": 14, "macro_basis": "",
-                    "meso_score": 20, "meso_basis": "",
-                    "micro_score": 36, "micro_basis": "",
-                    "recommendation": "持有", "action_logic": "",
-                    "stop_profit_pct": 20, "stop_loss_pct": -15,
-                }
-
-        config = SimpleNamespace(holdings=[SimpleNamespace(code="000001")])
-        store = SimpleNamespace(get_fund_score_history=lambda code, limit=50: [])
-        args = SimpleNamespace(
-            config="fund-portfolio.yaml",
-            output="/tmp/fund-agent-test-report.md",
-            recommend=False,
-            stress=False,
-            news_keyword_cache="/tmp/non_existent_cache.json",
-            fallback_keywords=True,
-            snapshot_after=False,
-        )
-
-        plan_passed_to_news = []
-
-        def fake_news(analyzer, config, agent_news_plan=None, days=7, report_date=None, max_workers=None):
-            plan_passed_to_news.append(agent_news_plan)
-            return [{"fund_code": "000001", "sentiment_mean": 0.6, "brief": {"trend": "bullish"}}]
-
-        with patch("src.config.loader.load_portfolio_config", lambda path: config), \
-             patch("src.config.loader.import_to_database", lambda config: None), \
-             patch("src.db.storage.FundStorage", lambda: store), \
-             patch("src.analysis.scorer.FundAnalyzer", FakeAnalyzer), \
-             patch("src.analysis.correlation.compute_correlations", lambda funds: pd.DataFrame()), \
-             patch("src.core.workflow.compute_holdings", lambda store, config, codes, analyzer: {"by_fund": {}, "funds": [], "total_value": 0}), \
-             patch("src.core.workflow.build_workflow_context", lambda config, holdings_data, news_data=None: {"is_trade_day": True}), \
-             patch("src.news.keyword_cache.load_valid_keyword_cache", lambda path, codes, today=None: None), \
-             patch("src.news.news_fetcher.extract_holding_keywords", lambda code, limit: ([], ["重仓股A"])), \
-             patch("src.news.news_fetcher._fallback_fund_keywords", lambda name, fund_type: ["兜底词A"]), \
-             patch("src.news.pipeline.run_news_pipeline", fake_news), \
-             patch("src.output.report.generate_report", lambda *args, **kwargs: "report"), \
-             patch("src.output.validator.post_process_report", lambda report, scores: report), \
-             patch("src.core.workflow.save_snapshot", lambda *args, **kwargs: None), \
-             patch("builtins.open", unittest.mock.mock_open()):
-            cmd_analyze(args)
-
-        self.assertEqual(len(plan_passed_to_news), 1)
-        self.assertIn("重仓股A", plan_passed_to_news[0]["funds"]["000001"]["keywords"])
-        self.assertIn("兜底词A", plan_passed_to_news[0]["funds"]["000001"]["keywords"])
+        self.assertEqual(len(scoring_calls), 1)
+        self.assertEqual(scoring_calls[0][2], {})
+        self.assertEqual(render_calls[0]["scores"][0]["fund_code"], "000001")
+        self.assertEqual(len(strategy_calls), 1)
+        self.assertEqual(render_calls[0]["scores"][0]["_strategy_advice"]["action"], "wait")
 
 
 if __name__ == "__main__":

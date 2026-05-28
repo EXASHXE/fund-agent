@@ -1,4 +1,5 @@
 """Tests for Knowledge Graph schema and industry mapping."""
+import pickle
 import pytest
 from src.kg.schema import (
     KGNodeType, KGEdgeType, KGEdge,
@@ -102,6 +103,88 @@ class TestKGSchema:
         node1 = FundNode(code="110011", name="test1")
         node2 = FundNode(code="110012", name="test2")
         assert node1 != node2
+
+    def test_fund_node_pickle_roundtrip(self):
+        """Serialize FundNode to pickle and back -- id, code, type survive."""
+        node = FundNode(code="110011", name="易方达中小盘混合", fund_type="hybrid", style="growth")
+        data = pickle.dumps(node)
+        restored = pickle.loads(data)
+        assert restored == node
+        assert restored.id == "fund:110011"
+        assert restored.code == "110011"
+        assert restored.node_type == KGNodeType.FUND
+
+    def test_stock_node_pickle_roundtrip(self):
+        """Serialize StockNode to pickle and back."""
+        node = StockNode(code="600519", name="贵州茅台", sector="白酒", industry="食品饮料")
+        data = pickle.dumps(node)
+        restored = pickle.loads(data)
+        assert restored == node
+        assert restored.id == "stock:600519"
+        assert restored.code == "600519"
+
+    def test_industry_node_pickle_roundtrip(self):
+        """Serialize IndustryNode to pickle and back."""
+        node = IndustryNode(code="sw_food_beverage", name="食品饮料", sw_code="801120")
+        data = pickle.dumps(node)
+        restored = pickle.loads(data)
+        assert restored == node
+        assert restored.id == "industry:sw_food_beverage"
+        assert restored.name == "食品饮料"
+
+    def test_theme_node_pickle_roundtrip(self):
+        """Serialize ThemeNode (with keywords list) to pickle and back."""
+        node = ThemeNode(name="AI算力", keywords=["人工智能", "算力", "GPU", "光模块"])
+        data = pickle.dumps(node)
+        restored = pickle.loads(data)
+        assert restored == node
+        assert restored.id == "theme:AI算力"
+        assert restored.keywords == ["人工智能", "算力", "GPU", "光模块"]
+
+    def test_event_node_pickle_roundtrip(self):
+        """Serialize EventNode to pickle and back -- polarity, magnitude survive."""
+        node = EventNode(
+            event_id="evt_001",
+            event_type="earnings_surprise",
+            subtype="positive",
+            date="2026-05-27",
+            polarity=0.8,
+            magnitude=0.6,
+            time_horizon="short",
+            description="Q1 beat",
+        )
+        data = pickle.dumps(node)
+        restored = pickle.loads(data)
+        assert restored == node
+        assert restored.id == "event:evt_001"
+        assert restored.polarity == 0.8
+        assert restored.magnitude == 0.6
+
+    def test_macro_factor_node_pickle_roundtrip(self):
+        """Serialize MacroFactorNode to pickle and back."""
+        node = MacroFactorNode(name="利率", factor_type="interest_rate", direction="rising")
+        data = pickle.dumps(node)
+        restored = pickle.loads(data)
+        assert restored == node
+        assert restored.id == "macro:利率"
+        assert restored.factor_type == "interest_rate"
+
+    def test_kg_edge_pickle_roundtrip(self):
+        """Serialize KGEdge with optional fields to pickle and back."""
+        edge = KGEdge(
+            source="fund:110011",
+            target="stock:600519",
+            edge_type=KGEdgeType.HOLDS,
+            weight=9.5,
+            polarity=0.3,
+            magnitude=0.7,
+        )
+        data = pickle.dumps(edge)
+        restored = pickle.loads(data)
+        assert restored == edge
+        assert restored.edge_type == KGEdgeType.HOLDS
+        assert restored.weight == pytest.approx(9.5)
+        assert restored.polarity == 0.3
 
 
 class TestIndustryMap:

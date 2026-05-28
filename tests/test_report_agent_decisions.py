@@ -113,6 +113,70 @@ class ReportAgentDecisionTest(unittest.TestCase):
         ]:
             self.assertIn(title, report)
 
+    def test_report_evidence_preserves_strategy_advice_for_agents_mode(self):
+        score = _score()
+        score["_strategy_advice"] = {
+            "action": "hold",
+            "confidence": 0.72,
+            "risk_level": "medium",
+            "reasons": ["趋势稳定"],
+            "stop_loss_pct": 15.0,
+            "valid_transitions": {"hold": ["add", "reduce"]},
+        }
+
+        evidence = _build_report_evidence(
+            date(2026, 5, 22),
+            [score],
+            {"by_fund": {}, "funds": []},
+            [],
+            pd.DataFrame(),
+            [],
+            {},
+        )
+
+        fund = evidence["funds"]["000001"]
+        self.assertEqual(fund["strategy_advice"]["action"], "hold")
+        self.assertEqual(fund["strategy_advice"]["confidence"], 0.72)
+        self.assertEqual(fund["strategy_advice"]["valid_transitions"], {"hold": ["add", "reduce"]})
+
+    def test_report_evidence_adds_v3_extension_sections_without_removing_v2_fields(self):
+        score = _score()
+        score["score_evidence"] = {
+            "regime": "normal",
+            "quant_score": {"score": 72, "confidence": 0.8},
+            "weights_used": {"quant": 0.4},
+        }
+        score["_strategy_advice"] = {"action": "hold", "confidence": 0.7}
+        news_data = [{
+            "fund_code": "000001",
+            "classified_news": {"layer_1": [{"title": "直接新闻"}]},
+            "research_summaries": [{"what": "发生事件"}],
+            "extracted_events": [{"id": "evt-1", "type": "earnings"}],
+        }]
+
+        evidence = _build_report_evidence(
+            date(2026, 5, 22),
+            [score],
+            {"by_fund": {}, "funds": []},
+            news_data,
+            pd.DataFrame(),
+            [],
+            {},
+            workflow_context={
+                "kg_snapshot": {
+                    "fund_exposure": {"000001": {"themes": ["消费"]}},
+                    "impact_chains": {},
+                }
+            },
+        )
+
+        self.assertEqual(evidence["schema_version"], "report_evidence.v2")
+        self.assertIn("funds", evidence)
+        self.assertEqual(evidence["kg_snapshot"]["fund_exposure"]["000001"]["themes"], ["消费"])
+        self.assertEqual(evidence["news_evidence"]["000001"]["research_summaries"][0]["what"], "发生事件")
+        self.assertEqual(evidence["score_evidence"]["000001"]["regime"], "normal")
+        self.assertEqual(evidence["strategy_evidence"]["000001"]["action"], "hold")
+
     def test_news_low_relevance_renders_agent_limitation(self):
         report = generate_report(
             analyzer=None,

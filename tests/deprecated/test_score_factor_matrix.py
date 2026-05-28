@@ -3,7 +3,7 @@ from datetime import date, timedelta
 
 import pandas as pd
 
-from src.analysis.scorer import FundAnalyzer
+from src.deprecated.scorer import FundAnalyzer
 
 
 def _loaded_analyzer(completeness="A"):

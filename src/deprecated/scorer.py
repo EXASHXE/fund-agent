@@ -11,7 +11,9 @@ from src.analysis.factors import FactorMatrixBuilder
 from src.analysis.holdings import compute_hhi
 from src.analysis.loader import FundDataLoader
 from src.analysis.metrics import MetricsCalculator
-from src.analysis.scoring import MacroScorer, MesoScorer, MicroScorer
+from src.deprecated.macro import MacroScorer
+from src.deprecated.meso import MesoScorer
+from src.deprecated.micro import MicroScorer
 
 
 

@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 
 from src.config.defaults import QUANT_CONFIG
+from src.tools.risk.metrics import sortino_ratio, compute_perf_from_nav
 
 
 class MetricsCalculator:

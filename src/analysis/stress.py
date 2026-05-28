@@ -5,6 +5,7 @@
 的 agent 结合当前市场局势自主判断。
 """
 from typing import Dict, List
+from src.tools.risk.metrics import stress_test, _fund_exposure_text, _infer_risk_scenarios
 
 
 def stress_test(funds_data: Dict) -> List[Dict]:

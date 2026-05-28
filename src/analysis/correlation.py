@@ -1,6 +1,7 @@
 """Pearson 相关性矩阵计算"""
 import pandas as pd
 from typing import Dict
+from src.tools.risk.metrics import compute_correlations
 
 
 def compute_correlations(funds_data: Dict) -> pd.DataFrame:

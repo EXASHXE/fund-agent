@@ -132,6 +132,22 @@ class TestNewsAgentNode:
         assert isinstance(result, dict)
         assert result.get("search_plans") == {}
 
+    def test_node_does_not_fetch_market_news_without_kg_fund_node(self):
+        """Node should not run broad market retrieval when KG has no fund node."""
+        from src.agents.graphs.news_agent import news_agent_node
+
+        state = _make_state(
+            funds_data={"110011": {"code": "110011", "name": "Test"}},
+            knowledge_graph=nx.DiGraph(),
+        )
+
+        with patch("src.news.retriever.Retriever.retrieve_market_news") as mock_market:
+            result = news_agent_node(state)
+
+        mock_market.assert_not_called()
+        assert result["search_plans"]["110011"].fund_code == "110011"
+        assert result["scored_news"]["110011"] == []
+
     def test_node_handles_multiple_funds(self):
         """Node should process multiple funds from funds_data."""
         from src.agents.graphs.news_agent import news_agent_node

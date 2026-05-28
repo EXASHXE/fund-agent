@@ -48,9 +48,7 @@
 }
 ```
 
-## 新增字段（Agent 增强模式，`--use-agents`）
-
-### regime
+## regime
 
 每只基金可携带 `regime` 字段，表示当前市场环境分类：
 
@@ -61,11 +59,11 @@
 | `trending` | 趋势行情 | 明确上/下趋势，跟随趋势，提高持仓权重 |
 | `crisis` | 危机模式 | 极端行情，避险优先，事件和择时主导 |
 
-`regime` 为可选字段。标准模式（未使用 `--use-agents`）下可为 `null` 或缺失。当存在时，应确保评分 Agent 使用的权重与 regime 匹配。
+`regime` 为可选字段。当存在时，应确保评分 Agent 使用的权重与 regime 匹配。
 
-### strategy_advice
+## strategy_advice
 
-当策略引擎被激活（`--use-agents` 模式）时，每只基金可携带 `strategy_advice` 节：
+每只基金可携带 `strategy_advice` 节：
 
 ```json
 {
@@ -96,14 +94,7 @@
 | `state` | string | 策略引擎当前状态机状态 |
 | `valid_transitions` | object | 从当前状态允许的合法转移目标及说明 |
 
-`strategy_advice` 为可选字段。标准模式下可为 `null` 或缺失。Agent 可调整 `strategy_advice` 中的值，但不建议删除整个节；若确需删除，应在 `rationale` 中说明理由。
-
-## 评分字段互斥规则
-
-同一份 decisions 中，两种评分模式不可混用：
-
-- **标准模式**（无 `--use-agents`）：使用 `agent_adjustments.{macro,meso,micro}` 和 `final_scores.{macro,meso,micro,total}`
-- **Agent 增强模式**（`--use-agents`）：使用 `event_extraction`、`kg_analysis`、`regime`、`strategy_advice` 等新字段；`agent_adjustments` 仍可存在但作用于 5 维度引擎
+`strategy_advice` 为可选字段。Agent 可调整 `strategy_advice` 中的值，但不建议删除整个节；若确需删除，应在 `rationale` 中说明理由。
 
 ## 对账规则
 

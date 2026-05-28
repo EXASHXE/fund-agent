@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import pandas as pd
 
-from src.news.pipeline import run_news_pipeline
+from src.deprecated.news_pipeline import run_news_pipeline
 
 
 class NewsPipelineTest(unittest.TestCase):

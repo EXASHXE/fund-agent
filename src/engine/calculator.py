@@ -17,6 +17,7 @@ from typing import Dict, List, Optional, Tuple
 
 from src.engine.calendar import is_trade_day, next_trade_day
 from src.engine.events import FundEvent, EventType, resolve_nav_date, _effective_trade_date
+from src.tools.math.calc import _match_nav, _calc_xirr, compute_portfolio
 
 CALIBRATION_MAX_DELTA_PCT = 0.03
 

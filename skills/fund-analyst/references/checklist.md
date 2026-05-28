@@ -1,6 +1,6 @@
 # 最终报告验收清单
 
-本清单用于验收 `agent_decisions.v2` 和由 CLI 渲染的最终 `report.md`。
+本清单用于验收 `agent_decisions.v2` 和渲染的最终 `report.md`。
 
 ## 合同与口径
 
@@ -16,24 +16,19 @@
 - [ ] `final_action`、目标配置、执行金额、理由和触发条件均由 Agent 明确给出，不由量化候选自动回填。
 - [ ] 所有数值目标配置合计不超过 100%，保留现金时已说明用途。
 - [ ] 数据完整度低、低置信度、新闻覆盖窄或 pending 明显时，结论已保守降级并解释原因。
+- [ ] `market_regime`（或 `regime`）已由评分引擎检测并写入 decisions，值在 `normal` / `high_volatility` / `trending` / `crisis` 中。
+- [ ] 评分权重与 regime 匹配：对照 `scoring-agent.md` 中的 regime 权重表，确认各维度权重使用正确。
+- [ ] `strategy_advice` 已为每只评分基金生成，包含 `action`、`confidence`、`risk_level`、`reasons`、`stop_loss_pct`、`valid_transitions`。
+- [ ] `strategy_advice.action` 与 `fund_scores.{code}.final_action` 一致；不一致时必须有理有据解释。
+- [ ] 5 维度评分（quant / fundamental / event / position / timing）各自 0-100 分，综合分在 0-100 范围内，等级映射正确（green ≥80、yellow 60-79、orange 40-59、red ≤39）。
 
 ## 新闻与组合风险
 
 - [ ] 每个新闻结论引用了有效样本数量、覆盖限制与置信度；低相关样本未支撑买入或加仓。
 - [ ] 组合判断考虑了相关性、暴露集中、压力结果、pending 和净值结算状态。
 - [ ] 最终推荐对象来自本次 `recommendation_evidence.candidates` 且写明组合角色和风险约束；空数组不出现规则候选结论。
-
-## Agent 增强模式（`--use-agents`）专项
-
-当使用 `--use-agents` 标志生成 evidence 和 decisions 时，追加以下检查项：
-
-- [ ] `market_regime`（或 `regime`）已由评分引擎检测并写入 decisions，值在 `normal` / `high_volatility` / `trending` / `crisis` 中。
-- [ ] 评分权重与 regime 匹配：对照 `scoring-agent.md` 中的 regime 权重表，确认各维度权重使用正确。
-- [ ] `strategy_advice` 已为每只评分基金生成，包含 `action`、`confidence`、`risk_level`、`reasons`、`stop_loss_pct`、`valid_transitions`。
-- [ ] `strategy_advice.action` 与 `fund_scores.{code}.final_action` 一致；不一致时必须有理有据解释。
 - [ ] `event_extraction` 如有生成，其 `affected_holdings` 与重仓股列表覆盖一致。
 - [ ] `kg_analysis.cross_fund_links` 如有生成，`correlation_risk` 判断与 `portfolio_evidence` 中的相关性矩阵一致。
-- [ ] 5 维度评分（quant / fundamental / event / position / timing）各自 0-100 分，综合分在 0-100 范围内，等级映射正确（green ≥80、yellow 60-79、orange 40-59、red ≤39）。
 
 ## 报告完整性
 
@@ -42,10 +37,4 @@
 - [ ] 单基金诊断折叠块均闭合，止盈止损线有单位并能与风险证据对应。
 - [ ] 报告中不存在 `AGENT_FILL`、`<!-- AGENT:`、`尚未提供 agent`、`待 Agent 最终评定`、旧规则动作章节。
 
-最低检查命令：
-
-```bash
-grep -n "AGENT_FILL\|<!-- AGENT:\|尚未提供 agent\|待 Agent 最终评定" report.md
-```
-
-输出非空即不交付最终稿。
+验证检查：报告输出中不得包含 `AGENT_FILL`、`<!-- AGENT:`、`尚未提供 agent`、`待 Agent 最终评定` 等占位符，否则不交付最终稿。

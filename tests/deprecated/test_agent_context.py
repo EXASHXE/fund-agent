@@ -3,7 +3,7 @@ from datetime import date, timedelta
 
 import pandas as pd
 
-from src.analysis.scorer import FundAnalyzer
+from src.deprecated.scorer import FundAnalyzer
 from src.news.agent_context import (
     build_news_judgment_context,
     build_recommendation_judgment_context,

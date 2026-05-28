@@ -2,19 +2,14 @@
 
 from __future__ import annotations
 
-import json
-import os
-from collections.abc import Callable
+from dataclasses import asdict, is_dataclass
 from typing import Any
 
 import networkx as nx
 import pandas as pd
 
 from src.config.shared import effective_report_date, today as shared_today
-from src.services.news_service import (
-    news_context_by_code,
-    write_keyword_request_and_exit,
-)
+from src.services.news_service import news_context_by_code
 from src.services.portfolio_service import compute_holdings
 from src.services.workflow_context import build_workflow_context
 
@@ -26,18 +21,14 @@ from src.services.snapshot_service import (
     should_snapshot_after_analyze,
 )
 
-
-KeywordCallback = Callable[[list[str], list[dict]], dict | None]
-
 # ══════════════════════════════════════════════════════════════════════════════
 # Adapter helpers for new KG+AI pipeline → old report format
 # ══════════════════════════════════════════════════════════════════════════════
 
-
 def _prepare_fund_data_for_kg(
     code: str, fund_data: dict[str, Any]
 ) -> dict[str, Any]:
-    """Convert analyzer.funds[code] (DataFrame-heavy) to dict for KnowledgeGraphBuilder.
+    """Convert funds[code] (DataFrame-heavy) to dict for KnowledgeGraphBuilder.
 
     Args:
         code: Fund code string.
@@ -115,11 +106,10 @@ def _prepare_fund_data_for_kg(
         "sectors": sectors_list,
     }
 
-
 def _build_unified_graph(
-    analyzer, codes: list[str]
+    funds, codes: list[str]
 ) -> nx.DiGraph:
-    """Build a unified Knowledge Graph from all funds in the analyzer.
+    """Build a unified Knowledge Graph from all funds.
 
     Merges per-fund KGs via nx.compose so that shared stock/industry/theme
     nodes are reused across funds.
@@ -129,7 +119,7 @@ def _build_unified_graph(
     kg_builder = KnowledgeGraphBuilder()
     unified = nx.DiGraph()
     for code in codes:
-        fund_data_raw = analyzer.funds.get(code, {})
+        fund_data_raw = funds.get(code, {})
         fund_data = _prepare_fund_data_for_kg(code, fund_data_raw)
         try:
             graph = kg_builder.build_from_holdings(fund_data)
@@ -137,7 +127,6 @@ def _build_unified_graph(
         except Exception as exc:
             print(f"  [WARNING] KG build failed for {code}: {exc}")
     return unified
-
 
 def _adapt_new_news_to_old(
     news_results: dict[str, dict[str, Any]],
@@ -215,9 +204,225 @@ def _adapt_new_news_to_old(
         "entity_profile": None,
         "agent_news_context": {},
         "relevance_task": {},
+        "classified_news": result.get("classified_news", []),
+        "research_summaries": result.get("research_summaries", []),
+        "extracted_events": result.get("events", []),
         "status": "ok" if news_list else "empty",
     }
 
+def _run_langgraph_research(
+    codes: list[str],
+    funds,
+    graph: nx.DiGraph,
+    report_date,
+) -> dict[str, Any]:
+    """Run the LangGraph research OS and return its final shared state."""
+    from src.agents.graphs.supervisor import build_research_graph
+
+    initial_state = {
+        "report_date": report_date.isoformat(),
+        "funds_data": {
+            code: funds.get(code, {})
+            for code in codes
+            if funds.get(code) is not None
+        },
+        "knowledge_graph": graph,
+        "errors": [],
+    }
+    research_graph = build_research_graph()
+    return research_graph.invoke(initial_state)
+
+def _agent_state_to_news_results(
+    codes: list[str],
+    agent_state: dict[str, Any],
+) -> dict[str, dict[str, Any]]:
+    """Convert LangGraph shared state into NewsPipeline-style per-fund results."""
+    news_results: dict[str, dict[str, Any]] = {}
+    search_plans = agent_state.get("search_plans", {}) or {}
+    raw_news = agent_state.get("raw_news", {}) or {}
+    classified_news = agent_state.get("classified_news", {}) or {}
+    scored_news = agent_state.get("scored_news", {}) or {}
+    research_summaries = agent_state.get("research_summaries", {}) or {}
+    extracted_events = agent_state.get("extracted_events", {}) or {}
+
+    for code in codes:
+        raw_items = raw_news.get(code, [])
+        news_results[code] = {
+            "search_plan": search_plans.get(code),
+            "raw_news": raw_items,
+            "classified_news": classified_news.get(code, []),
+            "scored_news": scored_news.get(code, []),
+            "research_summaries": research_summaries.get(code, []),
+            "events": extracted_events.get(code, []),
+            "raw_news_count": len(raw_items) if isinstance(raw_items, list) else 0,
+            "stages_completed": ["langgraph_research_os"],
+        }
+    return news_results
+
+def _strategy_advice_payload(advice: Any) -> dict[str, Any] | None:
+    """Normalize StrategyAdvice dataclass/dict/object into report score payload."""
+    if not advice:
+        return None
+    if isinstance(advice, dict) and "error" in advice:
+        return None
+
+    def _get(name: str, default=None):
+        if isinstance(advice, dict):
+            return advice.get(name, default)
+        return getattr(advice, name, default)
+
+    action = _get("action")
+    action_value = action.value if hasattr(action, "value") else action
+    return {
+        "action": action_value,
+        "confidence": _get("confidence"),
+        "risk_level": _get("risk_level"),
+        "reasons": _get("reasons", []),
+        "trigger_events": _get("trigger_events", []),
+        "position_suggestion": _get("position_suggestion"),
+        "time_horizon": _get("time_horizon"),
+    }
+
+def _attach_strategy_advice_from_state(
+    scores: list[dict[str, Any]],
+    agent_state: dict[str, Any],
+) -> None:
+    """Attach graph-produced strategy advice to adapted score records."""
+    strategies = agent_state.get("strategies", {}) or {}
+    for score in scores:
+        code = score.get("fund_code")
+        payload = _strategy_advice_payload(strategies.get(code))
+        if payload:
+            score["_strategy_advice"] = payload
+
+def _attach_agent_score_state_from_state(
+    scores: list[dict[str, Any]],
+    agent_state: dict[str, Any],
+) -> None:
+    """Attach graph-produced scoring state to per-fund score evidence."""
+    score_sources = {
+        "quant_scores": "quant_score",
+        "fundamental_scores": "fundamental_score",
+        "event_scores": "event_score",
+        "position_scores": "position_score",
+        "timing_scores": "timing_score",
+    }
+    portfolio_strategy = agent_state.get("portfolio_strategy") or {}
+
+    for score in scores:
+        code = str(score.get("fund_code", ""))
+        if not code:
+            continue
+
+        agent_score_state: dict[str, Any] = {}
+        if agent_state.get("market_regime"):
+            agent_score_state["market_regime"] = agent_state.get("market_regime")
+
+        for state_key, payload_key in score_sources.items():
+            values = agent_state.get(state_key, {}) or {}
+            if code in values:
+                agent_score_state[payload_key] = _score_component_payload(values[code])
+
+        final_scores = agent_state.get("final_scores", {}) or {}
+        if code in final_scores:
+            agent_score_state["final_score"] = _plain_data(final_scores[code])
+
+        risk_assessments = agent_state.get("risk_assessments", {}) or {}
+        if code in risk_assessments:
+            agent_score_state["risk_assessment"] = _plain_data(risk_assessments[code])
+
+        if agent_score_state:
+            score_evidence = score.get("score_evidence")
+            if not isinstance(score_evidence, dict):
+                score_evidence = {}
+                score["score_evidence"] = score_evidence
+            score_evidence["agent_state"] = agent_score_state
+
+        score.setdefault("agent_score_context", {})
+        if portfolio_strategy:
+            score["agent_score_context"]["portfolio_strategy"] = portfolio_strategy
+
+def _attach_strategy_advice_with_engine(
+    scores: list[dict[str, Any]],
+    codes: list[str],
+    funds,
+    graph: nx.DiGraph,
+    news_results: dict[str, dict[str, Any]],
+) -> None:
+    """Attach StrategyEngine advice when LangGraph strategy output is unavailable."""
+    try:
+        from src.strategy.engine import StrategyEngine
+        strategy_engine = StrategyEngine()
+    except Exception as exc:
+        print(f"  [WARNING] StrategyEngine unavailable: {exc}")
+        return
+
+    scores_by_code = {
+        str(score.get("fund_code", "")): score
+        for score in scores
+        if score.get("fund_code")
+    }
+    for code in codes:
+        fund_data = funds.get(code, {})
+        events = news_results.get(code, {}).get("events", [])
+        try:
+            advice = strategy_engine.analyze_fund(code, fund_data, graph, events)
+        except Exception as exc:
+            print(f"  [WARNING] StrategyEngine failed for {code}: {exc}")
+            continue
+        payload = _strategy_advice_payload(advice)
+        if payload and code in scores_by_code:
+            scores_by_code[code]["_strategy_advice"] = payload
+
+def _score_component_payload(component: Any) -> dict[str, Any]:
+    """Convert ScoreComponent-like values into evidence payloads."""
+    if component is None:
+        return {}
+    return {
+        "score": getattr(component, "score", None),
+        "detail": _plain_data(getattr(component, "detail", {}) or {}),
+        "weights": _plain_data(getattr(component, "weights", {}) or {}),
+        "confidence": getattr(component, "confidence", None),
+    }
+
+def _plain_data(value: Any) -> Any:
+    if is_dataclass(value):
+        return asdict(value)
+    if isinstance(value, dict):
+        return {str(key): _plain_data(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_plain_data(item) for item in value]
+    return value
+
+def _build_kg_snapshot(
+    codes: list[str],
+    graph: nx.DiGraph,
+    news_results: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    """Build compact KG evidence for report_evidence v3 extensions."""
+    from src.kg.graph import KnowledgeGraphBuilder
+
+    builder = KnowledgeGraphBuilder()
+    fund_exposure = {
+        code: builder.get_fund_exposure(graph, code)
+        for code in codes
+    }
+    impact_chains: dict[str, Any] = {}
+    for code in codes:
+        for event in news_results.get(code, {}).get("events", []) or []:
+            event_id = (
+                event.get("id")
+                if isinstance(event, dict)
+                else getattr(event, "id", None)
+            )
+            if event_id:
+                impact_chains[str(event_id)] = builder.get_impact_chain(
+                    graph, str(event_id), code
+                )
+    return {
+        "fund_exposure": fund_exposure,
+        "impact_chains": impact_chains,
+    }
 
 def _adapt_new_score_to_old(
     composite,
@@ -237,7 +442,7 @@ def _adapt_new_score_to_old(
         news_context: Optional news context dict for the fund.
 
     Returns:
-        Dict matching the format produced by analyzer.score_fund().
+        Dict matching the format produced by _adapt_new_score_to_old().
     """
     from src.analysis.scoring.types import MarketRegime
 
@@ -398,6 +603,17 @@ def _adapt_new_score_to_old(
             (qs.confidence + fs.confidence + es.confidence + ps.confidence + ts.confidence) / 5, 2
         ),
         "score_source": "kg_ai_pipeline",
+        "score_evidence": {
+            "regime": composite.regime.value,
+            "quant_score": _score_component_payload(qs),
+            "fundamental_score": _score_component_payload(fs),
+            "event_score": _score_component_payload(es),
+            "position_score": _score_component_payload(ps),
+            "timing_score": _score_component_payload(ts),
+            "weights_used": composite.weights_used,
+            "composite_score": composite.composite,
+            "score_level": composite.level,
+        },
         "agent_review_required": True,
         "agent_score_context": {},
         "trend_evidence": {},
@@ -407,10 +623,9 @@ def _adapt_new_score_to_old(
 
     return score
 
-
 def _score_with_new_engine(
     codes: list[str],
-    analyzer,
+    funds,
     graph: nx.DiGraph,
     news_results: dict[str, dict[str, Any]],
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
@@ -418,7 +633,7 @@ def _score_with_new_engine(
 
     Args:
         codes: List of fund codes to score.
-        analyzer: FundAnalyzer instance with loaded fund data.
+        funds: dict of loaded fund data (keyed by fund code).
         graph: Unified NetworkX DiGraph from KG.
         news_results: Per-fund news pipeline results.
 
@@ -432,7 +647,7 @@ def _score_with_new_engine(
     unscores: list[dict[str, Any]] = []
 
     for code in codes:
-        fund_data = analyzer.funds.get(code)
+        fund_data = funds.get(code)
         if fund_data is None:
             unscores.append({
                 "code": code, "name": code, "fund_name": code, "fund_code": code,
@@ -473,12 +688,11 @@ def _score_with_new_engine(
 
     return scores, unscores
 
-
-def run_analyze(args, keyword_callback: KeywordCallback | None = None):
+def run_analyze(args):
     """Run the full analyze workflow from data collection to report output."""
     from src.analysis.correlation import compute_correlations
     from src.analysis.portfolio_risk import build_portfolio_risk_matrix
-    from src.analysis.scorer import FundAnalyzer
+    from src.analysis.loader import FundDataLoader
     from src.analysis.stress import stress_test
     from src.config.loader import import_to_database, load_portfolio_config
     from src.db.storage import FundStorage
@@ -499,26 +713,52 @@ def run_analyze(args, keyword_callback: KeywordCallback | None = None):
     print("\n[Layer 1] 数据采集...")
     print("Agent 模式: 脚本生成数据证据包；最终评分/新闻/压力测试/推荐由接入 skill 的模型判断")
 
-    analyzer = FundAnalyzer()
+    loader = FundDataLoader()
+    funds: dict[str, Any] = {}
     for code in codes:
         try:
-            analyzer.load_fund(code)
+            funds[code] = loader.load_fund(code)
         except Exception as exc:
             print(f"  [ERROR] {code}: {exc}")
 
-    use_agents = getattr(args, "use_agents", False)
+    graph = nx.DiGraph()
+    news_results: dict[str, dict[str, Any]] = {}
 
-    if use_agents:
-        # ═══ NEW KG+AI PIPELINE (Phase 2-4) ═══
-        print("\n[Layer 2-3] 结合 KG+AI 新流水线...")
-        print("  → 构建持仓知识图谱 (KnowledgeGraph)")
-        graph = _build_unified_graph(analyzer, codes)
-        if graph.number_of_nodes() == 0:
-            print("  [ERROR] 知识图谱构建失败，回退到旧流水线")
-        else:
-            print(f"    图节点: {graph.number_of_nodes()}, 边: {graph.number_of_edges()}")
-            # Run new 8-stage news pipeline
-            print("  → 运行 8-stage 新闻流水线 (NewsPipeline)")
+    print("\n[Layer 2-3] 结合 KG+AI 新流水线...")
+    print("  → 构建持仓知识图谱 (KnowledgeGraph)")
+    graph = _build_unified_graph(funds, codes)
+    agent_state: dict[str, Any] = {}
+    if graph.number_of_nodes() == 0:
+        print("  [ERROR] 知识图谱构建失败，使用空新闻证据继续 5-dimension 评分")
+        news_results = {}
+        print("  → 运行 5-dimension 评分引擎 (ScoreEngine)")
+        scores, unscores = _score_with_new_engine(codes, funds, graph, news_results)
+        news_data = []
+        for code in codes:
+            basic = funds.get(code, {}).get("basic", {})
+            name = basic.get("name", code)
+            news_data.append(_adapt_new_news_to_old(news_results, code, name))
+        news_contexts = news_context_by_code(news_data)
+        _attach_strategy_advice_with_engine(
+            scores, codes, funds, graph, news_results
+        )
+    else:
+        print(f"    图节点: {graph.number_of_nodes()}, 边: {graph.number_of_edges()}")
+        print("  → 运行 LangGraph 五智能体研究图 (News/Quant/Risk/Research/Strategy)")
+        try:
+            agent_state = _run_langgraph_research(codes, funds, graph, report_date)
+            news_results = _agent_state_to_news_results(codes, agent_state)
+            completed = [
+                name for name in (
+                    "scored_news", "quant_scores", "risk_assessments",
+                    "fundamental_scores", "strategies",
+                )
+                if agent_state.get(name)
+            ]
+            print(f"    Agent 状态完成: {completed}")
+        except Exception as exc:
+            print(f"  [ERROR] LangGraph research graph failed: {exc}")
+            print("  → 回退运行 8-stage 新闻流水线 (NewsPipeline)")
             try:
                 from src.news.news_pipeline import NewsPipeline
                 from src.news.finnhub_client import FinnhubNewsClient
@@ -529,68 +769,33 @@ def run_analyze(args, keyword_callback: KeywordCallback | None = None):
                 )
                 news_results = pipeline.run(codes, graph)
                 print(f"    完成阶段: {next(iter(news_results.values()), {}).get('stages_completed', [])}")
-            except Exception as exc:
-                print(f"  [ERROR] NewsPipeline failed: {exc}")
+            except Exception as fallback_exc:
+                print(f"  [ERROR] NewsPipeline failed: {fallback_exc}")
                 news_results = {}
 
-            # Score with 5-dimension ScoreEngine
-            print("  → 运行 5-dimension 评分引擎 (ScoreEngine)")
-            scores, unscores = _score_with_new_engine(codes, analyzer, graph, news_results)
+        # Score with 5-dimension ScoreEngine
+        print("  → 运行 5-dimension 评分引擎 (ScoreEngine)")
+        scores, unscores = _score_with_new_engine(codes, funds, graph, news_results)
 
-            # Convert new news results to old format for report rendering
-            news_data: list[dict[str, Any]] = []
-            for code in codes:
-                basic = analyzer.funds.get(code, {}).get("basic", {})
-                name = basic.get("name", code)
-                news_data.append(_adapt_new_news_to_old(news_results, code, name))
-            news_contexts = news_context_by_code(news_data)
-
-            # Strategy advice (supplementary, non-fatal on failure)
-            try:
-                from src.strategy.engine import StrategyEngine
-                strategy_engine = StrategyEngine()
-                for code in codes:
-                    fund_data = analyzer.funds.get(code, {})
-                    events = news_results.get(code, {}).get("events", [])
-                    advice = strategy_engine.analyze_fund(code, fund_data, graph, events)
-                    for s in scores:
-                        if s.get("fund_code") == code:
-                            s["_strategy_advice"] = {
-                                "action": advice.action.value,
-                                "confidence": advice.confidence,
-                                "risk_level": advice.risk_level,
-                                "reasons": advice.reasons,
-                                "trigger_events": advice.trigger_events,
-                                "position_suggestion": advice.position_suggestion,
-                                "time_horizon": advice.time_horizon,
-                            }
-            except Exception as exc:
-                print(f"  [WARNING] StrategyEngine failed: {exc}")
-
-    else:
-        # ═══ OLD PIPELINE (unchanged) ═══
-        news_keyword_plan = _resolve_news_keyword_plan(args, codes, analyzer, keyword_callback)
-        if not news_keyword_plan:
-            write_keyword_request_and_exit(config, codes, analyzer, args.output or "report.md")
-            return
-
-        print("\n[Layer 2] 新闻采集与分析...")
-        from src.news.pipeline import run_news_pipeline
-        news_data = run_news_pipeline(
-            analyzer,
-            config,
-            agent_news_plan=news_keyword_plan,
-            days=7,
-            report_date=report_date,
-        )
+        # Convert new news results to old format for report rendering
+        news_data: list[dict[str, Any]] = []
+        for code in codes:
+            basic = funds.get(code, {}).get("basic", {})
+            name = basic.get("name", code)
+            news_data.append(_adapt_new_news_to_old(news_results, code, name))
         news_contexts = news_context_by_code(news_data)
 
-        print("\n[Layer 3] 分析打分...")
-        scores, unscores = _score_funds(codes, analyzer, news_contexts)
+        if agent_state:
+            _attach_strategy_advice_from_state(scores, agent_state)
+            _attach_agent_score_state_from_state(scores, agent_state)
+        else:
+            _attach_strategy_advice_with_engine(
+                scores, codes, funds, graph, news_results
+            )
 
-    correlations = compute_correlations(analyzer.funds)
+    correlations = compute_correlations(funds)
     if getattr(args, "stress", False):
-        stress_results = stress_test(analyzer.funds)
+        stress_results = stress_test(funds)
         print(f"\n  压力测试: {len(stress_results)} 条风险线索")
     else:
         stress_results = []
@@ -598,12 +803,15 @@ def run_analyze(args, keyword_callback: KeywordCallback | None = None):
 
     attach_score_trends(store, scores)
 
-    holdings_data = compute_holdings(store, config, codes, analyzer)
+    holdings_data = compute_holdings(store, config, codes, funds)
     attach_decision_evidence(scores, news_contexts, holdings_data)
     portfolio_risk_matrix = build_portfolio_risk_matrix(holdings_data, scores, correlations)
     workflow_context = build_workflow_context(config, holdings_data, news_data=news_data)
     if isinstance(workflow_context, dict):
         workflow_context["portfolio_risk_matrix"] = portfolio_risk_matrix
+        workflow_context["kg_snapshot"] = _build_kg_snapshot(
+            codes, graph, news_results
+        )
 
     recommendations = []
     recommendation_status = "skipped" if not args.recommend else "empty"
@@ -613,7 +821,7 @@ def run_analyze(args, keyword_callback: KeywordCallback | None = None):
         recommendations, inter_recommendation_correlations = _run_recommendations(
             news_data,
             codes,
-            analyzer,
+            funds,
             portfolio_risk_matrix=portfolio_risk_matrix,
         )
         recommendation_status = "ok" if recommendations else "empty"
@@ -631,7 +839,7 @@ def run_analyze(args, keyword_callback: KeywordCallback | None = None):
     report_result = render_analysis_report(
         output_path=report_path,
         report_date=report_date,
-        analyzer=analyzer,
+        analyzer=funds,
         scores=scores,
         correlations=correlations,
         stress_results=stress_results,
@@ -653,108 +861,7 @@ def run_analyze(args, keyword_callback: KeywordCallback | None = None):
         perform_snapshot(args.config)
 
 
-def _resolve_news_keyword_plan(args, codes: list[str], analyzer, keyword_callback: KeywordCallback | None):
-    from src.news.keyword_cache import (
-        CACHE_VERSION,
-        default_keyword_cache_path,
-        load_valid_keyword_cache,
-    )
-
-    keyword_cache_path = (
-        getattr(args, "news_keyword_cache", None)
-        or default_keyword_cache_path()
-    )
-    news_keyword_plan = load_valid_keyword_cache(keyword_cache_path, codes, today=shared_today())
-    if news_keyword_plan:
-        return news_keyword_plan
-
-    fund_profiles = []
-    for code in codes:
-        basic = analyzer.funds.get(code, {}).get("basic", {})
-        fund_profiles.append({
-            "code": code,
-            "name": basic.get("name", code),
-            "type": basic.get("fund_type", ""),
-        })
-    agent_keywords = keyword_callback(codes, fund_profiles) if keyword_callback else None
-    if agent_keywords:
-        return {
-            "cache_version": CACHE_VERSION,
-            "holding_codes": sorted(codes),
-            "generated_at": shared_today().isoformat(),
-            "funds": {
-                code: {"keywords": agent_keywords.get(code, [])}
-                for code in codes
-            },
-        }
-
-    if not getattr(args, "fallback_keywords", False):
-        return None
-
-    print("\n[CLI] 未找到有效的新闻关键词缓存且无 Agent，启用 --fallback-keywords 模式自动生成在途关键词进行分析...")
-    from src.news.news_fetcher import _fallback_fund_keywords, extract_holding_keywords
-
-    fallback_plan_funds = {}
-    for code in codes:
-        basic = analyzer.funds.get(code, {}).get("basic", {})
-        name = basic.get("name", code)
-        fund_type = basic.get("fund_type", "")
-        _, stock_keywords = extract_holding_keywords(code, limit=10)
-        theme_keywords = _fallback_fund_keywords(name, fund_type)
-        keywords = list(dict.fromkeys(stock_keywords + theme_keywords))
-        fallback_plan_funds[code] = {"keywords": keywords}
-        print(f"  {code} ({name}) 自动提取关键词: {keywords}")
-
-    news_keyword_plan = {
-        "cache_version": CACHE_VERSION,
-        "holding_codes": sorted(codes),
-        "generated_at": shared_today().isoformat(),
-        "funds": fallback_plan_funds,
-    }
-    try:
-        os.makedirs(os.path.dirname(os.path.abspath(keyword_cache_path)), exist_ok=True)
-        with open(keyword_cache_path, "w", encoding="utf-8") as handle:
-            json.dump(news_keyword_plan, handle, ensure_ascii=False, indent=2)
-        print(f"[CLI] 已将自动生成的关键词缓存保存至: {keyword_cache_path}")
-    except Exception as exc:
-        print(f"[WARNING] 保存关键词缓存失败: {exc}")
-    return news_keyword_plan
-
-
-def _score_funds(codes: list[str], analyzer, news_contexts):
-    scores = []
-    unscores = []
-    for code in codes:
-        if code in analyzer.funds:
-            fund = analyzer.funds[code]
-            if fund["completeness"] != "D":
-                score = analyzer.score_fund(code, news_context=news_contexts.get(code))
-                scores.append(score)
-                print(f"  {code}: {score['composite_score']}/100 ({score['score_level_emoji']})")
-            else:
-                basic = fund.get("basic", {})
-                unscores.append({
-                    "code": code,
-                    "name": basic.get("name", code),
-                    "fund_name": basic.get("name", code),
-                    "fund_code": code,
-                    "data_completeness": "D",
-                    "error": basic.get("error", "核心数据获取失败"),
-                })
-                print(f"  {code}: D (数据不足) — {basic.get('error', '核心数据获取失败')[:60]}")
-        else:
-            unscores.append({
-                "code": code,
-                "name": code,
-                "fund_name": code,
-                "fund_code": code,
-                "data_completeness": "D",
-                "error": "数据采集失败",
-            })
-    return scores, unscores
-
-
-def _run_recommendations(news_data, codes, analyzer, portfolio_risk_matrix=None):
+def _run_recommendations(news_data, codes, funds, portfolio_risk_matrix=None):
     from src.news.agent_context import build_recommendation_judgment_context
     from src.recommend.engine import (
         build_holding_profiles,
@@ -770,7 +877,7 @@ def _run_recommendations(news_data, codes, analyzer, portfolio_risk_matrix=None)
     hot_sectors = extract_hot_sectors(news_data)
     candidates = screen_funds(hot_sectors)
     holding_codes = set(codes)
-    holding_profiles = build_holding_profiles(analyzer, holding_codes)
+    holding_profiles = build_holding_profiles(funds, holding_codes)
     filtered = filter_by_correlation(candidates, holding_codes, holding_profiles)
     if portfolio_risk_matrix:
         ranked = rank_recommendations_with_portfolio(

@@ -6,6 +6,27 @@ def _evidence():
         "portfolio": {"total_value": 10000},
         "portfolio_evidence": {"risk_matrix": {"warnings": ["集中"]}},
         "workflow_evidence": {"settlement_rows": [{"code": "000001"}]},
+        "kg_snapshot": {
+            "fund_exposure": {"000001": {"themes": ["消费"]}},
+            "impact_chains": {"evt-1": {"paths": []}},
+        },
+        "news_evidence": {
+            "000001": {
+                "classified_news": [{"title": "分类新闻"}],
+                "research_summaries": [{"what": "发生事件"}],
+                "extracted_events": [{"id": "evt-1"}],
+            },
+        },
+        "score_evidence": {
+            "000001": {
+                "regime": "normal",
+                "quant_score": {"score": 72},
+                "agent_state": {"final_score": 70},
+            },
+        },
+        "strategy_evidence": {
+            "000001": {"action": "hold", "confidence": 0.72},
+        },
         "funds": {
             "000001": {
                 "identity": {"name": "测试基金"},
@@ -65,3 +86,18 @@ def test_evidence_tools_expose_portfolio_and_scoring_contexts():
     assert portfolio["portfolio"]["total_value"] == 10000
     assert recs["candidates"][0]["code"] == "588710"
     assert "raw" not in recs["candidates"][0]
+
+
+def test_evidence_tools_expose_agent_v3_extensions():
+    registry = build_evidence_tool_registry(_evidence())
+
+    kg = registry.invoke("kg.snapshot", code="000001")
+    news = registry.invoke("news.agent_evidence", code="000001")
+    score = registry.invoke("scoring.agent_evidence", code="000001")
+    strategy = registry.invoke("strategy.evidence", code="000001")
+
+    assert kg["fund_exposure"]["themes"] == ["消费"]
+    assert "evt-1" in kg["impact_chains"]
+    assert news["research_summaries"][0]["what"] == "发生事件"
+    assert score["agent_state"]["final_score"] == 70
+    assert strategy["action"] == "hold"

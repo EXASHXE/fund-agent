@@ -1,10 +1,10 @@
 # AKShare 基金接口参考
 
-本文件约束数据口径。默认由 CLI 通过 `src/data/fetcher.py` 调用 AKShare；Agent 不直接绕过 CLI 抓数，除非用户明确要求排查数据源。
+本文件约束数据口径。默认由数据层通过 `src/data/fetcher.py` 调用 AKShare；Agent 不直接绕过 CLI 抓数，除非用户明确要求排查数据源。
 
 ## 使用原则
 
-- CLI 输出的 `report.evidence.json` 是最终研判的结构化事实输入；最终报告由经校验的 Agent decisions 渲染。
+- 证据构建层输出的 `report.evidence.json` 是最终研判的结构化事实输入；最终报告由经校验的 Agent decisions 渲染。
 - AKShare 接口只用于底层采集、问题定位或代码开发，不用于在报告阶段临时补编数据。
 - AKShare 字段可能变化，任何接口异常都应降级为 `[数据缺失-无法评估]` 或 NAV 自算指标，不得编造。
 - 新闻、评分与趋势证据由 pipeline 串联；Agent 基于结构化证据形成最终动作并接受合同校验。
@@ -163,4 +163,4 @@ df = ak.fund_hold_structure_em()
 | 行业配置 | `portfolio_risk_matrix` | 暴露簇、组合风险预算 |
 | 持有人结构 | 微观因子 | 机构资金行为 |
 
-Agent 在决策阶段必须优先引用 evidence 中的这些结果，而不是重新调用接口。
+Agent 在决策阶段必须优先引用 EvidenceGraph 中的 HardEvidence 节点，而不是重新调用接口。

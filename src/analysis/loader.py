@@ -7,6 +7,7 @@ from src.data.fetcher import (
     fetch_fund_basic, fetch_fund_performance, fetch_fund_nav,
     fetch_fund_holdings, fetch_fund_sectors, fetch_holder_structure,
 )
+from src.tools.scoring.helpers import assess_completeness
 
 
 class FundDataLoader:
@@ -32,27 +33,5 @@ class FundDataLoader:
         return fund_data
 
     def _assess_completeness(self, basic, perf, nav, holdings, sectors) -> str:
-        has_basic = bool(basic) and "error" not in basic
-        has_nav = isinstance(nav, pd.DataFrame) and len(nav) > 30
-        has_perf = bool(perf) and "error" not in perf
-
-        if not has_basic or not has_nav:
-            return "D"
-
-        core_ok = has_basic and has_nav
-        enhanced_ok = (
-            isinstance(holdings, pd.DataFrame) and len(holdings) > 0 and
-            isinstance(sectors, pd.DataFrame) and len(sectors) > 0
-        )
-
-        if not core_ok:
-            return "D"
-        if has_perf and enhanced_ok:
-            return "A"
-        if has_perf:
-            return "B"
-        if core_ok and enhanced_ok:
-            return "B"
-        if core_ok:
-            return "C"
-        return "D"
+        """Delegate to pure function in src.tools.scoring.helpers."""
+        return assess_completeness(basic, perf, nav, holdings, sectors)

@@ -14,8 +14,10 @@ from src.strategy.stop_logic import StopLogic
 from src.strategy.state_machine import StateMachine
 from src.strategy.advisor import StrategyAdvisor
 from src.strategy.engine import StrategyEngine
+from src.strategy.models import ActionPlan, StrategyDecision, TriggerPoint
 
 __all__ = [
     "StrategyAction", "StrategyState", "StrategyAdvice",
     "StopLogic", "StateMachine", "StrategyAdvisor", "StrategyEngine",
+    "ActionPlan", "StrategyDecision", "TriggerPoint",
 ]

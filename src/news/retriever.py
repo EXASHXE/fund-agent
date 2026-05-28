@@ -47,13 +47,12 @@ class Retriever:
         """
         fund_id = f"fund:{fund_code}"
 
-        plan = SearchPlan(
-            fund_code=fund_code,
-            macro_queries=list(_DEFAULT_MACRO_QUERIES),
-        )
+        plan = SearchPlan(fund_code=fund_code)
 
         if not graph.has_node(fund_id):
             return plan
+
+        plan.macro_queries = list(_DEFAULT_MACRO_QUERIES)
 
         # Extract fund name from KG
         fund_data = graph.nodes[fund_id].get("data")
@@ -121,10 +120,10 @@ class Retriever:
         Returns:
             List of raw news dicts with title, content, date, source.
         """
-        from src.news.news_fetcher import _cached_ak_call
+        from src.news.shared_fetch import cached_ak_call
 
         try:
-            df = _cached_ak_call("stock_news_em", symbol=stock_code)
+            df = cached_ak_call("stock_news_em", symbol=stock_code)
         except Exception:
             return []
 
@@ -185,21 +184,21 @@ class Retriever:
         Returns:
             List of raw news dicts.
         """
-        from src.news.news_fetcher import _cached_ak_call, _fetch_sina_roll_news_df
+        from src.news.shared_fetch import cached_ak_call, fetch_sina_roll_news_df
 
         news_items = []
         seen_titles = set()
 
         # Try CLS (财联社) telegraph
         try:
-            df = _cached_ak_call("stock_telegraph_cls")
+            df = cached_ak_call("stock_telegraph_cls")
             news_items.extend(self._extract_from_df(df, queries, days, seen_titles, "财联社"))
         except Exception:
             pass
 
         # Try Sina roll news
         try:
-            df = _fetch_sina_roll_news_df(pages=3)
+            df = fetch_sina_roll_news_df(pages=3)
             news_items.extend(self._extract_from_df(df, queries, days, seen_titles, "新浪财经"))
         except Exception:
             pass
@@ -207,7 +206,7 @@ class Retriever:
         # Try CLS category
         for symbol in ["全部", "重点"]:
             try:
-                df = _cached_ak_call("stock_info_global_cls", symbol=symbol)
+                df = cached_ak_call("stock_info_global_cls", symbol=symbol)
                 news_items.extend(self._extract_from_df(df, queries, days, seen_titles, f"财联社:{symbol}"))
             except Exception:
                 pass

@@ -84,7 +84,7 @@ def write_keyword_request_and_exit(config, codes, analyzer, output_path):
     import json
     import sys
 
-    from src.news.news_fetcher import _cached_ak_call, _normalize_company_name, _pick_first
+    from src.news.shared_fetch import cached_ak_call, normalize_company_name, pick_first
 
     request_file = (
         output_path[:-3] + ".news_keywords_request.json"
@@ -103,14 +103,14 @@ def write_keyword_request_and_exit(config, codes, analyzer, output_path):
         top_holdings = []
         for year in ["2025", "2024"]:
             try:
-                df = _cached_ak_call("fund_portfolio_hold_em", symbol=code, date=year)
+                df = cached_ak_call("fund_portfolio_hold_em", symbol=code, date=year)
                 if df is not None and not df.empty:
                     for _, row in df.head(10).iterrows():
                         stock_code = str(row.get("股票代码", "")).strip()
                         if not stock_code or stock_code.lower() == "nan":
                             continue
-                        stock_name = _normalize_company_name(str(row.get("股票名称", "")))
-                        weight = _pick_first(row, ["占净值比例", "持仓占比", "占比", "持股占比"])
+                        stock_name = normalize_company_name(str(row.get("股票名称", "")))
+                        weight = pick_first(row, ["占净值比例", "持仓占比", "占比", "持股占比"])
                         top_holdings.append({
                             "stock_name": stock_name,
                             "stock_code": stock_code,

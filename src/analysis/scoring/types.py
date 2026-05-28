@@ -5,6 +5,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Literal
 
+from src.tools.scoring.helpers import score_level  # noqa: F401
+
 
 @dataclass
 class ScoreComponent:
@@ -56,15 +58,3 @@ class CompositeScore:
     composite: float
     level: Literal["green", "yellow", "orange", "red"]
     regime: MarketRegime
-
-
-def score_level(composite: float) -> Literal["green", "yellow", "orange", "red"]:
-    """Convert composite score to level."""
-    if composite >= 75:
-        return "green"
-    elif composite >= 50:
-        return "yellow"
-    elif composite >= 30:
-        return "orange"
-    else:
-        return "red"

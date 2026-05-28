@@ -14,7 +14,7 @@ def build_evidence_tool_registry(evidence: Mapping[str, Any]) -> ToolRegistry:
     @registry.tool(
         "evidence.fund_identity",
         "Return one fund's identity and risk constraints from report evidence.",
-        agents=("news", "scoring", "portfolio", "summary"),
+        agents=("news", "scoring", "portfolio", "strategy", "summary"),
     )
     def fund_identity(code: str):
         fund = _fund(evidence, code)
@@ -63,7 +63,7 @@ def build_evidence_tool_registry(evidence: Mapping[str, Any]) -> ToolRegistry:
     @registry.tool(
         "scoring.factor_matrix",
         "Return quant baseline and explainable factor matrix for one fund.",
-        agents=("scoring", "summary"),
+        agents=("scoring", "strategy", "summary"),
     )
     def scoring_context(code: str):
         fund = _fund(evidence, code)
@@ -77,7 +77,7 @@ def build_evidence_tool_registry(evidence: Mapping[str, Any]) -> ToolRegistry:
     @registry.tool(
         "portfolio.context",
         "Return portfolio-level risk, workflow, and attribution evidence.",
-        agents=("portfolio", "summary"),
+        agents=("portfolio", "strategy", "summary"),
     )
     def portfolio_context():
         return {
@@ -85,6 +85,54 @@ def build_evidence_tool_registry(evidence: Mapping[str, Any]) -> ToolRegistry:
             "portfolio_evidence": evidence.get("portfolio_evidence") or {},
             "workflow_evidence": evidence.get("workflow_evidence") or {},
         }
+
+    @registry.tool(
+        "kg.snapshot",
+        "Return KG exposure and impact-chain evidence from agent-enhanced reports.",
+        agents=("news", "scoring", "portfolio", "strategy", "summary", "research"),
+    )
+    def kg_snapshot(code: str | None = None):
+        snapshot = evidence.get("kg_snapshot") or {}
+        if not code:
+            return snapshot
+        return {
+            "fund_exposure": (
+                (snapshot.get("fund_exposure") or {}).get(str(code), {})
+            ),
+            "impact_chains": snapshot.get("impact_chains") or {},
+        }
+
+    @registry.tool(
+        "news.agent_evidence",
+        "Return classified news, research summaries, and extracted events for one fund.",
+        agents=("news", "scoring", "strategy", "summary", "research"),
+    )
+    def agent_news_evidence(code: str):
+        news = (evidence.get("news_evidence") or {}).get(str(code), {})
+        return {
+            "classified_news": _compact_sequence(news.get("classified_news") or [], 20),
+            "research_summaries": _compact_sequence(news.get("research_summaries") or [], 10),
+            "extracted_events": _compact_sequence(news.get("extracted_events") or [], 20),
+        }
+
+    @registry.tool(
+        "scoring.agent_evidence",
+        "Return five-dimension ScoreEngine and LangGraph score evidence for one fund.",
+        agents=("scoring", "strategy", "summary", "research"),
+    )
+    def agent_score_evidence(code: str):
+        return (evidence.get("score_evidence") or {}).get(str(code), {})
+
+    @registry.tool(
+        "strategy.evidence",
+        "Return StrategyEngine or StrategyAgent evidence for one fund.",
+        agents=("strategy", "summary"),
+    )
+    def strategy_evidence(code: str):
+        strategy = (evidence.get("strategy_evidence") or {}).get(str(code))
+        if strategy:
+            return strategy
+        return _fund(evidence, code).get("strategy_advice") or {}
 
     @registry.tool(
         "recommendations.candidates",
@@ -114,6 +162,16 @@ def _compact_mapping(payload: Mapping[str, Any], keys: tuple[str, ...]) -> dict[
         for key in keys
         if key in payload and payload.get(key) is not None
     }
+
+
+def _compact_sequence(payload: Any, limit: int) -> list[Any]:
+    if isinstance(payload, list):
+        return payload[:limit]
+    if isinstance(payload, tuple):
+        return list(payload[:limit])
+    if payload:
+        return [payload]
+    return []
 
 
 def _compact_relevance_task(task: Mapping[str, Any]) -> dict[str, Any]:

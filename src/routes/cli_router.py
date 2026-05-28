@@ -51,12 +51,6 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="与本次 evidence 口径日一致的 Agent 最终决策 JSON；提供后生成最终报告",
     )
-    p_analyze.add_argument(
-        "--use-agents",
-        action="store_true",
-        default=False,
-        help="使用新的 KG+AI 流水线（Phase 2-4）替代旧版关键词流水线",
-    )
 
     p_fetch = sub.add_parser("fetch", help="仅拉取净值数据")
     p_fetch.add_argument("-c", "--config", required=True)
