@@ -5,7 +5,10 @@ import unittest
 
 import pandas as pd
 
-from src.cli import _build_report_evidence, _load_agent_decisions
+from src.core.contracts import (
+    build_report_evidence as _build_report_evidence,
+    load_agent_decisions as _load_agent_decisions,
+)
 from src.output.report import _format_profit_contribution, generate_report
 from src.output.templates import qdii_hint
 from src.output.validator import post_process_report, validate_final_report
@@ -50,11 +53,11 @@ def _valid_decisions():
     return {
         "schema_version": "agent_decisions.v2",
         "evidence_report_date": "2026-05-22",
-        "portfolio": {"tldr": "维持均衡", "stance": "neutral"},
+        "portfolio": {"tldr": "维持均衡", "stance": "neutral", "daily_analysis": "测试当日归因"},
         "fund_scores": {
             "000001": {
-                "final_scores": {"macro": 15, "meso": 22, "micro": 39, "total": 76},
-                "agent_adjustments": {"macro": 0, "meso": 0, "micro": 0},
+                "final_scores": {"macro": 16, "meso": 22, "micro": 39, "total": 77},
+                "agent_adjustments": {"macro": 1, "meso": 0, "micro": 0},
                 "final_action": "hold",
                 "target_weight_pct": 18.0,
                 "adjust_amount": 0,
@@ -173,7 +176,7 @@ class ReportAgentDecisionTest(unittest.TestCase):
         )
         self.assertIn("Agent 最终研判", report)
         self.assertIn("77/100", report)
-        self.assertIn("| 综合 | 76 | +1 | 77 |", report)
+        self.assertIn("<tr><td>综合</td><td>76</td><td>+1</td><td>77</td>", report)
         self.assertIn("hold", report)
         self.assertIn("18.00%", report)
         self.assertIn("-500.00", report)
@@ -186,14 +189,16 @@ class ReportAgentDecisionTest(unittest.TestCase):
             correlations=pd.DataFrame(),
             stress_tests=[],
         )
+        self.assertNotIn("<details markdown=\"1\">", report)
         self.assertEqual(report.count("<details>"), report.count("</details>"))
         self.assertIn("<summary>测试基金（000001）", report)
+        self.assertIn("<table>", report)
 
     def test_agent_decisions_contract_rejects_score_that_cannot_reconcile(self):
         payload = {
             "schema_version": "agent_decisions.v2",
             "evidence_report_date": "2026-05-22",
-            "portfolio": {"tldr": "测试", "stance": "neutral"},
+            "portfolio": {"tldr": "测试", "stance": "neutral", "daily_analysis": "测试"},
             "fund_scores": {
                 "000001": {
                     "final_scores": {"macro": 16, "meso": 21, "micro": 40, "total": 99},
@@ -291,6 +296,28 @@ class ReportAgentDecisionTest(unittest.TestCase):
         self.assertIn("| **止盈线** | +50.00%", processed)
         self.assertIn("| **止损线** | -37.50%", processed)
         self.assertNotIn("- 原始风险提示", processed)
+
+    def test_post_process_report_calibrates_html_details_stop_bounds(self):
+        raw_markdown = """
+<details>
+<summary>华宝纳斯达克精选股票(QDII)A（017436） ⚠️*(海外净值披露可能滞后)*</summary>
+<div>
+<table>
+<tbody>
+<tr><td>止盈线</td><td>+20.00%</td><td>待 Agent 设定</td></tr>
+<tr><td>止损线</td><td>-15.00%</td><td>待 Agent 设定</td></tr>
+</tbody>
+</table>
+</div>
+</details>
+
+## 风险提示
+- 原始风险提示
+"""
+        scores = [{"fund_code": "017436", "fund_name": "华宝纳斯达克精选股票(QDII)A", "annual_volatility": 25.0}]
+        processed = post_process_report(raw_markdown, scores)
+        self.assertIn("<tr><td>止盈线</td><td>+50.00%</td>", processed)
+        self.assertIn("<tr><td>止损线</td><td>-37.50%</td>", processed)
 
 
 if __name__ == "__main__":

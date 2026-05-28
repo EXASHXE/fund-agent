@@ -1,5 +1,6 @@
 """报告后置校验器：止盈止损线自动校准 + 合规声明强制追加。"""
 from datetime import date
+from html import escape
 import re
 from typing import Dict, List
 
@@ -58,6 +59,13 @@ def post_process_report(raw_markdown: str, scores: List[Dict]) -> str:
         result = pattern_loss.sub(
             rf'\1| **止损线** | -{stop_loss:.2f}%', result
         )
+        result = _replace_html_stop_bounds(
+            result,
+            fund_name=fund_name,
+            fund_code=fund_code,
+            stop_profit=stop_profit,
+            stop_loss=stop_loss,
+        )
 
     # 2. 移除已有的风险提示（如有），追加标准合规声明
     existing_idx = result.rfind("## 风险提示")
@@ -90,7 +98,7 @@ def validate_final_report(markdown: str, report_date: str, holding_count: int) -
 
     required_chapters = [
         "## 一、新闻资讯与 Agent 舆情研判",
-        "## 二、持仓总览与收益口径",
+        "## 二、持仓总览与当日归因分析",
         "## 三、定投执行与申购结算状态",
         "## 四、单基金深度诊断",
         "## 五、组合研判与执行方案",
@@ -101,14 +109,18 @@ def validate_final_report(markdown: str, report_date: str, holding_count: int) -
     if missing:
         raise ValueError(f"最终报告缺少固定章节: {', '.join(missing)}")
 
-    if markdown.count("<details>") != markdown.count("</details>"):
+    if "<details markdown=" in markdown:
+        raise ValueError("最终报告应使用纯 HTML details 折叠块")
+
+    details_count = markdown.count("<details>")
+    if details_count != markdown.count("</details>"):
         raise ValueError("最终报告存在未闭合的 details 折叠块")
 
     cutoff = date.fromisoformat(report_date)
-    news_segment = _section_between(markdown, "#### 当日新闻线索", "### ")
+    news_segment = _section_between(markdown, "## 一、新闻资讯与 Agent 舆情研判", "## 二、持仓总览与当日归因分析")
     for value in re.findall(r"\|\s*(\d{4}-\d{2}-\d{2})\s*\|", news_segment):
         if date.fromisoformat(value) > cutoff:
-            raise ValueError(f"当日新闻线索包含口径日后的新闻: {value} > {report_date}")
+            raise ValueError(f"当日新闻线索包含了未来或非口径日的新闻: {value} > {report_date}")
 
     if holding_count > 0:
         settlement = _section_between(markdown, "### 申购与净值结算状态", "## ")
@@ -133,3 +145,35 @@ def _section_between(markdown: str, heading: str, next_heading_prefix: str) -> s
     search_from = start + len(heading)
     end = markdown.find(f"\n{next_heading_prefix}", search_from)
     return markdown[start:] if end < 0 else markdown[start:end]
+
+
+def _replace_html_stop_bounds(
+    markdown: str,
+    fund_name: str,
+    fund_code: str,
+    stop_profit: float,
+    stop_loss: float,
+) -> str:
+    """Calibrate stop bounds inside pure-HTML details blocks."""
+    escaped_name = re.escape(escape(fund_name, quote=True))
+    escaped_code = re.escape(escape(fund_code, quote=True))
+    block_pattern = re.compile(
+        rf'(<details>\s*<summary>{escaped_name}（{escaped_code}）.*?</summary>.*?</details>)',
+        re.DOTALL,
+    )
+
+    def replace_block(match):
+        block = match.group(1)
+        block = re.sub(
+            r'(<tr><td>止盈线</td><td>)\+?[+-]?[\d.]+%',
+            rf'\1+{stop_profit:.2f}%',
+            block,
+        )
+        block = re.sub(
+            r'(<tr><td>止损线</td><td>)[+-]?[\d.]+%',
+            rf'\1-{stop_loss:.2f}%',
+            block,
+        )
+        return block
+
+    return block_pattern.sub(replace_block, markdown)

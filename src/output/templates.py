@@ -25,8 +25,6 @@ def report_header(scores_count: int) -> str:
 def portfolio_overview_table(portfolio_data: dict) -> str:
     """持仓总览表"""
     lines = []
-    lines.append("## 二、持仓总览与收益口径")
-    lines.append("")
     lines.append(f"> 评估日期：{effective_report_date().isoformat()}")
     lines.append("")
     lines.append("| 基金代码 | 基金名称 | 持有市值(¥) | 占比 | 成本价 | 累计收益(¥) | 累计收益率 | 年化收益率 | 待确认(¥) | 定投状态 |")

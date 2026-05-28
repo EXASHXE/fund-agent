@@ -2,12 +2,16 @@ import unittest
 
 from types import SimpleNamespace
 
-from src.cli import _score_snapshot_payload, _sanitize_stress_tests_for_snapshot, _should_snapshot_after_analyze
+from src.services.snapshot_service import (
+    sanitize_stress_tests_for_snapshot,
+    score_snapshot_payload,
+    should_snapshot_after_analyze,
+)
 
 
 class SnapshotSanitizeTest(unittest.TestCase):
     def test_stress_tests_drop_report_only_fields_before_db_save(self):
-        sanitized = _sanitize_stress_tests_for_snapshot([
+        sanitized = sanitize_stress_tests_for_snapshot([
             {
                 "scenario_id": "R_QDII",
                 "scenario_desc": "海外权益与汇率共振",
@@ -26,12 +30,12 @@ class SnapshotSanitizeTest(unittest.TestCase):
         self.assertNotIn("agent_instruction", sanitized[0])
 
     def test_analyze_snapshot_is_enabled_by_default(self):
-        self.assertTrue(_should_snapshot_after_analyze(SimpleNamespace()))
-        self.assertFalse(_should_snapshot_after_analyze(SimpleNamespace(snapshot_after=False)))
-        self.assertTrue(_should_snapshot_after_analyze(SimpleNamespace(snapshot_after=True)))
+        self.assertTrue(should_snapshot_after_analyze(SimpleNamespace()))
+        self.assertFalse(should_snapshot_after_analyze(SimpleNamespace(snapshot_after=False)))
+        self.assertTrue(should_snapshot_after_analyze(SimpleNamespace(snapshot_after=True)))
 
     def test_score_snapshot_payload_preserves_structured_matrices(self):
-        payload = _score_snapshot_payload({
+        payload = score_snapshot_payload({
             "fund_code": "000001",
             "data_completeness": "A",
             "composite_score": 70,

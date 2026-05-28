@@ -33,6 +33,7 @@ class ScoreFactorMatrixTest(unittest.TestCase):
 
         self.assertIn("score_confidence", score)
         self.assertGreater(score["score_confidence"], 0.85)
+        self.assertAlmostEqual(score["feature_matrix"]["hhi_index"], 67.24)
         for dimension in ["macro", "meso", "micro"]:
             self.assertIn(dimension, score["factor_matrix"])
             self.assertGreater(len(score["factor_matrix"][dimension]), 0)

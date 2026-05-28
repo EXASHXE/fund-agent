@@ -1,6 +1,7 @@
 import sys
 import types
 import unittest
+from datetime import date
 from unittest.mock import patch
 
 import pandas as pd
@@ -32,7 +33,12 @@ class NewsFetcherTest(unittest.TestCase):
         old = sys.modules.get("akshare")
         sys.modules["akshare"] = fake_ak
         try:
-            news = fetch_fund_news("017436", "华宝纳斯达克精选股票(QDII)A", days=7)
+            news = fetch_fund_news(
+                "017436",
+                "华宝纳斯达克精选股票(QDII)A",
+                days=7,
+                as_of=date(2026, 5, 22),
+            )
         finally:
             if old is not None:
                 sys.modules["akshare"] = old
@@ -94,6 +100,7 @@ class NewsFetcherTest(unittest.TestCase):
                 "东方惠灵活配置混合A",
                 keywords=["寒武纪", "国产AI芯片"],
                 days=7,
+                as_of=date(2026, 5, 22),
             )
         finally:
             if old is not None:
@@ -179,6 +186,7 @@ class NewsFetcherTest(unittest.TestCase):
                 keywords=["寒武纪"],
                 days=7,
                 max_items=2,
+                as_of=date(2026, 5, 22),
             )
         finally:
             if old is not None:

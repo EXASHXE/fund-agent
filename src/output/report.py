@@ -1,5 +1,6 @@
 """Render investment research evidence drafts and Agent-decided final reports."""
 
+from html import escape
 from typing import Any, Dict, Iterable, List, Optional
 
 import pandas as pd
@@ -192,19 +193,22 @@ def _render_news_section(news_data: List[Dict], decisions: Dict) -> List[str]:
             if sampled:
                 body.extend([
                     "",
-                    "<details>",
-                    f"<summary>新闻证据明细（共 {len(sampled)} 条）</summary>",
+                    f"**新闻证据明细（共 {len(sampled)} 条）**",
                     "",
                     "<table>",
                     "<thead><tr><th>日期</th><th>标题</th></tr></thead>",
                     "<tbody>"
                 ])
                 for news in sampled:
-                    body.append(f"<tr><td>{news.get('date', '-')}</td><td>{news.get('title', '-')}</td></tr>")
+                    body.append(
+                        f"<tr><td>{_html(news.get('date', '-'))}</td>"
+                        f"<td>{_html(news.get('title', '-'))}</td></tr>"
+                    )
                 body.extend([
                     "</tbody>",
                     "</table>",
-                    "</details>",
+                    "",
+                    "---",
                     ""
                 ])
 
@@ -251,43 +255,49 @@ def _render_fund_diagnostics(
             total_adjustment = sum(adjusts[key] for key in ("macro", "meso", "micro"))
         fund_type = score.get("fund_type") or fund.get("fund_type") or detail.get("fund_type", "")
         title = f"{name}（{code}）"
-        body = [
-            f"### {title}{qdii_hint(name, fund_type)}",
-            "",
-            "| 维度 | 量化基准分 | Agent 调整 | 最终分 | 关键依据 |",
-            "|------|-----------:|-----------:|-------:|----------|",
-            _score_row("宏观", score.get("macro_score"), adjusts.get("macro"), finals.get("macro"), score.get("macro_basis")),
-            _score_row("中观", score.get("meso_score"), adjusts.get("meso"), finals.get("meso"), score.get("meso_basis")),
-            _score_row("微观", score.get("micro_score"), adjusts.get("micro"), finals.get("micro"), score.get("micro_basis")),
-            _score_row("综合", score.get("composite_score"), total_adjustment, finals.get("total"), "量化基准与 Agent 校准汇总"),
-            "",
+        score_rows = [
+            ("宏观", _score_value(score.get("macro_score")), _signed_score(adjusts.get("macro")), _score_value(finals.get("macro")), score.get("macro_basis") or "-"),
+            ("中观", _score_value(score.get("meso_score")), _signed_score(adjusts.get("meso")), _score_value(finals.get("meso")), score.get("meso_basis") or "-"),
+            ("微观", _score_value(score.get("micro_score")), _signed_score(adjusts.get("micro")), _score_value(finals.get("micro")), score.get("micro_basis") or "-"),
+            ("综合", _score_value(score.get("composite_score")), _signed_score(total_adjustment), _score_value(finals.get("total")), "量化基准与 Agent 校准汇总"),
         ]
+        body = _html_table(
+            ["维度", "量化基准分", "Agent 调整", "最终分", "关键依据"],
+            score_rows,
+        )
         if decision:
-            body.extend([
-                f"- Agent 最终评分：{_score_value(finals.get('total'))}/100",
-                f"- Agent 最终动作：{decision.get('final_action', '未说明')}",
-                f"- 研判依据：{_join_value(decision.get('rationale'))}",
-                f"- 复核触发：{_join_value(decision.get('triggers'))}",
-            ])
+            agent_rows = [
+                ("Agent 最终评分", f"{_score_value(finals.get('total'))}/100"),
+                ("Agent 最终动作", decision.get("final_action", "未说明")),
+                ("研判依据", _join_value(decision.get("rationale"))),
+                ("复核触发", _join_value(decision.get("triggers"))),
+            ]
             if decision.get("trend_view"):
-                body.append(f"- 趋势判断：{_join_value(decision.get('trend_view'))}")
+                agent_rows.append(("趋势判断", _join_value(decision.get("trend_view"))))
+            body.extend(["<h4>Agent 研判</h4>"])
+            body.extend(_html_table(["项目", "结论"], agent_rows))
         else:
-            body.extend([
-                "- Agent 最终评分：待评定",
-                "- 本条为量化证据，不输出规则动作；待 Agent 最终评定。",
-            ])
+            body.extend(["<h4>Agent 研判</h4>"])
+            body.extend(_html_table(
+                ["项目", "结论"],
+                [
+                    ("Agent 最终评分", "待评定"),
+                    ("说明", "本条为量化证据，不输出规则动作；待 Agent 最终评定。"),
+                ],
+            ))
 
         if fund or detail:
             body.extend([
-                "",
-                "**持仓与约束证据**",
-                "",
-                "| 指标 | 数值 |",
-                "|------|------|",
-                f"| 当前市值 | ¥{_as_float(fund.get('value', detail.get('current_value'))):,.2f} |",
-                f"| 累计收益 | ¥{_as_float(fund.get('profit', detail.get('profit'))):+,.2f} |",
-                f"| 待确认金额 | ¥{_as_float(fund.get('pending_amount', detail.get('pending_amount'))):,.2f} |",
+                "<h4>持仓与约束证据</h4>",
             ])
+            body.extend(_html_table(
+                ["指标", "数值"],
+                [
+                    ("当前市值", f"¥{_as_float(fund.get('value', detail.get('current_value'))):,.2f}"),
+                    ("累计收益", f"¥{_as_float(fund.get('profit', detail.get('profit'))):+,.2f}"),
+                    ("待确认金额", f"¥{_as_float(fund.get('pending_amount', detail.get('pending_amount'))):,.2f}"),
+                ],
+            ))
 
         sp_pct = decision.get('suggested_stop_profit_pct') if decision else None
         sl_pct = decision.get('suggested_stop_loss_pct') if decision else None
@@ -295,16 +305,17 @@ def _render_fund_diagnostics(
         sl_agent = f"{sl_pct:.2f}%" if sl_pct is not None else "待 Agent 设定"
 
         body.extend([
-            "",
-            "**风险边界证据**",
-            "",
-            "| 指标 | 量化默认值 | Agent 建议值 |",
-            "|------|------------|--------------|",
-            f"| **止盈线** | +{_as_float(score.get('stop_profit_pct'), 20.0):.2f}% | {sp_agent} |",
-            f"| **止损线** | {_negative_pct(score.get('stop_loss_pct'), -15.0)} | {sl_agent} |",
-            f"| 年化波动率 | {_format_optional_pct(score.get('annual_volatility'))} | - |",
+            "<h4>风险边界证据</h4>",
         ])
-        lines.extend(body)
+        body.extend(_html_table(
+            ["指标", "量化默认值", "Agent 建议值"],
+            [
+                ("止盈线", f"+{_as_float(score.get('stop_profit_pct'), 20.0):.2f}%", sp_agent),
+                ("止损线", _negative_pct(score.get('stop_loss_pct'), -15.0), sl_agent),
+                ("年化波动率", _format_optional_pct(score.get('annual_volatility')), "-"),
+            ],
+        ))
+        lines.extend(_details(f"{title}{qdii_hint(name, fund_type)}", body))
     return lines
 
 
@@ -528,7 +539,35 @@ def _render_execution_tables(ctx: Dict) -> List[str]:
     return lines
 
 def _details(summary: str, body_lines: Iterable[str]) -> List[str]:
-    return ["<details>", f"<summary>{summary}</summary>", "", *body_lines, "</details>", ""]
+    return [
+        "<details>",
+        f"<summary>{_html(summary)}</summary>",
+        "<div>",
+        *body_lines,
+        "</div>",
+        "</details>",
+        "",
+    ]
+
+
+def _html_table(headers: Iterable[Any], rows: Iterable[Iterable[Any]]) -> List[str]:
+    header_html = "".join(f"<th>{_html(header)}</th>" for header in headers)
+    lines = [
+        "<table>",
+        f"<thead><tr>{header_html}</tr></thead>",
+        "<tbody>",
+    ]
+    for row in rows:
+        row_html = "".join(f"<td>{_html(cell)}</td>" for cell in row)
+        lines.append(f"<tr>{row_html}</tr>")
+    lines.extend(["</tbody>", "</table>"])
+    return lines
+
+
+def _html(value) -> str:
+    if value is None:
+        return ""
+    return escape(str(value), quote=True)
 
 
 def _score_row(label: str, base, adjustment, final, basis) -> str:

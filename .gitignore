@@ -32,3 +32,11 @@ data/cache/
 daily_report_card.py
 daily_card*.py
 scratchpad_*.py
+
+# 生成输出
+report.evidence.json
+mock.py
+
+# 会话数据
+.omo/
+.pytest_cache/

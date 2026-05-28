@@ -465,8 +465,23 @@ def compute_hhi(holdings_df: Any) -> Optional[float]:
                     weight_col = col
                     break
             if weight_col:
-                w = float(row[weight_col])
-                hhi += (w * 100) ** 2
+                w = _parse_weight_pct(row[weight_col])
+                if w is not None:
+                    hhi += w ** 2
         return round(hhi, 2)
     except Exception:
         return None
+
+
+def _parse_weight_pct(value: Any) -> Optional[float]:
+    """Parse holding weight into percentage points for HHI calculation."""
+    try:
+        raw = str(value).strip().replace("%", "")
+        if not raw or raw.lower() in {"nan", "none", "null"}:
+            return None
+        weight = float(raw)
+    except (TypeError, ValueError):
+        return None
+    if 0 < weight <= 1:
+        return weight * 100
+    return weight

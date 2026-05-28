@@ -5,9 +5,9 @@ from unittest.mock import patch
 
 import pandas as pd
 
-from src.cli import _compute_holdings
 from src.engine.calculator import compute_fund
 from src.engine.events import EventType, FundEvent, generate_events
+from src.services.portfolio_service import compute_holdings
 
 
 def _is_weekday(d):
@@ -223,13 +223,15 @@ class EngineCalculatorTest(unittest.TestCase):
             funds={"000001": {"nav": nav_df, "basic": {"name": "测试基金"}}}
         )
 
-        with patch("src.cli.effective_report_date", lambda: date(2026, 5, 15)), \
+        with patch("src.services.portfolio_service.effective_report_date", lambda: date(2026, 5, 15)), \
+             patch("src.services.portfolio_service.dca_effective_date", lambda: date(2026, 5, 15)), \
+             patch("src.services.portfolio_service.shared_today", lambda: date(2026, 5, 15)), \
              patch("src.db.database.get_session", lambda: None), \
              patch("src.engine.calculator.is_trade_day", _is_weekday), \
              patch("src.engine.calculator.next_trade_day", _next_weekday), \
              patch("src.engine.events.is_trade_day", _is_weekday), \
              patch("src.engine.events.next_trade_day", _next_weekday):
-            result = _compute_holdings(store, config, ["000001"], analyzer=analyzer)
+            result = compute_holdings(store, config, ["000001"], analyzer=analyzer)
 
         detail = result["by_fund"]["000001"]
         self.assertEqual(detail["total_shares"], 500.0)
