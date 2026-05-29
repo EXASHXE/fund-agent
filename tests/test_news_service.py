@@ -1,4 +1,4 @@
-from src.services.news_service import build_nav_summary, news_context_by_code, planned_news_keywords
+from legacy.services.news_service import build_nav_summary, news_context_by_code, planned_news_keywords
 
 
 def test_planned_news_keywords_splits_compound_terms_and_preserves_order():

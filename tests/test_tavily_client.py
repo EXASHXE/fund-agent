@@ -11,48 +11,48 @@ class TavilySearchClientTest(unittest.TestCase):
 
     def test_init_without_api_key_does_not_crash(self):
         """Client should initialize without an API key and not crash."""
-        from src.news.tavily_client import TavilySearchClient
+        from legacy.news.tavily_client import TavilySearchClient
         client = TavilySearchClient()
         self.assertIsNotNone(client)
         self.assertEqual(client.api_key, "")
 
     def test_init_with_explicit_api_key(self):
         """Client should accept an explicit API key."""
-        from src.news.tavily_client import TavilySearchClient
+        from legacy.news.tavily_client import TavilySearchClient
         client = TavilySearchClient(api_key="tavily_test_key")
         self.assertEqual(client.api_key, "tavily_test_key")
 
     def test_init_with_env_var(self):
         """Client should read API key from environment variable TAVILY_API_KEY."""
-        from src.news.tavily_client import TavilySearchClient
+        from legacy.news.tavily_client import TavilySearchClient
         with patch.dict(os.environ, {"TAVILY_API_KEY": "env_tavily_key"}):
             client = TavilySearchClient()
             self.assertEqual(client.api_key, "env_tavily_key")
 
     def test_get_client_returns_none_when_no_api_key(self):
         """_get_client should return None when api_key is empty."""
-        from src.news.tavily_client import TavilySearchClient
+        from legacy.news.tavily_client import TavilySearchClient
         client = TavilySearchClient()
         result = client._get_client()
         self.assertIsNone(result)
 
     def test_search_finance_returns_empty_when_no_api_key(self):
         """search_finance should return empty list when API key is missing."""
-        from src.news.tavily_client import TavilySearchClient
+        from legacy.news.tavily_client import TavilySearchClient
         client = TavilySearchClient()
         result = client.search_finance("AAPL earnings")
         self.assertEqual(result, [])
 
     def test_search_news_returns_empty_when_no_api_key(self):
         """search_news should return empty list when API key is missing."""
-        from src.news.tavily_client import TavilySearchClient
+        from legacy.news.tavily_client import TavilySearchClient
         client = TavilySearchClient()
         result = client.search_news("Tesla stock")
         self.assertEqual(result, [])
 
     def test_normalize_converts_tavily_response_format(self):
         """_normalize should convert Tavily response to standard dict format."""
-        from src.news.tavily_client import TavilySearchClient
+        from legacy.news.tavily_client import TavilySearchClient
         sample = [
             {
                 "title": "Apple Reports Record Q2 Earnings",
@@ -79,7 +79,7 @@ class TavilySearchClientTest(unittest.TestCase):
 
     def test_normalize_handles_missing_fields(self):
         """_normalize should handle records with missing fields gracefully."""
-        from src.news.tavily_client import TavilySearchClient
+        from legacy.news.tavily_client import TavilySearchClient
         sample = [{}]  # Empty record
         result = TavilySearchClient._normalize(sample)
         self.assertEqual(len(result), 1)
@@ -92,13 +92,13 @@ class TavilySearchClientTest(unittest.TestCase):
 
     def test_normalize_empty_list(self):
         """_normalize should return empty list for empty input."""
-        from src.news.tavily_client import TavilySearchClient
+        from legacy.news.tavily_client import TavilySearchClient
         result = TavilySearchClient._normalize([])
         self.assertEqual(result, [])
 
     def test_search_finance_with_mocked_client(self):
         """search_finance should call TavilyClient and return normalized results."""
-        from src.news.tavily_client import TavilySearchClient
+        from legacy.news.tavily_client import TavilySearchClient
         fake_tavily = types.SimpleNamespace()
         mock_client = MagicMock()
         mock_client.search.return_value = {
@@ -132,7 +132,7 @@ class TavilySearchClientTest(unittest.TestCase):
 
     def test_search_finance_handles_exception(self):
         """search_finance should return empty list when API call raises exception."""
-        from src.news.tavily_client import TavilySearchClient
+        from legacy.news.tavily_client import TavilySearchClient
         fake_tavily = types.SimpleNamespace()
         mock_client = MagicMock()
         mock_client.search.side_effect = Exception("API error")
@@ -153,7 +153,7 @@ class TavilySearchClientTest(unittest.TestCase):
 
     def test_search_news_with_mocked_client(self):
         """search_news should call TavilyClient with news topic and days parameter."""
-        from src.news.tavily_client import TavilySearchClient
+        from legacy.news.tavily_client import TavilySearchClient
         fake_tavily = types.SimpleNamespace()
         mock_client = MagicMock()
         mock_client.search.return_value = {
@@ -192,7 +192,7 @@ class TavilySearchClientTest(unittest.TestCase):
 
     def test_search_news_handles_exception(self):
         """search_news should return empty list when API call raises exception."""
-        from src.news.tavily_client import TavilySearchClient
+        from legacy.news.tavily_client import TavilySearchClient
         fake_tavily = types.SimpleNamespace()
         mock_client = MagicMock()
         mock_client.search.side_effect = Exception("API error")

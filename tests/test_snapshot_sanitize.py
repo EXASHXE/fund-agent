@@ -2,7 +2,7 @@ import unittest
 
 from types import SimpleNamespace
 
-from src.services.snapshot_service import (
+from legacy.services.snapshot_service import (
     sanitize_stress_tests_for_snapshot,
     score_snapshot_payload,
     should_snapshot_after_analyze,

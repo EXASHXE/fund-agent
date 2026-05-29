@@ -5,9 +5,9 @@ from datetime import date, timedelta
 import networkx as nx
 import pytest
 
-from src.analysis.scoring.types import ScoreComponent
-from src.kg.graph import KnowledgeGraphBuilder
-from src.kg.schema import (
+from legacy.analysis.scoring.types import ScoreComponent
+from src.graph.builder import KnowledgeGraphBuilder
+from src.graph.schema import (
     EventNode, KGEdge, KGEdgeType,
     FundNode, StockNode,
 )
@@ -52,7 +52,7 @@ class TestEventScoreCompute:
 
     def test_returns_score_component(self, graph_with_event_chain):
         """Should return a valid ScoreComponent."""
-        from src.analysis.scoring.event_score import EventScoreCalculator
+        from legacy.analysis.scoring.event_score import EventScoreCalculator
 
         calc = EventScoreCalculator()
         events = [
@@ -67,7 +67,7 @@ class TestEventScoreCompute:
 
     def test_no_events_fallback(self):
         """Empty events list returns default score with low confidence."""
-        from src.analysis.scoring.event_score import EventScoreCalculator
+        from legacy.analysis.scoring.event_score import EventScoreCalculator
 
         calc = EventScoreCalculator()
         result = calc.compute("110011", [], nx.DiGraph())
@@ -78,7 +78,7 @@ class TestEventScoreCompute:
 
     def test_positive_events_raise_score(self, graph_with_event_chain):
         """Positive polarity events should push score above 50."""
-        from src.analysis.scoring.event_score import EventScoreCalculator
+        from legacy.analysis.scoring.event_score import EventScoreCalculator
 
         calc = EventScoreCalculator()
         events = [
@@ -89,7 +89,7 @@ class TestEventScoreCompute:
 
     def test_negative_events_lower_score(self):
         """Negative polarity events should push score below 50."""
-        from src.analysis.scoring.event_score import EventScoreCalculator
+        from legacy.analysis.scoring.event_score import EventScoreCalculator
 
         G = nx.DiGraph()
         fund = FundNode(code="110011", name="测试", fund_type="混合")
@@ -112,7 +112,7 @@ class TestEventScoreCompute:
 
     def test_time_decay_reduces_impact(self, graph_with_event_chain):
         """Older events should have less impact due to exponential decay."""
-        from src.analysis.scoring.event_score import EventScoreCalculator
+        from legacy.analysis.scoring.event_score import EventScoreCalculator
 
         calc = EventScoreCalculator(lambda_decay=0.2)
         today = date.today().isoformat()
@@ -135,7 +135,7 @@ class TestEventScoreCompute:
 
     def test_multiple_events_aggregated(self, graph_with_event_chain):
         """Multiple events should be aggregated."""
-        from src.analysis.scoring.event_score import EventScoreCalculator
+        from legacy.analysis.scoring.event_score import EventScoreCalculator
 
         # Add second event
         stock2 = StockNode(code="000858", name="五粮液", sector="食品饮料", industry="食品饮料")
@@ -160,7 +160,7 @@ class TestEventScoreCompute:
 
     def test_confidence_scales_with_event_count(self):
         """More events should yield higher confidence."""
-        from src.analysis.scoring.event_score import EventScoreCalculator
+        from legacy.analysis.scoring.event_score import EventScoreCalculator
 
         calc = EventScoreCalculator()
         events_1 = [{"polarity": 0.5, "magnitude": 0.5, "date": "2026-05-25"}]
@@ -173,7 +173,7 @@ class TestEventScoreCompute:
 
     def test_no_kg_events_still_scored(self):
         """Events without KG nodes are scored using direct polarity/magnitude."""
-        from src.analysis.scoring.event_score import EventScoreCalculator
+        from legacy.analysis.scoring.event_score import EventScoreCalculator
 
         calc = EventScoreCalculator()
         events = [
@@ -189,7 +189,7 @@ class TestEventScoreCompute:
 
     def test_detail_contains_contributions(self, graph_with_event_chain):
         """Detail dict should list per-event contributions."""
-        from src.analysis.scoring.event_score import EventScoreCalculator
+        from legacy.analysis.scoring.event_score import EventScoreCalculator
 
         calc = EventScoreCalculator()
         events = [
@@ -202,7 +202,7 @@ class TestEventScoreCompute:
 
     def test_missing_polarity_defaults_to_zero(self):
         """Events without polarity should default to 0."""
-        from src.analysis.scoring.event_score import EventScoreCalculator
+        from legacy.analysis.scoring.event_score import EventScoreCalculator
 
         calc = EventScoreCalculator()
         events = [{"magnitude": 0.8, "date": "2026-05-25"}]

@@ -6,10 +6,10 @@ from unittest.mock import patch
 import networkx as nx
 import pandas as pd
 
-from src.analysis.scoring.types import ScoreComponent
-from src.output.report import _render_daily_attribution_section, _render_execution_status
-from src.cli import cmd_analyze
-from src.services.workflow_context import build_workflow_context
+from legacy.analysis.scoring.types import ScoreComponent
+from legacy.output.report import _render_daily_attribution_section, _render_execution_status
+from legacy.cli import cmd_analyze
+from legacy.services.workflow_context import build_workflow_context
 
 
 class WorkflowContextTest(unittest.TestCase):

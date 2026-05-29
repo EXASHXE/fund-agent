@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 import networkx as nx
 import pytest
 
-from src.agents.state import FundResearchState, EMPTY_STATE
+from legacy.agents.state import FundResearchState, EMPTY_STATE
 
 
 def _make_state(**overrides) -> FundResearchState:
@@ -60,7 +60,7 @@ class TestNewsAgentNode:
 
     def test_node_returns_dict(self):
         """Node should return a dict of state updates (LangGraph pattern)."""
-        from src.agents.graphs.news_agent import news_agent_node
+        from legacy.agents.graphs.news_agent import news_agent_node
 
         state = _make_state(
             funds_data={"110011": {"code": "110011", "name": "Test"}},
@@ -79,7 +79,7 @@ class TestNewsAgentNode:
 
     def test_node_populates_news_fields(self):
         """Node should populate search_plans, classified_news, scored_news, etc."""
-        from src.agents.graphs.news_agent import news_agent_node
+        from legacy.agents.graphs.news_agent import news_agent_node
 
         state = _make_state(
             funds_data={"110011": {"code": "110011", "name": "Test"}},
@@ -102,7 +102,7 @@ class TestNewsAgentNode:
 
     def test_node_handles_empty_state(self):
         """Node should handle empty state gracefully, returning empty updates."""
-        from src.agents.graphs.news_agent import news_agent_node
+        from legacy.agents.graphs.news_agent import news_agent_node
 
         state: FundResearchState = dict(EMPTY_STATE)  # type: ignore[arg-type]
 
@@ -118,7 +118,7 @@ class TestNewsAgentNode:
 
     def test_node_handles_no_funds_data(self):
         """Node should handle state without funds_data gracefully."""
-        from src.agents.graphs.news_agent import news_agent_node
+        from legacy.agents.graphs.news_agent import news_agent_node
 
         state = _make_state(knowledge_graph=_make_kg())
 
@@ -134,7 +134,7 @@ class TestNewsAgentNode:
 
     def test_node_does_not_fetch_market_news_without_kg_fund_node(self):
         """Node should not run broad market retrieval when KG has no fund node."""
-        from src.agents.graphs.news_agent import news_agent_node
+        from legacy.agents.graphs.news_agent import news_agent_node
 
         state = _make_state(
             funds_data={"110011": {"code": "110011", "name": "Test"}},
@@ -150,7 +150,7 @@ class TestNewsAgentNode:
 
     def test_node_handles_multiple_funds(self):
         """Node should process multiple funds from funds_data."""
-        from src.agents.graphs.news_agent import news_agent_node
+        from legacy.agents.graphs.news_agent import news_agent_node
 
         state = _make_state(
             funds_data={
@@ -172,7 +172,7 @@ class TestNewsAgentNode:
 
     def test_node_converts_kg_dict_to_nx_graph(self):
         """Node should handle knowledge_graph as dict (serialized form) by converting to nx.DiGraph."""
-        from src.agents.graphs.news_agent import news_agent_node
+        from legacy.agents.graphs.news_agent import news_agent_node
 
         # knowledge_graph stored as dict (serialized)
         kg_dict = {
@@ -201,6 +201,6 @@ class TestNewsAgentNode:
 
     def test_node_docstring_exists(self):
         """news_agent_node must have a docstring."""
-        from src.agents.graphs.news_agent import news_agent_node
+        from legacy.agents.graphs.news_agent import news_agent_node
         assert news_agent_node.__doc__ is not None
         assert len(news_agent_node.__doc__) > 10

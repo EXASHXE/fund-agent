@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 import networkx as nx
 import pytest
 
-from src.agents.state import FundResearchState, EMPTY_STATE
+from legacy.agents.state import FundResearchState, EMPTY_STATE
 
 
 def _make_state(**overrides) -> FundResearchState:
@@ -21,7 +21,7 @@ class TestRiskAgentNode:
 
     def test_node_returns_dict(self):
         """Node should return a dict of state updates."""
-        from src.agents.graphs.risk_agent import risk_agent_node
+        from legacy.agents.graphs.risk_agent import risk_agent_node
 
         fund_data = {
             "code": "110011",
@@ -44,7 +44,7 @@ class TestRiskAgentNode:
 
     def test_node_computes_position_scores(self):
         """Node should compute PositionScore for each fund."""
-        from src.agents.graphs.risk_agent import risk_agent_node
+        from legacy.agents.graphs.risk_agent import risk_agent_node
 
         fund_data = {
             "code": "110011",
@@ -68,7 +68,7 @@ class TestRiskAgentNode:
 
     def test_node_computes_timing_scores(self):
         """Node should compute TimingScore for each fund."""
-        from src.agents.graphs.risk_agent import risk_agent_node
+        from legacy.agents.graphs.risk_agent import risk_agent_node
 
         fund_data = {"code": "110011", "name": "Test Fund"}
         state = _make_state(
@@ -85,7 +85,7 @@ class TestRiskAgentNode:
 
     def test_node_uses_market_regime_for_timing(self):
         """Node should pass market_regime to TimingScoreCalculator."""
-        from src.agents.graphs.risk_agent import risk_agent_node
+        from legacy.agents.graphs.risk_agent import risk_agent_node
 
         fund_data = {"code": "110011", "name": "Test Fund"}
         
@@ -111,7 +111,7 @@ class TestRiskAgentNode:
 
     def test_node_handles_empty_state(self):
         """Node should handle empty state gracefully."""
-        from src.agents.graphs.risk_agent import risk_agent_node
+        from legacy.agents.graphs.risk_agent import risk_agent_node
 
         state: FundResearchState = dict(EMPTY_STATE)  # type: ignore[arg-type]
 
@@ -123,7 +123,7 @@ class TestRiskAgentNode:
 
     def test_node_handles_no_funds_data(self):
         """Node should return empty scores when no funds_data."""
-        from src.agents.graphs.risk_agent import risk_agent_node
+        from legacy.agents.graphs.risk_agent import risk_agent_node
 
         state = _make_state(knowledge_graph=nx.DiGraph())
 
@@ -134,7 +134,7 @@ class TestRiskAgentNode:
 
     def test_node_handles_minimal_fund_data(self):
         """Node should not crash on minimal fund data (no holdings)."""
-        from src.agents.graphs.risk_agent import risk_agent_node
+        from legacy.agents.graphs.risk_agent import risk_agent_node
 
         minimal = {"code": "110011", "name": "Minimal Fund"}
         state = _make_state(
@@ -149,7 +149,7 @@ class TestRiskAgentNode:
 
     def test_node_uses_events_for_timing(self):
         """Node should pass events to TimingScoreCalculator for momentum adjustment."""
-        from src.agents.graphs.risk_agent import risk_agent_node
+        from legacy.agents.graphs.risk_agent import risk_agent_node
 
         fund_data = {"code": "110011", "name": "Test Fund"}
         events_list = [
@@ -169,6 +169,6 @@ class TestRiskAgentNode:
 
     def test_node_docstring_exists(self):
         """risk_agent_node must have a docstring."""
-        from src.agents.graphs.risk_agent import risk_agent_node
+        from legacy.agents.graphs.risk_agent import risk_agent_node
         assert risk_agent_node.__doc__ is not None
         assert len(risk_agent_node.__doc__) > 10

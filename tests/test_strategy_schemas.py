@@ -1,7 +1,7 @@
 """Test strategy schemas: StrategyAction, StrategyState, StrategyAdvice."""
 import pytest
 
-from src.strategy.schemas import StrategyAction, StrategyState, StrategyAdvice
+from legacy.strategy.schemas import StrategyAction, StrategyState, StrategyAdvice
 
 
 class TestStrategyAction:

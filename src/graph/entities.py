@@ -1,5 +1,5 @@
-"""Knowledge Graph entity types — re-exported from src.kg.schema"""
-from src.kg.schema import (
+"""Knowledge Graph entity types — re-exported from src.graph.schema"""
+from src.graph.schema import (
     FundNode,
     StockNode,
     IndustryNode,

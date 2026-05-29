@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.agents.state import FundResearchState, EMPTY_STATE
+from legacy.agents.state import FundResearchState, EMPTY_STATE
 
 
 def _make_state(**overrides) -> FundResearchState:
@@ -47,7 +47,7 @@ def _make_fund_data(code: str = "110011", seed: int = 42) -> dict:
 
 def _make_kg() -> nx.DiGraph:
     """Minimal KG."""
-    from src.kg.graph import KnowledgeGraphBuilder
+    from src.graph.builder import KnowledgeGraphBuilder
     builder = KnowledgeGraphBuilder()
     return builder.build_from_holdings(_make_fund_data())
 
@@ -57,7 +57,7 @@ class TestStrategyAgentNode:
 
     def test_node_returns_dict(self):
         """Node should return a dict of state updates."""
-        from src.agents.graphs.strategy_agent import strategy_agent_node
+        from legacy.agents.graphs.strategy_agent import strategy_agent_node
 
         fund_data = _make_fund_data("110011")
         state = _make_state(
@@ -74,8 +74,8 @@ class TestStrategyAgentNode:
 
     def test_node_uses_existing_scores(self):
         """Node should use existing scores from state when available."""
-        from src.agents.graphs.strategy_agent import strategy_agent_node
-        from src.analysis.scoring.types import ScoreComponent, MarketRegime
+        from legacy.agents.graphs.strategy_agent import strategy_agent_node
+        from legacy.analysis.scoring.types import ScoreComponent, MarketRegime
 
         fund_data = _make_fund_data("110011")
 
@@ -105,7 +105,7 @@ class TestStrategyAgentNode:
 
     def test_node_handles_empty_state(self):
         """Node should handle empty state gracefully."""
-        from src.agents.graphs.strategy_agent import strategy_agent_node
+        from legacy.agents.graphs.strategy_agent import strategy_agent_node
 
         state: FundResearchState = dict(EMPTY_STATE)  # type: ignore[arg-type]
 
@@ -118,7 +118,7 @@ class TestStrategyAgentNode:
 
     def test_node_handles_no_funds_data(self):
         """Node should return empty when no funds_data."""
-        from src.agents.graphs.strategy_agent import strategy_agent_node
+        from legacy.agents.graphs.strategy_agent import strategy_agent_node
 
         state = _make_state(knowledge_graph=_make_kg())
 
@@ -129,11 +129,11 @@ class TestStrategyAgentNode:
 
     def test_node_handles_partial_scores(self):
         """Node should gracefully handle missing score components."""
-        from src.agents.graphs.strategy_agent import strategy_agent_node
+        from legacy.agents.graphs.strategy_agent import strategy_agent_node
 
         fund_data = _make_fund_data("110011")
         # Only quant scores provided, others missing
-        from src.analysis.scoring.types import ScoreComponent
+        from legacy.analysis.scoring.types import ScoreComponent
         quant = ScoreComponent(score=75.0, detail={}, weights={}, confidence=0.8)
 
         state = _make_state(
@@ -148,7 +148,7 @@ class TestStrategyAgentNode:
 
     def test_node_computes_portfolio_strategy(self):
         """Node should compute portfolio-level strategy summary."""
-        from src.agents.graphs.strategy_agent import strategy_agent_node
+        from legacy.agents.graphs.strategy_agent import strategy_agent_node
 
         fund_a = _make_fund_data("110011", seed=42)
         fund_b = _make_fund_data("000001", seed=99)
@@ -164,7 +164,7 @@ class TestStrategyAgentNode:
 
     def test_node_gets_risk_assessments(self):
         """Node should populate risk_assessments per fund."""
-        from src.agents.graphs.strategy_agent import strategy_agent_node
+        from legacy.agents.graphs.strategy_agent import strategy_agent_node
 
         fund_data = _make_fund_data("110011")
         state = _make_state(
@@ -180,6 +180,6 @@ class TestStrategyAgentNode:
 
     def test_node_docstring_exists(self):
         """strategy_agent_node must have a docstring."""
-        from src.agents.graphs.strategy_agent import strategy_agent_node
+        from legacy.agents.graphs.strategy_agent import strategy_agent_node
         assert strategy_agent_node.__doc__ is not None
         assert len(strategy_agent_node.__doc__) > 10

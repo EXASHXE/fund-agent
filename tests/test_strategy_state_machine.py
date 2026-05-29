@@ -17,11 +17,11 @@ from __future__ import annotations
 
 import pytest
 
-from src.analysis.scoring.types import (
+from legacy.analysis.scoring.types import (
     CompositeScore, ScoreComponent, MarketRegime, score_level,
 )
-from src.strategy.schemas import StrategyState
-from src.strategy.state_machine import StateMachine
+from legacy.strategy.schemas import StrategyState
+from legacy.strategy.state_machine import StateMachine
 
 
 # ----------------------------------------------------------------

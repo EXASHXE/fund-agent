@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.agents.state import FundResearchState, EMPTY_STATE
+from legacy.agents.state import FundResearchState, EMPTY_STATE
 
 
 def _make_state(**overrides) -> FundResearchState:
@@ -37,7 +37,7 @@ class TestPlannerNode:
 
     def test_planner_emits_tasks(self):
         """Planner should emit research tasks for each fund."""
-        from src.agents.graphs.planner_agent import planner_agent_node
+        from legacy.agents.graphs.planner_agent import planner_agent_node
 
         state = _make_state(
             funds_data={"110011": _make_fund_data("110011")},
@@ -56,7 +56,7 @@ class TestPlannerNode:
 
     def test_planner_handles_multiple_funds(self):
         """Planner should emit one task per fund."""
-        from src.agents.graphs.planner_agent import planner_agent_node
+        from legacy.agents.graphs.planner_agent import planner_agent_node
 
         state = _make_state(
             funds_data={
@@ -72,7 +72,7 @@ class TestPlannerNode:
 
     def test_planner_lower_priority_with_scores(self):
         """Planner should lower priority when scores already exist."""
-        from src.agents.graphs.planner_agent import planner_agent_node
+        from legacy.agents.graphs.planner_agent import planner_agent_node
 
         state = _make_state(
             funds_data={"110011": _make_fund_data("110011")},
@@ -86,7 +86,7 @@ class TestPlannerNode:
 
     def test_planner_low_priority_all_scored(self):
         """Planner should set low priority when all dimensions scored."""
-        from src.agents.graphs.planner_agent import planner_agent_node
+        from legacy.agents.graphs.planner_agent import planner_agent_node
 
         scores = {"score": 75.0}
         state = _make_state(
@@ -105,7 +105,7 @@ class TestPlannerNode:
 
     def test_planner_increments_iteration(self):
         """Planner should increment iteration counter."""
-        from src.agents.graphs.planner_agent import planner_agent_node
+        from legacy.agents.graphs.planner_agent import planner_agent_node
 
         state = _make_state(
             funds_data={"110011": _make_fund_data("110011")},
@@ -117,7 +117,7 @@ class TestPlannerNode:
 
     def test_planner_logs_iterations(self):
         """Planner should append to planner_iteration_log."""
-        from src.agents.graphs.planner_agent import planner_agent_node
+        from legacy.agents.graphs.planner_agent import planner_agent_node
 
         state = _make_state(
             funds_data={"110011": _make_fund_data("110011")},
@@ -131,7 +131,7 @@ class TestPlannerNode:
 
     def test_planner_empty_state(self):
         """Planner should handle empty state gracefully."""
-        from src.agents.graphs.planner_agent import planner_agent_node
+        from legacy.agents.graphs.planner_agent import planner_agent_node
 
         state: FundResearchState = dict(EMPTY_STATE)  # type: ignore[arg-type]
         result = planner_agent_node(state)
@@ -141,7 +141,7 @@ class TestPlannerNode:
 
     def test_planner_docstring_exists(self):
         """planner_agent_node must have a docstring."""
-        from src.agents.graphs.planner_agent import planner_agent_node
+        from legacy.agents.graphs.planner_agent import planner_agent_node
         assert planner_agent_node.__doc__ is not None
         assert len(planner_agent_node.__doc__) > 10
 
@@ -155,7 +155,7 @@ class TestCriticNode:
 
     def test_critic_detects_gaps(self):
         """Critic should flag missing scoring dimensions as gaps."""
-        from src.agents.graphs.critic_agent import critic_agent_node
+        from legacy.agents.graphs.critic_agent import critic_agent_node
 
         state = _make_state(
             funds_data={"110011": _make_fund_data("110011")},
@@ -171,7 +171,7 @@ class TestCriticNode:
 
     def test_critic_passes_when_complete(self):
         """Critic should pass when all dimensions have scores."""
-        from src.agents.graphs.critic_agent import critic_agent_node
+        from legacy.agents.graphs.critic_agent import critic_agent_node
 
         scores = {"score": 75.0}
         state = _make_state(
@@ -190,7 +190,7 @@ class TestCriticNode:
 
     def test_critic_bias_increases_with_iterations(self):
         """Critic bias_score should increase with iteration count."""
-        from src.agents.graphs.critic_agent import critic_agent_node
+        from legacy.agents.graphs.critic_agent import critic_agent_node
 
         state_1 = _make_state(
             funds_data={"110011": _make_fund_data("110011")},
@@ -212,7 +212,7 @@ class TestCriticNode:
 
     def test_circuit_breaker_max_iterations(self):
         """Circuit breaker should force-pass when iteration >= 3 even with gaps."""
-        from src.agents.graphs.critic_agent import critic_agent_node
+        from legacy.agents.graphs.critic_agent import critic_agent_node
 
         # At iteration 3 with gaps — circuit breaker should force pass
         state = _make_state(
@@ -228,7 +228,7 @@ class TestCriticNode:
 
     def test_circuit_breaker_bias_threshold(self):
         """Circuit breaker should force-pass when bias_score > 0.8."""
-        from src.agents.graphs.critic_agent import critic_agent_node
+        from legacy.agents.graphs.critic_agent import critic_agent_node
 
         # At iteration 4: bias = min((4-1)/3, 1.0) = 1.0 > 0.8
         state = _make_state(
@@ -244,7 +244,7 @@ class TestCriticNode:
 
     def test_critic_no_gaps_at_iteration_1(self):
         """Critic should not pass at iteration 1 if gaps exist (no circuit breaker yet)."""
-        from src.agents.graphs.critic_agent import critic_agent_node
+        from legacy.agents.graphs.critic_agent import critic_agent_node
 
         state = _make_state(
             funds_data={"110011": _make_fund_data("110011")},
@@ -258,7 +258,7 @@ class TestCriticNode:
 
     def test_critic_empty_state(self):
         """Critic should handle empty funds_data gracefully."""
-        from src.agents.graphs.critic_agent import critic_agent_node
+        from legacy.agents.graphs.critic_agent import critic_agent_node
 
         state: FundResearchState = dict(EMPTY_STATE)  # type: ignore[arg-type]
         result = critic_agent_node(state)
@@ -269,7 +269,7 @@ class TestCriticNode:
 
     def test_critic_docstring_exists(self):
         """critic_agent_node must have a docstring."""
-        from src.agents.graphs.critic_agent import critic_agent_node
+        from legacy.agents.graphs.critic_agent import critic_agent_node
         assert critic_agent_node.__doc__ is not None
         assert len(critic_agent_node.__doc__) > 10
 
@@ -283,7 +283,7 @@ class TestLedgerNode:
 
     def test_ledger_generates_decisions(self):
         """Ledger should generate decisions from strategies."""
-        from src.agents.graphs.ledger_node import ledger_agent_node
+        from legacy.agents.graphs.ledger_node import ledger_agent_node
 
         state = _make_state(
             funds_data={"110011": _make_fund_data("110011")},
@@ -316,7 +316,7 @@ class TestLedgerNode:
 
     def test_ledger_decision_fields(self):
         """Each decision should contain all decision-contract.v2 fields."""
-        from src.agents.graphs.ledger_node import ledger_agent_node
+        from legacy.agents.graphs.ledger_node import ledger_agent_node
 
         state = _make_state(
             funds_data={"110011": _make_fund_data("110011")},
@@ -351,7 +351,7 @@ class TestLedgerNode:
 
     def test_ledger_confidence_from_critic(self):
         """Confidence should be higher when critic passed."""
-        from src.agents.graphs.ledger_node import ledger_agent_node
+        from legacy.agents.graphs.ledger_node import ledger_agent_node
 
         # With critic passed=True
         state_passed = _make_state(
@@ -374,7 +374,7 @@ class TestLedgerNode:
 
     def test_ledger_handles_no_strategies(self):
         """Ledger should handle empty strategies gracefully."""
-        from src.agents.graphs.ledger_node import ledger_agent_node
+        from legacy.agents.graphs.ledger_node import ledger_agent_node
 
         state = _make_state(funds_data={"110011": _make_fund_data("110011")})
         result = ledger_agent_node(state)
@@ -384,7 +384,7 @@ class TestLedgerNode:
 
     def test_ledger_includes_fund_name(self):
         """Decision should include the fund name from funds_data."""
-        from src.agents.graphs.ledger_node import ledger_agent_node
+        from legacy.agents.graphs.ledger_node import ledger_agent_node
 
         state = _make_state(
             funds_data={"110011": {"code": "110011", "name": "E Fund"}},
@@ -396,7 +396,7 @@ class TestLedgerNode:
 
     def test_ledger_empty_state(self):
         """Ledger should handle empty state gracefully."""
-        from src.agents.graphs.ledger_node import ledger_agent_node
+        from legacy.agents.graphs.ledger_node import ledger_agent_node
 
         state: FundResearchState = dict(EMPTY_STATE)  # type: ignore[arg-type]
         result = ledger_agent_node(state)
@@ -407,7 +407,7 @@ class TestLedgerNode:
 
     def test_ledger_docstring_exists(self):
         """ledger_agent_node must have a docstring."""
-        from src.agents.graphs.ledger_node import ledger_agent_node
+        from legacy.agents.graphs.ledger_node import ledger_agent_node
         assert ledger_agent_node.__doc__ is not None
         assert len(ledger_agent_node.__doc__) > 10
 
@@ -421,7 +421,7 @@ class TestIterationLoop:
 
     def test_critic_router_goes_to_strategy_on_pass(self):
         """_critic_router should route to strategy when critic passed."""
-        from src.agents.graphs.supervisor import _critic_router
+        from legacy.agents.graphs.supervisor import _critic_router
 
         state = _make_state(
             critic_report={"passed": True, "gaps": []},
@@ -432,7 +432,7 @@ class TestIterationLoop:
 
     def test_critic_router_loops_on_gaps(self):
         """_critic_router should loop to planner when critic not passed and iter < 3."""
-        from src.agents.graphs.supervisor import _critic_router
+        from legacy.agents.graphs.supervisor import _critic_router
 
         state = _make_state(
             critic_report={"passed": False, "gaps": ["Missing quant score for 110011"]},
@@ -443,7 +443,7 @@ class TestIterationLoop:
 
     def test_critic_router_circuit_breaker_at_iter_3(self):
         """_critic_router should route to strategy when iteration >= 3."""
-        from src.agents.graphs.supervisor import _critic_router
+        from legacy.agents.graphs.supervisor import _critic_router
 
         state = _make_state(
             critic_report={"passed": False, "gaps": ["Missing quant score for 110011"]},
@@ -454,14 +454,14 @@ class TestIterationLoop:
 
     def test_new_graph_has_all_eight_nodes(self):
         """build_research_graph should include all 8 nodes."""
-        from src.agents.graphs.supervisor import build_research_graph
+        from legacy.agents.graphs.supervisor import build_research_graph
 
         graph = build_research_graph()
         assert graph is not None
 
     def test_new_graph_accepts_state(self):
         """New graph should accept FundResearchState without error."""
-        from src.agents.graphs.supervisor import build_research_graph
+        from legacy.agents.graphs.supervisor import build_research_graph
 
         graph = build_research_graph()
         state = _make_state(
@@ -475,7 +475,7 @@ class TestIterationLoop:
 
     def test_legacy_graph_still_works(self):
         """build_research_graph_legacy should still construct without error."""
-        from src.agents.graphs.supervisor import build_research_graph_legacy
+        from legacy.agents.graphs.supervisor import build_research_graph_legacy
 
         graph = build_research_graph_legacy()
         assert graph is not None
@@ -518,8 +518,8 @@ class TestStateSchema:
 
     def test_integration_planner_to_critic(self):
         """Planner output should flow correctly into critic input."""
-        from src.agents.graphs.planner_agent import planner_agent_node
-        from src.agents.graphs.critic_agent import critic_agent_node
+        from legacy.agents.graphs.planner_agent import planner_agent_node
+        from legacy.agents.graphs.critic_agent import critic_agent_node
 
         # Run planner
         state = _make_state(
@@ -539,7 +539,7 @@ class TestStateSchema:
         """End-to-end: planner→news→quant→risk→research→critic→strategy→ledger."""
         from langgraph.graph import END, StateGraph
 
-        from src.agents.state import FundResearchState
+        from legacy.agents.state import FundResearchState
 
         # Define simple node functions
         def _planner(state):

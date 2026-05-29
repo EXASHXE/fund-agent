@@ -2,11 +2,11 @@
 import networkx as nx
 import pytest
 
-from src.analysis.scoring.types import (
+from legacy.analysis.scoring.types import (
     CompositeScore, ScoreComponent, MarketRegime, score_level,
 )
-from src.strategy.schemas import StrategyAction, StrategyState, StrategyAdvice
-from src.strategy.advisor import StrategyAdvisor
+from legacy.strategy.schemas import StrategyAction, StrategyState, StrategyAdvice
+from legacy.strategy.advisor import StrategyAdvisor
 
 
 # ----------------------------------------------------------------

@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import pandas as pd
 
-from src.news.news_fetcher import extract_holding_keywords, fetch_fund_news
+from legacy.news.news_fetcher import extract_holding_keywords, fetch_fund_news
 
 
 class NewsFetcherTest(unittest.TestCase):
@@ -113,22 +113,22 @@ class NewsFetcherTest(unittest.TestCase):
         # 重仓拉取异常不影响市场新闻兜底
 
     def test_matches_terms_chinese_short(self):
-        from src.news.news_fetcher import _matches_terms
+        from legacy.news.news_fetcher import _matches_terms
         self.assertTrue(_matches_terms("芯片行业迎来利好", ["芯片"]))
         self.assertTrue(_matches_terms("半导体板块大涨", ["半导体"]))
         self.assertTrue(_matches_terms("白酒消费回暖", ["白酒"]))
 
     def test_matches_terms_english_short(self):
-        from src.news.news_fetcher import _matches_terms
+        from legacy.news.news_fetcher import _matches_terms
         self.assertTrue(_matches_terms("AI芯片需求爆发", ["AI"]))
 
     def test_matches_terms_no_false_positive(self):
-        from src.news.news_fetcher import _matches_terms
+        from legacy.news.news_fetcher import _matches_terms
         self.assertFalse(_matches_terms("正常文章内容", ["芯片"]))
         self.assertFalse(_matches_terms("regular text no match", ["AI"]))
 
     def test_degrade_keywords_truncates_to_three_chars(self):
-        from src.news.news_fetcher import _degrade_keywords
+        from legacy.news.news_fetcher import _degrade_keywords
         result = _degrade_keywords(["英伟达", "寒武纪", "消费", "AI", "比亚迪股份"])
         self.assertIn("英伟达", result)  # 3-char stays intact
         self.assertIn("寒武纪", result)
@@ -139,7 +139,7 @@ class NewsFetcherTest(unittest.TestCase):
         self.assertEqual(len(result), 5)
 
     def test_matched_terms_english_word_boundary(self):
-        from src.news.news_fetcher import _matched_terms
+        from legacy.news.news_fetcher import _matched_terms
         result = _matched_terms("NVIDIA AI chip demand surges", ["AI"])
         self.assertEqual(result, ["AI"])
         result = _matched_terms("NVDA launches new AI, HBM products", ["AI"])
@@ -152,14 +152,14 @@ class NewsFetcherTest(unittest.TestCase):
         self.assertEqual(result, [])
 
     def test_matched_terms_short_english_rejects_substring(self):
-        from src.news.news_fetcher import _matched_terms
+        from legacy.news.news_fetcher import _matched_terms
         result = _matched_terms("NVIDIA stock hits all-time high", ["NV"])
         self.assertEqual(result, [])
         result = _matched_terms("NV is a ticker symbol", ["NV"])
         self.assertEqual(result, ["NV"])
 
     def test_matched_terms_two_char_chinese(self):
-        from src.news.news_fetcher import _matched_terms
+        from legacy.news.news_fetcher import _matched_terms
         result = _matched_terms("台积电 Q1 财报超预期", ["台积"])
         self.assertEqual(result, ["台积"])
 
@@ -202,7 +202,7 @@ class NewsFetcherTest(unittest.TestCase):
     def test_build_search_profile_skips_fallback_when_sufficient_holdings(self):
         import types
         import sys
-        from src.news.news_fetcher import build_news_search_profile
+        from legacy.news.news_fetcher import build_news_search_profile
         import pandas as pd
         
         fake_ak = types.SimpleNamespace()

@@ -7,7 +7,7 @@ class TestNewsLayer:
     """Test NewsLayer enum with 6 layers."""
 
     def test_news_layer_has_six_layers(self):
-        from src.news.schemas import NewsLayer
+        from legacy.news.schemas import NewsLayer
         assert len(NewsLayer) == 6
         assert NewsLayer.FUND_DIRECT.value == "fund_direct"
         assert NewsLayer.HEAVY_HOLDING.value == "heavy_holding"
@@ -17,7 +17,7 @@ class TestNewsLayer:
         assert NewsLayer.BLACK_SWAN.value == "black_swan"
 
     def test_news_layer_is_hashable(self):
-        from src.news.schemas import NewsLayer
+        from legacy.news.schemas import NewsLayer
         d = {NewsLayer.FUND_DIRECT: "direct", NewsLayer.HEAVY_HOLDING: "holding"}
         assert d[NewsLayer.FUND_DIRECT] == "direct"
 
@@ -26,7 +26,7 @@ class TestSearchPlan:
     """Test SearchPlan dataclass."""
 
     def test_search_plan_creation(self):
-        from src.news.schemas import SearchPlan
+        from legacy.news.schemas import SearchPlan
         plan = SearchPlan(
             fund_code="110011",
             fund_name="易方达中小盘",
@@ -42,7 +42,7 @@ class TestSearchPlan:
         assert "消费" in plan.themes
 
     def test_search_plan_defaults(self):
-        from src.news.schemas import SearchPlan
+        from legacy.news.schemas import SearchPlan
         plan = SearchPlan()
         assert plan.fund_code == ""
         assert plan.stocks == []
@@ -52,7 +52,7 @@ class TestSearchPlan:
         assert plan.macro_queries == []
 
     def test_search_plan_to_dict(self):
-        from src.news.schemas import SearchPlan
+        from legacy.news.schemas import SearchPlan
         plan = SearchPlan(fund_code="001", stocks=["002", "003"], themes=["AI"])
         d = asdict(plan)
         assert d["fund_code"] == "001"
@@ -63,7 +63,7 @@ class TestClassifiedNews:
     """Test ClassifiedNews dataclass."""
 
     def test_classified_news_creation(self):
-        from src.news.schemas import ClassifiedNews, NewsLayer
+        from legacy.news.schemas import ClassifiedNews, NewsLayer
         news = ClassifiedNews(
             title="茅台大涨",
             content="贵州茅台今日上涨5%",
@@ -78,7 +78,7 @@ class TestClassifiedNews:
         assert news.fund_code == "110011"
 
     def test_classified_news_defaults(self):
-        from src.news.schemas import ClassifiedNews, NewsLayer
+        from legacy.news.schemas import ClassifiedNews, NewsLayer
         news = ClassifiedNews()
         assert news.layer == NewsLayer.FUND_DIRECT
         assert news.weight == 0.0
@@ -87,7 +87,7 @@ class TestClassifiedNews:
         assert news.matched_entity == ""
 
     def test_classified_news_extra_fields(self):
-        from src.news.schemas import ClassifiedNews, NewsLayer
+        from legacy.news.schemas import ClassifiedNews, NewsLayer
         news = ClassifiedNews(
             title="test",
             layer=NewsLayer.FUND_DIRECT,
@@ -110,7 +110,7 @@ class TestScoredNews:
     """Test ScoredNews dataclass."""
 
     def test_scored_news_creation(self):
-        from src.news.schemas import ScoredNews, NewsLayer
+        from legacy.news.schemas import ScoredNews, NewsLayer
         news = ScoredNews(
             title="茅台大涨",
             content="贵州茅台今日上涨5%",
@@ -126,7 +126,7 @@ class TestScoredNews:
         assert abs(news.combined_score - 0.71) < 0.01
 
     def test_scored_news_defaults(self):
-        from src.news.schemas import ScoredNews
+        from legacy.news.schemas import ScoredNews
         news = ScoredNews()
         assert news.relevance_score == 0.0
         assert news.vector_score == 0.0
@@ -135,7 +135,7 @@ class TestScoredNews:
         assert news.sentiment_severity == 0.5
 
     def test_scored_news_scoring_factors(self):
-        from src.news.schemas import ScoredNews, NewsLayer
+        from legacy.news.schemas import ScoredNews, NewsLayer
         news = ScoredNews(
             title="test",
             layer=NewsLayer.INDUSTRY,
@@ -158,7 +158,7 @@ class TestResearchSummary:
     """Test ResearchSummary dataclass."""
 
     def test_research_summary_creation(self):
-        from src.news.schemas import ResearchSummary
+        from legacy.news.schemas import ResearchSummary
         summary = ResearchSummary(
             fund_code="110011",
             news_title="茅台大涨5%",
@@ -178,7 +178,7 @@ class TestResearchSummary:
         assert summary.risk_opportunity == "opportunity"
 
     def test_research_summary_defaults(self):
-        from src.news.schemas import ResearchSummary
+        from legacy.news.schemas import ResearchSummary
         summary = ResearchSummary()
         assert summary.fund_code == ""
         assert summary.what == ""
@@ -188,7 +188,7 @@ class TestResearchSummary:
         assert summary.risk_opportunity == "neutral"
 
     def test_research_summary_rule_based(self):
-        from src.news.schemas import ResearchSummary
+        from legacy.news.schemas import ResearchSummary
         summary = ResearchSummary(
             fund_code="001",
             news_title="测试",
@@ -208,7 +208,7 @@ class TestNewsSchemasIntegration:
     """Test integration between schema types."""
 
     def test_classified_to_scored_conversion_support(self):
-        from src.news.schemas import ClassifiedNews, ScoredNews, NewsLayer
+        from legacy.news.schemas import ClassifiedNews, ScoredNews, NewsLayer
         classified = ClassifiedNews(
             title="test",
             layer=NewsLayer.INDUSTRY,
@@ -232,7 +232,7 @@ class TestNewsSchemasIntegration:
         assert scored.fund_code == classified.fund_code
 
     def test_search_plan_feeds_retriever(self):
-        from src.news.schemas import SearchPlan
+        from legacy.news.schemas import SearchPlan
         plan = SearchPlan(
             fund_code="110011",
             stocks=["600519", "000858"],

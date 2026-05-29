@@ -4,8 +4,8 @@ from unittest.mock import patch, MagicMock, PropertyMock
 
 import networkx as nx
 
-from src.kg.graph import KnowledgeGraphBuilder
-from src.news.schemas import NewsLayer, SearchPlan, ClassifiedNews, ScoredNews, ResearchSummary
+from src.graph.builder import KnowledgeGraphBuilder
+from legacy.news.schemas import NewsLayer, SearchPlan, ClassifiedNews, ScoredNews, ResearchSummary
 
 
 @pytest.fixture
@@ -32,7 +32,7 @@ class TestNewsPipeline:
 
     def test_pipeline_run_single_fund(self, sample_kg):
         graph, kg_builder = sample_kg
-        from src.news.news_pipeline import NewsPipeline
+        from legacy.news.news_pipeline import NewsPipeline
 
         mock_news = [
             {"title": "贵州茅台大涨", "content": "涨了", "date": "2026-05-27", "source": "财联社"},
@@ -55,7 +55,7 @@ class TestNewsPipeline:
     def test_pipeline_stage_count(self, sample_kg):
         """Pipeline should have 8 stages."""
         graph, kg_builder = sample_kg
-        from src.news.news_pipeline import NewsPipeline
+        from legacy.news.news_pipeline import NewsPipeline
 
         mock_news = [{"title": "test", "content": "test", "date": "2026-05-27", "source": "test"}]
 
@@ -85,7 +85,7 @@ class TestNewsPipeline:
         # Merge graphs
         graph = nx.compose(graph, graph2)
 
-        from src.news.news_pipeline import NewsPipeline
+        from legacy.news.news_pipeline import NewsPipeline
         mock_news = [{"title": "test", "content": "test", "date": "2026-05-27", "source": "test"}]
 
         with patch("src.news.retriever.Retriever.retrieve_stock_news", return_value=mock_news), \
@@ -98,7 +98,7 @@ class TestNewsPipeline:
 
     def test_pipeline_unknown_fund(self, sample_kg):
         graph, kg_builder = sample_kg
-        from src.news.news_pipeline import NewsPipeline
+        from legacy.news.news_pipeline import NewsPipeline
 
         pipeline = NewsPipeline()
         with patch("src.news.retriever.Retriever.retrieve_stock_news", return_value=[]), \
@@ -111,7 +111,7 @@ class TestNewsPipeline:
 
     def test_pipeline_output_schema(self, sample_kg):
         graph, kg_builder = sample_kg
-        from src.news.news_pipeline import NewsPipeline
+        from legacy.news.news_pipeline import NewsPipeline
 
         mock_news = [{"title": "茅台大涨", "content": "涨5%", "date": "2026-05-27", "source": "财联社"}]
 
@@ -141,7 +141,7 @@ class TestNewsPipeline:
     def test_pipeline_with_vector_store_disabled(self, sample_kg):
         """Pipeline should work without vector store."""
         graph, kg_builder = sample_kg
-        from src.news.news_pipeline import NewsPipeline
+        from legacy.news.news_pipeline import NewsPipeline
 
         mock_news = [{"title": "test", "content": "test", "date": "2026-05-27", "source": "test"}]
 
@@ -156,7 +156,7 @@ class TestNewsPipeline:
 
     def test_pipeline_stages_completed(self, sample_kg):
         graph, kg_builder = sample_kg
-        from src.news.news_pipeline import NewsPipeline
+        from legacy.news.news_pipeline import NewsPipeline
 
         mock_news = [{"title": "test", "content": "test", "date": "2026-05-27", "source": "test"}]
 

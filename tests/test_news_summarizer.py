@@ -1,7 +1,7 @@
 """Tests for Phase 2 Summarizer: research-style AI summary."""
 import pytest
 
-from src.news.schemas import NewsLayer, ScoredNews, ResearchSummary
+from legacy.news.schemas import NewsLayer, ScoredNews, ResearchSummary
 
 
 @pytest.fixture
@@ -39,7 +39,7 @@ class TestSummarizer:
 
     def test_summarize_rule_based_fallback(self, sample_scored_news):
         """Without LLM, summarizer should produce rule-based summaries."""
-        from src.news.summarizer import Summarizer
+        from legacy.news.summarizer import Summarizer
         s = Summarizer()
 
         summaries = s.summarize_news(sample_scored_news, "110011", llm_client=None)
@@ -53,7 +53,7 @@ class TestSummarizer:
             assert summary.source == "rule_based"
 
     def test_summarize_empty_news(self):
-        from src.news.summarizer import Summarizer
+        from legacy.news.summarizer import Summarizer
         s = Summarizer()
 
         summaries = s.summarize_news([], "110011", llm_client=None)
@@ -61,7 +61,7 @@ class TestSummarizer:
         assert summaries == []
 
     def test_summarize_includes_fund_impact(self, sample_scored_news):
-        from src.news.summarizer import Summarizer
+        from legacy.news.summarizer import Summarizer
         s = Summarizer()
 
         summaries = s.summarize_news(sample_scored_news, "110011", llm_client=None)
@@ -70,7 +70,7 @@ class TestSummarizer:
             assert summary.fund_impact != ""
 
     def test_summarize_includes_time_horizon(self, sample_scored_news):
-        from src.news.summarizer import Summarizer
+        from legacy.news.summarizer import Summarizer
         s = Summarizer()
 
         summaries = s.summarize_news(sample_scored_news, "110011", llm_client=None)
@@ -79,7 +79,7 @@ class TestSummarizer:
             assert summary.time_horizon in ("short", "medium", "long")
 
     def test_summarize_includes_suggested_action(self, sample_scored_news):
-        from src.news.summarizer import Summarizer
+        from legacy.news.summarizer import Summarizer
         s = Summarizer()
 
         summaries = s.summarize_news(sample_scored_news, "110011", llm_client=None)
@@ -88,7 +88,7 @@ class TestSummarizer:
             assert summary.suggested_action != ""
 
     def test_summarize_sorts_by_relevance(self, sample_scored_news):
-        from src.news.summarizer import Summarizer
+        from legacy.news.summarizer import Summarizer
         s = Summarizer()
 
         summaries = s.summarize_news(sample_scored_news, "110011", llm_client=None)
@@ -99,7 +99,7 @@ class TestSummarizer:
     def test_summarize_with_mock_llm(self, sample_scored_news):
         """Test that summarizer can use LLM when available."""
         from unittest.mock import MagicMock
-        from src.news.summarizer import Summarizer
+        from legacy.news.summarizer import Summarizer
         s = Summarizer()
 
         mock_llm = MagicMock()
@@ -124,7 +124,7 @@ class TestSummarizer:
     def test_summarize_llm_fallback_on_error(self, sample_scored_news):
         """When LLM fails, fall back to rule-based."""
         from unittest.mock import MagicMock
-        from src.news.summarizer import Summarizer
+        from legacy.news.summarizer import Summarizer
         s = Summarizer()
 
         mock_llm = MagicMock()
@@ -140,7 +140,7 @@ class TestSummarizerRuleBased:
     """Test rule-based fallback summary quality."""
 
     def test_rule_based_uses_title_as_what(self):
-        from src.news.summarizer import Summarizer
+        from legacy.news.summarizer import Summarizer
         s = Summarizer()
 
         news = ScoredNews(
@@ -154,7 +154,7 @@ class TestSummarizerRuleBased:
         assert "茅台" in summary.what
 
     def test_rule_based_positive_sentiment(self):
-        from src.news.summarizer import Summarizer
+        from legacy.news.summarizer import Summarizer
         s = Summarizer()
 
         news = ScoredNews(
@@ -168,7 +168,7 @@ class TestSummarizerRuleBased:
         assert summary.risk_opportunity in ("opportunity", "neutral", "risk")
 
     def test_rule_based_uses_layer_for_impact(self):
-        from src.news.summarizer import Summarizer
+        from legacy.news.summarizer import Summarizer
         s = Summarizer()
 
         heavy_news = ScoredNews(

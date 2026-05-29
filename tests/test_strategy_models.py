@@ -1,10 +1,10 @@
 """Tests for Phase 4 strategy decision model contracts."""
 
-from src.strategy.schemas import StrategyAction, StrategyAdvice, StrategyState
+from legacy.strategy.schemas import StrategyAction, StrategyAdvice, StrategyState
 
 
 def test_trigger_point_evaluates_numeric_context():
-    from src.strategy.models import TriggerPoint
+    from legacy.strategy.models import TriggerPoint
 
     trigger = TriggerPoint(
         metric="composite_score",
@@ -19,7 +19,7 @@ def test_trigger_point_evaluates_numeric_context():
 
 
 def test_strategy_decision_from_advice_preserves_execution_contract():
-    from src.strategy.models import StrategyDecision
+    from legacy.strategy.models import StrategyDecision
 
     advice = StrategyAdvice(
         action=StrategyAction.HOLD,

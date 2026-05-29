@@ -1,8 +1,8 @@
 """Tests for vector store collection definitions, embedding pipeline, and search."""
 import pytest
 from unittest.mock import MagicMock, patch
-from src.vectorstore.collections import COLLECTIONS, CollectionSchema, CollectionField, FieldType
-from src.vectorstore.search import cosine_similarity
+from src.infra.vectorstore.collections import COLLECTIONS, CollectionSchema, CollectionField, FieldType
+from src.infra.vectorstore.search import cosine_similarity
 
 
 class TestCollectionDefinitions:

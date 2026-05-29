@@ -2,9 +2,9 @@
 import pytest
 import networkx as nx
 
-from src.kg.graph import KnowledgeGraphBuilder
-from src.kg.schema import KGNodeType, KGEdgeType
-from src.news.schemas import NewsLayer, SearchPlan, ClassifiedNews
+from src.graph.builder import KnowledgeGraphBuilder
+from src.graph.schema import KGNodeType, KGEdgeType
+from legacy.news.schemas import NewsLayer, SearchPlan, ClassifiedNews
 
 
 @pytest.fixture
@@ -44,7 +44,7 @@ class TestClassifierLayerLogic:
     """Test news classification into 6 layers."""
 
     def test_fund_direct_match_by_code(self, sample_search_plan):
-        from src.news.classifier import Classifier
+        from legacy.news.classifier import Classifier
         c = Classifier()
 
         news = [{"title": "易方达中小盘公告", "content": "基金公告", "date": "2026-05-27"}]
@@ -55,7 +55,7 @@ class TestClassifierLayerLogic:
         assert result[0].weight == 1.0
 
     def test_fund_direct_match_by_name(self, sample_search_plan):
-        from src.news.classifier import Classifier
+        from legacy.news.classifier import Classifier
         c = Classifier()
 
         news = [{"title": "易方达中小盘基金经理变更", "content": "test", "date": "2026-05-27"}]
@@ -65,7 +65,7 @@ class TestClassifierLayerLogic:
         assert result[0].layer == NewsLayer.FUND_DIRECT
 
     def test_heavy_holding_match(self, sample_search_plan):
-        from src.news.classifier import Classifier
+        from legacy.news.classifier import Classifier
         c = Classifier()
 
         news = [{"title": "贵州茅台一季报发布", "content": "茅台营收增长", "date": "2026-05-27"}]
@@ -76,7 +76,7 @@ class TestClassifierLayerLogic:
         assert result[0].weight == 0.8
 
     def test_industry_match(self, sample_search_plan):
-        from src.news.classifier import Classifier
+        from legacy.news.classifier import Classifier
         c = Classifier()
 
         news = [{"title": "食品饮料行业景气度提升", "content": "test", "date": "2026-05-27"}]
@@ -87,7 +87,7 @@ class TestClassifierLayerLogic:
         assert result[0].weight == 0.5
 
     def test_theme_match(self, sample_search_plan):
-        from src.news.classifier import Classifier
+        from legacy.news.classifier import Classifier
         c = Classifier()
 
         news = [{"title": "白酒板块集体走强", "content": "test", "date": "2026-05-27"}]
@@ -98,7 +98,7 @@ class TestClassifierLayerLogic:
         assert result[0].weight >= 0.5
 
     def test_policy_macro_match(self, sample_search_plan):
-        from src.news.classifier import Classifier
+        from legacy.news.classifier import Classifier
         c = Classifier()
 
         news = [{"title": "央行宣布降息", "content": "LPR下调", "date": "2026-05-27"}]
@@ -109,7 +109,7 @@ class TestClassifierLayerLogic:
         assert result[0].weight == 0.3
 
     def test_overseas_match(self, sample_search_plan):
-        from src.news.classifier import Classifier
+        from legacy.news.classifier import Classifier
         c = Classifier()
 
         news = [{"title": "纳斯达克指数大幅波动", "content": "美股科技股下跌", "date": "2026-05-27"}]
@@ -120,7 +120,7 @@ class TestClassifierLayerLogic:
         assert result[0].weight == 0.2
 
     def test_black_swan_match(self, sample_search_plan):
-        from src.news.classifier import Classifier
+        from legacy.news.classifier import Classifier
         c = Classifier()
 
         news = [{"title": "系统性风险爆发", "content": "市场崩盘恐慌蔓延", "date": "2026-05-27"}]
@@ -132,7 +132,7 @@ class TestClassifierLayerLogic:
 
     def test_classification_priority(self, sample_search_plan):
         """Test that fund-direct takes priority over other matches."""
-        from src.news.classifier import Classifier
+        from legacy.news.classifier import Classifier
         c = Classifier()
 
         # A news item that mentions both the fund code AND a heavy holding
@@ -144,7 +144,7 @@ class TestClassifierLayerLogic:
         assert result[0].layer == NewsLayer.FUND_DIRECT
 
     def test_classify_news_sets_metadata(self, sample_search_plan):
-        from src.news.classifier import Classifier
+        from legacy.news.classifier import Classifier
         c = Classifier()
 
         news = [{"title": "贵州茅台大涨", "content": "茅台涨5%", "date": "2026-05-27", "source": "财联社"}]
@@ -156,7 +156,7 @@ class TestClassifierLayerLogic:
         assert result[0].entity_type == "stock"
 
     def test_irrelevant_news_gets_default_layer(self, sample_search_plan):
-        from src.news.classifier import Classifier
+        from legacy.news.classifier import Classifier
         c = Classifier()
 
         news = [{"title": "火星探测器成功着陆", "content": "太空探索", "date": "2026-05-27"}]
@@ -172,7 +172,7 @@ class TestClassifierEdgeCases:
     """Test edge cases for classifier."""
 
     def test_empty_news_list(self):
-        from src.news.classifier import Classifier
+        from legacy.news.classifier import Classifier
         c = Classifier()
         plan = SearchPlan(fund_code="110011")
 
@@ -181,7 +181,7 @@ class TestClassifierEdgeCases:
         assert result == []
 
     def test_unknown_fund_code(self):
-        from src.news.classifier import Classifier
+        from legacy.news.classifier import Classifier
         c = Classifier()
         plan = SearchPlan(fund_code="999999")
 
@@ -192,7 +192,7 @@ class TestClassifierEdgeCases:
         assert result[0].fund_code == "999999"
 
     def test_classify_multiple_news(self, sample_search_plan):
-        from src.news.classifier import Classifier
+        from legacy.news.classifier import Classifier
         c = Classifier()
 
         news = [

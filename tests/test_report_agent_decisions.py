@@ -9,9 +9,9 @@ from src.core.contracts import (
     build_report_evidence as _build_report_evidence,
     load_agent_decisions as _load_agent_decisions,
 )
-from src.output.report import _format_profit_contribution, generate_report
-from src.output.templates import qdii_hint
-from src.output.validator import post_process_report, validate_final_report
+from legacy.output.report import _format_profit_contribution, generate_report
+from legacy.output.templates import qdii_hint
+from legacy.output.validator import post_process_report, validate_final_report
 
 
 def _score(code="000001", name="测试基金"):

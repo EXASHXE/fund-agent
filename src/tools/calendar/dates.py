@@ -79,3 +79,34 @@ def to_date(d) -> Optional[date]:
         except ValueError:
             return None
     return None
+
+
+def is_trade_day(d: date) -> bool:
+    """Check if a date is a trade day (pure weekday-based: Mon-Fri, no holiday calendar).
+
+    This is a pure function with no IO, no network, no akshare dependency.
+    For A-share holiday-aware trade day checks, use src.engine.calendar.is_trade_day.
+    """
+    return d.weekday() < 5
+
+
+def previous_trade_day(d: date) -> date:
+    """Get the current or most recent trade day (inclusive of *d*).
+
+    This is a pure function with no IO, no network, no akshare dependency.
+    """
+    cursor = d
+    while not is_trade_day(cursor):
+        cursor -= timedelta(days=1)
+    return cursor
+
+
+def next_trade_day(d: date) -> date:
+    """Get the current or next trade day (inclusive of *d*).
+
+    This is a pure function with no IO, no network, no akshare dependency.
+    """
+    cursor = d
+    while not is_trade_day(cursor):
+        cursor += timedelta(days=1)
+    return cursor

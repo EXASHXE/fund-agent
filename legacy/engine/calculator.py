@@ -1,0 +1,245 @@
+"""
+核心计算引擎：事件驱动状态机 + XIRR + 校准平账。
+
+处理 BUY/CALIBRATE 事件。
+净值匹配统一使用 settle_delay=1（所有基金 T 日净值），与结算到账时间无关。
+  - _match_nav 前瞻 5 天兜底；近 3 天目标不向后搜索（防 QDII 净值滞后误配历史数据）。
+PENDING 判断基于 effective trade date + fund settle_delay：若结算日 > 今天（未到确认日），标记为 PENDING。
+  - settle_date == today 表示今日确认到账，计入已确认份额。
+  - effective trade date = 实际交易日期（非交易日顺延，after_1500 顺延）
+  - settle_delay = 1（T+1 到账，国内）/ 2（T+2 到账，QDII）
+所有买入均计入现金流（钱已从账户扣除），XIRR 基于全口径现金流计算。
+返回双口径收益：confirmed_pnl（已确认份额浮盈）/ portfolio_pnl（含待确认资金的整体盈亏）。
+校准偏差超过 3% 时拒绝并报警。
+"""
+from datetime import date, timedelta
+from typing import Dict, List, Optional, Tuple
+
+from legacy.engine.calendar import is_trade_day, next_trade_day
+from legacy.engine.events import FundEvent, EventType, resolve_nav_date, _effective_trade_date
+from src.tools.math.calc import _match_nav, _calc_xirr, compute_portfolio
+
+CALIBRATION_MAX_DELTA_PCT = 0.03
+
+
+def _settlement_date(trade_date: date, settle_delay: int) -> date:
+    """计算买入的份额确认到账日（从实际交易日起算，交易日顺延）。
+
+    国内 (settle_delay=1): T+1 交易日到账
+    QDII (settle_delay=2): T+2 交易日到账
+
+    示例：
+    - 周四 QDII 买入 → 周五+1T → 周一+1T → 周二到账
+    - 周五 QDII 买入 → 周一+1T → 周二+1T → 周三到账
+    """
+    result = trade_date
+    for _ in range(settle_delay):
+        result = next_trade_day(result + timedelta(days=1))
+    return result
+
+
+def compute_fund(
+    events: List[FundEvent],
+    nav_map: Dict[date, float],
+    fee_rate: float,
+    settle_delay: int,
+    today: date,
+) -> Dict:
+    total_shares = 0.0
+    total_cost = 0.0
+    cashflows: List[Tuple[date, float]] = []
+    calibrations_applied = []
+    calibrations_rejected = []
+    events_detail = []
+    pending_amount = 0.0
+
+    sorted_nav_dates = sorted(nav_map.keys())
+    last_nav_date = sorted_nav_dates[-1] if sorted_nav_dates else None
+    current_nav = nav_map[last_nav_date] if last_nav_date else 1.0
+
+    for event in events:
+        if event.event_type == EventType.BUY:
+            if event.amount <= 0:
+                continue
+
+            # 所有买入均计入现金流（钱已从账户扣除）
+            cashflows.append((event.event_date, -event.amount))
+
+            trade_date = _effective_trade_date(event.event_date, event.after_1500)
+            settle_date = _settlement_date(trade_date, settle_delay)
+            if settle_date > today:
+                pending_amount += event.amount
+                events_detail.append({
+                    "type": "BUY",
+                    "status": "PENDING",
+                    "purchase_date": event.event_date.isoformat(),
+                    "trade_date": trade_date.isoformat(),
+                    "settle_date": settle_date.isoformat(),
+                    "amount": event.amount,
+                    "reason": f"尚未到账 (预计 {settle_date}, sett_delay={settle_delay})",
+                })
+                continue
+
+            nav_date = resolve_nav_date(event.event_date, event.after_1500, settle_delay=1)
+            nav = float(event.nav) if event.nav else _match_nav(nav_map, nav_date, today)
+            if nav is None or nav <= 0:
+                events_detail.append({
+                    "type": "BUY",
+                    "status": "SKIPPED",
+                    "purchase_date": event.event_date.isoformat(),
+                    "nav_date": nav_date.isoformat(),
+                    "amount": event.amount,
+                    "reason": f"净值日期 {nav_date} 无数据",
+                })
+                continue
+
+            net_amount = event.amount / (1.0 + fee_rate)
+            new_shares = round(net_amount / nav, 4)
+
+            total_shares += new_shares
+            total_cost += event.amount
+
+            events_detail.append({
+                "type": "BUY",
+                "status": "CONFIRMED",
+                "purchase_date": event.event_date.isoformat(),
+                "nav_date": nav_date.isoformat(),
+                "settle_date": settle_date.isoformat(),
+                "amount": event.amount,
+                "fee_rate": fee_rate,
+                "net_amount": round(net_amount, 2),
+                "nav": round(nav, 4),
+                "nav_source": "transaction" if event.nav else "nav_map",
+                "new_shares": new_shares,
+                "after_1500": event.after_1500,
+            })
+
+        elif event.event_type == EventType.CALIBRATE:
+            if event.actual_shares <= 0:
+                continue
+
+            delta = event.actual_shares - total_shares
+            delta_pct = abs(delta) / event.actual_shares if event.actual_shares > 0 else 0
+
+            cal_detail = {
+                "date": event.event_date.isoformat(),
+                "actual_shares": event.actual_shares,
+                "computed_shares": round(total_shares, 4),
+                "delta": round(delta, 4),
+                "delta_pct": round(delta_pct * 100, 2),
+            }
+
+            if delta_pct <= CALIBRATION_MAX_DELTA_PCT:
+                total_shares = event.actual_shares
+                cal_detail["status"] = "CONFIRMED"
+                cal_detail["reason"] = "偏差在容忍范围内，成功校准份额"
+                calibrations_applied.append(cal_detail)
+                events_detail.append({
+                    "type": "CALIBRATE",
+                    **cal_detail
+                })
+            else:
+                cal_detail["status"] = "REJECTED"
+                cal_detail["reason"] = f"偏差大于 {CALIBRATION_MAX_DELTA_PCT * 100}%，校准被拒绝"
+                calibrations_rejected.append(cal_detail)
+                events_detail.append({
+                    "type": "CALIBRATE",
+                    **cal_detail
+                })
+
+    current_asset = total_shares * current_nav
+    confirmed_pnl = current_asset - total_cost
+    confirmed_return_pct = round(confirmed_pnl / total_cost * 100, 2) if total_cost > 0 else 0.0
+    portfolio_pnl = current_asset - (total_cost + pending_amount)
+
+    # XIRR: 所有现金流（含 pending）+ 当前市值作为终值，终端日对齐最新净值日
+    terminal_date = last_nav_date if last_nav_date else today
+    xirr_val = _calc_xirr(cashflows, current_asset, terminal_date)
+
+    avg_cost = round(total_cost / total_shares, 4) if total_shares > 0 else 0.0
+
+    return {
+        "total_cost": round(total_cost, 2),
+        "total_shares": round(total_shares, 4),
+        "current_nav": round(current_nav, 4),
+        "current_asset": current_asset,
+        "confirmed_pnl": confirmed_pnl,
+        "confirmed_return_pct": confirmed_return_pct,
+        "portfolio_pnl": portfolio_pnl,
+        "xirr": round(xirr_val, 4),
+        "avg_cost": avg_cost,
+        "pending_amount": round(pending_amount, 2),
+        "cashflows": [(d.isoformat(), v) for d, v in cashflows],
+        "calibrations_applied": calibrations_applied,
+        "calibrations_rejected": calibrations_rejected,
+        "has_calibration_error": len(calibrations_rejected) > 0,
+        "events_detail": events_detail,
+    }
+
+
+def _match_nav(nav_map: Dict[date, float], target: date, today: Optional[date] = None) -> Optional[float]:
+    if target in nav_map:
+        return nav_map[target]
+    for i in range(1, 6):
+        d = target + timedelta(days=i)
+        if d in nav_map:
+            return nav_map[d]
+    if today and (today - target).days <= 3:
+        return None
+    for i in range(1, 4):
+        d = target - timedelta(days=i)
+        if d in nav_map:
+            return nav_map[d]
+    return None
+
+
+def _calc_xirr(cashflows, current_value, today, guess=0.1):
+    if not cashflows or current_value <= 0:
+        return 0.0
+    all_cfs = list(cashflows) + [(today, current_value)]
+    has_pos = any(v > 0 for _, v in all_cfs)
+    has_neg = any(v < 0 for _, v in all_cfs)
+    if not (has_pos and has_neg):
+        return 0.0
+    rate = guess
+    for _ in range(100):
+        npv = 0.0
+        dnpv = 0.0
+        for d, v in all_cfs:
+            t = (d - all_cfs[0][0]).days / 365.0
+            factor = (1.0 + rate) ** (-t)
+            npv += v * factor
+            dnpv += -t * v * factor * (1.0 / (1.0 + rate))
+        if abs(dnpv) < 1e-12:
+            break
+        new_rate = rate - npv / dnpv
+        if isinstance(new_rate, complex):
+            return -0.99
+        if new_rate <= -0.999999:
+            new_rate = -0.99
+        if abs(new_rate - rate) < 1e-8:
+            rate = new_rate
+            break
+        rate = new_rate
+    return rate if rate > -0.99 else -0.99
+
+
+def compute_portfolio(fund_results: Dict[str, Dict]) -> Dict:
+    total_cost = sum(r["total_cost"] for r in fund_results.values())
+    total_asset = sum(r["current_asset"] for r in fund_results.values())
+    total_profit = total_asset - total_cost
+    total_return = round(total_profit / total_cost * 100, 2) if total_cost > 0 else 0.0
+    total_pending = sum(r["pending_amount"] for r in fund_results.values())
+    calibration_errors = []
+    for code, r in fund_results.items():
+        if r.get("calibrations_rejected"):
+            calibration_errors.append({"code": code, "rejected": r["calibrations_rejected"]})
+    return {
+        "total_cost": round(total_cost, 2),
+        "total_asset": round(total_asset, 2),
+        "total_profit": round(total_profit, 2),
+        "total_return_pct": total_return,
+        "total_pending": round(total_pending, 2),
+        "fund_count": len(fund_results),
+        "calibration_errors": calibration_errors,
+    }

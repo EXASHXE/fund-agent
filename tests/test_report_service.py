@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pandas as pd
 
-from src.services.report_service import render_analysis_report
+from legacy.services.report_service import render_analysis_report
 
 
 def test_report_service_writes_evidence_and_post_processed_report(tmp_path):

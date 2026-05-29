@@ -1,6 +1,6 @@
 """Test dynamic factor weights: regime-based weight mapping and enhanced factor matrix."""
-from src.analysis.scoring.factors import get_regime_weights, compute_factor_matrix
-from src.analysis.scoring.types import MarketRegime
+from legacy.analysis.scoring.factors import get_regime_weights, compute_factor_matrix
+from legacy.analysis.scoring.types import MarketRegime
 
 
 class TestGetRegimeWeights:

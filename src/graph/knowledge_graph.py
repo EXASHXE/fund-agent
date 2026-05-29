@@ -9,7 +9,7 @@ Handles holdings with either ``code/name`` or ``stock_code/stock_name`` keys.
 from __future__ import annotations
 
 import networkx as nx
-from src.kg.graph import KnowledgeGraphBuilder
+from src.graph.builder import KnowledgeGraphBuilder
 
 
 class KnowledgeGraph:

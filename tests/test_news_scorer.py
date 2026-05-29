@@ -3,10 +3,10 @@ import pytest
 import networkx as nx
 import math
 
-from src.kg.graph import KnowledgeGraphBuilder
-from src.kg.schema import KGEdgeType
-from src.news.schemas import NewsLayer, ScoredNews, ClassifiedNews
-from src.vectorstore.search import cosine_similarity
+from src.graph.builder import KnowledgeGraphBuilder
+from src.graph.schema import KGEdgeType
+from legacy.news.schemas import NewsLayer, ScoredNews, ClassifiedNews
+from src.infra.vectorstore.search import cosine_similarity
 
 
 @pytest.fixture
@@ -53,7 +53,7 @@ class TestScorerRelevance:
 
     def test_score_relevance_holding_overlap(self, sample_kg):
         graph, kg_builder = sample_kg
-        from src.news.scorer import Scorer
+        from legacy.news.scorer import Scorer
         scorer = Scorer()
 
         classified = [make_classified(title="贵州茅台大涨", matched_entity="600519")]
@@ -65,7 +65,7 @@ class TestScorerRelevance:
 
     def test_score_relevance_industry_hit(self, sample_kg):
         graph, kg_builder = sample_kg
-        from src.news.scorer import Scorer
+        from legacy.news.scorer import Scorer
         scorer = Scorer()
 
         classified = [make_classified(title="食品饮料景气", matched_entity="食品饮料",
@@ -77,7 +77,7 @@ class TestScorerRelevance:
 
     def test_score_relevance_theme_hit(self, sample_kg):
         graph, kg_builder = sample_kg
-        from src.news.scorer import Scorer
+        from legacy.news.scorer import Scorer
         scorer = Scorer()
 
         classified = [make_classified(title="芯片行业突破", matched_entity="电子",
@@ -90,7 +90,7 @@ class TestScorerRelevance:
 
     def test_score_relevance_calculates_combined(self, sample_kg):
         graph, kg_builder = sample_kg
-        from src.news.scorer import Scorer
+        from legacy.news.scorer import Scorer
         scorer = Scorer()
 
         classified = [make_classified(title="贵州茅台年报")]
@@ -101,7 +101,7 @@ class TestScorerRelevance:
 
     def test_score_relevance_unknown_fund(self, sample_kg):
         graph, kg_builder = sample_kg
-        from src.news.scorer import Scorer
+        from legacy.news.scorer import Scorer
         scorer = Scorer()
 
         classified = [make_classified(fund_code="999999")]
@@ -113,7 +113,7 @@ class TestScorerRelevance:
 
     def test_score_relevance_timeliness_decay(self, sample_kg):
         graph, kg_builder = sample_kg
-        from src.news.scorer import Scorer
+        from legacy.news.scorer import Scorer
         scorer = Scorer()
 
         # Recent news
@@ -128,7 +128,7 @@ class TestScorerRelevance:
 
     def test_score_relevance_multiple_items(self, sample_kg):
         graph, kg_builder = sample_kg
-        from src.news.scorer import Scorer
+        from legacy.news.scorer import Scorer
         scorer = Scorer()
 
         classified = [
@@ -149,7 +149,7 @@ class TestScorerVectorReranking:
     def test_rerank_without_embedding_pipeline_uses_default(self, sample_kg):
         """When no embedding pipeline, scores should remain unchanged."""
         graph, kg_builder = sample_kg
-        from src.news.scorer import Scorer
+        from legacy.news.scorer import Scorer
         scorer = Scorer()
 
         classified = [make_classified(title="贵州茅台年报")]
@@ -163,7 +163,7 @@ class TestScorerVectorReranking:
 
     def test_rerank_combined_score_formula(self, sample_kg):
         """Combined score = relevance * 0.6 + cosine * 0.4."""
-        from src.news.scorer import Scorer
+        from legacy.news.scorer import Scorer
 
         scored = [
             ScoredNews(
@@ -187,7 +187,7 @@ class TestScorerVectorReranking:
         assert abs(result[1].combined_score - 0.2) < 0.01
 
     def test_rerank_sorts_by_combined_score(self, sample_kg):
-        from src.news.scorer import Scorer
+        from legacy.news.scorer import Scorer
         scorer = Scorer()
 
         scored = [
@@ -205,7 +205,7 @@ class TestScorerVectorReranking:
         assert reranked[-1].title == "low"
 
     def test_rerank_top_k(self, sample_kg):
-        from src.news.scorer import Scorer
+        from legacy.news.scorer import Scorer
         scorer = Scorer()
 
         scored = [

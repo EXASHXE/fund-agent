@@ -1,4 +1,4 @@
-"""Knowledge Graph relation types — re-exported from src.kg.schema"""
-from src.kg.schema import KGEdgeType, KGEdge
+"""Knowledge Graph relation types — re-exported from src.graph.schema"""
+from src.graph.schema import KGEdgeType, KGEdge
 
 __all__ = ["KGEdgeType", "KGEdge"]

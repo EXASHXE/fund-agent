@@ -4,7 +4,7 @@ from __future__ import annotations
 import networkx as nx
 import pytest
 
-from src.agents.state import FundResearchState, EMPTY_STATE
+from legacy.agents.state import FundResearchState, EMPTY_STATE
 
 
 def _make_state(**overrides) -> FundResearchState:
@@ -19,7 +19,7 @@ class TestBuildResearchGraph:
 
     def test_build_returns_compiled_graph(self):
         """build_research_graph should return a compiled StateGraph."""
-        from src.agents.graphs.supervisor import build_research_graph
+        from legacy.agents.graphs.supervisor import build_research_graph
 
         graph = build_research_graph()
 
@@ -27,7 +27,7 @@ class TestBuildResearchGraph:
 
     def test_graph_has_all_five_nodes(self):
         """Graph should contain nodes for all 5 agents: news, quant, research, risk, strategy."""
-        from src.agents.graphs.supervisor import build_research_graph
+        from legacy.agents.graphs.supervisor import build_research_graph
 
         graph = build_research_graph()
 
@@ -39,7 +39,7 @@ class TestBuildResearchGraph:
 
     def test_graph_accepts_state(self):
         """Graph should accept FundResearchState as initial state."""
-        from src.agents.graphs.supervisor import build_research_graph
+        from legacy.agents.graphs.supervisor import build_research_graph
 
         graph = build_research_graph()
 
@@ -58,7 +58,7 @@ class TestBuildResearchGraph:
 
     def test_graph_handle_empty_state(self):
         """Graph should not crash on empty state invocation."""
-        from src.agents.graphs.supervisor import build_research_graph
+        from legacy.agents.graphs.supervisor import build_research_graph
 
         graph = build_research_graph()
 
@@ -73,14 +73,14 @@ class TestBuildResearchGraph:
 
     def test_dynamic_routing_graph_exists(self):
         """build_research_graph_with_routing should use dynamic supervisor routing."""
-        from src.agents.graphs.supervisor import build_research_graph_with_routing
+        from legacy.agents.graphs.supervisor import build_research_graph_with_routing
 
         graph = build_research_graph_with_routing()
         assert graph is not None
 
     def test_dynamic_routing_uses_supervisor(self):
         """Dynamic routing graph should check get_supervisor_routing for next agent."""
-        from src.agents.graphs.supervisor import build_research_graph_with_routing
+        from legacy.agents.graphs.supervisor import build_research_graph_with_routing
 
         graph = build_research_graph_with_routing()
 
@@ -96,7 +96,7 @@ class TestBuildResearchGraph:
 
     def test_docs_exist(self):
         """build_research_graph and build_research_graph_with_routing must have docstrings."""
-        from src.agents.graphs.supervisor import build_research_graph, build_research_graph_with_routing
+        from legacy.agents.graphs.supervisor import build_research_graph, build_research_graph_with_routing
         assert build_research_graph.__doc__ is not None
         assert len(build_research_graph.__doc__) > 10
         assert build_research_graph_with_routing.__doc__ is not None
@@ -110,7 +110,7 @@ class TestGraphIntegration:
         """Full sequential pipeline should run through all 5 agents."""
         from langgraph.graph import StateGraph, END
 
-        from src.agents.state import FundResearchState
+        from legacy.agents.state import FundResearchState
 
         # Define simple node functions that just mark completion
         def _news(state: FundResearchState) -> dict:
@@ -159,11 +159,11 @@ class TestGraphIntegration:
         """Dynamic routing should skip agents that already have results."""
         from langgraph.graph import StateGraph, END
 
-        from src.agents.state import FundResearchState
+        from legacy.agents.state import FundResearchState
 
         # Define a supervisor function that routes based on state
         def _supervisor(state: FundResearchState) -> str:
-            from src.agents.supervisor import get_supervisor_routing
+            from legacy.agents.supervisor import get_supervisor_routing
             routing = get_supervisor_routing(state)
             return routing["next_agent"]
 

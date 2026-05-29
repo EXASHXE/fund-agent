@@ -2,7 +2,7 @@
 import networkx as nx
 import pytest
 
-from src.analysis.scoring.types import ScoreComponent
+from legacy.analysis.scoring.types import ScoreComponent
 
 
 @pytest.fixture
@@ -44,7 +44,7 @@ class TestPositionScoreCompute:
 
     def test_returns_score_component(self, diversified_fund_data):
         """Should return a valid ScoreComponent."""
-        from src.analysis.scoring.position import PositionScoreCalculator
+        from legacy.analysis.scoring.position import PositionScoreCalculator
 
         calc = PositionScoreCalculator()
         result = calc.compute(diversified_fund_data, nx.DiGraph())
@@ -56,7 +56,7 @@ class TestPositionScoreCompute:
 
     def test_empty_holdings_fallback(self):
         """Empty holdings returns default score with low confidence."""
-        from src.analysis.scoring.position import PositionScoreCalculator
+        from legacy.analysis.scoring.position import PositionScoreCalculator
 
         calc = PositionScoreCalculator()
         result = calc.compute({"code": "110011"}, nx.DiGraph())
@@ -66,7 +66,7 @@ class TestPositionScoreCompute:
 
     def test_diversified_scores_higher_than_concentrated(self, diversified_fund_data, concentrated_fund_data):
         """Diversified holdings should score higher than concentrated ones."""
-        from src.analysis.scoring.position import PositionScoreCalculator
+        from legacy.analysis.scoring.position import PositionScoreCalculator
 
         calc = PositionScoreCalculator()
         div_result = calc.compute(diversified_fund_data, nx.DiGraph())
@@ -76,7 +76,7 @@ class TestPositionScoreCompute:
 
     def test_hhi_in_detail(self, diversified_fund_data):
         """Detail should include HHI concentration metric."""
-        from src.analysis.scoring.position import PositionScoreCalculator
+        from legacy.analysis.scoring.position import PositionScoreCalculator
 
         calc = PositionScoreCalculator()
         result = calc.compute(diversified_fund_data, nx.DiGraph())
@@ -85,7 +85,7 @@ class TestPositionScoreCompute:
 
     def test_weights_sum_to_one(self, diversified_fund_data):
         """Sub-factor weights should sum to 1.0."""
-        from src.analysis.scoring.position import PositionScoreCalculator
+        from legacy.analysis.scoring.position import PositionScoreCalculator
 
         calc = PositionScoreCalculator()
         result = calc.compute(diversified_fund_data, nx.DiGraph())
@@ -95,7 +95,7 @@ class TestPositionScoreCompute:
 
     def test_five_sub_factors(self, diversified_fund_data):
         """Should include all 5 sub-factors: concentration, style, industry, single_name, overseas."""
-        from src.analysis.scoring.position import PositionScoreCalculator
+        from legacy.analysis.scoring.position import PositionScoreCalculator
 
         calc = PositionScoreCalculator()
         result = calc.compute(diversified_fund_data, nx.DiGraph())
@@ -106,7 +106,7 @@ class TestPositionScoreCompute:
 
     def test_high_concentration_lowers_score(self, diversified_fund_data, concentrated_fund_data):
         """Concentrated fund should have lower concentration sub-score."""
-        from src.analysis.scoring.position import PositionScoreCalculator
+        from legacy.analysis.scoring.position import PositionScoreCalculator
 
         calc = PositionScoreCalculator()
         div = calc.compute(diversified_fund_data, nx.DiGraph())
@@ -118,7 +118,7 @@ class TestPositionScoreCompute:
 
     def test_multi_industry_scores_higher_industry_exposure(self, diversified_fund_data, concentrated_fund_data):
         """Multi-industry fund should have higher industry_exposure score."""
-        from src.analysis.scoring.position import PositionScoreCalculator
+        from legacy.analysis.scoring.position import PositionScoreCalculator
 
         calc = PositionScoreCalculator()
         div = calc.compute(diversified_fund_data, nx.DiGraph())
@@ -128,7 +128,7 @@ class TestPositionScoreCompute:
 
     def test_single_name_risk_penalizes_high_weight(self, diversified_fund_data, concentrated_fund_data):
         """Funds with high single-stock weights should have lower single_name_risk scores."""
-        from src.analysis.scoring.position import PositionScoreCalculator
+        from legacy.analysis.scoring.position import PositionScoreCalculator
 
         calc = PositionScoreCalculator()
         div = calc.compute(diversified_fund_data, nx.DiGraph())

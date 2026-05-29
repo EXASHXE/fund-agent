@@ -1,6 +1,6 @@
 import unittest
 
-from src.forecast.engine import build_trend_matrix
+from legacy.forecast.engine import build_trend_matrix
 
 
 class ForecastDecisionTest(unittest.TestCase):

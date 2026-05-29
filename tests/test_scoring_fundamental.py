@@ -2,8 +2,8 @@
 import networkx as nx
 import pytest
 
-from src.analysis.scoring.types import ScoreComponent
-from src.kg.graph import KnowledgeGraphBuilder
+from legacy.analysis.scoring.types import ScoreComponent
+from src.graph.builder import KnowledgeGraphBuilder
 
 
 @pytest.fixture
@@ -41,7 +41,7 @@ class TestFundamentalScoreCompute:
 
     def test_returns_score_component(self, graph_with_exposure, fund_data_with_holdings):
         """Should return a valid ScoreComponent."""
-        from src.analysis.scoring.fundamental import FundamentalScoreCalculator
+        from legacy.analysis.scoring.fundamental import FundamentalScoreCalculator
 
         calc = FundamentalScoreCalculator()
         result = calc.compute(fund_data_with_holdings, graph_with_exposure, [])
@@ -53,7 +53,7 @@ class TestFundamentalScoreCompute:
 
     def test_empty_fund_data_fallback(self):
         """Empty fund data returns default score with low confidence."""
-        from src.analysis.scoring.fundamental import FundamentalScoreCalculator
+        from legacy.analysis.scoring.fundamental import FundamentalScoreCalculator
 
         calc = FundamentalScoreCalculator()
         result = calc.compute({}, nx.DiGraph(), [])
@@ -63,7 +63,7 @@ class TestFundamentalScoreCompute:
 
     def test_kg_exposure_contributes_to_score(self, graph_with_exposure, fund_data_with_holdings):
         """Fund with multiple industry/themes gets higher score from diversification."""
-        from src.analysis.scoring.fundamental import FundamentalScoreCalculator
+        from legacy.analysis.scoring.fundamental import FundamentalScoreCalculator
 
         calc = FundamentalScoreCalculator()
         result = calc.compute(fund_data_with_holdings, graph_with_exposure, [])
@@ -74,7 +74,7 @@ class TestFundamentalScoreCompute:
 
     def test_positive_events_improve_score(self, graph_with_exposure, fund_data_with_holdings):
         """Positive events should increase the fundamental score."""
-        from src.analysis.scoring.fundamental import FundamentalScoreCalculator
+        from legacy.analysis.scoring.fundamental import FundamentalScoreCalculator
 
         calc = FundamentalScoreCalculator()
         no_events = calc.compute(fund_data_with_holdings, graph_with_exposure, [])
@@ -88,7 +88,7 @@ class TestFundamentalScoreCompute:
 
     def test_negative_events_decrease_score(self, graph_with_exposure, fund_data_with_holdings):
         """Negative events should decrease the fundamental score."""
-        from src.analysis.scoring.fundamental import FundamentalScoreCalculator
+        from legacy.analysis.scoring.fundamental import FundamentalScoreCalculator
 
         calc = FundamentalScoreCalculator()
         baseline = calc.compute(fund_data_with_holdings, graph_with_exposure, [])
@@ -102,7 +102,7 @@ class TestFundamentalScoreCompute:
 
     def test_detail_contains_diversity_metrics(self, graph_with_exposure, fund_data_with_holdings):
         """Detail dict should include industry/themes diversity info."""
-        from src.analysis.scoring.fundamental import FundamentalScoreCalculator
+        from legacy.analysis.scoring.fundamental import FundamentalScoreCalculator
 
         calc = FundamentalScoreCalculator()
         result = calc.compute(fund_data_with_holdings, graph_with_exposure, [])
@@ -113,7 +113,7 @@ class TestFundamentalScoreCompute:
 
     def test_no_kg_but_with_events_still_computable(self):
         """Events alone should produce a meaningful score even without KG."""
-        from src.analysis.scoring.fundamental import FundamentalScoreCalculator
+        from legacy.analysis.scoring.fundamental import FundamentalScoreCalculator
 
         calc = FundamentalScoreCalculator()
         events = [
@@ -126,7 +126,7 @@ class TestFundamentalScoreCompute:
 
     def test_llm_client_acceptance(self, graph_with_exposure, fund_data_with_holdings):
         """Should accept llm_client parameter without error (stub/no-op)."""
-        from src.analysis.scoring.fundamental import FundamentalScoreCalculator
+        from legacy.analysis.scoring.fundamental import FundamentalScoreCalculator
 
         calc = FundamentalScoreCalculator()
         result = calc.compute(fund_data_with_holdings, graph_with_exposure, [], llm_client=None)
@@ -135,7 +135,7 @@ class TestFundamentalScoreCompute:
 
     def test_confidence_increases_with_exposure_data(self, graph_with_exposure, fund_data_with_holdings):
         """More KG data should yield higher confidence."""
-        from src.analysis.scoring.fundamental import FundamentalScoreCalculator
+        from legacy.analysis.scoring.fundamental import FundamentalScoreCalculator
 
         calc = FundamentalScoreCalculator()
         no_kg = calc.compute({"code": "110011"}, nx.DiGraph(), [])

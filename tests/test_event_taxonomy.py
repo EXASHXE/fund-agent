@@ -1,11 +1,11 @@
 """Tests for event taxonomy and scoring types."""
 import pytest
-from src.events.taxonomy import (
+from legacy.events.taxonomy import (
     EventType, EventCategory, EVENT_HIERARCHY,
     ClassifiedEvent, get_event_type, classify_event,
 )
-from src.events.extractor import extract_events_from_text
-from src.analysis.scoring.types import ScoreComponent, MarketRegime, CompositeScore, score_level
+from legacy.events.extractor import extract_events_from_text
+from legacy.analysis.scoring.types import ScoreComponent, MarketRegime, CompositeScore, score_level
 
 
 class TestEventTaxonomy:

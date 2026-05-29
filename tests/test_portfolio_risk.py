@@ -2,7 +2,7 @@ import unittest
 
 import pandas as pd
 
-from src.analysis.portfolio_risk import build_portfolio_risk_matrix
+from legacy.analysis.portfolio_risk import build_portfolio_risk_matrix
 
 
 class PortfolioRiskTest(unittest.TestCase):

@@ -1,11 +1,11 @@
 """Tests for Knowledge Graph schema and industry mapping."""
 import pickle
 import pytest
-from src.kg.schema import (
+from src.graph.schema import (
     KGNodeType, KGEdgeType, KGEdge,
     FundNode, StockNode, IndustryNode, ThemeNode, EventNode, MacroFactorNode,
 )
-from src.kg.industry_map import (
+from src.graph.industry_map import (
     INDUSTRY_THEME_MAP, THEME_KEYWORDS,
     get_themes_for_industry, get_keywords_for_theme, get_all_themes, get_all_industries,
 )

@@ -2,7 +2,7 @@
 import networkx as nx
 import pytest
 
-from src.analysis.scoring.types import ScoreComponent, MarketRegime
+from legacy.analysis.scoring.types import ScoreComponent, MarketRegime
 
 
 class TestTimingScoreCompute:
@@ -10,7 +10,7 @@ class TestTimingScoreCompute:
 
     def test_returns_score_component(self):
         """Should return a valid ScoreComponent."""
-        from src.analysis.scoring.timing import TimingScoreCalculator
+        from legacy.analysis.scoring.timing import TimingScoreCalculator
 
         calc = TimingScoreCalculator()
         result = calc.compute({"code": "110011"}, MarketRegime.NORMAL, [])
@@ -22,7 +22,7 @@ class TestTimingScoreCompute:
 
     def test_trending_regime_highest_score(self):
         """Trending regime should give the highest timing score (good time to invest)."""
-        from src.analysis.scoring.timing import TimingScoreCalculator
+        from legacy.analysis.scoring.timing import TimingScoreCalculator
 
         calc = TimingScoreCalculator()
         scores = {}
@@ -37,7 +37,7 @@ class TestTimingScoreCompute:
 
     def test_crisis_regime_lowest_score(self):
         """Crisis regime should give the lowest timing score."""
-        from src.analysis.scoring.timing import TimingScoreCalculator
+        from legacy.analysis.scoring.timing import TimingScoreCalculator
 
         calc = TimingScoreCalculator()
         result = calc.compute({"code": "110011"}, MarketRegime.CRISIS, [])
@@ -45,7 +45,7 @@ class TestTimingScoreCompute:
 
     def test_positive_momentum_improves_score(self):
         """Positive momentum events should increase timing score."""
-        from src.analysis.scoring.timing import TimingScoreCalculator
+        from legacy.analysis.scoring.timing import TimingScoreCalculator
 
         calc = TimingScoreCalculator()
         baseline = calc.compute({"code": "110011"}, MarketRegime.NORMAL, [])
@@ -60,7 +60,7 @@ class TestTimingScoreCompute:
 
     def test_negative_momentum_worsens_score(self):
         """Negative momentum events should decrease timing score."""
-        from src.analysis.scoring.timing import TimingScoreCalculator
+        from legacy.analysis.scoring.timing import TimingScoreCalculator
 
         calc = TimingScoreCalculator()
         baseline = calc.compute({"code": "110011"}, MarketRegime.NORMAL, [])
@@ -75,7 +75,7 @@ class TestTimingScoreCompute:
 
     def test_detail_contains_regime(self):
         """Detail should include the detected regime."""
-        from src.analysis.scoring.timing import TimingScoreCalculator
+        from legacy.analysis.scoring.timing import TimingScoreCalculator
 
         calc = TimingScoreCalculator()
         result = calc.compute({"code": "110011"}, MarketRegime.HIGH_VOLATILITY, [])
@@ -83,7 +83,7 @@ class TestTimingScoreCompute:
 
     def test_llm_client_acceptance(self):
         """Should accept llm_client parameter without error (stub)."""
-        from src.analysis.scoring.timing import TimingScoreCalculator
+        from legacy.analysis.scoring.timing import TimingScoreCalculator
 
         calc = TimingScoreCalculator()
         result = calc.compute({"code": "110011"}, MarketRegime.NORMAL, [], llm_client=None)
@@ -91,7 +91,7 @@ class TestTimingScoreCompute:
 
     def test_empty_fund_data_still_computable(self):
         """Empty/missing fund data should still return a valid score."""
-        from src.analysis.scoring.timing import TimingScoreCalculator
+        from legacy.analysis.scoring.timing import TimingScoreCalculator
 
         calc = TimingScoreCalculator()
         result = calc.compute({}, MarketRegime.NORMAL, [])
@@ -100,7 +100,7 @@ class TestTimingScoreCompute:
 
     def test_all_regimes_have_valid_scores(self):
         """Every regime type should produce a valid score 0-100."""
-        from src.analysis.scoring.timing import TimingScoreCalculator
+        from legacy.analysis.scoring.timing import TimingScoreCalculator
 
         calc = TimingScoreCalculator()
         for regime in MarketRegime:

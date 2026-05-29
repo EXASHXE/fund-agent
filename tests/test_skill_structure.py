@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from src.analysis.scoring.types import MarketRegime
-from src.prompts.loader import PROMPT_FILES, load_all_prompts, load_prompt
+from legacy.analysis.scoring.types import MarketRegime
+from legacy.prompts.loader import PROMPT_FILES, load_all_prompts, load_prompt
 
 
 ROOT = Path(__file__).resolve().parents[1]

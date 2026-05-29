@@ -11,68 +11,68 @@ class FinnhubNewsClientTest(unittest.TestCase):
 
     def test_init_without_api_key_does_not_crash(self):
         """Client should initialize without an API key and not crash."""
-        from src.news.finnhub_client import FinnhubNewsClient
+        from legacy.news.finnhub_client import FinnhubNewsClient
         client = FinnhubNewsClient()
         self.assertIsNotNone(client)
         self.assertEqual(client.api_key, "")
 
     def test_init_with_explicit_api_key(self):
         """Client should accept an explicit API key."""
-        from src.news.finnhub_client import FinnhubNewsClient
+        from legacy.news.finnhub_client import FinnhubNewsClient
         client = FinnhubNewsClient(api_key="test_key_123")
         self.assertEqual(client.api_key, "test_key_123")
 
     def test_init_with_env_var(self):
         """Client should read API key from environment variable FINNHUB_API_KEY."""
-        from src.news.finnhub_client import FinnhubNewsClient
+        from legacy.news.finnhub_client import FinnhubNewsClient
         with patch.dict(os.environ, {"FINNHUB_API_KEY": "env_key_456"}):
             client = FinnhubNewsClient()
             self.assertEqual(client.api_key, "env_key_456")
 
     def test_init_with_empty_env_var(self):
         """Client should default to empty string when env var is empty."""
-        from src.news.finnhub_client import FinnhubNewsClient
+        from legacy.news.finnhub_client import FinnhubNewsClient
         client = FinnhubNewsClient(api_key="")
         self.assertEqual(client.api_key, "")
 
     def test_get_client_returns_none_when_no_api_key(self):
         """_get_client should return None when api_key is empty."""
-        from src.news.finnhub_client import FinnhubNewsClient
+        from legacy.news.finnhub_client import FinnhubNewsClient
         client = FinnhubNewsClient()
         result = client._get_client()
         self.assertIsNone(result)
 
     def test_get_company_news_returns_empty_when_no_api_key(self):
         """get_company_news should return empty list when API key is missing."""
-        from src.news.finnhub_client import FinnhubNewsClient
+        from legacy.news.finnhub_client import FinnhubNewsClient
         client = FinnhubNewsClient()
         result = client.get_company_news("AAPL")
         self.assertEqual(result, [])
 
     def test_get_news_sentiment_returns_empty_when_no_api_key(self):
         """get_news_sentiment should return empty dict when API key is missing."""
-        from src.news.finnhub_client import FinnhubNewsClient
+        from legacy.news.finnhub_client import FinnhubNewsClient
         client = FinnhubNewsClient()
         result = client.get_news_sentiment("AAPL")
         self.assertEqual(result, {})
 
     def test_get_market_news_returns_empty_when_no_api_key(self):
         """get_market_news should return empty list when API key is missing."""
-        from src.news.finnhub_client import FinnhubNewsClient
+        from legacy.news.finnhub_client import FinnhubNewsClient
         client = FinnhubNewsClient()
         result = client.get_market_news()
         self.assertEqual(result, [])
 
     def test_search_news_returns_empty_when_no_api_key(self):
         """search_news should return empty list when API key is missing."""
-        from src.news.finnhub_client import FinnhubNewsClient
+        from legacy.news.finnhub_client import FinnhubNewsClient
         client = FinnhubNewsClient()
         result = client.search_news("AAPL")
         self.assertEqual(result, [])
 
     def test_normalize_converts_finnhub_response_format(self):
         """_normalize should convert Finnhub response to standard dict format."""
-        from src.news.finnhub_client import FinnhubNewsClient
+        from legacy.news.finnhub_client import FinnhubNewsClient
         sample = [{
             "headline": "Apple Reports Record Earnings",
             "summary": "Apple Inc. reported record quarterly earnings.",
@@ -94,7 +94,7 @@ class FinnhubNewsClientTest(unittest.TestCase):
 
     def test_normalize_handles_empty_datetime(self):
         """_normalize should handle items with missing datetime (timestamp 0)."""
-        from src.news.finnhub_client import FinnhubNewsClient
+        from legacy.news.finnhub_client import FinnhubNewsClient
         sample = [{
             "headline": "Test Headline",
             "summary": "Test Content",
@@ -109,7 +109,7 @@ class FinnhubNewsClientTest(unittest.TestCase):
 
     def test_normalize_handles_missing_fields(self):
         """_normalize should handle records with missing fields gracefully."""
-        from src.news.finnhub_client import FinnhubNewsClient
+        from legacy.news.finnhub_client import FinnhubNewsClient
         sample = [{}]  # Empty record
         result = FinnhubNewsClient._normalize(sample, "MSFT")
         self.assertEqual(len(result), 1)
@@ -119,7 +119,7 @@ class FinnhubNewsClientTest(unittest.TestCase):
 
     def test_get_company_news_with_mocked_client(self):
         """get_company_news should call finnhub.Client and return normalized news."""
-        from src.news.finnhub_client import FinnhubNewsClient
+        from legacy.news.finnhub_client import FinnhubNewsClient
         fake_finnhub = types.SimpleNamespace()
         mock_client_instance = MagicMock()
         mock_client_instance.company_news.return_value = [{
@@ -150,7 +150,7 @@ class FinnhubNewsClientTest(unittest.TestCase):
 
     def test_get_company_news_handles_client_exception(self):
         """get_company_news should return empty list when API call raises exception."""
-        from src.news.finnhub_client import FinnhubNewsClient
+        from legacy.news.finnhub_client import FinnhubNewsClient
         fake_finnhub = types.SimpleNamespace()
         mock_client_instance = MagicMock()
         mock_client_instance.company_news.side_effect = Exception("API error")
@@ -171,7 +171,7 @@ class FinnhubNewsClientTest(unittest.TestCase):
 
     def test_get_news_sentiment_with_mocked_client(self):
         """get_news_sentiment should call finnhub.Client and return sentiment data."""
-        from src.news.finnhub_client import FinnhubNewsClient
+        from legacy.news.finnhub_client import FinnhubNewsClient
         fake_finnhub = types.SimpleNamespace()
         mock_client_instance = MagicMock()
         mock_client_instance.news_sentiment.return_value = {
@@ -196,7 +196,7 @@ class FinnhubNewsClientTest(unittest.TestCase):
 
     def test_get_news_sentiment_handles_exception(self):
         """get_news_sentiment should return empty dict when API call raises exception."""
-        from src.news.finnhub_client import FinnhubNewsClient
+        from legacy.news.finnhub_client import FinnhubNewsClient
         fake_finnhub = types.SimpleNamespace()
         mock_client_instance = MagicMock()
         mock_client_instance.news_sentiment.side_effect = Exception("API error")
@@ -217,7 +217,7 @@ class FinnhubNewsClientTest(unittest.TestCase):
 
     def test_get_market_news_with_mocked_client(self):
         """get_market_news should call finnhub.Client and return general news."""
-        from src.news.finnhub_client import FinnhubNewsClient
+        from legacy.news.finnhub_client import FinnhubNewsClient
         fake_finnhub = types.SimpleNamespace()
         mock_client_instance = MagicMock()
         mock_client_instance.general_news.return_value = [
@@ -241,7 +241,7 @@ class FinnhubNewsClientTest(unittest.TestCase):
 
     def test_get_market_news_handles_exception(self):
         """get_market_news should return empty list when API call raises exception."""
-        from src.news.finnhub_client import FinnhubNewsClient
+        from legacy.news.finnhub_client import FinnhubNewsClient
         fake_finnhub = types.SimpleNamespace()
         mock_client_instance = MagicMock()
         mock_client_instance.general_news.side_effect = Exception("API error")
@@ -262,7 +262,7 @@ class FinnhubNewsClientTest(unittest.TestCase):
 
     def test_search_news_filters_by_query_keyword(self):
         """search_news should filter results by keyword in title or content."""
-        from src.news.finnhub_client import FinnhubNewsClient
+        from legacy.news.finnhub_client import FinnhubNewsClient
         fake_finnhub = types.SimpleNamespace()
         mock_client_instance = MagicMock()
         mock_client_instance.company_news.return_value = [
@@ -299,7 +299,7 @@ class FinnhubNewsClientTest(unittest.TestCase):
 
     def test_search_news_no_filter_when_no_query(self):
         """search_news should return all news when query is None."""
-        from src.news.finnhub_client import FinnhubNewsClient
+        from legacy.news.finnhub_client import FinnhubNewsClient
         fake_finnhub = types.SimpleNamespace()
         mock_client_instance = MagicMock()
         mock_client_instance.company_news.return_value = [

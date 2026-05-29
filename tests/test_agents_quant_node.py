@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.agents.state import FundResearchState, EMPTY_STATE
+from legacy.agents.state import FundResearchState, EMPTY_STATE
 
 
 def _make_state(**overrides) -> FundResearchState:
@@ -43,7 +43,7 @@ class TestQuantAgentNode:
 
     def test_node_returns_dict(self):
         """Node should return a dict of state updates (LangGraph pattern)."""
-        from src.agents.graphs.quant_agent import quant_agent_node
+        from legacy.agents.graphs.quant_agent import quant_agent_node
 
         fund_data = _make_fund_data("110011")
         state = _make_state(funds_data={"110011": fund_data})
@@ -55,7 +55,7 @@ class TestQuantAgentNode:
 
     def test_node_computes_quant_scores(self):
         """Node should compute QuantScore for each fund."""
-        from src.agents.graphs.quant_agent import quant_agent_node
+        from legacy.agents.graphs.quant_agent import quant_agent_node
 
         fund_data = _make_fund_data("110011")
         state = _make_state(funds_data={"110011": fund_data})
@@ -68,7 +68,7 @@ class TestQuantAgentNode:
 
     def test_node_detects_market_regime(self):
         """Node should detect and set market_regime in state."""
-        from src.agents.graphs.quant_agent import quant_agent_node
+        from legacy.agents.graphs.quant_agent import quant_agent_node
 
         fund_data = _make_fund_data("110011")
         state = _make_state(funds_data={"110011": fund_data})
@@ -80,7 +80,7 @@ class TestQuantAgentNode:
 
     def test_node_handles_empty_state(self):
         """Node should handle empty state gracefully."""
-        from src.agents.graphs.quant_agent import quant_agent_node
+        from legacy.agents.graphs.quant_agent import quant_agent_node
 
         state: FundResearchState = dict(EMPTY_STATE)  # type: ignore[arg-type]
 
@@ -91,7 +91,7 @@ class TestQuantAgentNode:
 
     def test_node_handles_no_funds_data(self):
         """Node should return empty quant_scores when no funds_data."""
-        from src.agents.graphs.quant_agent import quant_agent_node
+        from legacy.agents.graphs.quant_agent import quant_agent_node
 
         state = _make_state()
 
@@ -102,7 +102,7 @@ class TestQuantAgentNode:
 
     def test_node_handles_minimal_fund_data(self):
         """Node should not crash on minimal fund data."""
-        from src.agents.graphs.quant_agent import quant_agent_node
+        from legacy.agents.graphs.quant_agent import quant_agent_node
 
         minimal = {"code": "110011", "basic": {"name": "Minimal", "fund_type": "混合"}}
         state = _make_state(funds_data={"110011": minimal})
@@ -113,7 +113,7 @@ class TestQuantAgentNode:
 
     def test_node_handles_events_for_regime(self):
         """Node should use events for regime detection when available."""
-        from src.agents.graphs.quant_agent import quant_agent_node
+        from legacy.agents.graphs.quant_agent import quant_agent_node
 
         fund_data = _make_fund_data("110011")
         state = _make_state(
@@ -131,7 +131,7 @@ class TestQuantAgentNode:
 
     def test_node_docstring_exists(self):
         """quant_agent_node must have a docstring."""
-        from src.agents.graphs.quant_agent import quant_agent_node
+        from legacy.agents.graphs.quant_agent import quant_agent_node
         assert quant_agent_node.__doc__ is not None
         assert len(quant_agent_node.__doc__) > 10
 
@@ -141,7 +141,7 @@ class TestRegimeIntegration:
 
     def test_trending_regime_detected(self):
         """Should detect TRENDING when NAV has strong uptrend + low volatility."""
-        from src.agents.graphs.quant_agent import quant_agent_node
+        from legacy.agents.graphs.quant_agent import quant_agent_node
 
         dates = pd.date_range(end="2026-05-27", periods=252, freq="B")
         # Linear uptrend with very low noise
@@ -159,7 +159,7 @@ class TestRegimeIntegration:
 
     def test_crisis_regime_from_black_swan(self):
         """Should detect CRISIS when events include black_swan."""
-        from src.agents.graphs.quant_agent import quant_agent_node
+        from legacy.agents.graphs.quant_agent import quant_agent_node
 
         fund_data = _make_fund_data("110011")
         state = _make_state(

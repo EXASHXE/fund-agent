@@ -1,7 +1,7 @@
 import pytest
 
-from src.agents.orchestrator import AgentOrchestrator
-from src.agents.protocols import AgentContext, AgentOpinion, StageResult
+from legacy.agents.orchestrator import AgentOrchestrator
+from legacy.agents.protocols import AgentContext, AgentOpinion, StageResult
 from src.tools.registry import ToolDefinition, ToolRegistry
 
 

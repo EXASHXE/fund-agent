@@ -4,8 +4,8 @@ from unittest.mock import patch, MagicMock
 
 import networkx as nx
 
-from src.kg.graph import KnowledgeGraphBuilder
-from src.kg.schema import (
+from src.graph.builder import KnowledgeGraphBuilder
+from src.graph.schema import (
     FundNode, StockNode, IndustryNode, ThemeNode,
     KGNodeType, KGEdgeType, KGEdge,
 )
@@ -39,7 +39,7 @@ class TestRetrieverSearchPlan:
 
     def test_build_search_plan_extracts_holdings(self, sample_kg):
         graph, kg_builder = sample_kg
-        from src.news.retriever import Retriever
+        from legacy.news.retriever import Retriever
         retriever = Retriever()
 
         plan = retriever.build_search_plan("110011", graph)
@@ -51,7 +51,7 @@ class TestRetrieverSearchPlan:
 
     def test_build_search_plan_includes_themes(self, sample_kg):
         graph, kg_builder = sample_kg
-        from src.news.retriever import Retriever
+        from legacy.news.retriever import Retriever
         retriever = Retriever()
 
         plan = retriever.build_search_plan("110011", graph)
@@ -63,7 +63,7 @@ class TestRetrieverSearchPlan:
 
     def test_build_search_plan_includes_macro_queries(self, sample_kg):
         graph, kg_builder = sample_kg
-        from src.news.retriever import Retriever
+        from legacy.news.retriever import Retriever
         retriever = Retriever()
 
         plan = retriever.build_search_plan("110011", graph)
@@ -72,7 +72,7 @@ class TestRetrieverSearchPlan:
 
     def test_build_search_plan_unknown_fund(self, sample_kg):
         graph, kg_builder = sample_kg
-        from src.news.retriever import Retriever
+        from legacy.news.retriever import Retriever
         retriever = Retriever()
 
         plan = retriever.build_search_plan("999999", graph)
@@ -83,7 +83,7 @@ class TestRetrieverSearchPlan:
 
     def test_build_search_plan_identifies_heavy_holdings(self, sample_kg):
         graph, kg_builder = sample_kg
-        from src.news.retriever import Retriever
+        from legacy.news.retriever import Retriever
         retriever = Retriever()
 
         plan = retriever.build_search_plan("110011", graph, heavy_threshold=5.0)
@@ -97,7 +97,7 @@ class TestRetrieverNewsRetrieval:
     """Test news retrieval methods."""
 
     def test_retrieve_stock_news_uses_akshare(self):
-        from src.news.retriever import Retriever
+        from legacy.news.retriever import Retriever
         retriever = Retriever()
 
         mock_df = MagicMock()
@@ -117,7 +117,7 @@ class TestRetrieverNewsRetrieval:
             assert "content" in item
 
     def test_retrieve_market_news_uses_market_sources(self):
-        from src.news.retriever import Retriever
+        from legacy.news.retriever import Retriever
         retriever = Retriever()
 
         mock_df = MagicMock()
@@ -133,7 +133,7 @@ class TestRetrieverNewsRetrieval:
         assert isinstance(news, list)
 
     def test_retriever_handles_akshare_errors(self):
-        from src.news.retriever import Retriever
+        from legacy.news.retriever import Retriever
         retriever = Retriever()
 
         with patch("src.news.news_fetcher._cached_ak_call", side_effect=Exception("API error")):
@@ -147,8 +147,8 @@ class TestRetrieverIntegration:
 
     def test_search_plan_drives_retrieval(self, sample_kg):
         graph, kg_builder = sample_kg
-        from src.news.retriever import Retriever
-        from src.news.schemas import SearchPlan
+        from legacy.news.retriever import Retriever
+        from legacy.news.schemas import SearchPlan
         retriever = Retriever()
 
         plan = retriever.build_search_plan("110011", graph)
@@ -161,7 +161,7 @@ class TestRetrieverIntegration:
 
     def test_retriever_with_search_plan(self, sample_kg):
         graph, kg_builder = sample_kg
-        from src.news.retriever import Retriever
+        from legacy.news.retriever import Retriever
         retriever = Retriever()
 
         plan = retriever.build_search_plan("110011", graph)

@@ -23,7 +23,7 @@ def _evidence():
 
 
 def test_agent_tool_registry_exposes_strategy_relevant_evidence_tools():
-    from src.agents.tools import build_agent_tool_registry, tools_for_agent
+    from legacy.agents.tools import build_agent_tool_registry, tools_for_agent
 
     registry = build_agent_tool_registry(_evidence())
     names = [tool.name for tool in tools_for_agent(registry, "strategy")]
@@ -39,7 +39,7 @@ def test_agent_tool_registry_exposes_strategy_relevant_evidence_tools():
 
 
 def test_strategy_trigger_tool_uses_strategy_model_contract():
-    from src.agents.tools import build_agent_tool_registry
+    from legacy.agents.tools import build_agent_tool_registry
 
     registry = build_agent_tool_registry(_evidence())
     result = registry.invoke(
@@ -59,8 +59,8 @@ def test_strategy_trigger_tool_uses_strategy_model_contract():
 def test_kg_impact_chain_tool_uses_graph_builder_contract():
     import networkx as nx
 
-    from src.agents.tools import build_agent_tool_registry
-    from src.kg.schema import EventNode, FundNode, KGEdge, KGEdgeType, StockNode
+    from legacy.agents.tools import build_agent_tool_registry
+    from src.graph.schema import EventNode, FundNode, KGEdge, KGEdgeType, StockNode
 
     graph = nx.DiGraph()
     graph.add_node("fund:000001", data=FundNode(code="000001", name="测试基金"))
@@ -99,7 +99,7 @@ def test_kg_impact_chain_tool_uses_graph_builder_contract():
 
 
 def test_agent_tools_package_exposes_planned_tool_modules():
-    from src.agents.tools import AGENT_TOOL_MODULES
+    from legacy.agents.tools import AGENT_TOOL_MODULES
 
     assert AGENT_TOOL_MODULES == (
         "kg_tools",

@@ -5,9 +5,9 @@ from unittest.mock import patch
 
 import pandas as pd
 
-from src.engine.calculator import compute_fund
-from src.engine.events import EventType, FundEvent, generate_events
-from src.services.portfolio_service import compute_holdings
+from legacy.engine.calculator import compute_fund
+from legacy.engine.events import EventType, FundEvent, generate_events
+from legacy.services.portfolio_service import compute_holdings
 
 
 def _is_weekday(d):

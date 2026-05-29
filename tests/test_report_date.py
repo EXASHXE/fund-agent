@@ -3,7 +3,7 @@ import unittest
 from datetime import datetime, date
 from unittest.mock import patch
 
-from src.config.shared import effective_report_date, dca_effective_date
+from src.infra.config.shared import effective_report_date, dca_effective_date
 
 
 class ReportDateTest(unittest.TestCase):
@@ -15,7 +15,7 @@ class ReportDateTest(unittest.TestCase):
 
     def test_default_cutoff_is_2222_on_trade_day(self):
         """22:22 前报告使用前一个交易日口径，22:22 后使用当日口径。"""
-        import src.engine.calendar as cal_mod
+        import legacy.engine.calendar as cal_mod
         orig_trade = cal_mod.is_trade_day
         orig_prev = cal_mod.previous_trade_day
         cal_mod.is_trade_day = lambda d: True

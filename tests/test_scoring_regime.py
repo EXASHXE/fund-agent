@@ -1,6 +1,6 @@
 """Test market regime detection: compute rolling volatility, detect regimes from NAV series and events."""
-from src.analysis.scoring.regime import detect_regime, compute_rolling_volatility, has_trend, has_black_swan, count_high_magnitude_events
-from src.analysis.scoring.types import MarketRegime
+from legacy.analysis.scoring.regime import detect_regime, compute_rolling_volatility, has_trend, has_black_swan, count_high_magnitude_events
+from legacy.analysis.scoring.types import MarketRegime
 
 
 class TestComputeRollingVolatility:

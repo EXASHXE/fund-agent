@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.analysis.scoring.types import CompositeScore, ScoreComponent, MarketRegime, score_level
-from src.kg.graph import KnowledgeGraphBuilder
+from legacy.analysis.scoring.types import CompositeScore, ScoreComponent, MarketRegime, score_level
+from src.graph.builder import KnowledgeGraphBuilder
 
 
 @pytest.fixture
@@ -69,7 +69,7 @@ class TestScoreEngineCompute:
 
     def test_returns_composite_score(self, fund_data, kg_graph, events):
         """Should return a valid CompositeScore."""
-        from src.analysis.scoring.engine import ScoreEngine
+        from legacy.analysis.scoring.engine import ScoreEngine
 
         engine = ScoreEngine()
         result = engine.compute_composite("110011", fund_data, kg_graph, events)
@@ -84,7 +84,7 @@ class TestScoreEngineCompute:
 
     def test_composite_is_weighted_combination(self, fund_data, kg_graph, events):
         """Composite should be a weighted sum of all 5 sub-scores per regime weights."""
-        from src.analysis.scoring.engine import ScoreEngine
+        from legacy.analysis.scoring.engine import ScoreEngine
 
         engine = ScoreEngine()
         result = engine.compute_composite("110011", fund_data, kg_graph, events)
@@ -101,7 +101,7 @@ class TestScoreEngineCompute:
 
     def test_weights_used_match_regime(self, fund_data, kg_graph, events):
         """Weights should correspond to the detected regime."""
-        from src.analysis.scoring.engine import ScoreEngine
+        from legacy.analysis.scoring.engine import ScoreEngine
 
         engine = ScoreEngine()
         result = engine.compute_composite("110011", fund_data, kg_graph, events)
@@ -112,7 +112,7 @@ class TestScoreEngineCompute:
 
     def test_deduces_level_from_composite(self, fund_data, kg_graph, events):
         """Level should match the score_level() function output."""
-        from src.analysis.scoring.engine import ScoreEngine
+        from legacy.analysis.scoring.engine import ScoreEngine
 
         engine = ScoreEngine()
         result = engine.compute_composite("110011", fund_data, kg_graph, events)
@@ -122,7 +122,7 @@ class TestScoreEngineCompute:
 
     def test_minimal_fund_data_still_works(self):
         """Engine should handle minimal fund data gracefully."""
-        from src.analysis.scoring.engine import ScoreEngine
+        from legacy.analysis.scoring.engine import ScoreEngine
 
         engine = ScoreEngine()
         minimal_data = {"code": "110011", "basic": {"name": "测试", "fund_type": "混合"}}
@@ -145,7 +145,7 @@ class TestScoreEngineCompute:
 
     def test_no_events_no_kg_still_produces_result(self):
         """Engine should produce a result even with completely empty inputs."""
-        from src.analysis.scoring.engine import ScoreEngine
+        from legacy.analysis.scoring.engine import ScoreEngine
 
         engine = ScoreEngine()
         result = engine.compute_composite("110011", {}, nx.DiGraph(), [])
@@ -156,7 +156,7 @@ class TestScoreEngineCompute:
 
     def test_llm_client_acceptance(self, fund_data, kg_graph, events):
         """Engine should accept llm_client parameter without error."""
-        from src.analysis.scoring.engine import ScoreEngine
+        from legacy.analysis.scoring.engine import ScoreEngine
 
         engine = ScoreEngine(llm_client=None)
         result = engine.compute_composite("110011", fund_data, kg_graph, events, llm_client=None)

@@ -4,9 +4,9 @@ from unittest.mock import patch, MagicMock
 import pandas as pd
 import sys
 
-from src.analysis.correlation import compute_correlations
-from src.engine.events import generate_events, EventType, FundEvent
-from src.news.news_fetcher import _cached_ak_call
+from legacy.analysis.correlation import compute_correlations
+from legacy.engine.events import generate_events, EventType, FundEvent
+from legacy.news.news_fetcher import _cached_ak_call
 
 
 def _is_weekday(d):

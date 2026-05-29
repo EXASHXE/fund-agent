@@ -2,8 +2,8 @@
 import pytest
 import pandas as pd
 import numpy as np
-from src.analysis.scoring.quant import QuantScoreCalculator
-from src.analysis.scoring.types import ScoreComponent, MarketRegime
+from legacy.analysis.scoring.quant import QuantScoreCalculator
+from legacy.analysis.scoring.types import ScoreComponent, MarketRegime
 
 
 @pytest.fixture

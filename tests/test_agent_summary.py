@@ -3,11 +3,11 @@ import json
 
 import pandas as pd
 
-from src.agents.protocols import AgentOpinion
-from src.agents.summary import compose_agent_decisions
+from legacy.agents.protocols import AgentOpinion
+from legacy.agents.summary import compose_agent_decisions
 from src.core.contracts import load_agent_decisions
-from src.output.report import generate_report
-from src.output.validator import validate_final_report
+from legacy.output.report import generate_report
+from legacy.output.validator import validate_final_report
 
 
 def test_summary_composes_opinions_into_valid_agent_decisions(tmp_path):

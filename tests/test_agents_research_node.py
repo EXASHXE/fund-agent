@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 import networkx as nx
 import pytest
 
-from src.agents.state import FundResearchState, EMPTY_STATE
+from legacy.agents.state import FundResearchState, EMPTY_STATE
 
 
 def _make_state(**overrides) -> FundResearchState:
@@ -18,7 +18,7 @@ def _make_state(**overrides) -> FundResearchState:
 
 def _make_kg() -> nx.DiGraph:
     """Minimal KG for testing."""
-    from src.kg.graph import KnowledgeGraphBuilder
+    from src.graph.builder import KnowledgeGraphBuilder
 
     fund_data = {
         "code": "110011",
@@ -41,7 +41,7 @@ class TestResearchAgentNode:
 
     def test_node_returns_dict(self):
         """Node should return a dict of state updates."""
-        from src.agents.graphs.research_agent import research_agent_node
+        from legacy.agents.graphs.research_agent import research_agent_node
 
         fund_data = {"code": "110011", "name": "Test Fund", "holdings": [], "sectors": []}
         state = _make_state(
@@ -57,7 +57,7 @@ class TestResearchAgentNode:
 
     def test_node_computes_fundamental_scores(self):
         """Node should compute FundamentalScore for each fund."""
-        from src.agents.graphs.research_agent import research_agent_node
+        from legacy.agents.graphs.research_agent import research_agent_node
 
         fund_data = {
             "code": "110011",
@@ -82,7 +82,7 @@ class TestResearchAgentNode:
 
     def test_node_computes_event_scores(self):
         """Node should compute EventScore for each fund when events are present."""
-        from src.agents.graphs.research_agent import research_agent_node
+        from legacy.agents.graphs.research_agent import research_agent_node
 
         fund_data = {"code": "110011", "name": "Test Fund"}
         state = _make_state(
@@ -103,7 +103,7 @@ class TestResearchAgentNode:
 
     def test_node_handles_empty_state(self):
         """Node should handle empty state gracefully."""
-        from src.agents.graphs.research_agent import research_agent_node
+        from legacy.agents.graphs.research_agent import research_agent_node
 
         state: FundResearchState = dict(EMPTY_STATE)  # type: ignore[arg-type]
 
@@ -115,7 +115,7 @@ class TestResearchAgentNode:
 
     def test_node_handles_no_funds_data(self):
         """Node should return empty scores when no funds_data."""
-        from src.agents.graphs.research_agent import research_agent_node
+        from legacy.agents.graphs.research_agent import research_agent_node
 
         state = _make_state(knowledge_graph=_make_kg())
 
@@ -126,7 +126,7 @@ class TestResearchAgentNode:
 
     def test_node_handles_empty_kg(self):
         """Node should handle empty knowledge_graph."""
-        from src.agents.graphs.research_agent import research_agent_node
+        from legacy.agents.graphs.research_agent import research_agent_node
 
         fund_data = {"code": "110011", "name": "Test Fund"}
         state = _make_state(
@@ -140,7 +140,7 @@ class TestResearchAgentNode:
 
     def test_node_handles_multiple_funds(self):
         """Node should process multiple funds."""
-        from src.agents.graphs.research_agent import research_agent_node
+        from legacy.agents.graphs.research_agent import research_agent_node
 
         fund_a = {"code": "110011", "name": "Fund A"}
         fund_b = {"code": "000001", "name": "Fund B"}
@@ -158,6 +158,6 @@ class TestResearchAgentNode:
 
     def test_node_docstring_exists(self):
         """research_agent_node must have a docstring."""
-        from src.agents.graphs.research_agent import research_agent_node
+        from legacy.agents.graphs.research_agent import research_agent_node
         assert research_agent_node.__doc__ is not None
         assert len(research_agent_node.__doc__) > 10

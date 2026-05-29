@@ -3,8 +3,8 @@ from datetime import date, timedelta
 
 import pandas as pd
 
-from src.deprecated.scorer import FundAnalyzer
-from src.news.agent_context import (
+from legacy.deprecated.scorer import FundAnalyzer
+from legacy.news.agent_context import (
     build_news_judgment_context,
     build_recommendation_judgment_context,
 )
@@ -105,8 +105,8 @@ class AgentContextTest(unittest.TestCase):
 
 
     def test_build_news_relevance_task_includes_holdings_and_news(self):
-        from src.news.agent_context import build_news_relevance_task
-        from src.news.schemas import EntityProfile
+        from legacy.news.agent_context import build_news_relevance_task
+        from legacy.news.schemas import EntityProfile
 
         entity = EntityProfile(
             fund_code="008253",

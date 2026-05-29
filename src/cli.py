@@ -1,40 +1,19 @@
-"""Thin CLI entrypoint; command handlers live in src.routes.commands."""
+"""DEPRECATED CLI shim — re-exports legacy.cli with DeprecationWarning."""
+import warnings
 
-import os
-import sys
-
-from src.routes.cli_router import run_cli
-from src.routes.commands import (
-    cmd_analyze as _cmd_analyze,
-    cmd_fetch,
-    cmd_import,
-    cmd_init,
-    cmd_news,
-    cmd_recommend,
-    cmd_snapshot,
-    cmd_ui,
-    command_handlers,
+warnings.warn(
+    "src.cli is deprecated. CLI entry point moved to legacy/cli.py",
+    DeprecationWarning,
+    stacklevel=2,
 )
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from legacy import cli as _legacy_cli
 
-try:
-    import pandas as pd
-    pd.options.mode.string_storage = "python"
-except ImportError:
-    pass
+# Re-export the main entry point
+main = _legacy_cli.main if hasattr(_legacy_cli, "main") else None
 
-
-def cmd_analyze(args):
-    """Run the core analyze workflow."""
-    return _cmd_analyze(args)
-
-
-def main(argv=None):
-    handlers = command_handlers()
-    handlers["analyze"] = cmd_analyze
-    return run_cli(handlers, argv=argv)
-
-
+# Fallback: if old-style CLI used directly, delegate to legacy
 if __name__ == "__main__":
-    main()
+    import sys
+    from legacy.routes.cli_router import run_cli
+    sys.exit(run_cli(sys.argv[1:]))

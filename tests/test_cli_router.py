@@ -1,4 +1,4 @@
-from src.routes.cli_router import build_parser, run_cli
+from legacy.routes.cli_router import build_parser, run_cli
 
 
 def test_cli_router_parses_analyze_flags():

@@ -8,14 +8,14 @@ from typing import Any
 import networkx as nx
 import pandas as pd
 
-from src.config.shared import effective_report_date, today as shared_today
-from src.services.news_service import news_context_by_code
-from src.services.portfolio_service import compute_holdings
-from src.services.workflow_context import build_workflow_context
+from src.infra.config.shared import effective_report_date, today as shared_today
+from legacy.services.news_service import news_context_by_code
+from legacy.services.portfolio_service import compute_holdings
+from legacy.services.workflow_context import build_workflow_context
 
-from src.services.report_service import load_decisions_for_run, render_analysis_report
-from src.services.scoring_service import attach_decision_evidence, attach_score_trends
-from src.services.snapshot_service import (
+from legacy.services.report_service import load_decisions_for_run, render_analysis_report
+from legacy.services.scoring_service import attach_decision_evidence, attach_score_trends
+from legacy.services.snapshot_service import (
     perform_snapshot,
     save_snapshot,
     should_snapshot_after_analyze,
@@ -114,7 +114,7 @@ def _build_unified_graph(
     Merges per-fund KGs via nx.compose so that shared stock/industry/theme
     nodes are reused across funds.
     """
-    from src.kg.graph import KnowledgeGraphBuilder
+    from src.graph.builder import KnowledgeGraphBuilder
 
     kg_builder = KnowledgeGraphBuilder()
     unified = nx.DiGraph()
@@ -217,7 +217,7 @@ def _run_langgraph_research(
     report_date,
 ) -> dict[str, Any]:
     """Run the LangGraph research OS and return its final shared state."""
-    from src.agents.graphs.supervisor import build_research_graph
+    from legacy.agents.graphs.supervisor import build_research_graph
 
     initial_state = {
         "report_date": report_date.isoformat(),
@@ -351,7 +351,7 @@ def _attach_strategy_advice_with_engine(
 ) -> None:
     """Attach StrategyEngine advice when LangGraph strategy output is unavailable."""
     try:
-        from src.strategy.engine import StrategyEngine
+        from legacy.strategy.engine import StrategyEngine
         strategy_engine = StrategyEngine()
     except Exception as exc:
         print(f"  [WARNING] StrategyEngine unavailable: {exc}")
@@ -400,7 +400,7 @@ def _build_kg_snapshot(
     news_results: dict[str, dict[str, Any]],
 ) -> dict[str, Any]:
     """Build compact KG evidence for report_evidence v3 extensions."""
-    from src.kg.graph import KnowledgeGraphBuilder
+    from src.graph.builder import KnowledgeGraphBuilder
 
     builder = KnowledgeGraphBuilder()
     fund_exposure = {
@@ -444,7 +444,7 @@ def _adapt_new_score_to_old(
     Returns:
         Dict matching the format produced by _adapt_new_score_to_old().
     """
-    from src.analysis.scoring.types import MarketRegime
+    from legacy.analysis.scoring.types import MarketRegime
 
     basic = fund_data.get("basic", {})
     completeness = fund_data.get("completeness", "D")
@@ -640,7 +640,7 @@ def _score_with_new_engine(
     Returns:
         Tuple of (scores: list of adapted score dicts, unscores: list of failed dicts).
     """
-    from src.analysis.scoring.engine import ScoreEngine
+    from legacy.analysis.scoring.engine import ScoreEngine
 
     score_engine = ScoreEngine()
     scores: list[dict[str, Any]] = []
@@ -690,12 +690,12 @@ def _score_with_new_engine(
 
 def run_analyze(args):
     """Run the full analyze workflow from data collection to report output."""
-    from src.analysis.correlation import compute_correlations
-    from src.analysis.portfolio_risk import build_portfolio_risk_matrix
-    from src.analysis.loader import FundDataLoader
-    from src.analysis.stress import stress_test
+    from legacy.analysis.correlation import compute_correlations
+    from legacy.analysis.portfolio_risk import build_portfolio_risk_matrix
+    from legacy.analysis.loader import FundDataLoader
+    from legacy.analysis.stress import stress_test
     from src.config.loader import import_to_database, load_portfolio_config
-    from src.db.storage import FundStorage
+    from src.infra.persistence.storage import FundStorage
 
     config = load_portfolio_config(args.config)
     import_to_database(config)
@@ -760,9 +760,9 @@ def run_analyze(args):
             print(f"  [ERROR] LangGraph research graph failed: {exc}")
             print("  → 回退运行 8-stage 新闻流水线 (NewsPipeline)")
             try:
-                from src.news.news_pipeline import NewsPipeline
-                from src.news.finnhub_client import FinnhubNewsClient
-                from src.news.tavily_client import TavilySearchClient
+                from legacy.news.news_pipeline import NewsPipeline
+                from legacy.news.finnhub_client import FinnhubNewsClient
+                from legacy.news.tavily_client import TavilySearchClient
                 pipeline = NewsPipeline(
                     finnhub_client=FinnhubNewsClient(),
                     tavily_client=TavilySearchClient(),
@@ -862,8 +862,8 @@ def run_analyze(args):
 
 
 def _run_recommendations(news_data, codes, funds, portfolio_risk_matrix=None):
-    from src.news.agent_context import build_recommendation_judgment_context
-    from src.recommend.engine import (
+    from legacy.news.agent_context import build_recommendation_judgment_context
+    from legacy.recommend.engine import (
         build_holding_profiles,
         compute_inter_recommendation_correlations,
         extract_hot_sectors,

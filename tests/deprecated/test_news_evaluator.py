@@ -1,7 +1,7 @@
 import unittest
 
-from src.deprecated.evaluator import evaluate_news_result, filter_relevant_catalysts
-from src.news.schemas import EntityProfile
+from legacy.deprecated.evaluator import evaluate_news_result, filter_relevant_catalysts
+from legacy.news.schemas import EntityProfile
 
 
 class NewsEvaluatorTest(unittest.TestCase):

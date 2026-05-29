@@ -1,6 +1,6 @@
 import unittest
 
-from src.recommend.engine import (
+from legacy.recommend.engine import (
     compute_fund_similarity,
     filter_by_correlation,
     infer_exposure_cluster,

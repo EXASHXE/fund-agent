@@ -4,9 +4,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.analysis.scoring.types import CompositeScore, ScoreComponent, MarketRegime
-from src.strategy.schemas import StrategyAdvice, StrategyState, StrategyAction
-from src.strategy.engine import StrategyEngine
+from legacy.analysis.scoring.types import CompositeScore, ScoreComponent, MarketRegime
+from legacy.strategy.schemas import StrategyAdvice, StrategyState, StrategyAction
+from legacy.strategy.engine import StrategyEngine
 
 
 # ----------------------------------------------------------------
@@ -51,7 +51,7 @@ def fund_data():
 
 @pytest.fixture
 def kg(fund_data):
-    from src.kg.graph import KnowledgeGraphBuilder
+    from src.graph.builder import KnowledgeGraphBuilder
     builder = KnowledgeGraphBuilder()
     return builder.build_from_holdings(fund_data)
 

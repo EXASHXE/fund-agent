@@ -1,7 +1,7 @@
 """Tests for LangGraph state and supervisor routing."""
 import pytest
-from src.agents.state import FundResearchState, EMPTY_STATE
-from src.agents.supervisor import get_supervisor_routing, AGENT_ORDER
+from legacy.agents.state import FundResearchState, EMPTY_STATE
+from legacy.agents.supervisor import get_supervisor_routing, AGENT_ORDER
 
 
 class TestFundResearchState:

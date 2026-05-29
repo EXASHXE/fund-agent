@@ -4,10 +4,10 @@ import os
 import pickle
 import networkx as nx
 
-from src.kg.graph import KnowledgeGraphBuilder
-from src.kg.schema import KGNodeType, KGEdgeType, KGEdge, EventNode, StockNode, FundNode, IndustryNode, MacroFactorNode, FundNode
-from src.kg.enrichment import enrich_with_events
-from src.kg.diff import GraphDiff
+from src.graph.builder import KnowledgeGraphBuilder
+from src.graph.schema import KGNodeType, KGEdgeType, KGEdge, EventNode, StockNode, FundNode, IndustryNode, MacroFactorNode, FundNode
+from src.graph.enrichment import enrich_with_events
+from src.graph.diff import GraphDiff
 
 
 @pytest.fixture
@@ -1106,7 +1106,7 @@ class TestKnowledgeGraphDiff:
 
         # Change a stock node's data
         stock_id = "stock:600519"
-        from src.kg.schema import StockNode
+        from src.graph.schema import StockNode
         old_node = graph_b.nodes[stock_id]["data"]
         modified_stock = StockNode(
             code=old_node.code,
@@ -1266,7 +1266,7 @@ class TestRemainingCoverageGaps:
         }
         graph = kg.build_from_holdings(fund_data)
         # Add a non-EXPOSES edge from fund (e.g. a CORRELATES_WITH edge)
-        from src.kg.schema import KGEdge
+        from src.graph.schema import KGEdge
         extra_edge = KGEdge(
             source="fund:110011",
             target="fund:999999",

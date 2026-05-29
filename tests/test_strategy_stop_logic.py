@@ -1,8 +1,8 @@
 """Test StopLogic: regime-aware stop-loss and take-profit computation."""
 import pytest
 
-from src.analysis.scoring.types import MarketRegime
-from src.strategy.stop_logic import StopLogic
+from legacy.analysis.scoring.types import MarketRegime
+from legacy.strategy.stop_logic import StopLogic
 
 
 class TestStopLogicDefaults:
