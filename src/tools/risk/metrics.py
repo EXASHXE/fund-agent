@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import pandas as pd
 
-from src.config.defaults import QUANT_CONFIG
+from src.infra.config.defaults import QUANT_CONFIG
 
 
 # ====================================================================

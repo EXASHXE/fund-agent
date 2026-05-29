@@ -4,6 +4,8 @@ The restructured architecture enforces strict boundaries:
 - Research OS (src/core/, src/schemas/, src/tools/, src/graph/, src/workflows/, src/infra/)
   must NOT import from the legacy system (legacy/).
 - src/tools/ must remain pure: no LLM, no network IO.
+- src/ top-level must stay within the allowlist.
+- Old src/ directories (news, analysis, output, etc.) must not be imported by new code.
 """
 
 import ast
@@ -25,13 +27,11 @@ def _get_imports_from_dir(dirpath: str) -> set[str]:
             if not f.endswith('.py'):
                 continue
             filepath = os.path.join(root, f)
-            # Skip empty/deprecation-only marker files
             if os.path.getsize(filepath) < 100:
                 try:
                     with open(filepath) as fh:
-                        content = fh.read()
-                    if '# DEPRECATED' in content:
-                        continue
+                        if '# DEPRECATED' in fh.read():
+                            continue
                 except Exception:
                     pass
             try:
@@ -49,58 +49,138 @@ def _get_imports_from_dir(dirpath: str) -> set[str]:
     return imports
 
 
-def _assert_no_legacy_imports(dirpath: str, label: str):
-    """Assert that no file in dirpath imports from legacy.*."""
+def _assert_no_imports_matching(dirpath: str, patterns: list[str], label: str):
+    """Assert that no file in dirpath imports modules matching any pattern."""
     imports = _get_imports_from_dir(dirpath)
-    violations = [i for i in imports if i.startswith('legacy.')]
-    assert not violations, f"{label} must not import from legacy/: {violations}"
+    violations = [i for i in imports if any(p in i for p in patterns)]
+    assert not violations, f"{label}: {violations}"
 
 
-# ── Boundary: Research OS must not import legacy ──────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════════
+# Boundary: Research OS must not import legacy
+# ═══════════════════════════════════════════════════════════════════════════════
 
-def test_core_does_not_import_legacy():
-    """src/core/ must not import from legacy/."""
-    _assert_no_legacy_imports('src/core', 'src/core')
-
-
-def test_schemas_does_not_import_legacy():
-    """src/schemas/ must not import from legacy/."""
-    _assert_no_legacy_imports('src/schemas', 'src/schemas')
-
-
-def test_tools_does_not_import_legacy():
-    """src/tools/ must not import from legacy/."""
-    _assert_no_legacy_imports('src/tools', 'src/tools')
-
-
-def test_graph_does_not_import_legacy():
-    """src/graph/ must not import from legacy/."""
-    _assert_no_legacy_imports('src/graph', 'src/graph')
+@pytest.mark.parametrize("dirpath,label", [
+    ("src/core", "src/core"),
+    ("src/schemas", "src/schemas"),
+    ("src/tools", "src/tools"),
+    ("src/graph", "src/graph"),
+    ("src/workflows", "src/workflows"),
+    ("src/infra", "src/infra"),
+])
+def test_no_legacy_imports(dirpath, label):
+    _assert_no_imports_matching(dirpath, ["legacy."], f"{label} must not import from legacy/")
 
 
-def test_workflows_does_not_import_legacy():
-    """src/workflows/ must not import from legacy/."""
-    _assert_no_legacy_imports('src/workflows', 'src/workflows')
+def test_research_os_no_legacy():
+    """src/workflows/research_os.py must not import from legacy/."""
+    fp = os.path.join(PROJECT_ROOT, "src", "workflows", "research_os.py")
+    if not os.path.exists(fp):
+        pytest.skip("research_os.py not found")
+    with open(fp) as f:
+        tree = ast.parse(f.read(), filename=fp)
+    imports = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and node.module:
+            imports.add(node.module)
+    violations = [i for i in imports if i.startswith("legacy.")]
+    assert not violations, f"research_os.py must not import legacy: {violations}"
 
 
-def test_infra_does_not_import_legacy():
-    """src/infra/ must not import from legacy/."""
-    _assert_no_legacy_imports('src/infra', 'src/infra')
+# ═══════════════════════════════════════════════════════════════════════════════
+# Boundary: New code must not import old src/ directories
+# ═══════════════════════════════════════════════════════════════════════════════
+
+OLD_SRC_DIRS = [
+    "src.news", "src.analysis", "src.output", "src.recommend",
+    "src.ui", "src.routes", "src.strategy", "src.engine",
+    "src.events", "src.forecast", "src.deprecated", "src.agents",
+    "src.services", "src.prompts", "src.decision",
+]
+
+NEW_CODE_DIRS = ["src/core", "src/graph", "src/schemas", "src/tools", "src/workflows", "src/infra"]
+
+def test_new_code_no_old_imports():
+    """New Research OS code must not import old src/ directories."""
+    all_imports = set()
+    for d in NEW_CODE_DIRS:
+        all_imports.update(_get_imports_from_dir(d))
+    violations = [i for i in all_imports if any(i.startswith(p) for p in OLD_SRC_DIRS)]
+    assert not violations, f"New code imports old src/ dirs: {violations}"
 
 
-# ── Purity: tools/ must remain pure math ─────────────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════════
+# Boundary: New code must not import shimmed infra old paths directly
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@pytest.mark.parametrize("dirpath", ["src/core", "src/tools", "src/graph", "src/schemas", "src/workflows"])
+def test_no_direct_config_import(dirpath):
+    _assert_no_imports_matching(dirpath, ["src.config."], f"{dirpath} must not import src.config (use src.infra.config)")
+
+@pytest.mark.parametrize("dirpath", ["src/core", "src/tools", "src/graph", "src/schemas", "src/workflows"])
+def test_no_direct_data_import(dirpath):
+    _assert_no_imports_matching(dirpath, ["src.data."], f"{dirpath} must not import src.data (use src.infra.data)")
+
+@pytest.mark.parametrize("dirpath", ["src/core", "src/tools", "src/graph", "src/schemas", "src/workflows"])
+def test_no_direct_db_import(dirpath):
+    _assert_no_imports_matching(dirpath, ["src.db."], f"{dirpath} must not import src.db (use src.infra.persistence)")
+
+@pytest.mark.parametrize("dirpath", ["src/core", "src/tools", "src/graph", "src/schemas", "src/workflows"])
+def test_no_direct_vectorstore_import(dirpath):
+    _assert_no_imports_matching(dirpath, ["src.vectorstore."], f"{dirpath} must not import src.vectorstore (use src.infra.vectorstore)")
+
+@pytest.mark.parametrize("dirpath", ["src/core", "src/tools", "src/graph", "src/schemas", "src/workflows"])
+def test_no_direct_kg_import(dirpath):
+    _assert_no_imports_matching(dirpath, ["src.kg."], f"{dirpath} must not import src.kg (use src.graph)")
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Purity: tools/ must remain pure math
+# ═══════════════════════════════════════════════════════════════════════════════
 
 def test_tools_no_llm_imports():
-    """src/tools/ modules must not import LLM modules."""
-    imports = _get_imports_from_dir('src/tools')
-    llm_imports = {'llm', 'langchain', 'openai', 'anthropic', 'google.generativeai'}
-    violations = [i for i in imports if any(li in i.lower() for li in llm_imports)]
+    imports = _get_imports_from_dir("src/tools")
+    llm_keywords = {"llm", "langchain", "openai", "anthropic", "google.generativeai"}
+    violations = [i for i in imports if any(kw in i.lower() for kw in llm_keywords)]
     assert not violations, f"src/tools imports LLM modules: {violations}"
 
 
 def test_tools_no_network_io():
-    """src/tools/ modules must not import network/HTTP clients."""
-    imports = _get_imports_from_dir('src/tools')
-    network_imports = {'requests', 'aiohttp', 'httpx', 'urllib3', 'websocket', 'socket'}
-    violations = [i for i in imports if any(ni in i.lower() for ni in network_imports)]
+    imports = _get_imports_from_dir("src/tools")
+    network_keywords = {"requests", "aiohttp", "httpx", "urllib3", "websocket", "socket", "akshare"}
+    violations = [i for i in imports if any(kw in i.lower() for kw in network_keywords)]
     assert not violations, f"src/tools imports network modules: {violations}"
+
+
+def test_schemas_no_heavy_deps():
+    imports = _get_imports_from_dir("src/schemas")
+    heavy = {"pandas", "requests", "akshare"}
+    violations = [i for i in imports if any(h in i for h in heavy)]
+    assert not violations, f"src/schemas imports heavy deps: {violations}"
+
+
+def test_graph_no_legacy_dirs():
+    _assert_no_imports_matching("src/graph", ["legacy.", "src.news.", "src.output.", "src.recommend."],
+                                 "src/graph must not import legacy or old src dirs")
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Top-level allowlist
+# ═══════════════════════════════════════════════════════════════════════════════
+
+ALLOWLIST = frozenset({
+    "core", "schemas", "graph", "tools", "infra", "workflows",
+    "__init__.py", "cli.py",
+    # DEPRECATED compatibility shims — marked for removal
+    "config", "data", "db", "kg", "vectorstore",
+    # Internal Python
+    "__pycache__",
+})
+
+
+def test_src_top_level_allowlist():
+    """src/ top-level must only contain allowlisted entries."""
+    src_dir = os.path.join(PROJECT_ROOT, "src")
+    entries = set(os.listdir(src_dir))
+    violations = entries - ALLOWLIST
+    assert not violations, f"src/ has non-allowlisted entries: {violations}"

@@ -2,44 +2,51 @@
 
 ## Overview
 
-The legacy `analyze` pipeline (CLI → data fetch → quant scoring → news pipeline → report) is isolated in `src/deprecated/`. This document describes what was replaced and the migration path.
+The legacy `analyze` pipeline (CLI → data fetch → quant scoring → news pipeline → report) has been
+moved from `src/` to `legacy/` for architecture separation. All legacy modules live under `legacy/` —
+the `src/` directory is now exclusively the new Research OS path.
 
 ## Components
 
 ### Old CLI Analyze Main Path
-- **Location**: `src/cli.py`, `src/routes/commands.py`
-- **Flow**: CLI → `src.workflows.run_analyze` → `src.core.workflow.run_analyze`
-- **Status**: Works but does not use the new Research OS architecture
+- **Location**: `legacy/cli.py`, `legacy/routes/commands.py`
+- **Flow**: CLI → `legacy.workflows.analyze` → `legacy.workflows.workflow.run_analyze`
+- **Compat shim**: `src/cli.py` re-exports `legacy.cli.main` with DeprecationWarning
 
 ### Old News Pipeline
-- **Location**: `src/deprecated/news_pipeline.py` (383 lines)
+- **Location**: `legacy/news/` + `legacy/deprecated/news_pipeline.py`
 - **Purpose**: 8-stage holdings-driven news pipeline (entity mapping → fetching → dedup → sentiment → catalyst scoring → NAV correlation)
-- **Replaced by**: 8-node LangGraph multi-agent system in `src/agents/`
+- **Replaced by**: Research OS Skill pipeline (`src/core/research_os.py`)
 
 ### Old Scoring Pipeline
-- **Location**: `src/deprecated/scorer.py` (285 lines)
-- **Purpose**: Single-fund scoring card engine (20% macro, 30% meso, 50% micro) with hardcoded rules
-- **Replaced by**: `src/analysis/scoring/` — 5-dimension AI+factor scoring engine
+- **Location**: `legacy/analysis/scoring/`, `legacy/deprecated/scorer.py`
+- **Purpose**: Multi-dimensional fund scoring engine (Quant, Fundamental, Event, Position, Timing)
+- **Replaced by**: `src/tools/quant/` (pure math) + Research OS evidence pipeline
 
-### Old Recommendation Engine
-- **Location**: `src/deprecated/` (macro.py, meso.py, micro.py)
-- **Purpose**: IF/ELIF name-matching rules for fund recommendations
-- **Replaced by**: `src/strategy/` — state machine strategy engine (WAIT→HOLD→ADD→REDUCE→STOP_LOSS)
+### Old Strategy / Recommendation Engine
+- **Location**: `legacy/strategy/` (state machine: WAIT→HOLD→ADD→REDUCE→STOP_LOSS)
+- **Location**: `legacy/deprecated/` (macro.py, meso.py, micro.py — IF/ELIF rules)
+- **Replaced by**: `src/core/decision_engine.py` (contract-enforced); `src/core/critic.py` (structural review)
 
 ### Old Report Rendering
-- **Location**: `src/output/`
-- **Purpose**: Markdown/JSON report generation from old pipeline
+- **Location**: `legacy/output/`
+- **Purpose**: Markdown/JSON report generation
 - **Replaced by**: DecisionContract v2 + ExecutionLedger
+
+### Old Agent System
+- **Location**: `legacy/agents/` (8-node LangGraph multi-agent)
+- **Replaced by**: New standalone Planner/Critic/DecisionEngine in `src/core/`
 
 ## Architecture Boundary Rules
 
-1. **New core modules** (`src/core/`, `src/workflows/`, `src/tools/`) MUST NOT import from `src/deprecated/`
-2. **Legacy** CAN import new tools (e.g., `src/deprecated/scorer.py` imports `src.analysis.*`)
-3. **New modules** use pure tool functions only — no LLM/network/IO in `src/tools/`
+1. **`src/core/`**, **`src/schemas/`**, **`src/graph/`**, **`src/tools/`**, **`src/workflows/`**, **`src/infra/`**
+   MUST NOT import from `legacy/`.
+2. **Legacy** CAN import from `src/tools/`, `src/schemas/`, `src/infra/`.
+3. **`src/tools/`** must remain pure: no LLM, no network IO.
+4. **Architecture tests** enforce all boundaries in `tests/test_architecture_boundaries.py`.
 
 ## Migration Path
 
-For existing users:
-1. Existing CLI path (`python3 -m src.cli analyze`) continues to work
-2. New Research OS path: `from src.core.research_os import run_research_task`
-3. Both paths coexist; no breaking changes
+1. Existing CLI (`python3 -m src.cli analyze`) works via compat shim → `legacy/cli.py`
+2. New Research OS: `from src.core.research_os import run_research_task`
+3. Both paths coexist; no breaking changes.

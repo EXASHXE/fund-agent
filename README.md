@@ -21,60 +21,65 @@ fund-agent/
 │   ├── news_research/         #   持仓驱动新闻检索，6 层分类，多因子评分
 │   ├── sentiment_analysis/    #   舆情极性/强度/时间衰减/信源加权
 │   └── thesis_generation/     #   投资命题生成，证据链追溯，决策合约输出
-├── src/
-│   ├── schemas/               # 类型化合约
-│   │   ├── evidence.py        #   EvidenceItem (evidence-contract.v2)
-│   │   ├── decision.py        #   Decision / ActionType (decision-contract.v2)
-│   │   └── evidence_graph.py  #   EvidenceGraph — 统一证据存储/去重/冲突检测
-│   ├── tools/                 # 纯函数数学工具（无 IO/无网络/无 LLM）
-│   │   ├── registry.py        #   ToolRegistry — 工具注册与绑定
-│   │   └── evidence_tools.py  #   只读证据查询工具
-│   ├── kg/                    # 知识图谱（NetworkX 内存图）
-│   │   ├── schema.py          #   节点/边类型定义
-│   │   ├── graph.py           #   KnowledgeGraphBuilder
-│   │   ├── industry_map.py    #   申万行业→投资主题映射
-│   │   └── enrichment.py      #   事件注入图谱
-│   ├── agents/                # 8 节点 LangGraph 多智能体
-│   │   ├── state.py           #   FundResearchState
-│   │   ├── supervisor.py      #   路由逻辑
-│   │   └── graphs/            #   8 个专用节点
-│   │       ├── planner_agent.py   #   研究计划生成
-│   │       ├── news_agent.py      #   新闻研究
-│   │       ├── quant_agent.py     #   量化分析
-│   │       ├── risk_agent.py      #   风险评估
-│   │       ├── research_agent.py  #   深度研究
-│   │       ├── critic_agent.py    #   评审（含迭代回路）
-│   │       ├── strategy_agent.py  #   策略建议
-│   │       └── ledger_node.py     #   ExecutionLedger 输出
-│   ├── vectorstore/           # Qdrant 向量数据库
-│   │   ├── client.py          #   Qdrant 客户端
-│   │   ├── embedding.py       #   EmbeddingPipeline
-│   │   ├── search.py          #   余弦相似度 + 基金相似度
-│   │   └── collections.py     #   集合 Schema
-│   ├── news/                  # 持仓驱动新闻流水线（8 阶段）
-│   │   ├── news_pipeline.py   #   NewsPipeline 编排器
-│   │   ├── retriever.py       #   持仓驱动新闻检索
-│   │   ├── classifier.py      #   6 层新闻分类
-│   │   ├── scorer.py          #   多因子相关性评分 + 向量重排
-│   │   ├── summarizer.py      #   研究报告式 AI 摘要
-│   │   ├── finnhub_client.py  #   Finnhub 美股新闻（免费 60 次/分）
-│   │   └── tavily_client.py   #   Tavily AI 搜索（免费 1000 次/月）
-│   ├── core/                  # 工作流编排与合约校验
-│   │   ├── workflow.py        #   核心工作流实现
-│   │   └── contracts.py       #   数据合约定义
-│   ├── workflows/             # 薄编排入口（不承载业务逻辑）
-│   │   └── analyze.py         #   分析工作流入口
-│   ├── config/                # Pydantic 数据模型
-│   ├── engine/                # 事件驱动计算引擎（XIRR / BUY / CALIBRATE）
-│   ├── data/                  # AKShare 数据采集
-│   ├── db/                    # SQLAlchemy ORM + SQLite
-│   ├── analysis/scoring/      # 5 维度 AI+因子混合评分引擎
-│   ├── strategy/              # 状态机策略引擎（WAIT→HOLD→ADD→REDUCE→STOP_LOSS）
-│   ├── services/              # 服务层
-│   ├── output/                # 报告渲染 + 合同校验
-│   ├── ui/                    # Streamlit 交互界面
-│   └── deprecated/            # 旧流水线保留代码（不影响主线）
+├── src/                       # ★ Research OS 主路径
+│   ├── core/                  #   研究编排核心
+│   │   ├── research_os.py     #     主循环：KG→Plan→Skills→Evidence→Critic→Decision→Ledger
+│   │   ├── planner.py         #     KG 驱动的 Plan/PlanStep 生成
+│   │   ├── critic.py          #     6 维度结构化评审 (PASS/RETRY/FAIL)
+│   │   ├── decision_engine.py #     合约强制决策引擎
+│   │   ├── skill_registry.py  #     Skill 注册与引导
+│   │   └── ledger.py          #     ExecutionLedger 构建
+│   ├── schemas/               #   类型化合约
+│   │   ├── evidence.py        #     EvidenceItem (evidence-contract.v2)
+│   │   ├── decision.py        #     Decision / ActionType (decision-contract.v2)
+│   │   ├── evidence_graph.py  #     EvidenceGraph (去重/冲突检测/Hybrid 升级)
+│   │   ├── research_task.py   #     ResearchTask (新入口)
+│   │   └── report.py          #     FinalThesis
+│   ├── graph/                 #   KnowledgeGraph (唯一权威实现)
+│   │   ├── builder.py         #     KnowledgeGraphBuilder
+│   │   ├── schema.py          #     节点/边类型定义 (7 entity, 10 edge types)
+│   │   ├── knowledge_graph.py #     KnowledgeGraph 包装类
+│   │   ├── queries.py         #     get_entity_chain / query_exposure / expand_theme
+│   │   ├── cache.py           #     KG 缓存
+│   │   ├── industry_map.py    #     申万行业→投资主题映射
+│   │   ├── enrichment.py      #     事件注入图谱
+│   │   └── diff.py            #     图差异对比
+│   ├── tools/                 #   纯函数数学工具（无 IO/无网络/无 LLM）
+│   │   ├── quant/             #     Sharpe/Sortino/MaxDD/Vol/HHI
+│   │   ├── ledger/            #     execution_amount/settlement/DCA
+│   │   ├── evidence/          #     builders/validators
+│   │   └── adapters/          #     MCP adapter 接口（预留）
+│   ├── infra/                 #   基础设施层
+│   │   ├── config/            #     Pydantic 配置
+│   │   ├── data/              #     AKShare 数据采集
+│   │   ├── persistence/       #     SQLAlchemy ORM + SQLite
+│   │   └── vectorstore/       #     Qdrant 向量数据库
+│   ├── workflows/             #   薄编排入口
+│   │   └── research_os.py     #     薄封装 → src.core.research_os
+│   └── cli.py                 #   兼容 shim → legacy/cli.py
+├── legacy/                    # ★ 旧系统（保留兼容）
+│   ├── cli.py                 #   旧 CLI analyze 入口
+│   ├── workflows/             #   旧 workflow 编排
+│   ├── analysis/              #   旧评分引擎 (Quant/Fundamental/Event/Position/Timing)
+│   ├── news/                  #   旧新闻流水线
+│   ├── strategy/              #   旧状态机策略引擎
+│   ├── agents/                #   旧 LangGraph 多智能体
+│   ├── engine/                #   旧事件驱动计算引擎
+│   ├── services/              #   旧服务层
+│   ├── output/                #   旧报告渲染
+│   ├── recommend/             #   旧推荐引擎
+│   ├── ui/                    #   Streamlit UI
+│   ├── routes/                #   CLI 路由
+│   ├── prompts/               #   LLM prompts
+│   ├── events/                #   事件分类
+│   ├── forecast/              #   预测引擎
+│   └── deprecated/            #   已废弃代码
+└── docs/contracts/            # v2 合约文档
+    ├── evidence-contract.v2.md
+    └── decision-contract.v2.md
 ```
+
+**Architecture boundary: `src/` = new Research OS. `legacy/` = old system.**  `src/core/` never imports `legacy/`.
 
 ## Research OS Path (New)
 
