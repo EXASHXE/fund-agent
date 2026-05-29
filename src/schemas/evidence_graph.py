@@ -8,6 +8,7 @@ confidence 0.1-0.9) into a single queryable graph. Supports:
 - SoftEvidence → HybridEvidence upgrade when 2+ sources corroborate
 - Entity-level confidence aggregation
 - Validation and serialization
+- Typed edges: supports / contradicts / derived_from / about_entity
 
 Downstream consumers (Phase 6 Planner/Critic) use EvidenceGraph for research
 and auditability.
@@ -27,12 +28,13 @@ class EvidenceGraph:
 
     Attributes:
         items: Mapping of evidence_id -> EvidenceItem.
-        edges: List of (from_id, to_id) tuples representing relationships
-               (supports / contradicts) between evidence items.
+        edges: List of (from_id, to_id, edge_type) tuples representing typed
+               relationships between evidence items.
+               Edge types: supports, contradicts, derived_from, about_entity.
     """
 
     items: dict[str, EvidenceItem] = field(default_factory=dict)
-    edges: list[tuple[str, str]] = field(default_factory=list)
+    edges: list[tuple[str, str, str]] = field(default_factory=list)
 
     # ── Core CRUD ────────────────────────────────────────────────────────
 
@@ -52,13 +54,30 @@ class EvidenceGraph:
         """Retrieve an evidence item by its ID, or None if absent."""
         return self.items.get(evidence_id)
 
-    def add_edge(self, from_id: str, to_id: str) -> None:
-        """Link two evidence items (supports / contradicts relationship).
+    def add_edge(self, from_id: str, to_id: str, edge_type: str = "supports") -> None:
+        """Link two evidence items with a typed relationship.
 
+        Edge types: supports, contradicts, derived_from, about_entity.
         No validation is performed on whether the IDs exist in the graph;
         callers should ensure IDs are present.
         """
-        self.edges.append((from_id, to_id))
+        self.edges.append((from_id, to_id, edge_type))
+
+    def add_supports_edge(self, from_id: str, to_id: str) -> None:
+        """Add a supports edge — from_id supports to_id's claim."""
+        self.add_edge(from_id, to_id, "supports")
+
+    def add_contradicts_edge(self, from_id: str, to_id: str) -> None:
+        """Add a contradicts edge — from_id contradicts to_id's claim."""
+        self.add_edge(from_id, to_id, "contradicts")
+
+    def add_derived_from_edge(self, from_id: str, to_id: str) -> None:
+        """Add a derived_from edge — from_id was derived from to_id."""
+        self.add_edge(from_id, to_id, "derived_from")
+
+    def add_about_entity_edge(self, from_id: str, entity_id: str) -> None:
+        """Add an about_entity edge — from_id pertains to entity_id."""
+        self.add_edge(from_id, entity_id, "about_entity")
 
     # ── Hybrid upgrade ───────────────────────────────────────────────────
 
@@ -140,6 +159,9 @@ class EvidenceGraph:
         and have opposite directions (one "positive", the other "negative").
         Neutral items do not conflict with anything.
 
+        Detected conflicts are automatically registered as typed ``contradicts``
+        edges in the graph.
+
         Returns:
             List of (evidence_id_a, evidence_id_b) tuples for conflicting pairs.
         """
@@ -160,6 +182,7 @@ class EvidenceGraph:
                     item_a.direction == "negative" and item_b.direction == "positive"
                 ):
                     conflicts.append((id_a, id_b))
+                    self.add_contradicts_edge(id_a, id_b)
 
         return conflicts
 
@@ -255,11 +278,12 @@ class EvidenceGraph:
         """Serialize the graph to a JSON-compatible dictionary.
 
         Each item is serialized via EvidenceItem.to_dict().
+        Edges include their type as third element.
         A ``stats`` sub-dictionary provides summary counts.
         """
         return {
             "items": {eid: item.to_dict() for eid, item in self.items.items()},
-            "edges": self.edges,
+            "edges": [[e[0], e[1], e[2]] for e in self.edges],
             "stats": {
                 "total": len(self.items),
                 "hard": self.hard_evidence_count(),

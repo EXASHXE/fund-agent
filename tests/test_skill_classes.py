@@ -618,8 +618,8 @@ class TestThesisGenerationSkill:
         )
 
         output_low = skill.execute(input_low)
-        # Low score with strong negative → likely SELL or REDUCE
-        assert output_low.decisions[0].action in ("SELL", "REDUCE", "HOLD")
+        # Low score with strong negative → WAIT (or HOLD as fallback)
+        assert output_low.decisions[0].action in ("WAIT", "HOLD")
 
     def test_evidence_ranking_uses_tool(self):
         """Evidence ranking should use tool if available."""

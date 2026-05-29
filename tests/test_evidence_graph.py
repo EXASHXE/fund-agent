@@ -102,11 +102,11 @@ class TestEvidenceGraphBasic:
         assert graph.get("nonexistent") is None
 
     def test_add_edge(self):
-        """add_edge stores a (from_id, to_id) tuple."""
+        """add_edge stores a (from_id, to_id, edge_type) tuple."""
         graph = EvidenceGraph()
         graph.add_edge("ev-001", "ev-002")
         assert len(graph.edges) == 1
-        assert graph.edges[0] == ("ev-001", "ev-002")
+        assert graph.edges[0] == ("ev-001", "ev-002", "supports")
 
     def test_add_edge_multiple(self):
         """Multiple edges are accumulated."""
@@ -652,7 +652,7 @@ class TestEvidenceGraphSerialization:
         assert "items" in d
         assert "edges" in d
         assert "stats" in d
-        assert d["edges"] == [("ev-1", "ev-2")]
+        assert d["edges"] == [["ev-1", "ev-2", "supports"]]
 
     def test_to_dict_items(self):
         """to_dict items are serialized via EvidenceItem.to_dict."""

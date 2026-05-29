@@ -20,6 +20,10 @@ from typing import Any, Literal
 
 EvidenceType = Literal["HardEvidence", "SoftEvidence", "HybridEvidence"]
 Direction = Literal["positive", "negative", "neutral"]
+SourceType = Literal[
+    "quant_tool", "news_source", "sentiment_analysis",
+    "kg_query", "llm_inference", "hybrid",
+]
 
 
 @dataclass

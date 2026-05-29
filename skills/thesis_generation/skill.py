@@ -46,15 +46,8 @@ class ThesisOutput:
 
 
 # Decision thresholds
-_SCORE_ACTION_MAP: list[tuple[float, float, ActionType]] = [
-    (80.0, 100.0, "HOLD"),
-    (60.0, 79.99, "HOLD"),
-    (40.0, 59.99, "REDUCE"),
-    (0.0, 39.99, "SELL"),
-]
-
-_SCORE_INCREASE_THRESHOLD = 70.0  # Scores above this may trigger INCREASE
-_SCORE_BUY_THRESHOLD = 75.0  # Scores above this may trigger BUY (new position)
+_SCORE_INCREASE_THRESHOLD = 70.0  # Scores above this may trigger positive action
+_SCORE_HOLD_STRONG_THRESHOLD = 75.0  # Scores above this trigger HOLD with positive evidence
 
 
 class ThesisGenerationSkill:
@@ -298,7 +291,7 @@ class ThesisGenerationSkill:
         - score >= 75 on positive evidence with no major negative -> HOLD/INCREASE
         - score >= 60 with mixed evidence -> HOLD
         - score 40-60 with negative evidence -> REDUCE
-        - score < 40 with strong negative evidence -> SELL
+        - score < 40 with strong negative evidence -> WAIT
         """
         evidence_ids = [e.evidence_id for e in evidence]
         has_strong_negative = any(
@@ -312,22 +305,23 @@ class ThesisGenerationSkill:
         positive_count = sum(1 for e in evidence if e.direction == "positive")
         negative_count = sum(1 for e in evidence if e.direction == "negative")
 
-        # Determine action
+        # Determine action — output HOLD/WAIT only. BUY/SELL decisions
+        # are the exclusive responsibility of DecisionEngine.
         if score >= _SCORE_INCREASE_THRESHOLD and has_strong_positive and not has_strong_negative:
-            action: ActionType = "INCREASE"
-            execution_amount = risk_budget * 0.3
-        elif score >= _SCORE_BUY_THRESHOLD and has_strong_positive:
-            action = "BUY"
-            execution_amount = risk_budget * 0.2
+            action: ActionType = "HOLD"
+            execution_amount = 0.0
+        elif score >= _SCORE_HOLD_STRONG_THRESHOLD and has_strong_positive:
+            action = "HOLD"
+            execution_amount = 0.0
         elif score >= 60.0 and not has_strong_negative:
             action = "HOLD"
             execution_amount = 0.0
         elif score >= 40.0 and has_strong_negative:
-            action = "REDUCE"
-            execution_amount = risk_budget * 0.15
+            action = "WAIT"
+            execution_amount = 0.0
         elif score < 40.0 or (has_strong_negative and negative_count > positive_count):
-            action = "SELL"
-            execution_amount = risk_budget * 0.1
+            action = "WAIT"
+            execution_amount = 0.0
         else:
             action = "HOLD"
             execution_amount = 0.0
@@ -356,11 +350,8 @@ class ThesisGenerationSkill:
 
         # Time horizon based on action
         time_horizons: dict[str, str] = {
-            "BUY": "中长期 (6-12个月)",
-            "SELL": "短期 (1-3个月)",
             "HOLD": "中长期 (6-12个月)",
-            "INCREASE": "中长期 (6-12个月)",
-            "REDUCE": "中短期 (3-6个月)",
+            "WAIT": "短期 (1-3个月)",
         }
         time_horizon = time_horizons.get(action, "中长期 (6-12个月)")
 

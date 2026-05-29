@@ -76,6 +76,42 @@ fund-agent/
 │   └── deprecated/            # 旧流水线保留代码（不影响主线）
 ```
 
+## Research OS Path (New)
+
+The new Research OS architecture provides an alternative, structured path:
+
+```
+ResearchTask → Planner → KnowledgeGraph query → Skill execution → Evidence compile → Critic → DecisionEngine → ExecutionLedger
+```
+
+**Key differences from legacy path:**
+
+| Aspect | Legacy (`src.cli analyze`) | Research OS (`src.core.research_os`) |
+|--------|---------------------------|--------------------------------------|
+| Entry | CLI command | `ResearchTask` typed dataclass |
+| Planning | None | Planner queries KG then generates PlanSteps |
+| Evidence | Report JSON field | EvidenceGraph (dedup, conflict, hybrid) |
+| Review | None | Critic with PASS/RETRY/FAIL |
+| Decision | Basic recommendation | DecisionContract v2 (execution_amount, rationale_anchor, trigger/invalidating_conditions) |
+| Auditing | None | ExecutionLedger with audit trail |
+
+**Usage:**
+```python
+from src.schemas.research_task import ResearchTask
+from src.core.research_os import run_research_task
+
+task = ResearchTask(
+    task_id="my-analysis",
+    fund_universe=["110011", "005827"],
+    objective="quarterly review",
+    risk_profile="moderate",
+)
+result = run_research_task(task)
+# result contains: decision, ledger, evidence, critique status
+```
+
+The legacy path continues to work unchanged. Both paths coexist.
+
 ## Skill 能力矩阵
 
 | Skill | MCP 依赖 | 核心能力 |

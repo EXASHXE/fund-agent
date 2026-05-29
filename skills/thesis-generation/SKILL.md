@@ -3,6 +3,20 @@ name: thesis-generation
 description: 投资论题生成与验证 Agent Skill。通过全部 6 个 MCP 提供者的协同，完成 claim → evidence chain → confidence → counter-argument → risk budget 五段论题结构，输出可审计的投资决策依据。
 ---
 
+# Thesis Generation
+
+## Contract
+
+- **Purpose**: Investment thesis generation & validation
+- **Inputs**: ResearchTask, EvidenceGraph
+- **Outputs**: Thesis with evidence chain
+- **Required MCP Capabilities**: TrendRadar, Tavily, Exa, Firecrawl, Finnhub, Reddit
+- **Priority**: 4
+- **Fallback Strategy**: If MCP unavailable, mark evidence as SoftEvidence with reduced confidence
+- **Forbidden Behavior**: Do NOT hardcode API keys or vendor SDKs; Do NOT generate final BUY/SELL decisions directly; Do NOT bypass EvidenceGraph
+
+---
+
 # 投资论题生成 Agent Skill 规约
 
 ## 一、定位与心智模型

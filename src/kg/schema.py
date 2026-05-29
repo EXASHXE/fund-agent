@@ -17,6 +17,7 @@ class KGNodeType(Enum):
     THEME = "theme"
     EVENT = "event"
     MACRO_FACTOR = "macro_factor"
+    SUPPLY_CHAIN = "supply_chain"
 
 
 class KGEdgeType(Enum):
@@ -26,6 +27,10 @@ class KGEdgeType(Enum):
     IMPACTS = "impacts"
     CORRELATES_WITH = "correlates"
     EXPOSES = "exposes"
+    EXPOSED_TO = "exposed_to"
+    AFFECTED_BY = "affected_by"
+    SUPPLIES = "supplies"
+    COMPETES_WITH = "competes_with"
 
 
 @dataclass
@@ -143,3 +148,20 @@ class MacroFactorNode:
     @property
     def id(self) -> str:
         return f"macro:{self.name}"
+
+
+@dataclass
+class SupplyChainNode:
+    """Supply chain node data."""
+    name: str = ""
+    tier: str = ""
+    products: list[str] = field(default_factory=list)
+    region: str = ""
+
+    @property
+    def node_type(self) -> KGNodeType:
+        return KGNodeType.SUPPLY_CHAIN
+
+    @property
+    def id(self) -> str:
+        return f"supply_chain:{self.name}"

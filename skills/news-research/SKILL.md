@@ -3,6 +3,20 @@ name: news-research
 description: 持仓驱动新闻研究与事件挖掘 Agent Skill。通过 Finnhub + Tavily + Exa + Firecrawl 四层 MCP 完成 pull → classify → score → summarize 全链路新闻分析，输出结构化新闻证据供投研决策。
 ---
 
+# News Research
+
+## Contract
+
+- **Purpose**: Holdings-driven news research & event mining
+- **Inputs**: Portfolio holdings, search queries
+- **Outputs**: Scored/categorized news items
+- **Required MCP Capabilities**: Finnhub, Tavily, Exa, Firecrawl
+- **Priority**: 2
+- **Fallback Strategy**: If MCP unavailable, mark evidence as SoftEvidence with reduced confidence
+- **Forbidden Behavior**: Do NOT hardcode API keys or vendor SDKs; Do NOT generate final BUY/SELL decisions directly; Do NOT bypass EvidenceGraph
+
+---
+
 # 新闻研究 Agent Skill 规约
 
 ## 一、定位与心智模型

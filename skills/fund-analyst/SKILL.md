@@ -3,6 +3,20 @@ name: fund-analyst
 description: 首席公募基金战略投研与资产配置 Agent Skill。通过 MCP 能力层输出新闻前置、评分因子矩阵、趋势预测、组合风险预算与结构化操作建议，Agent 基于结构化证据填充研判文本和有限 overlay。
 ---
 
+# Fund Analyst
+
+## Contract
+
+- **Purpose**: CIO-level strategic fund research & asset allocation
+- **Inputs**: ResearchTask, KnowledgeGraph context
+- **Outputs**: EvidenceItems, scoring artifacts
+- **Required MCP Capabilities**: TrendRadar, Tavily, Exa, Firecrawl, Finnhub, Reddit
+- **Priority**: 1
+- **Fallback Strategy**: If MCP unavailable, mark evidence as SoftEvidence with reduced confidence
+- **Forbidden Behavior**: Do NOT hardcode API keys or vendor SDKs; Do NOT generate final BUY/SELL decisions directly; Do NOT bypass EvidenceGraph
+
+---
+
 # 首席基金战略投研 Agent Skill 规约
 
 ## 零占位符铁律（最高优先级，覆盖所有其他规则）

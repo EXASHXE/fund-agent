@@ -3,6 +3,20 @@ name: sentiment-analysis
 description: 金融市场舆情与情绪分析 Agent Skill。通过 Reddit + TrendRadar MCP 完成多维度情绪量化，输出极性/强度/时间衰减/信源加权四维情绪矩阵，供投研与风控决策。
 ---
 
+# Sentiment Analysis
+
+## Contract
+
+- **Purpose**: Financial market sentiment analysis
+- **Inputs**: News items, social media data
+- **Outputs**: Sentiment scores with polarity/direction
+- **Required MCP Capabilities**: Reddit, TrendRadar
+- **Priority**: 3
+- **Fallback Strategy**: If MCP unavailable, mark evidence as SoftEvidence with reduced confidence
+- **Forbidden Behavior**: Do NOT hardcode API keys or vendor SDKs; Do NOT generate final BUY/SELL decisions directly; Do NOT bypass EvidenceGraph
+
+---
+
 # 情绪分析 Agent Skill 规约
 
 ## 一、定位与心智模型
