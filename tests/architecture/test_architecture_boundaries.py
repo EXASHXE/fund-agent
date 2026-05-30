@@ -13,7 +13,7 @@ import os
 import pytest
 import yaml
 
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 def _get_imports_from_dir(dirpath: str) -> set[str]:
@@ -82,6 +82,11 @@ def _load_skillpack_manifest() -> dict:
 ])
 def test_no_legacy_imports(dirpath, label):
     _assert_no_imports_matching(dirpath, ["legacy."], f"{label} must not import from legacy/")
+
+
+def test_src_does_not_import_legacy():
+    """No src module may import the historical legacy archive."""
+    _assert_no_imports_matching("src", ["legacy", "legacy."], "src must not import legacy")
 
 
 def test_research_os_no_legacy():
@@ -409,6 +414,7 @@ def test_readme_positions_skillpack_as_primary_product():
         content = f.read()
 
     assert "Host-Agnostic AI Financial Research Skill Pack" in content
+    assert "Host-Agnostic AI Financial Research Skill Pack / Agent Plugin" in content
     assert "skillpack/fund-agent.skillpack.yaml" in content
     assert "Host integrations do not need to import or call" in content
     assert "Research OS Path (New)" not in content
@@ -459,7 +465,14 @@ def test_host_integration_doc_says_research_os_not_required():
     content = _read("docs/host-integration.md")
 
     assert "Host integrations do not need to call `src.core.research_os`" in content
+    assert "ResearchOS is optional reference only, not required" in content
     assert "does not own the agent loop" in content
+    forbidden = [
+        "must call ResearchOS",
+        "requires ResearchOS",
+        "required ResearchOS",
+    ]
+    assert not [phrase for phrase in forbidden if phrase in content]
 
 
 def test_agent_host_quickstart_exists():
@@ -478,7 +491,32 @@ def test_agent_host_quickstart_does_not_require_research_os():
     content = _read("docs/agent-host-quickstart.md")
 
     assert "Do not call ResearchOS for host integration" in content
-    assert "src.core.research_os" not in content
+    assert "ResearchOS is optional reference only, not required" in content
+    forbidden = [
+        "must call ResearchOS",
+        "requires ResearchOS",
+        "required ResearchOS",
+        "src.core.research_os",
+    ]
+    assert not [phrase for phrase in forbidden if phrase in content]
+
+
+def test_research_os_reference_modules_are_labeled_deprecated_optional():
+    required_phrases = [
+        "Deprecated / optional reference only.",
+        "Not required for host integration.",
+        "External agents should use skillpack manifest and skills_runtime directly.",
+    ]
+    for relpath in (
+        "src/core/research_os.py",
+        "src/workflows/research_os.py",
+        "src/core/planner.py",
+        "src/core/skill_registry.py",
+        "src/core/critic.py",
+    ):
+        content = _read(relpath)
+        for phrase in required_phrases:
+            assert phrase in content, f"{relpath} missing {phrase}"
 
 
 def test_decision_support_is_only_formal_decision_skill():

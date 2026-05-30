@@ -1,7 +1,10 @@
-"""Deprecated / optional reference runtime helper.
+"""Deprecated / optional reference only.
 
-Not required for host integration. External agents should use
-``skillpack/fund-agent.skillpack.yaml`` and ``src.skills_runtime`` directly.
+Not required for host integration.
+External agents should use skillpack manifest and skills_runtime directly.
+
+External agents should use ``skillpack/fund-agent.skillpack.yaml`` and
+``src.skills_runtime`` directly.
 For host-agnostic evidence review, prefer
 ``src.tools.evidence.review.review_evidence_graph`` as the direct tool API.
 This module remains for reference workflow compatibility.

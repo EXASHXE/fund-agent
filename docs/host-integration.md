@@ -15,7 +15,7 @@ Host integrations do not need to call `src.core.research_os`.
 
 ## Integration Flow
 
-1. Load `skillpack/fund-agent.skillpack.yaml`.
+1. Load [`skillpack/fund-agent.skillpack.yaml`](../skillpack/fund-agent.skillpack.yaml).
 2. Resolve the runtime path for the skill the host wants to call.
 3. Inject an `MCPHostAdapter` implementation if the skill needs MCP data.
 4. Build a `SkillInput`.
@@ -25,6 +25,9 @@ Host integrations do not need to call `src.core.research_os`.
 8. Call `DecisionSupportSkill` when the host wants a formal `Decision` and
    `ExecutionLedger`.
 9. Choose any order. `fund-agent` does not impose an agent loop.
+
+The callable tool catalog lives at
+[`skillpack/tools.yaml`](../skillpack/tools.yaml).
 
 ## Pseudocode
 
@@ -105,3 +108,5 @@ External agents can:
 - combine this skill pack with other repositories.
 
 `fund-agent` does not own the agent loop.
+
+ResearchOS is optional reference only, not required for host integrations.

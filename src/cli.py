@@ -1,18 +1,23 @@
-"""DEPRECATED CLI compat shim — delegates to legacy CLI.
+"""Deprecated CLI stub.
 
-This file exists only for backward compatibility. All CLI logic lives in legacy/cli.py.
-Use the new Research OS path: from src.core.research_os import run_research_task
+The plugin core is loaded through skillpack manifests and skills_runtime.
+This module is retained only so ``python -m src.cli`` fails with a clear
+message instead of importing the legacy archive.
 """
-import warnings
 
-warnings.warn(
-    "src.cli is deprecated — CLI moved to legacy/cli.py. Use src.core.research_os.",
-    DeprecationWarning,
-    stacklevel=2,
-)
+from __future__ import annotations
 
-from legacy.cli import main  # noqa: E402, F401
+from collections.abc import Sequence
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    """Exit with guidance for host-agnostic plugin usage."""
+    raise SystemExit(
+        "src.cli is deprecated and is not part of the plugin contract. "
+        "Load skillpack/fund-agent.skillpack.yaml and call src.skills_runtime "
+        "from an external host."
+    )
+
 
 if __name__ == "__main__":
-    import sys
-    main(sys.argv[1:])
+    main()

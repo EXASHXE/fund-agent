@@ -4,7 +4,7 @@ from legacy.analysis.scoring.types import MarketRegime
 from legacy.prompts.loader import PROMPT_FILES, load_all_prompts, load_prompt
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 SKILL_DIR = ROOT / "skills" / "fund-analyst"
 
 

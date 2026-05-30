@@ -1,4 +1,7 @@
-"""Deprecated optional Research OS reference wrapper.
+"""Deprecated / optional reference only.
+
+Not required for host integration.
+External agents should use skillpack manifest and skills_runtime directly.
 
 This wrapper is retained for compatibility/reference examples only. External
 agent hosts should use the skill pack manifest and ``src.skills_runtime``

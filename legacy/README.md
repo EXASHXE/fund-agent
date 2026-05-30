@@ -1,55 +1,39 @@
-# Legacy Pipeline — Retained for Reference
+# Legacy Archive — Historical Reference Only
 
 ## Overview
 
-The legacy `analyze` pipeline (CLI → data fetch → quant scoring → news pipeline → report) has been
-moved from `src/` to `legacy/` for architecture separation. All legacy modules live under `legacy/` —
-the `src/` directory is now exclusively the new Research OS path.
+The legacy `analyze` pipeline is preserved as a historical archive for old CLI,
+report, news, recommendation, strategy, and UI experiments. It is not part of
+the host-agnostic plugin contract.
 
-## Components
+The old pipeline has been replaced by the host-agnostic skillpack,
+`skills_runtime`, tools, EvidenceGraph compiler, and `DecisionSupportSkill`.
 
-### Old CLI Analyze Main Path
-- **Location**: `legacy/cli.py`, `legacy/routes/commands.py`
-- **Flow**: CLI → `legacy.workflows.analyze` → `legacy.workflows.workflow.run_analyze`
-- **Compat shim**: `src/cli.py` re-exports `legacy.cli.main` with DeprecationWarning
+## Archive Boundary
 
-### Old News Pipeline
-- **Location**: `legacy/news/` + `legacy/deprecated/news_pipeline.py`
-- **Purpose**: 8-stage holdings-driven news pipeline (entity mapping → fetching → dedup → sentiment → catalyst scoring → NAV correlation)
-- **Replaced by**: Research OS Skill pipeline (`src/core/research_os.py`)
+- No new code should import `legacy`.
+- No new tests should depend on `legacy`.
+- Legacy may be deleted after an archive tag.
+- Provider-specific clients here are not part of the plugin contract.
 
-### Old Scoring Pipeline
-- **Location**: `legacy/analysis/scoring/`, `legacy/deprecated/scorer.py`
-- **Purpose**: Multi-dimensional fund scoring engine (Quant, Fundamental, Event, Position, Timing)
-- **Replaced by**: `src/tools/quant/` (pure math) + Research OS evidence pipeline
+## Historical Components
 
-### Old Strategy / Recommendation Engine
-- **Location**: `legacy/strategy/` (state machine: WAIT→HOLD→ADD→REDUCE→STOP_LOSS)
-- **Location**: `legacy/deprecated/` (macro.py, meso.py, micro.py — IF/ELIF rules)
-- **Replaced by**: `src/core/decision_engine.py` (contract-enforced); `src/core/critic.py` (structural review)
+- `legacy/cli.py`, `legacy/routes/`: old CLI analyze route.
+- `legacy/news/`: old holdings-driven news pipeline and provider clients.
+- `legacy/analysis/scoring/`: old multi-dimensional scoring engine.
+- `legacy/strategy/`: old WAIT/HOLD/ADD/REDUCE/STOP_LOSS state machine.
+- `legacy/output/`: old Markdown/JSON report rendering.
+- `legacy/agents/`: old LangGraph-style multi-agent experiment.
+- `legacy/services/`, `legacy/engine/`, `legacy/forecast/`: old workflow
+  support modules.
 
-### Old Report Rendering
-- **Location**: `legacy/output/`
-- **Purpose**: Markdown/JSON report generation
-- **Replaced by**: DecisionContract v2 + ExecutionLedger
+## Current Replacement
 
-### Old Agent System
-- **Location**: `legacy/agents/` (8-node LangGraph multi-agent)
-- **Replaced by**: New standalone Planner/Critic/DecisionEngine in `src/core/`
+New host integrations should load `skillpack/fund-agent.skillpack.yaml`, call
+`src.skills_runtime` handlers directly, use `src.tools` for pure calculations
+and evidence compilation, and call
+`src.skills_runtime.decision_support.DecisionSupportSkill` only when a formal
+`Decision` and `ExecutionLedger` are needed.
 
-## Architecture Boundary Rules
-
-1. **`src/core/`**, **`src/schemas/`**, **`src/graph/`**, **`src/tools/`**, **`src/workflows/`**, **`src/infra/`**
-   MUST NOT import from `legacy/`.
-2. **Legacy** CAN import from `src/tools/`, `src/schemas/`, and `src/infra/`.
-3. Legacy should prefer `src.infra.config`, `src.infra.data`, `src.infra.persistence`, and `src.infra.vectorstore`.
-   The old `src.config`, `src.data`, `src.db`, and `src.vectorstore` packages are deprecated package-level shims only.
-4. **`src/tools/`** must remain pure: no LLM, no network IO.
-5. **Architecture tests** enforce all boundaries in `tests/test_architecture_boundaries.py`.
-6. The legacy tree is a compatibility/reference path only; new Research OS code belongs under `src/`.
-
-## Migration Path
-
-1. Existing CLI (`python3 -m src.cli analyze`) works via compat shim → `legacy/cli.py`
-2. New Research OS: `from src.core.research_os import run_research_task`
-3. Both paths coexist; no breaking changes.
+ResearchOS reference modules under `src/core` and `src/workflows` are optional
+reference workflows only. They are not the plugin entrypoint.

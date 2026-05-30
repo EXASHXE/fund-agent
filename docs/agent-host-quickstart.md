@@ -11,7 +11,8 @@ order, retry policy, memory, MCP provider wiring, and final user interaction.
 
 `fund-agent` provides:
 
-- `skillpack/fund-agent.skillpack.yaml`
+- [`skillpack/fund-agent.skillpack.yaml`](../skillpack/fund-agent.skillpack.yaml)
+- [`skillpack/tools.yaml`](../skillpack/tools.yaml)
 - host-callable `src.skills_runtime` classes
 - `SkillInput` / `SkillOutput` contracts
 - EvidenceGraph compile and review tools
@@ -19,8 +20,7 @@ order, retry policy, memory, MCP provider wiring, and final user interaction.
 - Decision support
 - MCP adapter boundary interfaces
 
-Do not call ResearchOS for host integration. The optional reference workflows
-are teaching examples only.
+Do not call ResearchOS for host integration. ResearchOS is optional reference only, not required. The optional reference workflows are teaching examples.
 
 ## Minimal Flow
 
@@ -60,6 +60,26 @@ decision_output = DecisionSupportSkill().run(
         },
     )
 )
+```
+
+## Handling SkillOutput Errors
+
+Hosts should treat `SkillOutput.errors` as structured control data, not as
+exceptions hidden in text:
+
+```python
+if news_output.errors:
+    for error in news_output.errors:
+        code = error["code"]
+        if code == "MISSING_MCP_CAPABILITY":
+            # Wire or choose a host MCP capability before retrying.
+            ...
+        elif code == "MCP_CALL_FAILED":
+            # Apply host retry/rate-limit policy.
+            ...
+        else:
+            # Decide whether to continue with partial evidence.
+            ...
 ```
 
 ## MCPHostAdapter

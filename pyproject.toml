@@ -5,12 +5,25 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "fund-agent"
 version = "2.0.0"
-description = "AI-driven multi-agent fund research platform"
+description = "Host-agnostic AI financial research skill pack"
 requires-python = ">=3.10"
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = [
+    "tests/architecture",
+    "tests/contracts",
+    "tests/skillpack",
+    "tests/skills",
+    "tests/tools",
+    "tests/integration",
+]
 pythonpath = ["."]
+markers = [
+    "plugin: host-agnostic plugin core tests",
+    "contract: schema and runtime contract tests",
+    "architecture: boundary and dependency tests",
+    "deprecated: optional historical or reference workflow tests",
+]
 
 [tool.setuptools.packages.find]
 include = ["src*"]

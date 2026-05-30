@@ -1,7 +1,10 @@
-"""Deprecated / optional reference runtime helper.
+"""Deprecated / optional reference only.
 
-Not required for host integration. External agents should use
-``skillpack/fund-agent.skillpack.yaml`` and ``src.skills_runtime`` directly.
+Not required for host integration.
+External agents should use skillpack manifest and skills_runtime directly.
+
+External agents should use ``skillpack/fund-agent.skillpack.yaml`` and
+``src.skills_runtime`` directly.
 External agent hosts can instantiate skills directly from the skill pack
 manifest. This registry is a convenience/reference helper.
 """

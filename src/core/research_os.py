@@ -1,4 +1,7 @@
-"""Deprecated reference Research OS loop.
+"""Deprecated / optional reference only.
+
+Not required for host integration.
+External agents should use skillpack manifest and skills_runtime directly.
 
 This module is retained as an optional reference workflow for tests and
 examples. It is not the primary product entrypoint for fund-agent. External

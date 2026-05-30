@@ -1,7 +1,7 @@
-"""AI Financial Research OS — Orchestration entry points.
+"""Optional reference workflow entry points.
 
-Legacy analyze workflow has been moved to legacy/workflows/analyze.py.
-Use research_os for new pipelines, or import legacy.cli for CLI operations.
+Host integrations should use the skillpack manifest and src.skills_runtime
+directly. ResearchOS wrappers are retained for optional reference only.
 """
 from src.workflows.research_os import run_research_task as _run_research_task
 
