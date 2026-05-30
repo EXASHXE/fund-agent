@@ -41,3 +41,4 @@ mock.py
 # 会话数据
 .omo/
 .pytest_cache/
+.coverage
