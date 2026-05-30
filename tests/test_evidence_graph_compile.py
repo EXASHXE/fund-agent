@@ -6,6 +6,7 @@ src/tools/evidence/validators.py.
 
 from __future__ import annotations
 
+import json
 from datetime import datetime
 
 import pytest
@@ -17,6 +18,7 @@ from src.tools.evidence.builders import (
 )
 from src.tools.evidence.validators import (
     EvidenceGraphCompileReport,
+    EvidenceGraphCompileResult,
     aggregate_confidence,
     compile_evidence_graph,
     deduplicate_evidence,
@@ -451,17 +453,18 @@ class TestCompileEvidenceGraph:
                 confidence_weight=0.5,
             ),
         ]
-        report = compile_evidence_graph(items)
-        graph = report.graph
-        assert isinstance(report, EvidenceGraphCompileReport)
+        result = compile_evidence_graph(items)
+        graph = result.graph
+        assert isinstance(result, EvidenceGraphCompileResult)
+        assert isinstance(result.report, EvidenceGraphCompileReport)
         assert len(graph.items) == 2
         assert graph.get("ev-1") is not None
         assert graph.get("ev-2") is not None
 
     def test_empty_input(self):
         """Empty list produces empty graph."""
-        report = compile_evidence_graph([])
-        graph = report.graph
+        result = compile_evidence_graph([])
+        graph = result.graph
         assert len(graph.items) == 0
         assert graph.edges == []
 
@@ -487,11 +490,161 @@ class TestCompileEvidenceGraph:
         )
         object.__setattr__(invalid, "confidence_weight", 0.5)
 
-        report = compile_evidence_graph([valid, invalid])
+        result = compile_evidence_graph([valid, invalid])
+        report = result.report
 
         assert isinstance(report, EvidenceGraphCompileReport)
         assert report.rejected_count == 1
         assert report.accepted_count == 1
-        assert "ev-valid" in report.graph.items
-        assert "ev-invalid" not in report.graph.items
+        assert "ev-valid" in result.graph.items
+        assert "ev-invalid" not in result.graph.items
         assert report.rejected_items[0]["evidence_id"] == "ev-invalid"
+
+    def test_compile_rejects_missing_source_type(self):
+        """Missing source_type is rejected by the compiler."""
+        item = _make_soft("ev-missing-source")
+        object.__setattr__(item, "source_type", "")
+
+        result = compile_evidence_graph([item])
+
+        assert result.report.rejected_count == 1
+        assert result.report.rejected_items[0]["evidence_id"] == "ev-missing-source"
+        assert "ev-missing-source" not in result.graph.items
+
+    def test_compile_rejects_missing_timestamp(self):
+        """Missing timestamp is rejected by the compiler."""
+        item = _make_soft("ev-missing-timestamp")
+        object.__setattr__(item, "timestamp", None)
+
+        result = compile_evidence_graph([item])
+
+        assert result.report.rejected_count == 1
+        assert any("timestamp" in error for error in result.report.rejected_items[0]["errors"])
+        assert result.graph.items == {}
+
+    def test_compile_rejects_empty_related_entities(self):
+        """Empty related_entities is rejected by the compiler."""
+        item = _make_soft("ev-empty-entities")
+        object.__setattr__(item, "related_entities", [])
+
+        result = compile_evidence_graph([item])
+
+        assert result.report.rejected_count == 1
+        assert any("related_entities" in error for error in result.report.rejected_items[0]["errors"])
+        assert result.graph.items == {}
+
+    def test_compile_rejects_bad_hard_evidence_confidence(self):
+        """HardEvidence with confidence != 1.0 is rejected."""
+        item = _make_hard("ev-bad-hard")
+        object.__setattr__(item, "confidence_weight", 0.7)
+
+        result = compile_evidence_graph([item])
+
+        assert result.report.rejected_count == 1
+        assert any("1.0" in error for error in result.report.rejected_items[0]["errors"])
+        assert result.graph.items == {}
+
+    def test_compile_deduplicates_claims(self):
+        """Same claim + related_entities + source_type is deduplicated."""
+        item_a = _make_soft(
+            "ev-dup-a",
+            claim="Fund risk is improving",
+            source_type="news",
+            confidence=0.5,
+        )
+        item_b = _make_soft(
+            "ev-dup-b",
+            claim="Fund risk is improving",
+            source_type="news",
+            confidence=0.8,
+        )
+
+        result = compile_evidence_graph([item_a, item_b])
+
+        assert result.report.deduplicated_count == 1
+        assert result.report.accepted_count == 1
+        assert "ev-dup-b" in result.graph.items
+        assert "ev-dup-a" not in result.graph.items
+
+    def test_compile_detects_conflicts(self):
+        """Opposite directions on the same entity produce a conflict."""
+        positive = _make_soft("ev-pos", direction="positive")
+        negative = _make_soft("ev-neg", direction="negative")
+
+        result = compile_evidence_graph([positive, negative])
+
+        assert result.report.conflict_count == 1
+        assert result.report.conflicts == [("ev-pos", "ev-neg")]
+        assert ("ev-pos", "ev-neg", "contradicts") in result.graph.edges
+
+    def test_compile_upgrades_soft_to_hybrid_only_with_multi_source_support(self):
+        """Only 2+ independent source_type values may upgrade SoftEvidence."""
+        same_source_a = _make_soft("same-a", source_type="news_a", direction="positive")
+        same_source_b = _make_soft("same-b", source_type="news_a", direction="positive")
+
+        single_source = compile_evidence_graph([same_source_a, same_source_b])
+
+        assert single_source.report.hybrid_upgraded_count == 0
+        assert all(
+            item.evidence_type == "SoftEvidence"
+            for item in single_source.graph.items.values()
+        )
+
+        multi_source_a = _make_soft("multi-a", source_type="news_a", direction="positive")
+        multi_source_b = _make_soft("multi-b", source_type="news_b", direction="positive")
+
+        multi_source = compile_evidence_graph([multi_source_a, multi_source_b])
+
+        assert multi_source.report.hybrid_upgraded_count == 1
+        assert multi_source.graph.get("multi-a").evidence_type == "HybridEvidence"
+        assert multi_source.graph.get("multi-b").evidence_type == "SoftEvidence"
+
+    def test_compile_report_is_json_serializable(self):
+        """EvidenceGraphCompileReport must be JSON serializable."""
+        result = compile_evidence_graph([
+            _make_soft("ev-json-a", source_type="news_a", direction="positive"),
+            _make_soft("ev-json-b", source_type="news_b", direction="positive"),
+        ])
+
+        json.dumps(result.report.to_dict())
+
+
+def _make_hard(
+    evidence_id: str,
+    claim: str = "Hard evidence",
+    entities: list[str] | None = None,
+    direction: str = "neutral",
+    source_type: str = "quant_tool",
+) -> EvidenceItem:
+    return EvidenceItem(
+        evidence_id=evidence_id,
+        evidence_type="HardEvidence",
+        source_type=source_type,
+        timestamp=datetime.now(),
+        related_entities=entities or ["fund:110011"],
+        claim=claim,
+        value=1.0,
+        direction=direction,
+    )
+
+
+def _make_soft(
+    evidence_id: str,
+    claim: str = "Soft evidence",
+    entities: list[str] | None = None,
+    direction: str = "neutral",
+    source_type: str = "news",
+    confidence: float = 0.5,
+) -> EvidenceItem:
+    return EvidenceItem(
+        evidence_id=evidence_id,
+        evidence_type="SoftEvidence",
+        source_type=source_type,
+        timestamp=datetime.now(),
+        related_entities=entities or ["fund:110011"],
+        claim=claim,
+        value={},
+        confidence_weight=confidence,
+        direction=direction,
+        provenance={"source": source_type},
+    )

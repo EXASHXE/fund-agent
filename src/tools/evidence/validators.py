@@ -19,9 +19,8 @@ from src.schemas.evidence_graph import EvidenceGraph
 
 @dataclass
 class EvidenceGraphCompileReport:
-    """Structured result from EvidenceGraph compilation."""
+    """Structured metadata from EvidenceGraph compilation."""
 
-    graph: EvidenceGraph
     input_count: int = 0
     accepted_count: int = 0
     rejected_items: list[dict[str, Any]] = field(default_factory=list)
@@ -36,24 +35,48 @@ class EvidenceGraphCompileReport:
     def rejected_count(self) -> int:
         return len(self.rejected_items)
 
+    @property
+    def deduplicated_count(self) -> int:
+        return len(self.duplicate_removed_ids)
+
+    @property
+    def conflict_count(self) -> int:
+        return len(self.conflicts)
+
+    @property
+    def hybrid_upgraded_count(self) -> int:
+        return len(self.hybrid_upgraded_ids)
+
     def to_dict(self) -> dict[str, Any]:
         return {
-            "graph": self.graph.to_dict(),
             "input_count": self.input_count,
             "accepted_count": self.accepted_count,
             "rejected_count": self.rejected_count,
             "rejected_items": self.rejected_items,
+            "deduplicated_count": self.deduplicated_count,
             "duplicate_removed_ids": self.duplicate_removed_ids,
+            "conflict_count": self.conflict_count,
             "conflicts": [list(pair) for pair in self.conflicts],
+            "hybrid_upgraded_count": self.hybrid_upgraded_count,
             "hybrid_upgraded_ids": self.hybrid_upgraded_ids,
             "confidence_by_entity": self.confidence_by_entity,
             "average_confidence": self.average_confidence,
             "warnings": self.warnings,
         }
 
-    def __getattr__(self, name: str) -> Any:
-        """Delegate legacy graph-style attribute access to the compiled graph."""
-        return getattr(self.graph, name)
+
+@dataclass
+class EvidenceGraphCompileResult:
+    """Compiled EvidenceGraph plus its structured compile report."""
+
+    graph: EvidenceGraph
+    report: EvidenceGraphCompileReport
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "graph": self.graph.to_dict(),
+            "report": self.report.to_dict(),
+        }
 
 
 def validate_evidence(item: EvidenceItem) -> list[str]:
@@ -151,7 +174,7 @@ def aggregate_confidence(items: list[EvidenceItem]) -> float:
     return total / len(items)
 
 
-def compile_evidence_graph(items: list[EvidenceItem]) -> EvidenceGraphCompileReport:
+def compile_evidence_graph(items: list[EvidenceItem]) -> EvidenceGraphCompileResult:
     """Compile evidence through the full contract pipeline.
 
     Pipeline order:
@@ -162,7 +185,7 @@ def compile_evidence_graph(items: list[EvidenceItem]) -> EvidenceGraphCompileRep
         items: List of EvidenceItem instances.
 
     Returns:
-        EvidenceGraphCompileReport containing the graph and compile metadata.
+        EvidenceGraphCompileResult containing the graph and compile metadata.
     """
     input_count = len(items)
     rejected_items: list[dict[str, Any]] = []
@@ -189,8 +212,7 @@ def compile_evidence_graph(items: list[EvidenceItem]) -> EvidenceGraphCompileRep
     hybrid_upgraded_ids = _upgrade_corroborated_soft_evidence(graph)
     confidence_by_entity = _aggregate_confidence_by_entity(graph)
 
-    return EvidenceGraphCompileReport(
-        graph=graph,
+    report = EvidenceGraphCompileReport(
         input_count=input_count,
         accepted_count=len(graph.items),
         rejected_items=rejected_items,
@@ -203,6 +225,7 @@ def compile_evidence_graph(items: list[EvidenceItem]) -> EvidenceGraphCompileRep
             f"Rejected {len(rejected_items)} invalid evidence item(s)"
         ] if rejected_items else [],
     )
+    return EvidenceGraphCompileResult(graph=graph, report=report)
 
 
 def _upgrade_corroborated_soft_evidence(graph: EvidenceGraph) -> list[str]:

@@ -226,7 +226,7 @@ class EngineCalculatorTest(unittest.TestCase):
         with patch("legacy.services.portfolio_service.effective_report_date", lambda: date(2026, 5, 15)), \
              patch("legacy.services.portfolio_service.dca_effective_date", lambda: date(2026, 5, 15)), \
              patch("legacy.services.portfolio_service.shared_today", lambda: date(2026, 5, 15)), \
-             patch("src.db.database.get_session", lambda: None), \
+             patch("src.infra.persistence.database.get_session", lambda: None), \
              patch("legacy.engine.calculator.is_trade_day", _is_weekday), \
              patch("legacy.engine.calculator.next_trade_day", _next_weekday), \
              patch("legacy.engine.events.is_trade_day", _is_weekday), \

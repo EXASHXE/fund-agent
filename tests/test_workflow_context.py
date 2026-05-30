@@ -247,9 +247,9 @@ class WorkflowContextTest(unittest.TestCase):
         kg = nx.DiGraph()
         kg.add_node("fund:000001")
 
-        with patch("src.config.loader.load_portfolio_config", lambda path: config), \
-             patch("src.config.loader.import_to_database", lambda config: None), \
-             patch("src.db.storage.FundStorage", lambda: store), \
+        with patch("src.infra.config.loader.load_portfolio_config", lambda path: config), \
+             patch("src.infra.config.loader.import_to_database", lambda config: None), \
+             patch("src.infra.persistence.storage.FundStorage", lambda: store), \
              patch("legacy.analysis.loader.FundDataLoader", FakeAnalyzer), \
              patch("legacy.analysis.correlation.compute_correlations", lambda funds: pd.DataFrame()), \
              patch("legacy.workflows.workflow._build_unified_graph", lambda funds, codes: kg), \
@@ -345,9 +345,9 @@ class WorkflowContextTest(unittest.TestCase):
             snapshot_after=False,
         )
 
-        with patch("src.config.loader.load_portfolio_config", lambda path: config), \
-             patch("src.config.loader.import_to_database", lambda config: None), \
-             patch("src.db.storage.FundStorage", lambda: store), \
+        with patch("src.infra.config.loader.load_portfolio_config", lambda path: config), \
+             patch("src.infra.config.loader.import_to_database", lambda config: None), \
+             patch("src.infra.persistence.storage.FundStorage", lambda: store), \
              patch("legacy.analysis.loader.FundDataLoader", FakeLoader), \
              patch("legacy.analysis.correlation.compute_correlations", lambda funds: pd.DataFrame()), \
              patch("legacy.workflows.workflow._build_unified_graph", lambda funds, codes: nx.DiGraph()), \

@@ -9,8 +9,8 @@
 **核心设计原则：**
 - **纯工具无副作用** — `src/tools/` 中的数学函数（Sortino / HHI / Sharpe / XIRR）无 IO、无网络、无 LLM，可独立验证
 - **知识图谱冷启动** — 基金→股票→行业→主题→事件全链路关系，NetworkX 内存图引擎，可增量刷新
-- **证据驱动决策** — 所有投资决策追溯至 `EvidenceItem`，HardEvidence 置信度恒为 1.0，支持冲突检测与 Hybrid 升级
-- **8 节点反思回路** — Planner → News → Quant → Risk → Research → Critic → Strategy → Ledger，Critic 未通过则回退 Planner（最多 3 轮）
+- **证据驱动决策** — 所有主动投资决策追溯至真实 `EvidenceItem`，HardEvidence 置信度恒为 1.0，支持冲突检测与 Hybrid 升级
+- **结构化 Research OS 闭环** — Planner → Skill execution → EvidenceGraph compile → Critic → DecisionEngine → ExecutionLedger，Critic 未通过则重试并在预算耗尽时返回 EXHAUSTED
 
 ## 架构
 
@@ -56,7 +56,7 @@ fund-agent/
 │   │   └── vectorstore/       #     Qdrant 向量数据库
 │   ├── workflows/             #   薄编排入口
 │   │   └── research_os.py     #     薄封装 → src.core.research_os
-│   └── cli.py                 #   兼容 shim → legacy/cli.py
+│   └── cli.py                 #   legacy compatibility shim → legacy/cli.py
 ├── legacy/                    # ★ 旧系统（保留兼容）
 │   ├── cli.py                 #   旧 CLI analyze 入口
 │   ├── workflows/             #   旧 workflow 编排
@@ -83,7 +83,7 @@ fund-agent/
 
 ## Research OS Path (New)
 
-The new Research OS architecture provides an alternative, structured path:
+The new Research OS architecture is the primary structured path:
 
 ```
 ResearchTask → Planner → KnowledgeGraph query → Skill execution → Evidence compile → Critic → DecisionEngine → ExecutionLedger
@@ -91,7 +91,7 @@ ResearchTask → Planner → KnowledgeGraph query → Skill execution → Eviden
 
 **Key differences from legacy path:**
 
-| Aspect | Legacy (`src.cli analyze`) | Research OS (`src.core.research_os`) |
+| Aspect | Legacy (`python -m src.cli analyze`) | Research OS (`src.core.research_os` / `src.workflows.research_os`) |
 |--------|---------------------------|--------------------------------------|
 | Entry | CLI command | `ResearchTask` typed dataclass |
 | Planning | None | Planner queries KG then generates PlanSteps |
@@ -115,7 +115,9 @@ result = run_research_task(task)
 # result contains: decision, ledger, evidence, critique status
 ```
 
-The legacy path continues to work unchanged. Both paths coexist.
+`python -m src.cli analyze` is a legacy compatibility path backed by
+`legacy/`. New integrations should use `src.core.research_os.run_research_task`
+or the thin `src.workflows.research_os` wrapper.
 
 ## Skill 能力矩阵
 
@@ -135,8 +137,8 @@ Host (Claude / GPT / Gemini / LLM ...) 加载 fund-analyst Skill
   → Skill 声明所需 MCP 能力
     → Host 注入 TrendRadar / Tavily / Finnhub / Exa / Firecrawl / Reddit
       → Skill 通过 ToolRegistry 编排纯数学工具 + KG 查询 + MCP adapter
-        → 8 节点 LangGraph 依次执行（含 Critic 反思回路）
-          → 产出 EvidenceGraph + Decision[] + ExecutionLedger
+        → Research OS 闭环执行：Planner → Skills → EvidenceGraph compile → Critic → DecisionEngine → Ledger
+          → 产出 FinalThesis + EvidenceGraph compile report + Decision/ExecutionLedger
 ```
 
 ### CLI 调用（本地开发/测试）
@@ -145,7 +147,7 @@ Host (Claude / GPT / Gemini / LLM ...) 加载 fund-analyst Skill
 python3 -m src.cli analyze -c fund-portfolio.yaml -o report.md
 ```
 
-CLI 是薄封装，仅用于本地调试。核心业务逻辑全部在 `skills/`、`src/core/`、`src/tools/`、`src/schemas/` 中。
+CLI 是 legacy compatibility path，仅用于旧 analyze/report/news/recommend/ui 系统。本轮新系统入口是 `src.core.research_os.run_research_task` 和 `src.workflows.research_os`。
 
 ## 数据层
 
@@ -181,8 +183,8 @@ ScoreEngine
 | 合约 | 版本 | 核心字段 | 约束 |
 |------|------|---------|------|
 | `EvidenceItem` | evidence-contract.v2 | 11 字段：evidence_id, evidence_type, source_type, timestamp, related_entities, claim, value, confidence_weight, direction, version, provenance | HardEvidence 置信度恒为 1.0；SoftEvidence 限 [0.1, 0.9] |
-| `Decision` | decision-contract.v2 | 10 字段：decision_id, action, execution_amount, rationale_anchor, trigger_conditions, invalidating_conditions, time_horizon, risk_budget, audit_trail, version | 主动决策须引用真实 evidence_id；WAIT/HOLD 可在说明证据不足时空 anchor；BUY/SELL/INCREASE/REDUCE 须有执行金额 |
-| `EvidenceGraph` | — | items{id→EvidenceItem}, edges[(from, to)] | 支持去重、冲突检测、Soft→Hybrid 升级 |
+| `Decision` | decision-contract.v2 | 10 字段：decision_id, action, execution_amount, rationale_anchor, trigger_conditions, invalidating_conditions, time_horizon, risk_budget, audit_trail, version | 主动决策须引用真实 evidence_id；WAIT/HOLD/PAUSE_DCA 可在说明证据不足或被 Critic 阻断时空 anchor；BUY/SELL/INCREASE/REDUCE 须有执行金额 |
+| `EvidenceGraph` | — | items{id→EvidenceItem}, edges[(from, to)] | 支持验证、拒绝无效证据、去重、冲突检测、Soft→Hybrid 升级、置信度聚合 |
 | `ExecutionLedger` | — | decisions: list[Decision], summary | 可审计决策账本 |
 
 ## 开发

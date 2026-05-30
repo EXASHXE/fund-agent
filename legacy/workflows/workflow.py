@@ -694,7 +694,7 @@ def run_analyze(args):
     from legacy.analysis.portfolio_risk import build_portfolio_risk_matrix
     from legacy.analysis.loader import FundDataLoader
     from legacy.analysis.stress import stress_test
-    from src.config.loader import import_to_database, load_portfolio_config
+    from src.infra.config.loader import import_to_database, load_portfolio_config
     from src.infra.persistence.storage import FundStorage
 
     config = load_portfolio_config(args.config)

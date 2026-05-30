@@ -4,7 +4,8 @@ Generates Decision instances with contract enforcement:
     - Non-PASS critique → only WAIT/HOLD allowed
     - BUY/SELL/INCREASE/REDUCE require execution_amount > 0
     - Active Decisions reference real evidence in rationale_anchor
-    - WAIT/HOLD may use an empty anchor only with insufficient-evidence context
+    - WAIT/HOLD/PAUSE_DCA may use an empty anchor only with
+      insufficient-evidence or critic-blocked context
     - Full audit trail for traceability
 
 Design constraints:
@@ -61,7 +62,8 @@ class DecisionEngine:
         action = self._determine_action(task, evidence_graph, critique)
 
         # Rule 2: Validate action against critique status
-        critique_passed = getattr(critique, "status", None) == "PASS"
+        critique_status = getattr(critique, "status", None)
+        critique_passed = critique_status == "PASS"
         if not critique_passed and action in ACTIVE_ACTIONS:
             # Downgrade active actions to WAIT when critique fails
             action = "WAIT"
@@ -73,6 +75,7 @@ class DecisionEngine:
 
         # Rule 4: Build rationale anchor from evidence
         rationale_anchor = self._extract_rationale_anchor(evidence_graph)
+        self._validate_anchor_membership(action, rationale_anchor, evidence_graph)
 
         insufficient_evidence = not rationale_anchor
 
@@ -167,11 +170,24 @@ class DecisionEngine:
             return []
         return list(items.keys())[:10]
 
+    def _validate_anchor_membership(
+        self, action: str, rationale_anchor: list[str], evidence_graph: Any
+    ) -> None:
+        if action not in ACTIVE_ACTIONS:
+            return
+        items = getattr(evidence_graph, "items", None) or {}
+        missing = [anchor for anchor in rationale_anchor if anchor not in items]
+        if missing or not rationale_anchor:
+            raise ValueError(
+                "Active decision rationale_anchor must reference real "
+                f"EvidenceGraph evidence_id values, missing={missing}"
+            )
+
     def _build_trigger_conditions(
         self, task: Any, action: str, insufficient_evidence: bool = False
     ) -> list[str]:
         """Build trigger conditions for the decision."""
-        if action in {"WAIT", "HOLD"} and insufficient_evidence:
+        if action in PASSIVE_ACTIONS and insufficient_evidence:
             return ["Insufficient evidence to support an active decision"]
         conditions = [f"Critique status must be PASS for {action}"]
         if action in ACTIVE_ACTIONS:
@@ -215,7 +231,10 @@ class DecisionEngine:
         elif insufficient_evidence:
             trail.append("Insufficient evidence: no evidence items available")
         if critique is not None:
-            trail.append(f"Critique status: {getattr(critique, 'status', 'unknown')}")
+            status = getattr(critique, "status", "unknown")
+            trail.append(f"Critique status: {status}")
+            if status and status != "PASS":
+                trail.append(f"Blocked by critic: {status}")
             issues = getattr(critique, "issues", [])
             trail.append(f"Issues: {len(issues)}")
         trail.append(f"Generated at: {datetime.now().isoformat()}")

@@ -3,6 +3,7 @@
 from src.tools.evidence.builders import build_hard_evidence, build_hybrid_evidence, build_soft_evidence
 from src.tools.evidence.validators import (
     EvidenceGraphCompileReport,
+    EvidenceGraphCompileResult,
     aggregate_confidence,
     compile_evidence_graph,
     deduplicate_evidence,
@@ -15,6 +16,7 @@ __all__ = [
     "build_soft_evidence",
     "build_hybrid_evidence",
     "EvidenceGraphCompileReport",
+    "EvidenceGraphCompileResult",
     "validate_evidence",
     "deduplicate_evidence",
     "detect_conflicts",

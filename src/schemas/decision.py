@@ -6,8 +6,8 @@ to evidence. ExecutionLedger collects multiple decisions for audit trails.
 Constraints:
 - BUY/SELL/INCREASE/REDUCE MUST have execution_amount > 0
 - BUY/SELL/INCREASE/REDUCE MUST reference at least one real evidence_id
-- WAIT/HOLD may use an empty rationale_anchor when insufficient evidence is
-  explicitly explained
+- WAIT/HOLD/PAUSE_DCA may use an empty rationale_anchor when insufficient
+  evidence or critic blockage is explicitly explained
 - trigger_conditions and invalidating_conditions are required
 - risk_budget MUST be > 0
 - audit_trail references evidence_ids for full traceability
@@ -24,7 +24,15 @@ ActionType = Literal["BUY", "SELL", "HOLD", "PAUSE_DCA", "REDUCE", "INCREASE", "
 
 _ACTIONS_NEED_AMOUNT: frozenset[str] = frozenset({"BUY", "SELL", "INCREASE", "REDUCE"})
 _ACTIONS_NEED_ANCHOR: frozenset[str] = frozenset({"BUY", "SELL", "INCREASE", "REDUCE"})
-_PASSIVE_EMPTY_ANCHOR_ALLOWED: frozenset[str] = frozenset({"WAIT", "HOLD"})
+_PASSIVE_EMPTY_ANCHOR_ALLOWED: frozenset[str] = frozenset({"WAIT", "HOLD", "PAUSE_DCA"})
+_FAKE_ANCHORS: frozenset[str] = frozenset({
+    "no_evidence_available",
+    "fake_anchor",
+    "fake-anchor",
+    "placeholder",
+    "missing_evidence",
+    "missing-evidence",
+})
 
 
 @dataclass
@@ -36,8 +44,9 @@ class Decision:
         action: The investment action to take.
         execution_amount: Amount for execution (required for BUY/SELL/INCREASE/REDUCE).
         rationale_anchor: Evidence IDs that directly support this decision.
-            Active actions must contain at least one real evidence_id. WAIT/HOLD
-            may leave this empty when insufficient evidence is explicitly noted.
+            Active actions must contain at least one real evidence_id.
+            WAIT/HOLD/PAUSE_DCA may leave this empty when insufficient evidence
+            or critic blockage is explicitly noted.
         trigger_conditions: Conditions that triggered this decision.
             Must not be empty.
         invalidating_conditions: Conditions that would invalidate this decision.
@@ -78,10 +87,10 @@ class Decision:
         if not self.invalidating_conditions:
             raise ValueError("Decision must specify invalidating_conditions")
 
-        if any(anchor == "no_evidence_available" for anchor in self.rationale_anchor):
+        if any(anchor in _FAKE_ANCHORS for anchor in self.rationale_anchor):
             raise ValueError(
                 "rationale_anchor must reference real evidence_id values, "
-                "not no_evidence_available"
+                "not fake placeholders"
             )
 
         # Active decisions must reference at least one real evidence_id.
@@ -96,7 +105,8 @@ class Decision:
             and not self._explains_insufficient_evidence()
         ):
             raise ValueError(
-                "WAIT/HOLD with empty rationale_anchor must explain insufficient evidence"
+                "WAIT/HOLD/PAUSE_DCA with empty rationale_anchor must explain "
+                "insufficient evidence or critic blockage"
             )
 
         if not self.rationale_anchor and self.action not in _PASSIVE_EMPTY_ANCHOR_ALLOWED:
@@ -116,7 +126,7 @@ class Decision:
             + list(self.invalidating_conditions)
             + list(self.audit_trail)
         ).lower()
-        return "insufficient evidence" in text
+        return "insufficient evidence" in text or "blocked by critic" in text
 
     def to_dict(self) -> dict:
         """Serialize to a JSON-compatible dict.

@@ -41,9 +41,12 @@ the `src/` directory is now exclusively the new Research OS path.
 
 1. **`src/core/`**, **`src/schemas/`**, **`src/graph/`**, **`src/tools/`**, **`src/workflows/`**, **`src/infra/`**
    MUST NOT import from `legacy/`.
-2. **Legacy** CAN import from `src/tools/`, `src/schemas/`, `src/infra/`.
-3. **`src/tools/`** must remain pure: no LLM, no network IO.
-4. **Architecture tests** enforce all boundaries in `tests/test_architecture_boundaries.py`.
+2. **Legacy** CAN import from `src/tools/`, `src/schemas/`, and `src/infra/`.
+3. Legacy should prefer `src.infra.config`, `src.infra.data`, `src.infra.persistence`, and `src.infra.vectorstore`.
+   The old `src.config`, `src.data`, `src.db`, and `src.vectorstore` packages are deprecated package-level shims only.
+4. **`src/tools/`** must remain pure: no LLM, no network IO.
+5. **Architecture tests** enforce all boundaries in `tests/test_architecture_boundaries.py`.
+6. The legacy tree is a compatibility/reference path only; new Research OS code belongs under `src/`.
 
 ## Migration Path
 

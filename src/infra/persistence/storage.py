@@ -2,7 +2,7 @@
 高层存储 API — 供 Agent 调用的简洁接口。
 
 典型用法:
-    from src.db.storage import FundStorage
+    from src.infra.persistence.storage import FundStorage
 
     store = FundStorage()
 

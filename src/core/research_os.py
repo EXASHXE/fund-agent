@@ -36,7 +36,7 @@ from src.schemas.evidence import EvidenceItem
 from src.schemas.evidence_graph import EvidenceGraph
 from src.schemas.report import FinalThesis
 from src.schemas.research_task import ResearchTask
-from src.tools.evidence.validators import EvidenceGraphCompileReport, compile_evidence_graph
+from src.tools.evidence.validators import EvidenceGraphCompileResult, compile_evidence_graph
 
 
 # ── Public API ──────────────────────────────────────────────────────────────────
@@ -102,7 +102,7 @@ def run_research_task(
 
     # ── Step 1: Query KG FIRST (before anything else) ──────────────────────────
     # Enforced: KG context MUST be captured before Planner.plan() is called.
-    kg_context: dict[str, Any] = _query_kg_context(kg, task)
+    kg_context: dict[str, Any] = _query_kg_context(kg, task, warnings=warnings)
 
     # ── Step 2: Generate initial plan (Planner also queries KG internally) ─────
     plan = planner.plan(task, kg)
@@ -174,11 +174,11 @@ def run_research_task(
                         all_evidence_items.append(item)
 
         # Compile evidence graph from accumulated items
-        compile_report = compile_evidence_graph(all_evidence_items)
-        iteration_compile_reports.append(compile_report.to_dict())
-        if compile_report.warnings:
-            warnings.extend(compile_report.warnings)
-        evidence_graph: EvidenceGraph = compile_report.graph
+        compile_result = compile_evidence_graph(all_evidence_items)
+        iteration_compile_reports.append(compile_result.report.to_dict())
+        if compile_result.report.warnings:
+            warnings.extend(compile_result.report.warnings)
+        evidence_graph: EvidenceGraph = compile_result.graph
 
         # Critic review of current evidence
         critique = critic.review(
@@ -203,16 +203,24 @@ def run_research_task(
 
     # ── Step 4: Decision (only if we have evidence + critique result) ──────────
 
-    final_compile_report: EvidenceGraphCompileReport = compile_evidence_graph(
+    final_compile_result: EvidenceGraphCompileResult = compile_evidence_graph(
         all_evidence_items
     )
-    final_evidence_graph: EvidenceGraph = final_compile_report.graph
-    if final_compile_report.warnings:
-        warnings.extend(final_compile_report.warnings)
+    final_evidence_graph: EvidenceGraph = final_compile_result.graph
+    if final_compile_result.report.warnings:
+        warnings.extend(final_compile_result.report.warnings)
 
     if final_critique is None:
         # Safety: create a default FAIL critique if none was produced
         final_critique = CritiqueResult(status="FAIL", issues=["No critique generated"])
+    elif final_critique.status == "RETRY" and iteration >= max_iterations:
+        final_critique = CritiqueResult(
+            status="EXHAUSTED",
+            issues=["Retry budget exhausted: max_iterations reached"] + final_critique.issues,
+            missing_evidence=final_critique.missing_evidence,
+            retry_plan_suggestions=[],
+            iteration=iteration,
+        )
 
     try:
         final_decision = decision_engine.decide(
@@ -241,8 +249,9 @@ def run_research_task(
         "failed_steps": failed_steps,
         "warnings": warnings,
         "skill_artifacts": skill_artifacts,
-        "evidence_compile_report": final_compile_report.to_dict(),
+        "evidence_compile_report": final_compile_result.report.to_dict(),
         "iteration_compile_reports": iteration_compile_reports,
+        "final_critique_status": final_critique.status,
     }
     return FinalThesis(
         thesis_id=str(uuid.uuid4()),
@@ -274,7 +283,7 @@ def run_research_task(
 
 
 def _query_kg_context(
-    kg: KnowledgeGraph, task: ResearchTask
+    kg: KnowledgeGraph, task: ResearchTask, warnings: list[str] | None = None
 ) -> dict[str, Any]:
     """Query the Knowledge Graph for each fund in the task universe.
 
@@ -302,7 +311,11 @@ def _query_kg_context(
             chain = get_entity_chain(kg, fund_id, depth=2)
             exposure = query_exposure(kg, fund_id)
             context[code] = {"chain": chain, "exposure": exposure}
-        except Exception:
+        except Exception as exc:
+            if warnings is not None:
+                warnings.append(
+                    f"KG query failed for {fund_id}: {type(exc).__name__}: {exc}"
+                )
             context[code] = {"chain": {}, "exposure": {}}
 
     return context

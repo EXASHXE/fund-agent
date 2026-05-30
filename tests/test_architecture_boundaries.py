@@ -173,8 +173,6 @@ ALLOWLIST = frozenset({
     "__init__.py", "cli.py",
     # DEPRECATED compatibility shims — marked for removal
     "config", "data", "db", "kg", "vectorstore",
-    # Internal Python
-    "__pycache__",
 })
 
 
@@ -182,6 +180,7 @@ def test_src_top_level_allowlist():
     """src/ top-level must only contain allowlisted entries."""
     src_dir = os.path.join(PROJECT_ROOT, "src")
     entries = set(os.listdir(src_dir))
+    entries.discard("__pycache__")
     violations = entries - ALLOWLIST
     assert not violations, f"src/ has non-allowlisted entries: {violations}"
 
@@ -195,15 +194,24 @@ KG_IMPLEMENTATION_FILES = {"graph.py", "schema.py", "diff.py", "enrichment.py", 
 
 def test_src_kg_is_only_deprecated_shim():
     """src/kg/ must not contain implementation files — only __init__.py shim."""
-    kg_dir = os.path.join(PROJECT_ROOT, "src", "kg")
-    if not os.path.isdir(kg_dir):
-        pytest.skip("src/kg directory not found")
-    entries = set(os.listdir(kg_dir))
+    _assert_deprecated_shim_only("kg")
+
+
+@pytest.mark.parametrize("shim_dir", ["config", "data", "db", "vectorstore"])
+def test_deprecated_compat_shims_are_init_only(shim_dir):
+    """Deprecated compat shim dirs must not retain implementation files."""
+    _assert_deprecated_shim_only(shim_dir)
+
+
+def _assert_deprecated_shim_only(shim_dir: str):
+    shim_path = os.path.join(PROJECT_ROOT, "src", shim_dir)
+    if not os.path.isdir(shim_path):
+        pytest.skip(f"src/{shim_dir} directory not found")
+    entries = set(os.listdir(shim_path))
     entries.discard("__pycache__")
-    violations = entries & KG_IMPLEMENTATION_FILES
-    assert not violations, (
-        f"src/kg/ contains implementation files that should be removed: {violations}. "
-        f"Use src.graph instead."
+    assert entries == {"__init__.py"}, (
+        f"src/{shim_dir}/ must be only a deprecated __init__.py shim, "
+        f"found: {sorted(entries)}"
     )
 
 

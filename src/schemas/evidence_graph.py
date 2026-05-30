@@ -119,6 +119,8 @@ class EvidenceGraph:
 
         Two items are considered duplicates when:
         - They share the exact same set of related_entities.
+        - They have the same source_type.
+        - They have the same direction.
         - Their claim similarity (word overlap) is > 0.85.
 
         The item with the *lower* confidence_weight is removed. If confidence
@@ -139,7 +141,11 @@ class EvidenceGraph:
                 item_a = self.items[id_a]
                 item_b = self.items[id_b]
 
-                if set(item_a.related_entities) == set(item_b.related_entities):
+                if (
+                    set(item_a.related_entities) == set(item_b.related_entities)
+                    and item_a.source_type == item_b.source_type
+                    and item_a.direction == item_b.direction
+                ):
                     similarity = self._claim_similarity(item_a.claim, item_b.claim)
                     if similarity > 0.85:
                         if item_a.confidence_weight >= item_b.confidence_weight:
