@@ -107,7 +107,7 @@ class TestRetrieverNewsRetrieval:
                  "发布时间": "2026-05-27 10:00:00", "文章来源": "财联社"}),
         ])
 
-        with patch("src.news.news_fetcher._cached_ak_call", return_value=mock_df):
+        with patch("legacy.news.news_fetcher._cached_ak_call", return_value=mock_df):
             news = retriever.retrieve_stock_news("600519")
 
         assert len(news) >= 1
@@ -127,7 +127,7 @@ class TestRetrieverNewsRetrieval:
                  "发布时间": "2026-05-27", "文章来源": "央行"}),
         ])
 
-        with patch("src.news.news_fetcher._cached_ak_call", return_value=mock_df):
+        with patch("legacy.news.news_fetcher._cached_ak_call", return_value=mock_df):
             news = retriever.retrieve_market_news(["央行利率", "LPR"])
 
         assert isinstance(news, list)
@@ -136,7 +136,7 @@ class TestRetrieverNewsRetrieval:
         from legacy.news.retriever import Retriever
         retriever = Retriever()
 
-        with patch("src.news.news_fetcher._cached_ak_call", side_effect=Exception("API error")):
+        with patch("legacy.news.news_fetcher._cached_ak_call", side_effect=Exception("API error")):
             news = retriever.retrieve_stock_news("600519")
 
         assert news == []
@@ -169,7 +169,7 @@ class TestRetrieverIntegration:
         mock_df = MagicMock()
         mock_df.empty = True  # Empty result
 
-        with patch("src.news.news_fetcher._cached_ak_call", return_value=mock_df):
+        with patch("legacy.news.news_fetcher._cached_ak_call", return_value=mock_df):
             all_news = []
             for stock in plan.stocks:
                 news = retriever.retrieve_stock_news(stock)

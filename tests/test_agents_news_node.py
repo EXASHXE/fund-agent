@@ -67,7 +67,7 @@ class TestNewsAgentNode:
             knowledge_graph=_make_kg(),
         )
 
-        with patch("src.agents.graphs.news_agent.NewsPipeline") as mock_pipeline_cls:
+        with patch("legacy.agents.graphs.news_agent.NewsPipeline") as mock_pipeline_cls:
             mock_pipeline = MagicMock()
             mock_pipeline.run.return_value = _mock_pipeline_result(["110011"])
             mock_pipeline_cls.return_value = mock_pipeline
@@ -86,7 +86,7 @@ class TestNewsAgentNode:
             knowledge_graph=_make_kg(),
         )
 
-        with patch("src.agents.graphs.news_agent.NewsPipeline") as mock_pipeline_cls:
+        with patch("legacy.agents.graphs.news_agent.NewsPipeline") as mock_pipeline_cls:
             mock_pipeline = MagicMock()
             mock_pipeline.run.return_value = _mock_pipeline_result(["110011"])
             mock_pipeline_cls.return_value = mock_pipeline
@@ -106,7 +106,7 @@ class TestNewsAgentNode:
 
         state: FundResearchState = dict(EMPTY_STATE)  # type: ignore[arg-type]
 
-        with patch("src.agents.graphs.news_agent.NewsPipeline") as mock_pipeline_cls:
+        with patch("legacy.agents.graphs.news_agent.NewsPipeline") as mock_pipeline_cls:
             mock_pipeline = MagicMock()
             mock_pipeline.run.return_value = {}
             mock_pipeline_cls.return_value = mock_pipeline
@@ -122,7 +122,7 @@ class TestNewsAgentNode:
 
         state = _make_state(knowledge_graph=_make_kg())
 
-        with patch("src.agents.graphs.news_agent.NewsPipeline") as mock_pipeline_cls:
+        with patch("legacy.agents.graphs.news_agent.NewsPipeline") as mock_pipeline_cls:
             mock_pipeline = MagicMock()
             mock_pipeline.run.return_value = {}
             mock_pipeline_cls.return_value = mock_pipeline
@@ -141,7 +141,7 @@ class TestNewsAgentNode:
             knowledge_graph=nx.DiGraph(),
         )
 
-        with patch("src.news.retriever.Retriever.retrieve_market_news") as mock_market:
+        with patch("legacy.news.retriever.Retriever.retrieve_market_news") as mock_market:
             result = news_agent_node(state)
 
         mock_market.assert_not_called()
@@ -160,7 +160,7 @@ class TestNewsAgentNode:
             knowledge_graph=_make_kg(),
         )
 
-        with patch("src.agents.graphs.news_agent.NewsPipeline") as mock_pipeline_cls:
+        with patch("legacy.agents.graphs.news_agent.NewsPipeline") as mock_pipeline_cls:
             mock_pipeline = MagicMock()
             mock_pipeline.run.return_value = _mock_pipeline_result(["110011", "000001"])
             mock_pipeline_cls.return_value = mock_pipeline
@@ -190,7 +190,7 @@ class TestNewsAgentNode:
             knowledge_graph=kg_dict,
         )
 
-        with patch("src.agents.graphs.news_agent.NewsPipeline") as mock_pipeline_cls:
+        with patch("legacy.agents.graphs.news_agent.NewsPipeline") as mock_pipeline_cls:
             mock_pipeline = MagicMock()
             mock_pipeline.run.return_value = _mock_pipeline_result(["110011"])
             mock_pipeline_cls.return_value = mock_pipeline

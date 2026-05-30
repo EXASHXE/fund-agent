@@ -38,8 +38,8 @@ class TestNewsPipeline:
             {"title": "贵州茅台大涨", "content": "涨了", "date": "2026-05-27", "source": "财联社"},
         ]
 
-        with patch("src.news.retriever.Retriever.retrieve_stock_news", return_value=mock_news), \
-             patch("src.news.retriever.Retriever.retrieve_market_news", return_value=[]):
+        with patch("legacy.news.retriever.Retriever.retrieve_stock_news", return_value=mock_news), \
+             patch("legacy.news.retriever.Retriever.retrieve_market_news", return_value=[]):
             pipeline = NewsPipeline()
             result = pipeline.run(["110011"], graph)
 
@@ -59,8 +59,8 @@ class TestNewsPipeline:
 
         mock_news = [{"title": "test", "content": "test", "date": "2026-05-27", "source": "test"}]
 
-        with patch("src.news.retriever.Retriever.retrieve_stock_news", return_value=mock_news), \
-             patch("src.news.retriever.Retriever.retrieve_market_news", return_value=[]):
+        with patch("legacy.news.retriever.Retriever.retrieve_stock_news", return_value=mock_news), \
+             patch("legacy.news.retriever.Retriever.retrieve_market_news", return_value=[]):
             pipeline = NewsPipeline()
             result = pipeline.run(["110011"], graph)
 
@@ -88,8 +88,8 @@ class TestNewsPipeline:
         from legacy.news.news_pipeline import NewsPipeline
         mock_news = [{"title": "test", "content": "test", "date": "2026-05-27", "source": "test"}]
 
-        with patch("src.news.retriever.Retriever.retrieve_stock_news", return_value=mock_news), \
-             patch("src.news.retriever.Retriever.retrieve_market_news", return_value=[]):
+        with patch("legacy.news.retriever.Retriever.retrieve_stock_news", return_value=mock_news), \
+             patch("legacy.news.retriever.Retriever.retrieve_market_news", return_value=[]):
             pipeline = NewsPipeline()
             result = pipeline.run(["110011", "000001"], graph)
 
@@ -101,8 +101,8 @@ class TestNewsPipeline:
         from legacy.news.news_pipeline import NewsPipeline
 
         pipeline = NewsPipeline()
-        with patch("src.news.retriever.Retriever.retrieve_stock_news", return_value=[]), \
-             patch("src.news.retriever.Retriever.retrieve_market_news", return_value=[]):
+        with patch("legacy.news.retriever.Retriever.retrieve_stock_news", return_value=[]), \
+             patch("legacy.news.retriever.Retriever.retrieve_market_news", return_value=[]):
             result = pipeline.run(["999999"], graph)
 
         assert "999999" in result
@@ -115,8 +115,8 @@ class TestNewsPipeline:
 
         mock_news = [{"title": "茅台大涨", "content": "涨5%", "date": "2026-05-27", "source": "财联社"}]
 
-        with patch("src.news.retriever.Retriever.retrieve_stock_news", return_value=mock_news), \
-             patch("src.news.retriever.Retriever.retrieve_market_news", return_value=[]):
+        with patch("legacy.news.retriever.Retriever.retrieve_stock_news", return_value=mock_news), \
+             patch("legacy.news.retriever.Retriever.retrieve_market_news", return_value=[]):
             pipeline = NewsPipeline()
             result = pipeline.run(["110011"], graph)
 
@@ -145,8 +145,8 @@ class TestNewsPipeline:
 
         mock_news = [{"title": "test", "content": "test", "date": "2026-05-27", "source": "test"}]
 
-        with patch("src.news.retriever.Retriever.retrieve_stock_news", return_value=mock_news), \
-             patch("src.news.retriever.Retriever.retrieve_market_news", return_value=[]):
+        with patch("legacy.news.retriever.Retriever.retrieve_stock_news", return_value=mock_news), \
+             patch("legacy.news.retriever.Retriever.retrieve_market_news", return_value=[]):
             pipeline = NewsPipeline()
             result = pipeline.run(["110011"], graph, vector_store=None)
 
@@ -160,8 +160,8 @@ class TestNewsPipeline:
 
         mock_news = [{"title": "test", "content": "test", "date": "2026-05-27", "source": "test"}]
 
-        with patch("src.news.retriever.Retriever.retrieve_stock_news", return_value=mock_news), \
-             patch("src.news.retriever.Retriever.retrieve_market_news", return_value=[]):
+        with patch("legacy.news.retriever.Retriever.retrieve_stock_news", return_value=mock_news), \
+             patch("legacy.news.retriever.Retriever.retrieve_market_news", return_value=[]):
             pipeline = NewsPipeline()
             result = pipeline.run(["110011"], graph)
 

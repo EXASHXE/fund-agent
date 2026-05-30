@@ -34,7 +34,7 @@ class NewsPipelineTest(unittest.TestCase):
             "source": "财联社",
             "matched_terms": ["寒武纪"],
         }]
-        with patch("src.news.news_fetcher.fetch_fund_news", return_value=fetched):
+        with patch("legacy.news.news_fetcher.fetch_fund_news", return_value=fetched):
             result = run_news_pipeline(
                 self._analyzer(),
                 self._config(),
@@ -50,7 +50,7 @@ class NewsPipelineTest(unittest.TestCase):
             {"title": "寒武纪订单增长", "content": "", "date": "2026-05-22", "source": "财联社", "matched_terms": ["寒武纪"]},
             {"title": "寒武纪盘后公告", "content": "", "date": "2026-05-23", "source": "交易所", "matched_terms": ["寒武纪"]},
         ]
-        with patch("src.news.news_fetcher.fetch_fund_news", return_value=fetched):
+        with patch("legacy.news.news_fetcher.fetch_fund_news", return_value=fetched):
             result = run_news_pipeline(
                 self._analyzer(),
                 self._config(),
@@ -94,7 +94,7 @@ class NewsPipelineTest(unittest.TestCase):
             }]
 
         started = time.perf_counter()
-        with patch("src.news.news_fetcher.fetch_fund_news", side_effect=fake_fetch):
+        with patch("legacy.news.news_fetcher.fetch_fund_news", side_effect=fake_fetch):
             result = run_news_pipeline(
                 analyzer,
                 config,

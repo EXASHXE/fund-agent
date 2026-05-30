@@ -72,8 +72,8 @@ class Phase3OptimizationsTest(unittest.TestCase):
             "day_of_week": "mon",
         }
         
-        with patch("src.engine.events.is_trade_day", _is_weekday), \
-             patch("src.engine.events.next_trade_day", _next_weekday):
+        with patch("legacy.engine.events.is_trade_day", _is_weekday), \
+             patch("legacy.engine.events.next_trade_day", _next_weekday):
             events = generate_events(purchases, dca_strategy, [], date(2026, 5, 11))
         self.assertEqual(len([e for e in events if e.event_type == EventType.BUY]), 1)
         
@@ -89,8 +89,8 @@ class Phase3OptimizationsTest(unittest.TestCase):
             "day_of_week": "tue",
         }
         
-        with patch("src.engine.events.is_trade_day", _is_weekday), \
-             patch("src.engine.events.next_trade_day", _next_weekday):
+        with patch("legacy.engine.events.is_trade_day", _is_weekday), \
+             patch("legacy.engine.events.next_trade_day", _next_weekday):
             events_2 = generate_events(purchases_2, dca_strategy_2, [], date(2026, 5, 12))
             
         self.assertEqual(len([e for e in events_2 if e.event_type == EventType.BUY]), 1)

@@ -15,9 +15,9 @@ from legacy.services.workflow_context import build_workflow_context
 class WorkflowContextTest(unittest.TestCase):
     def test_monday_before_cutoff_uses_non_trade_day_mode(self):
         config = SimpleNamespace(holdings=[])
-        with patch("src.services.workflow_context.shared_today", lambda: date(2026, 5, 18)), \
-             patch("src.services.workflow_context.effective_report_date", lambda: date(2026, 5, 15)), \
-             patch("src.engine.calendar.is_trade_day", lambda d: d == date(2026, 5, 18)):
+        with patch("legacy.services.workflow_context.shared_today", lambda: date(2026, 5, 18)), \
+             patch("legacy.services.workflow_context.effective_report_date", lambda: date(2026, 5, 15)), \
+             patch("legacy.engine.calendar.is_trade_day", lambda d: d == date(2026, 5, 18)):
             ctx = build_workflow_context(config, {"by_fund": {}, "funds": []})
 
         self.assertTrue(ctx["run_is_trade_day"])
@@ -89,9 +89,9 @@ class WorkflowContextTest(unittest.TestCase):
                 "017436": {"settle_delay": 2, "nav_date": "2026-05-21", "current_nav": 2, "total_shares": 20, "engine_events": []},
             },
         }
-        with patch("src.services.workflow_context.shared_today", lambda: date(2026, 5, 22)), \
-             patch("src.services.workflow_context.effective_report_date", lambda: date(2026, 5, 22)), \
-             patch("src.engine.calendar.is_trade_day", lambda d: True):
+        with patch("legacy.services.workflow_context.shared_today", lambda: date(2026, 5, 22)), \
+             patch("legacy.services.workflow_context.effective_report_date", lambda: date(2026, 5, 22)), \
+             patch("legacy.engine.calendar.is_trade_day", lambda d: True):
             ctx = build_workflow_context(config, holdings)
 
         self.assertEqual(len(ctx["settlement_rows"]), 2)
@@ -110,9 +110,9 @@ class WorkflowContextTest(unittest.TestCase):
                 {"title": "口径内消息", "date": "2026-05-22"},
             ],
         }]
-        with patch("src.services.workflow_context.shared_today", lambda: date(2026, 5, 23)), \
-             patch("src.services.workflow_context.effective_report_date", lambda: date(2026, 5, 22)), \
-             patch("src.engine.calendar.is_trade_day", lambda d: True):
+        with patch("legacy.services.workflow_context.shared_today", lambda: date(2026, 5, 23)), \
+             patch("legacy.services.workflow_context.effective_report_date", lambda: date(2026, 5, 22)), \
+             patch("legacy.engine.calendar.is_trade_day", lambda d: True):
             ctx = build_workflow_context(config, {"by_fund": {}, "funds": []}, news_data)
 
         self.assertEqual(ctx["top_news"][0]["headline"], "口径内消息")
@@ -250,19 +250,19 @@ class WorkflowContextTest(unittest.TestCase):
         with patch("src.config.loader.load_portfolio_config", lambda path: config), \
              patch("src.config.loader.import_to_database", lambda config: None), \
              patch("src.db.storage.FundStorage", lambda: store), \
-             patch("src.analysis.loader.FundDataLoader", FakeAnalyzer), \
-             patch("src.analysis.correlation.compute_correlations", lambda funds: pd.DataFrame()), \
-             patch("src.core.workflow._build_unified_graph", lambda funds, codes: kg), \
-             patch("src.agents.graphs.supervisor.build_research_graph", lambda: FakeResearchGraph()), \
-             patch("src.news.news_pipeline.NewsPipeline", FakeNewsPipeline), \
-             patch("src.news.finnhub_client.FinnhubNewsClient", lambda: None), \
-             patch("src.news.tavily_client.TavilySearchClient", lambda: None), \
-             patch("src.strategy.engine.StrategyEngine", FakeStrategyEngine), \
-             patch("src.core.workflow._score_with_new_engine", lambda codes, funds, graph, news_results: ([dict(score)], [])), \
-             patch("src.core.workflow.compute_holdings", lambda store, config, codes, funds: {"by_fund": {}, "funds": [], "total_value": 0}), \
-             patch("src.core.workflow.build_workflow_context", lambda config, holdings_data, news_data=None: {"is_trade_day": True}), \
-             patch("src.core.workflow.render_analysis_report", lambda **kwargs: render_calls.append(kwargs) or SimpleNamespace(evidence_path="/tmp/report.evidence.json")), \
-             patch("src.core.workflow.save_snapshot", lambda *args, **kwargs: None):
+             patch("legacy.analysis.loader.FundDataLoader", FakeAnalyzer), \
+             patch("legacy.analysis.correlation.compute_correlations", lambda funds: pd.DataFrame()), \
+             patch("legacy.workflows.workflow._build_unified_graph", lambda funds, codes: kg), \
+             patch("legacy.agents.graphs.supervisor.build_research_graph", lambda: FakeResearchGraph()), \
+             patch("legacy.news.news_pipeline.NewsPipeline", FakeNewsPipeline), \
+             patch("legacy.news.finnhub_client.FinnhubNewsClient", lambda: None), \
+             patch("legacy.news.tavily_client.TavilySearchClient", lambda: None), \
+             patch("legacy.strategy.engine.StrategyEngine", FakeStrategyEngine), \
+             patch("legacy.workflows.workflow._score_with_new_engine", lambda codes, funds, graph, news_results: ([dict(score)], [])), \
+             patch("legacy.workflows.workflow.compute_holdings", lambda store, config, codes, funds: {"by_fund": {}, "funds": [], "total_value": 0}), \
+             patch("legacy.workflows.workflow.build_workflow_context", lambda config, holdings_data, news_data=None: {"is_trade_day": True}), \
+             patch("legacy.workflows.workflow.render_analysis_report", lambda **kwargs: render_calls.append(kwargs) or SimpleNamespace(evidence_path="/tmp/report.evidence.json")), \
+             patch("legacy.workflows.workflow.save_snapshot", lambda *args, **kwargs: None):
             cmd_analyze(args)
 
         self.assertEqual(len(graph_calls), 1)
@@ -348,15 +348,15 @@ class WorkflowContextTest(unittest.TestCase):
         with patch("src.config.loader.load_portfolio_config", lambda path: config), \
              patch("src.config.loader.import_to_database", lambda config: None), \
              patch("src.db.storage.FundStorage", lambda: store), \
-             patch("src.analysis.loader.FundDataLoader", FakeLoader), \
-             patch("src.analysis.correlation.compute_correlations", lambda funds: pd.DataFrame()), \
-             patch("src.core.workflow._build_unified_graph", lambda funds, codes: nx.DiGraph()), \
-             patch("src.core.workflow._score_with_new_engine", fake_score), \
-             patch("src.strategy.engine.StrategyEngine", lambda: FakeStrategyEngine()), \
-             patch("src.core.workflow.compute_holdings", lambda store, config, codes, funds: {"by_fund": {}, "funds": [], "total_value": 0}), \
-             patch("src.core.workflow.build_workflow_context", lambda config, holdings_data, news_data=None: {"is_trade_day": True}), \
-             patch("src.core.workflow.render_analysis_report", fake_render), \
-             patch("src.core.workflow.save_snapshot", lambda *args, **kwargs: None):
+             patch("legacy.analysis.loader.FundDataLoader", FakeLoader), \
+             patch("legacy.analysis.correlation.compute_correlations", lambda funds: pd.DataFrame()), \
+             patch("legacy.workflows.workflow._build_unified_graph", lambda funds, codes: nx.DiGraph()), \
+             patch("legacy.workflows.workflow._score_with_new_engine", fake_score), \
+             patch("legacy.strategy.engine.StrategyEngine", lambda: FakeStrategyEngine()), \
+             patch("legacy.workflows.workflow.compute_holdings", lambda store, config, codes, funds: {"by_fund": {}, "funds": [], "total_value": 0}), \
+             patch("legacy.workflows.workflow.build_workflow_context", lambda config, holdings_data, news_data=None: {"is_trade_day": True}), \
+             patch("legacy.workflows.workflow.render_analysis_report", fake_render), \
+             patch("legacy.workflows.workflow.save_snapshot", lambda *args, **kwargs: None):
             cmd_analyze(args)
 
         self.assertEqual(len(scoring_calls), 1)

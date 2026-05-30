@@ -39,10 +39,10 @@ class EngineCalculatorTest(unittest.TestCase):
             date(2026, 5, 12): 2.0,
         }
 
-        with patch("src.engine.calculator.is_trade_day", _is_weekday), \
-             patch("src.engine.calculator.next_trade_day", _next_weekday), \
-             patch("src.engine.events.is_trade_day", _is_weekday), \
-             patch("src.engine.events.next_trade_day", _next_weekday):
+        with patch("legacy.engine.calculator.is_trade_day", _is_weekday), \
+             patch("legacy.engine.calculator.next_trade_day", _next_weekday), \
+             patch("legacy.engine.events.is_trade_day", _is_weekday), \
+             patch("legacy.engine.events.next_trade_day", _next_weekday):
             result = compute_fund(
                 events=events,
                 nav_map=nav_map,
@@ -65,10 +65,10 @@ class EngineCalculatorTest(unittest.TestCase):
         ]
         nav_map = {date(2026, 5, 11): 1.2345}
 
-        with patch("src.engine.calculator.is_trade_day", _is_weekday), \
-             patch("src.engine.calculator.next_trade_day", _next_weekday), \
-             patch("src.engine.events.is_trade_day", _is_weekday), \
-             patch("src.engine.events.next_trade_day", _next_weekday):
+        with patch("legacy.engine.calculator.is_trade_day", _is_weekday), \
+             patch("legacy.engine.calculator.next_trade_day", _next_weekday), \
+             patch("legacy.engine.events.is_trade_day", _is_weekday), \
+             patch("legacy.engine.events.next_trade_day", _next_weekday):
             result = compute_fund(
                 events=events,
                 nav_map=nav_map,
@@ -93,10 +93,10 @@ class EngineCalculatorTest(unittest.TestCase):
             date(2026, 5, 12): 1.5,
         }
 
-        with patch("src.engine.calculator.is_trade_day", _is_weekday), \
-             patch("src.engine.calculator.next_trade_day", _next_weekday), \
-             patch("src.engine.events.is_trade_day", _is_weekday), \
-             patch("src.engine.events.next_trade_day", _next_weekday):
+        with patch("legacy.engine.calculator.is_trade_day", _is_weekday), \
+             patch("legacy.engine.calculator.next_trade_day", _next_weekday), \
+             patch("legacy.engine.events.is_trade_day", _is_weekday), \
+             patch("legacy.engine.events.next_trade_day", _next_weekday):
             result = compute_fund(
                 events=events,
                 nav_map=nav_map,
@@ -136,10 +136,10 @@ class EngineCalculatorTest(unittest.TestCase):
             ),
         ]
 
-        with patch("src.engine.calculator.is_trade_day", _is_weekday), \
-             patch("src.engine.calculator.next_trade_day", _next_weekday), \
-             patch("src.engine.events.is_trade_day", _is_weekday), \
-             patch("src.engine.events.next_trade_day", _next_weekday):
+        with patch("legacy.engine.calculator.is_trade_day", _is_weekday), \
+             patch("legacy.engine.calculator.next_trade_day", _next_weekday), \
+             patch("legacy.engine.events.is_trade_day", _is_weekday), \
+             patch("legacy.engine.events.next_trade_day", _next_weekday):
             result = compute_fund(
                 events=events,
                 nav_map={date(2026, 5, 12): 3.0},
@@ -171,10 +171,10 @@ class EngineCalculatorTest(unittest.TestCase):
             ),
         ]
 
-        with patch("src.engine.calculator.is_trade_day", _is_weekday), \
-             patch("src.engine.calculator.next_trade_day", _next_weekday), \
-             patch("src.engine.events.is_trade_day", _is_weekday), \
-             patch("src.engine.events.next_trade_day", _next_weekday):
+        with patch("legacy.engine.calculator.is_trade_day", _is_weekday), \
+             patch("legacy.engine.calculator.next_trade_day", _next_weekday), \
+             patch("legacy.engine.events.is_trade_day", _is_weekday), \
+             patch("legacy.engine.events.next_trade_day", _next_weekday):
             result = compute_fund(
                 events=events,
                 nav_map={date(2026, 5, 12): 3.0},
@@ -223,14 +223,14 @@ class EngineCalculatorTest(unittest.TestCase):
             funds={"000001": {"nav": nav_df, "basic": {"name": "测试基金"}}}
         )
 
-        with patch("src.services.portfolio_service.effective_report_date", lambda: date(2026, 5, 15)), \
-             patch("src.services.portfolio_service.dca_effective_date", lambda: date(2026, 5, 15)), \
-             patch("src.services.portfolio_service.shared_today", lambda: date(2026, 5, 15)), \
+        with patch("legacy.services.portfolio_service.effective_report_date", lambda: date(2026, 5, 15)), \
+             patch("legacy.services.portfolio_service.dca_effective_date", lambda: date(2026, 5, 15)), \
+             patch("legacy.services.portfolio_service.shared_today", lambda: date(2026, 5, 15)), \
              patch("src.db.database.get_session", lambda: None), \
-             patch("src.engine.calculator.is_trade_day", _is_weekday), \
-             patch("src.engine.calculator.next_trade_day", _next_weekday), \
-             patch("src.engine.events.is_trade_day", _is_weekday), \
-             patch("src.engine.events.next_trade_day", _next_weekday):
+             patch("legacy.engine.calculator.is_trade_day", _is_weekday), \
+             patch("legacy.engine.calculator.next_trade_day", _next_weekday), \
+             patch("legacy.engine.events.is_trade_day", _is_weekday), \
+             patch("legacy.engine.events.next_trade_day", _next_weekday):
             result = compute_holdings(store, config, ["000001"], analyzer=analyzer)
 
         detail = result["by_fund"]["000001"]

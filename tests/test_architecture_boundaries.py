@@ -184,3 +184,60 @@ def test_src_top_level_allowlist():
     entries = set(os.listdir(src_dir))
     violations = entries - ALLOWLIST
     assert not violations, f"src/ has non-allowlisted entries: {violations}"
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Boundary: src/kg/ must be only a deprecated shim
+# ═══════════════════════════════════════════════════════════════════════════════
+
+KG_IMPLEMENTATION_FILES = {"graph.py", "schema.py", "diff.py", "enrichment.py", "industry_map.py"}
+
+
+def test_src_kg_is_only_deprecated_shim():
+    """src/kg/ must not contain implementation files — only __init__.py shim."""
+    kg_dir = os.path.join(PROJECT_ROOT, "src", "kg")
+    if not os.path.isdir(kg_dir):
+        pytest.skip("src/kg directory not found")
+    entries = set(os.listdir(kg_dir))
+    entries.discard("__pycache__")
+    violations = entries & KG_IMPLEMENTATION_FILES
+    assert not violations, (
+        f"src/kg/ contains implementation files that should be removed: {violations}. "
+        f"Use src.graph instead."
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Boundary: README must not describe old src/ layout as new architecture
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def test_readme_does_not_describe_old_src_layout():
+    """README must not describe old src/ directories as new system architecture."""
+    readme_path = os.path.join(PROJECT_ROOT, "README.md")
+    if not os.path.exists(readme_path):
+        pytest.skip("README.md not found")
+    with open(readme_path) as f:
+        content = f.read()
+    # Old paths that should NOT appear as new architecture descriptions
+    old_path_patterns = [
+        "src/agents/",
+        "src/analysis/",
+        "src/news/",
+        "src/output/",
+        "src/recommend/",
+        "src/ui/",
+        "src/routes/",
+        "src/strategy/",
+        "src/engine/",
+        "src/events/",
+        "src/forecast/",
+        "src/services/",
+        "src/prompts/",
+        "src/decision/",
+        "src/deprecated/",
+    ]
+    violations = [p for p in old_path_patterns if p in content]
+    assert not violations, (
+        f"README still describes old src/ paths as new architecture: {violations}. "
+        f"Update to describe legacy/ paths instead."
+    )

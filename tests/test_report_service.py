@@ -17,8 +17,8 @@ def test_report_service_writes_evidence_and_post_processed_report(tmp_path):
         "composite_score": 76,
     }
 
-    with patch("src.output.report.generate_report", return_value="raw report") as generate, \
-         patch("src.output.validator.post_process_report", return_value="processed report") as post_process:
+    with patch("legacy.output.report.generate_report", return_value="raw report") as generate, \
+         patch("legacy.output.validator.post_process_report", return_value="processed report") as post_process:
         result = render_analysis_report(
             output_path=str(output),
             report_date=date(2026, 5, 22),
@@ -47,9 +47,9 @@ def test_report_service_validates_final_agent_report(tmp_path):
     output = tmp_path / "report.md"
     agent_decisions = {"fund_scores": {"000001": {}}, "recommendations": []}
 
-    with patch("src.output.report.generate_report", return_value="final report"), \
-         patch("src.output.validator.post_process_report", return_value="final report"), \
-         patch("src.output.validator.validate_final_report") as validate:
+    with patch("legacy.output.report.generate_report", return_value="final report"), \
+         patch("legacy.output.validator.post_process_report", return_value="final report"), \
+         patch("legacy.output.validator.validate_final_report") as validate:
         render_analysis_report(
             output_path=str(output),
             report_date=date(2026, 5, 22),

@@ -8,7 +8,7 @@ from typing import Dict, List
 def _infer_exposure_cluster(candidate: Dict) -> str:
     """Infer coarse exposure cluster from fund name/type/theme (pure keyword matching).
 
-    Extracted from src.recommend.engine.infer_exposure_cluster.
+    Extracted from legacy.recommend.engine.infer_exposure_cluster.
     """
     text = f"{candidate.get('name', '')} {candidate.get('type', '')} {candidate.get('theme', '')}"
     if any(kw in text for kw in ["债", "固收", "货币", "短债"]):

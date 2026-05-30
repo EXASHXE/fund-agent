@@ -145,7 +145,7 @@ Host (Claude / GPT / Gemini / LLM ...) 加载 fund-analyst Skill
 python3 -m src.cli analyze -c fund-portfolio.yaml -o report.md
 ```
 
-CLI 是薄封装，仅用于本地调试。核心业务逻辑全部在 `skills/`、`src/tools/`、`src/agents/` 中。
+CLI 是薄封装，仅用于本地调试。核心业务逻辑全部在 `skills/`、`src/core/`、`src/tools/`、`src/schemas/` 中。
 
 ## 数据层
 
@@ -159,7 +159,7 @@ CLI 是薄封装，仅用于本地调试。核心业务逻辑全部在 `skills/`
 
 ## 评分引擎
 
-ScoreEngine 采用 5 维度 AI+因子混合评分，权重随市场状态动态调整（`src/analysis/scoring/`）：
+ScoreEngine 采用 5 维度 AI+因子混合评分，权重随市场状态动态调整（`legacy/analysis/scoring/`）：
 
 ```
 ScoreEngine

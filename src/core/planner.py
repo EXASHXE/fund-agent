@@ -6,7 +6,7 @@ Produces a Plan with ordered, dependency-aware PlanSteps ready for
 execution by the skill pipeline.
 
 Integration with existing agent system: The Planner wraps the gap-analysis
-logic from src.agents.graphs.planner_agent.planner_agent_node, while
+logic from legacy.agents.graphs.planner_agent.planner_agent_node, while
 providing a standalone, typed interface for the Research OS path.
 
 Design constraints:
