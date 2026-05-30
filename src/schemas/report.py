@@ -29,6 +29,10 @@ class FinalThesis:
     critique_status: str = "N/A"
     circuit_broken: bool = False
     kg_context_snapshot: dict[str, Any] = field(default_factory=dict)
+    artifacts: dict[str, Any] = field(default_factory=dict)
+    skill_errors: list[dict[str, Any]] = field(default_factory=list)
+    failed_steps: list[dict[str, Any]] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
     generated_at: str = ""
 
     def to_dict(self) -> dict[str, Any]:
@@ -42,6 +46,10 @@ class FinalThesis:
             "critique_status": self.critique_status,
             "circuit_broken": self.circuit_broken,
             "kg_context_snapshot": self.kg_context_snapshot,
+            "artifacts": self.artifacts,
+            "skill_errors": self.skill_errors,
+            "failed_steps": self.failed_steps,
+            "warnings": self.warnings,
             "generated_at": self.generated_at,
         }
 
@@ -57,5 +65,9 @@ class FinalThesis:
             critique_status=data.get("critique_status", "N/A"),
             circuit_broken=data.get("circuit_broken", False),
             kg_context_snapshot=data.get("kg_context_snapshot", {}),
+            artifacts=data.get("artifacts", {}),
+            skill_errors=data.get("skill_errors", []),
+            failed_steps=data.get("failed_steps", []),
+            warnings=data.get("warnings", []),
             generated_at=data.get("generated_at", ""),
         )

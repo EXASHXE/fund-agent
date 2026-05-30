@@ -224,17 +224,24 @@ class TestCriticCircuitBreaker:
     """Tests for the iteration-based circuit breaker."""
 
     def test_critic_iteration_limit(self, hard_evidence_only, dummy_task):
-        """iteration >= 3 → circuit breaker forces PASS."""
+        """iteration >= 3 with unresolved issues → EXHAUSTED."""
         critic = Critic()
         result = critic.review(dummy_task, hard_evidence_only, iteration=3)
-        assert result.status == "PASS"
-        assert any("circuit breaker" in issue.lower() for issue in result.issues)
+        assert result.status == "EXHAUSTED"
+        assert any("exhausted" in issue.lower() for issue in result.issues)
 
     def test_critic_iteration_limit_exact_max(self, hard_evidence_only, dummy_task):
-        """iteration == MAX_ITERATIONS → circuit breaker triggers."""
+        """iteration == MAX_ITERATIONS with issues returns EXHAUSTED, not PASS."""
         critic = Critic()
         result = critic.review(dummy_task, hard_evidence_only, iteration=critic.MAX_ITERATIONS)
-        assert result.status == "PASS"
+        assert result.status == "EXHAUSTED"
+
+    def test_critic_does_not_force_pass_at_max_iterations(self, hard_evidence_only, dummy_task):
+        """Max iterations must not convert unresolved issues into PASS."""
+        critic = Critic()
+        result = critic.review(dummy_task, hard_evidence_only, iteration=critic.MAX_ITERATIONS)
+        assert result.status == "EXHAUSTED"
+        assert result.issues
 
     def test_critic_iteration_below_limit_no_breaker(self, mixed_evidence_graph, dummy_task):
         """iteration < 3 → circuit breaker does NOT trigger prematurely."""
@@ -321,7 +328,7 @@ class TestCritiqueResult:
         """Review status is a valid CritiqueStatus value."""
         critic = Critic()
         result = critic.review(dummy_task, hard_evidence_only, iteration=0)
-        assert result.status in ("PASS", "RETRY", "FAIL")
+        assert result.status in ("PASS", "RETRY", "FAIL", "EXHAUSTED")
 
     def test_critic_critique_result_to_dict(self):
         """to_dict() serializes all fields correctly."""

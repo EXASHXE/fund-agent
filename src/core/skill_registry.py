@@ -69,7 +69,13 @@ class SkillRegistry:
                 )
             return SkillOutput()
         except Exception as e:
-            return SkillOutput(warnings=[str(e)])
+            return SkillOutput(
+                artifacts={
+                    "skill_error": str(e),
+                    "error_type": type(e).__name__,
+                },
+                warnings=[str(e)],
+            )
 
     def list_skills(self) -> list[str]:
         """List all registered skill names."""

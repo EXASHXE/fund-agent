@@ -238,14 +238,15 @@ class TestEvidenceGraphUpgrade:
         assert item is not None
         assert item.evidence_type == "HardEvidence"
 
-    def test_upgrade_insufficient_support(self):
-        """Fewer than 2 supporting IDs prevents upgrade."""
+    def test_upgrade_with_one_supporting_id(self):
+        """One supporting ID provides 2-source corroboration and upgrades."""
         graph = EvidenceGraph()
         graph.add(_make_soft("ev-soft", claim="test"))
         graph.add(_make_hard("ev-hard1"))
 
         result = graph.upgrade_to_hybrid("ev-soft", ["ev-hard1"])
-        assert result is None
+        assert result is not None
+        assert result.evidence_type == "HybridEvidence"
 
     def test_upgrade_empty_supporting_list(self):
         """Empty supporting list prevents upgrade."""
@@ -700,6 +701,18 @@ class TestEvidenceGraphSerialization:
         assert d["stats"]["hybrid"] == 1
         assert d["stats"]["soft"] == 0
         assert d["stats"]["hard"] == 2
+
+    def test_evidence_graph_to_dict_is_pure(self):
+        """to_dict must not mutate graph edges by detecting conflicts."""
+        graph = EvidenceGraph()
+        graph.add(_make_soft("ev-pos", claim="Bullish", direction="positive"))
+        graph.add(_make_soft("ev-neg", claim="Bearish", direction="negative"))
+
+        before_edges = list(graph.edges)
+        d = graph.to_dict()
+
+        assert graph.edges == before_edges
+        assert d["stats"]["conflicts"] == 1
 
 
 # ═══════════════════════════════════════════════════════════════════════════

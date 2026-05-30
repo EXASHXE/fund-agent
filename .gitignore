@@ -11,6 +11,7 @@ SUPERPOWERS.md
 
 # 数据库
 /data/
+src/data/*.db
 
 # Python
 __pycache__/

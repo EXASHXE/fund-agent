@@ -1,9 +1,9 @@
-"""Pure risk/metric functions extracted from src/analysis/.
+"""Pure risk/metric functions extracted from the legacy analysis modules.
 
 Extracted from:
-  - src/analysis/metrics.py      -> sortino_ratio, compute_perf_from_nav
-  - src/analysis/correlation.py   -> compute_correlations
-  - src/analysis/stress.py        -> stress_test, _fund_exposure_text, _infer_risk_scenarios
+  - legacy/analysis/metrics.py      -> sortino_ratio, compute_perf_from_nav
+  - legacy/analysis/correlation.py   -> compute_correlations
+  - legacy/analysis/stress.py        -> stress_test, _fund_exposure_text, _infer_risk_scenarios
 
 All functions are PURE: zero IO, zero network, zero LLM calls.
 """
@@ -19,7 +19,7 @@ from src.infra.config.defaults import QUANT_CONFIG
 
 
 # ====================================================================
-# From src/analysis/metrics.py (MetricsCalculator class methods)
+# From legacy/analysis/metrics.py (MetricsCalculator class methods)
 # ====================================================================
 
 
@@ -98,7 +98,7 @@ def compute_perf_from_nav(nav_df: Any) -> dict:
 
 
 # ====================================================================
-# From src/analysis/correlation.py
+# From legacy/analysis/correlation.py
 # ====================================================================
 
 
@@ -130,7 +130,7 @@ def compute_correlations(funds_data: Dict) -> pd.DataFrame:
 
 
 # ====================================================================
-# From src/analysis/stress.py
+# From legacy/analysis/stress.py
 # ====================================================================
 
 

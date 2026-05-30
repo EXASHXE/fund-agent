@@ -16,6 +16,7 @@ from src.tools.evidence.builders import (
     build_soft_evidence,
 )
 from src.tools.evidence.validators import (
+    EvidenceGraphCompileReport,
     aggregate_confidence,
     compile_evidence_graph,
     deduplicate_evidence,
@@ -450,13 +451,47 @@ class TestCompileEvidenceGraph:
                 confidence_weight=0.5,
             ),
         ]
-        graph = compile_evidence_graph(items)
+        report = compile_evidence_graph(items)
+        graph = report.graph
+        assert isinstance(report, EvidenceGraphCompileReport)
         assert len(graph.items) == 2
         assert graph.get("ev-1") is not None
         assert graph.get("ev-2") is not None
 
     def test_empty_input(self):
         """Empty list produces empty graph."""
-        graph = compile_evidence_graph([])
+        report = compile_evidence_graph([])
+        graph = report.graph
         assert len(graph.items) == 0
         assert graph.edges == []
+
+    def test_compile_rejects_invalid_evidence(self):
+        """Invalid evidence is rejected before graph assembly."""
+        valid = EvidenceItem(
+            evidence_id="ev-valid",
+            evidence_type="HardEvidence",
+            source_type="tool_a",
+            timestamp=datetime.now(),
+            related_entities=["f1"],
+            claim="Valid evidence",
+            value=1.0,
+        )
+        invalid = EvidenceItem(
+            evidence_id="ev-invalid",
+            evidence_type="HardEvidence",
+            source_type="tool_b",
+            timestamp=datetime.now(),
+            related_entities=["f1"],
+            claim="Invalid evidence",
+            value=1.0,
+        )
+        object.__setattr__(invalid, "confidence_weight", 0.5)
+
+        report = compile_evidence_graph([valid, invalid])
+
+        assert isinstance(report, EvidenceGraphCompileReport)
+        assert report.rejected_count == 1
+        assert report.accepted_count == 1
+        assert "ev-valid" in report.graph.items
+        assert "ev-invalid" not in report.graph.items
+        assert report.rejected_items[0]["evidence_id"] == "ev-invalid"

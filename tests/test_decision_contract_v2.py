@@ -353,8 +353,11 @@ class TestWaitAllowedWhenNonPass:
         empty_graph = EvidenceGraph()
         decision = engine.decide(sample_task, empty_graph, retry_critique)
         assert decision.action == "WAIT"
-        # Engine provides fallback anchor when evidence is empty
-        assert len(decision.rationale_anchor) > 0
+        assert decision.rationale_anchor == []
+        assert any(
+            "insufficient evidence" in condition.lower()
+            for condition in decision.trigger_conditions + decision.audit_trail
+        )
         assert decision.risk_budget > 0
 
 
@@ -464,6 +467,34 @@ class TestDecisionEngineEmptyEvidence:
         decision = engine.decide(sample_task, None, pass_critique)
         assert decision.action == "WAIT"
         assert decision.risk_budget > 0
+
+    def test_active_decision_requires_real_anchor(self) -> None:
+        """Active decisions reject empty or placeholder rationale anchors."""
+        with pytest.raises(ValueError, match="rationale_anchor"):
+            _make_valid_decision(
+                action="BUY",
+                execution_amount=1000.0,
+                rationale_anchor=[],
+            )
+        with pytest.raises(ValueError, match="real evidence_id"):
+            _make_valid_decision(
+                action="BUY",
+                execution_amount=1000.0,
+                rationale_anchor=["no_evidence_available"],
+            )
+
+    def test_wait_can_have_empty_anchor_with_missing_evidence(self) -> None:
+        """WAIT may use an empty anchor when it explains insufficient evidence."""
+        decision = _make_valid_decision(
+            action="WAIT",
+            execution_amount=0.0,
+            rationale_anchor=[],
+            trigger_conditions=["Insufficient evidence to support an active decision"],
+            audit_trail=["Insufficient evidence: no evidence items available"],
+        )
+
+        assert decision.action == "WAIT"
+        assert decision.rationale_anchor == []
 
 
 # ── Test 18: Decision engine respects risk profiles ──────────────────────────

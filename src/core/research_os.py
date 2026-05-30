@@ -7,13 +7,13 @@ full fund-research pipeline:
     2. Plan generation (Planner receives KG context)
     3. Skill execution (registered skills produce EvidenceItems)
     4. Evidence compilation (compile_evidence_graph)
-    5. Critic review (structural checks → PASS / RETRY / FAIL)
+    5. Critic review (structural checks → PASS / RETRY / FAIL / EXHAUSTED)
     6. Decision generation (DecisionEngine.enforce contract rules)
     7. Ledger construction (LedgerBuilder → ExecutionLedger)
 
 Constraints:
     - Max 3 retries by default (configurable via max_iterations)
-    - Circuit breaker on FAIL critique — exits the loop immediately
+    - Circuit breaker on FAIL/EXHAUSTED critique — exits the loop immediately
     - KG MUST be queried before Planner (enforced in code)
     - No LLM / network / IO imports in the main loop
 """
@@ -36,7 +36,7 @@ from src.schemas.evidence import EvidenceItem
 from src.schemas.evidence_graph import EvidenceGraph
 from src.schemas.report import FinalThesis
 from src.schemas.research_task import ResearchTask
-from src.tools.evidence.validators import compile_evidence_graph
+from src.tools.evidence.validators import EvidenceGraphCompileReport, compile_evidence_graph
 
 
 # ── Public API ──────────────────────────────────────────────────────────────────
@@ -94,6 +94,11 @@ def run_research_task(
     final_ledger: ExecutionLedger | None = None
     final_critique: CritiqueResult | None = None
     iteration: int = 0
+    skill_errors: list[dict[str, Any]] = []
+    failed_steps: list[dict[str, Any]] = []
+    warnings: list[str] = []
+    skill_artifacts: dict[str, list[dict[str, Any]]] = {}
+    iteration_compile_reports: list[dict[str, Any]] = []
 
     # ── Step 1: Query KG FIRST (before anything else) ──────────────────────────
     # Enforced: KG context MUST be captured before Planner.plan() is called.
@@ -112,20 +117,68 @@ def run_research_task(
         for step in plan.steps:
             try:
                 skill_output = skill_registry.run(step.skill_name, step.input)
-                if skill_output is not None and skill_output.evidence_items:
-                    for item in skill_output.evidence_items:
-                        if isinstance(item, EvidenceItem):
-                            all_evidence_items.append(item)
-            except (KeyError, Exception):
-                # Skill not registered or execution failed — skip
-                pass
+            except KeyError as exc:
+                _record_skill_failure(
+                    step=step,
+                    iteration=iteration,
+                    exc=exc,
+                    skill_errors=skill_errors,
+                    failed_steps=failed_steps,
+                    warnings=warnings,
+                )
+                continue
+            except Exception as exc:
+                _record_skill_failure(
+                    step=step,
+                    iteration=iteration,
+                    exc=exc,
+                    skill_errors=skill_errors,
+                    failed_steps=failed_steps,
+                    warnings=warnings,
+                )
+                continue
+
+            if skill_output is None:
+                continue
+
+            if skill_output.warnings:
+                warnings.extend(
+                    f"{step.skill_name}: {warning}"
+                    for warning in skill_output.warnings
+                )
+
+            if skill_output.artifacts:
+                skill_artifacts.setdefault(step.step_id, []).append(
+                    {
+                        "iteration": iteration,
+                        "skill_name": step.skill_name,
+                        "artifacts": skill_output.artifacts,
+                    }
+                )
+                if "skill_error" in skill_output.artifacts:
+                    _record_skill_failure(
+                        step=step,
+                        iteration=iteration,
+                        exc=RuntimeError(str(skill_output.artifacts["skill_error"])),
+                        skill_errors=skill_errors,
+                        failed_steps=failed_steps,
+                        warnings=warnings,
+                        error_type=str(
+                            skill_output.artifacts.get("error_type", "SkillError")
+                        ),
+                    )
+
+            if skill_output.evidence_items:
+                for item in skill_output.evidence_items:
+                    if isinstance(item, EvidenceItem):
+                        all_evidence_items.append(item)
 
         # Compile evidence graph from accumulated items
-        evidence_graph: EvidenceGraph
-        if all_evidence_items:
-            evidence_graph = compile_evidence_graph(all_evidence_items)
-        else:
-            evidence_graph = EvidenceGraph()
+        compile_report = compile_evidence_graph(all_evidence_items)
+        iteration_compile_reports.append(compile_report.to_dict())
+        if compile_report.warnings:
+            warnings.extend(compile_report.warnings)
+        evidence_graph: EvidenceGraph = compile_report.graph
 
         # Critic review of current evidence
         critique = critic.review(
@@ -137,8 +190,8 @@ def run_research_task(
         if critique.status == "PASS":
             break
 
-        # Circuit breaker: FAIL → exit immediately
-        if critique.status == "FAIL":
+        # Terminal statuses exit immediately.
+        if critique.status in ("FAIL", "EXHAUSTED"):
             break
 
         # RETRY: use critic suggestions to re-plan
@@ -150,11 +203,12 @@ def run_research_task(
 
     # ── Step 4: Decision (only if we have evidence + critique result) ──────────
 
-    final_evidence_graph: EvidenceGraph
-    if all_evidence_items:
-        final_evidence_graph = compile_evidence_graph(all_evidence_items)
-    else:
-        final_evidence_graph = EvidenceGraph()
+    final_compile_report: EvidenceGraphCompileReport = compile_evidence_graph(
+        all_evidence_items
+    )
+    final_evidence_graph: EvidenceGraph = final_compile_report.graph
+    if final_compile_report.warnings:
+        warnings.extend(final_compile_report.warnings)
 
     if final_critique is None:
         # Safety: create a default FAIL critique if none was produced
@@ -164,7 +218,8 @@ def run_research_task(
         final_decision = decision_engine.decide(
             task, final_evidence_graph, final_critique
         )
-    except Exception:
+    except Exception as exc:
+        warnings.append(f"DecisionEngine failed: {type(exc).__name__}: {exc}")
         final_decision = None
 
     # ── Step 5: Ledger ─────────────────────────────────────────────────────────
@@ -174,12 +229,21 @@ def run_research_task(
             final_ledger = ledger_builder.build(
                 final_decision, final_evidence_graph
             )
-        except Exception:
+        except Exception as exc:
+            warnings.append(f"LedgerBuilder failed: {type(exc).__name__}: {exc}")
             final_ledger = None
 
     # ── Step 6: Compile FinalThesis ────────────────────────────────────────────
 
     from src.schemas.report import FinalThesis
+    artifacts: dict[str, Any] = {
+        "skill_errors": skill_errors,
+        "failed_steps": failed_steps,
+        "warnings": warnings,
+        "skill_artifacts": skill_artifacts,
+        "evidence_compile_report": final_compile_report.to_dict(),
+        "iteration_compile_reports": iteration_compile_reports,
+    }
     return FinalThesis(
         thesis_id=str(uuid.uuid4()),
         task_id=task.task_id,
@@ -193,11 +257,15 @@ def run_research_task(
             if final_ledger is not None and hasattr(final_ledger, "to_dict")
             else None
         ),
-        evidence_count=len(all_evidence_items),
+        evidence_count=len(final_evidence_graph.items),
         iterations=iteration,
         critique_status=final_critique.status,
         circuit_broken=final_critique.status == "FAIL",
         kg_context_snapshot=kg_context,
+        artifacts=artifacts,
+        skill_errors=skill_errors,
+        failed_steps=failed_steps,
+        warnings=warnings,
         generated_at=datetime.now().isoformat(),
     )
 
@@ -238,3 +306,37 @@ def _query_kg_context(
             context[code] = {"chain": {}, "exposure": {}}
 
     return context
+
+
+def _record_skill_failure(
+    *,
+    step: Any,
+    iteration: int,
+    exc: Exception,
+    skill_errors: list[dict[str, Any]],
+    failed_steps: list[dict[str, Any]],
+    warnings: list[str],
+    error_type: str | None = None,
+) -> None:
+    """Record a failed skill step in the FinalThesis audit fields."""
+    err_type = error_type or type(exc).__name__
+    error = {
+        "iteration": iteration,
+        "step_id": getattr(step, "step_id", ""),
+        "skill_name": getattr(step, "skill_name", ""),
+        "error_type": err_type,
+        "message": str(exc),
+    }
+    skill_errors.append(error)
+    failed_steps.append(
+        {
+            **(step.to_dict() if hasattr(step, "to_dict") else {}),
+            "iteration": iteration,
+            "error_type": err_type,
+            "error": str(exc),
+        }
+    )
+    warnings.append(
+        f"Skill {error['skill_name']} failed at iteration {iteration}: "
+        f"{err_type}: {exc}"
+    )

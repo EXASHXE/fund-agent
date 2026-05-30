@@ -25,7 +25,7 @@ fund-agent/
 │   ├── core/                  #   研究编排核心
 │   │   ├── research_os.py     #     主循环：KG→Plan→Skills→Evidence→Critic→Decision→Ledger
 │   │   ├── planner.py         #     KG 驱动的 Plan/PlanStep 生成
-│   │   ├── critic.py          #     6 维度结构化评审 (PASS/RETRY/FAIL)
+│   │   ├── critic.py          #     6 维度结构化评审 (PASS/RETRY/FAIL/EXHAUSTED)
 │   │   ├── decision_engine.py #     合约强制决策引擎
 │   │   ├── skill_registry.py  #     Skill 注册与引导
 │   │   └── ledger.py          #     ExecutionLedger 构建
@@ -96,7 +96,7 @@ ResearchTask → Planner → KnowledgeGraph query → Skill execution → Eviden
 | Entry | CLI command | `ResearchTask` typed dataclass |
 | Planning | None | Planner queries KG then generates PlanSteps |
 | Evidence | Report JSON field | EvidenceGraph (dedup, conflict, hybrid) |
-| Review | None | Critic with PASS/RETRY/FAIL |
+| Review | None | Critic with PASS/RETRY/FAIL/EXHAUSTED |
 | Decision | Basic recommendation | DecisionContract v2 (execution_amount, rationale_anchor, trigger/invalidating_conditions) |
 | Auditing | None | ExecutionLedger with audit trail |
 
@@ -181,7 +181,7 @@ ScoreEngine
 | 合约 | 版本 | 核心字段 | 约束 |
 |------|------|---------|------|
 | `EvidenceItem` | evidence-contract.v2 | 11 字段：evidence_id, evidence_type, source_type, timestamp, related_entities, claim, value, confidence_weight, direction, version, provenance | HardEvidence 置信度恒为 1.0；SoftEvidence 限 [0.1, 0.9] |
-| `Decision` | decision-contract.v2 | 10 字段：decision_id, action, execution_amount, rationale_anchor, trigger_conditions, invalidating_conditions, time_horizon, risk_budget, audit_trail, version | 至少引用一个 evidence_id；BUY/SELL/INCREASE/REDUCE 须有执行金额 |
+| `Decision` | decision-contract.v2 | 10 字段：decision_id, action, execution_amount, rationale_anchor, trigger_conditions, invalidating_conditions, time_horizon, risk_budget, audit_trail, version | 主动决策须引用真实 evidence_id；WAIT/HOLD 可在说明证据不足时空 anchor；BUY/SELL/INCREASE/REDUCE 须有执行金额 |
 | `EvidenceGraph` | — | items{id→EvidenceItem}, edges[(from, to)] | 支持去重、冲突检测、Soft→Hybrid 升级 |
 | `ExecutionLedger` | — | decisions: list[Decision], summary | 可审计决策账本 |
 

@@ -1,6 +1,6 @@
 """Factor matrix builder and score confidence calculator.
 
-Extracted from src/analysis/factors.py.
+Extracted from legacy/analysis/factors.py.
 
 All methods are PURE: zero IO, zero network, zero LLM calls.
 """

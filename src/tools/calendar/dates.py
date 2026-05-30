@@ -85,7 +85,7 @@ def is_trade_day(d: date) -> bool:
     """Check if a date is a trade day (pure weekday-based: Mon-Fri, no holiday calendar).
 
     This is a pure function with no IO, no network, no akshare dependency.
-    For A-share holiday-aware trade day checks, use src.engine.calendar.is_trade_day.
+    For A-share holiday-aware trade day checks, use the legacy calendar adapter.
     """
     return d.weekday() < 5
 

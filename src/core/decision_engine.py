@@ -3,7 +3,8 @@
 Generates Decision instances with contract enforcement:
     - Non-PASS critique → only WAIT/HOLD allowed
     - BUY/SELL/INCREASE/REDUCE require execution_amount > 0
-    - Every Decision references evidence in rationale_anchor
+    - Active Decisions reference real evidence in rationale_anchor
+    - WAIT/HOLD may use an empty anchor only with insufficient-evidence context
     - Full audit trail for traceability
 
 Design constraints:
@@ -30,7 +31,7 @@ class DecisionEngine:
 
     Enforcement rules:
         1. Non-PASS critique → only WAIT/HOLD allowed (downgrade active → WAIT)
-        2. Every Decision must reference evidence in rationale_anchor
+        2. Active decisions must reference evidence in rationale_anchor
         3. Every Decision must have trigger/invalidating conditions
         4. Risk budget always > 0
         5. Audit trail built from evidence and critique
@@ -73,15 +74,21 @@ class DecisionEngine:
         # Rule 4: Build rationale anchor from evidence
         rationale_anchor = self._extract_rationale_anchor(evidence_graph)
 
+        insufficient_evidence = not rationale_anchor
+
         # Rule 5: Build trigger/invalidating conditions
-        trigger_conditions = self._build_trigger_conditions(task, action)
+        trigger_conditions = self._build_trigger_conditions(
+            task, action, insufficient_evidence=insufficient_evidence
+        )
         invalidating_conditions = self._build_invalidating_conditions(task, action)
 
         # Rule 6: Risk budget
         risk_budget = self._calculate_risk_budget(task, action)
 
         # Rule 7: Audit trail
-        audit_trail = self._build_audit_trail(evidence_graph, critique)
+        audit_trail = self._build_audit_trail(
+            evidence_graph, critique, insufficient_evidence=insufficient_evidence
+        )
 
         return Decision(
             decision_id=str(uuid.uuid4()),
@@ -152,18 +159,20 @@ class DecisionEngine:
         """Extract evidence IDs as rationale anchor.
 
         Returns up to 10 evidence IDs from the graph.
-        Returns a descriptive placeholder when no evidence exists.
-        Callers must handle the no-evidence case (typically WAIT/HOLD).
+        Returns an empty list when no evidence exists. WAIT/HOLD may use an
+        empty anchor when trigger/audit text explains insufficient evidence.
         """
         items = getattr(evidence_graph, "items", None)
         if not items:
-            return ["no_evidence_available"]
+            return []
         return list(items.keys())[:10]
 
     def _build_trigger_conditions(
-        self, task: Any, action: str
+        self, task: Any, action: str, insufficient_evidence: bool = False
     ) -> list[str]:
         """Build trigger conditions for the decision."""
+        if action in {"WAIT", "HOLD"} and insufficient_evidence:
+            return ["Insufficient evidence to support an active decision"]
         conditions = [f"Critique status must be PASS for {action}"]
         if action in ACTIVE_ACTIONS:
             conditions.append("Evidence direction consensus confirmed")
@@ -196,13 +205,15 @@ class DecisionEngine:
         return base
 
     def _build_audit_trail(
-        self, evidence_graph: Any, critique: Any
+        self, evidence_graph: Any, critique: Any, insufficient_evidence: bool = False
     ) -> list[str]:
         """Build audit trail from evidence and critique."""
         trail: list[str] = []
         items = getattr(evidence_graph, "items", None)
         if items:
             trail.append(f"Evidence items: {len(items)}")
+        elif insufficient_evidence:
+            trail.append("Insufficient evidence: no evidence items available")
         if critique is not None:
             trail.append(f"Critique status: {getattr(critique, 'status', 'unknown')}")
             issues = getattr(critique, "issues", [])

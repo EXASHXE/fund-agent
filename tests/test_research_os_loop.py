@@ -391,6 +391,35 @@ class TestRunResearchTaskEdgeCases:
         # Should not raise, should complete normally
         assert isinstance(result.iterations, int)
 
+    def test_skill_exception_is_recorded(self, simple_task, empty_kg):
+        """Skill exceptions are recorded in thesis audit fields."""
+
+        def _raising_skill(input_data: dict) -> SkillOutput:
+            raise RuntimeError("boom")
+
+        registry = SkillRegistry()
+        registry.register(
+            SkillDefinition(
+                name="QuantRiskAnalysis",
+                handler=_raising_skill,
+                purpose="Faulty skill",
+            )
+        )
+
+        result = run_research_task(
+            task=simple_task,
+            kg=empty_kg,
+            skill_registry=registry,
+            max_iterations=1,
+        )
+
+        assert result.skill_errors
+        assert result.failed_steps
+        assert result.warnings
+        assert result.artifacts["skill_errors"] == result.skill_errors
+        assert result.skill_errors[0]["skill_name"] == "QuantRiskAnalysis"
+        assert "boom" in result.skill_errors[0]["message"]
+
     def test_run_research_task_max_iterations_zero(self, simple_task, empty_kg, empty_registry):
         """max_iterations=0 should produce a result (empty loop)."""
         result = run_research_task(

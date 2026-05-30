@@ -88,7 +88,7 @@ class EvidenceGraph:
 
         Conditions:
         - The target item must exist and have evidence_type == "SoftEvidence".
-        - At least 2 supporting evidence IDs must be provided.
+        - At least 1 supporting evidence ID must be provided.
         - All supporting IDs must exist in the graph.
 
         Effects:
@@ -101,7 +101,7 @@ class EvidenceGraph:
         item = self.items.get(soft_id)
         if not item or item.evidence_type != "SoftEvidence":
             return None
-        if len(supporting_ids) < 2:
+        if len(supporting_ids) < 1:
             return None
         # Verify all supporting items exist
         for sid in supporting_ids:
@@ -152,15 +152,12 @@ class EvidenceGraph:
 
     # ── Conflict detection ───────────────────────────────────────────────
 
-    def detect_conflicts(self) -> list[tuple[str, str]]:
+    def find_conflicts(self) -> list[tuple[str, str]]:
         """Find evidence pairs with opposite direction for shared entities.
 
         A conflict exists when two evidence items share at least one entity
         and have opposite directions (one "positive", the other "negative").
         Neutral items do not conflict with anything.
-
-        Detected conflicts are automatically registered as typed ``contradicts``
-        edges in the graph.
 
         Returns:
             List of (evidence_id_a, evidence_id_b) tuples for conflicting pairs.
@@ -182,8 +179,22 @@ class EvidenceGraph:
                     item_a.direction == "negative" and item_b.direction == "positive"
                 ):
                     conflicts.append((id_a, id_b))
-                    self.add_contradicts_edge(id_a, id_b)
 
+        return conflicts
+
+    def detect_conflicts(self) -> list[tuple[str, str]]:
+        """Find conflicts and register missing ``contradicts`` edges.
+
+        This method mutates the graph by adding typed contradiction edges. Use
+        ``find_conflicts()`` when callers need a pure read.
+        """
+        conflicts = self.find_conflicts()
+        existing_edges = set(self.edges)
+        for id_a, id_b in conflicts:
+            edge = (id_a, id_b, "contradicts")
+            if edge not in existing_edges:
+                self.add_contradicts_edge(id_a, id_b)
+                existing_edges.add(edge)
         return conflicts
 
     # ── Claim similarity (internal) ──────────────────────────────────────
@@ -289,6 +300,6 @@ class EvidenceGraph:
                 "hard": self.hard_evidence_count(),
                 "soft": self.soft_evidence_count(),
                 "hybrid": self.hybrid_evidence_count(),
-                "conflicts": len(self.detect_conflicts()),
+                "conflicts": len(self.find_conflicts()),
             },
         }

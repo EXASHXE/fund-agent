@@ -5,9 +5,9 @@ PlanStep is grounded in entity-chain and exposure data from the KG.
 Produces a Plan with ordered, dependency-aware PlanSteps ready for
 execution by the skill pipeline.
 
-Integration with existing agent system: The Planner wraps the gap-analysis
-logic from legacy.agents.graphs.planner_agent.planner_agent_node, while
-providing a standalone, typed interface for the Research OS path.
+Integration with existing agent system: The Planner preserves the old
+gap-analysis intent from legacy agents while providing a standalone, typed
+interface for the Research OS path.
 
 Design constraints:
     * No LLM / network / IO imports — this is a pure orchestration module.
@@ -78,9 +78,9 @@ class Plan:
 class Planner:
     """KG-driven fund research planner.
 
-    Wraps the gap-analysis logic from the existing 8-node LangGraph
-    planner agent (src.agents.graphs.planner_agent), but provides a
-    standalone typed interface where gaps are derived from KG entity
+    Preserves the gap-analysis intent from the previous 8-node LangGraph
+    planner agent in legacy/, but provides a standalone typed interface
+    where gaps are derived from KG entity
     chains, exposures, themes, and events — not hardcoded rules.
     """
 

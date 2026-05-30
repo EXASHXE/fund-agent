@@ -1,9 +1,9 @@
-"""Pure math/calculation functions extracted from src/analysis/ and src/engine/.
+"""Pure math/calculation functions extracted from legacy analysis and engine modules.
 
 Extracted from:
-  - src/analysis/holdings.py  -> calc_xirr, compute_hhi, _parse_weight_pct,
-                                 _find_closest_nav, portfolio_summary
-  - src/engine/calculator.py  -> _match_nav, _calc_xirr, compute_portfolio
+  - legacy/analysis/holdings.py  -> calc_xirr, compute_hhi, _parse_weight_pct,
+                                    _find_closest_nav, portfolio_summary
+  - legacy/engine/calculator.py  -> _match_nav, _calc_xirr, compute_portfolio
 
 All functions are PURE: zero IO, zero network, zero LLM calls.
 
@@ -20,7 +20,7 @@ from src.tools.math.xirr import xirr
 
 
 # ====================================================================
-# From src/analysis/holdings.py
+# From legacy/analysis/holdings.py
 # ====================================================================
 
 
@@ -197,7 +197,7 @@ def portfolio_summary(holding_analyses: List[Dict]) -> Dict:
 
 
 # ====================================================================
-# From src/engine/calculator.py
+# From legacy/engine/calculator.py
 # ====================================================================
 
 

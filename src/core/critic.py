@@ -8,7 +8,7 @@ Reviews an EvidenceGraph against ResearchTask requirements, checking for:
 - Untraceable nodes
 - Inference leaps (SoftEvidence without HardEvidence support)
 
-Returns a structured CritiqueResult (PASS / RETRY / FAIL) with
+Returns a structured CritiqueResult (PASS / RETRY / FAIL / EXHAUSTED) with
 actionable retry suggestions. Includes circuit breaker to prevent
 infinite iteration loops.
 
@@ -24,7 +24,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Literal
 
-CritiqueStatus = Literal["PASS", "RETRY", "FAIL"]
+CritiqueStatus = Literal["PASS", "RETRY", "FAIL", "EXHAUSTED"]
 
 
 @dataclass
@@ -33,7 +33,8 @@ class CritiqueResult:
 
     Attributes:
         status: PASS (ready for decision), RETRY (fixable gaps found),
-                or FAIL (unrecoverable issues).
+                FAIL (unrecoverable issues), or EXHAUSTED (retry budget spent
+                with unresolved issues).
         issues: Human-readable descriptions of problems found.
         missing_evidence: Evidence categories or entities that are missing.
         retry_plan_suggestions: Actionable suggestions for the retry plan.
@@ -71,7 +72,7 @@ class Critic:
     5. Untraceable nodes (evidence with no provenance)
     6. Inference leaps (SoftEvidence without supporting HardEvidence)
 
-    Circuit breaker: forces PASS after 3 iterations to prevent infinite loops.
+    Circuit breaker: returns EXHAUSTED after 3 iterations when issues remain.
     """
 
     MAX_ITERATIONS: int = 3
@@ -154,18 +155,17 @@ class Critic:
 
         # ── Determine status ──────────────────────────────────────────────────
 
+        if not issues:
+            return CritiqueResult(status="PASS", iteration=iteration)
+
         if iteration >= self.MAX_ITERATIONS:
-            # Circuit breaker — force PASS after max iterations
             return CritiqueResult(
-                status="PASS",
-                issues=["Circuit breaker: max iterations reached"] + issues,
+                status="EXHAUSTED",
+                issues=["Retry budget exhausted: max iterations reached"] + issues,
                 missing_evidence=missing,
                 retry_plan_suggestions=[],
                 iteration=iteration,
             )
-
-        if not issues:
-            return CritiqueResult(status="PASS", iteration=iteration)
 
         # Critical issues → FAIL (not recoverable)
         if untraceable:
