@@ -1,7 +1,8 @@
 # Skill Runtime Contract
 
-This document defines the beta Skill runtime boundary for Research OS. It is a
-host-native capability contract, not a production provider integration.
+This document defines the Skill runtime boundary for the host-agnostic
+fund-agent skill pack. External agents own planning and orchestration; this
+repository provides callable skills and contracts.
 
 ## Flow
 

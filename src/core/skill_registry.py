@@ -1,4 +1,9 @@
-"""Skill Registry — manages skill registration and execution."""
+"""Optional in-process skill registry.
+
+External agent hosts can instantiate skills directly from the skill pack
+manifest. This registry is a convenience/reference helper, not a required host
+integration layer.
+"""
 
 from dataclasses import dataclass, field
 from typing import Any

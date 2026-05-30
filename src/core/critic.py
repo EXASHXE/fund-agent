@@ -1,4 +1,9 @@
-"""Critic — structural review of EvidenceGraph for decision readiness.
+"""Optional evidence critique helper.
+
+For host-agnostic integrations, prefer
+``src.tools.evidence.review.review_evidence_graph`` as the direct tool API.
+This module remains for reference workflow compatibility and is not an agent
+loop requirement.
 
 Reviews an EvidenceGraph against ResearchTask requirements, checking for:
 - Missing HardEvidence coverage

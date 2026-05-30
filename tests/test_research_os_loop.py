@@ -1,4 +1,4 @@
-"""Tests for Research OS main loop with retry circuit breaker.
+"""Optional reference workflow tests for the deprecated Research OS loop.
 
 Covers:
     - Empty KG / no skills → valid thesis with 0 evidence

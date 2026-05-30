@@ -1,0 +1,13 @@
+tools:
+  evidence_compile:
+    runtime: src.tools.evidence.validators:compile_evidence_graph
+    description: Validate, reject invalid evidence, deduplicate, detect conflicts, upgrade hybrid evidence, and aggregate confidence.
+  evidence_review:
+    runtime: src.tools.evidence.review:review_evidence_graph
+    description: Pure evidence review helper for host agents.
+  hard_evidence_builder:
+    runtime: src.tools.evidence.builders:build_hard_evidence_from_metric
+  soft_evidence_builder:
+    runtime: src.tools.evidence.builders:build_soft_evidence_from_mcp_result
+  mcp_adapter_contract:
+    runtime: src.tools.adapters.mcp:MCPHostAdapter

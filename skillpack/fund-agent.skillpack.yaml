@@ -1,0 +1,99 @@
+name: fund-agent
+version: 0.2.0
+type: host-agnostic-financial-research-skill-pack
+description: Host-agnostic AI financial research skill pack for external agent runtimes.
+
+skills:
+  - name: fund_analysis
+    runtime: src.skills_runtime.fund_analysis:FundAnalysisSkill
+    input_schema: src.schemas.skill:SkillInput
+    output_schema: src.schemas.skill:SkillOutput
+    produces:
+      - HardEvidence
+    requires_mcp: []
+
+  - name: news_research
+    runtime: src.skills_runtime.news_research:NewsResearchSkill
+    input_schema: src.schemas.skill:SkillInput
+    output_schema: src.schemas.skill:SkillOutput
+    produces:
+      - SoftEvidence
+    requires_mcp:
+      - web_search
+      - financial_news
+
+  - name: sentiment_analysis
+    runtime: src.skills_runtime.sentiment_analysis:SentimentAnalysisSkill
+    input_schema: src.schemas.skill:SkillInput
+    output_schema: src.schemas.skill:SkillOutput
+    produces:
+      - SoftEvidence
+    requires_mcp:
+      - social_sentiment
+
+  - name: thesis_generation
+    runtime: src.skills_runtime.thesis_generation:ThesisGenerationSkill
+    input_schema: src.schemas.skill:SkillInput
+    output_schema: src.schemas.skill:SkillOutput
+    produces:
+      - ThesisDraft
+    requires_mcp: []
+    forbidden:
+      - formal_decision_generation
+
+  - name: decision_support
+    runtime: src.skills_runtime.decision_support:DecisionSupportSkill
+    input_schema: src.schemas.skill:SkillInput
+    output_schema: src.schemas.skill:SkillOutput
+    consumes:
+      - EvidenceGraph
+    produces:
+      - Decision
+      - ExecutionLedger
+    requires_mcp: []
+
+tools:
+  - src.tools.evidence.validators:compile_evidence_graph
+  - src.tools.evidence.review:review_evidence_graph
+  - src.tools.evidence.builders:build_hard_evidence_from_metric
+  - src.tools.evidence.builders:build_soft_evidence_from_mcp_result
+  - src.tools.adapters.mcp:MCPHostAdapter
+
+schemas:
+  - src.schemas.skill:SkillInput
+  - src.schemas.skill:SkillOutput
+  - src.schemas.evidence:EvidenceItem
+  - src.schemas.evidence_graph:EvidenceGraph
+  - src.schemas.decision:Decision
+  - src.schemas.decision:ExecutionLedger
+
+contracts:
+  - docs/contracts/evidence-contract.v2.md
+  - docs/contracts/decision-contract.v2.md
+
+mcp_capabilities:
+  - name: web_search
+    required_by:
+      - news_research
+  - name: financial_news
+    required_by:
+      - news_research
+  - name: social_sentiment
+    required_by:
+      - sentiment_analysis
+
+host_integration:
+  planner_owner: external_agent
+  orchestration_owner: external_agent
+  mcp_provider_owner: external_host
+  required_entrypoint: skillpack/fund-agent.skillpack.yaml
+  optional_reference_workflows:
+    - examples/reference_workflows/research_os_example.py
+    - examples/reference_workflows/simple_planner.py
+
+forbidden_behaviors:
+  - hardcode_provider_sdk
+  - require_internal_research_os_runtime
+  - require_fixed_workflow_order
+  - skill_generates_formal_decision_except_decision_support
+  - network_request_outside_mcp_adapter

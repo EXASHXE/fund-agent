@@ -1,0 +1,118 @@
+"""DecisionSupportSkill contract tests."""
+
+from __future__ import annotations
+
+import ast
+import json
+from datetime import datetime
+from pathlib import Path
+
+from src.schemas.evidence import EvidenceItem
+from src.schemas.evidence_graph import EvidenceGraph
+from src.schemas.skill import SkillInput
+from src.skills_runtime.decision_support import DecisionSupportSkill
+
+
+def test_decision_support_skill_outputs_decision_and_ledger():
+    output = DecisionSupportSkill().run(_input(evidence_graph=_positive_graph()))
+
+    assert output.status == "OK"
+    assert output.artifacts["decision"]["action"] in {"BUY", "INCREASE"}
+    assert output.artifacts["decision"]["rationale_anchor"] == ["ev-positive"]
+    assert output.artifacts["execution_ledger"]["decisions"][0]["evidence_ids"] == [
+        "ev-positive"
+    ]
+
+
+def test_decision_support_rejects_active_decision_without_anchor():
+    output = DecisionSupportSkill().run(
+        _input(
+            evidence_graph=EvidenceGraph(),
+            payload_extra={"requested_action": "BUY"},
+        )
+    )
+
+    assert output.status == "FAILED"
+    assert "Active decision requires" in output.errors[0]["message"]
+
+
+def test_decision_support_allows_wait_with_insufficient_evidence():
+    output = DecisionSupportSkill().run(_input(evidence_graph=EvidenceGraph()))
+
+    assert output.status == "OK"
+    decision = output.artifacts["decision"]
+    assert decision["action"] in {"WAIT", "HOLD", "PAUSE_DCA"}
+    assert decision["rationale_anchor"] == []
+    assert any("Insufficient evidence" in item for item in decision["audit_trail"])
+
+
+def test_decision_support_is_json_serializable():
+    output = DecisionSupportSkill().run(_input(evidence_graph=_positive_graph()))
+
+    json.dumps(output.to_dict())
+
+
+def test_decision_support_does_not_import_network_or_llm():
+    imports = _imports_from(Path("src/skills_runtime/decision_support.py"))
+    forbidden = {
+        "requests",
+        "httpx",
+        "aiohttp",
+        "urllib3",
+        "socket",
+        "openai",
+        "anthropic",
+        "langchain",
+    }
+
+    assert not (imports & forbidden)
+
+
+def _input(
+    evidence_graph: EvidenceGraph,
+    payload_extra: dict | None = None,
+) -> SkillInput:
+    payload = {
+        "evidence_graph": evidence_graph.to_dict(),
+        "objective": "review fund",
+        "time_horizon": "1 year",
+        "portfolio_context": {},
+        "risk_budget": {},
+    }
+    payload.update(payload_extra or {})
+    return SkillInput(
+        task_id="decision-support",
+        step_id="decision",
+        skill_name="decision_support",
+        payload=payload,
+    )
+
+
+def _positive_graph() -> EvidenceGraph:
+    graph = EvidenceGraph()
+    graph.add(
+        EvidenceItem(
+            evidence_id="ev-positive",
+            evidence_type="HardEvidence",
+            source_type="quant_tool",
+            timestamp=datetime.now(),
+            related_entities=["fund:110011"],
+            claim="positive risk adjusted return signal",
+            value={"score": 1.0},
+            confidence_weight=1.0,
+            direction="positive",
+            provenance={"tool": "quant_tool"},
+        )
+    )
+    return graph
+
+
+def _imports_from(path: Path) -> set[str]:
+    tree = ast.parse(path.read_text())
+    imports = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            imports.update(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            imports.add(node.module)
+    return imports

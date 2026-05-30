@@ -1,7 +1,12 @@
-"""Research OS — main orchestration loop for AI Financial Research.
+"""Deprecated reference Research OS loop.
 
-The ResearchOS loop is the primary integration point that orchestrates the
-full fund-research pipeline:
+This module is retained as an optional reference workflow for tests and
+examples. It is not the primary product entrypoint for fund-agent. External
+agent hosts should load ``skillpack/fund-agent.skillpack.yaml`` and call
+``src.skills_runtime`` handlers directly.
+
+The reference loop demonstrates one possible orchestration of the
+fund-research pipeline:
 
     1. KG query (MUST happen before Planner, enforced here)
     2. Plan generation (Planner receives KG context)

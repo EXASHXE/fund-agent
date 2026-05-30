@@ -18,6 +18,7 @@ from src.tools.evidence.validators import (
     detect_conflicts,
     validate_evidence,
 )
+from src.tools.evidence.review import EvidenceReviewResult, review_evidence_graph
 
 __all__ = [
     "build_hard_evidence",
@@ -34,4 +35,6 @@ __all__ = [
     "detect_conflicts",
     "aggregate_confidence",
     "compile_evidence_graph",
+    "EvidenceReviewResult",
+    "review_evidence_graph",
 ]

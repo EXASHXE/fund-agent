@@ -1,4 +1,8 @@
-"""Runtime contract tests for the Research OS loop."""
+"""Optional reference workflow tests for the deprecated Research OS loop.
+
+These tests preserve compatibility for the reference workflow. They are not
+host integration requirements for the skill pack product.
+"""
 
 from __future__ import annotations
 

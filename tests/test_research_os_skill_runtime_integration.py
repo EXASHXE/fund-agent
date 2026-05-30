@@ -1,4 +1,7 @@
-"""ResearchOS integration with SkillInput / SkillOutput runtime."""
+"""Optional reference workflow integration with SkillInput / SkillOutput.
+
+Host integrations use the skillpack manifest and skills_runtime directly.
+"""
 
 from __future__ import annotations
 

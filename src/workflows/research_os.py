@@ -1,9 +1,8 @@
-"""Research OS workflow entry point — thin wrapper.
+"""Deprecated optional Research OS reference wrapper.
 
-This module provides the external-facing ``analyze`` function that delegates
-all business logic to ``src.core.research_os.run_research_task``. The entry
-point handles input normalization (dict → ResearchTask) and optional KG
-construction from portfolio holdings data.
+This wrapper is retained for compatibility/reference examples only. External
+agent hosts should use the skill pack manifest and ``src.skills_runtime``
+handlers directly.
 """
 
 from __future__ import annotations
@@ -16,7 +15,7 @@ from src.schemas.research_task import ResearchTask
 
 
 def analyze(task_data: dict[str, Any] | ResearchTask) -> dict[str, Any]:
-    """Thin entry point for Research OS workflow.
+    """Reference-only Research OS workflow.
 
     Converts a dict or ResearchTask into the typed contract, optionally
     builds a KnowledgeGraph from portfolio holdings, then delegates to the

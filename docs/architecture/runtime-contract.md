@@ -1,7 +1,9 @@
-# Research OS Runtime Contract
+# Optional Research OS Reference Contract
 
-This document describes the beta Research OS runtime contract. It is a contract
-and boundary statement, not a production-readiness claim.
+This document describes an optional reference workflow retained for
+compatibility and examples. It is not the host integration contract and not a
+required entrypoint for the fund-agent skill pack. External agents should use
+`skillpack/fund-agent.skillpack.yaml` and `src/skills_runtime` directly.
 
 ## Runtime Flow
 

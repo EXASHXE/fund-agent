@@ -1,8 +1,8 @@
-"""Architecture boundary tests — enforce clean separation between Research OS and legacy.
+"""Architecture boundary tests for the host-agnostic skill pack.
 
-The restructured architecture enforces strict boundaries:
-- Research OS (src/core/, src/schemas/, src/tools/, src/graph/, src/workflows/, src/infra/)
-  must NOT import from the legacy system (legacy/).
+The architecture enforces strict boundaries:
+- Skill pack code must NOT import from the legacy system (legacy/).
+- Runtime skills must not depend on internal ResearchOS orchestration.
 - src/tools/ must remain pure: no LLM, no network IO.
 - src/ top-level must stay within the allowlist.
 - Old src/ directories (news, analysis, output, etc.) must not be imported by new code.
@@ -67,6 +67,8 @@ def _assert_no_imports_matching(dirpath: str, patterns: list[str], label: str):
     ("src/graph", "src/graph"),
     ("src/workflows", "src/workflows"),
     ("src/infra", "src/infra"),
+    ("src/skills_runtime", "src/skills_runtime"),
+    ("src/skillpack", "src/skillpack"),
 ])
 def test_no_legacy_imports(dirpath, label):
     _assert_no_imports_matching(dirpath, ["legacy."], f"{label} must not import from legacy/")
@@ -106,6 +108,7 @@ NEW_CODE_DIRS = [
     "src/workflows",
     "src/infra",
     "src/skills_runtime",
+    "src/skillpack",
 ]
 
 def test_new_code_no_old_imports():
@@ -181,7 +184,19 @@ def test_tools_no_network_io():
 
 def test_schemas_no_heavy_deps():
     imports = _get_imports_from_dir("src/schemas")
-    heavy = {"pandas", "requests", "akshare"}
+    heavy = {
+        "pandas",
+        "requests",
+        "httpx",
+        "aiohttp",
+        "urllib3",
+        "socket",
+        "akshare",
+        "openai",
+        "anthropic",
+        "langchain",
+        "src.infra",
+    }
     violations = [i for i in imports if any(h in i for h in heavy)]
     assert not violations, f"src/schemas imports heavy deps: {violations}"
 
@@ -213,6 +228,22 @@ def test_skills_runtime_does_not_import_provider_sdks():
         "src/skills_runtime",
         provider_or_network,
         "src/skills_runtime must stay adapter-only",
+    )
+
+
+def test_skills_runtime_does_not_import_research_os_runtime():
+    """Host-callable skills must not depend on internal orchestration."""
+    forbidden = [
+        "src.core.research_os",
+        "src.core.planner",
+        "src.core.skill_registry",
+        "src.workflows.research_os",
+        "legacy.",
+    ]
+    _assert_no_imports_matching(
+        "src/skills_runtime",
+        forbidden,
+        "src/skills_runtime must be host-callable without internal runtime",
     )
 
 
@@ -268,13 +299,73 @@ def test_evidence_tools_have_no_network_or_llm_dependency():
         )
 
 
+def test_src_tools_do_not_import_legacy():
+    _assert_no_imports_matching(
+        "src/tools",
+        ["legacy."],
+        "src/tools must not import legacy",
+    )
+
+
+def test_workflows_research_os_has_no_provider_or_legacy_dependency():
+    _assert_no_imports_matching(
+        "src/workflows",
+        ["legacy.", "tavily", "exa", "firecrawl", "finnhub", "reddit"],
+        "src/workflows must not import legacy or provider SDKs",
+    )
+
+
+def test_skillpack_manifest_does_not_require_research_os_entrypoint():
+    """The manifest must not require internal ResearchOS as host entrypoint."""
+    import yaml
+
+    manifest_path = os.path.join(PROJECT_ROOT, "skillpack", "fund-agent.skillpack.yaml")
+    assert os.path.exists(manifest_path)
+    with open(manifest_path) as f:
+        data = yaml.safe_load(f)
+
+    required = data.get("host_integration", {}).get("required_entrypoint", "")
+    assert required == "skillpack/fund-agent.skillpack.yaml"
+    assert "src.core.research_os" not in required
+    assert "src/workflows/research_os.py" not in required
+
+
+def test_readme_positions_skillpack_as_primary_product():
+    readme_path = os.path.join(PROJECT_ROOT, "README.md")
+    with open(readme_path) as f:
+        content = f.read()
+
+    assert "Host-Agnostic AI Financial Research Skill Pack" in content
+    assert "skillpack/fund-agent.skillpack.yaml" in content
+    assert "Host integrations do not need to import or call" in content
+    assert "Research OS Path (New)" not in content
+    assert "primary structured path" not in content
+
+
+def test_host_integration_doc_exists_and_contains_flow():
+    doc_path = os.path.join(PROJECT_ROOT, "docs", "host-integration.md")
+    assert os.path.exists(doc_path)
+    with open(doc_path) as f:
+        content = f.read()
+
+    for phrase in (
+        "external agent host",
+        "load_skillpack_manifest",
+        "resolve_runtime",
+        "SkillInput",
+        "compile_evidence_graph",
+        "DecisionSupportSkill",
+    ):
+        assert phrase in content
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # Top-level allowlist
 # ═══════════════════════════════════════════════════════════════════════════════
 
 ALLOWLIST = frozenset({
     "core", "schemas", "graph", "tools", "infra", "workflows",
-    "skills_runtime",
+    "skills_runtime", "skillpack",
     "__init__.py", "cli.py",
     # DEPRECATED compatibility shims — marked for removal
     "config", "data", "db", "kg", "vectorstore",

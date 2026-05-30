@@ -1,0 +1,17 @@
+schemas:
+  skill_input: src.schemas.skill:SkillInput
+  skill_output: src.schemas.skill:SkillOutput
+  evidence_item: src.schemas.evidence:EvidenceItem
+  evidence_graph: src.schemas.evidence_graph:EvidenceGraph
+  decision: src.schemas.decision:Decision
+  execution_ledger: src.schemas.decision:ExecutionLedger
+
+contract_docs:
+  evidence: docs/contracts/evidence-contract.v2.md
+  decision: docs/contracts/decision-contract.v2.md
+
+rules:
+  - Skills return SkillOutput only.
+  - Formal Decision generation is restricted to decision_support.
+  - Active decisions require real EvidenceGraph evidence_id anchors.
+  - MCP providers are injected by the external host.

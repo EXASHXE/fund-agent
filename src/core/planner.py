@@ -1,4 +1,8 @@
-"""Planner — KG-first inquiry decomposition for fund research.
+"""Optional reference planner helper for fund research.
+
+External agent hosts own planning/orchestration for the skill pack. This
+module is retained as a reference helper and compatibility surface, not as a
+required host integration path.
 
 Queries KnowledgeGraph BEFORE generating plan steps, ensuring every
 PlanStep is grounded in entity-chain and exposure data from the KG.

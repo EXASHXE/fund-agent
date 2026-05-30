@@ -1,0 +1,21 @@
+mcp_capabilities:
+  web_search:
+    description: Host-provided web search capability.
+    required_by:
+      - news_research
+  financial_news:
+    description: Host-provided financial news capability.
+    required_by:
+      - news_research
+  social_sentiment:
+    description: Host-provided social sentiment capability.
+    required_by:
+      - sentiment_analysis
+
+local_capabilities:
+  evidence_compile:
+    runtime: src.tools.evidence.validators:compile_evidence_graph
+  evidence_review:
+    runtime: src.tools.evidence.review:review_evidence_graph
+  decision_support:
+    runtime: src.skills_runtime.decision_support:DecisionSupportSkill
