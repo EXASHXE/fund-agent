@@ -42,3 +42,5 @@ mock.py
 .omo/
 .pytest_cache/
 .coverage
+1.txt
+plan.txt
