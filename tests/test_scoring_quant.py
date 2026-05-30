@@ -10,7 +10,8 @@ from legacy.analysis.scoring.types import ScoreComponent, MarketRegime
 def fund_data_with_perf():
     """Minimal fund data with performance metrics."""
     dates = pd.date_range(end="2026-05-27", periods=252, freq="B")
-    returns = np.random.normal(0.0005, 0.015, 252)  # ~12.6% annual return, ~24% vol
+    rng = np.random.default_rng(42)
+    returns = rng.normal(0.0005, 0.015, 252)  # ~12.6% annual return, ~24% vol
     nav = 1.0 * (1 + pd.Series(returns)).cumprod()
     nav_df = pd.DataFrame({"单位净值": nav, "日增长率": returns * 100}, index=dates)
     return {

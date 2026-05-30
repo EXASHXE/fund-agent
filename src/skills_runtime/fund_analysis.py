@@ -6,7 +6,7 @@ task/KG inputs and does not call MCP, network, or LLM providers.
 
 from __future__ import annotations
 
-from src.schemas.skill import SkillInput, SkillOutput
+from src.schemas.skill import SkillError, SkillInput, SkillOutput
 from src.tools.evidence.builders import build_hard_evidence_from_metric
 
 
@@ -42,11 +42,14 @@ class FundAnalysisSkill:
                 )
             except Exception as exc:
                 errors.append(
-                    {
-                        "type": type(exc).__name__,
-                        "message": str(exc),
-                        "skill_name": skill_input.skill_name,
-                    }
+                    SkillError(
+                        code="EVIDENCE_BUILD_FAILED",
+                        message=str(exc),
+                        details={
+                            "error_type": type(exc).__name__,
+                            "skill_name": skill_input.skill_name,
+                        },
+                    ).to_dict()
                 )
         return SkillOutput(
             step_id=skill_input.step_id,

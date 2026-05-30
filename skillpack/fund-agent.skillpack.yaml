@@ -1,7 +1,11 @@
 name: fund-agent
 version: 0.2.0
+schema_version: skillpack.v1
+package_role: agent_plugin
 type: host-agnostic-financial-research-skill-pack
 description: Host-agnostic AI financial research skill pack for external agent runtimes.
+orchestration_owner: external_agent
+mcp_provider_owner: external_host
 
 skills:
   - name: fund_analysis
@@ -87,6 +91,7 @@ host_integration:
   orchestration_owner: external_agent
   mcp_provider_owner: external_host
   required_entrypoint: skillpack/fund-agent.skillpack.yaml
+  optional_reference_only: true
   optional_reference_workflows:
     - examples/reference_workflows/research_os_example.py
     - examples/reference_workflows/simple_planner.py

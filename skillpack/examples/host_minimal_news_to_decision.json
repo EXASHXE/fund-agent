@@ -1,0 +1,26 @@
+{
+  "description": "External host controlled flow from news_research to evidence compile to decision_support.",
+  "host_owns_orchestration": true,
+  "required_entrypoint": "skillpack/fund-agent.skillpack.yaml",
+  "steps": [
+    {
+      "id": "load_manifest",
+      "action": "load_skillpack_manifest"
+    },
+    {
+      "id": "run_news_research",
+      "runtime": "src.skills_runtime.news_research:NewsResearchSkill",
+      "mcp_adapter": "InMemoryMCPHostAdapter",
+      "skill_input_ref": "skillpack/examples/news_research_input.json"
+    },
+    {
+      "id": "compile_evidence",
+      "tool": "src.tools.evidence.validators:compile_evidence_graph"
+    },
+    {
+      "id": "run_decision_support",
+      "runtime": "src.skills_runtime.decision_support:DecisionSupportSkill",
+      "skill_input_ref": "skillpack/examples/decision_support_input.json"
+    }
+  ]
+}

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from src.schemas.skill import SkillInput, SkillOutput
 from src.skillpack.loader import load_skillpack_manifest, resolve_runtime
+from src.skillpack.manifest import SkillPackManifest
 from src.skillpack.validator import validate_manifest
 from src.skills_runtime.news_research import NewsResearchSkill
 
@@ -54,3 +55,17 @@ def test_skillpack_loader_does_not_depend_on_research_os_or_legacy():
 
     assert "src.core.research_os" not in serialized
     assert "legacy" not in serialized
+
+
+def test_skillpack_manifest_rejects_required_research_os_entrypoint():
+    manifest = load_skillpack_manifest(validate=False)
+    data = manifest.to_dict()
+    data["host_integration"]["required_entrypoint"] = "src.core.research_os:run_research_task"
+    invalid = SkillPackManifest.from_dict(data)
+
+    try:
+        validate_manifest(invalid)
+    except ValueError as exc:
+        assert "ResearchOS" in str(exc)
+    else:
+        raise AssertionError("Expected ResearchOS entrypoint validation failure")

@@ -1,0 +1,16 @@
+{
+  "task_id": "golden-host-flow",
+  "step_id": "fund-analysis-1",
+  "skill_name": "fund_analysis",
+  "payload": {
+    "related_entities": ["fund:110011"]
+  },
+  "kg_context": {
+    "fund_codes": ["110011"]
+  },
+  "required_mcp_capabilities": [],
+  "evidence_context": [],
+  "metadata": {
+    "host_planned": true
+  }
+}

@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from src.schemas.skill import SkillInput, SkillOutput
+from src.schemas.skill import SkillError, SkillInput, SkillOutput
 from src.tools.evidence.builders import build_soft_evidence_from_sentiment
 
 
@@ -27,7 +27,7 @@ class SentimentAnalysisSkill:
         if capability is None:
             return self._failed(
                 skill_input,
-                "MissingMCPCapability",
+                "MISSING_MCP_CAPABILITY",
                 "SentimentResearch requires social_sentiment",
             )
 
@@ -35,8 +35,9 @@ class SentimentAnalysisSkill:
         if not response.get("ok"):
             return self._failed(
                 skill_input,
-                response.get("error", {}).get("type", "MCPError"),
+                "MCP_CALL_FAILED",
                 response.get("error", {}).get("message", "MCP call failed"),
+                details={"capability": capability, "error": response.get("error", {})},
             )
 
         evidence_items = []
@@ -61,16 +62,27 @@ class SentimentAnalysisSkill:
                 )
             except Exception as exc:
                 errors.append(
-                    {
-                        "type": type(exc).__name__,
-                        "message": str(exc),
-                        "skill_name": skill_input.skill_name,
-                    }
+                    SkillError(
+                        code="EVIDENCE_BUILD_FAILED",
+                        message=str(exc),
+                        details={
+                            "error_type": type(exc).__name__,
+                            "skill_name": skill_input.skill_name,
+                        },
+                    ).to_dict()
                 )
 
         status = "OK" if evidence_items and not errors else "PARTIAL"
         if not evidence_items:
             status = "FAILED"
+            if not errors:
+                errors.append(
+                    SkillError(
+                        code="EMPTY_RESULT",
+                        message="SentimentResearch returned no evidence items",
+                        details={"skill_name": skill_input.skill_name},
+                    ).to_dict()
+                )
         return SkillOutput(
             step_id=skill_input.step_id,
             skill_name=skill_input.skill_name,
@@ -99,17 +111,18 @@ class SentimentAnalysisSkill:
         skill_input: SkillInput,
         error_type: str,
         message: str,
+        details: dict | None = None,
     ) -> SkillOutput:
         return SkillOutput(
             step_id=skill_input.step_id,
             skill_name=skill_input.skill_name,
             warnings=[message],
             errors=[
-                {
-                    "type": error_type,
-                    "message": message,
-                    "skill_name": skill_input.skill_name,
-                }
+                SkillError(
+                    code=error_type,
+                    message=message,
+                    details=details or {"skill_name": skill_input.skill_name},
+                ).to_dict()
             ],
             status="FAILED",
         )

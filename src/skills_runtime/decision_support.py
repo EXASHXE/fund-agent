@@ -15,7 +15,7 @@ from src.core.decision_engine import ACTIVE_ACTIONS, DecisionEngine
 from src.core.ledger import LedgerBuilder
 from src.schemas.evidence import EvidenceItem
 from src.schemas.evidence_graph import EvidenceGraph
-from src.schemas.skill import SkillInput, SkillOutput
+from src.schemas.skill import SkillError, SkillInput, SkillOutput
 
 
 class DecisionSupportSkill:
@@ -34,11 +34,17 @@ class DecisionSupportSkill:
 
     def run(self, skill_input: SkillInput) -> SkillOutput:
         try:
+            if "evidence_graph" not in skill_input.payload:
+                raise _SkillContractError(
+                    code="INVALID_INPUT",
+                    message="DecisionSupportSkill requires payload.evidence_graph",
+                )
             graph = _graph_from_payload(skill_input.payload.get("evidence_graph"))
             requested_action = skill_input.payload.get("requested_action")
             if requested_action in ACTIVE_ACTIONS and not graph.items:
-                raise ValueError(
-                    "Active decision requires at least one real evidence anchor"
+                raise _SkillContractError(
+                    code="CONTRACT_VIOLATION",
+                    message="Active decision requires at least one real evidence anchor",
                 )
 
             task = _task_from_payload(skill_input.payload)
@@ -59,15 +65,20 @@ class DecisionSupportSkill:
                 status="OK",
             )
         except Exception as exc:
+            code = getattr(exc, "code", "INTERNAL_ERROR")
             return SkillOutput(
                 step_id=skill_input.step_id,
                 skill_name=skill_input.skill_name,
                 errors=[
-                    {
-                        "type": type(exc).__name__,
-                        "message": str(exc),
-                        "skill_name": skill_input.skill_name,
-                    }
+                    SkillError(
+                        code=code,
+                        message=str(exc),
+                        details={
+                            "error_type": type(exc).__name__,
+                            "skill_name": skill_input.skill_name,
+                        },
+                        recoverable=code != "CONTRACT_VIOLATION",
+                    ).to_dict()
                 ],
                 warnings=[str(exc)],
                 status="FAILED",
@@ -140,3 +151,11 @@ def _critique_from_payload(payload: dict[str, Any], graph: EvidenceGraph) -> Sim
     if issues is None and not graph.items:
         issues = ["insufficient evidence"]
     return SimpleNamespace(status=status, issues=list(issues or []))
+
+
+class _SkillContractError(ValueError):
+    """Internal exception carrying a standard SkillError code."""
+
+    def __init__(self, code: str, message: str) -> None:
+        super().__init__(message)
+        self.code = code

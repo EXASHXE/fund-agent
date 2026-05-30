@@ -1,0 +1,26 @@
+{
+  "task_id": "golden-host-flow",
+  "step_id": "sentiment-1",
+  "skill_name": "sentiment_analysis",
+  "payload": {
+    "related_entities": ["fund:110011"],
+    "mock_mcp_response": {
+      "items": [
+        {
+          "claim": "Host-provided social sentiment is positive",
+          "timestamp": "2026-05-31T00:00:00",
+          "related_entities": ["fund:110011"],
+          "sentiment_score": 0.64
+        }
+      ]
+    }
+  },
+  "kg_context": {
+    "fund_codes": ["110011"]
+  },
+  "required_mcp_capabilities": ["social_sentiment"],
+  "evidence_context": [],
+  "metadata": {
+    "host_planned": true
+  }
+}

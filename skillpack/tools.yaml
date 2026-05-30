@@ -1,13 +1,145 @@
 tools:
-  evidence_compile:
-    runtime: src.tools.evidence.validators:compile_evidence_graph
-    description: Validate, reject invalid evidence, deduplicate, detect conflicts, upgrade hybrid evidence, and aggregate confidence.
-  evidence_review:
-    runtime: src.tools.evidence.review:review_evidence_graph
-    description: Pure evidence review helper for host agents.
-  hard_evidence_builder:
-    runtime: src.tools.evidence.builders:build_hard_evidence_from_metric
-  soft_evidence_builder:
-    runtime: src.tools.evidence.builders:build_soft_evidence_from_mcp_result
-  mcp_adapter_contract:
-    runtime: src.tools.adapters.mcp:MCPHostAdapter
+  - id: compile_evidence_graph
+    import_path: src.tools.evidence.validators:compile_evidence_graph
+    category: evidence
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: list[src.schemas.evidence:EvidenceItem]
+    output_schema: src.tools.evidence.validators:EvidenceGraphCompileResult
+    produces:
+      - EvidenceGraph
+      - EvidenceGraphCompileReport
+    notes: Full evidence pipeline validation, rejection, deduplication, conflict detection, hybrid upgrade, and confidence aggregation.
+
+  - id: review_evidence_graph
+    import_path: src.tools.evidence.review:review_evidence_graph
+    category: evidence
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: src.schemas.evidence_graph:EvidenceGraph
+    output_schema: src.tools.evidence.review:EvidenceReviewResult
+    produces:
+      - EvidenceReviewResult
+    notes: Optional host-callable evidence review helper, not an agent loop.
+
+  - id: build_hard_evidence_from_metric
+    import_path: src.tools.evidence.builders:build_hard_evidence_from_metric
+    category: evidence_builder
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: dict
+    output_schema: src.schemas.evidence:EvidenceItem
+    produces:
+      - HardEvidence
+    notes: Converts a local metric result into HardEvidence with confidence_weight 1.0.
+
+  - id: build_soft_evidence_from_mcp_result
+    import_path: src.tools.evidence.builders:build_soft_evidence_from_mcp_result
+    category: evidence_builder
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: dict
+    output_schema: src.schemas.evidence:EvidenceItem
+    produces:
+      - SoftEvidence
+    notes: Converts structured host MCP output into SoftEvidence.
+
+  - id: calculate_sharpe
+    import_path: src.tools.quant.metrics:calculate_sharpe
+    category: quant
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: list[float]
+    output_schema: float
+    produces:
+      - SharpeRatio
+    notes: Pure annualized Sharpe calculation.
+
+  - id: calculate_sortino
+    import_path: src.tools.quant.metrics:calculate_sortino
+    category: quant
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: list[float]
+    output_schema: float
+    produces:
+      - SortinoRatio
+    notes: Pure annualized Sortino calculation.
+
+  - id: calculate_max_drawdown
+    import_path: src.tools.quant.metrics:calculate_max_drawdown
+    category: quant
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: list[float]
+    output_schema: float
+    produces:
+      - MaxDrawdown
+    notes: Pure max drawdown calculation from NAV series.
+
+  - id: calculate_volatility
+    import_path: src.tools.quant.metrics:calculate_volatility
+    category: quant
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: list[float]
+    output_schema: float
+    produces:
+      - AnnualizedVolatility
+    notes: Pure annualized volatility calculation.
+
+  - id: calculate_hhi
+    import_path: src.tools.quant.metrics:calculate_hhi
+    category: quant
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: list[float]
+    output_schema: float
+    produces:
+      - HHI
+    notes: Holdings concentration metric.
+
+  - id: simulate_position_ledger
+    import_path: src.tools.ledger.settlement:simulate_position_ledger
+    category: ledger
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: dict
+    output_schema: dict
+    produces:
+      - PositionLedgerSimulation
+    notes: Pure deterministic position ledger simulation.
+
+  - id: simulate_dca_plan
+    import_path: src.tools.ledger.dca:simulate_dca_plan
+    category: ledger
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: dict
+    output_schema: dict
+    produces:
+      - DCAPlanSimulation
+    notes: Pure deterministic dollar-cost averaging simulation.
+
+  - id: MCPHostAdapter
+    import_path: src.tools.adapters.mcp:MCPHostAdapter
+    category: adapter_contract
+    pure_function: false
+    network: false
+    llm: false
+    input_schema: dict
+    output_schema: dict
+    produces:
+      - MCPAdapterBoundary
+    notes: Host capability boundary. Concrete provider networking belongs to the external host, not fund-agent.

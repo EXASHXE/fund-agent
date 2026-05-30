@@ -1,0 +1,28 @@
+{
+  "task_id": "golden-host-flow",
+  "step_id": "news-1",
+  "skill_name": "news_research",
+  "payload": {
+    "query": "fund:110011 financial news",
+    "related_entities": ["fund:110011"],
+    "mock_mcp_response": {
+      "items": [
+        {
+          "claim": "Host-provided financial news signal is positive",
+          "timestamp": "2026-05-31T00:00:00",
+          "related_entities": ["fund:110011"],
+          "confidence_weight": 0.7,
+          "direction": "positive"
+        }
+      ]
+    }
+  },
+  "kg_context": {
+    "fund_codes": ["110011"]
+  },
+  "required_mcp_capabilities": ["financial_news"],
+  "evidence_context": [],
+  "metadata": {
+    "host_planned": true
+  }
+}

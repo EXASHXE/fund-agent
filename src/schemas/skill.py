@@ -1,4 +1,4 @@
-"""Skill runtime contracts for Research OS.
+"""Skill runtime contracts for host-agent skill packs.
 
 Skills are evidence producers. They receive a structured ``SkillInput`` and
 return a structured ``SkillOutput``. Formal decisions are produced only by the
@@ -13,11 +13,38 @@ from typing import Any, Literal
 from src.schemas.evidence import EvidenceItem
 
 SkillStatus = Literal["OK", "PARTIAL", "FAILED"]
+SkillErrorCode = Literal[
+    "MISSING_MCP_CAPABILITY",
+    "MCP_CALL_FAILED",
+    "INVALID_INPUT",
+    "EVIDENCE_BUILD_FAILED",
+    "EMPTY_RESULT",
+    "INTERNAL_ERROR",
+    "CONTRACT_VIOLATION",
+]
+
+
+@dataclass
+class SkillError:
+    """Standard structured skill error."""
+
+    code: str
+    message: str
+    details: dict[str, Any] = field(default_factory=dict)
+    recoverable: bool = True
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "code": self.code,
+            "message": self.message,
+            "details": self.details,
+            "recoverable": self.recoverable,
+        }
 
 
 @dataclass
 class SkillInput:
-    """Structured input passed from ResearchOS to a skill."""
+    """Structured input passed from an external host to a skill."""
 
     task_id: str
     step_id: str
@@ -41,7 +68,7 @@ class SkillOutput:
     evidence_items: list[EvidenceItem] = field(default_factory=list)
     artifacts: dict[str, Any] = field(default_factory=dict)
     warnings: list[str] = field(default_factory=list)
-    errors: list[dict[str, Any]] = field(default_factory=list)
+    errors: list[SkillError | dict[str, Any]] = field(default_factory=list)
     used_mcp_capabilities: list[str] = field(default_factory=list)
     status: SkillStatus = "OK"
 
@@ -60,7 +87,10 @@ class SkillOutput:
             ],
             "artifacts": self.artifacts,
             "warnings": self.warnings,
-            "errors": self.errors,
+            "errors": [
+                error.to_dict() if hasattr(error, "to_dict") else error
+                for error in self.errors
+            ],
             "used_mcp_capabilities": self.used_mcp_capabilities,
             "status": self.status,
         }

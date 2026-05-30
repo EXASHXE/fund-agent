@@ -6,7 +6,7 @@ import json
 
 import pytest
 
-from src.schemas.skill import SkillInput, SkillOutput
+from src.schemas.skill import SkillError, SkillInput, SkillOutput
 
 
 def test_skill_input_is_json_serializable():
@@ -47,10 +47,10 @@ def test_skill_output_does_not_contain_decision():
 def test_failed_skill_output_has_structured_errors():
     output = SkillOutput(
         status="FAILED",
-        errors=[{"type": "RuntimeError", "message": "boom"}],
+        errors=[SkillError(code="INTERNAL_ERROR", message="boom").to_dict()],
     )
 
-    assert output.errors[0]["type"] == "RuntimeError"
+    assert output.to_dict()["errors"][0]["code"] == "INTERNAL_ERROR"
     assert output.status == "FAILED"
 
 

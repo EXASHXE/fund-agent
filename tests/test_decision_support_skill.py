@@ -33,6 +33,7 @@ def test_decision_support_rejects_active_decision_without_anchor():
     )
 
     assert output.status == "FAILED"
+    assert output.errors[0]["code"] == "CONTRACT_VIOLATION"
     assert "Active decision requires" in output.errors[0]["message"]
 
 

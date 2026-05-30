@@ -1,0 +1,73 @@
+{
+  "step_id": "decision-1",
+  "skill_name": "decision_support",
+  "evidence_items": [],
+  "artifacts": {
+    "decision": {
+      "decision_id": "decision-golden",
+      "action": "BUY",
+      "execution_amount": 10000.0,
+      "rationale_anchor": ["ev-hard-positive"],
+      "trigger_conditions": [
+        "Critique status must be PASS for BUY",
+        "Evidence direction consensus confirmed"
+      ],
+      "invalidating_conditions": [
+        "Evidence contradiction detected",
+        "Market regime changes to CRISIS",
+        "Risk budget exceeded"
+      ],
+      "time_horizon": "1 year",
+      "risk_budget": 0.05,
+      "audit_trail": [
+        "Evidence items: 1",
+        "Critique status: PASS",
+        "Issues: 0"
+      ],
+      "version": "decision-contract.v2",
+      "created_at": "2026-05-31T00:00:00"
+    },
+    "execution_ledger": {
+      "ledger_id": "ledger-golden",
+      "version": "execution-ledger.v1",
+      "generated_at": "2026-05-31T00:00:00",
+      "decisions": [
+        {
+          "decision_id": "decision-golden",
+          "action": "BUY",
+          "execution_amount": 10000.0,
+          "rationale_anchor": ["ev-hard-positive"],
+          "evidence_ids": ["ev-hard-positive"],
+          "trigger_conditions": [
+            "Critique status must be PASS for BUY",
+            "Evidence direction consensus confirmed"
+          ],
+          "invalidating_conditions": [
+            "Evidence contradiction detected",
+            "Market regime changes to CRISIS",
+            "Risk budget exceeded"
+          ],
+          "time_horizon": "1 year",
+          "risk_budget": 0.05,
+          "audit_trail": [
+            "Evidence items: 1",
+            "Critique status: PASS",
+            "Issues: 0"
+          ],
+          "version": "decision-contract.v2",
+          "created_at": "2026-05-31T00:00:00"
+        }
+      ]
+    },
+    "decision_status": "BUY",
+    "audit_trail": [
+      "Evidence items: 1",
+      "Critique status: PASS",
+      "Issues: 0"
+    ]
+  },
+  "warnings": [],
+  "errors": [],
+  "used_mcp_capabilities": [],
+  "status": "OK"
+}

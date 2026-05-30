@@ -16,8 +16,12 @@ def test_skillpack_manifest_exists_and_has_required_top_level_fields():
     for key in (
         "name",
         "version",
+        "schema_version",
+        "package_role",
         "type",
         "description",
+        "orchestration_owner",
+        "mcp_provider_owner",
         "skills",
         "tools",
         "schemas",
@@ -54,6 +58,28 @@ def test_skillpack_manifest_does_not_require_research_os_entrypoint():
     assert data["host_integration"]["required_entrypoint"] == str(MANIFEST_PATH)
     assert "src.core.research_os" not in serialized
     assert "src/workflows/research_os.py" not in serialized
+
+
+def test_skillpack_manifest_has_schema_version():
+    data = _manifest()
+
+    assert data["schema_version"] == "skillpack.v1"
+    assert data["package_role"] == "agent_plugin"
+
+
+def test_skillpack_manifest_declares_external_orchestration_owner():
+    data = _manifest()
+
+    assert data["orchestration_owner"] == "external_agent"
+    assert data["host_integration"]["orchestration_owner"] == "external_agent"
+    assert data["host_integration"]["planner_owner"] == "external_agent"
+
+
+def test_skillpack_manifest_declares_external_mcp_provider_owner():
+    data = _manifest()
+
+    assert data["mcp_provider_owner"] == "external_host"
+    assert data["host_integration"]["mcp_provider_owner"] == "external_host"
 
 
 def test_skillpack_sidecar_files_exist():

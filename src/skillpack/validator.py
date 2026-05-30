@@ -10,8 +10,12 @@ from src.skillpack.manifest import SkillPackManifest
 REQUIRED_TOP_LEVEL = {
     "name",
     "version",
+    "schema_version",
+    "package_role",
     "type",
     "description",
+    "orchestration_owner",
+    "mcp_provider_owner",
     "skills",
     "tools",
     "schemas",
@@ -28,6 +32,20 @@ def validate_manifest(manifest: SkillPackManifest) -> list[str]:
 
     if manifest.type != "host-agnostic-financial-research-skill-pack":
         errors.append("Manifest type must be host-agnostic-financial-research-skill-pack")
+    if manifest.schema_version != "skillpack.v1":
+        errors.append("Manifest schema_version must be skillpack.v1")
+    if manifest.package_role != "agent_plugin":
+        errors.append("Manifest package_role must be agent_plugin")
+    if manifest.orchestration_owner != "external_agent":
+        errors.append("Manifest orchestration_owner must be external_agent")
+    if manifest.mcp_provider_owner != "external_host":
+        errors.append("Manifest mcp_provider_owner must be external_host")
+    if manifest.host_integration.get("orchestration_owner") != "external_agent":
+        errors.append("host_integration.orchestration_owner must be external_agent")
+    if manifest.host_integration.get("planner_owner") != "external_agent":
+        errors.append("host_integration.planner_owner must be external_agent")
+    if manifest.host_integration.get("mcp_provider_owner") != "external_host":
+        errors.append("host_integration.mcp_provider_owner must be external_host")
     if not manifest.skills:
         errors.append("Manifest must declare at least one skill")
     if _references_research_os_required_entrypoint(manifest):

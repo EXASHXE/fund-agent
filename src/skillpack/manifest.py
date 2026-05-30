@@ -51,8 +51,12 @@ class SkillPackManifest:
 
     name: str
     version: str
+    schema_version: str
+    package_role: str
     type: str
     description: str
+    orchestration_owner: str
+    mcp_provider_owner: str
     skills: list[SkillSpec]
     tools: list[str] = field(default_factory=list)
     schemas: list[str] = field(default_factory=list)
@@ -66,8 +70,12 @@ class SkillPackManifest:
         return cls(
             name=str(data.get("name", "")),
             version=str(data.get("version", "")),
+            schema_version=str(data.get("schema_version", "")),
+            package_role=str(data.get("package_role", "")),
             type=str(data.get("type", "")),
             description=str(data.get("description", "")),
+            orchestration_owner=str(data.get("orchestration_owner", "")),
+            mcp_provider_owner=str(data.get("mcp_provider_owner", "")),
             skills=[
                 SkillSpec.from_dict(item)
                 for item in data.get("skills", [])
@@ -91,8 +99,12 @@ class SkillPackManifest:
         return {
             "name": self.name,
             "version": self.version,
+            "schema_version": self.schema_version,
+            "package_role": self.package_role,
             "type": self.type,
             "description": self.description,
+            "orchestration_owner": self.orchestration_owner,
+            "mcp_provider_owner": self.mcp_provider_owner,
             "skills": [skill.to_dict() for skill in self.skills],
             "tools": self.tools,
             "schemas": self.schemas,

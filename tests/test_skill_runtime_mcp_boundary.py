@@ -32,7 +32,7 @@ def test_news_research_missing_mcp_returns_structured_error():
     )
 
     assert output.status == "FAILED"
-    assert output.errors[0]["type"] == "MissingMCPCapability"
+    assert output.errors[0]["code"] == "MISSING_MCP_CAPABILITY"
 
 
 def test_news_research_outputs_soft_evidence():
@@ -65,7 +65,7 @@ def test_sentiment_missing_mcp_returns_structured_error():
     )
 
     assert output.status == "FAILED"
-    assert output.errors[0]["type"] == "MissingMCPCapability"
+    assert output.errors[0]["code"] == "MISSING_MCP_CAPABILITY"
 
 
 def test_fund_analysis_outputs_hard_evidence():

@@ -310,6 +310,11 @@ def test_evidence_tools_have_no_network_or_llm_dependency():
         "aiohttp",
         "urllib3",
         "socket",
+        "tavily",
+        "exa",
+        "firecrawl",
+        "finnhub",
+        "reddit",
         "openai",
         "anthropic",
         "langchain",
@@ -338,6 +343,28 @@ def test_workflows_research_os_has_no_provider_or_legacy_dependency():
     )
 
 
+def test_skillpack_loader_has_no_network_or_provider_dependency():
+    _assert_no_imports_matching(
+        "src/skillpack",
+        [
+            "requests",
+            "httpx",
+            "aiohttp",
+            "urllib3",
+            "socket",
+            "tavily",
+            "exa",
+            "firecrawl",
+            "finnhub",
+            "reddit",
+            "openai",
+            "anthropic",
+            "langchain",
+        ],
+        "src/skillpack must not import network, LLM, or provider SDKs",
+    )
+
+
 def test_skillpack_manifest_does_not_require_research_os_entrypoint():
     """The manifest must not require internal ResearchOS as host entrypoint."""
     manifest_path = os.path.join(PROJECT_ROOT, "skillpack", "fund-agent.skillpack.yaml")
@@ -361,6 +388,19 @@ def test_skillpack_manifest_does_not_require_research_os():
     )
     assert "src.core.research_os" not in serialized
     assert "src/workflows/research_os.py" not in serialized
+
+
+def test_skillpack_examples_do_not_reference_research_os_required_path():
+    examples_dir = os.path.join(PROJECT_ROOT, "skillpack", "examples")
+    assert os.path.isdir(examples_dir)
+    serialized = []
+    for filename in os.listdir(examples_dir):
+        if filename.endswith(".json"):
+            serialized.append(_read(os.path.join("skillpack", "examples", filename)))
+    content = "\n".join(serialized)
+
+    assert "src.core.research_os" not in content
+    assert "src/workflows/research_os.py" not in content
 
 
 def test_readme_positions_skillpack_as_primary_product():
@@ -420,6 +460,25 @@ def test_host_integration_doc_says_research_os_not_required():
 
     assert "Host integrations do not need to call `src.core.research_os`" in content
     assert "does not own the agent loop" in content
+
+
+def test_agent_host_quickstart_exists():
+    assert os.path.exists(os.path.join(PROJECT_ROOT, "docs", "agent-host-quickstart.md"))
+
+
+def test_agent_host_quickstart_mentions_external_agent_owns_orchestration():
+    content = _read("docs/agent-host-quickstart.md")
+
+    assert "external agent owns orchestration" in content.lower()
+    assert "load_skillpack_manifest" in content
+    assert "DecisionSupportSkill" in content
+
+
+def test_agent_host_quickstart_does_not_require_research_os():
+    content = _read("docs/agent-host-quickstart.md")
+
+    assert "Do not call ResearchOS for host integration" in content
+    assert "src.core.research_os" not in content
 
 
 def test_decision_support_is_only_formal_decision_skill():
