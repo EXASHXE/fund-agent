@@ -89,6 +89,10 @@ Only `src.skills_runtime.decision_support.DecisionSupportSkill` produces formal
 EvidenceGraph anchors. WAIT/HOLD decisions may be anchorless only when
 insufficient evidence is explicitly recorded.
 
+`src.skills_runtime.thesis_generation.ThesisGenerationSkill` produces a
+`thesis_draft` artifact only. It must not produce a formal `Decision`; hosts
+should call `DecisionSupportSkill` for that step.
+
 ## No Required Workflow
 
 External agents can:

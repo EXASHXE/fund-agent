@@ -1,8 +1,9 @@
-"""Optional in-process skill registry.
+"""Deprecated / optional reference runtime helper.
 
+Not required for host integration. External agents should use
+``skillpack/fund-agent.skillpack.yaml`` and ``src.skills_runtime`` directly.
 External agent hosts can instantiate skills directly from the skill pack
-manifest. This registry is a convenience/reference helper, not a required host
-integration layer.
+manifest. This registry is a convenience/reference helper.
 """
 
 from dataclasses import dataclass, field

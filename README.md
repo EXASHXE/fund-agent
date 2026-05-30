@@ -1,4 +1,4 @@
-# fund-agent
+# fund-agent: Host-Agnostic AI Financial Research Skill Pack
 
 > Host-Agnostic AI Financial Research Skill Pack / Agent Plugin.
 
@@ -11,7 +11,12 @@ helpers, and a host-native MCP adapter boundary.
 `fund-agent` is not an internal autonomous ResearchOS runtime, not a fixed
 Planner loop, and not a production agent server.
 
-## Main Product
+## Overview
+
+`fund-agent` packages financial research capabilities so an external agent can
+mount them as a plugin. It does not require a resident autonomous runtime.
+
+## What This Repository Provides
 
 - `skillpack/fund-agent.skillpack.yaml`: primary manifest and host entrypoint
 - `skillpack/capabilities.yaml`: host MCP capability declarations
@@ -28,6 +33,14 @@ Planner loop, and not a production agent server.
 The external host decides which skill to call, in what order, with which MCP
 provider implementations, and how to use the returned evidence.
 
+## What The External Host Owns
+
+- planning and orchestration
+- task memory and retry policy
+- MCP provider implementation and credentials
+- provider rate limits and network access
+- final user interaction and UX
+
 ## Not The Main Product
 
 - internal ResearchOS
@@ -38,6 +51,12 @@ provider implementations, and how to use the returned evidence.
 Reference workflow examples may exist under `examples/reference_workflows/`, but
 they are optional examples only. Host integrations do not need to import or call
 `src.core.research_os`.
+
+## Skill Pack Manifest
+
+The standard plugin entrypoint is
+`skillpack/fund-agent.skillpack.yaml`. It declares runtime classes, schemas,
+contracts, MCP capabilities, and forbidden behaviors.
 
 ## Host Integration Flow
 

@@ -1,9 +1,10 @@
-"""Optional evidence critique helper.
+"""Deprecated / optional reference runtime helper.
 
-For host-agnostic integrations, prefer
+Not required for host integration. External agents should use
+``skillpack/fund-agent.skillpack.yaml`` and ``src.skills_runtime`` directly.
+For host-agnostic evidence review, prefer
 ``src.tools.evidence.review.review_evidence_graph`` as the direct tool API.
-This module remains for reference workflow compatibility and is not an agent
-loop requirement.
+This module remains for reference workflow compatibility.
 
 Reviews an EvidenceGraph against ResearchTask requirements, checking for:
 - Missing HardEvidence coverage

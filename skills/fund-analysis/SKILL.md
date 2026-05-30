@@ -1,23 +1,55 @@
 ---
+id: fund_analysis
 name: fund-analysis
-description: Pure quantitative fund scoring and portfolio exposure analysis — QuantRiskAnalysis + PortfolioExposureAnalysis
+runtime: src.skills_runtime.fund_analysis:FundAnalysisSkill
+input_schema: src.schemas.skill:SkillInput
+output_schema: src.schemas.skill:SkillOutput
+required_mcp_capabilities: []
+produced_evidence_type: HardEvidence
 ---
 
 # Fund Analysis
 
+## Purpose
+
+Produce local quantitative fund evidence such as risk baseline, exposure
+summary, and simple metric artifacts.
+
 ## Contract
 
-- **Purpose**: Pure quantitative fund scoring (Sharpe, Sortino, HHI, volatility, max drawdown) and portfolio exposure analysis via KnowledgeGraph queries
-- **Inputs**: ResearchTask, KnowledgeGraph context, fund portfolio data
-- **Outputs**: HardEvidence items (confidence_weight=1.0) for quant metrics and exposure analysis
-- **Required MCP Capabilities**: None (pure math — no IO, no network, no LLM)
-- **Priority**: 1
-- **Fallback Strategy**: If KG unavailable, compute exposure from raw holdings data directly
-- **Forbidden Behavior**: Do NOT hardcode API keys or vendor SDKs; Do NOT generate final BUY/SELL decisions directly; Do NOT bypass EvidenceGraph; Do NOT use LLM to compute quant metrics
+- `id`: `fund_analysis`
+- `runtime`: `src.skills_runtime.fund_analysis:FundAnalysisSkill`
+- `input_schema`: `src.schemas.skill:SkillInput`
+- `output_schema`: `src.schemas.skill:SkillOutput`
+- `required_mcp_capabilities`: `[]`
+- `produced_evidence_type`: `HardEvidence`
+- `forbidden_behavior`: network requests, LLM calls, provider SDK imports,
+  formal decision generation
 
----
+## Example SkillInput
 
-This skill is the split implementation of the legacy `fund-analyst` umbrella.
-It covers QuantRiskAnalysis and PortfolioExposureAnalysis.
+```json
+{
+  "task_id": "task-1",
+  "step_id": "fund-analysis-1",
+  "skill_name": "fund_analysis",
+  "payload": {"related_entities": ["fund:110011"]},
+  "kg_context": {"fund_codes": ["110011"]},
+  "required_mcp_capabilities": []
+}
+```
 
-See `skills/fund-analyst/SKILL.md` for the legacy umbrella (retained for reference).
+## Example SkillOutput
+
+```json
+{
+  "step_id": "fund-analysis-1",
+  "skill_name": "fund_analysis",
+  "evidence_items": ["HardEvidence"],
+  "artifacts": {},
+  "warnings": [],
+  "errors": [],
+  "used_mcp_capabilities": [],
+  "status": "OK"
+}
+```

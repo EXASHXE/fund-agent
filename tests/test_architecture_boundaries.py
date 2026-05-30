@@ -11,6 +11,7 @@ The architecture enforces strict boundaries:
 import ast
 import os
 import pytest
+import yaml
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -54,6 +55,15 @@ def _assert_no_imports_matching(dirpath: str, patterns: list[str], label: str):
     imports = _get_imports_from_dir(dirpath)
     violations = [i for i in imports if any(p in i for p in patterns)]
     assert not violations, f"{label}: {violations}"
+
+
+def _read(relpath: str) -> str:
+    with open(os.path.join(PROJECT_ROOT, relpath)) as f:
+        return f.read()
+
+
+def _load_skillpack_manifest() -> dict:
+    return yaml.safe_load(_read("skillpack/fund-agent.skillpack.yaml"))
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -247,6 +257,19 @@ def test_skills_runtime_does_not_import_research_os_runtime():
     )
 
 
+def test_skills_runtime_does_not_import_research_os_or_planner():
+    """Runtime skills must not import ResearchOS, Planner, or SkillRegistry."""
+    _assert_no_imports_matching(
+        "src/skills_runtime",
+        [
+            "src.core.research_os",
+            "src.core.planner",
+            "src.core.skill_registry",
+        ],
+        "src/skills_runtime must not depend on internal orchestration",
+    )
+
+
 def test_mcp_adapter_has_no_network_dependency():
     """MCP adapter declaration must not import providers or network clients."""
     provider_or_network = [
@@ -317,8 +340,6 @@ def test_workflows_research_os_has_no_provider_or_legacy_dependency():
 
 def test_skillpack_manifest_does_not_require_research_os_entrypoint():
     """The manifest must not require internal ResearchOS as host entrypoint."""
-    import yaml
-
     manifest_path = os.path.join(PROJECT_ROOT, "skillpack", "fund-agent.skillpack.yaml")
     assert os.path.exists(manifest_path)
     with open(manifest_path) as f:
@@ -328,6 +349,18 @@ def test_skillpack_manifest_does_not_require_research_os_entrypoint():
     assert required == "skillpack/fund-agent.skillpack.yaml"
     assert "src.core.research_os" not in required
     assert "src/workflows/research_os.py" not in required
+
+
+def test_skillpack_manifest_does_not_require_research_os():
+    """Manifest must not require ResearchOS anywhere in host integration."""
+    data = _load_skillpack_manifest()
+    serialized = yaml.safe_dump(data)
+
+    assert data["host_integration"]["required_entrypoint"] == (
+        "skillpack/fund-agent.skillpack.yaml"
+    )
+    assert "src.core.research_os" not in serialized
+    assert "src/workflows/research_os.py" not in serialized
 
 
 def test_readme_positions_skillpack_as_primary_product():
@@ -340,6 +373,29 @@ def test_readme_positions_skillpack_as_primary_product():
     assert "Host integrations do not need to import or call" in content
     assert "Research OS Path (New)" not in content
     assert "primary structured path" not in content
+
+
+def test_readme_identifies_skill_pack_as_primary_product():
+    """README must position fund-agent as a host-mounted skill pack."""
+    content = _read("README.md")
+
+    assert "Host-Agnostic" in content
+    assert "Skill Pack" in content
+    assert "external agent" in content
+    assert "skillpack/fund-agent.skillpack.yaml" in content
+
+
+def test_readme_does_not_require_research_os_for_new_integrations():
+    """README must not tell new integrations to use ResearchOS."""
+    content = _read("README.md")
+    forbidden = [
+        "New integrations should use src.core.research_os",
+        "src/ = Research OS 主路径",
+        "Research OS Path (New)",
+    ]
+
+    violations = [phrase for phrase in forbidden if phrase in content]
+    assert not violations
 
 
 def test_host_integration_doc_exists_and_contains_flow():
@@ -357,6 +413,58 @@ def test_host_integration_doc_exists_and_contains_flow():
         "DecisionSupportSkill",
     ):
         assert phrase in content
+
+
+def test_host_integration_doc_says_research_os_not_required():
+    content = _read("docs/host-integration.md")
+
+    assert "Host integrations do not need to call `src.core.research_os`" in content
+    assert "does not own the agent loop" in content
+
+
+def test_decision_support_is_only_formal_decision_skill():
+    data = _load_skillpack_manifest()
+    decision_skills = [
+        skill["name"]
+        for skill in data["skills"]
+        if "Decision" in skill.get("produces", [])
+        or "ExecutionLedger" in skill.get("produces", [])
+    ]
+
+    assert decision_skills == ["decision_support"]
+
+
+def test_thesis_generation_forbids_decision_generation():
+    data = _load_skillpack_manifest()
+    thesis = next(skill for skill in data["skills"] if skill["name"] == "thesis_generation")
+
+    assert "formal_decision_generation" in thesis.get("forbidden", [])
+    assert "formal_decision_generation" in _read("skills/thesis-generation/SKILL.md")
+
+
+def test_manifest_skill_docs_have_runtime_contract_fields():
+    docs = {
+        "fund_analysis": "skills/fund-analysis/SKILL.md",
+        "news_research": "skills/news-research/SKILL.md",
+        "sentiment_analysis": "skills/sentiment-analysis/SKILL.md",
+        "thesis_generation": "skills/thesis-generation/SKILL.md",
+        "decision_support": "skills/decision-support/SKILL.md",
+    }
+    required = (
+        "id:",
+        "runtime:",
+        "input_schema:",
+        "output_schema:",
+        "required_mcp_capabilities",
+        "Example SkillInput",
+        "Example SkillOutput",
+    )
+
+    for skill_id, path in docs.items():
+        content = _read(path)
+        assert skill_id in content
+        for phrase in required:
+            assert phrase in content, f"{path} missing {phrase}"
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
