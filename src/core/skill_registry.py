@@ -1,26 +1,9 @@
 """Skill Registry — manages skill registration and execution."""
 
 from dataclasses import dataclass, field
-from typing import Callable, Any
+from typing import Any
 
-
-@dataclass
-class SkillOutput:
-    """Output from a skill execution."""
-
-    evidence_items: list = field(default_factory=list)
-    artifacts: dict = field(default_factory=dict)
-    warnings: list[str] = field(default_factory=list)
-
-    def to_dict(self) -> dict:
-        return {
-            "evidence_items": [
-                e.to_dict() if hasattr(e, "to_dict") else e
-                for e in self.evidence_items
-            ],
-            "artifacts": self.artifacts,
-            "warnings": self.warnings,
-        }
+from src.schemas.skill import SkillInput, SkillOutput
 
 
 @dataclass
@@ -28,7 +11,7 @@ class SkillDefinition:
     """Definition of a registered skill."""
 
     name: str
-    handler: Callable
+    handler: Any
     purpose: str = ""
     required_mcp_capabilities: list[str] = field(default_factory=list)
     priority: int = 3
@@ -38,8 +21,9 @@ class SkillDefinition:
 class SkillRegistry:
     """Registry for skill registration and execution."""
 
-    def __init__(self, mcp_adapter: Any = None):
+    def __init__(self, tool_registry: Any = None, mcp_adapter: Any = None):
         self._skills: dict[str, SkillDefinition] = {}
+        self.tool_registry = tool_registry
         self.mcp_adapter = mcp_adapter
 
     def register(self, skill: SkillDefinition) -> None:
@@ -54,28 +38,96 @@ class SkillRegistry:
             raise KeyError(f"Skill '{name}' not found in registry")
         return self._skills[name]
 
-    def run(self, name: str, input_data: dict = None) -> SkillOutput:
-        """Run a registered skill with input data."""
-        skill = self.get(name)
+    def register_skill(self, name: str, handler: Any) -> None:
+        """Register a runtime skill handler by name."""
+        self.register(SkillDefinition(name=name, handler=handler))
+
+    def run_skill(self, skill_input: SkillInput) -> SkillOutput:
+        """Run a registered skill with the structured runtime contract.
+
+        Missing skills, missing MCP capabilities, and handler exceptions are
+        returned as structured ``SkillOutput`` failures.
+        """
         try:
-            result = skill.handler(input_data or {})
-            if isinstance(result, SkillOutput):
-                return result
-            # Wrap raw result
-            if isinstance(result, dict):
-                return SkillOutput(
-                    evidence_items=result.get("evidence_items", []),
-                    artifacts=result.get("artifacts", {}),
-                    warnings=result.get("warnings", []),
-                )
-            return SkillOutput()
+            skill = self.get(skill_input.skill_name)
+        except KeyError as exc:
+            return self._failed_output(
+                skill_input,
+                error_type="KeyError",
+                message=str(exc),
+            )
+
+        required = list(
+            dict.fromkeys(
+                list(skill_input.required_mcp_capabilities)
+                + list(skill.required_mcp_capabilities)
+            )
+        )
+        missing = [
+            capability
+            for capability in required
+            if self.mcp_adapter is None
+            or not self.mcp_adapter.has_capability(capability)
+        ]
+        if missing:
+            return self._failed_output(
+                skill_input,
+                error_type="MissingMCPCapability",
+                message=(
+                    "Missing required MCP capability: "
+                    + ", ".join(missing)
+                ),
+                details={"missing_capabilities": missing},
+            )
+
+        try:
+            result = self._invoke_handler(skill.handler, skill_input)
+        except Exception as exc:
+            return self._failed_output(
+                skill_input,
+                error_type=type(exc).__name__,
+                message=str(exc),
+            )
+
+        output = self._coerce_output(result, skill_input)
+        output.step_id = output.step_id or skill_input.step_id
+        output.skill_name = output.skill_name or skill_input.skill_name
+        return output
+
+    def run(self, name: str, input_data: dict = None) -> SkillOutput:
+        """Run a registered skill with legacy dict input data."""
+        skill = self.get(name)
+        skill_input = SkillInput(
+            task_id="",
+            step_id="",
+            skill_name=name,
+            payload=input_data or {},
+            required_mcp_capabilities=list(skill.required_mcp_capabilities),
+        )
+        try:
+            result = self._invoke_handler(
+                skill.handler,
+                skill_input,
+                legacy_payload=True,
+            )
+            return self._coerce_output(result, skill_input)
         except Exception as e:
             return SkillOutput(
+                step_id=skill_input.step_id,
+                skill_name=name,
                 artifacts={
                     "skill_error": str(e),
                     "error_type": type(e).__name__,
                 },
                 warnings=[str(e)],
+                errors=[
+                    {
+                        "type": type(e).__name__,
+                        "message": str(e),
+                        "skill_name": name,
+                    }
+                ],
+                status="FAILED",
             )
 
     def list_skills(self) -> list[str]:
@@ -85,6 +137,66 @@ class SkillRegistry:
     def unregister(self, name: str) -> None:
         """Unregister a skill."""
         self._skills.pop(name, None)
+
+    def _invoke_handler(
+        self,
+        handler: Any,
+        skill_input: SkillInput,
+        legacy_payload: bool = False,
+    ) -> Any:
+        if hasattr(handler, "mcp_adapter"):
+            handler.mcp_adapter = self.mcp_adapter
+        if hasattr(handler, "tool_registry"):
+            handler.tool_registry = self.tool_registry
+        if hasattr(handler, "run") and callable(handler.run):
+            return handler.run(skill_input)
+        if callable(handler):
+            return handler(skill_input.payload if legacy_payload else skill_input)
+        raise TypeError("Skill handler must be callable or expose run(input)")
+
+    def _coerce_output(self, result: Any, skill_input: SkillInput) -> SkillOutput:
+        if isinstance(result, SkillOutput):
+            return result
+        if isinstance(result, dict):
+            return SkillOutput(
+                step_id=result.get("step_id", skill_input.step_id),
+                skill_name=result.get("skill_name", skill_input.skill_name),
+                evidence_items=result.get("evidence_items", []),
+                artifacts=result.get("artifacts", {}),
+                warnings=result.get("warnings", []),
+                errors=result.get("errors", []),
+                used_mcp_capabilities=result.get("used_mcp_capabilities", []),
+                status=result.get("status", "OK"),
+            )
+        return SkillOutput(
+            step_id=skill_input.step_id,
+            skill_name=skill_input.skill_name,
+        )
+
+    def _failed_output(
+        self,
+        skill_input: SkillInput,
+        *,
+        error_type: str,
+        message: str,
+        details: dict[str, Any] | None = None,
+    ) -> SkillOutput:
+        error = {
+            "type": error_type,
+            "message": message,
+            "step_id": skill_input.step_id,
+            "skill_name": skill_input.skill_name,
+        }
+        if details:
+            error.update(details)
+        return SkillOutput(
+            step_id=skill_input.step_id,
+            skill_name=skill_input.skill_name,
+            artifacts={"skill_error": message, "error_type": error_type},
+            warnings=[message],
+            errors=[error],
+            status="FAILED",
+        )
 
 
 # Default registry singleton
@@ -109,16 +221,13 @@ def bootstrap_default_registry(registry: SkillRegistry | None = None) -> SkillRe
 
     # ── QuantRiskAnalysis ────────────────────────────────────────────────
     try:
-        from skills.fund_analysis.skill import FundAnalysisSkill
+        from src.skills_runtime.fund_analysis import FundAnalysisSkill
         skill = FundAnalysisSkill()
         registry.register(SkillDefinition(
             name="QuantRiskAnalysis",
-            handler=lambda inp: skill.run(inp) if hasattr(skill, 'run') else SkillOutput(
-                evidence_items=[],
-                artifacts={"note": "FundAnalysisSkill registered as QuantRiskAnalysis"},
-            ),
+            handler=skill,
             purpose="Quantitative risk analysis and score computation",
-            required_mcp_capabilities=["TrendRadar", "Tavily"],
+            required_mcp_capabilities=[],
             priority=1,
             forbidden_behavior=["Do NOT generate final BUY/SELL decisions"],
         ))
@@ -143,16 +252,13 @@ def bootstrap_default_registry(registry: SkillRegistry | None = None) -> SkillRe
 
     # ── NewsResearch ─────────────────────────────────────────────────────
     try:
-        from skills.news_research.skill import NewsResearchSkill
+        from src.skills_runtime.news_research import NewsResearchSkill
         skill = NewsResearchSkill()
         registry.register(SkillDefinition(
             name="NewsResearch",
-            handler=lambda inp: skill.run(inp) if hasattr(skill, 'run') else SkillOutput(
-                evidence_items=[],
-                artifacts={"note": "NewsResearchSkill registered"},
-            ),
+            handler=skill,
             purpose="Holdings-driven news research and event mining",
-            required_mcp_capabilities=["Finnhub", "Tavily", "Exa", "Firecrawl"],
+            required_mcp_capabilities=["web_search", "financial_news"],
             priority=2,
             forbidden_behavior=["Do NOT generate final BUY/SELL decisions"],
         ))
@@ -161,16 +267,13 @@ def bootstrap_default_registry(registry: SkillRegistry | None = None) -> SkillRe
 
     # ── SentimentResearch ────────────────────────────────────────────────
     try:
-        from skills.sentiment_analysis.skill import SentimentAnalysisSkill
+        from src.skills_runtime.sentiment_analysis import SentimentAnalysisSkill
         skill = SentimentAnalysisSkill()
         registry.register(SkillDefinition(
             name="SentimentResearch",
-            handler=lambda inp: skill.run(inp) if hasattr(skill, 'run') else SkillOutput(
-                evidence_items=[],
-                artifacts={"note": "SentimentAnalysisSkill registered"},
-            ),
+            handler=skill,
             purpose="Financial market sentiment analysis",
-            required_mcp_capabilities=["Reddit", "TrendRadar"],
+            required_mcp_capabilities=["social_sentiment"],
             priority=3,
             forbidden_behavior=["Do NOT generate final BUY/SELL decisions"],
         ))
@@ -179,16 +282,13 @@ def bootstrap_default_registry(registry: SkillRegistry | None = None) -> SkillRe
 
     # ── ThesisGeneration ─────────────────────────────────────────────────
     try:
-        from skills.thesis_generation.skill import ThesisGenerationSkill
+        from src.skills_runtime.thesis_generation import ThesisGenerationSkill
         skill = ThesisGenerationSkill()
         registry.register(SkillDefinition(
             name="ThesisGeneration",
-            handler=lambda inp: skill.run(inp) if hasattr(skill, 'run') else SkillOutput(
-                evidence_items=[],
-                artifacts={"note": "ThesisGenerationSkill registered"},
-            ),
+            handler=skill,
             purpose="Investment thesis generation and evidence validation",
-            required_mcp_capabilities=["TrendRadar", "Tavily", "Exa", "Firecrawl", "Finnhub", "Reddit"],
+            required_mcp_capabilities=[],
             priority=4,
             forbidden_behavior=["Do NOT generate final BUY/SELL decisions"],
         ))

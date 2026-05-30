@@ -38,6 +38,8 @@ class PlanStep:
     expected_output: str = ""
     depends_on: list[str] = field(default_factory=list)
     reason: str = ""
+    required_mcp_capabilities: list[str] = field(default_factory=list)
+    evidence_requirements: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return {
@@ -47,6 +49,8 @@ class PlanStep:
             "expected_output": self.expected_output,
             "depends_on": self.depends_on,
             "reason": self.reason,
+            "required_mcp_capabilities": self.required_mcp_capabilities,
+            "evidence_requirements": self.evidence_requirements,
         }
 
 
@@ -122,6 +126,8 @@ class Planner:
                     expected_output=f"Targeted evidence for: {suggestion[:60]}",
                     depends_on=[f"step_{next_id - 1}"] if next_id > 0 else [],
                     reason=f"Critic suggestion: {suggestion}",
+                    required_mcp_capabilities=self._mcp_capabilities_for_skill(skill, plan.kg_context_snapshot),
+                    evidence_requirements=self._evidence_requirements_for_skill(skill),
                 )
                 plan.steps.append(step)
                 next_id += 1
@@ -280,6 +286,8 @@ class Planner:
                 expected_output=f"EvidenceItems for {skill_name}",
                 depends_on=[f"step_{i - 1}"] if i > 0 else [],
                 reason=self._reason_for_skill(skill_name, kg_context),
+                required_mcp_capabilities=self._mcp_capabilities_for_skill(skill_name, kg_context),
+                evidence_requirements=self._evidence_requirements_for_skill(skill_name),
             )
             steps.append(step)
         return steps
@@ -294,3 +302,41 @@ class Planner:
             "ThesisGeneration": "Final synthesis of all evidence into actionable thesis",
         }
         return reasons.get(skill_name, f"Required by plan: {skill_name}")
+
+    def _mcp_capabilities_for_skill(self, skill_name: str, kg_context: dict) -> list[str]:
+        """Return host MCP capabilities needed by a skill.
+
+        The planner only declares capabilities. It does not call MCP adapters or
+        perform network IO.
+        """
+        if skill_name == "NewsResearch":
+            return ["web_search", "financial_news"]
+        if skill_name == "SentimentResearch":
+            return ["social_sentiment"]
+        if skill_name in {
+            "QuantRiskAnalysis",
+            "PortfolioExposureAnalysis",
+            "FundAnalysis",
+            "ThesisGeneration",
+        }:
+            return []
+        return []
+
+    def _evidence_requirements_for_skill(self, skill_name: str) -> list[str]:
+        """Return evidence contract expectations for a plan step."""
+        requirements = {
+            "QuantRiskAnalysis": ["HardEvidence:risk_metrics"],
+            "PortfolioExposureAnalysis": ["HardEvidence:portfolio_exposure"],
+            "FundAnalysis": ["HardEvidence:local_quant_tools"],
+            "NewsResearch": [
+                "SoftEvidence:news_events",
+                "optional:company_filings",
+            ],
+            "SentimentResearch": [
+                "SoftEvidence:sentiment",
+                "optional:reddit_search",
+                "optional:trend_radar",
+            ],
+            "ThesisGeneration": ["artifact:thesis_draft"],
+        }
+        return list(requirements.get(skill_name, []))

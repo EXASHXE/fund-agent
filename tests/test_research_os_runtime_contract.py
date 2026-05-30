@@ -85,6 +85,7 @@ def test_final_thesis_contains_compile_reports():
     assert "skill_errors" in artifacts
     assert "failed_steps" in artifacts
     assert "warnings" in artifacts
+    assert "mcp_capability_audit" in artifacts
     assert "evidence_compile_report" in artifacts
     assert "iteration_compile_reports" in artifacts
     assert "final_critique_status" in artifacts
@@ -119,6 +120,7 @@ def test_final_thesis_contains_runtime_audit_fields():
         "skill_errors",
         "failed_steps",
         "warnings",
+        "mcp_capability_audit",
         "evidence_compile_report",
         "iteration_compile_reports",
         "final_critique_status",

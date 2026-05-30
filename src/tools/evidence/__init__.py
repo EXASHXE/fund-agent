@@ -1,6 +1,14 @@
 """Evidence tools — builders and validators for EvidenceGraph compilation."""
 
-from src.tools.evidence.builders import build_hard_evidence, build_hybrid_evidence, build_soft_evidence
+from src.tools.evidence.builders import (
+    build_hard_evidence,
+    build_hard_evidence_from_metric,
+    build_hybrid_evidence,
+    build_hybrid_evidence_from_supporting_items,
+    build_soft_evidence,
+    build_soft_evidence_from_mcp_result,
+    build_soft_evidence_from_sentiment,
+)
 from src.tools.evidence.validators import (
     EvidenceGraphCompileReport,
     EvidenceGraphCompileResult,
@@ -13,8 +21,12 @@ from src.tools.evidence.validators import (
 
 __all__ = [
     "build_hard_evidence",
+    "build_hard_evidence_from_metric",
     "build_soft_evidence",
+    "build_soft_evidence_from_mcp_result",
+    "build_soft_evidence_from_sentiment",
     "build_hybrid_evidence",
+    "build_hybrid_evidence_from_supporting_items",
     "EvidenceGraphCompileReport",
     "EvidenceGraphCompileResult",
     "validate_evidence",

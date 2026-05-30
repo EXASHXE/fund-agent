@@ -4,7 +4,7 @@
 
 ## 概述
 
-一个由 LLM Agent 调用的基金投研操作系统 beta path。宿主注入 MCP 能力（资讯、搜索、舆情），Research OS 通过 **Skill** 编排纯数学工具、知识图谱（KG）、向量数据库（Qdrant）和证据图引擎，产出结构化 `FinalThesis`、决策合约与行动账本。当前不是 production-ready 运行时；重点是契约、边界和可审计闭环。
+一个由 LLM Agent 调用的基金投研操作系统 beta path。宿主注入 MCP 能力（资讯、搜索、舆情），Research OS 通过 **Skill** 编排纯数学工具、知识图谱（KG）、基础设施适配和证据图引擎，产出结构化 `FinalThesis`、决策合约与行动账本。当前不是 production-ready 运行时；重点是契约、边界和可审计闭环。
 
 **核心设计原则：**
 - **纯工具无副作用** — `src/tools/` 中的数学函数（Sortino / HHI / Sharpe / XIRR）无 IO、无网络、无 LLM，可独立验证
@@ -27,14 +27,16 @@ fund-agent/
 │   │   ├── planner.py         #     KG 驱动的 Plan/PlanStep 生成
 │   │   ├── critic.py          #     6 维度结构化评审 (PASS/RETRY/FAIL/EXHAUSTED)
 │   │   ├── decision_engine.py #     合约强制决策引擎
-│   │   ├── skill_registry.py  #     Skill 注册与引导
+│   │   ├── skill_registry.py  #     Skill 注册、MCP adapter 注入与运行
 │   │   └── ledger.py          #     ExecutionLedger 构建
 │   ├── schemas/               #   类型化合约
 │   │   ├── evidence.py        #     EvidenceItem (evidence-contract.v2)
 │   │   ├── decision.py        #     Decision / ActionType (decision-contract.v2)
 │   │   ├── evidence_graph.py  #     EvidenceGraph (去重/冲突检测/Hybrid 升级)
+│   │   ├── skill.py           #     SkillInput / SkillOutput runtime contract
 │   │   ├── research_task.py   #     ResearchTask (新入口)
 │   │   └── report.py          #     FinalThesis
+│   ├── skills_runtime/        #   Adapter-only runtime Skill handlers
 │   ├── graph/                 #   KnowledgeGraph (唯一权威实现)
 │   │   ├── builder.py         #     KnowledgeGraphBuilder
 │   │   ├── schema.py          #     节点/边类型定义 (7 entity, 10 edge types)
@@ -84,7 +86,8 @@ fund-agent/
 ## 目录职责
 
 - `src/core/`: Planner / Critic / DecisionEngine / LedgerBuilder / SkillRegistry / Research OS runtime
-- `src/schemas/`: ResearchTask、EvidenceItem、EvidenceGraph、Decision、ExecutionLedger、FinalThesis contracts
+- `src/schemas/`: ResearchTask、SkillInput、SkillOutput、EvidenceItem、EvidenceGraph、Decision、ExecutionLedger、FinalThesis contracts
+- `src/skills_runtime/`: adapter-only Skill handlers，Skill 只返回 evidence/artifacts/warnings/errors
 - `src/graph/`: KnowledgeGraph canonical implementation and query helpers
 - `src/tools/`: quant / ledger / evidence / adapters，保持无 LLM、无网络、无供应商 SDK
 - `src/infra/`: config / data / persistence / vectorstore 的真实实现
@@ -95,7 +98,7 @@ fund-agent/
 The new Research OS architecture is the primary structured path:
 
 ```
-ResearchTask → Planner → KnowledgeGraph query → Skill execution → Evidence compile → Critic → DecisionEngine → ExecutionLedger
+ResearchTask → Planner → KnowledgeGraph query → SkillInput → SkillRegistry → SkillOutput → Evidence compile → Critic → DecisionEngine → ExecutionLedger
 ```
 
 **Key differences from legacy path:**
@@ -128,14 +131,16 @@ result = run_research_task(task)
 `legacy/`. New integrations should use `src.core.research_os.run_research_task`
 or the thin `src.workflows.research_os` Research OS path.
 
-## Skill 能力矩阵
+## Skill Runtime 能力矩阵
 
-| Skill | MCP 依赖 | 核心能力 |
-|-------|----------|----------|
-| **fund-analysis** | TrendRadar, Tavily, Exa, Firecrawl, Finnhub, Reddit | CIO 级战略投研，多维度评分（宏观 20%、中观 30%、微观 50%），组合再平衡 |
-| **news-research** | Finnhub, Tavily, Exa, Firecrawl | 持仓驱动新闻检索，6 层分类，多因子相关性评分 |
-| **sentiment-analysis** | Reddit, TrendRadar | 金融词典极性分析，指数时间衰减，信源加权聚合 |
-| **thesis-generation** | 全部 6 个 MCP | 投资命题生成，EvidenceItem → Decision 映射，ExecutionLedger 输出 |
+| Runtime Skill | MCP capability plan | 输出边界 |
+|---------------|---------------------|----------|
+| `FundAnalysisSkill` / `QuantRiskAnalysis` | 无；只用本地纯工具 | `HardEvidence`，`confidence_weight=1.0` |
+| `NewsResearchSkill` | `web_search`、`financial_news`，`company_filings` 可作为宿主扩展能力 | `SoftEvidence` + artifacts/errors |
+| `SentimentAnalysisSkill` | `social_sentiment`，`trend_radar`/`reddit_search` 可作为宿主扩展能力 | `SoftEvidence` + artifacts/errors |
+| `ThesisGenerationSkill` | 无；只依赖 EvidenceGraph 上下文 | `thesis_draft` artifact，不生成正式 `Decision` |
+
+`Planner` 只产出 `PlanStep.required_mcp_capabilities`，不调用 MCP、不访问网络、不生成 Decision。`ResearchOS` 将 `PlanStep` 转为 `SkillInput`，经 `SkillRegistry` 注入 `MCPHostAdapter` 后执行。`SkillOutput` 是 Skill 的唯一返回通道。
 
 ## 调用模型
 
@@ -164,9 +169,9 @@ CLI 是 legacy compatibility path，仅用于旧 analyze/report/news/recommend/u
 
 - **持仓真源**：`fund-portfolio.yaml` — YAML 格式，人工维护，便于审阅
 - **缓存层**：SQLite — 基金元数据、净值缓存、分析快照
-- **向量存储**：Qdrant — embedding 相似度搜索、历史模式匹配
+- **向量存储**：Qdrant adapter — embedding 相似度搜索、历史模式匹配
 - **知识图谱**：NetworkX 内存图 — 基金→持仓→行业→主题→事件全链路
-- **数据源**：AKShare（A 股） + Finnhub（美股 QDII） + Tavily（AI 补充搜索）
+- **外部能力**：新 Research OS 通过 host MCP capability 注入；旧系统的数据/API 依赖保留在 `legacy/` compatibility path
 - **报告口径日**：北京时间 22:22（可设 `FUND_REPORT_CUTOFF_HOUR` / `FUND_REPORT_CUTOFF_MINUTE`）
 - **定投刷新点**：北京时间 10:00（可设 `FUND_DCA_CUTOFF_HOUR` / `FUND_DCA_CUTOFF_MINUTE`）
 
@@ -211,8 +216,8 @@ PYTHONPATH=. python -m pytest tests/test_schemas_*.py -v # 合约测试
 ## 环境变量
 
 ```bash
-export FINNHUB_API_KEY="your_key"   # 美股新闻（免费 60 次/分）
-export TAVILY_API_KEY="your_key"    # AI 补充搜索（免费 1000 次/月）
+# Provider credentials are host/legacy concerns. The new Research OS path
+# receives MCP providers through MCPHostAdapter injection.
 # 可选
 export FUND_REPORT_CUTOFF_HOUR=22
 export FUND_DCA_CUTOFF_HOUR=10

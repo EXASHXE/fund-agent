@@ -3,6 +3,7 @@ from src.schemas.evidence import EvidenceItem, EvidenceType, Direction, SourceTy
 from src.schemas.decision import Decision, ActionType, ExecutionLedger
 from src.schemas.evidence_graph import EvidenceGraph
 from src.schemas.research_task import ResearchTask
+from src.schemas.skill import SkillInput, SkillOutput, SkillStatus
 
 EvidenceDirection = Direction
 DecisionAction = ActionType
@@ -17,6 +18,9 @@ __all__ = [
     "ExecutionLedger",
     "EvidenceGraph",
     "ResearchTask",
+    "SkillInput",
+    "SkillOutput",
+    "SkillStatus",
     "EvidenceDirection",
     "DecisionAction",
 ]

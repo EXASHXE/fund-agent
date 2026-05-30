@@ -5,22 +5,24 @@ and boundary statement, not a production-readiness claim.
 
 ## Runtime Flow
 
-`ResearchTask -> Planner -> KG -> Skill -> EvidenceGraph -> Critic -> DecisionEngine -> Ledger`
+`ResearchTask -> Planner -> KG -> SkillInput -> SkillRegistry -> SkillOutput -> EvidenceGraph -> Critic -> DecisionEngine -> Ledger`
 
 1. `ResearchTask` enters through `src.core.research_os.run_research_task` or
    the thin `src.workflows.research_os` wrapper.
 2. `Planner` builds ordered skill steps from task and KnowledgeGraph context.
 3. KG queries run before planning context is used. Query failures fall back to
    empty context and must be recorded as warnings.
-4. `SkillRegistry` executes skill handlers. Missing skills and skill failures
-   are recorded in runtime audit fields.
-5. `compile_evidence_graph` validates evidence, rejects invalid items,
+4. `ResearchOS` converts each `PlanStep` to `SkillInput`.
+5. `SkillRegistry` executes skill handlers with an injected `MCPHostAdapter`.
+   Missing skills, missing MCP capabilities, and skill failures are recorded in
+   runtime audit fields.
+6. `compile_evidence_graph` validates evidence, rejects invalid items,
    deduplicates, detects conflicts, upgrades corroborated soft evidence, and
    aggregates confidence.
-6. `Critic` reviews the compiled graph. If blocking issues remain after retry
+7. `Critic` reviews the compiled graph. If blocking issues remain after retry
    budget exhaustion, the status is `EXHAUSTED`.
-7. `DecisionEngine` creates a contract-enforced passive or active decision.
-8. `LedgerBuilder` wraps the decision in an `ExecutionLedger`.
+8. `DecisionEngine` creates a contract-enforced passive or active decision.
+9. `LedgerBuilder` wraps the decision in an `ExecutionLedger`.
 
 ## Runtime Audit Fields
 
@@ -29,6 +31,7 @@ and boundary statement, not a production-readiness claim.
 - `skill_errors`
 - `failed_steps`
 - `warnings`
+- `mcp_capability_audit`
 - `evidence_compile_report`
 - `iteration_compile_reports`
 - `final_critique_status`

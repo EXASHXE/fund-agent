@@ -8,6 +8,9 @@ Provides three builder functions:
 
 from __future__ import annotations
 
+from datetime import datetime
+from typing import Any
+
 from src.schemas.evidence import EvidenceItem
 from src.schemas.evidence_graph import EvidenceGraph
 
@@ -99,3 +102,111 @@ def build_hybrid_evidence(soft_items: list[EvidenceItem]) -> EvidenceItem | None
         return result
 
     return soft_items[0]  # fallback to original
+
+
+def build_hard_evidence_from_metric(
+    *,
+    metric_name: str,
+    metric_value: Any,
+    claim: str,
+    related_entities: list[str],
+    direction: str = "neutral",
+    provenance: dict | None = None,
+) -> EvidenceItem:
+    """Build HardEvidence from a local metric result."""
+    if not related_entities:
+        raise ValueError("related_entities is required for HardEvidence")
+    return EvidenceItem.from_tool_output(
+        tool_name=metric_name,
+        output=metric_value,
+        claim=claim,
+        entities=related_entities,
+        direction=direction,
+        provenance=provenance or {"builder": "build_hard_evidence_from_metric"},
+    )
+
+
+def build_soft_evidence_from_mcp_result(
+    *,
+    source_type: str,
+    timestamp: datetime | str,
+    related_entities: list[str],
+    claim: str,
+    value: Any,
+    confidence_weight: float = 0.5,
+    direction: str = "neutral",
+    provenance: dict | None = None,
+) -> EvidenceItem:
+    """Build SoftEvidence from a structured MCP result."""
+    if not source_type:
+        raise ValueError("source_type is required for SoftEvidence")
+    if not timestamp:
+        raise ValueError("timestamp is required for SoftEvidence")
+    if not related_entities:
+        raise ValueError("related_entities is required for SoftEvidence")
+
+    parsed_timestamp = _parse_timestamp(timestamp)
+    return EvidenceItem(
+        evidence_id=_new_evidence_id(),
+        evidence_type="SoftEvidence",
+        source_type=source_type,
+        timestamp=parsed_timestamp,
+        related_entities=related_entities,
+        claim=claim,
+        value=value,
+        confidence_weight=min(max(confidence_weight, 0.1), 0.9),
+        direction=direction,
+        provenance=provenance or {"builder": "build_soft_evidence_from_mcp_result"},
+    )
+
+
+def build_soft_evidence_from_sentiment(
+    *,
+    source_type: str,
+    timestamp: datetime | str,
+    related_entities: list[str],
+    sentiment_score: float,
+    claim: str,
+    direction: str | None = None,
+    provenance: dict | None = None,
+) -> EvidenceItem:
+    """Build SoftEvidence from a structured sentiment result."""
+    if direction is None:
+        if sentiment_score > 0.05:
+            direction = "positive"
+        elif sentiment_score < -0.05:
+            direction = "negative"
+        else:
+            direction = "neutral"
+    return build_soft_evidence_from_mcp_result(
+        source_type=source_type,
+        timestamp=timestamp,
+        related_entities=related_entities,
+        claim=claim,
+        value={"sentiment_score": sentiment_score},
+        confidence_weight=min(max(abs(sentiment_score), 0.1), 0.9),
+        direction=direction,
+        provenance=provenance or {"builder": "build_soft_evidence_from_sentiment"},
+    )
+
+
+def build_hybrid_evidence_from_supporting_items(
+    supporting_items: list[EvidenceItem],
+) -> EvidenceItem | None:
+    """Build HybridEvidence from multiple supporting evidence items."""
+    return build_hybrid_evidence(supporting_items)
+
+
+def _parse_timestamp(timestamp: datetime | str) -> datetime:
+    if isinstance(timestamp, datetime):
+        return timestamp
+    try:
+        return datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ValueError(f"timestamp must be ISO-8601 compatible: {timestamp}") from exc
+
+
+def _new_evidence_id() -> str:
+    import uuid
+
+    return str(uuid.uuid4())

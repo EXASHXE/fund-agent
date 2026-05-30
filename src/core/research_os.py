@@ -36,6 +36,7 @@ from src.schemas.evidence import EvidenceItem
 from src.schemas.evidence_graph import EvidenceGraph
 from src.schemas.report import FinalThesis
 from src.schemas.research_task import ResearchTask
+from src.schemas.skill import SkillInput
 from src.tools.evidence.validators import EvidenceGraphCompileResult, compile_evidence_graph
 
 
@@ -99,6 +100,7 @@ def run_research_task(
     warnings: list[str] = []
     skill_artifacts: dict[str, list[dict[str, Any]]] = {}
     iteration_compile_reports: list[dict[str, Any]] = []
+    mcp_capability_audit: list[dict[str, Any]] = []
 
     # ── Step 1: Query KG FIRST (before anything else) ──────────────────────────
     # Enforced: KG context MUST be captured before Planner.plan() is called.
@@ -115,8 +117,28 @@ def run_research_task(
 
         # Execute skills from the current plan
         for step in plan.steps:
+            skill_input = SkillInput(
+                task_id=task.task_id,
+                step_id=step.step_id,
+                skill_name=step.skill_name,
+                payload=step.input,
+                kg_context=kg_context,
+                required_mcp_capabilities=list(
+                    getattr(step, "required_mcp_capabilities", [])
+                ),
+                evidence_context=[
+                    item.evidence_id for item in all_evidence_items
+                ],
+                metadata={
+                    "iteration": iteration,
+                    "expected_output": getattr(step, "expected_output", ""),
+                    "evidence_requirements": list(
+                        getattr(step, "evidence_requirements", [])
+                    ),
+                },
+            )
             try:
-                skill_output = skill_registry.run(step.skill_name, step.input)
+                skill_output = skill_registry.run_skill(skill_input)
             except KeyError as exc:
                 _record_skill_failure(
                     step=step,
@@ -141,10 +163,38 @@ def run_research_task(
             if skill_output is None:
                 continue
 
+            mcp_capability_audit.append(
+                _build_mcp_audit_record(
+                    skill_registry=skill_registry,
+                    skill_input=skill_input,
+                    skill_output=skill_output,
+                )
+            )
+
             if skill_output.warnings:
                 warnings.extend(
                     f"{step.skill_name}: {warning}"
                     for warning in skill_output.warnings
+                )
+
+            if getattr(skill_output, "errors", None):
+                _record_skill_output_errors(
+                    step=step,
+                    iteration=iteration,
+                    skill_output=skill_output,
+                    skill_errors=skill_errors,
+                    failed_steps=failed_steps,
+                    warnings=warnings,
+                )
+            elif getattr(skill_output, "status", "OK") == "FAILED":
+                _record_skill_failure(
+                    step=step,
+                    iteration=iteration,
+                    exc=RuntimeError("Skill returned FAILED without error detail"),
+                    skill_errors=skill_errors,
+                    failed_steps=failed_steps,
+                    warnings=warnings,
+                    error_type="SkillFailed",
                 )
 
             if skill_output.artifacts:
@@ -155,7 +205,10 @@ def run_research_task(
                         "artifacts": skill_output.artifacts,
                     }
                 )
-                if "skill_error" in skill_output.artifacts:
+                if (
+                    "skill_error" in skill_output.artifacts
+                    and not getattr(skill_output, "errors", None)
+                ):
                     _record_skill_failure(
                         step=step,
                         iteration=iteration,
@@ -248,6 +301,7 @@ def run_research_task(
         "skill_errors": skill_errors,
         "failed_steps": failed_steps,
         "warnings": warnings,
+        "mcp_capability_audit": mcp_capability_audit,
         "skill_artifacts": skill_artifacts,
         "evidence_compile_report": final_compile_result.report.to_dict(),
         "iteration_compile_reports": iteration_compile_reports,
@@ -321,6 +375,80 @@ def _query_kg_context(
             context[code] = {"chain": {}, "exposure": {}}
 
     return context
+
+
+def _build_mcp_audit_record(
+    *,
+    skill_registry: SkillRegistry,
+    skill_input: SkillInput,
+    skill_output: Any,
+) -> dict[str, Any]:
+    """Build a JSON-safe MCP capability audit record for a skill step."""
+    required = _required_capabilities_for_skill_input(skill_registry, skill_input)
+    missing = [
+        capability
+        for capability in required
+        if skill_registry.mcp_adapter is None
+        or not skill_registry.mcp_adapter.has_capability(capability)
+    ]
+    return {
+        "step_id": skill_input.step_id,
+        "skill_name": skill_input.skill_name,
+        "required_mcp_capabilities": required,
+        "missing_mcp_capabilities": missing,
+        "used_mcp_capabilities": list(
+            getattr(skill_output, "used_mcp_capabilities", [])
+        ),
+        "status": getattr(skill_output, "status", "OK"),
+    }
+
+
+def _required_capabilities_for_skill_input(
+    skill_registry: SkillRegistry,
+    skill_input: SkillInput,
+) -> list[str]:
+    required = list(skill_input.required_mcp_capabilities)
+    try:
+        required.extend(skill_registry.get(skill_input.skill_name).required_mcp_capabilities)
+    except KeyError:
+        pass
+    return list(dict.fromkeys(required))
+
+
+def _record_skill_output_errors(
+    *,
+    step: Any,
+    iteration: int,
+    skill_output: Any,
+    skill_errors: list[dict[str, Any]],
+    failed_steps: list[dict[str, Any]],
+    warnings: list[str],
+) -> None:
+    """Record structured SkillOutput.errors in the runtime audit."""
+    for error in getattr(skill_output, "errors", []):
+        err_type = str(error.get("type", "SkillError"))
+        message = str(error.get("message", "Skill failed"))
+        skill_errors.append(
+            {
+                "iteration": iteration,
+                "step_id": getattr(step, "step_id", ""),
+                "skill_name": getattr(step, "skill_name", ""),
+                "error_type": err_type,
+                "message": message,
+            }
+        )
+        failed_steps.append(
+            {
+                **(step.to_dict() if hasattr(step, "to_dict") else {}),
+                "iteration": iteration,
+                "error_type": err_type,
+                "error": message,
+            }
+        )
+        warnings.append(
+            f"Skill {getattr(step, 'skill_name', '')} failed at iteration "
+            f"{iteration}: {err_type}: {message}"
+        )
 
 
 def _record_skill_failure(

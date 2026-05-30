@@ -98,7 +98,15 @@ OLD_SRC_DIRS = [
     "src.services", "src.prompts", "src.decision",
 ]
 
-NEW_CODE_DIRS = ["src/core", "src/graph", "src/schemas", "src/tools", "src/workflows", "src/infra"]
+NEW_CODE_DIRS = [
+    "src/core",
+    "src/graph",
+    "src/schemas",
+    "src/tools",
+    "src/workflows",
+    "src/infra",
+    "src/skills_runtime",
+]
 
 def test_new_code_no_old_imports():
     """New Research OS code must not import old src/ directories."""
@@ -183,12 +191,90 @@ def test_graph_no_legacy_dirs():
                                  "src/graph must not import legacy or old src dirs")
 
 
+def test_skills_runtime_does_not_import_provider_sdks():
+    """Skill runtime handlers must use MCPHostAdapter, not provider SDKs."""
+    provider_or_network = [
+        "legacy.",
+        "requests",
+        "httpx",
+        "aiohttp",
+        "urllib3",
+        "socket",
+        "tavily",
+        "exa",
+        "firecrawl",
+        "finnhub",
+        "reddit",
+        "openai",
+        "anthropic",
+        "langchain",
+    ]
+    _assert_no_imports_matching(
+        "src/skills_runtime",
+        provider_or_network,
+        "src/skills_runtime must stay adapter-only",
+    )
+
+
+def test_mcp_adapter_has_no_network_dependency():
+    """MCP adapter declaration must not import providers or network clients."""
+    provider_or_network = [
+        "requests",
+        "httpx",
+        "aiohttp",
+        "urllib3",
+        "socket",
+        "tavily",
+        "exa",
+        "firecrawl",
+        "finnhub",
+        "reddit",
+    ]
+    _assert_no_imports_matching(
+        "src/tools/adapters",
+        provider_or_network,
+        "src/tools/adapters must not import providers or network clients",
+    )
+
+
+def test_core_has_no_provider_sdk_dependency():
+    """Core orchestration must not import concrete MCP provider SDKs."""
+    provider_sdks = ["tavily", "exa", "firecrawl", "finnhub", "reddit"]
+    _assert_no_imports_matching(
+        "src/core",
+        provider_sdks,
+        "src/core must not import provider SDKs",
+    )
+
+
+def test_evidence_tools_have_no_network_or_llm_dependency():
+    """Evidence/quant/ledger tools stay pure and do not import infra/network/LLM."""
+    forbidden = [
+        "src.infra",
+        "requests",
+        "httpx",
+        "aiohttp",
+        "urllib3",
+        "socket",
+        "openai",
+        "anthropic",
+        "langchain",
+    ]
+    for dirpath in ("src/tools/evidence", "src/tools/quant", "src/tools/ledger"):
+        _assert_no_imports_matching(
+            dirpath,
+            forbidden,
+            f"{dirpath} must not import infra, network, or LLM modules",
+        )
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # Top-level allowlist
 # ═══════════════════════════════════════════════════════════════════════════════
 
 ALLOWLIST = frozenset({
     "core", "schemas", "graph", "tools", "infra", "workflows",
+    "skills_runtime",
     "__init__.py", "cli.py",
     # DEPRECATED compatibility shims — marked for removal
     "config", "data", "db", "kg", "vectorstore",
