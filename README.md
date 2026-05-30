@@ -1,10 +1,10 @@
 # AI Financial Research OS
 
-> 宿主可注入的 AI-native Skill Pack — LLM 主导投研、MCP 能力注入、证据图驱动决策、行动账本输出。
+> Research OS beta path — 宿主可注入 MCP 能力、证据图驱动决策、行动账本输出。
 
 ## 概述
 
-一个由 LLM Agent 调用的基金投研操作系统。宿主注入 MCP 能力（资讯、搜索、舆情），Agent 通过 **Skill** 编排纯数学工具、知识图谱（KG）、向量数据库（Qdrant）和证据图引擎，产出结构化投研报告与可执行投资决策。
+一个由 LLM Agent 调用的基金投研操作系统 beta path。宿主注入 MCP 能力（资讯、搜索、舆情），Research OS 通过 **Skill** 编排纯数学工具、知识图谱（KG）、向量数据库（Qdrant）和证据图引擎，产出结构化 `FinalThesis`、决策合约与行动账本。当前不是 production-ready 运行时；重点是契约、边界和可审计闭环。
 
 **核心设计原则：**
 - **纯工具无副作用** — `src/tools/` 中的数学函数（Sortino / HHI / Sharpe / XIRR）无 IO、无网络、无 LLM，可独立验证
@@ -48,7 +48,7 @@ fund-agent/
 │   │   ├── quant/             #     Sharpe/Sortino/MaxDD/Vol/HHI
 │   │   ├── ledger/            #     execution_amount/settlement/DCA
 │   │   ├── evidence/          #     builders/validators
-│   │   └── adapters/          #     MCP adapter 接口（预留）
+│   │   └── adapters/          #     Host-native MCP adapter 抽象（无供应商 SDK）
 │   ├── infra/                 #   基础设施层
 │   │   ├── config/            #     Pydantic 配置
 │   │   ├── data/              #     AKShare 数据采集
@@ -79,7 +79,16 @@ fund-agent/
     └── decision-contract.v2.md
 ```
 
-**Architecture boundary: `src/` = new Research OS. `legacy/` = old system.**  `src/core/` never imports `legacy/`.
+**Architecture boundary: `src/` = new Research OS beta path. `legacy/` = old CLI/report/news/recommend/ui system.**  `src/core/` never imports `legacy/`.
+
+## 目录职责
+
+- `src/core/`: Planner / Critic / DecisionEngine / LedgerBuilder / SkillRegistry / Research OS runtime
+- `src/schemas/`: ResearchTask、EvidenceItem、EvidenceGraph、Decision、ExecutionLedger、FinalThesis contracts
+- `src/graph/`: KnowledgeGraph canonical implementation and query helpers
+- `src/tools/`: quant / ledger / evidence / adapters，保持无 LLM、无网络、无供应商 SDK
+- `src/infra/`: config / data / persistence / vectorstore 的真实实现
+- `legacy/`: old CLI/report/news/recommend/ui path，仅作 compatibility/reference
 
 ## Research OS Path (New)
 
@@ -117,7 +126,7 @@ result = run_research_task(task)
 
 `python -m src.cli analyze` is a legacy compatibility path backed by
 `legacy/`. New integrations should use `src.core.research_os.run_research_task`
-or the thin `src.workflows.research_os` wrapper.
+or the thin `src.workflows.research_os` Research OS path.
 
 ## Skill 能力矩阵
 
@@ -135,11 +144,13 @@ or the thin `src.workflows.research_os` wrapper.
 ```
 Host (Claude / GPT / Gemini / LLM ...) 加载 fund-analyst Skill
   → Skill 声明所需 MCP 能力
-    → Host 注入 TrendRadar / Tavily / Finnhub / Exa / Firecrawl / Reddit
-      → Skill 通过 ToolRegistry 编排纯数学工具 + KG 查询 + MCP adapter
+    → Host 注入能力实现（provider 由宿主负责）
+      → Skill 通过 ToolRegistry 编排纯数学工具 + KG 查询 + MCP adapter boundary
         → Research OS 闭环执行：Planner → Skills → EvidenceGraph compile → Critic → DecisionEngine → Ledger
           → 产出 FinalThesis + EvidenceGraph compile report + Decision/ExecutionLedger
 ```
+
+项目内只声明 `src.tools.adapters.mcp` 的 host-native adapter 抽象，不硬编码 Tavily/Finnhub/Exa/Firecrawl/Reddit SDK，也不在 Skill 内写供应商 API 调用。
 
 ### CLI 调用（本地开发/测试）
 

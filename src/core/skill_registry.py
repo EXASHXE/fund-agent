@@ -38,8 +38,9 @@ class SkillDefinition:
 class SkillRegistry:
     """Registry for skill registration and execution."""
 
-    def __init__(self):
+    def __init__(self, mcp_adapter: Any = None):
         self._skills: dict[str, SkillDefinition] = {}
+        self.mcp_adapter = mcp_adapter
 
     def register(self, skill: SkillDefinition) -> None:
         """Register a skill. Raises ValueError if name already exists."""

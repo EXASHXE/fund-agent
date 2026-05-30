@@ -252,6 +252,8 @@ def run_research_task(
         "evidence_compile_report": final_compile_result.report.to_dict(),
         "iteration_compile_reports": iteration_compile_reports,
         "final_critique_status": final_critique.status,
+        "final_decision_status": final_decision.action if final_decision else None,
+        "ledger_id": final_ledger.ledger_id if final_ledger else None,
     }
     return FinalThesis(
         thesis_id=str(uuid.uuid4()),

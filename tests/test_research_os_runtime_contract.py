@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import networkx as nx
 
 from src.core.research_os import run_research_task
@@ -88,6 +89,57 @@ def test_final_thesis_contains_compile_reports():
     assert "iteration_compile_reports" in artifacts
     assert "final_critique_status" in artifacts
     assert artifacts["final_critique_status"] == result.critique_status
+
+
+def test_exhausted_outputs_only_passive_decision():
+    """EXHAUSTED ResearchOS runs can only emit passive decisions."""
+    result = run_research_task(
+        task=_task(),
+        kg=KnowledgeGraph(),
+        skill_registry=SkillRegistry(),
+        max_iterations=1,
+    )
+
+    assert result.critique_status == "EXHAUSTED"
+    assert result.decision is not None
+    assert result.decision["action"] in {"WAIT", "HOLD", "PAUSE_DCA"}
+
+
+def test_final_thesis_contains_runtime_audit_fields():
+    """FinalThesis artifacts include all runtime audit fields."""
+    result = run_research_task(
+        task=_task(),
+        kg=KnowledgeGraph(),
+        skill_registry=SkillRegistry(),
+        max_iterations=1,
+    )
+
+    artifacts = result.artifacts
+    for key in (
+        "skill_errors",
+        "failed_steps",
+        "warnings",
+        "evidence_compile_report",
+        "iteration_compile_reports",
+        "final_critique_status",
+        "final_decision_status",
+        "ledger_id",
+    ):
+        assert key in artifacts
+    assert artifacts["final_decision_status"] == result.decision["action"]
+    assert artifacts["ledger_id"] == result.ledger["ledger_id"]
+
+
+def test_final_thesis_is_json_serializable():
+    """FinalThesis.to_dict output must be JSON serializable."""
+    result = run_research_task(
+        task=_task(),
+        kg=KnowledgeGraph(),
+        skill_registry=SkillRegistry(),
+        max_iterations=1,
+    )
+
+    json.dumps(result.to_dict())
 
 
 def test_kg_query_failure_is_recorded_as_warning(monkeypatch):

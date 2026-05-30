@@ -109,6 +109,25 @@ def test_new_code_no_old_imports():
     assert not violations, f"New code imports old src/ dirs: {violations}"
 
 
+def test_new_system_does_not_import_deprecated_shims():
+    """New Research OS code must not import deprecated infra shim paths."""
+    deprecated_shims = (
+        "src.config.",
+        "src.data.",
+        "src.db.",
+        "src.vectorstore.",
+    )
+    all_imports = set()
+    for d in NEW_CODE_DIRS:
+        all_imports.update(_get_imports_from_dir(d))
+    violations = [
+        item
+        for item in all_imports
+        if any(item.startswith(prefix) for prefix in deprecated_shims)
+    ]
+    assert not violations, f"New code imports deprecated shims: {violations}"
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # Boundary: New code must not import shimmed infra old paths directly
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -201,6 +220,22 @@ def test_src_kg_is_only_deprecated_shim():
 def test_deprecated_compat_shims_are_init_only(shim_dir):
     """Deprecated compat shim dirs must not retain implementation files."""
     _assert_deprecated_shim_only(shim_dir)
+
+
+def test_src_config_is_only_deprecated_shim():
+    _assert_deprecated_shim_only("config")
+
+
+def test_src_data_is_only_deprecated_shim():
+    _assert_deprecated_shim_only("data")
+
+
+def test_src_db_is_only_deprecated_shim():
+    _assert_deprecated_shim_only("db")
+
+
+def test_src_vectorstore_is_only_deprecated_shim():
+    _assert_deprecated_shim_only("vectorstore")
 
 
 def _assert_deprecated_shim_only(shim_dir: str):

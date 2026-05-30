@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from datetime import datetime
 from types import SimpleNamespace
 
@@ -9,6 +10,7 @@ import pytest
 
 from src.core.critic import CritiqueResult
 from src.core.decision_engine import DecisionEngine
+from src.core.ledger import LedgerBuilder
 from src.schemas.decision import Decision
 from src.schemas.evidence import EvidenceItem
 from src.schemas.evidence_graph import EvidenceGraph
@@ -88,6 +90,39 @@ def test_no_no_evidence_available_placeholder():
     assert "no_evidence_available" not in decision.rationale_anchor
     assert decision.rationale_anchor == []
     assert any("Insufficient evidence" in item for item in decision.audit_trail)
+
+
+def test_decision_is_json_serializable():
+    """Decision.to_dict output must be JSON serializable."""
+    decision = DecisionEngine().decide(
+        _task(),
+        EvidenceGraph(),
+        CritiqueResult(status="EXHAUSTED", issues=["missing evidence"]),
+    )
+
+    json.dumps(decision.to_dict())
+
+
+def test_execution_ledger_contains_audit_fields():
+    """ExecutionLedger exposes decision audit fields and evidence ids."""
+    graph = EvidenceGraph()
+    graph.add(_make_hard("ev-positive", direction="positive"))
+    decision = DecisionEngine().decide(
+        _task(),
+        graph,
+        CritiqueResult(status="PASS"),
+    )
+
+    ledger = LedgerBuilder().build(decision, graph)
+    payload = ledger.to_dict()
+    first = payload["decisions"][0]
+
+    assert payload["ledger_id"] == ledger.ledger_id
+    assert first["decision_id"] == decision.decision_id
+    assert first["evidence_ids"] == ["ev-positive"]
+    assert first["audit_trail"]
+    assert first["created_at"]
+    json.dumps(payload)
 
 
 def _task():

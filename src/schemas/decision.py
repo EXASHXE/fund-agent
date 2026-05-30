@@ -19,6 +19,7 @@ from collections import Counter
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from typing import Literal
+import uuid
 
 ActionType = Literal["BUY", "SELL", "HOLD", "PAUSE_DCA", "REDUCE", "INCREASE", "WAIT"]
 
@@ -152,15 +153,22 @@ class ExecutionLedger:
     """
 
     decisions: list[Decision]
+    ledger_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     generated_at: datetime = field(default_factory=datetime.now)
     version: str = "execution-ledger.v1"
 
     def to_dict(self) -> dict:
         """Serialize to a JSON-compatible dict."""
+        decisions = []
+        for decision in self.decisions:
+            payload = decision.to_dict()
+            payload["evidence_ids"] = list(decision.rationale_anchor)
+            decisions.append(payload)
         return {
+            "ledger_id": self.ledger_id,
             "version": self.version,
             "generated_at": self.generated_at.isoformat(),
-            "decisions": [d.to_dict() for d in self.decisions],
+            "decisions": decisions,
         }
 
     def total_risk_budget(self) -> float:
