@@ -1,20 +1,7 @@
-"""Thin CLI entrypoint; command handlers live in src.routes.commands."""
+"""Thin CLI entrypoint — DEPRECATED (routes/services/agents/forecast deleted)."""
 
 import os
 import sys
-
-from legacy.routes.cli_router import run_cli
-from legacy.routes.commands import (
-    cmd_analyze as _cmd_analyze,
-    cmd_fetch,
-    cmd_import,
-    cmd_init,
-    cmd_news,
-    cmd_recommend,
-    cmd_snapshot,
-    cmd_ui,
-    command_handlers,
-)
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -26,14 +13,13 @@ except ImportError:
 
 
 def cmd_analyze(args):
-    """Run the core analyze workflow."""
-    return _cmd_analyze(args)
+    """DEPRECATED: routes deleted. No-op stub."""
+    raise ImportError("legacy.routes deleted — cmd_analyze unavailable")
 
 
 def main(argv=None):
-    handlers = command_handlers()
-    handlers["analyze"] = cmd_analyze
-    return run_cli(handlers, argv=argv)
+    """DEPRECATED: routes deleted. No-op stub."""
+    raise ImportError("legacy.routes deleted — CLI unavailable")
 
 
 if __name__ == "__main__":

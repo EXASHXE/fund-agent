@@ -59,3 +59,36 @@ them from the relevant skill in `skillpack/fund-agent.skillpack.yaml`.
 Do not add Tavily, Finnhub, Exa, Firecrawl, Reddit, or other provider SDKs to
 the plugin core. Implement provider-specific networking in the external host and
 adapt it through `src.tools.adapters.mcp.MCPHostAdapter`.
+
+## Adding A Tool
+
+1. Place the tool implementation under `src/tools/` (e.g. `src/tools/quant/`).
+2. Register it in `skillpack/tools.yaml` with `id`, `import_path`, `category`,
+   `pure_function`, `network`, `llm`, and schema fields.
+3. Add tests under `tests/tools/`.
+4. Do not import `requests`, `httpx`, `aiohttp`, `urllib3`, `socket`, `openai`,
+   `anthropic`, `langchain`, `tavily`, `finnhub`, `exa`, `firecrawl`, `reddit`
+   unless the code lives within the MCP adapter boundary (`src/tools/adapters/`).
+
+## What Is NOT Plugin Core
+
+- `legacy/` — historical archive, not part of plugin contract
+- `src/core/research_os.py` — optional reference workflow, not required
+- `src/core/planner.py` — optional reference helper
+- `src/core/skill_registry.py` — optional reference helper
+- `src/workflows/research_os.py` — optional reference wrapper
+- Provider-specific SDKs — host concern
+- UI, routes, services — deleted or archived
+
+## Running The Gate Locally
+
+```bash
+bash scripts/check_plugin_gate.sh
+```
+
+Or manually:
+
+```bash
+PYTHONPATH=. python -m compileall src tests
+PYTHONPATH=. pytest -q
+```
