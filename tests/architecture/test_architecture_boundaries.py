@@ -883,3 +883,62 @@ def test_no_plugin_path_imports_legacy():
         imports = _get_imports_from_dir(dirpath)
         violations = [i for i in imports if i == "legacy" or i.startswith("legacy.")]
         assert not violations, f"{label} imports legacy: {violations}"
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Boundary: Host integration UX (Beta-10)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def test_agents_md_exists():
+    assert os.path.exists(os.path.join(PROJECT_ROOT, "AGENTS.md"))
+
+
+def test_agents_md_identifies_external_host_as_orchestrator():
+    content = _read("AGENTS.md")
+
+    assert "external agent" in content.lower() or "external agents" in content.lower()
+    assert "planning" in content.lower()
+    assert "Host-Agnostic" in content or "host-agnostic" in content
+
+
+def test_agents_md_does_not_require_research_os():
+    content = _read("AGENTS.md")
+
+    # "src.core.research_os" may appear only in "Do NOT use" context
+    if "src.core.research_os" in content:
+        idx = content.index("src.core.research_os")
+        context = content[max(0, idx-100):idx+100].upper()
+        assert "NOT" in context, "AGENTS.md mentions src.core.research_os without forbidding it"
+    assert "New integrations should use" not in content
+
+
+def test_examples_readme_exists():
+    assert os.path.exists(os.path.join(PROJECT_ROOT, "skillpack", "examples", "README.md"))
+
+
+def test_minimal_host_demo_exists():
+    assert os.path.exists(
+        os.path.join(PROJECT_ROOT, "examples", "minimal_host_news_to_decision.py")
+    )
+
+
+def test_minimal_host_demo_does_not_import_research_os_or_legacy():
+    demo_path = os.path.join(PROJECT_ROOT, "examples", "minimal_host_news_to_decision.py")
+    content = _read("examples/minimal_host_news_to_decision.py")
+
+    assert "src.core.research_os" not in content
+    assert "import legacy" not in content
+    assert "from legacy" not in content
+
+
+def test_readme_mentions_agent_quick_start():
+    content = _read("README.md")
+
+    assert "Agent Quick Start" in content
+    assert "AGENTS.md" in content
+
+
+def test_plugin_api_mentions_skill_error_codes():
+    content = _read("docs/plugin-api.md")
+
+    assert "SkillError Codes" in content or "Standard Error Codes" in content

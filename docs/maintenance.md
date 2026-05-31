@@ -105,3 +105,11 @@ Or manually:
 PYTHONPATH=. python -m compileall src tests
 PYTHONPATH=. pytest -q
 ```
+
+## Supporting External Coding Agents
+
+1. Update `AGENTS.md` when host-facing behavior changes.
+2. Update `skillpack/examples/` when `SkillInput` / `SkillOutput` shapes change.
+3. Update `examples/minimal_host_news_to_decision.py` when loader/runtime APIs change.
+4. Run `bash scripts/check_plugin_gate.sh` before push.
+5. Do not reintroduce ResearchOS or legacy as primary path.

@@ -1,115 +1,85 @@
-# AI Financial Research OS — Development Guide
+# AGENTS.md — Coding Agent Integration Guide
 
-## Project Overview
+## Project Identity
 
-AI-native Financial Research OS — a host-injectable Skill Pack invoked by LLM agents. Transforms fund analysis from keyword-based rules to AI-native pipeline: Skill → ToolRegistry → KG query → MCP adapter → EvidenceGraph → ExecutionLedger.
+`fund-agent` is a **host-agnostic financial research skill pack / agent plugin**.
+It is **not an autonomous agent runtime**. External agents (OpenCode, Claude Code,
+Codex, OpenClaw, Hermes) own planning and orchestration.
 
-## Architecture
+## What Agents Should Use
 
-```
-skills/                    # 4 AI-native Skills (LLM invocation entry points)
-├── fund_analysis/         #   CIO-level strategic evaluation
-├── news_research/         #   Holdings-driven news pipeline
-├── sentiment_analysis/    #   Polarity/intensity/time-decay analysis
-└── thesis_generation/     #   Thesis → Decision → Ledger pipeline
+Primary entrypoints and resources:
 
-src/
-├── schemas/               # Typed contracts (evidence-contract.v2, decision-contract.v2)
-│   ├── evidence.py        #   EvidenceItem: HardEvidence / SoftEvidence / HybridEvidence
-│   ├── decision.py        #   Decision + ActionType + ExecutionLedger
-│   └── evidence_graph.py  #   EvidenceGraph: dedup, conflict detection, hybrid upgrade
-├── tools/                 # Pure math functions (no IO/network/LLM)
-│   ├── registry.py        #   ToolRegistry: register, invoke, bind
-│   └── evidence_tools.py  #   Read-only evidence query tools
-├── kg/                    # Knowledge Graph (NetworkX), string-ID nodes
-├── graph/                 # KG query interfaces
-├── vectorstore/           # Qdrant vector DB
-├── news/                  # 8-stage holdings-driven news pipeline
-├── agents/                # LangGraph multi-agent system
-│   └── graphs/            #   8 nodes: planner → news → quant → risk → research
-│                           #   → critic → strategy → ledger (with iteration loop)
-│       ├── planner_agent.py   #   Research plan generation
-│       ├── critic_agent.py    #   Evidence review (triggers iteration loop)
-│       └── ledger_node.py     #   ExecutionLedger output
-├── analysis/scoring/      # 5-dimension AI+factor scoring, dynamic weights
-├── strategy/              # Strategy state machine (WAIT/HOLD/ADD/REDUCE/STOP_LOSS)
-├── workflows/             # Thin orchestration entry (no business logic)
-├── core/                  # Workflow orchestration & contract validation
-├── deprecated/            # Legacy pipeline (isolated, does not affect mainline)
-└── cli.py                 # Thin CLI wrapper for local debugging only
-```
+- `skillpack/fund-agent.skillpack.yaml` — plugin manifest (start here)
+- `docs/agent-host-quickstart.md` — host integration quickstart
+- `docs/host-integration.md` — detailed integration guide
+- `docs/plugin-api.md` — full API reference
+- `src/skills_runtime/` — host-callable skill handlers
+- `src/schemas/` — typed contracts
+- `src/tools/` — pure tools and MCP adapter boundary
+- `src/graph/` — KnowledgeGraph helpers
+- `src/tools/adapters/mcp.py` — MCP adapter abstraction
 
-## Skill Invocation Model
+## What Agents Must NOT Use As Primary Path
 
-### Primary: LLM Agent loads Skill
+- Do NOT use `legacy` as runtime code.
+- Do NOT use `src.core.research_os` as a required host integration path.
+- Do NOT import provider SDKs (tavily, finnhub, exa, firecrawl, reddit) inside skills.
+- Do NOT add network calls outside `MCPHostAdapter` boundary.
+- Do NOT generate formal `Decision` objects outside `DecisionSupportSkill`.
 
-```
-Host (Claude/GPT/Gemini) loads fund-analyst Skill
-  → Skill declares MCP capabilities (TrendRadar, Tavily, Finnhub, ...)
-    → Host injects the required MCP adapters
-      → Skill orchestrates: ToolRegistry tools + KG queries + MCP adapters
-        → 8-node LangGraph executes
-          → Outputs: EvidenceGraph + Decision[] + ExecutionLedger
-```
+## Recommended Agent Workflow
 
-### Secondary: CLI for local debugging
+1. Read the skill pack manifest: `skillpack/fund-agent.skillpack.yaml`
+2. Inspect `skillpack/capabilities.yaml` and `skillpack/tools.yaml`
+3. Resolve the skill runtime class for the skill you need
+4. Construct a `SkillInput` (schema: `src/schemas/skill.py`)
+5. Inject a `MCPHostAdapter` implementation if the skill needs MCP data
+6. Call `skill.run(skill_input)`
+7. Collect `SkillOutput.evidence_items` from the result
+8. Call `compile_evidence_graph(evidence_items)` to consolidate evidence
+9. Call `DecisionSupportSkill` when you need a formal `Decision`
+10. Return `Decision` / `ExecutionLedger` to the user
 
-```bash
-python3 -m src.cli analyze -c fund-portfolio.yaml -o report.md
-python3 -m src.cli ui -c fund-portfolio.yaml -p 8501
-```
+## Skill Map
 
-CLI is a thin wrapper for local development/testing. All business logic lives in `skills/`, `src/tools/`, `src/agents/`.
+| Skill | Runtime | Requires MCP | Produces | Forbidden |
+|---|---|---|---|---|
+| `fund_analysis` | `src.skills_runtime.fund_analysis:FundAnalysisSkill` | none | `HardEvidence` | — |
+| `news_research` | `src.skills_runtime.news_research:NewsResearchSkill` | `web_search`, `financial_news` | `SoftEvidence` | — |
+| `sentiment_analysis` | `src.skills_runtime.sentiment_analysis:SentimentAnalysisSkill` | `social_sentiment` | `SoftEvidence` | — |
+| `thesis_generation` | `src.skills_runtime.thesis_generation:ThesisGenerationSkill` | none | `ThesisDraft` | `formal_decision_generation` |
+| `decision_support` | `src.skills_runtime.decision_support:DecisionSupportSkill` | none | `Decision`, `ExecutionLedger` | — |
 
-## Development Commands
+## Safety / Contract Rules
 
-```bash
-# Run all tests (971 tests)
-PYTHONPATH=. python -m pytest tests/ -v
+- `HardEvidence` confidence_weight MUST be 1.0.
+- `SoftEvidence` requires `source_type`, `timestamp`, and `related_entities`.
+- Only `decision_support` may produce formal `Decision` and `ExecutionLedger`.
+- Active decisions (`BUY`, `SELL`, `INCREASE`, `REDUCE`) REQUIRE evidence anchors.
+- `WAIT` / `HOLD` may be used when evidence is insufficient.
+- `SkillOutput.errors` MUST use standard error codes (see `docs/plugin-api.md`).
 
-# Run specific module tests
-PYTHONPATH=. python -m pytest tests/test_kg_*.py -v
-PYTHONPATH=. python -m pytest tests/test_skill_*.py -v
-PYTHONPATH=. python -m pytest tests/test_schemas_*.py -v
-PYTHONPATH=. python -m pytest tests/test_agents_*.py -v
-
-# CLI local testing (thin wrapper)
-python3 -m src.cli analyze -c fund-portfolio.yaml -o report.md
-
-# Run Streamlit UI (local development)
-python3 -m src.cli ui -c fund-portfolio.yaml -p 8501
-```
-
-## Environment
+## Testing Commands
 
 ```bash
-# Required
-export FINNHUB_API_KEY="your_key"   # US stock news
-export TAVILY_API_KEY="your_key"    # AI search supplement
-# Optional
-export FUND_REPORT_CUTOFF_HOUR=22
-export FUND_DCA_CUTOFF_HOUR=10
+# Default plugin test gate
+PYTHONPATH=. pytest -q
+
+# Full health check
+bash scripts/check_plugin_gate.sh
+
+# External host integration smoke test
+PYTHONPATH=. pytest tests/integration/test_external_host_smoke.py -q
+
+# Architecture boundaries
+PYTHONPATH=. pytest tests/architecture/test_architecture_boundaries.py -q
+
+# Minimal host demo
+python examples/minimal_host_news_to_decision.py
 ```
 
-## Test Patterns
+## Minimal Example
 
-- Use `unittest.TestCase` or `pytest` classes
-- Mock external APIs with `sys.modules` pattern (see test_news_fetcher.py)
-- NetworkX KG uses string IDs: `"fund:110011"`, `"stock:600519"`
-- Dataclass instances stored in `G.nodes[id]["data"]`
-- Run with `PYTHONPATH=.` to resolve `src.` imports
-- Skill tests verify ToolRegistry integration (see test_skill_structure.py, test_skill_classes.py)
-- Schema tests verify contract validation (see test_schemas_evidence.py, test_schemas_decision.py)
-
-## Key Design Decisions
-
-- **KG nodes use string IDs**, not objects (for NetworkX compatibility)
-- **All scoring modules have rule-based fallbacks** (no LLM dependency)
-- **HardEvidence confidence_weight is always 1.0** (pure computation)
-- **Skills use ToolRegistry** — no direct network calls inside skills
-- **8-node LangGraph with iteration loop**: Critic reviews output → loops to Planner if gaps found (max 3 iterations)
-- **EvidenceGraph supports hybrid upgrades**: SoftEvidence → HybridEvidence when 2+ sources corroborate
-- **Legacy code isolated in `src/deprecated/`** — does not affect mainline agent pipeline
-- **`conftest.py`** adds project root to `sys.path` for pytest
-- **CLI is a thin wrapper** — all business logic lives in `src/tools/`, `src/schemas/`, `src/agents/`, `skills/`
-- **Skills are pure Python** — no network/IO calls; MCP adapters injected by host
+See `examples/minimal_host_news_to_decision.py` for a complete,
+self-contained host integration flow using only in-memory adapters.

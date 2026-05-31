@@ -185,6 +185,14 @@ git checkout v0.1.0-skillpack-alpha
 
 See `docs/archive/legacy-system.md` for details.
 
+## Agent Quick Start
+
+1. Read `AGENTS.md` — coding agent integration guide.
+2. Read `skillpack/fund-agent.skillpack.yaml` — plugin manifest.
+3. Use `docs/agent-host-quickstart.md` — host integration quickstart.
+4. Run `python examples/minimal_host_news_to_decision.py` — working demo.
+5. Run `bash scripts/check_plugin_gate.sh` — verify all gates pass.
+
 ## Development
 
 ```bash

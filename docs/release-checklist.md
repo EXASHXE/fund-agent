@@ -80,6 +80,18 @@ Run this checklist before tagging a release.
 - [ ] CI runs: compileall, default gate, external host smoke, architecture boundaries
 - [ ] `scripts/check_plugin_gate.sh` exists and is executable
 
+## 9. Host Integration UX
+
+- [ ] `AGENTS.md` exists
+- [ ] `skillpack/examples/README.md` exists
+- [ ] `examples/minimal_host_news_to_decision.py` runs:
+  ```bash
+  python examples/minimal_host_news_to_decision.py
+  ```
+- [ ] `docs/skill-io-examples.md` exists
+- [ ] `docs/plugin-api.md` documents `SkillError` standard codes
+- [ ] Minimal host demo does not import ResearchOS or legacy
+
 ## Quick Verification
 
 ```bash

@@ -1,0 +1,244 @@
+# Skill Input / Output Examples
+
+This document provides JSON-like examples of `SkillInput` and `SkillOutput`
+shapes for each runtime skill. External coding agents can use these as
+reference when constructing skill calls.
+
+## SkillInput Base Shape
+
+```json
+{
+  "task_id": "host-task-001",
+  "step_id": "step-1",
+  "skill_name": "fund_analysis",
+  "payload": {},
+  "required_mcp_capabilities": [],
+  "kg_context": {},
+  "evidence_context": [],
+  "metadata": {}
+}
+```
+
+## SkillOutput Base Shape
+
+```json
+{
+  "step_id": "step-1",
+  "skill_name": "fund_analysis",
+  "status": "OK",
+  "evidence_items": [],
+  "artifacts": {},
+  "warnings": [],
+  "errors": [],
+  "used_mcp_capabilities": []
+}
+```
+
+## fund_analysis
+
+**Input:**
+```json
+{
+  "task_id": "host-task-001",
+  "step_id": "fa-1",
+  "skill_name": "fund_analysis",
+  "payload": {
+    "related_entities": ["fund:110011"]
+  }
+}
+```
+
+**Output:**
+```json
+{
+  "step_id": "fa-1",
+  "skill_name": "fund_analysis",
+  "status": "OK",
+  "evidence_items": [
+    {
+      "evidence_id": "abc-123",
+      "confidence_weight": 1.0,
+      "source_type": "portfolio_analysis",
+      "direction": "positive",
+      "related_entities": ["fund:110011"]
+    }
+  ],
+  "artifacts": {},
+  "errors": []
+}
+```
+
+## news_research
+
+**Input:**
+```json
+{
+  "task_id": "host-task-001",
+  "step_id": "news-1",
+  "skill_name": "news_research",
+  "required_mcp_capabilities": ["web_search", "financial_news"],
+  "payload": {
+    "related_entities": ["fund:110011"]
+  }
+}
+```
+
+**Output:**
+```json
+{
+  "step_id": "news-1",
+  "skill_name": "news_research",
+  "status": "OK",
+  "evidence_items": [
+    {
+      "evidence_id": "news-abc",
+      "confidence_weight": 0.75,
+      "source_type": "financial_news",
+      "direction": "positive",
+      "related_entities": ["fund:110011"]
+    }
+  ],
+  "used_mcp_capabilities": ["financial_news"],
+  "errors": []
+}
+```
+
+## sentiment_analysis
+
+**Input:**
+```json
+{
+  "task_id": "host-task-001",
+  "step_id": "sent-1",
+  "skill_name": "sentiment_analysis",
+  "required_mcp_capabilities": ["social_sentiment"],
+  "payload": {
+    "related_entities": ["fund:110011"]
+  }
+}
+```
+
+**Output:**
+```json
+{
+  "step_id": "sent-1",
+  "skill_name": "sentiment_analysis",
+  "status": "OK",
+  "evidence_items": [
+    {
+      "evidence_id": "sent-abc",
+      "confidence_weight": 0.6,
+      "source_type": "social_sentiment",
+      "direction": "neutral",
+      "related_entities": ["fund:110011"]
+    }
+  ],
+  "used_mcp_capabilities": ["social_sentiment"],
+  "errors": []
+}
+```
+
+## thesis_generation
+
+**Input:**
+```json
+{
+  "task_id": "host-task-001",
+  "step_id": "thesis-1",
+  "skill_name": "thesis_generation",
+  "payload": {
+    "evidence_items": [],
+    "objective": "review fund"
+  }
+}
+```
+
+**Output:**
+```json
+{
+  "step_id": "thesis-1",
+  "skill_name": "thesis_generation",
+  "status": "OK",
+  "artifacts": {
+    "thesis_draft": {}
+  },
+  "evidence_items": [],
+  "errors": []
+}
+```
+
+Note: `thesis_generation` produces `ThesisDraft` artifacts only. It is
+forbidden from producing formal `Decision` objects.
+
+## decision_support
+
+**Input:**
+```json
+{
+  "task_id": "host-task-001",
+  "step_id": "decision-1",
+  "skill_name": "decision_support",
+  "payload": {
+    "evidence_graph": {},
+    "objective": "review fund",
+    "time_horizon": "1 year"
+  }
+}
+```
+
+**Output:**
+```json
+{
+  "step_id": "decision-1",
+  "skill_name": "decision_support",
+  "status": "OK",
+  "artifacts": {
+    "decision": {},
+    "execution_ledger": {}
+  },
+  "evidence_items": [],
+  "errors": []
+}
+```
+
+**Only `decision_support` may produce formal `Decision` and
+`ExecutionLedger` artifacts.**
+
+## Error Output Example
+
+```json
+{
+  "step_id": "news-1",
+  "skill_name": "news_research",
+  "status": "FAILED",
+  "evidence_items": [],
+  "errors": [
+    {
+      "code": "MISSING_MCP_CAPABILITY",
+      "message": "NewsResearch requires financial_news or web_search",
+      "details": {"skill_name": "news_research"},
+      "recoverable": false
+    }
+  ]
+}
+```
+
+## Warnings Example
+
+```json
+{
+  "step_id": "news-1",
+  "skill_name": "news_research",
+  "status": "PARTIAL",
+  "evidence_items": [],
+  "warnings": ["NewsResearch requires financial_news or web_search"],
+  "errors": [
+    {
+      "code": "MISSING_MCP_CAPABILITY",
+      "message": "NewsResearch requires financial_news or web_search",
+      "details": {"skill_name": "news_research"},
+      "recoverable": false
+    }
+  ]
+}
+```
