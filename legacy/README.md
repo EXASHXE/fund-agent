@@ -2,38 +2,47 @@
 
 ## Overview
 
-The legacy `analyze` pipeline is preserved as a historical archive for old CLI,
-report, news, recommendation, strategy, and UI experiments. It is not part of
-the host-agnostic plugin contract.
+The legacy pipeline is preserved as a historical archive. It is not part of the
+host-agnostic plugin contract and is not required for host integration.
 
-The old pipeline has been replaced by the host-agnostic skillpack,
-`skills_runtime`, tools, EvidenceGraph compiler, and `DecisionSupportSkill`.
+## Plugin Replacement
+
+The legacy pipeline has been replaced by the host-agnostic Skill Pack:
+
+- `skillpack/fund-agent.skillpack.yaml` — plugin manifest
+- `src/skills_runtime/` — host-callable skill handlers
+- `src/tools/` — pure quant, ledger, evidence tools
+- `src/schemas/` — typed contracts (Skill, Evidence, Decision)
+- `src/graph/` — KnowledgeGraph helpers
+- `src.tools.evidence.validators.compile_evidence_graph` — evidence compiler
+- `src.skills_runtime.decision_support.DecisionSupportSkill` — formal decisions
+- `src.tools.adapters.mcp.MCPHostAdapter` — MCP adapter boundary
 
 ## Archive Boundary
 
 - No new code should import `legacy`.
 - No new tests should depend on `legacy`.
-- Legacy may be deleted after an archive tag.
 - Provider-specific clients here are not part of the plugin contract.
+- Legacy may be deleted after an archive tag.
+- Legacy is not included in the default pytest gate.
 
-## Historical Components
+## Remaining Components
 
-- `legacy/cli.py`, `legacy/routes/`: old CLI analyze route.
-- `legacy/news/`: old holdings-driven news pipeline and provider clients.
-- `legacy/analysis/scoring/`: old multi-dimensional scoring engine.
-- `legacy/strategy/`: old WAIT/HOLD/ADD/REDUCE/STOP_LOSS state machine.
-- `legacy/output/`: old Markdown/JSON report rendering.
-- `legacy/agents/`: old LangGraph-style multi-agent experiment.
-- `legacy/services/`, `legacy/engine/`, `legacy/forecast/`: old workflow
-  support modules.
+- `legacy/analysis/` — old multi-dimensional scoring engine
+- `legacy/news/` — old holdings-driven news pipeline and provider clients
+- `legacy/output/` — old Markdown/JSON report rendering
+- `legacy/strategy/` — old WAIT/HOLD/ADD/REDUCE/STOP_LOSS state machine
+- `legacy/workflows/` — old workflow orchestration
+- `legacy/cli.py` — DEPRECATED stub (routes/services deleted)
+- `legacy/deprecated/` — historical pipeline experiments
+- `legacy/engine/`, `legacy/events/`, `legacy/prompts/`, `legacy/recommend/`, `legacy/decision/` — legacy support modules
 
-## Current Replacement
+## Deleted Directories
 
-New host integrations should load `skillpack/fund-agent.skillpack.yaml`, call
-`src.skills_runtime` handlers directly, use `src.tools` for pure calculations
-and evidence compilation, and call
-`src.skills_runtime.decision_support.DecisionSupportSkill` only when a formal
-`Decision` and `ExecutionLedger` are needed.
+The following low-value legacy directories have been removed:
 
-ResearchOS reference modules under `src/core` and `src/workflows` are optional
-reference workflows only. They are not the plugin entrypoint.
+- `legacy/ui/` — old Streamlit UI (zero references)
+- `legacy/routes/` — old CLI router
+- `legacy/services/` — old service layer
+- `legacy/agents/` — old LangGraph multi-agent experiment
+- `legacy/forecast/` — old trend forecast engine

@@ -69,7 +69,20 @@ Run this checklist before tagging a release.
 
 - [ ] No `src` module imports `legacy`
 - [ ] Legacy is historical reference only (see `legacy/README.md`)
-- [ ] Deleted legacy dirs: `ui`, `routes`, `services`, `agents`, `forecast`
+- [ ] Low-value legacy dirs removed:
+  - `legacy/ui`
+  - `legacy/routes`
+  - `legacy/services`
+  - `legacy/agents`
+  - `legacy/forecast`
+- [ ] `tests/deprecated` not in default gate
+
+## 8. CI
+
+- [ ] `.github/workflows/plugin-ci.yml` exists
+- [ ] CI runs: compileall, default gate, external host smoke, architecture boundaries
+- [ ] CI does NOT run `tests/deprecated`
+- [ ] `scripts/check_plugin_gate.sh` exists and is executable
 
 ## Quick Verification
 

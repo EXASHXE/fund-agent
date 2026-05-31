@@ -666,3 +666,68 @@ def test_readme_does_not_describe_old_src_layout():
         f"README still describes old src/ paths as new architecture: {violations}. "
         f"Update to describe legacy/ paths instead."
     )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Boundary: Legacy README must be historical archive only
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def test_legacy_readme_is_historical_archive_only():
+    """legacy/README.md must declare itself a historical archive, not ResearchOS replacement."""
+    content = _read("legacy/README.md")
+
+    assert "Legacy Archive" in content
+    assert "Historical Reference Only" in content
+
+    forbidden = [
+        "Research OS Skill pipeline",
+        "New Research OS",
+        "src.core.research_os as replacement",
+        "run_research_task",
+    ]
+    violations = [phrase for phrase in forbidden if phrase in content]
+    assert not violations, f"legacy/README.md references ResearchOS as replacement: {violations}"
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Boundary: Low-value legacy dirs must be removed
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def test_low_value_legacy_dirs_removed():
+    """ui, routes, services, agents, forecast must not exist under legacy/."""
+    deleted = ["ui", "routes", "services", "agents", "forecast"]
+    remaining = []
+    for d in deleted:
+        p = os.path.join(PROJECT_ROOT, "legacy", d)
+        if os.path.exists(p):
+            remaining.append(d)
+    assert not remaining, f"Low-value legacy dirs still exist: {remaining}"
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Boundary: Plugin main paths must not import legacy
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@pytest.mark.parametrize("dirpath,label", [
+    ("src/skills_runtime", "src/skills_runtime"),
+    ("src/tools", "src/tools"),
+    ("src/schemas", "src/schemas"),
+    ("src/graph", "src/graph"),
+    ("src/skillpack", "src/skillpack"),
+])
+def test_main_plugin_paths_do_not_import_legacy(dirpath, label):
+    _assert_no_imports_matching(dirpath, ["legacy."], f"{label} must not import legacy")
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Boundary: tests/deprecated must not be in default pytest testpaths
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def test_deprecated_not_in_default_pytest_testpaths():
+    """pyproject.toml testpaths must not include tests/deprecated."""
+    pyproject_path = os.path.join(PROJECT_ROOT, "pyproject.toml")
+    content = _read(pyproject_path)
+
+    assert "tests/deprecated" not in content.split("[tool.pytest.ini_options]")[1].split("[")[0], (
+        "tests/deprecated must not be in pyproject.toml testpaths"
+    )
