@@ -67,30 +67,17 @@ Run this checklist before tagging a release.
 
 ## 7. Legacy
 
-- [ ] No `src` module imports `legacy`
-- [ ] Legacy is historical reference only (see `legacy/README.md`)
-- [ ] Low-value legacy dirs removed:
-  - `legacy/ui`
-  - `legacy/routes`
-  - `legacy/services`
-  - `legacy/agents`
-  - `legacy/forecast`
-- [ ] `legacy/deprecated/news_pipeline.py` removed
-- [ ] `tests/deprecated/archived_broken/` removed
-- [ ] `tests/deprecated` not in default gate
-
-**Future prune candidates (do NOT delete in this release):**
-- `legacy/analysis`
-- `legacy/news`
-- `legacy/output`
-- `legacy/strategy`
-- `legacy/workflows`
+- [ ] `v0.1.0-skillpack-alpha` preserves the pre-prune legacy archive
+- [ ] Legacy implementation removed from current mainline
+- [ ] `tests/deprecated` removed from current mainline
+- [ ] `docs/archive/legacy-system.md` documents historical modules
+- [ ] No `src` import `legacy`
+- [ ] No `skillpack` reference to `legacy`
 
 ## 8. CI
 
 - [ ] `.github/workflows/plugin-ci.yml` exists
 - [ ] CI runs: compileall, default gate, external host smoke, architecture boundaries
-- [ ] CI does NOT run `tests/deprecated`
 - [ ] `scripts/check_plugin_gate.sh` exists and is executable
 
 ## Quick Verification

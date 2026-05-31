@@ -162,7 +162,7 @@ src/
   infra/                    # config/data/persistence/vectorstore implementation
   core/                     # optional reference helpers, not host entrypoint
   workflows/                # optional reference wrappers, not host entrypoint
-legacy/                     # historical archive for old CLI/report/news/recommend/workflow code
+legacy/README.md            # pointer to v0.1.0-skillpack-alpha legacy archive
 examples/reference_workflows/
 docs/
 ```
@@ -174,10 +174,21 @@ reference-only modules retained for compatibility and examples. They are not
 required by the skill pack manifest, not required by host integration, and not
 the recommended product entrypoint.
 
+## Archive Note
+
+Legacy code (CLI, news pipeline, scoring, strategy, reports, UI) was removed
+after `v0.1.0-skillpack-alpha`. To inspect the old implementation:
+
+```bash
+git checkout v0.1.0-skillpack-alpha
+```
+
+See `docs/archive/legacy-system.md` for details.
+
 ## Development
 
 ```bash
-PYTHONPATH=. python -m compileall src tests legacy
+PYTHONPATH=. python -m compileall src tests
 PYTHONPATH=. pytest -q
 ```
 

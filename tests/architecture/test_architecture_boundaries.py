@@ -673,11 +673,11 @@ def test_readme_does_not_describe_old_src_layout():
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def test_legacy_readme_is_historical_archive_only():
-    """legacy/README.md must declare itself a historical archive, not ResearchOS replacement."""
+    """legacy/README.md must be a pointer to the alpha tag, not ResearchOS replacement."""
     content = _read("legacy/README.md")
 
-    assert "Legacy Archive" in content
-    assert "Historical Reference Only" in content
+    assert "v0.1.0-skillpack-alpha" in content
+    assert "git checkout" in content
 
     forbidden = [
         "Research OS Skill pipeline",
@@ -833,3 +833,53 @@ def test_archived_broken_deprecated_tests_removed():
     assert not os.path.exists(
         os.path.join(PROJECT_ROOT, "tests", "deprecated", "archived_broken")
     )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Boundary: Post-Alpha legacy removal (Beta-9)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def test_legacy_code_removed_or_pointer_only():
+    """legacy/ must not exist, or contain only README.md."""
+    legacy_path = os.path.join(PROJECT_ROOT, "legacy")
+    if os.path.exists(legacy_path):
+        entries = set(os.listdir(legacy_path))
+        entries.discard("__pycache__")
+        assert entries == {"README.md"}, f"legacy/ contains unexpected entries: {entries}"
+
+
+def test_tests_deprecated_removed():
+    assert not os.path.exists(os.path.join(PROJECT_ROOT, "tests", "deprecated"))
+
+
+def test_readme_points_to_alpha_tag_for_legacy():
+    content = _read("README.md")
+    assert "v0.1.0-skillpack-alpha" in content
+
+
+def test_archive_doc_exists():
+    assert os.path.exists(os.path.join(PROJECT_ROOT, "docs", "archive", "legacy-system.md"))
+
+
+def test_archive_doc_mentions_alpha_tag():
+    content = _read("docs/archive/legacy-system.md")
+    assert "v0.1.0-skillpack-alpha" in content
+
+
+def test_no_plugin_path_imports_legacy():
+    """No plugin code path may import legacy."""
+    for dirpath, label in [
+        ("src", "src"),
+        ("skillpack", "skillpack"),
+        ("skills", "skills"),
+        ("docs", "docs"),
+        ("tests/architecture", "tests/architecture"),
+        ("tests/contracts", "tests/contracts"),
+        ("tests/skillpack", "tests/skillpack"),
+        ("tests/skills", "tests/skills"),
+        ("tests/tools", "tests/tools"),
+        ("tests/integration", "tests/integration"),
+    ]:
+        imports = _get_imports_from_dir(dirpath)
+        violations = [i for i in imports if i == "legacy" or i.startswith("legacy.")]
+        assert not violations, f"{label} imports legacy: {violations}"

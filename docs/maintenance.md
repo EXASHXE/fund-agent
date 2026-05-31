@@ -16,10 +16,27 @@ External hosts own orchestration, credentials, network access, and retries.
 
 ## Legacy Archive
 
-`legacy/` is historical reference only. Do not add new imports from plugin core
-to legacy modules, and do not make new main-gate tests depend on legacy. Legacy
-provider clients are not part of the plugin contract and may be removed after
-an archive tag.
+Legacy code was removed after `v0.1.0-skillpack-alpha`. To inspect the old
+implementation, checkout the tag:
+
+```bash
+git checkout v0.1.0-skillpack-alpha
+```
+
+See `docs/archive/legacy-system.md` for the full list of removed modules.
+
+`tests/deprecated` has been removed. New code must not import `legacy`. New
+code should extend only:
+
+- `skillpack/`
+- `skills/`
+- `src/skills_runtime/`
+- `src/schemas/`
+- `src/tools/`
+- `src/graph/`
+- `src/skillpack/`
+- `docs/`
+- `tests/` (plugin gate)
 
 ResearchOS modules under `src/core` and `src/workflows` are deprecated optional
 reference workflows. They are not required for host integration.
@@ -34,9 +51,6 @@ Default `pytest` targets plugin core only:
 - `tests/skills`
 - `tests/tools`
 - `tests/integration`
-
-Historical workflow and legacy tests live under `tests/deprecated` and can be
-run explicitly with `PYTHONPATH=. pytest tests/deprecated -q`.
 
 ## Adding A Skill
 
@@ -72,13 +86,12 @@ adapt it through `src.tools.adapters.mcp.MCPHostAdapter`.
 
 ## What Is NOT Plugin Core
 
-- `legacy/` — historical archive, not part of plugin contract
+- Legacy modules — removed after `v0.1.0-skillpack-alpha`, see `docs/archive/`
 - `src/core/research_os.py` — optional reference workflow, not required
 - `src/core/planner.py` — optional reference helper
 - `src/core/skill_registry.py` — optional reference helper
 - `src/workflows/research_os.py` — optional reference wrapper
 - Provider-specific SDKs — host concern
-- UI, routes, services — deleted or archived
 
 ## Running The Gate Locally
 
