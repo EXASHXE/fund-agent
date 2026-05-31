@@ -1,0 +1,83 @@
+# Contract Freeze — v0.3.0-skillpack-rc
+
+This document lists contracts that are frozen at `rc-stable` for
+`v0.3.0-skillpack-rc`. Breaking changes require a `schema_version` bump.
+
+## Frozen Contracts
+
+### 1. SkillInput / SkillOutput
+
+- **Location:** `src/schemas/skill.py`
+- **Stability:** rc-stable
+- **Allowed changes:** add optional fields with defaults, add new error codes
+- **Breaking:** renaming/removing required fields, changing field types
+
+### 2. SkillError
+
+- **Location:** `src/schemas/skill.py`
+- **Stability:** rc-stable
+- **Allowed changes:** add new standard error codes, add optional details fields
+- **Breaking:** removing existing error codes, changing `recoverable` semantics
+
+### 3. EvidenceItem
+
+- **Location:** `src/schemas/evidence.py`
+- **Stability:** rc-stable
+- **Allowed changes:** add optional metadata fields
+- **Breaking:** changing `confidence_weight` range, removing `source_type`
+
+### 4. EvidenceGraph
+
+- **Location:** `src/schemas/evidence_graph.py`
+- **Stability:** rc-stable
+- **Allowed changes:** add optional graph metadata
+- **Breaking:** changing node/edge schemas, removing `to_dict()` contract
+
+### 5. EvidenceGraphCompileResult / EvidenceGraphCompileReport
+
+- **Location:** `src/tools/evidence/validators.py`
+- **Stability:** rc-stable
+- **Allowed changes:** add optional report fields
+- **Breaking:** removing `graph` or `report` from result
+
+### 6. Decision
+
+- **Location:** `src/schemas/decision.py`
+- **Stability:** rc-stable
+- **Allowed changes:** add optional audit trail entries
+- **Breaking:** changing action enum values, removing `rationale_anchor`
+
+### 7. ExecutionLedger
+
+- **Location:** `src/schemas/decision.py`
+- **Stability:** rc-stable
+- **Allowed changes:** add optional ledger metadata
+- **Breaking:** changing `decisions` list schema
+
+### 8. MCPCapability / MCPHostAdapter
+
+- **Location:** `src/tools/adapters/mcp.py`
+- **Stability:** rc-stable
+- **Allowed changes:** add optional adapter methods
+- **Breaking:** changing `call()` or `list_capabilities()` signatures
+
+### 9. Skillpack Manifest
+
+- **Location:** `skillpack/fund-agent.skillpack.yaml`
+- **Schema version:** `skillpack.v1`
+- **Stability:** rc-stable
+- **Allowed changes:** add new skills, tools, or optional fields
+- **Breaking:** removing required skills, changing `package_role` or `orchestration_owner`
+
+### 10. Tool Catalog
+
+- **Location:** `skillpack/tools.yaml`
+- **Stability:** rc-stable
+- **Allowed changes:** add new tools, add optional fields
+- **Breaking:** removing required fields (`id`, `import_path`, `category`)
+
+## Versioning Policy
+
+- `v0.x.y` — pre-1.0, minor breaking changes allowed with notice
+- `v1.0.0` — stable API, full backward compatibility
+- `skillpack.v1` — manifest schema, frozen for v0.3.0-rc

@@ -942,3 +942,37 @@ def test_plugin_api_mentions_skill_error_codes():
     content = _read("docs/plugin-api.md")
 
     assert "SkillError Codes" in content or "Standard Error Codes" in content
+
+
+def test_changelog_exists():
+    assert os.path.exists(os.path.join(PROJECT_ROOT, "CHANGELOG.md"))
+
+
+def test_changelog_mentions_current_version():
+    content = _read("CHANGELOG.md")
+    version = _read("VERSION").strip()
+    assert version in content, f"CHANGELOG.md must mention {version}"
+
+
+def test_changelog_mentions_legacy_alpha_tag():
+    content = _read("CHANGELOG.md")
+    assert "v0.1.0-skillpack-alpha" in content
+
+
+def test_markdown_docs_are_not_single_line_blobs():
+    docs = [
+        "AGENTS.md",
+        "README.md",
+        "docs/plugin-api.md",
+        "docs/skill-io-examples.md",
+        "docs/agent-host-quickstart.md",
+        "docs/host-integration.md",
+        "skillpack/examples/README.md",
+        "docs/release-checklist.md",
+        "docs/maintenance.md",
+    ]
+    for path in docs:
+        content = _read(path)
+        lines = content.split("\n")
+        assert len(lines) > 10, f"{path} has only {len(lines)} lines"
+        assert any(line.strip().startswith("#") for line in lines), f"{path} has no heading"

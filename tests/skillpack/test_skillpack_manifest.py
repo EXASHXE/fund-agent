@@ -98,5 +98,39 @@ def test_skillpack_manifest_is_json_serializable():
     json.dumps(data)
 
 
+def test_manifest_version_matches_version_file():
+    version = (MANIFEST_PATH.parent.parent / "VERSION").read_text(encoding="utf-8").strip()
+    assert _manifest()["version"] == version
+
+
+def test_all_skill_runtime_paths_do_not_point_to_legacy_or_research_os():
+    data = _manifest()
+    for skill in data["skills"]:
+        runtime = skill["runtime"]
+        assert "legacy" not in runtime, f"{skill['name']} runtime points to legacy: {runtime}"
+        assert "research_os" not in runtime, f"{skill['name']} runtime points to ResearchOS: {runtime}"
+
+
+def test_every_skill_has_required_fields():
+    data = _manifest()
+    for skill in data["skills"]:
+        for key in ("name", "runtime", "input_schema", "output_schema", "requires_mcp"):
+            assert key in skill, f"{skill.get('name', '?')} missing {key}"
+
+
+def test_mcp_capabilities_declared_in_capabilities_yaml():
+    import yaml as y
+
+    data = _manifest()
+    caps_yaml = y.safe_load(Path("skillpack/capabilities.yaml").read_text(encoding="utf-8"))
+    declared = set(caps_yaml.get("mcp_capabilities", caps_yaml.get("capabilities", [])))
+    if isinstance(next(iter(declared), None), dict):
+        declared = {c["name"] for c in declared}
+
+    for skill in data["skills"]:
+        for cap in skill.get("requires_mcp", []):
+            assert cap in declared, f"{skill['name']} requires undeclared MCP capability: {cap}"
+
+
 def _manifest() -> dict:
     return yaml.safe_load(MANIFEST_PATH.read_text())

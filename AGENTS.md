@@ -79,6 +79,29 @@ PYTHONPATH=. pytest tests/architecture/test_architecture_boundaries.py -q
 python examples/minimal_host_news_to_decision.py
 ```
 
+## Versioning
+
+- Current package version is read from `VERSION`.
+- Skillpack manifest version must match `VERSION`.
+- Contract schema version is `skillpack.v1`.
+- Breaking contract changes require `schema_version` bump.
+
+## Before You Modify
+
+Agents must run:
+
+```bash
+PYTHONPATH=. pytest -q
+bash scripts/check_plugin_gate.sh
+```
+
+Before changing runtime contracts, also update:
+
+- `docs/CONTRACT_FREEZE.md`
+- `skillpack/fund-agent.skillpack.yaml`
+- `tests/contracts`
+- `tests/skillpack`
+
 ## Minimal Example
 
 See `examples/minimal_host_news_to_decision.py` for a complete,

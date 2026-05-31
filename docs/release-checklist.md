@@ -92,6 +92,22 @@ Run this checklist before tagging a release.
 - [ ] `docs/plugin-api.md` documents `SkillError` standard codes
 - [ ] Minimal host demo does not import ResearchOS or legacy
 
+## 10. RC Release (v0.3.0-skillpack-rc)
+
+- [ ] `VERSION` exists and reads `0.3.0-skillpack-rc`
+- [ ] `CHANGELOG.md` exists
+- [ ] `docs/CONTRACT_FREEZE.md` exists
+- [ ] Manifest version equals `VERSION`
+- [ ] Pyproject version equals `VERSION`
+- [ ] Manifest `schema_version` == `skillpack.v1`
+- [ ] Manifest `package_role` == `agent_plugin`
+- [ ] `bash scripts/check_plugin_gate.sh` passes
+- [ ] `.github/workflows/plugin-ci.yml` is valid YAML
+- [ ] No legacy runtime code on mainline
+- [ ] `tests/deprecated` does not exist
+- [ ] External host smoke passes
+- [ ] No provider SDKs in `skills_runtime`
+
 ## Quick Verification
 
 ```bash
