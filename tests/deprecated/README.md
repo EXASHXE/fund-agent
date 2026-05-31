@@ -11,7 +11,6 @@ for historical reference and may fail. They are not run by `pytest -q`.
 - `news/` — old holdings-driven news pipeline and provider client tests
 - `misc/` — miscellaneous old pipeline tests
 - `reporting/` — old report rendering tests
-- `archived_broken/` — tests that referenced deleted legacy code (ui, routes, services, agents, forecast)
 
 ## Running
 

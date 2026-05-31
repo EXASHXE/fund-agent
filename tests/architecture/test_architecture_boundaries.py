@@ -788,3 +788,51 @@ def test_readme_legacy_description_does_not_mention_deleted_ui():
     content = _read("README.md")
 
     assert "ui compatibility path" not in content
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Boundary: Cleanup verification for Beta-8.1 release
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def test_legacy_readme_does_not_reference_deleted_legacy_dirs():
+    """legacy/README.md must not mention deleted dirs outside Deleted Directories."""
+    content = _read("legacy/README.md")
+    # Split off the Deleted Directories section
+    parts = content.split("Deleted Directories")
+    main_content = parts[0]
+    deleted_names = ["legacy/routes", "legacy/agents", "legacy/services", "legacy/forecast", "legacy/ui"]
+    violations = [name for name in deleted_names if name in main_content]
+    assert not violations, f"legacy/README.md references deleted dirs in main content: {violations}"
+
+
+def test_readme_legacy_layout_does_not_reference_deleted_ui():
+    """README must not describe legacy as a ui compatibility path."""
+    content = _read("README.md")
+
+    assert "legacy/" in content
+    assert "ui compatibility" not in content
+
+
+def test_check_plugin_gate_script_exists_and_is_executable():
+    path = os.path.join(PROJECT_ROOT, "scripts", "check_plugin_gate.sh")
+
+    assert os.path.exists(path)
+    assert os.access(path, os.X_OK)
+
+
+def test_check_plugin_gate_script_does_not_run_deprecated():
+    content = _read("scripts/check_plugin_gate.sh")
+
+    assert "pytest tests/deprecated" not in content
+
+
+def test_legacy_deprecated_news_pipeline_removed():
+    assert not os.path.exists(
+        os.path.join(PROJECT_ROOT, "legacy", "deprecated", "news_pipeline.py")
+    )
+
+
+def test_archived_broken_deprecated_tests_removed():
+    assert not os.path.exists(
+        os.path.join(PROJECT_ROOT, "tests", "deprecated", "archived_broken")
+    )

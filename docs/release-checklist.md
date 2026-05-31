@@ -75,7 +75,16 @@ Run this checklist before tagging a release.
   - `legacy/services`
   - `legacy/agents`
   - `legacy/forecast`
+- [ ] `legacy/deprecated/news_pipeline.py` removed
+- [ ] `tests/deprecated/archived_broken/` removed
 - [ ] `tests/deprecated` not in default gate
+
+**Future prune candidates (do NOT delete in this release):**
+- `legacy/analysis`
+- `legacy/news`
+- `legacy/output`
+- `legacy/strategy`
+- `legacy/workflows`
 
 ## 8. CI
 
