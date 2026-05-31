@@ -28,21 +28,15 @@ The legacy pipeline has been replaced by the host-agnostic Skill Pack:
 
 ## Remaining Components
 
+- `legacy/cli.py` — DEPRECATED stub
 - `legacy/analysis/` — old multi-dimensional scoring engine
+- `legacy/decision/` — legacy decision support modules
+- `legacy/deprecated/` — historical pipeline experiments
+- `legacy/engine/` — old calculation engine
+- `legacy/events/` — old event taxonomy
 - `legacy/news/` — old holdings-driven news pipeline and provider clients
 - `legacy/output/` — old Markdown/JSON report rendering
+- `legacy/prompts/` — old prompt templates
+- `legacy/recommend/` — old recommendation engine
 - `legacy/strategy/` — old WAIT/HOLD/ADD/REDUCE/STOP_LOSS state machine
 - `legacy/workflows/` — old workflow orchestration
-- `legacy/cli.py` — DEPRECATED stub (routes/services deleted)
-- `legacy/deprecated/` — historical pipeline experiments
-- `legacy/engine/`, `legacy/events/`, `legacy/prompts/`, `legacy/recommend/`, `legacy/decision/` — legacy support modules
-
-## Deleted Directories
-
-The following low-value legacy directories have been removed:
-
-- `legacy/ui/` — old Streamlit UI (zero references)
-- `legacy/routes/` — old CLI router
-- `legacy/services/` — old service layer
-- `legacy/agents/` — old LangGraph multi-agent experiment
-- `legacy/forecast/` — old trend forecast engine

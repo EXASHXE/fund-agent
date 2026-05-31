@@ -795,14 +795,11 @@ def test_readme_legacy_description_does_not_mention_deleted_ui():
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def test_legacy_readme_does_not_reference_deleted_legacy_dirs():
-    """legacy/README.md must not mention deleted dirs outside Deleted Directories."""
+    """legacy/README.md must not reference deleted legacy dirs."""
     content = _read("legacy/README.md")
-    # Split off the Deleted Directories section
-    parts = content.split("Deleted Directories")
-    main_content = parts[0]
-    deleted_names = ["legacy/routes", "legacy/agents", "legacy/services", "legacy/forecast", "legacy/ui"]
-    violations = [name for name in deleted_names if name in main_content]
-    assert not violations, f"legacy/README.md references deleted dirs in main content: {violations}"
+    deleted_names = ["legacy/ui", "legacy/routes", "legacy/services", "legacy/agents", "legacy/forecast"]
+    violations = [name for name in deleted_names if name in content]
+    assert not violations, f"legacy/README.md references deleted dirs: {violations}"
 
 
 def test_readme_legacy_layout_does_not_reference_deleted_ui():
