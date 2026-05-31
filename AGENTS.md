@@ -102,6 +102,24 @@ Before changing runtime contracts, also update:
 - `tests/contracts`
 - `tests/skillpack`
 
+## RC Validation
+
+Before tagging an RC, agents must run:
+
+```bash
+PYTHONPATH=. pytest -q
+bash scripts/check_plugin_gate.sh
+python examples/minimal_host_news_to_decision.py
+python scripts/check_examples.py
+```
+
+Also verify:
+
+- `VERSION` == manifest version == pyproject version
+- `legacy/` contains only `README.md`
+- `tests/deprecated` does not exist
+- No provider SDK in `skills_runtime`
+
 ## Minimal Example
 
 See `examples/minimal_host_news_to_decision.py` for a complete,

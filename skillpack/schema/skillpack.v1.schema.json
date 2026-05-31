@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "skillpack.v1.schema.json",
+  "title": "Skillpack Manifest v1",
+  "description": "Host-agnostic financial research skill pack manifest schema",
+  "type": "object",
+  "required": [
+    "name",
+    "version",
+    "schema_version",
+    "package_role",
+    "type",
+    "orchestration_owner",
+    "mcp_provider_owner",
+    "skills",
+    "tools",
+    "schemas",
+    "contracts",
+    "mcp_capabilities",
+    "host_integration",
+    "forbidden_behaviors"
+  ],
+  "properties": {
+    "name": { "type": "string" },
+    "version": { "type": "string" },
+    "schema_version": {
+      "type": "string",
+      "const": "skillpack.v1"
+    },
+    "package_role": {
+      "type": "string",
+      "const": "agent_plugin"
+    },
+    "type": {
+      "type": "string",
+      "const": "host-agnostic-financial-research-skill-pack"
+    },
+    "description": { "type": "string" },
+    "orchestration_owner": {
+      "type": "string",
+      "const": "external_agent"
+    },
+    "mcp_provider_owner": {
+      "type": "string",
+      "const": "external_host"
+    },
+    "skills": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "runtime", "input_schema", "output_schema", "requires_mcp", "produces"],
+        "properties": {
+          "name": { "type": "string" },
+          "runtime": { "type": "string" },
+          "input_schema": { "type": "string" },
+          "output_schema": { "type": "string" },
+          "requires_mcp": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "produces": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "forbidden": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "consumes": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "tools": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "schemas": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "contracts": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "mcp_capabilities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "required_by"],
+        "properties": {
+          "name": { "type": "string" },
+          "required_by": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "host_integration": {
+      "type": "object",
+      "required": ["required_entrypoint", "orchestration_owner", "mcp_provider_owner"],
+      "properties": {
+        "planner_owner": { "type": "string" },
+        "orchestration_owner": { "type": "string" },
+        "mcp_provider_owner": { "type": "string" },
+        "required_entrypoint": { "type": "string" },
+        "optional_reference_only": { "type": "boolean" },
+        "optional_reference_workflows": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "forbidden_behaviors": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

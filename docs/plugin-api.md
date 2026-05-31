@@ -239,7 +239,7 @@ All skills return errors via `SkillOutput.errors`. Each error uses the
 | `details` | `dict` | Context-specific details (default `{}`) |
 | `recoverable` | `bool` | Whether the host can retry (default `True`) |
 
-### Standard Error Codes
+### SkillError Codes / Standard Error Codes
 
 | Code | Meaning | Recoverable |
 |---|---|---|

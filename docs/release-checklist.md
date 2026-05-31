@@ -108,6 +108,25 @@ Run this checklist before tagging a release.
 - [ ] External host smoke passes
 - [ ] No provider SDKs in `skills_runtime`
 
+## 11. RC-1 Host Compatibility
+
+- [ ] `skillpack/schema/skillpack.v1.schema.json` exists
+- [ ] Manifest validates against skillpack.v1 schema
+- [ ] `docs/host-compatibility.md` exists
+- [ ] Install smoke test passes:
+  ```bash
+  PYTHONPATH=. pytest tests/integration/test_install_smoke.py -q
+  ```
+- [ ] Public import paths resolve:
+  ```bash
+  PYTHONPATH=. pytest tests/contracts/test_public_import_paths.py -q
+  ```
+- [ ] Examples checker passes:
+  ```bash
+  python scripts/check_examples.py
+  ```
+- [ ] Minimal host demo emits JSON subprocess
+
 ## Quick Verification
 
 ```bash

@@ -976,3 +976,27 @@ def test_markdown_docs_are_not_single_line_blobs():
         lines = content.split("\n")
         assert len(lines) > 10, f"{path} has only {len(lines)} lines"
         assert any(line.strip().startswith("#") for line in lines), f"{path} has no heading"
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Boundary: Host compatibility (RC-1)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def test_host_compatibility_doc_exists():
+    assert os.path.exists(os.path.join(PROJECT_ROOT, "docs", "host-compatibility.md"))
+
+
+def test_host_compatibility_doc_mentions_major_hosts():
+    content = _read("docs/host-compatibility.md")
+    for host in ("OpenCode", "Claude Code", "Codex", "OpenClaw", "Hermes"):
+        assert host in content, f"host-compatibility missing {host}"
+
+
+def test_host_compatibility_doc_does_not_require_research_os():
+    content = _read("docs/host-compatibility.md")
+    # "ResearchOS" may appear only as "not required"
+    if "ResearchOS" in content:
+        idx = content.index("ResearchOS")
+        context = content[max(0, idx-100):idx+100].lower()
+        assert "not" in context, "host-compatibility.md mentions ResearchOS without saying not required"
+    assert "src.core.research_os" not in content

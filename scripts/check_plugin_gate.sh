@@ -15,8 +15,12 @@ echo
 
 echo "=== skillpack ==="
 PYTHONPATH=. pytest tests/skillpack -q
-echo
 
+echo
+echo "=== check examples ==="
+python scripts/check_examples.py
+
+echo
 echo "=== skills ==="
 PYTHONPATH=. pytest tests/skills -q
 echo
