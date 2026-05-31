@@ -2,10 +2,10 @@
 
 The architecture enforces strict boundaries:
 - Skill pack code must NOT import from the legacy system (legacy/).
-- Runtime skills must not depend on internal ResearchOS orchestration.
+- Runtime skills must not depend on internal ResearchOS (optional reference only).
 - src/tools/ must remain pure: no LLM, no network IO.
 - src/ top-level must stay within the allowlist.
-- Old src/ directories (news, analysis, output, etc.) must not be imported by new code.
+- Old src/ directories (news, analysis, output, etc.) must not be imported by plugin code.
 """
 
 import ast
@@ -67,7 +67,7 @@ def _load_skillpack_manifest() -> dict:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# Boundary: Research OS must not import legacy
+# Boundary: Skill Pack code must not import legacy
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @pytest.mark.parametrize("dirpath,label", [
@@ -89,8 +89,8 @@ def test_src_does_not_import_legacy():
     _assert_no_imports_matching("src", ["legacy", "legacy."], "src must not import legacy")
 
 
-def test_research_os_no_legacy():
-    """src/workflows/research_os.py must not import from legacy/."""
+def test_optional_reference_workflows_do_not_import_legacy():
+    """Optional reference workflow (src/workflows/research_os.py) must not import from legacy/."""
     fp = os.path.join(PROJECT_ROOT, "src", "workflows", "research_os.py")
     if not os.path.exists(fp):
         pytest.skip("research_os.py not found")
@@ -101,11 +101,11 @@ def test_research_os_no_legacy():
         if isinstance(node, ast.ImportFrom) and node.module:
             imports.add(node.module)
     violations = [i for i in imports if i.startswith("legacy.")]
-    assert not violations, f"research_os.py must not import legacy: {violations}"
+    assert not violations, f"optional reference workflow research_os.py must not import legacy: {violations}"
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# Boundary: New code must not import old src/ directories
+# Boundary: Plugin runtime code must not import old src/ directories
 # ═══════════════════════════════════════════════════════════════════════════════
 
 OLD_SRC_DIRS = [
@@ -127,7 +127,7 @@ NEW_CODE_DIRS = [
 ]
 
 def test_new_code_no_old_imports():
-    """New Research OS code must not import old src/ directories."""
+    """Plugin runtime code must not import old src/ directories."""
     all_imports = set()
     for d in NEW_CODE_DIRS:
         all_imports.update(_get_imports_from_dir(d))
@@ -136,7 +136,7 @@ def test_new_code_no_old_imports():
 
 
 def test_new_system_does_not_import_deprecated_shims():
-    """New Research OS code must not import deprecated infra shim paths."""
+    """Plugin runtime code must not import deprecated infra shim paths."""
     deprecated_shims = (
         "src.config.",
         "src.data.",
@@ -155,7 +155,7 @@ def test_new_system_does_not_import_deprecated_shims():
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# Boundary: New code must not import shimmed infra old paths directly
+# Boundary: Plugin runtime code must not import shimmed infra old paths directly
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @pytest.mark.parametrize("dirpath", ["src/core", "src/tools", "src/graph", "src/schemas", "src/workflows"])
