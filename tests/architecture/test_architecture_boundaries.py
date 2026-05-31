@@ -731,3 +731,60 @@ def test_deprecated_not_in_default_pytest_testpaths():
     assert "tests/deprecated" not in content.split("[tool.pytest.ini_options]")[1].split("[")[0], (
         "tests/deprecated must not be in pyproject.toml testpaths"
     )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Boundary: Plugin API documentation must exist and be correct
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def test_plugin_api_doc_exists():
+    assert os.path.exists(os.path.join(PROJECT_ROOT, "docs", "plugin-api.md"))
+
+
+def test_plugin_api_doc_mentions_external_host():
+    content = _read("docs/plugin-api.md")
+
+    assert "external host" in content.lower()
+    assert "external_agent" in content
+    assert "external_host" in content
+
+
+def test_plugin_api_doc_does_not_require_research_os():
+    content = _read("docs/plugin-api.md")
+
+    # "src.core.research_os" may appear only in "what not to do" context
+    forbidden_present = [
+        "call src.core.research_os",
+        "import src.core.research_os",
+    ]
+    for phrase in forbidden_present:
+        if phrase in content:
+            assert "NOT" in content[content.index(phrase)-50:content.index(phrase)+50].upper(), (
+                f"plugin-api.md mentions {phrase} without forbidding it"
+            )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Boundary: Legacy README must not mention deleted dirs as remaining
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def test_legacy_readme_matches_existing_dirs():
+    """legacy/README.md must not list deleted dirs in remaining components."""
+    content = _read("legacy/README.md")
+    deleted_refs = [
+        "`legacy/routes/`",
+        "`legacy/agents/`",
+        "`legacy/services/`",
+        "`legacy/forecast/`",
+        "`legacy/ui/`",
+    ]
+    # Find the Remaining Components section (before Deleted Directories)
+    remaining_section = content.split("Deleted Directories")[0]
+    violations = [ref for ref in deleted_refs if ref in remaining_section]
+    assert not violations, f"legacy/README.md lists deleted dirs in remaining section: {violations}"
+
+
+def test_readme_legacy_description_does_not_mention_deleted_ui():
+    content = _read("README.md")
+
+    assert "ui compatibility path" not in content

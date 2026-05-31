@@ -15,6 +15,20 @@ def test_all_skillpack_examples_are_valid_json():
         json.loads(path.read_text())
 
 
+def test_all_skill_input_examples_have_required_fields():
+    required = {"task_id", "step_id", "skill_name", "payload"}
+    input_files = [
+        "news_research_input.json",
+        "fund_analysis_input.json",
+        "sentiment_analysis_input.json",
+        "decision_support_input.json",
+    ]
+    for fname in input_files:
+        data = _load(fname)
+        missing = required - set(data.keys())
+        assert not missing, f"{fname} missing fields: {missing}"
+
+
 def test_news_research_example_matches_skill_input_shape():
     data = _load("news_research_input.json")
     skill_input = SkillInput(**data)
@@ -22,6 +36,23 @@ def test_news_research_example_matches_skill_input_shape():
     assert skill_input.skill_name == "news_research"
     assert "financial_news" in skill_input.required_mcp_capabilities
     assert skill_input.payload["mock_mcp_response"]["items"]
+
+
+def test_fund_analysis_example_matches_skill_input_shape():
+    data = _load("fund_analysis_input.json")
+    skill_input = SkillInput(**data)
+
+    assert skill_input.skill_name == "fund_analysis"
+    assert skill_input.required_mcp_capabilities == []
+    assert "related_entities" in skill_input.payload
+
+
+def test_sentiment_analysis_example_matches_skill_input_shape():
+    data = _load("sentiment_analysis_input.json")
+    skill_input = SkillInput(**data)
+
+    assert skill_input.skill_name == "sentiment_analysis"
+    assert "social_sentiment" in skill_input.required_mcp_capabilities
 
 
 def test_decision_support_example_matches_skill_input_shape():

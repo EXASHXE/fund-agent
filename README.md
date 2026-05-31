@@ -162,7 +162,7 @@ src/
   infra/                    # config/data/persistence/vectorstore implementation
   core/                     # optional reference helpers, not host entrypoint
   workflows/                # optional reference wrappers, not host entrypoint
-legacy/                     # old CLI/report/news/recommend/ui compatibility path
+legacy/                     # historical archive for old CLI/report/news/recommend/workflow code
 examples/reference_workflows/
 docs/
 ```

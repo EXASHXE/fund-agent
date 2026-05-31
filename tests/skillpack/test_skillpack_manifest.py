@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import yaml
@@ -90,6 +91,11 @@ def test_skillpack_sidecar_files_exist():
         Path("skillpack/contracts.yaml"),
     ):
         assert path.exists()
+
+
+def test_skillpack_manifest_is_json_serializable():
+    data = _manifest()
+    json.dumps(data)
 
 
 def _manifest() -> dict:

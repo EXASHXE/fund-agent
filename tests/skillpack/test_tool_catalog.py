@@ -54,6 +54,31 @@ def test_tool_catalog_does_not_reference_legacy():
     assert "legacy" not in serialized
 
 
+def test_tool_catalog_does_not_reference_provider_sdks():
+    serialized = CATALOG.read_text()
+
+    for sdk in ("tavily", "exa", "firecrawl", "finnhub", "reddit"):
+        assert sdk not in serialized, f"tool catalog references provider SDK: {sdk}"
+
+
+def test_evidence_compiler_tool_present():
+    ids = {entry["id"] for entry in _tools()}
+    assert "compile_evidence_graph" in ids
+
+
+def test_mcp_host_adapter_present():
+    ids = {entry["id"] for entry in _tools()}
+    assert "MCPHostAdapter" in ids
+
+
+def test_decision_support_not_in_tool_catalog():
+    """DecisionSupportSkill is a runtime skill, not a pure tool."""
+    ids = {entry["id"] for entry in _tools()}
+    assert "decision_support" not in ids
+    for entry in _tools():
+        assert "decision_support" not in entry.get("id", "")
+
+
 def _tools() -> list[dict]:
     data = yaml.safe_load(CATALOG.read_text())
     return data["tools"]
