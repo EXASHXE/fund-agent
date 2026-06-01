@@ -43,7 +43,54 @@ reference when constructing skill calls.
   "step_id": "fa-1",
   "skill_name": "fund_analysis",
   "payload": {
-    "related_entities": ["fund:110011"]
+    "portfolio": {
+      "as_of_date": "2026-06-01",
+      "total_value": 200000,
+      "cash_available": 20000,
+      "positions": [
+        {
+          "fund_code": "110011",
+          "fund_name": "Example Fund",
+          "current_value": 30000,
+          "total_cost": 32000,
+          "shares": 12345.67,
+          "target_weight": 0.12,
+          "tags": ["healthcare", "active"]
+        }
+      ]
+    },
+    "fund_profiles": {
+      "110011": {
+        "fund_code": "110011",
+        "name": "Example Fund",
+        "fund_type": "active",
+        "manager": "Manager",
+        "benchmark": "Benchmark"
+      }
+    },
+    "nav_history": {
+      "110011": [
+        {"date": "2025-06-01", "nav": 1.0},
+        {"date": "2026-06-01", "nav": 1.2}
+      ]
+    },
+    "holdings": {
+      "110011": [
+        {"name": "A", "weight": 0.08, "industry": "pharma", "region": "CN"}
+      ]
+    },
+    "risk_profile": {
+      "risk_level": "moderate",
+      "max_single_fund_weight": 0.2,
+      "max_theme_weight": 0.35,
+      "max_trade_pct": 0.1,
+      "liquidity_reserve_pct": 0.1,
+      "short_term_trade_budget_pct": 0.1
+    },
+    "constraints": {
+      "min_trade_amount": 100,
+      "forbidden_actions": []
+    }
   }
 }
 ```
@@ -58,15 +105,31 @@ reference when constructing skill calls.
     {
       "evidence_id": "abc-123",
       "confidence_weight": 1.0,
-      "source_type": "portfolio_analysis",
+      "source_type": "portfolio_allocation_concentration",
       "direction": "positive",
       "related_entities": ["fund:110011"]
     }
   ],
-  "artifacts": {},
+  "artifacts": {
+    "fund_analysis_report": {
+      "fund_metrics": {},
+      "portfolio_metrics": {},
+      "exposures": {},
+      "concentration": {},
+      "risk_flags": [],
+      "suggested_watchlist": [],
+      "warnings": []
+    },
+    "portfolio_summary": {},
+    "risk_flags": [],
+    "suggested_rebalance_plan": {}
+  },
   "errors": []
 }
 ```
+
+When a host only provides `related_entities`, this skill returns baseline
+HardEvidence and a warning that no structured portfolio analysis was possible.
 
 ## news_research
 
@@ -181,6 +244,13 @@ forbidden from producing formal `Decision` objects.
   "payload": {
     "evidence_graph": {},
     "objective": "review fund",
+    "portfolio_context": {
+      "total_value": 200000,
+      "cash_available": 20000
+    },
+    "risk_profile": {"risk_level": "moderate", "max_trade_pct": 0.1},
+    "constraints": {"max_buy_amount": 10000, "min_trade_amount": 100},
+    "target_trade_amount": 8000,
     "time_horizon": "1 year"
   }
 }

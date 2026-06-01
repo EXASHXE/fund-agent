@@ -38,9 +38,11 @@ Requires MCP: []
 Produces: HardEvidence
 ```
 
-Analyzes fund portfolio holdings, allocation, and concentration metrics.
-Returns `HardEvidence` items with `confidence_weight=1.0`. No MCP
-capabilities required.
+Analyzes host-provided personal portfolio data: positions, fund profiles,
+NAV history, holdings, risk profile, and rebalance constraints. Returns
+portfolio summary artifacts, risk flags, optional suggested rebalance plan, and
+`HardEvidence` items with `confidence_weight=1.0`. No MCP capabilities are
+required and no data is fetched by the skill.
 
 **SkillInput shape:**
 ```json
@@ -49,8 +51,51 @@ capabilities required.
   "step_id": "fa-1",
   "skill_name": "fund_analysis",
   "payload": {
-    "fund_id": "fund:110011",
-    "holdings": [...]
+    "portfolio": {
+      "as_of_date": "2026-06-01",
+      "total_value": 200000,
+      "cash_available": 20000,
+      "positions": [
+        {
+          "fund_code": "110011",
+          "fund_name": "Example Fund",
+          "current_value": 30000,
+          "total_cost": 32000,
+          "target_weight": 0.12,
+          "tags": ["healthcare", "active"]
+        }
+      ]
+    },
+    "fund_profiles": {
+      "110011": {
+        "fund_code": "110011",
+        "name": "Example Fund",
+        "fund_type": "active"
+      }
+    },
+    "nav_history": {
+      "110011": [
+        {"date": "2025-06-01", "nav": 1.0},
+        {"date": "2026-06-01", "nav": 1.2}
+      ]
+    },
+    "holdings": {
+      "110011": [
+        {"name": "A", "weight": 0.08, "industry": "pharma", "region": "CN"}
+      ]
+    },
+    "risk_profile": {
+      "risk_level": "moderate",
+      "max_single_fund_weight": 0.2,
+      "max_theme_weight": 0.35,
+      "max_trade_pct": 0.1,
+      "liquidity_reserve_pct": 0.1,
+      "short_term_trade_budget_pct": 0.1
+    },
+    "constraints": {
+      "min_trade_amount": 100,
+      "forbidden_actions": []
+    }
   }
 }
 ```
@@ -58,13 +103,22 @@ capabilities required.
 **SkillOutput shape:**
 ```json
 {
-  "task_id": "host-task-001",
   "step_id": "fa-1",
   "status": "OK",
   "evidence_items": [...],
+  "artifacts": {
+    "fund_analysis_report": {},
+    "portfolio_summary": {},
+    "risk_flags": [],
+    "suggested_rebalance_plan": {}
+  },
+  "warnings": [],
   "errors": []
 }
 ```
+
+If only `related_entities` is provided, `fund_analysis` keeps a compatibility
+fallback and returns baseline HardEvidence with an explicit warning.
 
 ### 3.2 news_research
 
@@ -128,6 +182,10 @@ Produces: Decision, ExecutionLedger
 Consumes a compiled `EvidenceGraph`, evaluates evidence quality and conflict,
 and produces a structured `Decision` with anchored rationale and an
 `ExecutionLedger` listing all decisions.
+When portfolio context and risk constraints are provided, execution amounts are
+bounded by cash, max trade percentage, max buy/sell amounts, minimum trade size,
+and requested trade amount. If a safe active trade amount cannot be derived, the
+skill downgrades to `WAIT` or `HOLD` with an audit-trail explanation.
 
 **SkillInput shape:**
 ```json
@@ -138,6 +196,13 @@ and produces a structured `Decision` with anchored rationale and an
   "payload": {
     "evidence_graph": {...},
     "objective": "review fund",
+    "portfolio_context": {
+      "total_value": 200000,
+      "cash_available": 20000
+    },
+    "risk_profile": {"risk_level": "moderate", "max_trade_pct": 0.1},
+    "constraints": {"max_buy_amount": 10000, "min_trade_amount": 100},
+    "target_trade_amount": 8000,
     "time_horizon": "1 year"
   }
 }
@@ -166,6 +231,8 @@ and produces a structured `Decision` with anchored rationale and an
 | `build_soft_evidence_from_mcp_result` | `src.tools.evidence.builders:build_soft_evidence_from_mcp_result` | evidence | `SoftEvidence` |
 | `review_evidence_graph` | `src.tools.evidence.review:review_evidence_graph` | evidence | `ReviewReport` |
 | Quant metrics | `src.tools.quant.*` | quant | Various metrics |
+| Fund metrics | `src.tools.fund.metrics:*` | fund | NAV returns and risk-return metrics |
+| Portfolio analysis | `src.tools.portfolio.analysis:*` | portfolio | Weights, exposures, risk flags, rebalance simulation |
 | Ledger tools | `src.tools.ledger.*` | ledger | Ledger entries |
 | `MCPHostAdapter` | `src.tools.adapters.mcp:MCPHostAdapter` | adapter | MCP boundary |
 

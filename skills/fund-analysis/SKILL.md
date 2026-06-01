@@ -12,8 +12,10 @@ produced_evidence_type: HardEvidence
 
 ## Purpose
 
-Produce local quantitative fund evidence such as risk baseline, exposure
-summary, and simple metric artifacts.
+Analyze host-provided personal fund and portfolio data. The skill computes
+local NAV risk-return metrics, position weights, concentration, theme exposure,
+risk flags, and an optional rebalance simulation. It emits HardEvidence and
+plain artifacts only.
 
 ## Contract
 
@@ -26,6 +28,10 @@ summary, and simple metric artifacts.
 - `forbidden_behavior`: network requests, LLM calls, provider SDK imports,
   formal decision generation
 
+The host owns data fetching. Provide portfolio positions, fund profiles,
+NAV history, holdings, risk profile, and constraints in `payload`. Missing
+fund-level data produces `PARTIAL` with explicit warnings by fund code.
+
 ## Example SkillInput
 
 ```json
@@ -33,8 +39,57 @@ summary, and simple metric artifacts.
   "task_id": "task-1",
   "step_id": "fund-analysis-1",
   "skill_name": "fund_analysis",
-  "payload": {"related_entities": ["fund:110011"]},
-  "kg_context": {"fund_codes": ["110011"]},
+  "payload": {
+    "portfolio": {
+      "as_of_date": "2026-06-01",
+      "total_value": 200000,
+      "cash_available": 20000,
+      "positions": [
+        {
+          "fund_code": "110011",
+          "fund_name": "Example Fund",
+          "current_value": 30000,
+          "total_cost": 32000,
+          "shares": 12345.67,
+          "target_weight": 0.12,
+          "tags": ["healthcare", "active"]
+        }
+      ]
+    },
+    "fund_profiles": {
+      "110011": {
+        "fund_code": "110011",
+        "name": "Example Fund",
+        "fund_type": "active",
+        "manager": "Manager",
+        "benchmark": "Benchmark"
+      }
+    },
+    "nav_history": {
+      "110011": [
+        {"date": "2025-06-01", "nav": 1.0},
+        {"date": "2026-06-01", "nav": 1.2}
+      ]
+    },
+    "holdings": {
+      "110011": [
+        {"name": "A", "weight": 0.08, "industry": "pharma", "region": "CN"}
+      ]
+    },
+    "risk_profile": {
+      "risk_level": "moderate",
+      "max_single_fund_weight": 0.2,
+      "max_theme_weight": 0.35,
+      "max_trade_pct": 0.1,
+      "liquidity_reserve_pct": 0.1,
+      "short_term_trade_budget_pct": 0.1
+    },
+    "constraints": {
+      "min_trade_amount": 100,
+      "forbidden_actions": []
+    }
+  },
+  "kg_context": {},
   "required_mcp_capabilities": []
 }
 ```
@@ -46,10 +101,19 @@ summary, and simple metric artifacts.
   "step_id": "fund-analysis-1",
   "skill_name": "fund_analysis",
   "evidence_items": ["HardEvidence"],
-  "artifacts": {},
+  "artifacts": {
+    "fund_analysis_report": {},
+    "portfolio_summary": {},
+    "risk_flags": [],
+    "suggested_rebalance_plan": {}
+  },
   "warnings": [],
   "errors": [],
   "used_mcp_capabilities": [],
   "status": "OK"
 }
 ```
+
+Compatibility fallback: payloads with only `related_entities` still produce
+baseline HardEvidence and include a warning that structured portfolio analysis
+was not possible.

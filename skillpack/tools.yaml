@@ -108,6 +108,102 @@ tools:
       - HHI
     notes: Holdings concentration metric.
 
+  - id: normalize_nav_history
+    import_path: src.tools.fund.metrics:normalize_nav_history
+    category: fund
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: list[dict] | dict
+    output_schema: list[src.schemas.fund:NavPoint]
+    produces:
+      - NormalizedNavHistory
+    notes: Normalizes host-provided NAV records without fetching data.
+
+  - id: calculate_returns_from_nav
+    import_path: src.tools.fund.metrics:calculate_returns_from_nav
+    category: fund
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: list[src.schemas.fund:NavPoint]
+    output_schema: list[float]
+    produces:
+      - PeriodReturns
+    notes: Calculates deterministic period returns from normalized NAV history.
+
+  - id: calculate_fund_metrics
+    import_path: src.tools.fund.metrics:calculate_fund_metrics
+    category: fund
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: list[src.schemas.fund:NavPoint]
+    output_schema: dict
+    produces:
+      - FundRiskReturnMetrics
+    notes: Computes total return, volatility, drawdown, Sharpe, and Sortino from local NAV history.
+
+  - id: calculate_position_weights
+    import_path: src.tools.portfolio.analysis:calculate_position_weights
+    category: portfolio
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: src.schemas.fund:PortfolioSnapshot
+    output_schema: dict
+    produces:
+      - PositionWeights
+    notes: Calculates current portfolio position weights from host-provided values.
+
+  - id: calculate_theme_exposure
+    import_path: src.tools.portfolio.analysis:calculate_theme_exposure
+    category: portfolio
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: dict
+    output_schema: dict
+    produces:
+      - ThemeExposure
+    notes: Aggregates exposure from local positions, fund profiles, and holdings.
+
+  - id: calculate_concentration_metrics
+    import_path: src.tools.portfolio.analysis:calculate_concentration_metrics
+    category: portfolio
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: list[src.schemas.fund:PortfolioPosition]
+    output_schema: dict
+    produces:
+      - ConcentrationMetrics
+    notes: Computes max single fund weight, HHI, top-N concentration, and duplicate tags.
+
+  - id: detect_portfolio_risk_flags
+    import_path: src.tools.portfolio.analysis:detect_portfolio_risk_flags
+    category: portfolio
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: dict
+    output_schema: list[dict]
+    produces:
+      - PortfolioRiskFlags
+    notes: Detects concentration, theme, cash reserve, trading budget, drawdown, and duplicate exposure flags.
+
+  - id: simulate_rebalance
+    import_path: src.tools.portfolio.analysis:simulate_rebalance
+    category: portfolio
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: dict
+    output_schema: dict
+    produces:
+      - SuggestedRebalancePlan
+    notes: Simulates a plain suggested trade plan without producing Decision objects.
+
   - id: simulate_position_ledger
     import_path: src.tools.ledger.settlement:simulate_position_ledger
     category: ledger

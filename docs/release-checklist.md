@@ -92,13 +92,15 @@ Run this checklist before tagging a release.
 - [ ] `docs/plugin-api.md` documents `SkillError` standard codes
 - [ ] Minimal host demo does not import ResearchOS or legacy
 
-## 10. RC Release (v0.3.0-skillpack-rc)
+## 10. Domain Core Development (v0.4.0.dev0)
 
-- [ ] `VERSION` exists and reads `0.3.0-skillpack-rc`
+- [ ] `VERSION` exists and reads `0.4.0.dev0`
 - [ ] `CHANGELOG.md` exists
 - [ ] `docs/CONTRACT_FREEZE.md` exists
 - [ ] Manifest version equals `VERSION`
 - [ ] Pyproject version equals `VERSION`
+- [ ] `fund_analysis` supports host-provided portfolio, NAV, holdings, risk profile, and constraints
+- [ ] `examples/minimal_host_portfolio_review.py` runs without network, ResearchOS, or legacy imports
 - [ ] Manifest `schema_version` == `skillpack.v1`
 - [ ] Manifest `package_role` == `agent_plugin`
 - [ ] `bash scripts/check_plugin_gate.sh` passes

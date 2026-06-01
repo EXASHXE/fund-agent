@@ -44,7 +44,9 @@ def test_fund_analysis_example_matches_skill_input_shape():
 
     assert skill_input.skill_name == "fund_analysis"
     assert skill_input.required_mcp_capabilities == []
-    assert "related_entities" in skill_input.payload
+    assert "portfolio" in skill_input.payload
+    assert "nav_history" in skill_input.payload
+    assert skill_input.payload["portfolio"]["positions"][0]["fund_code"] == "110011"
 
 
 def test_sentiment_analysis_example_matches_skill_input_shape():

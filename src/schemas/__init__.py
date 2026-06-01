@@ -1,9 +1,26 @@
-"""AI Financial Research OS — Typed schemas for evidence, decisions, and reports."""
-from src.schemas.evidence import EvidenceItem, EvidenceType, Direction, SourceType
-from src.schemas.decision import Decision, ActionType, ExecutionLedger
+"""Typed schemas for skill pack evidence, decisions, funds, and reports."""
+
+from src.schemas.decision import ActionType, Decision, ExecutionLedger
+from src.schemas.evidence import Direction, EvidenceItem, EvidenceType, SourceType
 from src.schemas.evidence_graph import EvidenceGraph
+from src.schemas.fund import (
+    FundAnalysisReport,
+    FundHolding,
+    FundIdentity,
+    NavPoint,
+    PortfolioPosition,
+    PortfolioSnapshot,
+    RebalanceConstraint,
+    UserRiskProfile,
+)
 from src.schemas.research_task import ResearchTask
-from src.schemas.skill import SkillError, SkillErrorCode, SkillInput, SkillOutput, SkillStatus
+from src.schemas.skill import (
+    SkillError,
+    SkillErrorCode,
+    SkillInput,
+    SkillOutput,
+    SkillStatus,
+)
 
 EvidenceDirection = Direction
 DecisionAction = ActionType
@@ -17,6 +34,14 @@ __all__ = [
     "ActionType",
     "ExecutionLedger",
     "EvidenceGraph",
+    "FundIdentity",
+    "NavPoint",
+    "FundHolding",
+    "PortfolioPosition",
+    "PortfolioSnapshot",
+    "UserRiskProfile",
+    "RebalanceConstraint",
+    "FundAnalysisReport",
     "ResearchTask",
     "SkillInput",
     "SkillOutput",

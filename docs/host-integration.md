@@ -31,6 +31,83 @@ The callable tool catalog lives at
 
 ## Pseudocode
 
+### Portfolio Review
+
+For personal portfolio review, the host supplies local or host-fetched fund
+data directly to `fund_analysis`. `fund-agent` does not fetch NAV, holdings, or
+profiles.
+
+```python
+from src.schemas.skill import SkillInput
+from src.skills_runtime.fund_analysis import FundAnalysisSkill
+from src.skills_runtime.decision_support import DecisionSupportSkill
+from src.tools.evidence.validators import compile_evidence_graph
+
+payload = {
+    "portfolio": {
+        "as_of_date": "2026-06-01",
+        "total_value": 200000,
+        "cash_available": 20000,
+        "positions": [
+            {
+                "fund_code": "110011",
+                "fund_name": "Example Fund",
+                "current_value": 30000,
+                "total_cost": 32000,
+                "target_weight": 0.12,
+                "tags": ["healthcare", "active"],
+            }
+        ],
+    },
+    "fund_profiles": {"110011": {"fund_code": "110011", "name": "Example Fund"}},
+    "nav_history": {"110011": [{"date": "2025-06-01", "nav": 1.0}]},
+    "holdings": {"110011": [{"name": "A", "weight": 1.0, "industry": "healthcare"}]},
+    "risk_profile": {
+        "risk_level": "moderate",
+        "max_single_fund_weight": 0.2,
+        "max_theme_weight": 0.35,
+        "max_trade_pct": 0.1,
+        "liquidity_reserve_pct": 0.1,
+        "short_term_trade_budget_pct": 0.1,
+    },
+    "constraints": {"min_trade_amount": 100, "forbidden_actions": []},
+}
+
+fund_output = FundAnalysisSkill().run(
+    SkillInput(
+        task_id="host-task-1",
+        step_id="fund-analysis-1",
+        skill_name="fund_analysis",
+        payload=payload,
+    )
+)
+
+compile_result = compile_evidence_graph(fund_output.evidence_items)
+
+decision_output = DecisionSupportSkill().run(
+    SkillInput(
+        task_id="host-task-1",
+        step_id="decision-1",
+        skill_name="decision_support",
+        payload={
+            "evidence_graph": compile_result.graph.to_dict(),
+            "objective": "personal portfolio review",
+            "portfolio_context": payload["portfolio"],
+            "risk_profile": payload["risk_profile"],
+            "constraints": {"max_buy_amount": 10000, "min_trade_amount": 100},
+            "target_trade_amount": 8000,
+            "time_horizon": "1 year",
+        },
+    )
+)
+```
+
+`fund_output.artifacts` includes `fund_analysis_report`, `portfolio_summary`,
+`risk_flags`, and, when target weights are supplied,
+`suggested_rebalance_plan`.
+
+### News To Decision
+
 ```python
 from src.skillpack.loader import load_skillpack_manifest, resolve_runtime
 from src.schemas.skill import SkillInput
@@ -91,6 +168,11 @@ Only `src.skills_runtime.decision_support.DecisionSupportSkill` produces formal
 `Decision` and `ExecutionLedger` artifacts. Active actions require real
 EvidenceGraph anchors. WAIT/HOLD decisions may be anchorless only when
 insufficient evidence is explicitly recorded.
+
+When hosts provide `portfolio_context`, `risk_profile`, `constraints`, or
+`target_trade_amount`, `DecisionSupportSkill` derives execution amounts from
+those limits instead of using a generic default. If the amount cannot be safely
+derived for an active action, it returns a passive action with an audit note.
 
 `src.skills_runtime.thesis_generation.ThesisGenerationSkill` produces a
 `thesis_draft` artifact only. It must not produce a formal `Decision`; hosts

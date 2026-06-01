@@ -53,6 +53,51 @@ def test_decision_support_is_json_serializable():
     json.dumps(output.to_dict())
 
 
+def test_decision_support_respects_portfolio_trade_caps():
+    output = DecisionSupportSkill().run(
+        _input(
+            evidence_graph=_positive_graph(),
+            payload_extra={
+                "portfolio_context": {
+                    "total_value": 100000.0,
+                    "cash_available": 3000.0,
+                },
+                "risk_profile": {"risk_level": "moderate", "max_trade_pct": 0.1},
+                "constraints": {"max_buy_amount": 5000.0, "min_trade_amount": 100.0},
+                "target_trade_amount": 9000.0,
+            },
+        )
+    )
+
+    assert output.status == "OK"
+    decision = output.artifacts["decision"]
+    assert decision["action"] in {"BUY", "INCREASE"}
+    assert decision["execution_amount"] == 3000.0
+
+
+def test_decision_support_downgrades_when_active_amount_is_unsafe():
+    output = DecisionSupportSkill().run(
+        _input(
+            evidence_graph=_positive_graph(),
+            payload_extra={
+                "portfolio_context": {
+                    "total_value": 100000.0,
+                    "cash_available": 50.0,
+                },
+                "risk_profile": {"risk_level": "moderate", "max_trade_pct": 0.1},
+                "constraints": {"min_trade_amount": 100.0},
+                "target_trade_amount": 80.0,
+            },
+        )
+    )
+
+    assert output.status == "OK"
+    decision = output.artifacts["decision"]
+    assert decision["action"] in {"HOLD", "WAIT"}
+    assert decision["execution_amount"] == 0.0
+    assert any("Insufficient evidence or budget" in item for item in decision["audit_trail"])
+
+
 def test_decision_support_does_not_import_network_or_llm():
     imports = _imports_from(Path("src/skills_runtime/decision_support.py"))
     forbidden = {

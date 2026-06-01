@@ -1,5 +1,5 @@
 name: fund-agent
-version: 0.3.0-skillpack-rc
+version: 0.4.0.dev0
 schema_version: skillpack.v1
 package_role: agent_plugin
 type: host-agnostic-financial-research-skill-pack
@@ -61,6 +61,14 @@ tools:
   - src.tools.evidence.review:review_evidence_graph
   - src.tools.evidence.builders:build_hard_evidence_from_metric
   - src.tools.evidence.builders:build_soft_evidence_from_mcp_result
+  - src.tools.fund.metrics:normalize_nav_history
+  - src.tools.fund.metrics:calculate_returns_from_nav
+  - src.tools.fund.metrics:calculate_fund_metrics
+  - src.tools.portfolio.analysis:calculate_position_weights
+  - src.tools.portfolio.analysis:calculate_theme_exposure
+  - src.tools.portfolio.analysis:calculate_concentration_metrics
+  - src.tools.portfolio.analysis:detect_portfolio_risk_flags
+  - src.tools.portfolio.analysis:simulate_rebalance
   - src.tools.adapters.mcp:MCPHostAdapter
 
 schemas:
@@ -70,6 +78,14 @@ schemas:
   - src.schemas.evidence_graph:EvidenceGraph
   - src.schemas.decision:Decision
   - src.schemas.decision:ExecutionLedger
+  - src.schemas.fund:FundIdentity
+  - src.schemas.fund:NavPoint
+  - src.schemas.fund:FundHolding
+  - src.schemas.fund:PortfolioPosition
+  - src.schemas.fund:PortfolioSnapshot
+  - src.schemas.fund:UserRiskProfile
+  - src.schemas.fund:RebalanceConstraint
+  - src.schemas.fund:FundAnalysisReport
 
 contracts:
   - docs/contracts/evidence-contract.v2.md

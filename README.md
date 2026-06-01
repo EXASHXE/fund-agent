@@ -25,8 +25,8 @@ mount them as a plugin. It does not require a resident autonomous runtime.
 - `skills/SKILL.md`: host-readable skill pack index
 - `skills/`: human-readable skill instructions and per-skill `SKILL.md` assets
 - `src/skills_runtime/`: host-callable Python skill handlers
-- `src/tools/`: pure quant, ledger, evidence, and adapter tools
-- `src/schemas/`: typed contracts for skill, evidence, graph, decision, ledger
+- `src/tools/`: pure fund, portfolio, quant, ledger, evidence, and adapter tools
+- `src/schemas/`: typed contracts for skill, fund, evidence, graph, decision, ledger
 - `src/graph/`: KnowledgeGraph implementation and query helpers
 - `src/tools/adapters/mcp.py`: host-native MCP adapter abstraction
 
@@ -107,7 +107,7 @@ or combine `fund-agent` tools with other skill packs.
 
 | Skill | Runtime | Produces | MCP |
 |---|---|---|---|
-| `fund_analysis` | `src.skills_runtime.fund_analysis:FundAnalysisSkill` | `HardEvidence` | none |
+| `fund_analysis` | `src.skills_runtime.fund_analysis:FundAnalysisSkill` | `HardEvidence`, portfolio artifacts | none |
 | `news_research` | `src.skills_runtime.news_research:NewsResearchSkill` | `SoftEvidence` | `web_search`, `financial_news` |
 | `sentiment_analysis` | `src.skills_runtime.sentiment_analysis:SentimentAnalysisSkill` | `SoftEvidence` | `social_sentiment` |
 | `thesis_generation` | `src.skills_runtime.thesis_generation:ThesisGenerationSkill` | `ThesisDraft` artifact | none |
@@ -138,6 +138,9 @@ make direct network requests.
 - `EvidenceItem`: `src.schemas.evidence`
 - `EvidenceGraph`: `src.schemas.evidence_graph`
 - `Decision` / `ExecutionLedger`: `src.schemas.decision`
+- Fund and portfolio schemas: `src.schemas.fund`
+- Fund metrics: `src.tools.fund.metrics`
+- Portfolio analysis: `src.tools.portfolio.analysis`
 - Evidence compiler: `src.tools.evidence.validators.compile_evidence_graph`
 - Evidence review helper: `src.tools.evidence.review.review_evidence_graph`
 - Evidence builders: `src.tools.evidence.builders`
@@ -190,8 +193,9 @@ See `docs/archive/legacy-system.md` for details.
 1. Read `AGENTS.md` — coding agent integration guide.
 2. Read `skillpack/fund-agent.skillpack.yaml` — plugin manifest.
 3. Use `docs/agent-host-quickstart.md` — host integration quickstart.
-4. Run `python examples/minimal_host_news_to_decision.py` — working demo.
-5. Run `bash scripts/check_plugin_gate.sh` — verify all gates pass.
+4. Run `python examples/minimal_host_news_to_decision.py` — news-to-decision demo.
+5. Run `python examples/minimal_host_portfolio_review.py` — portfolio review demo.
+6. Run `bash scripts/check_plugin_gate.sh` — verify all gates pass.
 
 ## Development
 

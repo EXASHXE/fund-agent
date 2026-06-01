@@ -8,7 +8,7 @@ runtime skill.
 
 | File | Purpose |
 |---|---|
-| `fund_analysis_input.json` | Input for `FundAnalysisSkill` |
+| `fund_analysis_input.json` | Portfolio review input for `FundAnalysisSkill` |
 | `news_research_input.json` | Input for `NewsResearchSkill` (includes mock MCP payload) |
 | `sentiment_analysis_input.json` | Input for `SentimentAnalysisSkill` |
 | `decision_support_input.json` | Input for `DecisionSupportSkill` (includes evidence_graph) |
@@ -32,4 +32,5 @@ runtime skill.
 
 ## Reference
 
-See `examples/minimal_host_news_to_decision.py` for a working Python demo.
+See `examples/minimal_host_news_to_decision.py` and
+`examples/minimal_host_portfolio_review.py` for working Python demos.

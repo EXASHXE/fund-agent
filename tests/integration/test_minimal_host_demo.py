@@ -24,8 +24,38 @@ def test_minimal_host_demo_runs():
     assert "execution_ledger" in data
 
 
+def test_minimal_host_portfolio_review_demo_runs():
+    """The portfolio review demo must run and produce JSON output."""
+    result = subprocess.run(
+        [sys.executable, "examples/minimal_host_portfolio_review.py"],
+        capture_output=True,
+        text=True,
+        env={**__import__("os").environ, "PYTHONPATH": "."},
+        cwd=Path(__file__).parent.parent.parent,
+    )
+    assert result.returncode == 0, f"Demo failed: {result.stderr}"
+    data = json.loads(result.stdout)
+    assert "fund_analysis_report" in data
+    assert "evidence_compile_report" in data
+    assert "decision" in data
+    assert "execution_ledger" in data
+
+
 def test_minimal_host_demo_does_not_import_research_os():
     demo_path = Path(__file__).parent.parent.parent / "examples" / "minimal_host_news_to_decision.py"
+    content = demo_path.read_text()
+
+    assert "src.core.research_os" not in content, "Demo imports ResearchOS"
+    assert "import legacy" not in content, "Demo imports legacy"
+    assert "from legacy" not in content, "Demo imports legacy"
+
+
+def test_minimal_host_portfolio_review_does_not_import_research_os():
+    demo_path = (
+        Path(__file__).parent.parent.parent
+        / "examples"
+        / "minimal_host_portfolio_review.py"
+    )
     content = demo_path.read_text()
 
     assert "src.core.research_os" not in content, "Demo imports ResearchOS"

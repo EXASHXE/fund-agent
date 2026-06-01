@@ -40,6 +40,10 @@ def test_mentions_execution_ledger():
     assert "ExecutionLedger" in _content()
 
 
+def test_mentions_fund_portfolio_schemas():
+    assert "Fund And Portfolio Schemas" in _content()
+
+
 def test_mentions_mcp_host_adapter():
     assert "MCPHostAdapter" in _content()
 

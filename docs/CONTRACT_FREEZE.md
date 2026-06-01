@@ -1,7 +1,7 @@
-# Contract Freeze — v0.3.0-skillpack-rc
+# Contract Freeze — v0.4.0.dev0
 
 This document lists contracts that are frozen at `rc-stable` for
-`v0.3.0-skillpack-rc`. Breaking changes require a `schema_version` bump.
+`skillpack.v1`. Breaking changes require a `schema_version` bump.
 
 ## Frozen Contracts
 
@@ -61,7 +61,14 @@ This document lists contracts that are frozen at `rc-stable` for
 - **Allowed changes:** add optional adapter methods
 - **Breaking:** changing `call()` or `list_capabilities()` signatures
 
-### 9. Skillpack Manifest
+### 9. Fund And Portfolio Schemas
+
+- **Location:** `src/schemas/fund.py`
+- **Stability:** dev-stable
+- **Allowed changes:** add optional fields with defaults, add new report sections
+- **Breaking:** removing required fund/portfolio fields, changing `to_dict()` shape
+
+### 10. Skillpack Manifest
 
 - **Location:** `skillpack/fund-agent.skillpack.yaml`
 - **Schema version:** `skillpack.v1`
@@ -69,7 +76,7 @@ This document lists contracts that are frozen at `rc-stable` for
 - **Allowed changes:** add new skills, tools, or optional fields
 - **Breaking:** removing required skills, changing `package_role` or `orchestration_owner`
 
-### 10. Tool Catalog
+### 11. Tool Catalog
 
 - **Location:** `skillpack/tools.yaml`
 - **Stability:** rc-stable
@@ -80,4 +87,4 @@ This document lists contracts that are frozen at `rc-stable` for
 
 - `v0.x.y` — pre-1.0, minor breaking changes allowed with notice
 - `v1.0.0` — stable API, full backward compatibility
-- `skillpack.v1` — manifest schema, frozen for v0.3.0-rc
+- `skillpack.v1` — manifest schema, frozen for the host-agnostic plugin contract

@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.4.0.dev0
+
+### Added
+
+- Personal portfolio domain schemas in `src.schemas.fund`
+- Pure fund NAV metric tools in `src.tools.fund.metrics`
+- Pure portfolio analysis tools in `src.tools.portfolio.analysis`
+- Structured portfolio review support in `FundAnalysisSkill`
+- `examples/minimal_host_portfolio_review.py`
+- Domain core tests for fund metrics, portfolio analysis, and portfolio review integration
+
+### Changed
+
+- `DecisionSupportSkill` derives active trade amounts from host-provided
+  portfolio context, risk profile, constraints, and target trade amount when
+  those are available.
+- Skillpack version advanced to `0.4.0.dev0`.
+
 ## 0.3.0-skillpack-rc
 
 ### Added

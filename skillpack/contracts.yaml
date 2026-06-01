@@ -5,6 +5,14 @@ schemas:
   evidence_graph: src.schemas.evidence_graph:EvidenceGraph
   decision: src.schemas.decision:Decision
   execution_ledger: src.schemas.decision:ExecutionLedger
+  fund_identity: src.schemas.fund:FundIdentity
+  nav_point: src.schemas.fund:NavPoint
+  fund_holding: src.schemas.fund:FundHolding
+  portfolio_position: src.schemas.fund:PortfolioPosition
+  portfolio_snapshot: src.schemas.fund:PortfolioSnapshot
+  user_risk_profile: src.schemas.fund:UserRiskProfile
+  rebalance_constraint: src.schemas.fund:RebalanceConstraint
+  fund_analysis_report: src.schemas.fund:FundAnalysisReport
 
 contract_docs:
   evidence: docs/contracts/evidence-contract.v2.md
