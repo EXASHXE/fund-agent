@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter, defaultdict
+from datetime import date
 from typing import Any
 
 from src.schemas.fund import (
@@ -425,3 +426,302 @@ def _optional_float(value: Any) -> float | None:
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+def _date(value: Any) -> str:
+    if isinstance(value, (date,)):
+        return value.isoformat()
+    return str(value or "")
+
+
+# ——————————————————————————————————————————————————————————————————————————————
+# Extended portfolio analysis (v0.4.1)
+# ——————————————————————————————————————————————————————————————————————————————
+
+def calculate_industry_exposure(
+    positions: Any,
+    holdings: dict[str, Any] | None = None,
+) -> dict[str, float]:
+    """Aggregate industry exposure from position holdings."""
+    position_list = _positions_from_payload(positions)
+    total_value = sum(max(p.current_value, 0.0) for p in position_list)
+    if total_value <= 0:
+        return {}
+    holdings = holdings or {}
+    exposures: defaultdict[str, float] = defaultdict(float)
+    for pos in position_list:
+        w = pos.current_value / total_value
+        for h in holdings.get(pos.fund_code, []):
+            if isinstance(h, dict) and h.get("industry"):
+                exposures[f"industry:{h['industry']}"] += w * _holding_weight(h)
+    return {k: round(v, 6) for k, v in sorted(exposures.items()) if v > 0}
+
+
+def calculate_cash_ratio(portfolio: Any) -> float:
+    """Return cash_available / total_value."""
+    snapshot = _snapshot_from_payload(portfolio)
+    if snapshot is None or snapshot.total_value <= 0:
+        return 0.0
+    return round(snapshot.cash_available / snapshot.total_value, 6)
+
+
+def calculate_position_pnl(positions: Any) -> dict[str, dict[str, float]]:
+    """Return per-position unrealized PnL when total_cost is available."""
+    position_list = _positions_from_payload(positions)
+    result: dict[str, dict[str, float]] = {}
+    for pos in position_list:
+        pnl = pos.current_value - pos.total_cost if pos.total_cost else None
+        pnl_pct = (pnl / pos.total_cost) if pnl is not None and pos.total_cost > 0 else None
+        result[pos.fund_code] = {
+            "current_value": round(pos.current_value, 2),
+            "total_cost": round(pos.total_cost, 2) if pos.total_cost else 0.0,
+            "unrealized_pnl": round(pnl, 2) if pnl is not None else None,
+            "unrealized_pnl_pct": round(pnl_pct, 6) if pnl_pct is not None else None,
+        }
+    return result
+
+
+def calculate_portfolio_pnl(positions: Any) -> dict[str, Any]:
+    """Aggregate portfolio-level PnL summary."""
+    per_position = calculate_position_pnl(positions)
+    total_cost = sum(p["total_cost"] for p in per_position.values())
+    total_value = sum(p["current_value"] for p in per_position.values())
+    pnl = total_value - total_cost if total_cost > 0 else 0.0
+    pnl_pct = round(pnl / total_cost, 6) if total_cost > 0 else 0.0
+    return {
+        "total_cost": round(total_cost, 2),
+        "total_value": round(total_value, 2),
+        "unrealized_pnl": round(pnl, 2),
+        "unrealized_pnl_pct": pnl_pct,
+        "positions": per_position,
+    }
+
+
+def calculate_trade_budget(
+    portfolio: Any,
+    risk_profile: Any,
+    constraints: Any = None,
+) -> dict[str, Any]:
+    """Calculate available trade budget and short-term trade budget."""
+    snapshot = _snapshot_from_payload(portfolio)
+    profile = _risk_profile_from_payload(risk_profile)
+    constraint = _constraint_from_payload(constraints)
+    if snapshot is None or snapshot.total_value <= 0:
+        return {"total_value": 0, "max_trade_amount": 0, "short_term_budget": 0, "cash_available": 0}
+    max_trade = snapshot.total_value * profile.max_trade_pct
+    short_term_budget = snapshot.total_value * profile.short_term_trade_budget_pct
+    return {
+        "total_value": round(snapshot.total_value, 2),
+        "cash_available": round(snapshot.cash_available, 2),
+        "max_trade_amount": round(max_trade, 2),
+        "short_term_budget": round(short_term_budget, 2),
+        "liquidity_reserve": round(snapshot.total_value * profile.liquidity_reserve_pct, 2),
+        "max_buy_amount": constraint.max_buy_amount,
+        "max_sell_amount": constraint.max_sell_amount,
+        "min_trade_amount": constraint.min_trade_amount,
+    }
+
+
+def calculate_short_term_budget_usage(
+    positions: Any,
+    transactions: list[dict[str, Any]] | None,
+    risk_profile: Any,
+) -> dict[str, Any]:
+    """Estimate short-term trading budget usage from recent transactions."""
+    profile = _risk_profile_from_payload(risk_profile)
+    position_list = _positions_from_payload(positions)
+    total_value = sum(max(p.current_value, 0.0) for p in position_list)
+    budget = total_value * profile.short_term_trade_budget_pct
+    transactions = transactions or []
+    recent_buys = sum(
+        abs(_float(t.get("amount", 0))) for t in transactions
+        if str(t.get("type", "")).upper() in ("BUY",) and _is_recent(t, 30)
+    )
+    recent_sells = sum(
+        abs(_float(t.get("amount", 0))) for t in transactions
+        if str(t.get("type", "")).upper() in ("SELL",) and _is_recent(t, 30)
+    )
+    used = recent_buys + recent_sells
+    return {
+        "short_term_budget": round(budget, 2),
+        "used": round(used, 2),
+        "remaining": round(max(budget - used, 0), 2),
+        "usage_pct": round(used / budget, 6) if budget > 0 else 0.0,
+        "exceeded": used > budget,
+        "recent_buys": round(recent_buys, 2),
+        "recent_sells": round(recent_sells, 2),
+    }
+
+
+def review_dca_plan(
+    dca_plans: dict[str, Any] | None,
+    portfolio: Any,
+    transactions: dict[str, Any] | None,
+    risk_profile: Any,
+) -> dict[str, Any]:
+    """Review DCA plans against portfolio concentration and budget."""
+    dca_plans = dca_plans or {}
+    snapshot = _snapshot_from_payload(portfolio)
+    profile = _risk_profile_from_payload(risk_profile)
+    results: list[dict[str, Any]] = []
+    warnings: list[str] = []
+    if snapshot is None or snapshot.total_value <= 0:
+        return {"plans": results, "warnings": ["invalid portfolio for DCA review"], "suggestions": []}
+
+    for plan_id, plan in dca_plans.items():
+        if not isinstance(plan, dict):
+            continue
+        fund_code = plan.get("fund_code", "")
+        monthly = _float(plan.get("monthly_amount", 0))
+        annual = monthly * 12
+        weight = 0.0
+        for pos in snapshot.positions:
+            if pos.fund_code == fund_code:
+                weight = pos.current_value / snapshot.total_value
+                break
+        exceeded = weight + annual / snapshot.total_value > profile.max_single_fund_weight if annual > 0 else False
+        item = {
+            "plan_id": plan_id,
+            "fund_code": fund_code,
+            "monthly_amount": round(monthly, 2),
+            "annual_amount": round(annual, 2),
+            "current_weight": round(weight, 6),
+            "exceeds_limit": exceeded,
+            "suggestion": "CONTINUE",
+        }
+        if exceeded:
+            item["suggestion"] = "PAUSE" if weight > profile.max_single_fund_weight else "REDUCE"
+            warnings.append(f"DCA plan {plan_id} for {fund_code} exceeds concentration limit")
+        results.append(item)
+
+    suggestions = [r for r in results if r["suggestion"] in ("PAUSE", "REDUCE")]
+    return {"plans": results, "warnings": warnings, "suggestions": suggestions}
+
+
+def apply_trade_constraints(
+    trade_plan: list[dict[str, Any]],
+    portfolio: Any,
+    constraints: Any,
+    risk_profile: Any,
+) -> list[dict[str, Any]]:
+    """Filter and cap trade legs against host-provided constraints."""
+    snapshot = _snapshot_from_payload(portfolio)
+    constraint = _constraint_from_payload(constraints)
+    profile = _risk_profile_from_payload(risk_profile)
+    if snapshot is None:
+        return []
+
+    current_weights = calculate_position_weights(snapshot)
+    position_map = {p.fund_code: p for p in snapshot.positions}
+    max_trade = snapshot.total_value * profile.max_trade_pct
+    short_term_budget = snapshot.total_value * profile.short_term_trade_budget_pct
+    used_budget = 0.0
+    result: list[dict[str, Any]] = []
+
+    for trade in trade_plan:
+        if not isinstance(trade, dict):
+            continue
+        fund_code = trade.get("fund_code", "")
+        action = str(trade.get("action", "")).upper()
+        amount = _float(trade.get("amount", trade.get("requested_amount", 0)))
+
+        cap_reasons: list[str] = []
+        capped = False
+
+        if action in constraint.forbidden_actions:
+            cap_reasons.append(f"action {action} forbidden")
+            capped = True
+            amount = 0.0
+
+        if amount < constraint.min_trade_amount:
+            continue
+
+        cap = max_trade
+        if action in ("BUY", "INCREASE"):
+            effective_cash = snapshot.cash_available - profile.liquidity_reserve_pct * snapshot.total_value
+            cap = min(cap, max(effective_cash, 0))
+            if constraint.max_buy_amount is not None:
+                cap = min(cap, constraint.max_buy_amount)
+            budget_remaining = short_term_budget - used_budget
+            if budget_remaining < amount:
+                cap = min(cap, max(budget_remaining, 0))
+                cap_reasons.append("short-term budget exceeded")
+                capped = True
+        else:
+            current_val = position_map.get(fund_code, PortfolioPosition(fund_code, "", 0, 0)).current_value
+            cap = min(cap, current_val)
+            if constraint.max_sell_amount is not None:
+                cap = min(cap, constraint.max_sell_amount)
+
+        trade_amount = min(amount, cap)
+        if trade_amount < constraint.min_trade_amount:
+            continue
+
+        used_budget += trade_amount
+        result.append({
+            **trade,
+            "amount": round(trade_amount, 2),
+            "requested_amount": round(amount, 2),
+            "capped": trade_amount < amount or capped,
+            "cap_reasons": cap_reasons,
+            "current_weight": current_weights.get(fund_code, 0.0),
+        })
+
+    return result
+
+
+def summarize_exposure(
+    theme_exposure: dict[str, float],
+    industry_exposure: dict[str, float] | None,
+    fund_type_exposure: dict[str, float] | None,
+) -> dict[str, Any]:
+    """Consolidate exposure maps into a structured summary."""
+    return {
+        "theme_exposure": theme_exposure or {},
+        "industry_exposure": industry_exposure or {},
+        "fund_type_exposure": fund_type_exposure or {},
+    }
+
+
+def rank_trade_plan(
+    trades: list[dict[str, Any]],
+    risk_flags: list[dict[str, Any]],
+    fund_metrics: dict[str, Any] | None = None,
+    cost_basis: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """Deterministic trade ranking: risk-reduction first, respect constraints."""
+    fund_metrics = fund_metrics or {}
+    cost_basis = cost_basis or {}
+    risk_fund_codes = {f.get("details", {}).get("fund_code", "") for f in risk_flags if "fund_code" in f.get("details", {})}
+    overweight_themes = {f.get("details", {}).get("theme", "") for f in risk_flags if f.get("type") == "overweight_theme"}
+
+    def rank(trade: dict) -> tuple[int, int, float]:
+        code = trade.get("fund_code", "")
+        action = str(trade.get("action", "")).upper()
+        priority = 0 if (action in ("SELL", "REDUCE") and code in risk_fund_codes) else 1
+        if priority != 0:
+            priority = 1 if action in ("SELL", "REDUCE") else 2
+        if priority == 2 and code in risk_fund_codes:
+            priority = 3
+        amount = float(trade.get("amount", 0))
+        return (priority, 0 if action in ("SELL", "REDUCE") else 1, -amount)
+
+    ranked = sorted(trades, key=rank)
+    for i, t in enumerate(ranked):
+        t["rank"] = i + 1
+        priority, _, _ = rank(t)
+        t["priority"] = "risk_reduction" if priority == 0 else "constraint_reduction" if priority == 1 else "rebalance" if priority == 2 else "avoid"
+    return ranked
+
+
+def _is_recent(transaction: dict[str, Any], days: int) -> bool:
+    """Check if a transaction is within the last N days (best-effort)."""
+    tx_date = transaction.get("date", transaction.get("trade_date", ""))
+    if not tx_date:
+        return False
+    try:
+        from datetime import date, timedelta
+        d = date.fromisoformat(str(tx_date)[:10])
+        return (date.today() - d).days <= days
+    except (ValueError, TypeError):
+        return False

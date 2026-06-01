@@ -1,0 +1,426 @@
+{
+  "objective": "review DCA plans and suggest adjustments",
+  "portfolio": {
+    "as_of_date": "2026-06-01",
+    "total_value": 200000.0,
+    "cash_available": 20000.0,
+    "positions": [
+      {
+        "fund_code": "110011",
+        "fund_name": "Broad Market Alpha",
+        "current_value": 39000.0,
+        "total_cost": 36000.0,
+        "shares": 15600.0,
+        "target_weight": 0.30,
+        "tags": ["broad_market", "large_cap"]
+      },
+      {
+        "fund_code": "000001",
+        "fund_name": "Government Bond Stable",
+        "current_value": 40000.0,
+        "total_cost": 39000.0,
+        "shares": 38000.0,
+        "target_weight": 0.20,
+        "tags": ["fixed_income", "government"]
+      },
+      {
+        "fund_code": "161725",
+        "fund_name": "Healthcare Innovation",
+        "current_value": 30000.0,
+        "total_cost": 33000.0,
+        "shares": 15000.0,
+        "target_weight": 0.15,
+        "tags": ["healthcare", "innovation"]
+      },
+      {
+        "fund_code": "008888",
+        "fund_name": "Balanced Consumer Mix",
+        "current_value": 25000.0,
+        "total_cost": 24000.0,
+        "shares": 20000.0,
+        "target_weight": 0.12,
+        "tags": ["balanced", "consumer"]
+      },
+      {
+        "fund_code": "012345",
+        "fund_name": "Tech Consumer Electronics",
+        "current_value": 51000.0,
+        "total_cost": 48000.0,
+        "shares": 25000.0,
+        "target_weight": 0.05,
+        "tags": ["technology", "consumer_electronics", "short_term"]
+      },
+      {
+        "fund_code": "501009",
+        "fund_name": "Global Oil & Gas",
+        "current_value": 15000.0,
+        "total_cost": 17000.0,
+        "shares": 12000.0,
+        "target_weight": 0.08,
+        "tags": ["commodity", "energy", "oil_gas"]
+      }
+    ]
+  },
+  "target_weights": {
+    "110011": 0.20,
+    "000001": 0.20,
+    "161725": 0.15,
+    "008888": 0.12,
+    "012345": 0.05,
+    "501009": 0.08
+  },
+  "fund_profiles": {
+    "110011": {
+      "fund_code": "110011",
+      "name": "Broad Market Alpha",
+      "fund_type": "equity",
+      "risk_level": "moderate",
+      "manager": "Manager Li Wei",
+      "benchmark": "CSI 300 Index"
+    },
+    "000001": {
+      "fund_code": "000001",
+      "name": "Government Bond Stable",
+      "fund_type": "bond",
+      "risk_level": "low",
+      "manager": "Manager Zhang Ming",
+      "benchmark": "China Bond Composite Index"
+    },
+    "161725": {
+      "fund_code": "161725",
+      "name": "Healthcare Innovation",
+      "fund_type": "equity",
+      "risk_level": "moderate_high",
+      "manager": "Manager Chen Jie",
+      "benchmark": "CSI Healthcare Index"
+    },
+    "008888": {
+      "fund_code": "008888",
+      "name": "Balanced Consumer Mix",
+      "fund_type": "mixed",
+      "risk_level": "moderate",
+      "manager": "Manager Wang Fang",
+      "benchmark": "CSI Mixed Index"
+    },
+    "012345": {
+      "fund_code": "012345",
+      "name": "Tech Consumer Electronics",
+      "fund_type": "equity",
+      "risk_level": "high",
+      "manager": "Manager Liu Yang",
+      "benchmark": "CSI Tech Index"
+    },
+    "501009": {
+      "fund_code": "501009",
+      "name": "Global Oil & Gas",
+      "fund_type": "qdii",
+      "risk_level": "high",
+      "manager": "Manager Zhao Lei",
+      "benchmark": "S&P Global Oil Index"
+    }
+  },
+  "nav_history": {
+    "110011": [
+      {"date": "2025-06-01", "nav": 2.35},
+      {"date": "2025-09-01", "nav": 2.42},
+      {"date": "2025-12-01", "nav": 2.38},
+      {"date": "2026-03-01", "nav": 2.48},
+      {"date": "2026-05-01", "nav": 2.50},
+      {"date": "2026-06-01", "nav": 2.50}
+    ],
+    "000001": [
+      {"date": "2025-06-01", "nav": 1.025},
+      {"date": "2025-09-01", "nav": 1.031},
+      {"date": "2025-12-01", "nav": 1.038},
+      {"date": "2026-03-01", "nav": 1.042},
+      {"date": "2026-05-01", "nav": 1.048},
+      {"date": "2026-06-01", "nav": 1.052}
+    ],
+    "161725": [
+      {"date": "2025-06-01", "nav": 2.20},
+      {"date": "2025-09-01", "nav": 2.28},
+      {"date": "2025-12-01", "nav": 2.15},
+      {"date": "2026-03-01", "nav": 2.05},
+      {"date": "2026-05-01", "nav": 2.00},
+      {"date": "2026-06-01", "nav": 2.00}
+    ],
+    "008888": [
+      {"date": "2025-06-01", "nav": 1.20},
+      {"date": "2025-09-01", "nav": 1.22},
+      {"date": "2025-12-01", "nav": 1.24},
+      {"date": "2026-03-01", "nav": 1.23},
+      {"date": "2026-05-01", "nav": 1.25},
+      {"date": "2026-06-01", "nav": 1.25}
+    ],
+    "012345": [
+      {"date": "2025-06-01", "nav": 2.10},
+      {"date": "2025-09-01", "nav": 2.15},
+      {"date": "2025-12-01", "nav": 2.18},
+      {"date": "2026-03-01", "nav": 2.08},
+      {"date": "2026-05-01", "nav": 2.04},
+      {"date": "2026-06-01", "nav": 2.04}
+    ],
+    "501009": [
+      {"date": "2025-06-01", "nav": 1.42},
+      {"date": "2025-09-01", "nav": 1.36},
+      {"date": "2025-12-01", "nav": 1.32},
+      {"date": "2026-03-01", "nav": 1.28},
+      {"date": "2026-05-01", "nav": 1.25},
+      {"date": "2026-06-01", "nav": 1.25}
+    ]
+  },
+  "holdings": {
+    "110011": [
+      {"name": "Kweichow Moutai", "weight": 0.18, "industry": "consumer_staples", "region": "CN"},
+      {"name": "Ping An Insurance", "weight": 0.15, "industry": "financials", "region": "CN"},
+      {"name": "ICBC", "weight": 0.12, "industry": "financials", "region": "CN"},
+      {"name": "Various Blue Chip", "weight": 0.55, "industry": "diversified", "region": "CN"}
+    ],
+    "000001": [
+      {"name": "China 10Y Sovereign Bond", "weight": 0.40, "asset_type": "bond", "region": "CN"},
+      {"name": "Policy Bank Bond AAA", "weight": 0.30, "asset_type": "bond", "region": "CN"},
+      {"name": "Local Government Bond", "weight": 0.20, "asset_type": "bond", "region": "CN"},
+      {"name": "Cash & Money Market", "weight": 0.10, "asset_type": "cash", "region": "CN"}
+    ],
+    "161725": [
+      {"name": "Hengrui Medicine", "weight": 0.20, "industry": "healthcare", "region": "CN"},
+      {"name": "Wuxi AppTec", "weight": 0.18, "industry": "healthcare", "region": "CN"},
+      {"name": "BeiGene", "weight": 0.15, "industry": "healthcare", "region": "CN"},
+      {"name": "Various Healthcare", "weight": 0.47, "industry": "healthcare", "region": "CN"}
+    ],
+    "008888": [
+      {"name": "CSI Mixed Bond-Equity", "weight": 0.50, "asset_type": "bond", "region": "CN"},
+      {"name": "CSI Mixed Equity", "weight": 0.30, "asset_type": "equity", "region": "CN"},
+      {"name": "Consumer Staples Basket", "weight": 0.10, "industry": "consumer_staples", "region": "CN"},
+      {"name": "Cash Reserve", "weight": 0.10, "asset_type": "cash", "region": "CN"}
+    ],
+    "012345": [
+      {"name": "Apple Inc", "weight": 0.25, "industry": "consumer_electronics", "region": "US"},
+      {"name": "Samsung Electronics", "weight": 0.18, "industry": "consumer_electronics", "region": "KR"},
+      {"name": "MediaTek", "weight": 0.12, "industry": "semiconductors", "region": "TW"},
+      {"name": "Xiaomi", "weight": 0.10, "industry": "consumer_electronics", "region": "HK"},
+      {"name": "NVIDIA", "weight": 0.10, "industry": "semiconductors", "region": "US"},
+      {"name": "Various Tech", "weight": 0.25, "industry": "technology", "region": "global"}
+    ],
+    "501009": [
+      {"name": "Exxon Mobil", "weight": 0.22, "industry": "oil_gas", "region": "US"},
+      {"name": "Chevron", "weight": 0.18, "industry": "oil_gas", "region": "US"},
+      {"name": "Shell", "weight": 0.15, "industry": "oil_gas", "region": "EU"},
+      {"name": "TotalEnergies", "weight": 0.12, "industry": "oil_gas", "region": "EU"},
+      {"name": "ConocoPhillips", "weight": 0.10, "industry": "oil_gas", "region": "US"},
+      {"name": "Various Energy", "weight": 0.23, "industry": "energy", "region": "global"}
+    ]
+  },
+  "risk_profile": {
+    "risk_level": "moderate",
+    "max_single_fund_weight": 0.20,
+    "max_theme_weight": 0.35,
+    "max_industry_weight": 0.30,
+    "max_trade_pct": 0.10,
+    "liquidity_reserve_pct": 0.10,
+    "short_term_trade_budget_pct": 0.10
+  },
+  "constraints": {
+    "min_trade_amount": 100.0,
+    "forbidden_actions": []
+  },
+  "transactions": [
+    {
+      "transaction_id": "TXN-DCA-001",
+      "fund_code": "012345",
+      "fund_name": "Tech Consumer Electronics",
+      "type": "BUY",
+      "date": "2025-06-15",
+      "amount": 15000.0,
+      "shares": 7100.0,
+      "nav": 2.10,
+      "fee": 25.0,
+      "notes": "Initial position"
+    },
+    {
+      "transaction_id": "TXN-DCA-002",
+      "fund_code": "012345",
+      "fund_name": "Tech Consumer Electronics",
+      "type": "BUY",
+      "date": "2025-07-15",
+      "amount": 2000.0,
+      "shares": 930.0,
+      "nav": 2.15,
+      "fee": 10.0,
+      "notes": "DCA month 1"
+    },
+    {
+      "transaction_id": "TXN-DCA-003",
+      "fund_code": "012345",
+      "fund_name": "Tech Consumer Electronics",
+      "type": "BUY",
+      "date": "2025-08-15",
+      "amount": 2000.0,
+      "shares": 920.0,
+      "nav": 2.17,
+      "fee": 10.0,
+      "notes": "DCA month 2"
+    },
+    {
+      "transaction_id": "TXN-DCA-004",
+      "fund_code": "012345",
+      "fund_name": "Tech Consumer Electronics",
+      "type": "BUY",
+      "date": "2025-09-15",
+      "amount": 2000.0,
+      "shares": 920.0,
+      "nav": 2.18,
+      "fee": 10.0,
+      "notes": "DCA month 3"
+    },
+    {
+      "transaction_id": "TXN-DCA-005",
+      "fund_code": "012345",
+      "fund_name": "Tech Consumer Electronics",
+      "type": "BUY",
+      "date": "2025-10-15",
+      "amount": 2000.0,
+      "shares": 940.0,
+      "nav": 2.13,
+      "fee": 10.0,
+      "notes": "DCA month 4"
+    },
+    {
+      "transaction_id": "TXN-DCA-006",
+      "fund_code": "012345",
+      "fund_name": "Tech Consumer Electronics",
+      "type": "BUY",
+      "date": "2025-11-15",
+      "amount": 2000.0,
+      "shares": 950.0,
+      "nav": 2.11,
+      "fee": 10.0,
+      "notes": "DCA month 5"
+    },
+    {
+      "transaction_id": "TXN-DCA-007",
+      "fund_code": "012345",
+      "fund_name": "Tech Consumer Electronics",
+      "type": "BUY",
+      "date": "2025-12-15",
+      "amount": 2000.0,
+      "shares": 960.0,
+      "nav": 2.09,
+      "fee": 10.0,
+      "notes": "DCA month 6"
+    },
+    {
+      "transaction_id": "TXN-DCA-008",
+      "fund_code": "012345",
+      "fund_name": "Tech Consumer Electronics",
+      "type": "BUY",
+      "date": "2026-01-15",
+      "amount": 2000.0,
+      "shares": 980.0,
+      "nav": 2.04,
+      "fee": 10.0,
+      "notes": "DCA month 7"
+    },
+    {
+      "transaction_id": "TXN-DCA-009",
+      "fund_code": "012345",
+      "fund_name": "Tech Consumer Electronics",
+      "type": "BUY",
+      "date": "2026-02-15",
+      "amount": 2000.0,
+      "shares": 1000.0,
+      "nav": 2.00,
+      "fee": 10.0,
+      "notes": "DCA month 8"
+    },
+    {
+      "transaction_id": "TXN-DCA-010",
+      "fund_code": "012345",
+      "fund_name": "Tech Consumer Electronics",
+      "type": "BUY",
+      "date": "2026-03-15",
+      "amount": 2000.0,
+      "shares": 1020.0,
+      "nav": 1.96,
+      "fee": 10.0,
+      "notes": "DCA month 9"
+    },
+    {
+      "transaction_id": "TXN-DCA-011",
+      "fund_code": "012345",
+      "fund_name": "Tech Consumer Electronics",
+      "type": "BUY",
+      "date": "2026-04-15",
+      "amount": 2000.0,
+      "shares": 1010.0,
+      "nav": 1.98,
+      "fee": 10.0,
+      "notes": "DCA month 10"
+    },
+    {
+      "transaction_id": "TXN-DCA-012",
+      "fund_code": "012345",
+      "fund_name": "Tech Consumer Electronics",
+      "type": "BUY",
+      "date": "2026-05-15",
+      "amount": 2000.0,
+      "shares": 980.0,
+      "nav": 2.04,
+      "fee": 10.0,
+      "notes": "DCA month 11"
+    },
+    {
+      "transaction_id": "TXN-DCA-013",
+      "fund_code": "110011",
+      "fund_name": "Broad Market Alpha",
+      "type": "BUY",
+      "date": "2025-08-01",
+      "amount": 18000.0,
+      "shares": 7500.0,
+      "nav": 2.40,
+      "fee": 30.0,
+      "notes": "Core position build"
+    },
+    {
+      "transaction_id": "TXN-DCA-014",
+      "fund_code": "110011",
+      "fund_name": "Broad Market Alpha",
+      "type": "BUY",
+      "date": "2025-10-01",
+      "amount": 18000.0,
+      "shares": 7550.0,
+      "nav": 2.38,
+      "fee": 30.0,
+      "notes": "Core position build"
+    }
+  ],
+  "dca_plans": {
+    "012345": {
+      "fund_code": "012345",
+      "fund_name": "Tech Consumer Electronics",
+      "monthly_amount": 2000.0,
+      "status": "active",
+      "day_of_month": 15,
+      "start_date": "2025-07-01",
+      "note": "DCA has driven weight from 5% target to 25.5% actual — approaching max_single_fund_weight of 0.20"
+    },
+    "501009": {
+      "fund_code": "501009",
+      "fund_name": "Global Oil & Gas",
+      "monthly_amount": 500.0,
+      "status": "active",
+      "day_of_month": 15,
+      "start_date": "2025-09-01",
+      "note": "Sustained drawdown: NAV declined from 1.42 to 1.25 over 12 months"
+    },
+    "110011": {
+      "fund_code": "110011",
+      "fund_name": "Broad Market Alpha",
+      "monthly_amount": 1000.0,
+      "status": "active",
+      "day_of_month": 15,
+      "start_date": "2025-07-01",
+      "note": "Steady growth: NAV 2.35 to 2.50, weight at 19.5% (below max 20%)"
+    }
+  }
+}

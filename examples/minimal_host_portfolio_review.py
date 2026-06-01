@@ -2,11 +2,16 @@
 
 The external host owns the data in this example. Everything is in-memory:
 no network calls, no provider SDKs, and no internal orchestration runtime.
+
+Loads portfolio data from examples/portfolio_review_200k.json by default.
+Override with PORTFOLIO_JSON env var or --file argument.
 """
 
 from __future__ import annotations
 
+import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -21,8 +26,31 @@ from src.tools.evidence.review import review_evidence_graph
 from src.tools.evidence.validators import compile_evidence_graph
 
 
+def load_payload(path: str) -> dict:
+    with open(path, "r", encoding="utf-8") as fh:
+        return json.load(fh)
+
+
 def main() -> None:
-    payload = _mock_portfolio_payload()
+    parser = argparse.ArgumentParser(
+        description="Run portfolio review from a JSON payload."
+    )
+    parser.add_argument(
+        "--file",
+        type=str,
+        default=None,
+        help="Path to portfolio JSON payload. Defaults to examples/portfolio_review_200k.json.",
+    )
+    args = parser.parse_args()
+
+    json_path = (
+        args.file
+        or os.environ.get("PORTFOLIO_JSON")
+        or str(PROJECT_ROOT / "examples" / "portfolio_review_200k.json")
+    )
+
+    payload = load_payload(json_path)
+    objective = payload.pop("objective", "personal portfolio review")
 
     fund_output = FundAnalysisSkill().run(
         SkillInput(
@@ -36,7 +64,7 @@ def main() -> None:
     compile_result = compile_evidence_graph(fund_output.evidence_items)
     review_result = review_evidence_graph(
         compile_result.graph,
-        objective="personal portfolio review",
+        objective=objective,
     )
 
     decision_output = DecisionSupportSkill().run(
@@ -46,13 +74,15 @@ def main() -> None:
             skill_name="decision_support",
             payload={
                 "evidence_graph": compile_result.graph.to_dict(),
-                "objective": "personal portfolio review",
+                "objective": objective,
                 "portfolio_context": payload["portfolio"],
                 "risk_profile": payload["risk_profile"],
                 "constraints": {
                     "max_buy_amount": 10000.0,
                     "max_sell_amount": 8000.0,
-                    "min_trade_amount": 100.0,
+                    "min_trade_amount": payload.get("constraints", {}).get(
+                        "min_trade_amount", 100.0
+                    ),
                 },
                 "target_trade_amount": 9000.0,
                 "time_horizon": "6 months",
@@ -72,127 +102,6 @@ def main() -> None:
         "execution_ledger": decision_output.artifacts.get("execution_ledger"),
     }
     print(json.dumps(result, indent=2, ensure_ascii=False))
-
-
-def _mock_portfolio_payload() -> dict:
-    return {
-        "portfolio": {
-            "as_of_date": "2026-06-01",
-            "total_value": 200000.0,
-            "cash_available": 25000.0,
-            "positions": [
-                {
-                    "fund_code": "110011",
-                    "fund_name": "Healthcare Alpha",
-                    "current_value": 30000.0,
-                    "total_cost": 29000.0,
-                    "shares": 12000.0,
-                    "target_weight": 0.12,
-                    "tags": ["healthcare", "active"],
-                },
-                {
-                    "fund_code": "000001",
-                    "fund_name": "Balanced Core",
-                    "current_value": 50000.0,
-                    "total_cost": 49000.0,
-                    "shares": 20000.0,
-                    "target_weight": 0.24,
-                    "tags": ["core", "balanced"],
-                },
-                {
-                    "fund_code": "161725",
-                    "fund_name": "Technology Growth",
-                    "current_value": 40000.0,
-                    "total_cost": 42000.0,
-                    "shares": 18000.0,
-                    "target_weight": 0.18,
-                    "tags": ["technology", "growth"],
-                },
-                {
-                    "fund_code": "008888",
-                    "fund_name": "Dividend Income",
-                    "current_value": 30000.0,
-                    "total_cost": 30000.0,
-                    "shares": 10000.0,
-                    "target_weight": 0.16,
-                    "tags": ["income", "dividend"],
-                },
-            ],
-        },
-        "fund_profiles": {
-            "110011": {
-                "fund_code": "110011",
-                "name": "Healthcare Alpha",
-                "fund_type": "active_equity",
-                "manager": "Manager A",
-                "benchmark": "Healthcare Index",
-            },
-            "000001": {
-                "fund_code": "000001",
-                "name": "Balanced Core",
-                "fund_type": "balanced",
-                "manager": "Manager B",
-                "benchmark": "Balanced Index",
-            },
-            "161725": {
-                "fund_code": "161725",
-                "name": "Technology Growth",
-                "fund_type": "equity",
-                "manager": "Manager C",
-                "benchmark": "Technology Index",
-            },
-            "008888": {
-                "fund_code": "008888",
-                "name": "Dividend Income",
-                "fund_type": "income",
-                "manager": "Manager D",
-                "benchmark": "Dividend Index",
-            },
-        },
-        "nav_history": {
-            "110011": _nav(1.0, 1.08, 1.18),
-            "000001": _nav(1.0, 1.03, 1.07),
-            "161725": _nav(1.0, 0.98, 1.09),
-            "008888": _nav(1.0, 1.02, 1.05),
-        },
-        "holdings": {
-            "110011": [
-                {"name": "Healthcare A", "weight": 0.6, "industry": "healthcare", "region": "CN"},
-                {"name": "Healthcare B", "weight": 0.4, "industry": "healthcare", "region": "US"},
-            ],
-            "000001": [
-                {"name": "Bond Sleeve", "weight": 0.5, "asset_type": "bond", "region": "CN"},
-                {"name": "Equity Sleeve", "weight": 0.5, "asset_type": "equity", "region": "CN"},
-            ],
-            "161725": [
-                {"name": "Tech A", "weight": 0.7, "industry": "technology", "region": "US"},
-                {"name": "Tech B", "weight": 0.3, "industry": "technology", "region": "CN"},
-            ],
-            "008888": [
-                {"name": "Dividend A", "weight": 1.0, "industry": "dividend", "region": "CN"}
-            ],
-        },
-        "risk_profile": {
-            "risk_level": "moderate",
-            "max_single_fund_weight": 0.35,
-            "max_theme_weight": 0.45,
-            "max_trade_pct": 0.1,
-            "liquidity_reserve_pct": 0.1,
-            "short_term_trade_budget_pct": 0.1,
-        },
-        "constraints": {
-            "min_trade_amount": 100.0,
-            "forbidden_actions": [],
-        },
-    }
-
-
-def _nav(first: float, middle: float, last: float) -> list[dict]:
-    return [
-        {"date": "2025-06-01", "nav": first},
-        {"date": "2025-12-01", "nav": middle},
-        {"date": "2026-06-01", "nav": last},
-    ]
 
 
 if __name__ == "__main__":

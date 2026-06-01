@@ -114,6 +114,29 @@ fund-level data produces `PARTIAL` with explicit warnings by fund code.
 }
 ```
 
+## Personal Portfolio Mode
+
+When the payload includes expanded personal portfolio data, `fund_analysis` runs
+in full portfolio mode. The expanded payload shape accepts:
+
+- `transactions` — list of `FundTransaction` objects (buy, sell, dividend, fee, transfer)
+- `dca_plans` — recurring DCA (dollar-cost averaging) subscriptions per fund
+- `cost_basis` — per-position `PositionCostBasis` with weighted-average cost
+- `market_scenario` — optional stress/sensitivity scenarios (e.g. ±10% NAV shock)
+- `risk_profile` / `constraints` — user risk preferences and rebalance limits
+
+New artifacts produced in personal portfolio mode:
+
+| Artifact | Source | Description |
+|---|---|---|
+| `portfolio_summary` | analysis tools | Position weights, PnL by fund, total PnL, concentration |
+| `cost_basis_summary` | transaction tools | Weighted-average cost per position, unrealized PnL |
+| `trade_budget` | analysis tools | Max trade amount, short-term budget remaining |
+| `dca_review` | analysis tools | DCA plan health, recent discipline flags |
+| `trade_plan` | rank_trade_plan | Ranked multi-leg trade proposals with rationale |
+| `risk_flags` | detection | Concentration, drawdown, discipline, liquidity flags |
+| `fund_analysis_report` | aggregator | Composite report merging all above artifacts |
+
 Compatibility fallback: payloads with only `related_entities` still produce
 baseline HardEvidence and include a warning that structured portfolio analysis
 was not possible.

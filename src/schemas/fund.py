@@ -115,6 +115,16 @@ class FundAnalysisReport:
     risk_flags: list[dict[str, Any]] = field(default_factory=list)
     suggested_watchlist: list[dict[str, Any]] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
+    pnl_summary: dict[str, Any] | None = None
+    exposure_summary: dict[str, Any] | None = None
+    trade_budget: dict[str, Any] | None = None
+    short_term_budget: dict[str, Any] | None = None
+    dca_review: dict[str, Any] | None = None
+    transaction_summary: dict[str, Any] | None = None
+    cost_basis_summary: dict[str, Any] | None = None
+    reconciliation: dict[str, Any] | None = None
+    trading_flags: list[dict[str, Any]] = field(default_factory=list)
+    market_scenario: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -125,4 +135,14 @@ class FundAnalysisReport:
             "risk_flags": self.risk_flags,
             "suggested_watchlist": self.suggested_watchlist,
             "warnings": self.warnings,
+            "pnl_summary": self.pnl_summary,
+            "exposure_summary": self.exposure_summary,
+            "trade_budget": self.trade_budget,
+            "short_term_budget": self.short_term_budget,
+            "dca_review": self.dca_review,
+            "transaction_summary": self.transaction_summary,
+            "cost_basis_summary": self.cost_basis_summary,
+            "reconciliation": self.reconciliation,
+            "trading_flags": self.trading_flags,
+            "market_scenario": self.market_scenario,
         }

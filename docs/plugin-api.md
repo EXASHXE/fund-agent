@@ -38,6 +38,8 @@ Requires MCP: []
 Produces: HardEvidence
 ```
 
+**Personal portfolio payload** — fund_analysis accepts an expanded payload with transactions, dca_plans, cost_basis, market_scenario, and risk constraints. See `examples/portfolio_review_200k.json` for the full shape.
+
 Analyzes host-provided personal portfolio data: positions, fund profiles,
 NAV history, holdings, risk profile, and rebalance constraints. Returns
 portfolio summary artifacts, risk flags, optional suggested rebalance plan, and

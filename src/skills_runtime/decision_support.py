@@ -45,6 +45,39 @@ class DecisionSupportSkill:
                 )
 
             graph = _graph_from_payload(skill_input.payload.get("evidence_graph"))
+
+            trade_plan = skill_input.payload.get("trade_plan", {})
+            selected_trade_ids = skill_input.payload.get("selected_trade_ids", [])
+
+            if trade_plan and trade_plan.get("suggested_trade_plan"):
+                trades = trade_plan["suggested_trade_plan"]
+                if selected_trade_ids:
+                    trades = [t for t in trades if t.get("trade_id") in selected_trade_ids]
+                else:
+                    sorted_trades = sorted(
+                        trades, key=lambda t: t.get("priority", t.get("rank", 999))
+                    )
+                    trades = sorted_trades[:1]
+
+                if trades:
+                    decisions = [
+                        _decision_from_trade(t, graph, skill_input.payload) for t in trades
+                    ]
+                    ledger = ExecutionLedger(decisions=decisions)
+                    return SkillOutput(
+                        step_id=skill_input.step_id,
+                        skill_name=skill_input.skill_name,
+                        artifacts={
+                            "execution_ledger": ledger.to_dict(),
+                            "decisions": [d.to_dict() for d in decisions],
+                            "decision_count": len(decisions),
+                            "audit_trail": [
+                                entry for d in decisions for entry in d.audit_trail
+                            ],
+                        },
+                        status="OK",
+                    )
+
             requested_action = _normalized_action(
                 skill_input.payload.get("requested_action")
             )
@@ -126,15 +159,20 @@ def _build_decision(
         amount_reason=amount_reason,
         insufficient_evidence=insufficient_evidence,
         downgraded_reason=downgraded_reason,
+        payload=payload,
     )
-    invalidating_conditions = _build_invalidating_conditions(action)
+    invalidating_conditions = _build_invalidating_conditions(
+        action, payload=payload
+    )
     risk_budget = _calculate_risk_budget(payload, action)
+    missing_evidence = payload.get("missing_evidence", "") if action in PASSIVE_ACTIONS else ""
     audit_trail = _build_audit_trail(
         graph=graph,
         critique=critique,
         amount_reason=amount_reason,
         downgraded_reason=downgraded_reason,
         insufficient_evidence=insufficient_evidence,
+        missing_evidence=missing_evidence,
     )
 
     return Decision(
@@ -348,6 +386,7 @@ def _build_trigger_conditions(
     amount_reason: str,
     insufficient_evidence: bool,
     downgraded_reason: str,
+    payload: dict[str, Any] | None = None,
 ) -> list[str]:
     if insufficient_evidence:
         return ["Insufficient evidence to support an active decision"]
@@ -356,18 +395,38 @@ def _build_trigger_conditions(
     if action in ACTIVE_ACTIONS:
         conditions.append("Evidence direction consensus confirmed")
         conditions.append(amount_reason)
+    else:
+        payload = payload or {}
+        why_not_buy = payload.get("why_not_buy", "")
+        if why_not_buy:
+            conditions.append(f"Why not buy: {why_not_buy}")
+        why_not_sell = payload.get("why_not_sell", "")
+        if why_not_sell:
+            conditions.append(f"Why not sell: {why_not_sell}")
+        trigger_to_change = payload.get("trigger_to_change", "")
+        if trigger_to_change:
+            conditions.append(f"Trigger to change: {trigger_to_change}")
     if downgraded_reason:
         conditions.append(downgraded_reason)
     return conditions
 
 
-def _build_invalidating_conditions(action: str) -> list[str]:
+def _build_invalidating_conditions(
+    action: str,
+    payload: dict[str, Any] | None = None,
+) -> list[str]:
     conditions = [
         "Evidence contradiction detected",
         "Risk budget exceeded",
     ]
     if action in ACTIVE_ACTIONS:
         conditions.append("Execution budget or liquidity constraint changes")
+    else:
+        payload = payload or {}
+        what_invalidates = payload.get("what_invalidates", "")
+        if what_invalidates:
+            conditions.append(f"What invalidates: {what_invalidates}")
+        conditions.append("Market regime change")
     return conditions
 
 
@@ -393,12 +452,15 @@ def _build_audit_trail(
     amount_reason: str,
     downgraded_reason: str,
     insufficient_evidence: bool,
+    missing_evidence: str = "",
 ) -> list[str]:
     trail: list[str] = []
     if graph.items:
         trail.append(f"Evidence items: {len(graph.items)}")
     elif insufficient_evidence:
         trail.append("Insufficient evidence: no evidence items available")
+    if missing_evidence:
+        trail.append(f"Missing evidence: {missing_evidence}")
 
     status = getattr(critique, "status", "unknown")
     trail.append(f"Critique status: {status}")
@@ -440,6 +502,103 @@ def _optional_float(value: Any) -> float | None:
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+def _decision_from_trade(
+    trade: dict[str, Any],
+    evidence_graph: EvidenceGraph,
+    payload: dict[str, Any],
+) -> Decision:
+    """Build a formal Decision from a single trade leg."""
+    action = _normalized_action(trade.get("action", "HOLD")) or "HOLD"
+    amount = _optional_float(trade.get("amount")) or 0.0
+
+    anchors = list(evidence_graph.items.keys())[:3]
+
+    trigger_conditions: list[str] = []
+    rationale = trade.get("rationale", "")
+    if rationale:
+        trigger_conditions.append(f"Trade rationale: {rationale}")
+    market_scenario = trade.get("market_scenario", "")
+    if market_scenario:
+        trigger_conditions.append(f"Market scenario: {market_scenario}")
+    risk_flags = trade.get("risk_flags", [])
+    if isinstance(risk_flags, list):
+        for flag in risk_flags:
+            trigger_conditions.append(f"Risk flag: {flag}")
+    elif risk_flags:
+        trigger_conditions.append(f"Risk flags: {risk_flags}")
+
+    if action in PASSIVE_ACTIONS:
+        why_not_buy = trade.get("why_not_buy", payload.get("why_not_buy", ""))
+        if why_not_buy:
+            trigger_conditions.append(f"Why not buy: {why_not_buy}")
+        why_not_sell = trade.get("why_not_sell", payload.get("why_not_sell", ""))
+        if why_not_sell:
+            trigger_conditions.append(f"Why not sell: {why_not_sell}")
+        trigger_to_change = trade.get(
+            "trigger_to_change", payload.get("trigger_to_change", "")
+        )
+        if trigger_to_change:
+            trigger_conditions.append(f"Trigger to change: {trigger_to_change}")
+
+    invalidating_conditions = [
+        "Evidence contradiction detected",
+        "Market regime change",
+        "Risk budget exceeded",
+    ]
+    if action in PASSIVE_ACTIONS:
+        what_invalidates = trade.get(
+            "what_invalidates", payload.get("what_invalidates", "")
+        )
+        if what_invalidates:
+            invalidating_conditions.append(f"What invalidates: {what_invalidates}")
+
+    time_horizon = trade.get(
+        "time_horizon", payload.get("time_horizon", "medium_term")
+    )
+
+    portfolio_context = _dict(payload.get("portfolio_context"))
+    total_value = _optional_float(portfolio_context.get("total_value"))
+    risk_profile = _dict(payload.get("risk_profile"))
+    risk_budget_dict = _dict(payload.get("risk_budget"))
+    max_trade_pct = _optional_float(
+        risk_profile.get("max_trade_pct", risk_budget_dict.get("max_trade_pct"))
+    ) or 0.05
+    if total_value and total_value > 0 and amount > 0:
+        trade_pct = amount / total_value
+        risk_budget = round(min(trade_pct, max_trade_pct), 4)
+    else:
+        risk_budget = _calculate_risk_budget(payload, action)
+
+    audit_trail: list[str] = []
+    trade_id = trade.get("trade_id", "")
+    if trade_id:
+        audit_trail.append(f"Trade ID: {trade_id}")
+    if rationale:
+        audit_trail.append(f"Rationale: {rationale}")
+    if market_scenario:
+        audit_trail.append(f"Market scenario: {market_scenario}")
+    if action in PASSIVE_ACTIONS:
+        missing_evidence = trade.get(
+            "missing_evidence", payload.get("missing_evidence", "")
+        )
+        if missing_evidence:
+            audit_trail.append(f"Missing evidence: {missing_evidence}")
+    audit_trail.append(f"Generated at: {datetime.now().isoformat()}")
+
+    return Decision(
+        decision_id=str(uuid.uuid4()),
+        action=action,
+        execution_amount=amount,
+        rationale_anchor=anchors,
+        trigger_conditions=trigger_conditions,
+        invalidating_conditions=invalidating_conditions,
+        time_horizon=time_horizon,
+        risk_budget=risk_budget,
+        audit_trail=audit_trail,
+        created_at=datetime.now(),
+    )
 
 
 class _SkillContractError(ValueError):

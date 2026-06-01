@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.4.1-personal-portfolio-advisor-core
+
+### Added
+- Extended portfolio analysis tools (PnL, cost_basis, DCA review, trade budget)
+- Transaction/cost basis schemas and tools (weighted-average cost basis)
+- Fund NAV extended metrics (period returns, momentum, risk-adjusted score)
+- Multi-leg trade plan generation with deterministic ranking
+- 5 realistic personal portfolio example JSON payloads
+- 38 new tests across tools, skills, and integration
+- docs/host-compatibility.md host compatibility matrix
+
+### Changed
+- FundAnalysisSkill extended for personal portfolio analysis with transactions/DCA/market_scenario
+- DecisionSupportSkill extended for multi-trade decision making from trade_plan
+- Portfolio analysis API stabilized with 14 public functions
+- Fund metrics produce per-period returns and risk-adjusted scores
+
 ## 0.4.0.dev0
 
 ### Added

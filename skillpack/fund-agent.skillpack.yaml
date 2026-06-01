@@ -1,5 +1,5 @@
 name: fund-agent
-version: 0.4.0.dev0
+version: 0.4.1
 schema_version: skillpack.v1
 package_role: agent_plugin
 type: host-agnostic-financial-research-skill-pack
@@ -64,11 +64,21 @@ tools:
   - src.tools.fund.metrics:normalize_nav_history
   - src.tools.fund.metrics:calculate_returns_from_nav
   - src.tools.fund.metrics:calculate_fund_metrics
+  - src.tools.fund.metrics:calculate_period_return
+  - src.tools.fund.metrics:calculate_rolling_drawdown
   - src.tools.portfolio.analysis:calculate_position_weights
   - src.tools.portfolio.analysis:calculate_theme_exposure
   - src.tools.portfolio.analysis:calculate_concentration_metrics
   - src.tools.portfolio.analysis:detect_portfolio_risk_flags
   - src.tools.portfolio.analysis:simulate_rebalance
+  - src.tools.portfolio.analysis:calculate_position_pnl
+  - src.tools.portfolio.analysis:calculate_portfolio_pnl
+  - src.tools.portfolio.analysis:calculate_trade_budget
+  - src.tools.portfolio.analysis:review_dca_plan
+  - src.tools.portfolio.analysis:rank_trade_plan
+  - src.tools.portfolio.transaction:normalize_fund_transactions
+  - src.tools.portfolio.transaction:calculate_position_cost_basis
+  - src.tools.portfolio.transaction:summarize_transaction_ledger
   - src.tools.adapters.mcp:MCPHostAdapter
 
 schemas:
@@ -86,6 +96,9 @@ schemas:
   - src.schemas.fund:UserRiskProfile
   - src.schemas.fund:RebalanceConstraint
   - src.schemas.fund:FundAnalysisReport
+  - src.schemas.transaction:FundTransaction
+  - src.schemas.transaction:PositionCostBasis
+  - src.schemas.transaction:TransactionLedgerSummary
 
 contracts:
   - docs/contracts/evidence-contract.v2.md

@@ -14,11 +14,25 @@ from src.schemas.skill import SkillError, SkillInput, SkillOutput
 from src.tools.evidence.builders import build_hard_evidence_from_metric
 from src.tools.fund.metrics import calculate_fund_metrics
 from src.tools.portfolio.analysis import (
+    calculate_cash_ratio,
     calculate_concentration_metrics,
+    calculate_industry_exposure,
+    calculate_portfolio_pnl,
     calculate_position_weights,
+    calculate_short_term_budget_usage,
     calculate_theme_exposure,
+    calculate_trade_budget,
     detect_portfolio_risk_flags,
+    review_dca_plan,
     simulate_rebalance,
+    summarize_exposure,
+)
+from src.tools.portfolio.transaction import (
+    calculate_position_cost_basis,
+    detect_trading_discipline_flags,
+    normalize_fund_transactions,
+    reconcile_portfolio_with_transactions,
+    summarize_transaction_ledger,
 )
 
 
@@ -87,6 +101,17 @@ class FundAnalysisSkill:
         holdings = _dict_or_empty(payload.get("holdings"))
         risk_profile = _dict_or_empty(payload.get("risk_profile"))
         constraints = _dict_or_empty(payload.get("constraints"))
+        transactions = payload.get("transactions", [])
+        dca_plans = payload.get("dca_plans", {})
+        market_scenario = payload.get("market_scenario", {})
+
+        nav_data: dict[str, float] = {}
+        for fund_code, nav_points in nav_history.items():
+            if isinstance(nav_points, list) and nav_points:
+                latest = max(nav_points, key=lambda x: x.get("date", ""))
+                if isinstance(latest, dict) and latest.get("nav") is not None:
+                    nav_data[fund_code] = float(latest["nav"])
+        as_of_date = portfolio.get("as_of_date", "")
 
         warnings = _missing_data_warnings(
             fund_codes=fund_codes,
@@ -103,6 +128,13 @@ class FundAnalysisSkill:
                 fund_profiles=fund_profiles,
                 holdings=holdings,
             )
+            cash_ratio = calculate_cash_ratio(portfolio)
+            industry_exposure = calculate_industry_exposure(positions, holdings)
+            fund_type_exposure = {
+                key.replace("fund_type:", ""): round(value, 6)
+                for key, value in exposures.items()
+                if key.startswith("fund_type:")
+            }
             fund_metrics = {
                 fund_code: calculate_fund_metrics(nav_history[fund_code])
                 for fund_code in fund_codes
@@ -118,6 +150,56 @@ class FundAnalysisSkill:
                 exposures=exposures,
                 metrics=metrics_for_flags,
             )
+            pnl_summary = None
+            trade_budget = calculate_trade_budget(portfolio, risk_profile, constraints)
+            short_term_budget = None
+            dca_review = None
+            if positions and any(
+                isinstance(p, dict) and p.get("total_cost") is not None
+                for p in positions
+            ):
+                pnl_summary = calculate_portfolio_pnl(positions)
+            if transactions:
+                short_term_budget = calculate_short_term_budget_usage(
+                    positions, transactions, risk_profile
+                )
+            if dca_plans:
+                dca_review = review_dca_plan(
+                    dca_plans, portfolio, transactions, risk_profile
+                )
+
+            normalized_transactions = []
+            ledger_summary = None
+            cost_basis_summary = None
+            reconciliation = None
+            trading_flags: list[dict[str, Any]] = []
+            scenario_flags: list[dict[str, Any]] = []
+            if transactions:
+                normalized_transactions = normalize_fund_transactions(transactions)
+                ledger_summary = summarize_transaction_ledger(
+                    normalized_transactions, nav_data, as_of_date
+                )
+                cost_basis_summary = {
+                    fund_code: cb.to_dict()
+                    for fund_code, cb in calculate_position_cost_basis(
+                        normalized_transactions, nav_data, as_of_date
+                    ).items()
+                }
+                reconciliation = reconcile_portfolio_with_transactions(
+                    portfolio, ledger_summary
+                )
+                trading_flags = detect_trading_discipline_flags(
+                    normalized_transactions, risk_profile, portfolio
+                )
+            if market_scenario:
+                scenario_flags.append({
+                    "type": "market_scenario",
+                    "severity": "high" if market_scenario.get("risk_level") == "high" else "medium",
+                    "message": f"Host-provided market scenario: {market_scenario.get('name', 'unknown')}",
+                    "details": {"scenario": market_scenario},
+                })
+
+            position_map = {p["fund_code"]: p for p in positions if isinstance(p, dict) and p.get("fund_code")}
             target_weights = _target_weights_from_payload(payload, positions)
             rebalance_plan = (
                 simulate_rebalance(
@@ -129,6 +211,25 @@ class FundAnalysisSkill:
                 if target_weights
                 else None
             )
+            if rebalance_plan is not None:
+                pos_pnl_map = pnl_summary.get("positions", {}) if pnl_summary else {}
+                for trade_leg in rebalance_plan.get("suggested_trade_plan", []):
+                    fund_code = trade_leg.get("fund_code", "")
+                    pos = position_map.get(fund_code, {})
+                    trade_leg["fund_name"] = pos.get("fund_name", pos.get("name", fund_code))
+                    trade_leg["current_value"] = pos.get("current_value", 0.0)
+                    trade_leg["current_cost"] = pos.get("total_cost")
+                    trade_leg["unrealized_pnl"] = pos_pnl_map.get(fund_code, {}).get("unrealized_pnl")
+                    trade_leg["cap_reasons"] = trade_leg.get("cap_reasons", [])
+                    trade_leg["rationale"] = ""
+                    if trade_leg.get("capped"):
+                        trade_leg["rationale"] = "Capped by constraints" + (
+                            f": {', '.join(trade_leg['cap_reasons'])}"
+                            if trade_leg.get("cap_reasons") else ""
+                        )
+                    else:
+                        trade_leg["rationale"] = "Within constraint bounds"
+                    trade_leg["tags"] = pos.get("tags", [])
             portfolio_summary = {
                 "as_of_date": portfolio.get("as_of_date", ""),
                 "total_value": float(portfolio.get("total_value", 0.0) or 0.0),
@@ -141,9 +242,23 @@ class FundAnalysisSkill:
                 portfolio_metrics=portfolio_summary,
                 exposures=exposures,
                 concentration=concentration,
-                risk_flags=risk_flags,
+                risk_flags=risk_flags + trading_flags + scenario_flags,
                 suggested_watchlist=_suggested_watchlist(fund_metrics, risk_flags),
                 warnings=warnings,
+                pnl_summary=pnl_summary,
+                exposure_summary=summarize_exposure(
+                    {k: v for k, v in exposures.items() if not k.startswith("fund_type:")},
+                    industry_exposure,
+                    {k: v for k, v in exposures.items() if k.startswith("fund_type:")},
+                ),
+                trade_budget=trade_budget,
+                short_term_budget=short_term_budget,
+                dca_review=dca_review,
+                transaction_summary=ledger_summary.to_dict() if ledger_summary is not None else None,
+                cost_basis_summary=cost_basis_summary,
+                reconciliation=reconciliation,
+                trading_flags=trading_flags,
+                market_scenario=market_scenario if market_scenario else None,
             ).to_dict()
         except Exception as exc:
             return _failed_output(
@@ -154,12 +269,39 @@ class FundAnalysisSkill:
             )
 
         artifacts: dict[str, Any] = {
-            "fund_analysis_report": report,
             "portfolio_summary": portfolio_summary,
-            "risk_flags": risk_flags,
+            "position_summary": {
+                p["fund_code"]: {
+                    "fund_code": p.get("fund_code"),
+                    "fund_name": p.get("fund_name", p.get("name", "")),
+                    "current_value": p.get("current_value", 0.0),
+                    "total_cost": p.get("total_cost"),
+                    "shares": p.get("shares"),
+                    "target_weight": p.get("target_weight"),
+                    "tags": p.get("tags", []),
+                    "pending_amount": p.get("pending_amount", 0.0),
+                }
+                for p in positions
+                if isinstance(p, dict) and p.get("fund_code")
+            },
+            "cost_basis_summary": cost_basis_summary if transactions else None,
+            "pnl_summary": pnl_summary,
+            "exposure_summary": summarize_exposure(
+                {k: v for k, v in exposures.items() if not k.startswith("fund_type:")},
+                industry_exposure,
+                {k: v for k, v in exposures.items() if k.startswith("fund_type:")},
+            ),
+            "risk_flags": risk_flags + trading_flags + scenario_flags,
+            "short_term_trade_budget": short_term_budget if transactions else None,
+            "dca_plan_review": dca_review if dca_plans else None,
+            "suggested_rebalance_plan": rebalance_plan,
+            "fund_analysis_report": report,
+            "warnings": warnings + list(
+                reconciliation.get("warnings", [])
+                if reconciliation else []
+            ),
+            "market_scenario_impact": market_scenario if market_scenario else None,
         }
-        if rebalance_plan is not None:
-            artifacts["suggested_rebalance_plan"] = rebalance_plan
 
         evidence_items = []
         errors: list[dict[str, Any]] = []
@@ -169,8 +311,13 @@ class FundAnalysisSkill:
             portfolio_summary=portfolio_summary,
             concentration=concentration,
             fund_metrics=fund_metrics,
-            risk_flags=risk_flags,
+            risk_flags=risk_flags + trading_flags + scenario_flags,
             rebalance_plan=rebalance_plan,
+            cost_basis_summary=cost_basis_summary,
+            short_term_budget=short_term_budget,
+            dca_review=dca_review,
+            market_scenario=market_scenario,
+            pnl_summary=pnl_summary,
         )
         for spec in evidence_specs:
             try:
@@ -273,6 +420,11 @@ def _evidence_specs(
     fund_metrics: dict[str, Any],
     risk_flags: list[dict[str, Any]],
     rebalance_plan: dict[str, Any] | None,
+    cost_basis_summary: dict[str, Any] | None = None,
+    short_term_budget: dict[str, Any] | None = None,
+    dca_review: dict[str, Any] | None = None,
+    market_scenario: dict[str, Any] | None = None,
+    pnl_summary: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     entities = [f"fund:{code}" for code in fund_codes] or ["portfolio"]
     specs: list[dict[str, Any]] = [
@@ -329,6 +481,100 @@ def _evidence_specs(
                 "claim": "Portfolio rebalance simulation was generated",
                 "related_entities": entities,
                 "direction": "neutral",
+                "provenance": {
+                    "skill_name": skill_input.skill_name,
+                    "tool": "src.tools.portfolio.analysis",
+                },
+            }
+        )
+
+    if cost_basis_summary is not None:
+        specs.append(
+            {
+                "metric_name": "position_cost_basis",
+                "metric_value": cost_basis_summary,
+                "claim": "Position cost basis computed from transaction history",
+                "related_entities": entities,
+                "direction": "neutral",
+                "provenance": {
+                    "skill_name": skill_input.skill_name,
+                    "tool": "src.tools.portfolio.transaction",
+                },
+            }
+        )
+
+    if short_term_budget is not None:
+        specs.append(
+            {
+                "metric_name": "short_term_budget_usage",
+                "metric_value": short_term_budget,
+                "claim": "Short-term trading budget usage computed",
+                "related_entities": entities,
+                "direction": "negative" if short_term_budget.get("exceeded") else "neutral",
+                "provenance": {
+                    "skill_name": skill_input.skill_name,
+                    "tool": "src.tools.portfolio.analysis",
+                },
+            }
+        )
+
+    if dca_review is not None:
+        specs.append(
+            {
+                "metric_name": "dca_plan_review",
+                "metric_value": dca_review,
+                "claim": f"DCA plan review completed with {len(dca_review.get('suggestions', []))} action(s) suggested",
+                "related_entities": entities,
+                "direction": "neutral",
+                "provenance": {
+                    "skill_name": skill_input.skill_name,
+                    "tool": "src.tools.portfolio.analysis",
+                },
+            }
+        )
+
+    if market_scenario:
+        specs.append(
+            {
+                "metric_name": "market_scenario_impact",
+                "metric_value": {"scenario": market_scenario},
+                "claim": f"Market scenario impact assessed: {market_scenario.get('name', 'unknown')}",
+                "related_entities": entities,
+                "direction": "negative" if market_scenario.get("risk_level") == "high" else "neutral",
+                "provenance": {
+                    "skill_name": skill_input.skill_name,
+                    "tool": "host_provided",
+                },
+            }
+        )
+
+    if pnl_summary is not None:
+        for fund_code, pos_pnl in pnl_summary.get("positions", {}).items():
+            specs.append(
+                {
+                    "metric_name": "position_pnl",
+                    "metric_value": pos_pnl,
+                    "claim": f"Position PnL computed for fund {fund_code}",
+                    "related_entities": [f"fund:{fund_code}"],
+                    "direction": "positive" if (pos_pnl.get("unrealized_pnl") or 0) > 0 else "negative" if (pos_pnl.get("unrealized_pnl") or 0) < 0 else "neutral",
+                    "provenance": {
+                        "skill_name": skill_input.skill_name,
+                        "tool": "src.tools.portfolio.analysis",
+                    },
+                }
+            )
+        specs.append(
+            {
+                "metric_name": "portfolio_pnl",
+                "metric_value": {
+                    "total_cost": pnl_summary.get("total_cost"),
+                    "total_value": pnl_summary.get("total_value"),
+                    "unrealized_pnl": pnl_summary.get("unrealized_pnl"),
+                    "unrealized_pnl_pct": pnl_summary.get("unrealized_pnl_pct"),
+                },
+                "claim": "Portfolio-level PnL summary computed",
+                "related_entities": entities,
+                "direction": "positive" if (pnl_summary.get("unrealized_pnl") or 0) > 0 else "negative" if (pnl_summary.get("unrealized_pnl") or 0) < 0 else "neutral",
                 "provenance": {
                     "skill_name": skill_input.skill_name,
                     "tool": "src.tools.portfolio.analysis",
