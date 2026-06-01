@@ -215,3 +215,12 @@ This skill must never:
 
 More examples are in `references/examples.md` and the formal contract is in
 `references/decision-contract.md`.
+
+## References
+
+- `references/evidence-anchor-policy.md`
+- `references/wait-hold-policy.md`
+- `references/execution-amount-policy.md`
+- `references/deterministic-mode.md`
+- `references/decision-contract.md`
+- `references/examples.md`

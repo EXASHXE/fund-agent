@@ -1,6 +1,6 @@
 # Personal Fund Report Workflow
 
-This workflow covers the user request:
+This workflow is the canonical host-side guide for the user request:
 
 ```text
 分析下我的基金给出报告
@@ -10,7 +10,14 @@ This workflow covers the user request:
 fetching, data-fetching policy, user prompts, credentials, MCP providers, final
 UX, and whether to escalate to formal decision support.
 
-## 1. Interpret Objective
+## 1. User request
+
+A user asking `分析下我的基金给出报告` is asking for an analysis report, not
+automatically for executable trade advice. Hosts should default to a report-only
+flow and escalate to `decision_support` only when the user asks for actionable
+buy, sell, increase, reduce, wait, or hold guidance.
+
+## 2. Objective interpretation
 
 Default objective:
 
@@ -25,9 +32,9 @@ Do not assume the user wants executable trade decisions. A report request should
 normally stop after `FundAnalysisSkill` unless the user asks what to buy, sell,
 increase, reduce, wait on, or hold.
 
-## 2. Collect Data
+## 3. Data collection checklist
 
-Data requirements checklist:
+Collect as much of the following from the host data layer as available:
 
 - `portfolio`
 - `transactions`
@@ -37,12 +44,58 @@ Data requirements checklist:
 - `dca_plans`
 - `risk_profile`
 - `constraints`
-- `market_scenario` if applicable
+- `market_scenario` (if a stress or drawdown view is in scope)
 
-Ask the user or host data layer for missing required data. Proceed with PARTIAL
-analysis when portfolio positions exist but optional data is missing.
+If portfolio positions exist but optional data is missing, proceed with
+`PARTIAL` analysis and label the missing data in warnings.
 
-## 3. Example Minimal Payload
+## 4. Required vs optional data
+
+Required to produce any portfolio analysis:
+
+- `portfolio.as_of_date`
+- `portfolio.total_value`
+- `portfolio.cash_available`
+- `portfolio.positions[]` with `fund_code` and `current_value`
+- `risk_profile` with concentration, liquidity, and trade budget limits
+- `constraints` such as minimum trade amount and forbidden actions
+
+Optional (improves analysis quality but not strictly required):
+
+- `fund_profiles` for fund type, benchmark, manager, and tags
+- `nav_history` for deterministic risk-return metrics
+- `holdings` for theme, industry, region, and security exposure
+- `transactions` for cost basis, cashflow, and trading discipline analysis
+- `dca_plans` for recurring investment review
+- `market_scenario` supplied by the host (never fetched by `fund-agent`)
+
+If required data is absent, return `INVALID_INPUT`. If only `related_entities`
+is supplied, use the baseline `HardEvidence` compatibility path and warn that
+structured portfolio analysis was not possible.
+
+## 5. When to ask the user for missing data
+
+Ask before running when:
+
+- there are no positions;
+- fund codes are missing;
+- current values are missing;
+- the user asks for exact PnL but costs or transactions are absent;
+- the user asks for formal trade advice but risk limits are missing.
+
+## 6. When to proceed with PARTIAL analysis
+
+Proceed with `PARTIAL` when:
+
+- positions and current values exist;
+- optional NAV history, holdings, transactions, DCA plans, or market scenario
+  are missing;
+- the host can clearly label missing data in warnings.
+
+Emit explicit `warnings` for every missing optional data category. Do not
+fabricate missing data.
+
+## 7. Minimal payload
 
 ```json
 {
@@ -76,7 +129,7 @@ analysis when portfolio positions exist but optional data is missing.
 }
 ```
 
-## 4. Example Expanded Payload
+## 8. Expanded payload
 
 ```json
 {
@@ -109,7 +162,7 @@ analysis when portfolio positions exist but optional data is missing.
 }
 ```
 
-## 5. Call FundAnalysisSkill
+## 9. Calling FundAnalysisSkill
 
 ```python
 from src.schemas.skill import SkillInput
@@ -128,7 +181,7 @@ fund_output = FundAnalysisSkill().run(
 `FundAnalysisSkill` emits artifacts plus `HardEvidence`. It may emit warnings
 or `PARTIAL` status when optional data is missing.
 
-## 6. Generate Report Without Formal Decision
+## 10. Generating a report without formal decisions
 
 If `formal_decision=false`, the host writes the final report directly from:
 
@@ -140,7 +193,22 @@ If `formal_decision=false`, the host writes the final report directly from:
 - `fund_output.evidence_items`
 - `fund_output.warnings`
 
-## 7. Escalate For Actionable Trade Advice
+Do not turn `suggested_rebalance_plan` into executable advice by itself. The
+host should label it as a suggested plan, not a decision.
+
+## 11. When to escalate to DecisionSupportSkill
+
+Escalate when the user asks:
+
+- `现在该买什么？`
+- `要不要卖？`
+- `帮我给出买卖操作`
+- `加仓还是减仓？`
+- `给我正式决策`
+
+Do not escalate for a plain report request unless the host policy requires it.
+
+## 12. Calling DecisionSupportSkill
 
 If the user asks for actionable trade advice:
 
@@ -173,7 +241,10 @@ decision_output = DecisionSupportSkill().run(
 )
 ```
 
-## 8. Report Section Template
+`DecisionSupportSkill` is the only skill allowed to emit formal `Decision` or
+`ExecutionLedger` objects.
+
+## 13. Report section template
 
 1. Executive summary
 2. Portfolio overview
@@ -192,38 +263,7 @@ decision_output = DecisionSupportSkill().run(
 15. Data gaps and warnings
 16. Evidence appendix
 
-## 9. When To Ask The User For Missing Data
-
-Ask before running when:
-
-- there are no positions;
-- fund codes are missing;
-- current values are missing;
-- the user asks for exact PnL but costs or transactions are absent;
-- the user asks for formal trade advice but risk limits are missing.
-
-## 10. When To Proceed With PARTIAL Analysis
-
-Proceed when:
-
-- positions and current values exist;
-- optional NAV history, holdings, transactions, DCA plans, or market scenario
-  are missing;
-- the host can clearly label missing data in warnings.
-
-## 11. When To Escalate To decision_support
-
-Escalate when the user asks:
-
-- `现在该买什么？`
-- `要不要卖？`
-- `帮我给出买卖操作`
-- `加仓还是减仓？`
-- `给我正式决策`
-
-Do not escalate for a plain report request unless the host policy requires it.
-
-## 12. Warning And Uncertainty Language
+## 14. Warning and uncertainty language
 
 Use concrete, bounded wording:
 
@@ -238,3 +278,25 @@ Use concrete, bounded wording:
 ```text
 市场情景来自主机提供的数据，fund-agent 未自行抓取或推断市场状态。
 ```
+
+## 15. Evidence appendix guidance
+
+The evidence appendix is what makes the report auditable. For every claim in
+sections 1-14, the host should attach:
+
+- the `HardEvidence` or `SoftEvidence` ID(s) that justify the claim;
+- the source artifact (for example `portfolio_summary`, `exposure_summary`,
+  `risk_flags`, `suggested_rebalance_plan`) the claim was derived from;
+- any `warnings` that downgrade the claim to `PARTIAL`.
+
+Format guidance:
+
+- one row per claim, with the artifact name, evidence IDs, and any caveat;
+- group rows by report section so the reader can trace each section back to
+  its evidence;
+- if a claim has no evidence ID, mark it as an observation, not a fact;
+- if a `WAIT`/`HOLD` is recommended, list the missing evidence IDs and the
+  trigger that would change the recommendation.
+
+`fund-agent` does not produce the appendix formatting — the host renders it
+from `SkillOutput.evidence_items`, `artifacts`, and `warnings`.
