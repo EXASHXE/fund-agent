@@ -8,9 +8,27 @@ required_mcp_capabilities: []
 produced_artifact: thesis_draft
 forbidden_behavior:
   - formal_decision_generation
+role: supporting
 ---
 
-# Thesis Generation
+# Thesis Generation (supporting skill)
+
+`thesis-generation` is a **supporting skill** in the
+`fund-agent` Superpowers-compatible skill collection. It should be
+loaded only when the host wants a draft investment thesis before
+deciding whether to escalate to a formal decision. For ordinary
+portfolio and fund report requests, start with the primary skill
+`fund-analysis` and stop there.
+
+`thesis-generation` itself maps to the Python runtime ID
+`thesis_generation` declared in
+`skillpack/fund-agent.skillpack.yaml`. The agent-facing skill name is
+the hyphenated slug `thesis-generation`; the underscore
+`thesis_generation` is the runtime ID only.
+
+This skill produces a **`thesis_draft` artifact only**. It **must
+not** produce a formal `Decision` or `ExecutionLedger`. Only
+`decision-support` may produce those.
 
 ## Purpose
 
@@ -26,9 +44,13 @@ must not produce formal `Decision` or `ExecutionLedger` artifacts.
 - The host wants an intermediate artifact before deciding whether to call
   `decision_support`.
 
+**`thesis-generation` is not required for ordinary `fund-analysis`
+flows.** Load it only when the host wants a draft thesis.
+
 ## When not to use
 
 - Do not use it to produce BUY, SELL, INCREASE, REDUCE, WAIT, or HOLD.
+  Only `decision-support` may produce formal `Decision` artifacts.
 - Do not use it for portfolio calculations.
 - Do not use it to fetch news or sentiment.
 - Do not treat a thesis draft as executable advice.

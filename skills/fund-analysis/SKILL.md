@@ -6,9 +6,52 @@ input_schema: src.schemas.skill:SkillInput
 output_schema: src.schemas.skill:SkillOutput
 required_mcp_capabilities: []
 produced_evidence_type: HardEvidence
+role: primary
 ---
 
 # Fund Analysis
+
+## Default entrypoint
+
+`fund-analysis` is the **primary / default skill** in the
+`fund-agent` Superpowers-compatible skill collection. For ordinary
+portfolio and fund report requests — for example
+`分析下我的基金给出报告` — load `fund-analysis` first. It alone is
+sufficient for a report-only flow.
+
+`fund-analysis` itself maps to the Python runtime ID `fund_analysis`
+declared in `skillpack/fund-agent.skillpack.yaml`. The agent-facing
+skill name is the hyphenated slug `fund-analysis`; the underscore
+`fund_analysis` is the runtime ID only.
+
+## When to load supporting skills
+
+Load a supporting skill only when the subtask description matches,
+and only after `fund-analysis` (or equivalent evidence) is in scope:
+
+| Need | Supporting skill |
+|---|---|
+| Formal trade / action decision (BUY, SELL, INCREASE, REDUCE, WAIT, HOLD) | `decision-support` |
+| News context (recent or historical news for a fund, holding, theme, manager, or macro topic) | `news-research` |
+| Sentiment context (social / market mood signals) | `sentiment-analysis` |
+| Thesis synthesis (a draft investment thesis before any formal decision) | `thesis-generation` |
+
+Rules of thumb:
+
+- For an ordinary portfolio report, `fund-analysis` alone is
+  sufficient. Do not load `decision-support` for a report-only
+  request.
+- For actionable trade decisions, load `decision-support` **only
+  after** an `EvidenceGraph` and optional trade plan exist.
+  `decision-support` is the only skill that may produce a formal
+  `Decision` / `ExecutionLedger`.
+- For news / sentiment / thesis context, load the relevant
+  supporting skill only if the host has the required MCP capability
+  (news / sentiment) or the required evidence context (thesis).
+  None of these supporting skills is required for a normal
+  `fund-analysis` flow.
+- The legacy `fund-analyst` persona material is archived under
+  `docs/archive/fund-analyst/`. Do not load it as a runtime skill.
 
 ## Purpose
 

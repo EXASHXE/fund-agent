@@ -1,5 +1,73 @@
 # Changelog
 
+## 0.4.4-superpowers-compatible-skill-surface
+
+### Changed
+
+- Skill surface is now a **Superpowers-compatible composable
+  Markdown collection**: one hyphenated `skills/<slug>/SKILL.md`
+  directory per skill, with the directory name matching the
+  frontmatter `name` field.
+- `fund-analysis` is the **primary / default skill**. For ordinary
+  user requests like `分析下我的基金给出报告`, load `fund-analysis`
+  first. It alone is sufficient for a report-only flow.
+- `decision-support`, `news-research`, `sentiment-analysis`, and
+  `thesis-generation` are **supporting skills**. They are loaded
+  only when the subtask description matches the supporting skill
+  and only after the primary skill (or equivalent evidence) is in
+  scope. `decision-support` remains the only skill that may produce
+  a formal `Decision` / `ExecutionLedger`.
+- `skills/fund-analysis/SKILL.md` now has a "Default entrypoint"
+  section and a "When to load supporting skills" table.
+- Each supporting `SKILL.md` has a "supporting skill" preamble that
+  states the policy: `decision-support` is only for actionable trade
+  decisions after an `EvidenceGraph` exists, `news-research` and
+  `sentiment-analysis` are host/MCP-backed evidence skills with no
+  direct provider SDK calls, and `thesis-generation` produces a
+  `thesis_draft` artifact only and must not produce formal decisions.
+- Python runtime IDs remain underscore names in the manifest and
+  Python (`fund_analysis`, `decision_support`, `news_research`,
+  `sentiment_analysis`, `thesis_generation`). External hosts should
+  pass the underscore runtime ID to `fund_agent_runtime_hint` and to
+  `SkillInput(skill_name=...)`.
+
+### Removed
+
+- Underscore skill directories deleted: `skills/fund_analysis/`,
+  `skills/news_research/`, `skills/sentiment_analysis/`,
+  `skills/thesis_generation/`. They are not part of the
+  v0.4.4+ surface and are not exposed by the OpenCode plugin.
+- Legacy persona directory `skills/fund-analyst/` moved to
+  `docs/archive/fund-analyst/`. It is archived legacy reference
+  material, not a runtime skill, not installed, and not discovered.
+- `tests/skills/test_skill_classes.py` removed (it tested the
+  legacy underscore skill classes that have been removed).
+
+### Plugin
+
+- The OpenCode plugin now exposes the **five hyphenated Markdown
+  doc slugs** as agent-facing skill names: `fund-analysis` (primary)
+  + `decision-support`, `news-research`, `sentiment-analysis`,
+  `thesis-generation` (supporting).
+- `fund_agent_skills` returns `primary_skill`, `supporting_skills`,
+  and per-skill `role` metadata.
+- `fund_agent_skill_doc` accepts **hyphenated slugs only** and
+  rejects underscore skill slugs and the archived `fund-analyst`
+  persona.
+- `fund_agent_runtime_hint` accepts either a hyphenated agent-facing
+  slug **or** an underscore Python runtime ID; both resolve to the
+  same Python runtime class path.
+- `VERSION`, `pyproject.toml`, `skillpack/fund-agent.skillpack.yaml`,
+  and `package.json` all advanced to `0.4.4`.
+
+### Honesty
+
+- No provider SDKs, no LLM clients, no autonomous loop, no
+  subprocess spawn, no planner loop. The host-agnostic architecture
+  constraints are preserved.
+- No runtime / domain feature changes. The new milestone is purely
+  about the agent-facing skill surface and the install surface.
+
 ## 0.4.3-installable-skillpack
 
 ### Added

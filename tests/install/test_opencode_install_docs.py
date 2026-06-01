@@ -61,8 +61,8 @@ def test_opencode_install_md_mentions_git_backed_install():
 
 def test_opencode_install_md_mentions_version_pinning():
     text = _text(OPENCODE_INSTALL_MD)
-    # v0.4.3 should appear, or at least a version-pinning example with a tag.
-    assert "v0.4.3" in text or "tag" in text or "pin" in text, (
+    # v0.4.4 should appear, or at least a version-pinning example with a tag.
+    assert "v0.4.4" in text or "tag" in text or "pin" in text, (
         ".opencode/INSTALL.md must mention version pinning"
     )
 
@@ -119,7 +119,7 @@ def test_docs_opencode_md_mentions_git_backed_install():
 
 def test_docs_opencode_md_mentions_version_pinning():
     text = _text(DOCS_OPENCODE_MD)
-    assert "v0.4.3" in text or "tag" in text or "pin" in text, (
+    assert "v0.4.4" in text or "tag" in text or "pin" in text, (
         "docs/install/opencode.md must mention version pinning"
     )
 

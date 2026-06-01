@@ -69,6 +69,35 @@ External hosts must read the manifest for skill discovery. Do not infer runtime
 skill IDs from folder names. For example, `fund_analysis` is the runtime skill
 ID and `fund-analysis` is the canonical Markdown doc slug.
 
+## Skill Surface (Superpowers-compatible)
+
+`fund-agent` exposes a **composable collection of Markdown skills**, the same
+shape as a Superpowers / OpenCode Agent Skills / Codex Skills pack: one
+hyphenated `SKILL.md` directory per skill, with the directory name matching
+the skill's frontmatter `name` field. The agent-facing skill name is always
+the hyphenated slug; the underscore name is the Python runtime ID only.
+
+- **Primary / default skill:** `fund-analysis`. For ordinary portfolio and
+  fund report requests (for example
+  `分析下我的基金给出报告`), load `fund-analysis` first. It alone is
+  sufficient for report-only flows.
+- **Supporting skills:** `decision-support`, `news-research`,
+  `sentiment-analysis`, `thesis-generation`. Load one of these only when
+  the subtask description matches, and only after `fund-analysis` (or
+  equivalent evidence) is in scope.
+- **Python runtime IDs** remain underscore names in the manifest and in
+  Python: `fund_analysis`, `decision_support`, `news_research`,
+  `sentiment_analysis`, `thesis_generation`. External hosts should use
+  these for actual `skill.run(SkillInput)` calls.
+- **Discovery** is always `skillpack/fund-agent.skillpack.yaml`; the
+  `skills/<slug>/SKILL.md` files are the agent-facing policy layer.
+
+The legacy `fund-analyst` persona material is archived under
+`docs/archive/fund-analyst/`; it is not installed, not discovered, and
+not a runtime entrypoint. Underscore `skills/` directories are no
+longer present; any directory whose name contains `_` is not part of
+the agent-facing surface.
+
 ## Host Integration Flow
 
 External agents should treat the skill pack manifest as the entrypoint:
@@ -116,20 +145,36 @@ or combine `fund-agent` tools with other skill packs.
 
 ## Runtime Skills
 
-| Runtime skill ID | Markdown doc slug | Runtime | Produces | MCP |
+| Runtime skill ID (Python) | Agent-facing slug | Role | Produces | MCP |
 |---|---|---|---|---|
-| `fund_analysis` | `fund-analysis` | `src.skills_runtime.fund_analysis:FundAnalysisSkill` | `HardEvidence`, portfolio artifacts | none |
-| `news_research` | `news-research` | `src.skills_runtime.news_research:NewsResearchSkill` | `SoftEvidence` | `web_search`, `financial_news` |
-| `sentiment_analysis` | `sentiment-analysis` | `src.skills_runtime.sentiment_analysis:SentimentAnalysisSkill` | `SoftEvidence` | `social_sentiment` |
-| `thesis_generation` | `thesis-generation` | `src.skills_runtime.thesis_generation:ThesisGenerationSkill` | `ThesisDraft` artifact | none |
-| `decision_support` | `decision-support` | `src.skills_runtime.decision_support:DecisionSupportSkill` | `Decision`, `ExecutionLedger` | none |
+| `fund_analysis` | `fund-analysis` | **primary / default** | `HardEvidence`, portfolio artifacts | none |
+| `decision_support` | `decision-support` | supporting | `Decision`, `ExecutionLedger` | none |
+| `news_research` | `news-research` | supporting | `SoftEvidence` | `web_search`, `financial_news` |
+| `sentiment_analysis` | `sentiment-analysis` | supporting | `SoftEvidence` | `social_sentiment` |
+| `thesis_generation` | `thesis-generation` | supporting | `ThesisDraft` artifact | none |
+
+- The **agent-facing skill name** is the hyphenated slug
+  (`fund-analysis`, `decision-support`, …). Hosts should pass that slug
+  to the OpenCode plugin's `fund_agent_skill_doc` tool.
+- The **Python runtime ID** is the underscore name in the manifest
+  (`fund_analysis`, `decision_support`, …). Hosts should pass that to
+  `fund_agent_runtime_hint` and to `SkillInput(skill_name=...)`.
+- The two are linked 1:1 by the manifest; do not infer either from a
+  filesystem directory name alone.
 
 Only `decision_support` may produce formal `Decision` and `ExecutionLedger`
 artifacts. Other skills return evidence, draft artifacts, warnings, and
 structured errors through `SkillOutput`.
 
-`fund-analyst` is legacy/reference-only persona material and is not a runtime
-entrypoint.
+`fund-analysis` is the recommended starting point for ordinary user
+requests like `分析下我的基金给出报告`. Supporting skills should be
+loaded only when their description matches the subtask. See
+`skills/fund-analysis/SKILL.md` for the "When to load supporting skills"
+table.
+
+`fund-analyst` is legacy/reference-only persona material archived under
+`docs/archive/fund-analyst/`. It is not installed, not discovered, and
+not a runtime entrypoint.
 
 ## MCP Boundary
 

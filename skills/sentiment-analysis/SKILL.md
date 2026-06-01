@@ -7,9 +7,29 @@ output_schema: src.schemas.skill:SkillOutput
 required_mcp_capabilities:
   - social_sentiment
 produced_evidence_type: SoftEvidence
+role: supporting
 ---
 
-# Sentiment Analysis
+# Sentiment Analysis (supporting skill)
+
+`sentiment-analysis` is a **supporting skill** in the
+`fund-agent` Superpowers-compatible skill collection. It should be
+loaded only when the user wants sentiment-backed `SoftEvidence`, and
+only when the host has an MCP provider wired for `social_sentiment`.
+For ordinary portfolio and fund report requests, start with the
+primary skill `fund-analysis` and stop there.
+
+`sentiment-analysis` itself maps to the Python runtime ID
+`sentiment_analysis` declared in
+`skillpack/fund-agent.skillpack.yaml`. The agent-facing skill name is
+the hyphenated slug `sentiment-analysis`; the underscore
+`sentiment_analysis` is the runtime ID only.
+
+The host owns the sentiment MCP provider, network access, and any
+API credentials. This skill **must not** make direct network calls,
+import provider SDKs, or treat sentiment as deterministic evidence.
+It produces soft evidence only — **no formal `Decision` or
+`ExecutionLedger`**.
 
 ## Purpose
 
@@ -23,12 +43,18 @@ signals through `MCPHostAdapter` and convert structured signals into
 - The user asks about market mood, social chatter, or crowd risk.
 - Sentiment should supplement HardEvidence and news evidence.
 
+**`sentiment-analysis` is not required for ordinary `fund-analysis`
+flows.** Load it only when sentiment context is needed.
+
 ## When not to use
 
 - Do not use it for deterministic fund metrics or portfolio math.
 - Do not use it as a substitute for holdings, NAV, or transaction data.
 - Do not use it to make formal trade decisions.
 - Do not use it without host-owned MCP capability.
+- Do not use it as the only input to a formal `Decision`. Combine it
+  with `HardEvidence` from `fund-analysis` and any `SoftEvidence`
+  from `news-research` first.
 
 ## Host responsibilities
 

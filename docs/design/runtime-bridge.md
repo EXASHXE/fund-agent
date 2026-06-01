@@ -1,18 +1,18 @@
 # Runtime Bridge — Design (Future)
 
-> Status: **design only**. Not implemented in v0.4.3. This document
+> Status: **design only**. Not implemented in v0.4.4. This document
 > describes the shape of a future optional runtime bridge between an
 > OpenCode / Codex plugin and the deterministic Python runtime in
 > `src/skills_runtime/`.
 >
-> The v0.4.3 OpenCode install is **plugin metadata + doc reader only**
+> The v0.4.4 OpenCode install is **plugin metadata + doc reader only**
 > and does not run a runtime bridge. See
 > [`docs/install/opencode.md`](../install/opencode.md) for the current
 > install.
 
-## Why a runtime bridge is a future concern, not a v0.4.3 one
+## Why a runtime bridge is a future concern, not a v0.4.4 one
 
-The OpenCode plugin in v0.4.3 registers three custom tools
+The OpenCode plugin in v0.4.4 registers three custom tools
 (`fund_agent_skills`, `fund_agent_skill_doc`,
 `fund_agent_runtime_hint`) and logs at startup. It deliberately does
 **not** invoke the Python runtime from inside the plugin.
@@ -37,7 +37,7 @@ All three add real complexity:
   which the user has to manage and which is not "installable" in the
   Superpowers / OMO sense.
 
-The v0.4.3 milestone therefore ships the **metadata + doc reader**
+The v0.4.4 milestone therefore ships the **metadata + doc reader**
 plugin and documents a future, opt-in runtime bridge here.
 
 ## Goals of the future runtime bridge
@@ -122,7 +122,7 @@ The output JSON is the `SkillOutput` shape, serialized with
 The OpenCode / Codex plugin wraps this CLI in a custom tool:
 
 ```javascript
-// Pseudocode — not part of v0.4.3
+// Pseudocode — not part of v0.4.4
 fund_agent_run_skill: tool({
   description: "Run a fund-agent Python runtime skill and return its output.",
   args: {
@@ -240,7 +240,7 @@ silently failing.
 ## Tracking
 
 This design is the candidate spec for a future milestone
-(likely `v0.5.x-runtime-bridge`). It is not on the v0.4.3
+(likely `v0.5.x-runtime-bridge`). It is not on the v0.4.4
 critical path. If you need to wire the Python runtime into OpenCode
 today, use the manual host integration in
 [`docs/install/manual-host.md`](../install/manual-host.md) — it

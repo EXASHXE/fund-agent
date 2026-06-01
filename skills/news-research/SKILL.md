@@ -8,9 +8,28 @@ required_mcp_capabilities:
   - web_search
   - financial_news
 produced_evidence_type: SoftEvidence
+role: supporting
 ---
 
-# News Research
+# News Research (supporting skill)
+
+`news-research` is a **supporting skill** in the
+`fund-agent` Superpowers-compatible skill collection. It should be
+loaded only when the user wants news-backed `SoftEvidence` for a
+fund, holding, theme, manager, or macro topic, and only when the host
+has an MCP provider wired for `web_search` and / or `financial_news`.
+For ordinary portfolio and fund report requests, start with the
+primary skill `fund-analysis` and stop there.
+
+`news-research` itself maps to the Python runtime ID `news_research`
+declared in `skillpack/fund-agent.skillpack.yaml`. The agent-facing
+skill name is the hyphenated slug `news-research`; the underscore
+`news_research` is the runtime ID only.
+
+The host owns the MCP provider, network access, and any API
+credentials. This skill **must not** make direct network calls or
+import provider SDKs; it may only call the host-injected
+`MCPHostAdapter`.
 
 ## Purpose
 
@@ -24,6 +43,9 @@ Use `news_research` to request host-provided news or web search data through
 - The host has an MCP adapter with `financial_news` or `web_search`.
 - A later `EvidenceGraph` or `decision_support` step needs news-backed
   `SoftEvidence`.
+
+**`news-research` is not required for ordinary `fund-analysis` flows.**
+Load it only when news context is needed.
 
 ## When not to use
 

@@ -1,4 +1,4 @@
-"""全局默认策略参数，与 skills/fund-analyst/SKILL.md 保持一致"""
+"""全局默认策略参数，参考 docs/archive/fund-analyst/ 中的历史策略说明。"""
 from src.infra.config.schema import (
     ScoringParams, StopProfitLossParams, RebalanceParams,
     StrategyParams, UserProfile

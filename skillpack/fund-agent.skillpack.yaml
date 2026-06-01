@@ -1,17 +1,25 @@
 name: fund-agent
-version: 0.4.3
+version: 0.4.4
 schema_version: skillpack.v1
 package_role: agent_plugin
 type: host-agnostic-financial-research-skill-pack
 description: Host-agnostic AI financial research skill pack for external agent runtimes.
 orchestration_owner: external_agent
 mcp_provider_owner: external_host
+skill_surface: superpowers-compatible-markdown-collection
+primary_skill: fund-analysis
+supporting_skills:
+  - decision-support
+  - news-research
+  - sentiment-analysis
+  - thesis-generation
 
 skills:
   - name: fund_analysis
     runtime: src.skills_runtime.fund_analysis:FundAnalysisSkill
     input_schema: src.schemas.skill:SkillInput
     output_schema: src.schemas.skill:SkillOutput
+    role: primary
     produces:
       - HardEvidence
     requires_mcp: []
@@ -20,6 +28,7 @@ skills:
     runtime: src.skills_runtime.news_research:NewsResearchSkill
     input_schema: src.schemas.skill:SkillInput
     output_schema: src.schemas.skill:SkillOutput
+    role: supporting
     produces:
       - SoftEvidence
     requires_mcp:
@@ -30,6 +39,7 @@ skills:
     runtime: src.skills_runtime.sentiment_analysis:SentimentAnalysisSkill
     input_schema: src.schemas.skill:SkillInput
     output_schema: src.schemas.skill:SkillOutput
+    role: supporting
     produces:
       - SoftEvidence
     requires_mcp:
@@ -39,6 +49,7 @@ skills:
     runtime: src.skills_runtime.thesis_generation:ThesisGenerationSkill
     input_schema: src.schemas.skill:SkillInput
     output_schema: src.schemas.skill:SkillOutput
+    role: supporting
     produces:
       - ThesisDraft
     requires_mcp: []
@@ -49,6 +60,7 @@ skills:
     runtime: src.skills_runtime.decision_support:DecisionSupportSkill
     input_schema: src.schemas.skill:SkillInput
     output_schema: src.schemas.skill:SkillOutput
+    role: supporting
     consumes:
       - EvidenceGraph
     produces:

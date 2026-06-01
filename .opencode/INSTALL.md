@@ -4,9 +4,11 @@
 > sees the fund-agent skill catalog and can read the Markdown-first
 > `skills/<slug>/SKILL.md` documents.
 >
-> Scope of this milestone: **Markdown-first skill install only.** The
-> Python runtime is optional and host-driven. There is no autonomous
-> agent loop in this plugin.
+> Scope of this milestone: **Superpowers-compatible Markdown-first skill
+> install only.** OpenCode registers a **composable collection of
+> hyphenated Markdown skills** (one directory per skill, name matching
+> the directory). The Python runtime is optional and host-driven.
+> There is no autonomous agent loop in this plugin.
 
 ## Prerequisites
 
@@ -40,16 +42,40 @@ After restarting OpenCode, the plugin will:
 
 - log that `fund-agent vX.Y.Z` is loaded
 - register a `fund_agent_skills` tool that returns the manifest runtime
-  IDs and their hyphenated doc slugs
+  IDs and their hyphenated doc slugs (the agent-facing skill names)
 - register a `fund_agent_skill_doc` tool that returns the contents of a
-  specific `skills/<slug>/SKILL.md`
-- register a `fund_agent_runtime_hint` tool that returns the runtime
-  Python class path for a given runtime skill ID, plus a pointer to
-  `docs/install/manual-host.md` for the deterministic Python integration
-  flow
+  specific `skills/<slug>/SKILL.md` (the agent-facing slugs only; the
+  plugin rejects underscore doc slugs)
+- register a `fund_agent_runtime_hint` tool that maps a hyphenated
+  agent-facing slug **or** a Python runtime ID to the runtime class
+  path, plus a pointer to `docs/install/manual-host.md` for the
+  deterministic Python integration flow
 
 These tools do **not** fetch data, do **not** place trades, and do
 **not** call any LLM. They are pure metadata + doc readers.
+
+## Skill collection
+
+OpenCode will discover the **composable Markdown skill collection** under
+`skills/<slug>/SKILL.md`. The collection in v0.4.4+ is:
+
+- **Primary / default:** `fund-analysis` — start here for ordinary
+  fund analysis and report requests.
+- **Supporting:** `decision-support`, `news-research`, `sentiment-analysis`,
+  `thesis-generation` — load only when the subtask matches.
+
+The plugin does **not** expose:
+
+- underscore skill slugs (`fund_analysis`, `news_research`, …) as
+  agent-facing skill names;
+- the archived legacy persona directory (formerly at
+  `skills/fund-analyst/`, now under `docs/archive/fund-analyst/`);
+- any other `skills/` directory that lacks a canonical `SKILL.md`
+  with a hyphenated `name` frontmatter field.
+
+Python runtime IDs remain underscore names. Hosts call
+`fund_agent_runtime_hint` with the hyphenated slug **or** the
+underscore runtime ID; both resolve to the same Python class.
 
 ## Install (npm-published package)
 
@@ -68,7 +94,7 @@ add it to your `opencode.json`:
 OpenCode will install it via Bun at startup and cache it under
 `~/.cache/opencode/node_modules/`.
 
-> **Note:** As of v0.4.3, the npm package is declared but not yet
+> **Note:** As of v0.4.4, the npm package is declared but not yet
 > published. Use the project-local install above until the npm
 > publication milestone is cut. The install will still work end-to-end
 > via the project-local path; only the npm convenience install is
@@ -77,7 +103,7 @@ OpenCode will install it via Bun at startup and cache it under
 ## Pin to a specific version (git tag)
 
 ```bash
-git clone --branch v0.4.3 https://github.com/EXASHXE/fund-agent.git
+git clone --branch v0.4.4 https://github.com/EXASHXE/fund-agent.git
 ```
 
 or, for a fully reproducible symlink, pin the commit:
@@ -85,7 +111,7 @@ or, for a fully reproducible symlink, pin the commit:
 ```bash
 git clone https://github.com/EXASHXE/fund-agent.git
 cd fund-agent
-git checkout v0.4.3
+git checkout v0.4.4
 # then create the symlink as above
 ```
 
@@ -96,7 +122,7 @@ For development, the project-local install with `master` is fine.
 After restarting OpenCode in your project:
 
 1. Check the logs. You should see a line such as:
-   `fund-agent v0.4.3 plugin loaded; skills: fund-analysis, news-research, sentiment-analysis, thesis-generation, decision-support`
+   `fund-agent v0.4.4 plugin loaded; primary skill: fund-analysis; supporting skills: fund-analysis, decision-support, news-research, sentiment-analysis, thesis-generation`
 2. Ask the agent to use the `fund_agent_skills` tool. It should return
    a JSON list of the five manifest runtime skill IDs and their doc
    slugs.
@@ -115,6 +141,9 @@ If the plugin is not loaded, see the troubleshooting section below.
   Reddit, AkShare, OpenAI, Anthropic, LangChain).
 - It does not run a Python interpreter. Python runtime integration is
   host-driven; see `docs/install/manual-host.md`.
+- It does not expose underscore skill slugs or the archived legacy
+  persona directory as agent-facing skills. The persona material is
+  historical reference only and is not a runtime entrypoint.
 
 The agent host (OpenCode) owns planning, MCP provider wiring, and
 final user interaction. `fund-agent` provides deterministic skill

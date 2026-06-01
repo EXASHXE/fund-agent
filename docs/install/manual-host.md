@@ -180,7 +180,7 @@ test fixtures and are validated by `scripts/check_examples.py`.
 ## Versioning
 
 `fund-agent` follows semantic versioning. The current version is
-`0.4.3`. The canonical sources of truth are:
+`0.4.4`. The canonical sources of truth are:
 
 - `VERSION` — the version string
 - `pyproject.toml` — `project.version`
@@ -192,7 +192,7 @@ test fixtures and are validated by `scripts/check_examples.py`.
 Pin a specific version with a git tag:
 
 ```bash
-git clone --branch v0.4.3 https://github.com/EXASHXE/fund-agent.git
+git clone --branch v0.4.4 https://github.com/EXASHXE/fund-agent.git
 cd fund-agent
 pip install -e .
 ```
@@ -218,10 +218,10 @@ rm -rf /path/to/fund-agent
 - **OpenCode:** see [`docs/install/opencode.md`](./opencode.md). The
   OpenCode install is a thin plugin wrapper around this skill pack.
 - **Codex:** see [`docs/install/codex.md`](./codex.md). Codex has no
-  OMO-style installer in v0.4.3; you wire fund-agent into Codex
+  OMO-style installer in v0.4.4; you wire fund-agent into Codex
   manually.
 - **Claude Code, OpenClaw, Hermes:** the manual host install is
-  sufficient. No native installer is shipped in v0.4.3.
+  sufficient. No native installer is shipped in v0.4.4.
 - **Generic Python host:** this document. The Python skill pack is
   the canonical install path for any host that can `pip install`.
 

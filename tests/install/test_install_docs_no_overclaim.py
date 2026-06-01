@@ -1,6 +1,6 @@
 """Install docs must be honest about current capability.
 
-The v0.4.3 OpenCode install is a metadata + doc reader plugin only. It is
+The v0.4.4 OpenCode install is a metadata + doc reader plugin only. It is
 NOT a runtime bridge, NOT a data fetcher, and NOT a trading system. These
 tests guard the install docs against overclaiming, which would mislead
 users and break the host-agnostic architecture constraints.
@@ -25,9 +25,9 @@ def _text(path: Path) -> str:
     return path.read_text(encoding="utf-8").lower()
 
 
-def test_install_docs_do_not_claim_full_runtime_bridge_in_v0_4_3():
+def test_install_docs_do_not_claim_full_runtime_bridge_in_v0_4_4():
     """Install docs must not claim the OpenCode plugin runs the Python
-    runtime in v0.4.3."""
+    runtime in v0.4.4."""
     forbidden = [
         "opencode plugin runs fund-agent",
         "opencode plugin invokes fund-analysis",
@@ -181,7 +181,7 @@ def test_opencode_plugin_does_not_claim_full_runtime_bridge():
 
 def test_runtime_bridge_design_doc_exists_and_is_marked_future():
     """The runtime bridge design doc must exist and clearly mark itself
-    as not implemented in v0.4.3."""
+    as not implemented in v0.4.4."""
     assert RUNTIME_BRIDGE_DOC.exists(), (
         "docs/design/runtime-bridge.md must document the future runtime bridge"
     )
@@ -189,6 +189,6 @@ def test_runtime_bridge_design_doc_exists_and_is_marked_future():
     assert "design" in text or "future" in text, (
         "runtime-bridge.md must mark itself as design / future"
     )
-    assert "v0.4.3" in text and "not implemented" in text or "not in v0.4.3" in text, (
-        "runtime-bridge.md must state the bridge is not in v0.4.3"
+    assert "v0.4.4" in text and "not implemented" in text or "not in v0.4.4" in text, (
+        "runtime-bridge.md must state the bridge is not in v0.4.4"
     )

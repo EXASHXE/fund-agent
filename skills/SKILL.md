@@ -9,16 +9,18 @@ External agents should start from `skillpack/fund-agent.skillpack.yaml`, then
 read `skills/README.md` and the relevant `skills/<slug>/SKILL.md` file for
 usage policy. Do not infer callable runtime skill IDs from folder names.
 
-## Skills
+## Skills (Superpowers-compatible collection)
 
-- `fund_analysis` runtime ID, `fund-analysis/` Markdown docs
-- `news_research` runtime ID, `news-research/` Markdown docs
-- `sentiment_analysis` runtime ID, `sentiment-analysis/` Markdown docs
-- `thesis_generation` runtime ID, `thesis-generation/` Markdown docs
-- `decision_support` runtime ID, `decision-support/` Markdown docs
+- **Primary / default:** `fund-analysis` (runtime ID `fund_analysis`).
+  Start here for ordinary portfolio and fund report requests.
+- **Supporting:** `decision-support`, `news-research`, `sentiment-analysis`,
+  `thesis-generation` (runtime IDs `decision_support`, `news_research`,
+  `sentiment_analysis`, `thesis_generation`).
 
 Formal `Decision` and `ExecutionLedger` generation is handled by
-`src.skills_runtime.decision_support.DecisionSupportSkill`.
+`src.skills_runtime.decision_support.DecisionSupportSkill`, and only by
+that skill. No other skill may produce a formal `Decision`.
 
-`fund-analyst/` is legacy/reference-only persona material, not a runtime
-entrypoint.
+The legacy `fund-analyst` persona material is archived under
+`docs/archive/fund-analyst/`; it is not installed, not discovered, and
+not a runtime entrypoint.

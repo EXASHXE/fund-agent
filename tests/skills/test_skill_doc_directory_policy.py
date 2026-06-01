@@ -48,16 +48,54 @@ def test_underscore_docs_are_absent_or_marked_compatibility_only():
 
 
 def test_fund_analyst_is_legacy_reference_only():
-    text = (SKILLS_DIR / "fund-analyst" / "SKILL.md").read_text().lower()
-    assert "legacy/reference-only" in text
-    assert "not a runtime entrypoint" in text
+    """fund-analyst is archived under docs/archive/fund-analyst/ in
+    v0.4.4+. The archived SKILL.md must continue to mark itself as
+    legacy / not a runtime entrypoint."""
+    archive_path = ROOT / "docs" / "archive" / "fund-analyst" / "SKILL.md"
+    assert archive_path.exists(), (
+        "docs/archive/fund-analyst/SKILL.md must exist for legacy reference"
+    )
+    text = archive_path.read_text().lower()
+    assert "legacy" in text
+    assert "not a runtime" in text or "not installed" in text or "archived" in text
 
 
-def test_no_duplicate_directory_is_presented_as_second_runtime_skill():
-    top_level = (SKILLS_DIR / "README.md").read_text().lower()
-    assert "underscore directories" in top_level
-    assert "compatibility shims only" in top_level
-    assert "must not be presented as second runtime skills" in top_level
+def test_fund_analyst_is_not_under_skills_dir():
+    """skills/fund-analyst/ must not exist in v0.4.4+; the persona
+    material is archived under docs/archive/fund-analyst/."""
+    assert not (SKILLS_DIR / "fund-analyst").exists(), (
+        "skills/fund-analyst/ has been archived to docs/archive/fund-analyst/"
+    )
+
+
+def test_no_underscore_skill_dir_in_skills_root():
+    """The v0.4.4+ skill surface has no underscore `skills/<x>/`
+    directories. They are not exposed by the OpenCode plugin and are
+    not canonical Markdown skill directories."""
+    allowed = {"__pycache__"}  # pytest / build artefacts
+    for entry in SKILLS_DIR.iterdir():
+        if not entry.is_dir():
+            continue
+        if entry.name in allowed:
+            continue
+        assert "_" not in entry.name, (
+            f"underscore skill directory {entry} is no longer part of "
+            f"the v0.4.4+ skill surface; the canonical Markdown skill "
+            f"directories are hyphenated only"
+        )
+
+
+def test_skills_readme_documents_superpowers_compatible_surface():
+    """skills/README.md must explain the Superpowers-compatible skill
+    surface: primary skill, supporting skills, and that underscore
+    directories are not part of the surface."""
+    top_level = (SKILLS_DIR / "README.md").read_text()
+    assert "primary" in top_level.lower()
+    assert "supporting" in top_level.lower()
+    # The skill README must NOT present underscore directories as
+    # compatibility shims any more (the v0.4.4+ surface is hyphenated
+    # only).
+    assert "compatibility shims only" not in top_level.lower()
 
 
 def test_external_host_docs_do_not_call_skills_by_folder_name():

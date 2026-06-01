@@ -1,12 +1,27 @@
 // fund-agent OpenCode plugin
 //
-// Scope (v0.4.3, Markdown-first skill install):
-//   1. Logs that the plugin is loaded and which skills are available.
+// Scope (v0.4.4, Superpowers-compatible Markdown-first skill install):
+//   1. Logs that the plugin is loaded and which hyphenated skills are
+//      available.
 //   2. Registers three custom tools:
 //        - fund_agent_skills          list manifest runtime IDs + doc slugs
 //        - fund_agent_skill_doc       read a SKILL.md or reference doc
-//        - fund_agent_runtime_hint    map runtime ID -> Python runtime class
+//                                     (hyphenated slugs only)
+//        - fund_agent_runtime_hint    map hyphenated slug or runtime ID
+//                                     to the Python runtime class
 //   3. Does NOT fetch data, run an autonomous loop, or place trades.
+//
+// Skill surface (v0.4.4, Superpowers-compatible):
+//   - Agent-facing skill names are hyphenated Markdown doc slugs:
+//       fund-analysis (primary), decision-support, news-research,
+//       sentiment-analysis, thesis-generation (all supporting).
+//   - Python runtime IDs remain underscore names in the manifest and
+//     Python (fund_analysis, decision_support, news_research,
+//     sentiment_analysis, thesis_generation).
+//   - The OpenCode plugin does NOT expose underscore skill slugs as
+//     agent-facing skill names.
+//   - The archived `fund-analyst` persona material is NOT exposed as
+//     a skill and is NOT installable.
 //
 // What this plugin intentionally does NOT do:
 //   - No provider SDK imports (Tavily, Finnhub, Exa, Firecrawl, Reddit,
@@ -25,13 +40,15 @@ import { fileURLToPath } from "node:url";
 import { dirname, join, normalize, relative } from "node:path";
 import { createRequire } from "node:module";
 
-const PLUGIN_VERSION = "0.4.3";
+const PLUGIN_VERSION = "0.4.4";
 const PLUGIN_NAME = "fund-agent";
 
 // Manifest runtime skill ID -> hyphenated Markdown doc slug.
-// This map is the source of truth for the v0.4.3 install and MUST match
+// This map is the source of truth for the v0.4.4 install and MUST match
 // skillpack/fund-agent.skillpack.yaml. A test
 // (tests/install/test_skill_doc_slug_mapping.py) guards this invariant.
+// The `role` field marks fund-analysis as the primary / default skill
+// and the rest as supporting skills. It is metadata only.
 const SKILL_CATALOG = Object.freeze([
   Object.freeze({
     runtime_id: "fund_analysis",
@@ -39,6 +56,15 @@ const SKILL_CATALOG = Object.freeze([
     runtime_class: "src.skills_runtime.fund_analysis:FundAnalysisSkill",
     requires_mcp: [],
     produces: ["HardEvidence", "fund_analysis_report", "portfolio_summary"],
+    role: "primary",
+  }),
+  Object.freeze({
+    runtime_id: "decision_support",
+    doc_slug: "decision-support",
+    runtime_class: "src.skills_runtime.decision_support:DecisionSupportSkill",
+    requires_mcp: [],
+    produces: ["Decision", "ExecutionLedger"],
+    role: "supporting",
   }),
   Object.freeze({
     runtime_id: "news_research",
@@ -46,6 +72,7 @@ const SKILL_CATALOG = Object.freeze([
     runtime_class: "src.skills_runtime.news_research:NewsResearchSkill",
     requires_mcp: ["web_search", "financial_news"],
     produces: ["SoftEvidence"],
+    role: "supporting",
   }),
   Object.freeze({
     runtime_id: "sentiment_analysis",
@@ -54,6 +81,7 @@ const SKILL_CATALOG = Object.freeze([
       "src.skills_runtime.sentiment_analysis:SentimentAnalysisSkill",
     requires_mcp: ["social_sentiment"],
     produces: ["SoftEvidence"],
+    role: "supporting",
   }),
   Object.freeze({
     runtime_id: "thesis_generation",
@@ -63,13 +91,7 @@ const SKILL_CATALOG = Object.freeze([
     requires_mcp: [],
     produces: ["ThesisDraft"],
     forbidden: ["formal_decision_generation"],
-  }),
-  Object.freeze({
-    runtime_id: "decision_support",
-    doc_slug: "decision-support",
-    runtime_class: "src.skills_runtime.decision_support:DecisionSupportSkill",
-    requires_mcp: [],
-    produces: ["Decision", "ExecutionLedger"],
+    role: "supporting",
   }),
 ]);
 
@@ -79,6 +101,25 @@ const RUNTIME_ID_TO_SLUG = Object.freeze(
 const SLUG_TO_RUNTIME_ID = Object.freeze(
   Object.fromEntries(SKILL_CATALOG.map((s) => [s.doc_slug, s.runtime_id])),
 );
+
+// Set of valid hyphenated doc slugs (the agent-facing skill names).
+const VALID_SLUGS = Object.freeze(new Set(SKILL_CATALOG.map((s) => s.doc_slug)));
+// Set of valid underscore runtime IDs.
+const VALID_RUNTIME_IDS = Object.freeze(
+  new Set(SKILL_CATALOG.map((s) => s.runtime_id)),
+);
+
+function isHyphenatedSlug(slug) {
+  // Reject any input that is not a hyphenated kebab-case string in
+  // our catalog. This blocks underscore skill slugs and the archived
+  // `fund-analyst` persona from being treated as agent-facing skills.
+  if (typeof slug !== "string" || slug.length === 0) return false;
+  if (slug.includes("_")) return false;
+  if (slug.includes("/") || slug.includes("\\") || slug.includes("\0")) {
+    return false;
+  }
+  return VALID_SLUGS.has(slug);
+}
 
 function getPluginDir() {
   // When loaded by Bun/OpenCode the plugin file URL is the canonical
@@ -117,13 +158,25 @@ function listSkills() {
     plugin: PLUGIN_NAME,
     version: PLUGIN_VERSION,
     schema_version: "skillpack.v1",
+    // The OpenCode plugin exposes the five hyphenated Markdown doc
+    // slugs as the agent-facing skill names. Underscore runtime IDs
+    // are included as Python integration metadata, but are NOT
+    // agent-facing skill names.
     skills: SKILL_CATALOG.map((s) => ({
-      runtime_id: s.runtime_id,
-      doc_slug: s.doc_slug,
+      skill: s.doc_slug,            // agent-facing skill name
+      runtime_id: s.runtime_id,     // Python runtime ID
+      role: s.role,                 // primary | supporting
       runtime_class: s.runtime_class,
       requires_mcp: s.requires_mcp,
       produces: s.produces,
     })),
+    primary_skill: "fund-analysis",
+    supporting_skills: [
+      "decision-support",
+      "news-research",
+      "sentiment-analysis",
+      "thesis-generation",
+    ],
   };
 }
 
@@ -131,10 +184,29 @@ async function readSkillDoc({ slug, reference }) {
   if (typeof slug !== "string") {
     return { ok: false, error: "INVALID_INPUT: slug must be a string" };
   }
-  if (!Object.prototype.hasOwnProperty.call(SLUG_TO_RUNTIME_ID, slug)) {
+  // Reject underscore skill slugs (e.g. fund_analysis). The
+  // agent-facing skill name is the hyphenated Markdown doc slug.
+  if (slug.includes("_")) {
     return {
       ok: false,
-      error: `INVALID_INPUT: unknown doc slug '${slug}'. Valid: ${SKILL_CATALOG.map((s) => s.doc_slug).join(", ")}`,
+      error:
+        `INVALID_INPUT: doc slug '${slug}' is an underscore runtime ID, not a hyphenated ` +
+        `agent-facing skill name. Valid: ${Array.from(VALID_SLUGS).join(", ")}`,
+    };
+  }
+  // Reject the archived fund-analyst persona explicitly.
+  if (slug === "fund-analyst" || slug.startsWith("fund-analyst/")) {
+    return {
+      ok: false,
+      error:
+        `INVALID_INPUT: '${slug}' is archived legacy persona material and is not a ` +
+        `fund-agent skill. See docs/archive/fund-analyst/.`,
+    };
+  }
+  if (!isHyphenatedSlug(slug)) {
+    return {
+      ok: false,
+      error: `INVALID_INPUT: unknown doc slug '${slug}'. Valid: ${Array.from(VALID_SLUGS).join(", ")}`,
     };
   }
   const pluginDir = getPluginDir();
@@ -150,8 +222,8 @@ async function readSkillDoc({ slug, reference }) {
     const text = await readFile(abs, "utf8");
     return {
       ok: true,
+      skill: slug,                       // agent-facing skill name
       runtime_id: SLUG_TO_RUNTIME_ID[slug],
-      doc_slug: slug,
       path: relPath,
       content: text,
     };
@@ -163,22 +235,52 @@ async function readSkillDoc({ slug, reference }) {
   }
 }
 
-function runtimeHint({ runtime_id }) {
-  if (typeof runtime_id !== "string") {
-    return { ok: false, error: "INVALID_INPUT: runtime_id must be a string" };
+function runtimeHint({ runtime_id, slug }) {
+  // Accept either a hyphenated agent-facing slug (preferred) or an
+  // underscore Python runtime ID. This lets a host pass the name it
+  // already has on hand and still resolve the Python class.
+  let entry = null;
+  let inputKind = null;
+  if (typeof runtime_id === "string" && runtime_id.length > 0) {
+    if (runtime_id.includes("_")) {
+      // underscore runtime ID
+      if (VALID_RUNTIME_IDS.has(runtime_id)) {
+        entry = SKILL_CATALOG.find((s) => s.runtime_id === runtime_id);
+        inputKind = "runtime_id";
+      }
+    } else {
+      // treat as hyphenated slug
+      if (VALID_SLUGS.has(runtime_id)) {
+        entry = SKILL_CATALOG.find((s) => s.doc_slug === runtime_id);
+        inputKind = "doc_slug";
+      }
+    }
   }
-  const entry = SKILL_CATALOG.find((s) => s.runtime_id === runtime_id);
+  if (!entry && typeof slug === "string" && slug.length > 0) {
+    if (VALID_SLUGS.has(slug)) {
+      entry = SKILL_CATALOG.find((s) => s.doc_slug === slug);
+      inputKind = "doc_slug";
+    } else if (VALID_RUNTIME_IDS.has(slug)) {
+      entry = SKILL_CATALOG.find((s) => s.runtime_id === slug);
+      inputKind = "runtime_id";
+    }
+  }
   if (!entry) {
     return {
       ok: false,
-      error: `INVALID_INPUT: unknown runtime_id '${runtime_id}'. Valid: ${SKILL_CATALOG.map((s) => s.runtime_id).join(", ")}`,
+      error:
+        `INVALID_INPUT: cannot resolve skill. Provide a hyphenated ` +
+        `agent-facing slug (${Array.from(VALID_SLUGS).join(", ")}) or an ` +
+        `underscore runtime ID (${Array.from(VALID_RUNTIME_IDS).join(", ")}).`,
     };
   }
   return {
     ok: true,
-    runtime_id: entry.runtime_id,
-    doc_slug: entry.doc_slug,
+    input_kind: inputKind,
+    skill: entry.doc_slug,              // agent-facing skill name
+    runtime_id: entry.runtime_id,       // Python runtime ID
     runtime_class: entry.runtime_class,
+    role: entry.role,
     requires_mcp: entry.requires_mcp,
     produces: entry.produces,
     note:
@@ -212,8 +314,12 @@ function buildTools() {
   return {
     fund_agent_skills: toolHelper({
       description:
-        "List fund-agent manifest runtime skill IDs and their hyphenated Markdown doc slugs. " +
-        "Use this to discover what skills are available before reading a specific SKILL.md.",
+        "List the fund-agent Superpowers-compatible skill collection. " +
+        "Returns the five hyphenated agent-facing skill names (primary " +
+        "skill fund-analysis, plus four supporting skills), their " +
+        "underscore Python runtime IDs, the primary skill, and the list " +
+        "of supporting skills. Use this to discover what skills are " +
+        "available before reading a specific SKILL.md.",
       args: {},
       async execute() {
         return JSON.stringify(listSkills(), null, 2);
@@ -221,8 +327,11 @@ function buildTools() {
     }),
     fund_agent_skill_doc: toolHelper({
       description:
-        "Read a fund-agent SKILL.md (or a file under skills/<slug>/references/) by doc slug. " +
-        "Returns the file contents as text. Doc slugs are hyphenated, e.g. 'fund-analysis'.",
+        "Read a fund-agent SKILL.md (or a file under skills/<slug>/references/) " +
+        "by hyphenated doc slug. The agent-facing skill names are " +
+        "hyphenated Markdown doc slugs (e.g. 'fund-analysis'). The plugin " +
+        "rejects underscore skill slugs (e.g. 'fund_analysis') and the " +
+        "archived 'fund-analyst' persona. Returns the file contents as text.",
       args: {
         slug: stringSchema(),
         reference: toolSchema && toolSchema.string ? toolSchema.string().optional() : stringSchema(),
@@ -234,11 +343,15 @@ function buildTools() {
     }),
     fund_agent_runtime_hint: toolHelper({
       description:
-        "Map a fund-agent manifest runtime skill ID (e.g. 'fund_analysis') to its Python " +
-        "runtime class path and required MCP capabilities. This is metadata only; the Python " +
-        "runtime is host-driven.",
+        "Map a fund-agent skill identifier to its Python runtime class " +
+        "path and required MCP capabilities. Accepts either a " +
+        "hyphenated agent-facing slug (e.g. 'fund-analysis') or an " +
+        "underscore Python runtime ID (e.g. 'fund_analysis'). The two " +
+        "resolve to the same Python class. This is metadata only; the " +
+        "Python runtime is host-driven.",
       args: {
-        runtime_id: stringSchema(),
+        runtime_id: toolSchema && toolSchema.string ? toolSchema.string().optional() : stringSchema(),
+        slug: toolSchema && toolSchema.string ? toolSchema.string().optional() : stringSchema(),
       },
       async execute(args) {
         return JSON.stringify(runtimeHint(args || {}), null, 2);
@@ -248,6 +361,8 @@ function buildTools() {
 }
 
 export const FundAgentPlugin = async ({ client, directory, worktree }) => {
+  // The agent-facing skill names are the hyphenated Markdown doc slugs.
+  // The plugin never logs or registers underscore skill slugs.
   const skillSlugs = SKILL_CATALOG.map((s) => s.doc_slug).join(", ");
 
   // Best-effort structured log. If the OpenCode client is not available
@@ -258,11 +373,13 @@ export const FundAgentPlugin = async ({ client, directory, worktree }) => {
         body: {
           service: PLUGIN_NAME,
           level: "info",
-          message: `${PLUGIN_NAME} v${PLUGIN_VERSION} plugin loaded; skills: ${skillSlugs}`,
+          message: `${PLUGIN_NAME} v${PLUGIN_VERSION} plugin loaded; primary skill: fund-analysis; supporting skills: ${skillSlugs}`,
           extra: {
             directory: directory || null,
             worktree: worktree || null,
             mode: toolHelper ? "tools+log" : "log-only",
+            primary_skill: "fund-analysis",
+            supporting_skills: SKILL_CATALOG.filter((s) => s.role === "supporting").map((s) => s.doc_slug),
           },
         },
       });
@@ -285,7 +402,7 @@ export const FundAgentPlugin = async ({ client, directory, worktree }) => {
             body: {
               service: PLUGIN_NAME,
               level: "debug",
-              message: "fund-agent skills available; use fund_agent_skills to list them",
+              message: "fund-agent skills available; start with fund-analysis, load supporting skills only when their description matches",
               extra: { sessionID: event.properties && event.properties.id },
             },
           });

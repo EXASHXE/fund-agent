@@ -9,6 +9,28 @@ The install is metadata + docs only. The Python runtime is **host-driven**:
 the host owns data fetching, orchestration, MCP provider wiring, and
 final user interaction. The plugin does not become a planner loop.
 
+## Skill Surface (Superpowers-compatible)
+
+`fund-agent` registers a **composable collection of Markdown skills**,
+Superpowers-style: one hyphenated `skills/<slug>/SKILL.md` directory
+per skill, with the directory name matching the frontmatter `name`
+field. The collection in v0.4.4+ is:
+
+- **Primary / default skill:** `fund-analysis`. Start here for
+  ordinary fund / portfolio report requests. `fund-analysis` alone is
+  sufficient for a report-only flow.
+- **Supporting skills:** `decision-support`, `news-research`,
+  `sentiment-analysis`, `thesis-generation`. Load a supporting skill
+  only when its description matches the subtask, and only after the
+  primary skill (or equivalent evidence) is in scope.
+
+The OpenCode plugin exposes **only** the five hyphenated skill slugs
+above as agent-facing skill names. It does **not** expose underscore
+runtime IDs (`fund_analysis`, `decision_support`, …) as agent-facing
+skill names. The Python runtime IDs are still discoverable via the
+`fund_agent_runtime_hint` tool, which maps a hyphenated slug **or** an
+underscore runtime ID to the same Python class path.
+
 For other harnesses see:
 
 - `docs/install/manual-host.md` — manual / Python host install
@@ -20,19 +42,17 @@ For other harnesses see:
 `fund-agent` is a host-agnostic, Markdown-first financial research
 skill pack. The OpenCode install exposes a tiny plugin entrypoint that:
 
-1. Logs that the plugin is loaded and which skills are available.
+1. Logs that the plugin is loaded and which hyphenated skills are
+   available.
 2. Registers a `fund_agent_skills` tool that returns the manifest
-   runtime IDs (`fund_analysis`, `news_research`, `sentiment_analysis`,
-   `thesis_generation`, `decision_support`) and their hyphenated doc
-   slugs (`fund-analysis`, `news-research`, `sentiment-analysis`,
-   `thesis-generation`, `decision-support`).
+   runtime IDs and their hyphenated agent-facing doc slugs.
 3. Registers a `fund_agent_skill_doc` tool that returns the contents of
-   a specific `skills/<slug>/SKILL.md` or
-   `skills/<slug>/references/*.md` file.
-4. Registers a `fund_agent_runtime_hint` tool that returns the runtime
-   Python class path for a given runtime skill ID, plus a pointer to
-   the manual host integration flow for the deterministic Python
-   runtime.
+   a specific `skills/<slug>/SKILL.md` (accepts hyphenated slugs only;
+   rejects underscore slugs and the archived `fund-analyst` slug).
+4. Registers a `fund_agent_runtime_hint` tool that maps a hyphenated
+   agent-facing slug **or** an underscore runtime ID to the Python
+   runtime class path, plus a pointer to the manual host integration
+   flow for the deterministic Python runtime.
 
 The plugin does **not**:
 
@@ -53,7 +73,7 @@ synthesize them.
 ## Install modes
 
 There are two install modes. **Mode 1** is the only one shipped in
-v0.4.3. **Mode 2** is a future runtime bridge; it is not required to
+v0.4.4. **Mode 2** is a future runtime bridge; it is not required to
 use `fund-agent` today.
 
 ### Mode 1 — Markdown-only skill install (current target)
@@ -78,13 +98,14 @@ ln -s /absolute/path/to/fund-agent/opencode.plugin.js .opencode/plugins/fund-age
 Restart OpenCode and you should see in the logs:
 
 ```
-fund-agent v0.4.3 plugin loaded; skills: fund-analysis, news-research,
-sentiment-analysis, thesis-generation, decision-support
+fund-agent v0.4.4 plugin loaded; primary skill: fund-analysis;
+supporting skills: fund-analysis, decision-support, news-research,
+sentiment-analysis, thesis-generation
 ```
 
 #### Plugin metadata only — no runtime bridge
 
-For v0.4.3 the plugin exposes **only** the metadata + doc-reader tools
+For v0.4.4 the plugin exposes **only** the metadata + doc-reader tools
 listed above. The plugin does not shell out to Python, does not start a
 sidecar, and does not embed the deterministic Python runtime. If the
 agent wants to actually invoke `FundAnalysisSkill.run()` or
@@ -98,16 +119,16 @@ runtime into the agent's tool call path. Wiring a runtime bridge
 through the OpenCode plugin would require either a sidecar process
 (violates "no autonomous loop" constraint) or an embedded interpreter
 (bloats the plugin and pulls in transitive npm deps), neither of which
-is appropriate for v0.4.3.
+is appropriate for v0.4.4.
 
-### Mode 2 — Future runtime bridge (not in v0.4.3)
+### Mode 2 — Future runtime bridge (not in v0.4.4)
 
 The design for a future runtime bridge is documented in
 [`docs/design/runtime-bridge.md`](../design/runtime-bridge.md). In
 short, the plugin would optionally spawn a Python subprocess
 (`python -m fund_agent.run_skill`) on demand and proxy
 `SkillInput` / `SkillOutput` JSON in/out. This is **not implemented in
-v0.4.3** and is explicitly out of scope for this milestone.
+v0.4.4** and is explicitly out of scope for this milestone.
 
 ## Why a plugin and not just a config block
 
@@ -117,7 +138,7 @@ and `.agents/skills/<name>/SKILL.md`. A future fund-agent install could
 symlink those locations into the cloned `skills/<slug>/` directory
 instead of shipping a JavaScript plugin at all.
 
-The plugin approach was chosen for v0.4.3 because:
+The plugin approach was chosen for v0.4.4 because:
 
 1. It works without any symlink gymnastics from the user's side.
 2. It gives us a single integration surface for the
@@ -154,15 +175,15 @@ they assert that the install artifacts are coherent and honest.
 ## Pinning / version management
 
 `fund-agent` uses git tags for versioning. The current version is
-`v0.4.3` and matches the `VERSION` file, the `package.json` `version`
+`v0.4.4` and matches the `VERSION` file, the `package.json` `version`
 field, and the `skillpack/fund-agent.skillpack.yaml` `version` field.
 
 Pin to a specific version:
 
 ```bash
-git clone --branch v0.4.3 https://github.com/EXASHXE/fund-agent.git
+git clone --branch v0.4.4 https://github.com/EXASHXE/fund-agent.git
 cd fund-agent
-git checkout v0.4.3   # if you cloned without --branch
+git checkout v0.4.4   # if you cloned without --branch
 ```
 
 For a project that already has the symlink in place, update the
@@ -171,7 +192,7 @@ checkout:
 ```bash
 cd /path/to/fund-agent
 git fetch
-git checkout v0.4.3
+git checkout v0.4.4
 # restart OpenCode
 ```
 
@@ -186,7 +207,7 @@ the `opencode.plugin.js` file are not used by any other harness.
 - For Codex: see `docs/install/codex.md`.
 - For a generic Python host: see `docs/install/manual-host.md`.
 - For OpenClaw / Hermes: see `docs/host-compatibility.md` for what is
-  supported today. No native installer is shipped in v0.4.3.
+  supported today. No native installer is shipped in v0.4.4.
 
 ## Honesty about current capability
 

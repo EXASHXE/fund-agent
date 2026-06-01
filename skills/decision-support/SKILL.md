@@ -10,9 +10,28 @@ consumes:
 produces:
   - Decision
   - ExecutionLedger
+role: supporting
 ---
 
-# Decision Support
+# Decision Support (supporting skill)
+
+`decision-support` is a **supporting skill** in the
+`fund-agent` Superpowers-compatible skill collection. It must be
+loaded only when the user is asking for a formal trade / action
+decision, and only after an `EvidenceGraph` (and optional trade plan)
+exists. For ordinary portfolio and fund report requests, start with
+the primary skill `fund-analysis` and stop there.
+
+`decision-support` is the **only** skill that may produce a formal
+`Decision` or `ExecutionLedger`. No other skill — including
+`fund-analysis`, `news-research`, `sentiment-analysis`, or
+`thesis-generation` — may produce these artifacts.
+
+`decision-support` itself maps to the Python runtime ID
+`decision_support` declared in
+`skillpack/fund-agent.skillpack.yaml`. The agent-facing skill name is
+the hyphenated slug `decision-support`; the underscore
+`decision_support` is the runtime ID only.
 
 ## Purpose
 
@@ -29,11 +48,18 @@ This is the only skill allowed to emit `Decision` or `ExecutionLedger`.
 - The host wants a deterministic decision audit trail.
 - A `fund_analysis` `suggested_rebalance_plan` needs formal validation.
 
+**`decision-support` is not for ordinary report-only requests.** A user
+asking `分析下我的基金给出报告` should be served by `fund-analysis`
+alone. Only escalate to `decision-support` when the user asks for an
+actionable trade decision.
+
 ## When not to use this skill
 
 - Do not call it before evidence has been gathered and compiled.
+- Do not use it for an ordinary portfolio report. Use `fund-analysis`.
 - Do not use it to fetch news, market data, holdings, NAV, or sentiment.
 - Do not use it to create a thesis draft without formal decision intent.
+  Use `thesis-generation` for a draft thesis.
 - Do not use it as a planner, autonomous loop, or provider integration.
 
 ## Host responsibilities
@@ -172,6 +198,13 @@ This skill must never:
 - emit active decisions without trade-specific evidence refs;
 - fetch or infer market data;
 - allow any other skill to emit formal `Decision` or `ExecutionLedger`.
+
+## Active decision evidence-anchor policy (re-stated)
+
+Active BUY, SELL, INCREASE, and REDUCE decisions must be anchored to
+trade-specific evidence IDs in the supplied `EvidenceGraph`. A broad
+portfolio evidence list cannot justify an active trade unless the
+referenced evidence actually supports that trade.
 
 ## Examples
 
