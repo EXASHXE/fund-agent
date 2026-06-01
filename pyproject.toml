@@ -16,6 +16,7 @@ testpaths = [
     "tests/skills",
     "tests/tools",
     "tests/integration",
+    "tests/ci",
 ]
 pythonpath = ["."]
 markers = [

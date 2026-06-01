@@ -525,36 +525,45 @@ def detect_trading_discipline_flags(
     if isinstance(dca_funds, list):
         dca_funds = {item.get("fund_code", ""): item for item in dca_funds if item.get("fund_code")}
     if dca_funds:
-        now = _parse_date(as_of_date) if as_of_date else date.today()
-        for code, dca_cfg in dca_funds.items():
-            dca_cfg = _to_dict(dca_cfg)
-            interval_days = dca_cfg.get("interval_days") or dca_cfg.get("frequency_days") or 30
-            try:
-                interval_days = int(interval_days)
-            except (TypeError, ValueError):
-                interval_days = 30
+        if not as_of_date:
+            flags.append({
+                "type": "dca_interruption_skipped",
+                "severity": "low",
+                "message": "DCA interruption check skipped: as_of_date not provided",
+                "details": {"reason": "as_of_date is required for date-sensitive DCA checks"},
+            })
+        else:
+            now = _parse_date(as_of_date)
+            if now is not None:
+                for code, dca_cfg in dca_funds.items():
+                    dca_cfg = _to_dict(dca_cfg)
+                    interval_days = dca_cfg.get("interval_days") or dca_cfg.get("frequency_days") or 30
+                    try:
+                        interval_days = int(interval_days)
+                    except (TypeError, ValueError):
+                        interval_days = 30
 
-            fund_buys = [
-                _parse_date(t.date)
-                for t in transactions
-                if t.fund_code == code and t.action.upper() == "BUY" and t.date
-            ]
-            fund_buys = [d for d in fund_buys if d is not None]
-            if fund_buys:
-                last_buy = max(fund_buys)
-                days_since = (now - last_buy).days
-                if days_since > interval_days * 1.5:
-                    flags.append({
-                        "type": "dca_interruption",
-                        "severity": "low",
-                        "message": f"{code}: Last DCA buy {days_since} days ago, interval {interval_days} days",
-                        "details": {
-                            "fund_code": code,
-                            "last_buy_date": last_buy.isoformat(),
-                            "days_since_last": days_since,
-                            "expected_interval": interval_days,
-                        },
-                    })
+                    fund_buys = [
+                        _parse_date(t.date)
+                        for t in transactions
+                        if t.fund_code == code and t.action.upper() == "BUY" and t.date
+                    ]
+                    fund_buys = [d for d in fund_buys if d is not None]
+                    if fund_buys:
+                        last_buy = max(fund_buys)
+                        days_since = (now - last_buy).days
+                        if days_since > interval_days * 1.5:
+                            flags.append({
+                                "type": "dca_interruption",
+                                "severity": "low",
+                                "message": f"{code}: Last DCA buy {days_since} days ago, interval {interval_days} days",
+                                "details": {
+                                    "fund_code": code,
+                                    "last_buy_date": last_buy.isoformat(),
+                                    "days_since_last": days_since,
+                                    "expected_interval": interval_days,
+                                },
+                            })
 
     return flags
 

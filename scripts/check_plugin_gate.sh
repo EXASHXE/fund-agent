@@ -5,6 +5,13 @@ echo "=== compileall ==="
 PYTHONPATH=. python -m compileall src tests
 echo
 
+echo "=== parser checks ==="
+python -c "import tomllib; tomllib.load(open('pyproject.toml','rb'))"
+python -c "import yaml; yaml.safe_load(open('.github/workflows/ci.yml'))"
+python -c "import yaml; yaml.safe_load(open('.github/workflows/plugin-ci.yml'))"
+python -c "import yaml; yaml.safe_load(open('skillpack/fund-agent.skillpack.yaml'))"
+echo
+
 echo "=== architecture ==="
 PYTHONPATH=. pytest tests/architecture -q
 echo
@@ -18,7 +25,7 @@ PYTHONPATH=. pytest tests/skillpack -q
 
 echo
 echo "=== check examples ==="
-python scripts/check_examples.py
+PYTHONPATH=. python scripts/check_examples.py
 
 echo
 echo "=== skills ==="
@@ -31,6 +38,10 @@ echo
 
 echo "=== integration ==="
 PYTHONPATH=. pytest tests/integration -q
+echo
+
+echo "=== install smoke ==="
+PYTHONPATH=. pytest tests/integration/test_install_smoke.py -q
 echo
 
 echo "=== default gate ==="

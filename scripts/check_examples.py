@@ -1,18 +1,38 @@
 #!/usr/bin/env python3
-"""Check skillpack examples for consistency with manifest and contracts."""
+"""Check skillpack examples for consistency with manifest and contracts.
+
+Also validates realistic examples under examples/ and runs demo scripts as subprocesses.
+"""
 
 from __future__ import annotations
 
 import json
+import os
+import subprocess
 import sys
 from pathlib import Path
 
-EXAMPLES_DIR = Path("skillpack/examples")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+EXAMPLES_DIR = PROJECT_ROOT / "skillpack" / "examples"
+REALISTIC_EXAMPLES = [
+    "portfolio_review_200k.json",
+    "oil_gas_loss_rebalance.json",
+    "short_term_theme_trade.json",
+    "dca_adjustment.json",
+    "rebalance_with_cash_reserve.json",
+]
+DEMO_SCRIPTS = [
+    "examples/minimal_host_news_to_decision.py",
+    "examples/minimal_host_portfolio_review.py",
+    "examples/minimal_host_trade_plan_to_decisions.py",
+]
 
 
 def main() -> int:
-    errors = []
-    ok = 0
+    errors: list[str] = []
+    checked = 0
+    demo_passed = 0
 
     for path in sorted(EXAMPLES_DIR.glob("*.json")):
         try:
@@ -23,35 +43,141 @@ def main() -> int:
 
         name = path.name
 
-        # Output examples may not have task_id/step_id
         if "_output." in name:
             _check_output(name, data, errors)
         elif "_input." in name or "host_minimal" in name:
             _check_input(name, data, errors)
 
-        # All examples must be free of ResearchOS and legacy refs
         raw = path.read_text(encoding="utf-8")
         if "src.core.research_os" in raw:
             errors.append(f"{name}: references ResearchOS")
         if "legacy" in raw.lower():
             errors.append(f"{name}: references legacy")
 
-        ok += 1
+        checked += 1
 
-    print(f"Examples checked: {ok}")
+    checked += _check_realistic_examples(errors)
+    demo_passed = _check_demo_scripts(errors)
+
+    print(f"Examples checked: {checked}, Demos passed: {demo_passed}")
     if errors:
         print(f"Errors: {len(errors)}")
         for e in errors:
             print(f"  - {e}")
         return 1
-    print("All examples OK")
+    print("All OK")
     return 0
+
+
+def _check_realistic_examples(errors: list[str]) -> int:
+    examples_dir = PROJECT_ROOT / "examples"
+    checked = 0
+
+    for filename in REALISTIC_EXAMPLES:
+        path = examples_dir / filename
+        if not path.exists():
+            errors.append(f"examples/{filename}: file not found")
+            continue
+
+        raw = path.read_text(encoding="utf-8")
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError as exc:
+            errors.append(f"examples/{filename}: invalid JSON: {exc}")
+            continue
+
+        if "src.core.research_os" in raw:
+            errors.append(f"examples/{filename}: references ResearchOS")
+        if "legacy" in raw.lower():
+            errors.append(f"examples/{filename}: references legacy")
+
+        transactions = data.get("transactions", [])
+        if isinstance(transactions, list):
+            for i, txn in enumerate(transactions):
+                if isinstance(txn, dict) and "action" not in txn:
+                    errors.append(
+                        f"examples/{filename}: transaction [{i}] missing 'action' field"
+                    )
+
+        try:
+            from src.schemas.skill import SkillInput
+            from src.skills_runtime.fund_analysis import FundAnalysisSkill
+
+            skill_input = SkillInput(
+                task_id="check-examples",
+                step_id="fund-analysis-1",
+                skill_name="fund_analysis",
+                payload=data,
+            )
+            output = FundAnalysisSkill().run(skill_input)
+            if output.status == "FAILED":
+                error_msgs = [
+                    (e.get("code") if isinstance(e, dict) else getattr(e, "code", "?"))
+                    for e in output.errors
+                ]
+                errors.append(
+                    f"examples/{filename}: FundAnalysisSkill FAILED — "
+                    f"errors: {error_msgs}"
+                )
+        except Exception as exc:
+            errors.append(
+                f"examples/{filename}: FundAnalysisSkill raised: {exc}"
+            )
+
+        checked += 1
+
+    return checked
+
+
+def _check_demo_scripts(errors: list[str]) -> int:
+    passed = 0
+    env = {**os.environ, "PYTHONPATH": str(PROJECT_ROOT)}
+
+    for script_path in DEMO_SCRIPTS:
+        full_path = PROJECT_ROOT / script_path
+        if not full_path.exists():
+            errors.append(f"demo script not found: {script_path}")
+            continue
+
+        try:
+            result = subprocess.run(
+                [sys.executable, str(full_path)],
+                capture_output=True,
+                text=True,
+                env=env,
+                cwd=str(PROJECT_ROOT),
+                timeout=60,
+            )
+        except subprocess.TimeoutExpired:
+            errors.append(f"demo timeout: {script_path}")
+            continue
+        except Exception as exc:
+            errors.append(f"demo subprocess failed: {script_path}: {exc}")
+            continue
+
+        if result.returncode != 0:
+            errors.append(
+                f"demo non-zero exit {result.returncode}: {script_path}"
+            )
+            if result.stderr:
+                errors.append(f"  stderr: {result.stderr[:200]}")
+            continue
+
+        try:
+            output = json.loads(result.stdout)
+        except json.JSONDecodeError:
+            errors.append(f"demo output not valid JSON: {script_path}")
+            continue
+
+        passed += 1
+
+    return passed
 
 
 def _check_input(name: str, data: dict, errors: list[str]) -> None:
     for field in ("task_id", "step_id", "skill_name", "payload"):
         if field not in data:
-            pass  # host_minimal has different structure
+            pass
     if name == "decision_support_input.json":
         payload = data.get("payload", {})
         if "evidence_graph" not in payload:
@@ -68,21 +194,13 @@ def _check_output(name: str, data: dict, errors: list[str]) -> None:
 
 
 def _validate_trade_plan_demo() -> None:
-    """Validate that examples/minimal_host_trade_plan_to_decisions.py runs successfully."""
-    import json
-    import subprocess
-    import os
-
-    project_root = os.environ.get(
-        "CHECK_EXAMPLES_ROOT",
-        os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
-    )
+    env = {**os.environ, "PYTHONPATH": str(PROJECT_ROOT)}
     result = subprocess.run(
-        [sys.executable, "examples/minimal_host_trade_plan_to_decisions.py"],
+        [sys.executable, str(PROJECT_ROOT / "examples/minimal_host_trade_plan_to_decisions.py")],
         capture_output=True,
         text=True,
-        env={**os.environ, "PYTHONPATH": project_root},
-        cwd=project_root,
+        env=env,
+        cwd=str(PROJECT_ROOT),
     )
     if result.returncode != 0:
         raise AssertionError(

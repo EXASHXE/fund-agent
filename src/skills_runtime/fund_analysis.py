@@ -215,12 +215,42 @@ class FundAnalysisSkill:
 
             position_map = {p["fund_code"]: p for p in positions if isinstance(p, dict) and p.get("fund_code")}
             target_weights = _target_weights_from_payload(payload, positions)
+
+            portfolio_summary = {
+                "as_of_date": portfolio.get("as_of_date", ""),
+                "total_value": float(portfolio.get("total_value", 0.0) or 0.0),
+                "cash_available": float(portfolio.get("cash_available", 0.0) or 0.0),
+                "position_count": len(fund_codes),
+                "position_weights": position_weights,
+            }
+
+            all_risk_flags = risk_flags + trading_flags + scenario_flags
+            risk_flags_refs = [f["type"] for f in all_risk_flags]
+            evidence_ids = [
+                f"ev:{spec['metric_name']}"
+                for spec in _evidence_specs(
+                    skill_input=skill_input,
+                    fund_codes=fund_codes,
+                    portfolio_summary=portfolio_summary,
+                    concentration=concentration,
+                    fund_metrics=fund_metrics,
+                    risk_flags=all_risk_flags,
+                    rebalance_plan=None,
+                    cost_basis_summary=cost_basis_summary,
+                    short_term_budget=short_term_budget,
+                    dca_review=dca_review,
+                    market_scenario=market_scenario,
+                    pnl_summary=pnl_summary,
+                )
+            ]
             rebalance_plan = (
                 simulate_rebalance(
                     portfolio=portfolio,
                     target_weights=target_weights,
                     constraints=constraints,
                     risk_profile=risk_profile,
+                    risk_flags_refs=risk_flags_refs,
+                    evidence_refs=evidence_ids,
                 )
                 if target_weights
                 else None
@@ -244,13 +274,6 @@ class FundAnalysisSkill:
                     else:
                         trade_leg["rationale"] = "Within constraint bounds"
                     trade_leg["tags"] = pos.get("tags", [])
-            portfolio_summary = {
-                "as_of_date": portfolio.get("as_of_date", ""),
-                "total_value": float(portfolio.get("total_value", 0.0) or 0.0),
-                "cash_available": float(portfolio.get("cash_available", 0.0) or 0.0),
-                "position_count": len(fund_codes),
-                "position_weights": position_weights,
-            }
             report = FundAnalysisReport(
                 fund_metrics=fund_metrics,
                 portfolio_metrics=portfolio_summary,

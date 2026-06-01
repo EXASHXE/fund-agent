@@ -70,9 +70,12 @@ def main() -> None:
     if trade_plan:
         raw_trades = trade_plan.get("suggested_trade_plan", [])
         for i, trade in enumerate(raw_trades):
-            tid = f"trade-{i}"
-            trade["trade_id"] = tid
-        selected_trade_ids = [f"trade-{i}" for i in range(min(2, len(raw_trades)))]
+            if not trade.get("trade_id"):
+                trade["trade_id"] = f"trade-{i}"
+        selected_trade_ids = [
+            t.get("trade_id", f"trade-{i}")
+            for i, t in enumerate(raw_trades[:min(2, len(raw_trades))])
+        ]
 
     portfolio = payload.get("portfolio", {})
     risk_profile = payload.get("risk_profile", {})

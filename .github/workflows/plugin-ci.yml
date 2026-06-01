@@ -22,14 +22,5 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pyyaml
 
-      - name: Compile check
-        run: PYTHONPATH=. python -m compileall src tests
-
-      - name: Default test gate
-        run: PYTHONPATH=. pytest -q
-
-      - name: External host smoke test
-        run: PYTHONPATH=. pytest tests/integration/test_external_host_smoke.py -q
-
-      - name: Architecture boundaries
-        run: PYTHONPATH=. pytest tests/architecture/test_architecture_boundaries.py -q
+      - name: Run canonical plugin gate
+        run: bash scripts/check_plugin_gate.sh

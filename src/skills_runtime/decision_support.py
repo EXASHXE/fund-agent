@@ -10,6 +10,7 @@ from __future__ import annotations
 from datetime import datetime
 from types import SimpleNamespace
 from typing import Any
+import hashlib
 import uuid
 
 from src.schemas.decision import Decision, ExecutionLedger
@@ -183,6 +184,7 @@ class DecisionSupportSkill:
                 graph=graph,
                 critique=critique,
                 requested_action=requested_action,
+                skill_input=skill_input,
             )
             ledger = ExecutionLedger(decisions=[decision])
             decision_payload = decision.to_dict()
@@ -226,6 +228,7 @@ def _build_decision(
     graph: EvidenceGraph,
     critique: SimpleNamespace,
     requested_action: str | None,
+    skill_input: SkillInput | None = None,
 ) -> Decision:
     action = _determine_action(payload, graph, critique, requested_action)
     anchors = _extract_rationale_anchor(graph)
@@ -254,6 +257,20 @@ def _build_decision(
     )
     risk_budget = _calculate_risk_budget(payload, action)
     missing_evidence = payload.get("missing_evidence", "") if action in PASSIVE_ACTIONS else ""
+
+    deterministic = bool(payload.get("deterministic"))
+    deterministic_ts = _deterministic_timestamp(payload) if deterministic else None
+    decision_id = (
+        _deterministic_decision_id(payload, skill_input, action)
+        if deterministic
+        else str(uuid.uuid4())
+    )
+    created_at = (
+        datetime.fromisoformat(deterministic_ts)
+        if deterministic and deterministic_ts
+        else datetime.now()
+    )
+
     audit_trail = _build_audit_trail(
         graph=graph,
         critique=critique,
@@ -261,10 +278,11 @@ def _build_decision(
         downgraded_reason=downgraded_reason,
         insufficient_evidence=insufficient_evidence,
         missing_evidence=missing_evidence,
+        deterministic_ts=deterministic_ts,
     )
 
     return Decision(
-        decision_id=str(uuid.uuid4()),
+        decision_id=decision_id,
         action=action,
         execution_amount=amount,
         rationale_anchor=anchors,
@@ -273,7 +291,7 @@ def _build_decision(
         time_horizon=task.time_horizon,
         risk_budget=risk_budget,
         audit_trail=audit_trail,
-        created_at=datetime.now(),
+        created_at=created_at,
     )
 
 
@@ -541,6 +559,7 @@ def _build_audit_trail(
     downgraded_reason: str,
     insufficient_evidence: bool,
     missing_evidence: str = "",
+    deterministic_ts: str | None = None,
 ) -> list[str]:
     trail: list[str] = []
     if graph.items:
@@ -560,7 +579,10 @@ def _build_audit_trail(
         trail.append(f"Execution amount: {amount_reason}")
     if downgraded_reason:
         trail.append(downgraded_reason)
-    trail.append(f"Generated at: {datetime.now().isoformat()}")
+    if deterministic_ts:
+        trail.append(f"Generated at: {deterministic_ts}")
+    else:
+        trail.append(f"Generated at: {datetime.now().isoformat()}")
     return trail
 
 
@@ -601,7 +623,50 @@ def _decision_from_trade(
     action = _normalized_action(trade.get("action", "HOLD")) or "HOLD"
     amount = _optional_float(trade.get("amount")) or 0.0
 
-    anchors = list(evidence_graph.items.keys())[:3]
+    anchors = _resolve_trade_evidence_anchors(trade, evidence_graph, action)
+
+    if action in ACTIVE_ACTIONS and not anchors:
+        action = "HOLD"
+        amount = 0.0
+        trigger_conditions = [
+            "Downgraded to HOLD: no valid trade-specific evidence anchors in evidence graph"
+        ]
+        invalidating_conditions = [
+            "Evidence contradiction detected",
+            "Market regime change",
+        ]
+        audit_trail = [
+            "Trade ID: " + (trade.get("trade_id", "")),
+            "Insufficient evidence: evidence_refs and risk_flags_refs contained no valid evidence IDs",
+        ]
+
+        deterministic = bool(payload.get("deterministic"))
+        deterministic_ts = _deterministic_timestamp(payload) if deterministic else None
+        if deterministic_ts:
+            audit_trail.append(f"Generated at: {deterministic_ts}")
+            created_at = datetime.fromisoformat(deterministic_ts)
+        else:
+            audit_trail.append(f"Generated at: {datetime.now().isoformat()}")
+            created_at = datetime.now()
+
+        decision_id = (
+            _deterministic_decision_id(payload, None, action, trade.get("fund_code", ""))
+            if deterministic
+            else str(uuid.uuid4())
+        )
+
+        return Decision(
+            decision_id=decision_id,
+            action=action,
+            execution_amount=amount,
+            rationale_anchor=[],
+            trigger_conditions=trigger_conditions,
+            invalidating_conditions=invalidating_conditions,
+            time_horizon=trade.get("time_horizon", payload.get("time_horizon", "medium_term")),
+            risk_budget=0.01,
+            audit_trail=audit_trail,
+            created_at=created_at,
+        )
 
     trigger_conditions: list[str] = []
     rationale = trade.get("rationale", "")
@@ -629,6 +694,11 @@ def _decision_from_trade(
         )
         if trigger_to_change:
             trigger_conditions.append(f"Trigger to change: {trigger_to_change}")
+
+    if not trigger_conditions:
+        trigger_conditions.append(
+            f"Trade execution triggered: {action} {trade.get('fund_code', '')}"
+        )
 
     invalidating_conditions = [
         "Evidence contradiction detected",
@@ -673,10 +743,29 @@ def _decision_from_trade(
         )
         if missing_evidence:
             audit_trail.append(f"Missing evidence: {missing_evidence}")
-    audit_trail.append(f"Generated at: {datetime.now().isoformat()}")
+        if not evidence_graph.items:
+            audit_trail.append("Insufficient evidence: no evidence items in graph")
+
+    deterministic = bool(payload.get("deterministic"))
+    deterministic_ts = _deterministic_timestamp(payload) if deterministic else None
+    if deterministic_ts:
+        audit_trail.append(f"Generated at: {deterministic_ts}")
+    else:
+        audit_trail.append(f"Generated at: {datetime.now().isoformat()}")
+
+    decision_id = (
+        _deterministic_decision_id(payload, None, action, trade.get("fund_code", ""))
+        if deterministic
+        else str(uuid.uuid4())
+    )
+    created_at = (
+        datetime.fromisoformat(deterministic_ts)
+        if deterministic and deterministic_ts
+        else datetime.now()
+    )
 
     return Decision(
-        decision_id=str(uuid.uuid4()),
+        decision_id=decision_id,
         action=action,
         execution_amount=amount,
         rationale_anchor=anchors,
@@ -685,7 +774,7 @@ def _decision_from_trade(
         time_horizon=time_horizon,
         risk_budget=risk_budget,
         audit_trail=audit_trail,
-        created_at=datetime.now(),
+        created_at=created_at,
     )
 
 
@@ -695,6 +784,77 @@ class _SkillContractError(ValueError):
     def __init__(self, code: str, message: str) -> None:
         super().__init__(message)
         self.code = code
+
+
+def _deterministic_timestamp(payload: dict[str, Any]) -> str:
+    """Return a deterministic timestamp from payload, or fallback."""
+    portfolio_context = _dict(payload.get("portfolio_context"))
+    return (
+        payload.get("as_of_date")
+        or portfolio_context.get("as_of_date")
+        or "2026-01-01T00:00:00"
+    )
+
+
+def _deterministic_decision_id(
+    payload: dict[str, Any],
+    skill_input: SkillInput | None = None,
+    action: str = "",
+    fund_code: str = "",
+) -> str:
+    """Compute a stable decision_id hash from stable fields."""
+    task_id = payload.get("task_id", "")
+    step_id = payload.get("step_id", "")
+    if skill_input is not None:
+        task_id = task_id or skill_input.task_id
+        step_id = step_id or skill_input.step_id
+    fields = [task_id, step_id, fund_code, action]
+    hash_input = "|".join(str(f) for f in fields)
+    return hashlib.sha256(hash_input.encode()).hexdigest()[:16]
+
+
+def _resolve_trade_evidence_anchors(
+    trade: dict[str, Any],
+    evidence_graph: EvidenceGraph,
+    current_action: str,
+) -> list[str]:
+    """Resolve evidence anchors for a trade leg.
+
+    For active actions (BUY/SELL/INCREASE/REDUCE), anchors must come from
+    trade-specific evidence_refs or risk_flags_refs that exist in the
+    evidence graph. If neither provides valid anchors, the trade is
+    downgraded to HOLD and the anchor list is left empty (caller should
+    downgrade).
+
+    For passive actions, any available evidence is accepted.
+    """
+    if current_action not in ACTIVE_ACTIONS:
+        return list(evidence_graph.items.keys())[:3]
+
+    evidence_refs = trade.get("evidence_refs", [])
+    risk_flags_refs = trade.get("risk_flags_refs", [])
+
+    valid_evidence = [
+        ref for ref in (_safe_list(evidence_refs))
+        if ref in evidence_graph.items
+    ]
+    valid_risk = [
+        ref for ref in (_safe_list(risk_flags_refs))
+        if ref in evidence_graph.items
+    ]
+
+    if valid_evidence:
+        return valid_evidence
+    if valid_risk:
+        return valid_risk
+
+    return []
+
+
+def _safe_list(value: Any) -> list[str]:
+    if isinstance(value, list):
+        return [str(item) for item in value]
+    return []
 
 
 def _validate_trade_amount(

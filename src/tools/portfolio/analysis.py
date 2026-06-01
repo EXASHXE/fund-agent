@@ -229,6 +229,8 @@ def simulate_rebalance(
     target_weights: dict[str, float],
     constraints: Any = None,
     risk_profile: Any = None,
+    risk_flags_refs: list[str] | None = None,
+    evidence_refs: list[str] | None = None,
 ) -> dict[str, Any]:
     """Simulate a pure rebalance plan without creating Decision objects."""
     snapshot = _snapshot_from_payload(portfolio)
@@ -242,6 +244,8 @@ def simulate_rebalance(
     max_trade_amount = snapshot.total_value * profile.max_trade_pct
     trades: list[dict[str, Any]] = []
     warnings: list[str] = []
+    evidence_refs = evidence_refs or []
+    risk_flags_refs = risk_flags_refs or []
 
     for fund_code, target_weight in sorted(target_weights.items()):
         current_value = position_map.get(
@@ -274,25 +278,27 @@ def simulate_rebalance(
             warnings.append(f"trade below minimum after constraints for {fund_code}")
             continue
 
+        idx = len(trades)
+        pos = position_map.get(fund_code, PortfolioPosition(fund_code, fund_code, 0.0, 0.0))
         trades.append(
             {
-                "trade_id": f"{fund_code}_{action}_{len(trades)}",
+                "trade_id": f"{fund_code}_{action}_{idx}",
                 "fund_code": fund_code,
-                "fund_name": position_map.get(fund_code, PortfolioPosition(fund_code, fund_code, 0.0, 0.0)).fund_name,
+                "fund_name": pos.fund_name,
                 "action": action,
                 "amount": round(trade_amount, 2),
                 "requested_amount": round(amount, 2),
                 "current_weight": current_weights.get(fund_code, 0.0),
                 "target_weight": round(float(target_weight), 6),
                 "current_value": round(current_value, 2),
-                "current_cost": round(position_map.get(fund_code, PortfolioPosition(fund_code, fund_code, 0.0, 0.0)).total_cost, 2),
-                "unrealized_pnl": round(current_value - position_map.get(fund_code, PortfolioPosition(fund_code, fund_code, 0.0, 0.0)).total_cost, 2),
+                "current_cost": round(pos.total_cost, 2),
+                "unrealized_pnl": round(current_value - pos.total_cost, 2),
                 "capped": trade_amount < amount,
                 "cap_reasons": _build_cap_reasons(trade_amount, amount, action, snapshot, constraint, profile),
-                "rationale": "Within constraint bounds",
-                "tags": list(position_map.get(fund_code, PortfolioPosition(fund_code, fund_code, 0.0, 0.0)).tags),
-                "evidence_refs": [],
-                "risk_flags_refs": [],
+                "rationale": "rebalance to target weight",
+                "tags": list(pos.tags),
+                "evidence_refs": list(evidence_refs),
+                "risk_flags_refs": list(risk_flags_refs),
             }
         )
 
@@ -586,7 +592,7 @@ def calculate_short_term_budget_usage(
     positions: Any,
     transactions: list[dict[str, Any]] | None,
     risk_profile: Any,
-    as_of_date: str = "",
+    as_of_date: str | None = None,
 ) -> dict[str, Any]:
     """Estimate short-term trading budget usage from recent transactions."""
     profile = _risk_profile_from_payload(risk_profile)
@@ -594,6 +600,19 @@ def calculate_short_term_budget_usage(
     total_value = sum(max(p.current_value, 0.0) for p in position_list)
     budget = total_value * profile.short_term_trade_budget_pct
     transactions = transactions or []
+
+    if as_of_date is None:
+        return {
+            "short_term_budget": round(budget, 2),
+            "used": 0.0,
+            "remaining": round(budget, 2),
+            "usage_pct": 0.0,
+            "exceeded": False,
+            "recent_buys": 0.0,
+            "recent_sells": 0.0,
+            "warning": "as_of_date not provided; date-sensitive checks skipped",
+        }
+
     recent_buys = sum(
         abs(_float(t.get("amount", 0))) for t in transactions
         if str(t.get("action", t.get("type", ""))).upper() in ("BUY",) and _is_recent(t, 30, as_of_date)
@@ -685,6 +704,7 @@ def apply_trade_constraints(
         fund_code = trade.get("fund_code", "")
         action = str(trade.get("action", "")).upper()
         amount = _float(trade.get("amount", trade.get("requested_amount", 0)))
+        target_weight = trade.get("target_weight")
 
         cap_reasons: list[str] = []
         capped = False
@@ -719,13 +739,19 @@ def apply_trade_constraints(
             continue
 
         used_budget += trade_amount
+        was_capped = trade_amount < amount or capped
         result.append({
             **trade,
             "amount": round(trade_amount, 2),
             "requested_amount": round(amount, 2),
-            "capped": trade_amount < amount or capped,
+            "capped": was_capped,
             "cap_reasons": cap_reasons,
             "current_weight": current_weights.get(fund_code, 0.0),
+            "rationale": trade.get("rationale") or (
+                "constraint-capped rebalance" if was_capped else "rebalance to target weight"
+            ),
+            "evidence_refs": trade.get("evidence_refs", []),
+            "risk_flags_refs": trade.get("risk_flags_refs", []),
         })
 
     return result
