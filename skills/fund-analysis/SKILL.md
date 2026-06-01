@@ -12,27 +12,187 @@ produced_evidence_type: HardEvidence
 
 ## Purpose
 
-Analyze host-provided personal fund and portfolio data. The skill computes
-local NAV risk-return metrics, position weights, concentration, theme exposure,
-risk flags, and an optional rebalance simulation. It emits HardEvidence and
-plain artifacts only.
+Use `fund_analysis` to turn host-provided fund and portfolio data into
+deterministic portfolio artifacts, risk flags, warnings, and `HardEvidence`.
+This skill is the analytical layer for personal fund review. It is not a trade
+decision engine and never emits formal `Decision` or `ExecutionLedger` objects.
 
-## Contract
+## When to use this skill
 
-- `id`: `fund_analysis`
-- `runtime`: `src.skills_runtime.fund_analysis:FundAnalysisSkill`
-- `input_schema`: `src.schemas.skill:SkillInput`
-- `output_schema`: `src.schemas.skill:SkillOutput`
-- `required_mcp_capabilities`: `[]`
-- `produced_evidence_type`: `HardEvidence`
-- `forbidden_behavior`: network requests, LLM calls, provider SDK imports,
-  formal decision generation
+- The user asks for a fund or portfolio report, for example
+  `分析下我的基金给出报告`.
+- The host has portfolio positions, fund profiles, NAV history, holdings, or
+  transaction data to analyze locally.
+- The host needs `portfolio_summary`, `exposure_summary`, `risk_flags`,
+  `fund_analysis_report`, `suggested_rebalance_plan`, or HardEvidence.
+- The host wants deterministic portfolio structure, concentration, DCA,
+  short-term trade budget, cost basis, PnL, or market scenario analysis.
 
-The host owns data fetching. Provide portfolio positions, fund profiles,
-NAV history, holdings, risk profile, and constraints in `payload`. Missing
-fund-level data produces `PARTIAL` with explicit warnings by fund code.
+## When not to use this skill
 
-## Example SkillInput
+- Do not use it to fetch NAV, holdings, market news, or social sentiment.
+- Do not use it to produce formal BUY, SELL, INCREASE, REDUCE, WAIT, or HOLD
+  decisions. Escalate to `decision_support` for formal decisions.
+- Do not use it as an autonomous planner or agent loop.
+- Do not use it when the only need is news or sentiment evidence.
+
+## Host responsibilities
+
+The host owns planning, orchestration, user prompts, data fetching, MCP
+providers, credentials, market scenario selection, final report UX, and any
+decision to call `decision_support`. The host must provide all market, fund,
+portfolio, transaction, and scenario data in `SkillInput.payload`.
+
+## Inputs
+
+Runtime skill ID: `fund_analysis`.
+Runtime: `src.skills_runtime.fund_analysis:FundAnalysisSkill`.
+MCP capabilities required: none.
+
+### Required data
+
+- `portfolio.as_of_date`
+- `portfolio.total_value`
+- `portfolio.cash_available`
+- `portfolio.positions[]` with `fund_code`, `current_value`, and preferably
+  `total_cost`, `shares`, `target_weight`, and tags
+- `risk_profile` with concentration, liquidity, and trade budget limits
+- `constraints` such as minimum trade amount and forbidden actions
+
+### Optional data
+
+- `fund_profiles` for fund type, benchmark, manager, and tags
+- `nav_history` for deterministic risk-return metrics
+- `holdings` for theme, industry, region, and security exposure
+- `transactions` for cost basis, cashflow, and trading discipline analysis
+- `dca_plans` for recurring investment review
+- `market_scenario` supplied by the host
+
+See `references/input-contract.md` for the expanded payload contract.
+
+## Missing-data degradation policy
+
+Proceed with `PARTIAL` analysis when enough portfolio data exists to calculate
+structure and risk. Emit explicit `warnings` for missing fund profiles, NAV
+history, holdings, transactions, DCA plans, or scenario data. Do not fabricate
+missing data. If `portfolio.positions` is absent or empty, return an
+`INVALID_INPUT` error. If only `related_entities` is supplied, use the baseline
+HardEvidence compatibility path and warn that structured portfolio analysis was
+not possible.
+
+## Standard workflow
+
+1. Validate the host payload.
+2. Normalize the portfolio view around `as_of_date`.
+3. Analyze portfolio structure before individual fund performance.
+4. Calculate cash ratio, position weights, concentration, and exposure.
+5. Calculate fund metrics only from host-provided NAV history.
+6. Review transactions, cost basis, DCA plans, and short-term budget when
+   supplied.
+7. Apply host-provided market scenario if supplied.
+8. Emit artifacts, warnings, and HardEvidence.
+9. Leave formal decisions to `decision_support`.
+
+## Portfolio analysis order
+
+Always start with portfolio-level structure:
+
+1. Total value, cash reserve, and cash ratio.
+2. Position weights and single-fund concentration.
+3. Fund type, theme, region, and industry exposure.
+4. Cost and unrealized PnL by position.
+5. Individual fund NAV metrics.
+6. DCA health and short-term trading budget.
+7. Optional suggested rebalance plan.
+
+Check cash reserve before recommending buys. Check single-fund, theme, and
+industry concentration before suggesting any trade.
+
+## Risk analysis principles
+
+- Loss does not automatically mean sell.
+- Profit does not automatically mean chase or reduce.
+- Concentration can matter more than recent return.
+- Weak NAV performance should be weighed against thesis, exposure, drawdown,
+  risk budget, and cashflow.
+- WAIT/HOLD language must be explained, not used as filler.
+
+See `references/risk-policy.md`.
+
+## Short-term trade budget policy
+
+Short-term theme trades must be capped by
+`risk_profile.short_term_trade_budget_pct`. If a suggested trade would exceed
+the budget, cap it, warn, or avoid suggesting the active trade. The skill may
+emit `short_term_trade_budget` and capped trade plan details, but the formal
+trade decision still belongs to `decision_support`.
+
+See `references/short-term-trade-policy.md`.
+
+## DCA review policy
+
+DCA changes should consider long-term thesis, available cashflow,
+concentration, drawdown, and whether the DCA plan is reinforcing an overweight
+position. Do not pause DCA merely because the latest PnL is negative.
+
+See `references/dca-policy.md`.
+
+## Market scenario policy
+
+Market crash, drawdown, stress, or regime scenarios must be host-provided.
+`fund-agent` must not fetch, infer, or invent a scenario. If no scenario is
+provided, omit scenario claims or mark the scenario gap in warnings.
+
+See `references/market-scenario-policy.md`.
+
+## Outputs
+
+### Artifacts produced
+
+- `fund_analysis_report`
+- `portfolio_summary`
+- `position_summary`
+- `exposure_summary`
+- `risk_flags`
+- `pnl_summary`
+- `trade_budget`
+- `short_term_trade_budget`
+- `dca_review`
+- `transaction_summary`
+- `cost_basis_summary`
+- `reconciliation`
+- `suggested_rebalance_plan`
+- `warnings`
+
+Artifact availability depends on host-provided data.
+
+### Evidence produced
+
+The skill emits `HardEvidence` only. HardEvidence must have
+`confidence_weight=1.0` and should anchor deterministic local calculations such
+as allocation, concentration, NAV metrics, PnL, DCA review, market scenario
+impact, and portfolio risk flags.
+
+## Forbidden behavior
+
+This skill must never:
+
+- make direct network calls;
+- import provider SDKs;
+- call LLMs;
+- fetch or invent fund, market, news, sentiment, or scenario data;
+- generate formal `Decision` or `ExecutionLedger` artifacts;
+- convert `suggested_rebalance_plan` into executable advice by itself;
+- use `src.core.research_os` as a required path.
+
+## When to escalate to decision_support
+
+Escalate only when the user asks for actionable trade advice or the host needs
+formal decisions. The host should compile `SkillOutput.evidence_items` with
+`compile_evidence_graph`, extract `suggested_rebalance_plan` if present, then
+call `decision_support`. Active decisions require trade-specific evidence refs.
+
+## Minimal invocation example
 
 ```json
 {
@@ -94,49 +254,30 @@ fund-level data produces `PARTIAL` with explicit warnings by fund code.
 }
 ```
 
-## Example SkillOutput
+## Report-writing guidance for host agents
 
-```json
-{
-  "step_id": "fund-analysis-1",
-  "skill_name": "fund_analysis",
-  "evidence_items": ["HardEvidence"],
-  "artifacts": {
-    "fund_analysis_report": {},
-    "portfolio_summary": {},
-    "risk_flags": [],
-    "suggested_rebalance_plan": {}
-  },
-  "warnings": [],
-  "errors": [],
-  "used_mcp_capabilities": [],
-  "status": "OK"
-}
-```
+Write the final report from artifacts and evidence, not from invented market
+facts. For Chinese user requests, a concise Chinese report is appropriate:
 
-## Personal Portfolio Mode
+- `结论先行`: summarize portfolio health, major risks, and data gaps.
+- `组合结构`: explain cash ratio, weights, fund type, theme, and industry
+  exposure before individual fund details.
+- `风险提示`: name concentration, drawdown, DCA, short-term budget, and scenario
+  warnings directly.
+- `操作建议`: if no formal decision was requested, phrase as analysis or
+  suggested next checks. If formal trade advice is requested, call
+  `decision_support`.
+- `证据附录`: include evidence IDs or artifact names used for each claim.
 
-When the payload includes expanded personal portfolio data, `fund_analysis` runs
-in full portfolio mode. The expanded payload shape accepts:
+See `references/report-template.md` and `references/examples.md`.
 
-- `transactions` — list of `FundTransaction` objects (buy, sell, dividend, fee, transfer)
-- `dca_plans` — recurring DCA (dollar-cost averaging) subscriptions per fund
-- `cost_basis` — per-position `PositionCostBasis` with weighted-average cost
-- `market_scenario` — optional stress/sensitivity scenarios (e.g. ±10% NAV shock)
-- `risk_profile` / `constraints` — user risk preferences and rebalance limits
+## References
 
-New artifacts produced in personal portfolio mode:
-
-| Artifact | Source | Description |
-|---|---|---|
-| `portfolio_summary` | analysis tools | Position weights, PnL by fund, total PnL, concentration |
-| `cost_basis_summary` | transaction tools | Weighted-average cost per position, unrealized PnL |
-| `trade_budget` | analysis tools | Max trade amount, short-term budget remaining |
-| `dca_review` | analysis tools | DCA plan health, recent discipline flags |
-| `trade_plan` | rank_trade_plan | Ranked multi-leg trade proposals with rationale |
-| `risk_flags` | detection | Concentration, drawdown, discipline, liquidity flags |
-| `fund_analysis_report` | aggregator | Composite report merging all above artifacts |
-
-Compatibility fallback: payloads with only `related_entities` still produce
-baseline HardEvidence and include a warning that structured portfolio analysis
-was not possible.
+- `references/input-contract.md`
+- `references/report-template.md`
+- `references/risk-policy.md`
+- `references/missing-data-policy.md`
+- `references/dca-policy.md`
+- `references/short-term-trade-policy.md`
+- `references/market-scenario-policy.md`
+- `references/examples.md`

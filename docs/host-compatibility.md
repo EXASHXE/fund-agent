@@ -4,6 +4,11 @@
 agent host runtime. All hosts should treat `skillpack/fund-agent.skillpack.yaml`
 as the entrypoint.
 
+Hosts should also read the Markdown-first skill docs at
+`skills/<slug>/SKILL.md` for usage policy. The manifest supplies runtime skill
+IDs such as `fund_analysis`; hyphenated folders such as `fund-analysis` are
+documentation slugs only. `fund-analyst` is legacy/reference-only material.
+
 ## Matrix
 
 | Host | Reads manifest | Resolves runtime | Injects MCP adapter | Runs SkillInput/SkillOutput | External orchestration | Notes |
@@ -23,6 +28,8 @@ as the entrypoint.
 4. **Provider SDKs:** Not shipped with fund-agent
 5. **ResearchOS:** Not required for host integration
 6. **Minimal Demo:** `examples/minimal_host_news_to_decision.py`
+7. **Skill Docs:** `skills/<slug>/SKILL.md` is policy, not discovery
+8. **Directory Names:** Do not infer runtime skill IDs from folder names
 
 ## Host Requirements
 

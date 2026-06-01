@@ -6,11 +6,18 @@
 It is **not an autonomous agent runtime**. External agents (OpenCode, Claude Code,
 Codex, OpenClaw, Hermes) own planning and orchestration.
 
+At the skill layer, `fund-agent` is **Markdown-first**. `skills/<slug>/SKILL.md`
+files are the primary agent-facing workflow and policy instructions. Python
+under `src/` is deterministic runtime, schema, and tool implementation support.
+
 ## What Agents Should Use
 
 Primary entrypoints and resources:
 
 - `skillpack/fund-agent.skillpack.yaml` — plugin manifest (start here)
+- `skills/README.md` — Markdown skill directory policy
+- `skills/<slug>/SKILL.md` — primary agent-facing skill instructions
+- `skills/<slug>/references/*.md` — detailed policy, examples, templates
 - `docs/agent-host-quickstart.md` — host integration quickstart
 - `docs/host-integration.md` — detailed integration guide
 - `docs/plugin-api.md` — full API reference
@@ -24,22 +31,26 @@ Primary entrypoints and resources:
 
 - Do NOT use `legacy` as runtime code.
 - Do NOT use `src.core.research_os` as a required host integration path.
-- Do NOT import provider SDKs (tavily, finnhub, exa, firecrawl, reddit) inside skills.
+- Do NOT import provider SDKs (tavily, finnhub, exa, firecrawl, reddit,
+  akshare, openai, anthropic, langchain) inside skills.
 - Do NOT add network calls outside `MCPHostAdapter` boundary.
 - Do NOT generate formal `Decision` objects outside `DecisionSupportSkill`.
+- Do NOT infer runtime skill IDs from folder names.
+- Do NOT treat `fund-analyst` as a runtime entrypoint; it is legacy/reference-only.
 
 ## Recommended Agent Workflow
 
 1. Read the skill pack manifest: `skillpack/fund-agent.skillpack.yaml`
 2. Inspect `skillpack/capabilities.yaml` and `skillpack/tools.yaml`
-3. Resolve the skill runtime class for the skill you need
-4. Construct a `SkillInput` (schema: `src/schemas/skill.py`)
-5. Inject a `MCPHostAdapter` implementation if the skill needs MCP data
-6. Call `skill.run(skill_input)`
-7. Collect `SkillOutput.evidence_items` from the result
-8. Call `compile_evidence_graph(evidence_items)` to consolidate evidence
-9. Call `DecisionSupportSkill` when you need a formal `Decision`
-10. Return `Decision` / `ExecutionLedger` to the user
+3. Read `skills/README.md` and the relevant hyphenated `skills/<slug>/SKILL.md`
+4. Resolve the skill runtime class for the manifest skill ID you need
+5. Construct a `SkillInput` (schema: `src/schemas/skill.py`)
+6. Inject a `MCPHostAdapter` implementation if the skill needs MCP data
+7. Call `skill.run(skill_input)`
+8. Collect `SkillOutput.evidence_items` from the result
+9. Call `compile_evidence_graph(evidence_items)` to consolidate evidence
+10. Call `DecisionSupportSkill` when you need a formal `Decision`
+11. Return `Decision` / `ExecutionLedger` to the user
 
 ## Skill Map
 
@@ -50,6 +61,11 @@ Primary entrypoints and resources:
 | `sentiment_analysis` | `src.skills_runtime.sentiment_analysis:SentimentAnalysisSkill` | `social_sentiment` | `SoftEvidence` | — |
 | `thesis_generation` | `src.skills_runtime.thesis_generation:ThesisGenerationSkill` | none | `ThesisDraft` | `formal_decision_generation` |
 | `decision_support` | `src.skills_runtime.decision_support:DecisionSupportSkill` | none | `Decision`, `ExecutionLedger` | — |
+
+Canonical Markdown doc slugs are hyphenated: `fund-analysis`,
+`news-research`, `sentiment-analysis`, `thesis-generation`, and
+`decision-support`. Underscore directories under `skills/` are compatibility
+only when retained.
 
 ## Safety / Contract Rules
 

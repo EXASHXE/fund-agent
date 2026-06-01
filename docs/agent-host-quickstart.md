@@ -12,6 +12,8 @@ order, retry policy, memory, MCP provider wiring, and final user interaction.
 `fund-agent` provides:
 
 - [`skillpack/fund-agent.skillpack.yaml`](../skillpack/fund-agent.skillpack.yaml)
+- [`skills/README.md`](../skills/README.md)
+- `skills/<slug>/SKILL.md` Markdown-first policy guides
 - [`skillpack/tools.yaml`](../skillpack/tools.yaml)
 - host-callable `src.skills_runtime` classes
 - `SkillInput` / `SkillOutput` contracts
@@ -21,6 +23,10 @@ order, retry policy, memory, MCP provider wiring, and final user interaction.
 - MCP adapter boundary interfaces
 
 Do not call ResearchOS for host integration. ResearchOS is optional reference only, not required. The optional reference workflows are teaching examples.
+
+Discover callable skills from the manifest. Do not infer runtime skill IDs from
+folder names: `fund_analysis` is a runtime skill ID, while `fund-analysis` is a
+Markdown documentation slug. `fund-analyst` is legacy/reference-only material.
 
 ## Minimal Flow
 

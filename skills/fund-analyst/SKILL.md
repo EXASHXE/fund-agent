@@ -10,9 +10,9 @@ produced_artifact: legacy_reference
 
 # fund-analyst Legacy Reference
 
-This legacy umbrella skill is retained for reference material only. New host
-integrations should load `skillpack/fund-agent.skillpack.yaml` and call the
-manifest skills:
+This legacy/reference-only umbrella skill is retained for historical persona
+and prompt material only. It is not a runtime entrypoint. New host integrations
+should load `skillpack/fund-agent.skillpack.yaml` and call the manifest skills:
 
 - `fund_analysis`
 - `news_research`

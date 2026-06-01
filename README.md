@@ -8,6 +8,11 @@ agent owns planning and orchestration. This repository provides callable
 financial research skills, typed contracts, evidence tools, KnowledgeGraph
 helpers, and a host-native MCP adapter boundary.
 
+At the skill layer, `fund-agent` is Markdown-first: `skills/<slug>/SKILL.md`
+files are the primary agent-facing instructions, and `references/*.md` files
+hold longer policy, examples, templates, and methods. Python under `src/`
+remains deterministic runtime, schema, and tool support.
+
 `fund-agent` is not an internal autonomous ResearchOS runtime, not a fixed
 Planner loop, and not a production agent server.
 
@@ -22,8 +27,10 @@ mount them as a plugin. It does not require a resident autonomous runtime.
 - `skillpack/capabilities.yaml`: host MCP capability declarations
 - `skillpack/tools.yaml`: callable tool declarations
 - `skillpack/contracts.yaml`: schema and contract declarations
+- `skills/README.md`: Markdown-first skill directory policy
 - `skills/SKILL.md`: host-readable skill pack index
-- `skills/`: human-readable skill instructions and per-skill `SKILL.md` assets
+- `skills/<slug>/SKILL.md`: primary agent-facing skill instructions
+- `skills/<slug>/references/*.md`: longer policy and templates
 - `src/skills_runtime/`: host-callable Python skill handlers
 - `src/tools/`: pure fund, portfolio, quant, ledger, evidence, and adapter tools
 - `src/schemas/`: typed contracts for skill, fund, evidence, graph, decision, ledger
@@ -57,6 +64,10 @@ they are optional examples only. Host integrations do not need to import or call
 The standard plugin entrypoint is
 `skillpack/fund-agent.skillpack.yaml`. It declares runtime classes, schemas,
 contracts, MCP capabilities, and forbidden behaviors.
+
+External hosts must read the manifest for skill discovery. Do not infer runtime
+skill IDs from folder names. For example, `fund_analysis` is the runtime skill
+ID and `fund-analysis` is the canonical Markdown doc slug.
 
 ## Host Integration Flow
 
@@ -105,23 +116,26 @@ or combine `fund-agent` tools with other skill packs.
 
 ## Runtime Skills
 
-| Skill | Runtime | Produces | MCP |
-|---|---|---|---|
-| `fund_analysis` | `src.skills_runtime.fund_analysis:FundAnalysisSkill` | `HardEvidence`, portfolio artifacts | none |
-| `news_research` | `src.skills_runtime.news_research:NewsResearchSkill` | `SoftEvidence` | `web_search`, `financial_news` |
-| `sentiment_analysis` | `src.skills_runtime.sentiment_analysis:SentimentAnalysisSkill` | `SoftEvidence` | `social_sentiment` |
-| `thesis_generation` | `src.skills_runtime.thesis_generation:ThesisGenerationSkill` | `ThesisDraft` artifact | none |
-| `decision_support` | `src.skills_runtime.decision_support:DecisionSupportSkill` | `Decision`, `ExecutionLedger` | none |
+| Runtime skill ID | Markdown doc slug | Runtime | Produces | MCP |
+|---|---|---|---|---|
+| `fund_analysis` | `fund-analysis` | `src.skills_runtime.fund_analysis:FundAnalysisSkill` | `HardEvidence`, portfolio artifacts | none |
+| `news_research` | `news-research` | `src.skills_runtime.news_research:NewsResearchSkill` | `SoftEvidence` | `web_search`, `financial_news` |
+| `sentiment_analysis` | `sentiment-analysis` | `src.skills_runtime.sentiment_analysis:SentimentAnalysisSkill` | `SoftEvidence` | `social_sentiment` |
+| `thesis_generation` | `thesis-generation` | `src.skills_runtime.thesis_generation:ThesisGenerationSkill` | `ThesisDraft` artifact | none |
+| `decision_support` | `decision-support` | `src.skills_runtime.decision_support:DecisionSupportSkill` | `Decision`, `ExecutionLedger` | none |
 
 Only `decision_support` may produce formal `Decision` and `ExecutionLedger`
 artifacts. Other skills return evidence, draft artifacts, warnings, and
 structured errors through `SkillOutput`.
 
+`fund-analyst` is legacy/reference-only persona material and is not a runtime
+entrypoint.
+
 ## MCP Boundary
 
 MCP providers are injected by the external host. This repository does not
-hardcode Tavily, Finnhub, Exa, Firecrawl, Reddit, or other vendor SDKs in the
-skill runtime.
+hardcode Tavily, Finnhub, Exa, Firecrawl, Reddit, AkShare, OpenAI, Anthropic,
+LangChain, or other vendor SDKs in the skill runtime.
 
 `src.tools.adapters.mcp` defines:
 
@@ -156,6 +170,9 @@ explicitly recorded.
 ```text
 skillpack/                  # manifest, capabilities, tool and contract declarations
 skills/                     # host-readable Skill instructions and references
+  README.md                 # directory naming and Markdown-first policy
+  fund-analysis/            # canonical docs for runtime ID fund_analysis
+  decision-support/         # canonical docs for runtime ID decision_support
 src/
   skills_runtime/           # host-callable runtime skill handlers
   skillpack/                # manifest loader, resolver, validator
@@ -192,16 +209,19 @@ See `docs/archive/legacy-system.md` for details.
 
 1. Read `AGENTS.md` — coding agent integration guide.
 2. Read `skillpack/fund-agent.skillpack.yaml` — plugin manifest.
-3. Use `docs/agent-host-quickstart.md` — host integration quickstart.
-4. Run `python examples/minimal_host_news_to_decision.py` — news-to-decision demo.
-5. Run `python examples/minimal_host_portfolio_review.py` — portfolio review demo.
-6. Run `bash scripts/check_plugin_gate.sh` — verify all gates pass.
+3. Read `skills/README.md` and the relevant `skills/<slug>/SKILL.md`.
+4. Use `docs/agent-host-quickstart.md` — host integration quickstart.
+5. Use `docs/workflows/personal-fund-report.md` for personal fund reports.
+6. Run `python examples/minimal_host_news_to_decision.py` — news-to-decision demo.
+7. Run `python examples/minimal_host_portfolio_review.py` — portfolio review demo.
+8. Run `bash scripts/check_plugin_gate.sh` — verify all gates pass.
 
 ## Development
 
 ```bash
 PYTHONPATH=. python -m compileall src tests
 PYTHONPATH=. pytest -q
+bash scripts/check_plugin_gate.sh
 ```
 
 Provider credentials are host concerns. The skill pack itself only declares MCP

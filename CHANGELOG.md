@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.4.2-skill-md-first
+
+### Added
+- Markdown-first skill architecture documentation under `skills/README.md`
+- Canonical hyphenated SKILL.md workflow guides for all manifest skills
+- Fund analysis policy references for inputs, reports, risk, missing data, DCA,
+  short-term trade budgets, market scenarios, and examples
+- Decision support references for evidence anchors, WAIT/HOLD, execution amount
+  caps, deterministic mode, contracts, and examples
+- Host workflow guide for `分析下我的基金给出报告`
+- Documentation policy tests for skill docs and directory naming
+
+### Changed
+- Project docs now state that the manifest is the discovery entrypoint and
+  `skills/<slug>/SKILL.md` is the agent-facing policy layer
+- Underscore `skills/` directories are documented as compatibility-only
+- `fund-analyst` is explicitly marked legacy/reference-only
+
 ## 0.4.1-personal-portfolio-advisor-core
 
 ### Added

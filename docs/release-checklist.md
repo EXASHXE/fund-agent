@@ -6,6 +6,10 @@ Run this checklist before tagging a release.
 
 - [ ] README title is "Host-Agnostic AI Financial Research Skill Pack"
 - [ ] `skillpack/fund-agent.skillpack.yaml` exists
+- [ ] Skill layer is Markdown-first: `skills/<slug>/SKILL.md` files are primary
+      agent-facing instructions
+- [ ] External hosts discover runtime skills from the manifest, not folder names
+- [ ] `fund-analyst` is legacy/reference-only
 - [ ] `package_role` == `agent_plugin`
 - [ ] `orchestration_owner` == `external_agent`
 - [ ] `mcp_provider_owner` == `external_host`
@@ -34,7 +38,8 @@ Run this checklist before tagging a release.
 
 ## 4. MCP Boundary
 
-- [ ] No provider SDK (tavily, finnhub, exa, firecrawl, reddit) in skills_runtime
+- [ ] No provider SDK (tavily, finnhub, exa, firecrawl, reddit, akshare,
+      openai, anthropic, langchain) in skills_runtime
 - [ ] No network calls in skills_runtime except via mcp_adapter
 - [ ] MCP adapter tests pass:
   ```bash
@@ -77,7 +82,11 @@ Run this checklist before tagging a release.
 ## 8. CI
 
 - [ ] `.github/workflows/plugin-ci.yml` exists
-- [ ] CI runs: compileall, default gate, external host smoke, architecture boundaries
+- [ ] `.github/workflows/ci.yml` delegates to `bash scripts/check_plugin_gate.sh`
+- [ ] `.github/workflows/plugin-ci.yml` delegates to `bash scripts/check_plugin_gate.sh`
+- [ ] Canonical gate includes compileall, parser checks, architecture,
+      contracts, skillpack, examples, skills, tools, integration, install smoke,
+      and default pytest
 - [ ] `scripts/check_plugin_gate.sh` exists and is executable
 
 ## 9. Host Integration UX
@@ -89,6 +98,7 @@ Run this checklist before tagging a release.
   python examples/minimal_host_news_to_decision.py
   ```
 - [ ] `docs/skill-io-examples.md` exists
+- [ ] `docs/workflows/personal-fund-report.md` exists
 - [ ] `docs/plugin-api.md` documents `SkillError` standard codes
 - [ ] Minimal host demo does not import ResearchOS or legacy
 
@@ -133,4 +143,8 @@ Run this checklist before tagging a release.
 
 ```bash
 bash scripts/check_plugin_gate.sh
+python scripts/check_examples.py
+python examples/minimal_host_news_to_decision.py
+python examples/minimal_host_portfolio_review.py
+python examples/minimal_host_trade_plan_to_decisions.py
 ```

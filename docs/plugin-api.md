@@ -15,6 +15,17 @@ This document is the authoritative API reference for external agent hosts
 | Orchestration owner | `external_agent` |
 | MCP provider owner | `external_host` |
 
+## 1.1 Markdown-First Skill Layer
+
+External hosts use `skillpack/fund-agent.skillpack.yaml` for skill discovery
+and runtime paths. The `skills/<slug>/SKILL.md` files are the primary
+agent-facing instructions for workflow, policy, constraints, and report style.
+Longer materials live in `skills/<slug>/references/*.md`.
+
+Do not infer runtime skill IDs from folder names. For example, `fund_analysis`
+is the runtime skill ID and `fund-analysis` is the canonical Markdown doc slug.
+`fund-analyst` is legacy/reference-only material, not a runtime entrypoint.
+
 ## 2. Required Host Responsibilities
 
 The external host MUST provide:
@@ -29,6 +40,14 @@ The external host MUST provide:
 does NOT make network requests outside the MCP adapter boundary.
 
 ## 3. Runtime Skills
+
+| Runtime skill ID | Markdown doc slug |
+|---|---|
+| `fund_analysis` | `fund-analysis` |
+| `news_research` | `news-research` |
+| `sentiment_analysis` | `sentiment-analysis` |
+| `thesis_generation` | `thesis-generation` |
+| `decision_support` | `decision-support` |
 
 ### 3.1 fund_analysis
 
@@ -345,8 +364,8 @@ for err in output.errors:
 
 - Do NOT call `src.core.research_os` as a required host integration path.
 - Do NOT import `legacy` modules from plugin code.
-- Do NOT hardcode Tavily, Finnhub, Exa, Firecrawl, Reddit, or other
-  provider SDKs in skill runtimes.
+- Do NOT hardcode Tavily, Finnhub, Exa, Firecrawl, Reddit, AkShare, OpenAI,
+  Anthropic, LangChain, or other provider SDKs in skill runtimes.
 - Do NOT let `thesis_generation` produce a `Decision`.
 - Do NOT make network calls in `src/tools` outside the MCP adapter boundary.
 - Do NOT treat the optional reference workflows as the official entrypoint.

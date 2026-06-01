@@ -4,6 +4,11 @@
 planner and orchestrator. `fund-agent` provides manifest metadata, runtime
 skills, schemas, tools, and contracts.
 
+The skill layer is Markdown-first. Hosts should discover callable skills from
+`skillpack/fund-agent.skillpack.yaml`, then read `skills/<slug>/SKILL.md` for
+agent-facing workflow and policy. Do not infer runtime skill IDs from folder
+names.
+
 ## Responsibilities
 
 - Host agent: planning, skill order, task memory, MCP provider wiring,
@@ -16,15 +21,25 @@ Host integrations do not need to call `src.core.research_os`.
 ## Integration Flow
 
 1. Load [`skillpack/fund-agent.skillpack.yaml`](../skillpack/fund-agent.skillpack.yaml).
-2. Resolve the runtime path for the skill the host wants to call.
-3. Inject an `MCPHostAdapter` implementation if the skill needs MCP data.
-4. Build a `SkillInput`.
-5. Call `Skill.run(input)`.
-6. Collect `SkillOutput.evidence_items`, `artifacts`, `warnings`, and `errors`.
-7. Call `compile_evidence_graph` when the host wants to consolidate evidence.
-8. Call `DecisionSupportSkill` when the host wants a formal `Decision` and
+2. Select a manifest runtime skill ID such as `fund_analysis`.
+3. Read the corresponding hyphenated Markdown doc slug such as
+   `skills/fund-analysis/SKILL.md`.
+4. Resolve the runtime path declared by the manifest.
+5. Inject an `MCPHostAdapter` implementation if the skill needs MCP data.
+6. Build a `SkillInput`.
+7. Call `Skill.run(input)`.
+8. Collect `SkillOutput.evidence_items`, `artifacts`, `warnings`, and `errors`.
+9. Call `compile_evidence_graph` when the host wants to consolidate evidence.
+10. Call `DecisionSupportSkill` when the host wants a formal `Decision` and
    `ExecutionLedger`.
-9. Choose any order. `fund-agent` does not impose an agent loop.
+11. Choose any order. `fund-agent` does not impose an agent loop.
+
+Directory naming policy:
+
+- `fund_analysis` is the runtime skill ID.
+- `fund-analysis` is the canonical Markdown doc slug.
+- `fund-analyst` is legacy/reference-only material.
+- Underscore directories under `skills/` are compatibility-only if present.
 
 The callable tool catalog lives at
 [`skillpack/tools.yaml`](../skillpack/tools.yaml).

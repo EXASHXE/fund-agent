@@ -235,6 +235,7 @@ def test_skills_runtime_does_not_import_provider_sdks():
         "firecrawl",
         "finnhub",
         "reddit",
+        "akshare",
         "openai",
         "anthropic",
         "langchain",
@@ -539,7 +540,7 @@ def test_thesis_generation_forbids_decision_generation():
     assert "formal_decision_generation" in _read("skills/thesis-generation/SKILL.md")
 
 
-def test_manifest_skill_docs_have_runtime_contract_fields():
+def test_manifest_skill_docs_have_runtime_contract_fields_and_workflow_sections():
     docs = {
         "fund_analysis": "skills/fund-analysis/SKILL.md",
         "news_research": "skills/news-research/SKILL.md",
@@ -553,8 +554,14 @@ def test_manifest_skill_docs_have_runtime_contract_fields():
         "input_schema:",
         "output_schema:",
         "required_mcp_capabilities",
-        "Example SkillInput",
-        "Example SkillOutput",
+        "## Purpose",
+        "## When to use",
+        "## When not to use",
+        "## Host responsibilities",
+        "## Inputs",
+        "## Outputs",
+        "## Forbidden behavior",
+        "Minimal",
     )
 
     for skill_id, path in docs.items():

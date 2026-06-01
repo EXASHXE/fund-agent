@@ -4,6 +4,10 @@ This document provides JSON-like examples of `SkillInput` and `SkillOutput`
 shapes for each runtime skill. External coding agents can use these as
 reference when constructing skill calls.
 
+Use `skillpack/fund-agent.skillpack.yaml` to discover runtime skill IDs. Use
+hyphenated `skills/<slug>/SKILL.md` files for agent-facing policy. Do not infer
+runtime IDs from folder names.
+
 ## SkillInput Base Shape
 
 ```json

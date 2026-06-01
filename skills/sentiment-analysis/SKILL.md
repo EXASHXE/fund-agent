@@ -13,21 +13,72 @@ produced_evidence_type: SoftEvidence
 
 ## Purpose
 
-Request host-provided sentiment capability through `MCPHostAdapter` and convert
-structured sentiment signals into `SoftEvidence`.
+Use `sentiment_analysis` to request host-provided social or market sentiment
+signals through `MCPHostAdapter` and convert structured signals into
+`SoftEvidence`.
 
-## Contract
+## When to use
 
-- `id`: `sentiment_analysis`
-- `runtime`: `src.skills_runtime.sentiment_analysis:SentimentAnalysisSkill`
-- `input_schema`: `src.schemas.skill:SkillInput`
-- `output_schema`: `src.schemas.skill:SkillOutput`
-- `required_mcp_capabilities`: `social_sentiment`
-- `produced_evidence_type`: `SoftEvidence`
-- `forbidden_behavior`: provider SDK imports, direct HTTP/network requests,
-  hardcoded API keys, formal decision generation
+- The host has a `social_sentiment` MCP capability.
+- The user asks about market mood, social chatter, or crowd risk.
+- Sentiment should supplement HardEvidence and news evidence.
 
-## Example SkillInput
+## When not to use
+
+- Do not use it for deterministic fund metrics or portfolio math.
+- Do not use it as a substitute for holdings, NAV, or transaction data.
+- Do not use it to make formal trade decisions.
+- Do not use it without host-owned MCP capability.
+
+## Host responsibilities
+
+The host owns provider selection, credentials, network access, query scope,
+entity mapping, bot/spam filtering, retry policy, and final UX. The skill only
+uses the host-injected `MCPHostAdapter`.
+
+## MCP capabilities required
+
+- `social_sentiment`
+
+## Inputs
+
+Runtime skill ID: `sentiment_analysis`.
+Runtime: `src.skills_runtime.sentiment_analysis:SentimentAnalysisSkill`.
+
+Expected payload fields include:
+
+- `related_entities`
+- `query`
+- `fund_codes`
+- host-defined sentiment filters
+
+## Outputs
+
+- `SoftEvidence` items
+- `artifacts.mcp_response`
+- `used_mcp_capabilities`
+- `warnings`
+- `errors`
+
+## Missing-data policy
+
+If `social_sentiment` is unavailable, return `MISSING_MCP_CAPABILITY`. If the
+adapter call fails, return `MCP_CALL_FAILED`. If signals are absent or too weak,
+return `PARTIAL` or `EMPTY_RESULT`; do not invent sentiment.
+
+## Forbidden behavior
+
+This skill must never make direct network calls, import provider SDKs, hardcode
+API keys, call LLMs, produce formal `Decision` or `ExecutionLedger`, or treat
+sentiment as deterministic evidence.
+
+## How it composes with other skills
+
+Use sentiment as a soft overlay after `fund_analysis` has established portfolio
+facts. Combine with `news_research` for source context and compile both into an
+`EvidenceGraph` before `decision_support`.
+
+## Minimal example
 
 ```json
 {
@@ -39,17 +90,4 @@ structured sentiment signals into `SoftEvidence`.
 }
 ```
 
-## Example SkillOutput
-
-```json
-{
-  "step_id": "sentiment-1",
-  "skill_name": "sentiment_analysis",
-  "evidence_items": ["SoftEvidence"],
-  "artifacts": {"mcp_response": {}},
-  "warnings": [],
-  "errors": [],
-  "used_mcp_capabilities": ["social_sentiment"],
-  "status": "OK"
-}
-```
+See `references/signal-quality-policy.md`.

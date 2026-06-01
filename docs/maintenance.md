@@ -5,7 +5,8 @@
 Plugin core is the host-facing contract surface:
 
 - `skillpack/` manifests, capabilities, tools, contracts, and examples.
-- `skills/` host-readable `SKILL.md` instructions.
+- `skills/` Markdown-first host-readable `SKILL.md` instructions and
+  references.
 - `src/skills_runtime/` host-callable skill handlers.
 - `src/schemas/` typed skill, evidence, graph, decision, and ledger contracts.
 - `src/tools/` pure tools, evidence compilation, and MCP adapter boundary.
@@ -54,7 +55,7 @@ Default `pytest` targets plugin core only:
 
 ## Adding A Skill
 
-1. Add or update the host-readable `skills/<skill-name>/SKILL.md`.
+1. Add or update the host-readable `skills/<hyphenated-slug>/SKILL.md`.
 2. Add a host-callable runtime class under `src/skills_runtime/`.
 3. Use `SkillInput` and `SkillOutput` only for runtime boundaries.
 4. Return `EvidenceItem` objects or draft artifacts as appropriate.
@@ -64,6 +65,12 @@ Default `pytest` targets plugin core only:
 
 Only `DecisionSupportSkill` may produce formal `Decision` and
 `ExecutionLedger` artifacts.
+
+Runtime skill IDs are underscore names from
+`skillpack/fund-agent.skillpack.yaml`; Markdown doc slugs are hyphenated
+directories. Do not infer runtime IDs from folder names. Underscore directories
+under `skills/` are compatibility-only if retained, and `fund-analyst` is
+legacy/reference-only.
 
 ## Adding MCP Capability Declarations
 
