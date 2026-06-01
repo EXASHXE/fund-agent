@@ -13,15 +13,15 @@ python -c "import yaml; yaml.safe_load(open('skillpack/fund-agent.skillpack.yaml
 echo
 
 echo "=== architecture ==="
-PYTHONPATH=. pytest tests/architecture -q
+PYTHONPATH=. python -m pytest tests/architecture -q
 echo
 
 echo "=== contracts ==="
-PYTHONPATH=. pytest tests/contracts -q
+PYTHONPATH=. python -m pytest tests/contracts -q
 echo
 
 echo "=== skillpack ==="
-PYTHONPATH=. pytest tests/skillpack -q
+PYTHONPATH=. python -m pytest tests/skillpack -q
 
 echo
 echo "=== check examples ==="
@@ -29,27 +29,27 @@ PYTHONPATH=. python scripts/check_examples.py
 
 echo
 echo "=== skills ==="
-PYTHONPATH=. pytest tests/skills -q
+PYTHONPATH=. python -m pytest tests/skills -q
 echo
 
 echo "=== tools ==="
-PYTHONPATH=. pytest tests/tools -q
+PYTHONPATH=. python -m pytest tests/tools -q
 echo
 
 echo "=== integration ==="
-PYTHONPATH=. pytest tests/integration -q
+PYTHONPATH=. python -m pytest tests/integration -q
 echo
 
 echo "=== install smoke ==="
-PYTHONPATH=. pytest tests/integration/test_install_smoke.py -q
+PYTHONPATH=. python -m pytest tests/integration/test_install_smoke.py -q
 echo
 
 echo "=== install ==="
-PYTHONPATH=. pytest tests/install -q
+PYTHONPATH=. python -m pytest tests/install -q
 echo
 
 echo "=== default gate ==="
-PYTHONPATH=. pytest -q
+PYTHONPATH=. python -m pytest -q
 echo
 
 echo "All plugin gate checks passed."
