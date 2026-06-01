@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+echo "=== ensure test deps ==="
+if ! python -c "import pytest" >/dev/null 2>&1; then
+  echo "pytest not installed; installing pytest and pyyaml..."
+  python -m pip install --quiet pytest pyyaml
+fi
+echo
+
 echo "=== compileall ==="
 PYTHONPATH=. python -m compileall src tests
 echo
