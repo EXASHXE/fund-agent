@@ -106,14 +106,14 @@ def test_calculate_short_term_budget_usage():
         {"fund_code": "B", "current_value": 20000.0, "total_cost": 20000.0},
     ]
     transactions = [
-        {"type": "BUY", "amount": 2000.0, "date": "2026-05-25"},
-        {"type": "SELL", "amount": 1000.0, "date": "2026-05-20"},
+        {"action": "BUY", "amount": 2000.0, "date": "2026-06-01"},
+        {"action": "SELL", "amount": 1000.0, "date": "2026-05-28"},
     ]
     risk_profile = {
         "short_term_trade_budget_pct": 0.05,
     }
 
-    usage = calculate_short_term_budget_usage(positions, transactions, risk_profile)
+    usage = calculate_short_term_budget_usage(positions, transactions, risk_profile, as_of_date="2026-06-01")
 
     assert usage["short_term_budget"] == 5000.0
     assert usage["used"] == 3000.0

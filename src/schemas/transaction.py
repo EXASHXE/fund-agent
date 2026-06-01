@@ -9,11 +9,14 @@ from typing import Any
 
 @dataclass
 class FundTransaction:
-    """A single fund transaction."""
+    """A single fund transaction.
+
+    action is canonical, type is backward-compatible alias.
+    """
     transaction_id: str = ""
     fund_code: str = ""
     fund_name: str = ""
-    type: str = ""  # BUY, SELL, DIVIDEND, FEE, TRANSFER_IN, TRANSFER_OUT
+    action: str = ""  # BUY, SELL, DIVIDEND, FEE, TRANSFER_IN, TRANSFER_OUT
     date: str = ""
     amount: float = 0.0
     shares: float | None = None
@@ -21,8 +24,15 @@ class FundTransaction:
     fee: float = 0.0
     notes: str = ""
 
+    @property
+    def type(self) -> str:
+        """action is canonical, type is backward-compatible alias."""
+        return self.action
+
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        d = asdict(self)
+        d["type"] = self.action
+        return d
 
 
 @dataclass

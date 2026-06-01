@@ -86,6 +86,7 @@ class UserRiskProfile:
     risk_level: RiskLevel = "moderate"
     max_single_fund_weight: float = 0.2
     max_theme_weight: float = 0.35
+    max_industry_weight: float = 0.30
     max_trade_pct: float = 0.1
     liquidity_reserve_pct: float = 0.1
     short_term_trade_budget_pct: float = 0.1

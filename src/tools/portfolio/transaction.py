@@ -9,9 +9,11 @@ from typing import Any
 from src.schemas.transaction import FundTransaction, PositionCostBasis, TransactionLedgerSummary
 
 TRANSACTION_KEYS = {
-    "transaction_id", "fund_code", "fund_name", "type", "date",
+    "transaction_id", "fund_code", "fund_name", "action", "type", "date",
     "amount", "shares", "nav", "fee", "notes",
 }
+
+VALID_ACTIONS = {"BUY", "SELL", "DIVIDEND", "FEE", "TRANSFER_IN", "TRANSFER_OUT"}
 
 
 def _parse_date(val: str) -> date | None:
@@ -25,29 +27,41 @@ def _parse_date(val: str) -> date | None:
     return None
 
 
-def normalize_fund_transactions(raw: Any) -> list[FundTransaction]:
+def normalize_fund_transactions(raw: Any) -> tuple[list[FundTransaction], list[str]]:
     """Convert raw list of dicts to FundTransaction objects.
 
     Accepts a list of dicts, a single dict, or None.  Missing keys default to
     the FundTransaction defaults.  Numeric fields are coerced to float.
+
+    Accepts either "action" or "type" from raw dicts. Normalizes to uppercase.
+    Skips invalid transaction rows and returns warnings for each skipped row.
+
+    Returns (transactions, warnings) tuple.
     """
+    warnings: list[str] = []
     if raw is None:
-        return []
+        return [], warnings
     if isinstance(raw, dict):
         raw = [raw]
     if not isinstance(raw, (list, tuple)):
-        return []
+        return [], warnings
 
     result: list[FundTransaction] = []
-    for item in raw:
+    for idx, item in enumerate(raw):
         if not isinstance(item, dict):
             continue
         try:
+            raw_action = str(item.get("action", item.get("type", ""))).upper()
+            if raw_action and raw_action not in VALID_ACTIONS:
+                warnings.append(
+                    f"Row {idx}: invalid action '{raw_action}', expected one of {sorted(VALID_ACTIONS)}. Skipped."
+                )
+                continue
             result.append(FundTransaction(
                 transaction_id=str(item.get("transaction_id", "")),
                 fund_code=str(item.get("fund_code", "")),
                 fund_name=str(item.get("fund_name", "")),
-                type=str(item.get("type", "")).upper(),
+                action=raw_action,
                 date=str(item.get("date", "")),
                 amount=float(item.get("amount") or 0),
                 shares=float(item["shares"]) if item.get("shares") is not None else None,
@@ -55,9 +69,10 @@ def normalize_fund_transactions(raw: Any) -> list[FundTransaction]:
                 fee=float(item.get("fee") or 0),
                 notes=str(item.get("notes", "")),
             ))
-        except (ValueError, TypeError):
+        except (ValueError, TypeError) as exc:
+            warnings.append(f"Row {idx}: failed to parse transaction: {exc}. Skipped.")
             continue
-    return result
+    return result, warnings
 
 
 def calculate_position_cost_basis(
@@ -90,7 +105,7 @@ def calculate_position_cost_basis(
             fund_name[code] = txn.fund_name
         txn_count[code] += 1
 
-        txn_type = txn.type.upper()
+        txn_type = txn.action.upper()
 
         if txn_type == "BUY":
             s = txn.shares or 0.0
@@ -163,7 +178,7 @@ def summarize_transaction_ledger(
 
     for txn in transactions:
         code = txn.fund_code
-        txn_type = txn.type.upper()
+        txn_type = txn.action.upper()
         amount = txn.amount or 0.0
         fee = txn.fee or 0.0
 
@@ -210,7 +225,7 @@ def calculate_cashflow_summary(transactions: list[FundTransaction]) -> dict[str,
 
     for txn in transactions:
         code = txn.fund_code
-        txn_type = txn.type.upper()
+        txn_type = txn.action.upper()
         amount = txn.amount or 0.0
         fee = txn.fee or 0.0
 
@@ -332,6 +347,7 @@ def detect_trading_discipline_flags(
     transactions: list[FundTransaction],
     risk_profile: Any,
     portfolio: Any = None,
+    as_of_date: str = "",
 ) -> list[dict[str, Any]]:
     """Detect trading discipline violations using deterministic rules.
 
@@ -372,7 +388,7 @@ def detect_trading_discipline_flags(
         if parsed is None:
             continue
         fund_trades[t.fund_code].append({
-            "type": t.type.upper(),
+            "type": t.action.upper(),
             "date": parsed,
             "amount": t.amount or 0.0,
         })
@@ -452,7 +468,7 @@ def detect_trading_discipline_flags(
 
     # ── Sell below cost ──
     for txn in transactions:
-        txn_type = txn.type.upper()
+        txn_type = txn.action.upper()
         if txn_type != "SELL":
             continue
         code = txn.fund_code
@@ -488,7 +504,7 @@ def detect_trading_discipline_flags(
     # ── Min trade amount ──
     if min_trade_amount > 0:
         for txn in transactions:
-            txn_type = txn.type.upper()
+            txn_type = txn.action.upper()
             if txn_type in ("BUY", "SELL"):
                 trade_amount = (txn.amount or 0.0) + (txn.fee or 0.0)
                 if 0 < trade_amount < min_trade_amount:
@@ -509,7 +525,7 @@ def detect_trading_discipline_flags(
     if isinstance(dca_funds, list):
         dca_funds = {item.get("fund_code", ""): item for item in dca_funds if item.get("fund_code")}
     if dca_funds:
-        now = date.today()
+        now = _parse_date(as_of_date) if as_of_date else date.today()
         for code, dca_cfg in dca_funds.items():
             dca_cfg = _to_dict(dca_cfg)
             interval_days = dca_cfg.get("interval_days") or dca_cfg.get("frequency_days") or 30
@@ -521,7 +537,7 @@ def detect_trading_discipline_flags(
             fund_buys = [
                 _parse_date(t.date)
                 for t in transactions
-                if t.fund_code == code and t.type.upper() == "BUY" and t.date
+                if t.fund_code == code and t.action.upper() == "BUY" and t.date
             ]
             fund_buys = [d for d in fund_buys if d is not None]
             if fund_buys:

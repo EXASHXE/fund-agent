@@ -51,17 +51,80 @@ class DecisionSupportSkill:
 
             if trade_plan and trade_plan.get("suggested_trade_plan"):
                 trades = trade_plan["suggested_trade_plan"]
-                if selected_trade_ids:
-                    trades = [t for t in trades if t.get("trade_id") in selected_trade_ids]
-                else:
-                    sorted_trades = sorted(
-                        trades, key=lambda t: t.get("priority", t.get("rank", 999))
-                    )
-                    trades = sorted_trades[:1]
+                portfolio_context = _dict(skill_input.payload.get("portfolio_context"))
+                risk_profile = _dict(skill_input.payload.get("risk_profile"))
+                constraints = _dict(skill_input.payload.get("constraints"))
+                time_horizon = skill_input.payload.get("time_horizon", "medium_term")
+                is_short_term = time_horizon in ("short_term", "1 month", "3 months")
 
-                if trades:
+                has_real_evidence = bool(graph.items)
+
+                validated_trades: list[dict[str, Any]] = []
+                output_warnings: list[str] = []
+
+                for trade in trades:
+                    if not isinstance(trade, dict):
+                        continue
+
+                    if selected_trade_ids:
+                        trade_id = trade.get("trade_id", "")
+                        if trade_id not in selected_trade_ids:
+                            continue
+
+                    action = str(trade.get("action", "")).upper()
+
+                    forbidden_actions = [
+                        str(item).upper()
+                        for item in constraints.get("forbidden_actions", [])
+                    ]
+                    if action in forbidden_actions:
+                        output_warnings.append(
+                            f"Forbidden action {action} for {trade.get('fund_code', trade.get('trade_id', 'unknown'))} skipped"
+                        )
+                        continue
+
+                    if action in ACTIVE_ACTIONS and not has_real_evidence:
+                        trade = dict(trade)
+                        trade["action"] = "HOLD"
+                        trade["why_not_buy"] = "No real evidence anchor available to support active decision"
+                        trade["why_not_sell"] = "No real evidence anchor available"
+                        trade["missing_evidence"] = "No evidence items in evidence graph"
+                        trade["trigger_to_change"] = "New evidence becomes available"
+                        trade["what_invalidates"] = "Any new evidence contradicts current assessment"
+                        action = "HOLD"
+
+                    if action in ACTIVE_ACTIONS:
+                        trade = dict(trade)
+                        capped_amount, cap_reasons, is_valid = _validate_trade_amount(
+                            trade=trade,
+                            portfolio_context=portfolio_context,
+                            risk_profile=risk_profile,
+                            constraints=constraints,
+                            is_short_term=is_short_term,
+                        )
+                        if not is_valid:
+                            output_warnings.append(
+                                f"Trade {trade.get('trade_id', trade.get('fund_code', 'unknown'))} invalid after amount validation: {cap_reasons}"
+                            )
+                            continue
+                        trade["amount"] = capped_amount
+                        trade["capped"] = capped_amount < _float_value(
+                            trade.get("requested_amount"), 0.0
+                        )
+                        trade["cap_reasons"] = cap_reasons
+
+                    validated_trades.append(trade)
+
+                if not selected_trade_ids and validated_trades:
+                    validated_trades.sort(
+                        key=lambda t: t.get("priority", t.get("rank", 999))
+                    )
+                    validated_trades = validated_trades[:1]
+
+                if validated_trades:
                     decisions = [
-                        _decision_from_trade(t, graph, skill_input.payload) for t in trades
+                        _decision_from_trade(t, graph, skill_input.payload)
+                        for t in validated_trades
                     ]
                     ledger = ExecutionLedger(decisions=decisions)
                     return SkillOutput(
@@ -72,10 +135,35 @@ class DecisionSupportSkill:
                             "decisions": [d.to_dict() for d in decisions],
                             "decision_count": len(decisions),
                             "audit_trail": [
-                                entry for d in decisions for entry in d.audit_trail
+                                entry
+                                for d in decisions
+                                for entry in d.audit_trail
                             ],
                         },
-                        status="OK",
+                        warnings=output_warnings,
+                        status="OK" if decisions else "PARTIAL",
+                    )
+                else:
+                    return SkillOutput(
+                        step_id=skill_input.step_id,
+                        skill_name=skill_input.skill_name,
+                        artifacts={
+                            "warnings": output_warnings,
+                            "decision": {
+                                "action": "WAIT",
+                                "execution_amount": 0.0,
+                                "trigger_conditions": [
+                                    "Insufficient suitable trades available",
+                                    "No trades passed amount validation",
+                                ],
+                                "invalidating_conditions": [
+                                    "New suitable trades become available",
+                                    "Evidence quality improves",
+                                ],
+                            },
+                        },
+                        warnings=output_warnings,
+                        status="PARTIAL",
                     )
 
             requested_action = _normalized_action(
@@ -607,3 +695,75 @@ class _SkillContractError(ValueError):
     def __init__(self, code: str, message: str) -> None:
         super().__init__(message)
         self.code = code
+
+
+def _validate_trade_amount(
+    *,
+    trade: dict[str, Any],
+    portfolio_context: dict[str, Any],
+    risk_profile: dict[str, Any],
+    constraints: dict[str, Any],
+    is_short_term: bool = False,
+) -> tuple[float, list[str], bool]:
+    """Validate and cap a trade amount against portfolio constraints.
+
+    Returns (capped_amount, cap_reasons, is_valid).
+    """
+    action = str(trade.get("action", "")).upper()
+    requested_amount = _float_value(trade.get("amount"), _float_value(trade.get("requested_amount"), 0.0))
+
+    if requested_amount <= 0:
+        return (0.0, ["amount is zero or negative"], False)
+
+    total_value = _float_value(portfolio_context.get("total_value"), 0.0)
+    max_trade_pct = _float_value(risk_profile.get("max_trade_pct"), 0.1)
+    liquidity_reserve_pct = _float_value(risk_profile.get("liquidity_reserve_pct"), 0.1)
+    max_trade_amount = total_value * max_trade_pct if total_value > 0 else float("inf")
+
+    caps: list[tuple[float, str]] = [(max_trade_amount, f"max_trade_pct ({max_trade_pct})")]
+
+    if action in ("BUY", "INCREASE"):
+        cash_available = _float_value(portfolio_context.get("cash_available"), 0.0)
+        effective_cash = max(cash_available - liquidity_reserve_pct * total_value, 0.0)
+        if total_value > 0:
+            caps.append((effective_cash, f"liquidity_reserve_pct ({liquidity_reserve_pct})"))
+        max_buy_amount = _optional_float(constraints.get("max_buy_amount"))
+        if max_buy_amount is not None and max_buy_amount > 0:
+            caps.append((max_buy_amount, f"max_buy_amount ({max_buy_amount})"))
+
+        if is_short_term:
+            short_term_budget_pct = _float_value(
+                risk_profile.get("short_term_trade_budget_pct"), 0.1
+            )
+            short_term_budget = total_value * short_term_budget_pct
+            if total_value > 0:
+                caps.append((short_term_budget, f"short_term_trade_budget_pct ({short_term_budget_pct})"))
+    else:
+        current_value = _float_value(trade.get("current_value"), 0.0)
+        if current_value > 0:
+            caps.append((current_value, "current position value"))
+        max_sell_amount = _optional_float(constraints.get("max_sell_amount"))
+        if max_sell_amount is not None and max_sell_amount > 0:
+            caps.append((max_sell_amount, f"max_sell_amount ({max_sell_amount})"))
+
+    caps.sort(key=lambda x: x[0])
+    bounding_cap, bound_reason = caps[0]
+    capped_amount = min(requested_amount, bounding_cap)
+
+    cap_reasons: list[str] = []
+    if capped_amount < requested_amount:
+        cap_reasons.append(bound_reason)
+
+    min_trade_amount = _float_value(constraints.get("min_trade_amount"), 0.0)
+    if capped_amount < min_trade_amount:
+        cap_reasons.append(f"below min_trade_amount ({min_trade_amount})")
+        return (0.0, cap_reasons, False)
+
+    return (round(capped_amount, 2), cap_reasons, True)
+
+
+def _float_value(value: Any, default: float = 0.0) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default

@@ -67,5 +67,34 @@ def _check_output(name: str, data: dict, errors: list[str]) -> None:
             errors.append(f"{name}: missing execution_ledger in artifacts")
 
 
+def _validate_trade_plan_demo() -> None:
+    """Validate that examples/minimal_host_trade_plan_to_decisions.py runs successfully."""
+    import json
+    import subprocess
+    import os
+
+    project_root = os.environ.get(
+        "CHECK_EXAMPLES_ROOT",
+        os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
+    )
+    result = subprocess.run(
+        [sys.executable, "examples/minimal_host_trade_plan_to_decisions.py"],
+        capture_output=True,
+        text=True,
+        env={**os.environ, "PYTHONPATH": project_root},
+        cwd=project_root,
+    )
+    if result.returncode != 0:
+        raise AssertionError(
+            f"Trade plan demo failed (rc={result.returncode}): {result.stderr}"
+        )
+    data = json.loads(result.stdout)
+    assert "decisions" in data, "Trade plan demo output missing 'decisions'"
+    assert "execution_ledger" in data, "Trade plan demo output missing 'execution_ledger'"
+    assert isinstance(data["decisions"], list), "'decisions' must be a list"
+    print(f"  OK: trade_plan demo produces {len(data['decisions'])} decision(s)")
+
+
 if __name__ == "__main__":
+    _validate_trade_plan_demo()
     sys.exit(main())

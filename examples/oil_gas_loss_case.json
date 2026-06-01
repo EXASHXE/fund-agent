@@ -10,8 +10,12 @@
         "current_value": 25000.0,
         "total_cost": 32000.0,
         "shares": 20000.0,
-        "target_weight": 0.30,
-        "tags": ["commodity", "energy", "oil_gas"]
+        "target_weight": 0.3,
+        "tags": [
+          "commodity",
+          "energy",
+          "oil_gas"
+        ]
       },
       {
         "fund_code": "110022",
@@ -19,8 +23,11 @@
         "current_value": 15000.0,
         "total_cost": 18000.0,
         "shares": 8000.0,
-        "target_weight": 0.20,
-        "tags": ["energy", "infrastructure"]
+        "target_weight": 0.2,
+        "tags": [
+          "energy",
+          "infrastructure"
+        ]
       },
       {
         "fund_code": "000001",
@@ -29,7 +36,10 @@
         "total_cost": 29000.0,
         "shares": 28500.0,
         "target_weight": 0.35,
-        "tags": ["fixed_income", "government"]
+        "tags": [
+          "fixed_income",
+          "government"
+        ]
       },
       {
         "fund_code": "008888",
@@ -38,7 +48,10 @@
         "total_cost": 9500.0,
         "shares": 8000.0,
         "target_weight": 0.15,
-        "tags": ["balanced", "consumer"]
+        "tags": [
+          "balanced",
+          "consumer"
+        ]
       }
     ]
   },
@@ -70,66 +83,205 @@
   },
   "nav_history": {
     "501009": [
-      {"date": "2025-06-01", "nav": 1.60},
-      {"date": "2025-09-01", "nav": 1.55},
-      {"date": "2025-12-01", "nav": 1.42},
-      {"date": "2026-03-01", "nav": 1.32},
-      {"date": "2026-05-01", "nav": 1.27},
-      {"date": "2026-06-01", "nav": 1.25}
+      {
+        "date": "2025-06-01",
+        "nav": 1.6
+      },
+      {
+        "date": "2025-09-01",
+        "nav": 1.55
+      },
+      {
+        "date": "2025-12-01",
+        "nav": 1.42
+      },
+      {
+        "date": "2026-03-01",
+        "nav": 1.32
+      },
+      {
+        "date": "2026-05-01",
+        "nav": 1.27
+      },
+      {
+        "date": "2026-06-01",
+        "nav": 1.25
+      }
     ],
     "110022": [
-      {"date": "2025-06-01", "nav": 2.25},
-      {"date": "2025-09-01", "nav": 2.15},
-      {"date": "2025-12-01", "nav": 2.00},
-      {"date": "2026-03-01", "nav": 1.90},
-      {"date": "2026-05-01", "nav": 1.88},
-      {"date": "2026-06-01", "nav": 1.875}
+      {
+        "date": "2025-06-01",
+        "nav": 2.25
+      },
+      {
+        "date": "2025-09-01",
+        "nav": 2.15
+      },
+      {
+        "date": "2025-12-01",
+        "nav": 2.0
+      },
+      {
+        "date": "2026-03-01",
+        "nav": 1.9
+      },
+      {
+        "date": "2026-05-01",
+        "nav": 1.88
+      },
+      {
+        "date": "2026-06-01",
+        "nav": 1.875
+      }
     ],
     "000001": [
-      {"date": "2025-12-01", "nav": 1.02},
-      {"date": "2026-03-01", "nav": 1.04},
-      {"date": "2026-06-01", "nav": 1.05}
+      {
+        "date": "2025-12-01",
+        "nav": 1.02
+      },
+      {
+        "date": "2026-03-01",
+        "nav": 1.04
+      },
+      {
+        "date": "2026-06-01",
+        "nav": 1.05
+      }
     ],
     "008888": [
-      {"date": "2025-12-01", "nav": 1.18},
-      {"date": "2026-03-01", "nav": 1.22},
-      {"date": "2026-06-01", "nav": 1.25}
+      {
+        "date": "2025-12-01",
+        "nav": 1.18
+      },
+      {
+        "date": "2026-03-01",
+        "nav": 1.22
+      },
+      {
+        "date": "2026-06-01",
+        "nav": 1.25
+      }
     ]
   },
   "holdings": {
     "501009": [
-      {"name": "Exxon Mobil", "weight": 0.25, "industry": "oil_gas", "region": "US"},
-      {"name": "Chevron", "weight": 0.20, "industry": "oil_gas", "region": "US"},
-      {"name": "Shell", "weight": 0.18, "industry": "oil_gas", "region": "EU"},
-      {"name": "TotalEnergies", "weight": 0.15, "industry": "oil_gas", "region": "EU"},
-      {"name": "ConocoPhillips", "weight": 0.12, "industry": "oil_gas", "region": "US"},
-      {"name": "Various Energy", "weight": 0.10, "industry": "energy", "region": "global"}
+      {
+        "name": "Exxon Mobil",
+        "weight": 0.25,
+        "industry": "oil_gas",
+        "region": "US"
+      },
+      {
+        "name": "Chevron",
+        "weight": 0.2,
+        "industry": "oil_gas",
+        "region": "US"
+      },
+      {
+        "name": "Shell",
+        "weight": 0.18,
+        "industry": "oil_gas",
+        "region": "EU"
+      },
+      {
+        "name": "TotalEnergies",
+        "weight": 0.15,
+        "industry": "oil_gas",
+        "region": "EU"
+      },
+      {
+        "name": "ConocoPhillips",
+        "weight": 0.12,
+        "industry": "oil_gas",
+        "region": "US"
+      },
+      {
+        "name": "Various Energy",
+        "weight": 0.1,
+        "industry": "energy",
+        "region": "global"
+      }
     ],
     "110022": [
-      {"name": "Kinder Morgan", "weight": 0.30, "industry": "energy_infrastructure", "region": "US"},
-      {"name": "Enterprise Products", "weight": 0.25, "industry": "energy_infrastructure", "region": "US"},
-      {"name": "MPLX", "weight": 0.20, "industry": "energy_infrastructure", "region": "US"},
-      {"name": "Enbridge", "weight": 0.15, "industry": "energy_infrastructure", "region": "CA"},
-      {"name": "Various Infra", "weight": 0.10, "industry": "infrastructure", "region": "global"}
+      {
+        "name": "Kinder Morgan",
+        "weight": 0.3,
+        "industry": "energy_infrastructure",
+        "region": "US"
+      },
+      {
+        "name": "Enterprise Products",
+        "weight": 0.25,
+        "industry": "energy_infrastructure",
+        "region": "US"
+      },
+      {
+        "name": "MPLX",
+        "weight": 0.2,
+        "industry": "energy_infrastructure",
+        "region": "US"
+      },
+      {
+        "name": "Enbridge",
+        "weight": 0.15,
+        "industry": "energy_infrastructure",
+        "region": "CA"
+      },
+      {
+        "name": "Various Infra",
+        "weight": 0.1,
+        "industry": "infrastructure",
+        "region": "global"
+      }
     ],
     "000001": [
-      {"name": "Sovereign Bond", "weight": 0.60, "asset_type": "bond", "region": "CN"},
-      {"name": "Policy Bank Bond", "weight": 0.30, "asset_type": "bond", "region": "CN"},
-      {"name": "Cash", "weight": 0.10, "asset_type": "cash", "region": "CN"}
+      {
+        "name": "Sovereign Bond",
+        "weight": 0.6,
+        "asset_type": "bond",
+        "region": "CN"
+      },
+      {
+        "name": "Policy Bank Bond",
+        "weight": 0.3,
+        "asset_type": "bond",
+        "region": "CN"
+      },
+      {
+        "name": "Cash",
+        "weight": 0.1,
+        "asset_type": "cash",
+        "region": "CN"
+      }
     ],
     "008888": [
-      {"name": "Mixed Bond", "weight": 0.55, "asset_type": "bond", "region": "CN"},
-      {"name": "Mixed Equity", "weight": 0.35, "asset_type": "equity", "region": "CN"},
-      {"name": "Cash", "weight": 0.10, "asset_type": "cash", "region": "CN"}
+      {
+        "name": "Mixed Bond",
+        "weight": 0.55,
+        "asset_type": "bond",
+        "region": "CN"
+      },
+      {
+        "name": "Mixed Equity",
+        "weight": 0.35,
+        "asset_type": "equity",
+        "region": "CN"
+      },
+      {
+        "name": "Cash",
+        "weight": 0.1,
+        "asset_type": "cash",
+        "region": "CN"
+      }
     ]
   },
   "risk_profile": {
     "risk_level": "moderate",
-    "max_single_fund_weight": 0.30,
+    "max_single_fund_weight": 0.3,
     "max_theme_weight": 0.35,
-    "max_trade_pct": 0.10,
-    "liquidity_reserve_pct": 0.10,
-    "short_term_trade_budget_pct": 0.10
+    "max_trade_pct": 0.1,
+    "liquidity_reserve_pct": 0.1,
+    "short_term_trade_budget_pct": 0.1
   },
   "constraints": {
     "min_trade_amount": 100.0,
@@ -140,61 +292,61 @@
       "transaction_id": "TXN-OIL-001",
       "fund_code": "501009",
       "fund_name": "Global Oil & Gas",
-      "type": "BUY",
       "date": "2025-08-01",
       "amount": 15000.0,
       "shares": 9600.0,
       "nav": 1.56,
       "fee": 25.0,
-      "notes": "Initial oil & gas entry"
+      "notes": "Initial oil & gas entry",
+      "action": "BUY"
     },
     {
       "transaction_id": "TXN-OIL-002",
       "fund_code": "501009",
       "fund_name": "Global Oil & Gas",
-      "type": "BUY",
       "date": "2025-10-01",
       "amount": 10000.0,
       "shares": 6500.0,
       "nav": 1.54,
       "fee": 20.0,
-      "notes": "Averaging down into oil decline"
+      "notes": "Averaging down into oil decline",
+      "action": "BUY"
     },
     {
       "transaction_id": "TXN-OIL-003",
       "fund_code": "501009",
       "fund_name": "Global Oil & Gas",
-      "type": "BUY",
       "date": "2026-01-15",
       "amount": 7000.0,
       "shares": 5300.0,
       "nav": 1.32,
       "fee": 15.0,
-      "notes": "Deep value buy into drawdown"
+      "notes": "Deep value buy into drawdown",
+      "action": "BUY"
     },
     {
       "transaction_id": "TXN-OIL-004",
       "fund_code": "110022",
       "fund_name": "US Energy Infrastructure",
-      "type": "BUY",
       "date": "2025-09-01",
       "amount": 10000.0,
       "shares": 4600.0,
       "nav": 2.17,
       "fee": 20.0,
-      "notes": "Infra energy entry"
+      "notes": "Infra energy entry",
+      "action": "BUY"
     },
     {
       "transaction_id": "TXN-OIL-005",
       "fund_code": "110022",
       "fund_name": "US Energy Infrastructure",
-      "type": "BUY",
       "date": "2026-02-01",
       "amount": 8000.0,
       "shares": 4200.0,
       "nav": 1.91,
       "fee": 15.0,
-      "notes": "Add to infra position"
+      "notes": "Add to infra position",
+      "action": "BUY"
     }
   ]
 }

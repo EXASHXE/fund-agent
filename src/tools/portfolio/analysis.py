@@ -116,12 +116,14 @@ def detect_portfolio_risk_flags(
     risk_profile: Any,
     exposures: dict[str, float] | None,
     metrics: dict[str, Any] | None,
+    industry_exposure: dict[str, float] | None = None,
 ) -> list[dict[str, Any]]:
     """Detect deterministic portfolio risk flags."""
     snapshot = _snapshot_from_payload(portfolio)
     profile = _risk_profile_from_payload(risk_profile)
     exposures = exposures or {}
     metrics = metrics or {}
+    industry_exposure = industry_exposure or {}
     flags: list[dict[str, Any]] = []
 
     concentration = metrics.get("concentration", metrics)
@@ -148,6 +150,20 @@ def detect_portfolio_risk_flags(
                     value=value,
                     limit=profile.max_theme_weight,
                     theme=theme,
+                )
+            )
+
+    for industry_key, value in sorted(industry_exposure.items()):
+        if value > profile.max_industry_weight:
+            industry_name = industry_key.replace("industry:", "")
+            flags.append(
+                _flag(
+                    "overweight_industry",
+                    "industry exposure exceeds risk profile limit",
+                    "medium",
+                    current_value=value,
+                    limit=profile.max_industry_weight,
+                    affected_entities=[industry_name],
                 )
             )
 
@@ -260,13 +276,23 @@ def simulate_rebalance(
 
         trades.append(
             {
+                "trade_id": f"{fund_code}_{action}_{len(trades)}",
                 "fund_code": fund_code,
+                "fund_name": position_map.get(fund_code, PortfolioPosition(fund_code, fund_code, 0.0, 0.0)).fund_name,
                 "action": action,
                 "amount": round(trade_amount, 2),
                 "requested_amount": round(amount, 2),
                 "current_weight": current_weights.get(fund_code, 0.0),
                 "target_weight": round(float(target_weight), 6),
+                "current_value": round(current_value, 2),
+                "current_cost": round(position_map.get(fund_code, PortfolioPosition(fund_code, fund_code, 0.0, 0.0)).total_cost, 2),
+                "unrealized_pnl": round(current_value - position_map.get(fund_code, PortfolioPosition(fund_code, fund_code, 0.0, 0.0)).total_cost, 2),
                 "capped": trade_amount < amount,
+                "cap_reasons": _build_cap_reasons(trade_amount, amount, action, snapshot, constraint, profile),
+                "rationale": "Within constraint bounds",
+                "tags": list(position_map.get(fund_code, PortfolioPosition(fund_code, fund_code, 0.0, 0.0)).tags),
+                "evidence_refs": [],
+                "risk_flags_refs": [],
             }
         )
 
@@ -340,6 +366,7 @@ def _risk_profile_from_payload(payload: Any) -> UserRiskProfile:
             default=0.2,
         ),
         max_theme_weight=_float(payload.get("max_theme_weight"), default=0.35),
+        max_industry_weight=_float(payload.get("max_industry_weight"), default=0.30),
         max_trade_pct=_float(payload.get("max_trade_pct"), default=0.1),
         liquidity_reserve_pct=_float(
             payload.get("liquidity_reserve_pct"),
@@ -410,6 +437,39 @@ def _flag(
         "message": message,
         "details": details,
     }
+
+
+def _build_cap_reasons(
+    trade_amount: float,
+    requested_amount: float,
+    action: str,
+    snapshot: PortfolioSnapshot,
+    constraint: RebalanceConstraint,
+    profile: UserRiskProfile,
+) -> list[str]:
+    reasons: list[str] = []
+    if trade_amount >= requested_amount:
+        return reasons
+    max_trade = snapshot.total_value * profile.max_trade_pct
+    if trade_amount == max_trade:
+        reasons.append(f"capped by max_trade_pct ({profile.max_trade_pct})")
+    if action in ("BUY", "INCREASE"):
+        cash_available = snapshot.cash_available
+        if trade_amount == cash_available:
+            reasons.append(f"capped by cash_available ({cash_available})")
+        effective_cash = cash_available - profile.liquidity_reserve_pct * snapshot.total_value
+        if trade_amount == max(effective_cash, 0):
+            reasons.append(f"capped by liquidity_reserve_pct ({profile.liquidity_reserve_pct})")
+        max_buy = constraint.max_buy_amount
+        if max_buy is not None and trade_amount == max_buy:
+            reasons.append(f"capped by max_buy_amount ({max_buy})")
+    else:
+        max_sell = constraint.max_sell_amount
+        if max_sell is not None and trade_amount == max_sell:
+            reasons.append(f"capped by max_sell_amount ({max_sell})")
+    if not reasons:
+        reasons.append("capped by constraints")
+    return reasons
 
 
 def _float(value: Any, default: float = 0.0) -> float:
@@ -526,6 +586,7 @@ def calculate_short_term_budget_usage(
     positions: Any,
     transactions: list[dict[str, Any]] | None,
     risk_profile: Any,
+    as_of_date: str = "",
 ) -> dict[str, Any]:
     """Estimate short-term trading budget usage from recent transactions."""
     profile = _risk_profile_from_payload(risk_profile)
@@ -535,11 +596,11 @@ def calculate_short_term_budget_usage(
     transactions = transactions or []
     recent_buys = sum(
         abs(_float(t.get("amount", 0))) for t in transactions
-        if str(t.get("type", "")).upper() in ("BUY",) and _is_recent(t, 30)
+        if str(t.get("action", t.get("type", ""))).upper() in ("BUY",) and _is_recent(t, 30, as_of_date)
     )
     recent_sells = sum(
         abs(_float(t.get("amount", 0))) for t in transactions
-        if str(t.get("type", "")).upper() in ("SELL",) and _is_recent(t, 30)
+        if str(t.get("action", t.get("type", ""))).upper() in ("SELL",) and _is_recent(t, 30, as_of_date)
     )
     used = recent_buys + recent_sells
     return {
@@ -707,21 +768,30 @@ def rank_trade_plan(
         return (priority, 0 if action in ("SELL", "REDUCE") else 1, -amount)
 
     ranked = sorted(trades, key=rank)
+    annotated = []
     for i, t in enumerate(ranked):
-        t["rank"] = i + 1
-        priority, _, _ = rank(t)
-        t["priority"] = "risk_reduction" if priority == 0 else "constraint_reduction" if priority == 1 else "rebalance" if priority == 2 else "avoid"
-    return ranked
+        trade = dict(t)
+        trade["rank"] = i + 1
+        priority, _, _ = rank(trade)
+        trade["priority"] = "risk_reduction" if priority == 0 else "constraint_reduction" if priority == 1 else "rebalance" if priority == 2 else "avoid"
+        annotated.append(trade)
+    return annotated
 
 
-def _is_recent(transaction: dict[str, Any], days: int) -> bool:
-    """Check if a transaction is within the last N days (best-effort)."""
+def _is_recent(transaction: dict[str, Any], days: int, as_of_date: str = "") -> bool:
+    """Check if a transaction is within N days of as_of_date (best-effort).
+
+    When as_of_date is empty, the check is skipped (returns True).
+    """
     tx_date = transaction.get("date", transaction.get("trade_date", ""))
     if not tx_date:
+        return False
+    if not as_of_date:
         return False
     try:
         from datetime import date, timedelta
         d = date.fromisoformat(str(tx_date)[:10])
-        return (date.today() - d).days <= days
+        ref = date.fromisoformat(str(as_of_date)[:10])
+        return (ref - d).days <= days
     except (ValueError, TypeError):
         return False

@@ -35,6 +35,8 @@ from src.tools.portfolio.transaction import (
     summarize_transaction_ledger,
 )
 
+MAX_POSITION_EVIDENCE = 5
+
 
 class FundAnalysisSkill:
     """Local personal fund and portfolio analysis skill."""
@@ -149,6 +151,7 @@ class FundAnalysisSkill:
                 risk_profile=risk_profile,
                 exposures=exposures,
                 metrics=metrics_for_flags,
+                industry_exposure=industry_exposure,
             )
             pnl_summary = None
             trade_budget = calculate_trade_budget(portfolio, risk_profile, constraints)
@@ -161,7 +164,7 @@ class FundAnalysisSkill:
                 pnl_summary = calculate_portfolio_pnl(positions)
             if transactions:
                 short_term_budget = calculate_short_term_budget_usage(
-                    positions, transactions, risk_profile
+                    positions, transactions, risk_profile, as_of_date
                 )
             if dca_plans:
                 dca_review = review_dca_plan(
@@ -175,21 +178,32 @@ class FundAnalysisSkill:
             trading_flags: list[dict[str, Any]] = []
             scenario_flags: list[dict[str, Any]] = []
             if transactions:
-                normalized_transactions = normalize_fund_transactions(transactions)
+                normalized_transactions, txn_warnings = normalize_fund_transactions(transactions)
+                if txn_warnings:
+                    warnings.extend(txn_warnings)
+
+                # Determine as_of_date for transaction-aware tools:
+                # use portfolio.as_of_date or fall back to latest transaction date.
+                txn_as_of = as_of_date
+                if not txn_as_of and normalized_transactions:
+                    txn_dates = [t.date for t in normalized_transactions if t.date]
+                    if txn_dates:
+                        txn_as_of = max(txn_dates)
+
                 ledger_summary = summarize_transaction_ledger(
-                    normalized_transactions, nav_data, as_of_date
+                    normalized_transactions, nav_data, txn_as_of
                 )
                 cost_basis_summary = {
                     fund_code: cb.to_dict()
                     for fund_code, cb in calculate_position_cost_basis(
-                        normalized_transactions, nav_data, as_of_date
+                        normalized_transactions, nav_data, txn_as_of
                     ).items()
                 }
                 reconciliation = reconcile_portfolio_with_transactions(
                     portfolio, ledger_summary
                 )
                 trading_flags = detect_trading_discipline_flags(
-                    normalized_transactions, risk_profile, portfolio
+                    normalized_transactions, risk_profile, portfolio, txn_as_of
                 )
             if market_scenario:
                 scenario_flags.append({
@@ -549,30 +563,18 @@ def _evidence_specs(
         )
 
     if pnl_summary is not None:
-        for fund_code, pos_pnl in pnl_summary.get("positions", {}).items():
-            specs.append(
-                {
-                    "metric_name": "position_pnl",
-                    "metric_value": pos_pnl,
-                    "claim": f"Position PnL computed for fund {fund_code}",
-                    "related_entities": [f"fund:{fund_code}"],
-                    "direction": "positive" if (pos_pnl.get("unrealized_pnl") or 0) > 0 else "negative" if (pos_pnl.get("unrealized_pnl") or 0) < 0 else "neutral",
-                    "provenance": {
-                        "skill_name": skill_input.skill_name,
-                        "tool": "src.tools.portfolio.analysis",
-                    },
-                }
-            )
+        top_pnl_positions = _top_n_pnl_positions(pnl_summary, MAX_POSITION_EVIDENCE)
         specs.append(
             {
-                "metric_name": "portfolio_pnl",
+                "metric_name": "portfolio_pnl_summary",
                 "metric_value": {
                     "total_cost": pnl_summary.get("total_cost"),
                     "total_value": pnl_summary.get("total_value"),
                     "unrealized_pnl": pnl_summary.get("unrealized_pnl"),
                     "unrealized_pnl_pct": pnl_summary.get("unrealized_pnl_pct"),
+                    "top_positions": top_pnl_positions,
                 },
-                "claim": "Portfolio-level PnL summary computed",
+                "claim": "Portfolio-level PnL summary with top positions computed",
                 "related_entities": entities,
                 "direction": "positive" if (pnl_summary.get("unrealized_pnl") or 0) > 0 else "negative" if (pnl_summary.get("unrealized_pnl") or 0) < 0 else "neutral",
                 "provenance": {
@@ -723,3 +725,22 @@ def _is_number(value: Any) -> bool:
         return True
     except (TypeError, ValueError):
         return False
+
+
+def _top_n_pnl_positions(pnl_summary: dict[str, Any], n: int) -> list[dict[str, Any]]:
+    positions = pnl_summary.get("positions", {})
+    if not positions:
+        return []
+    pnl_items = [
+        (fund_code, pos)
+        for fund_code, pos in positions.items()
+        if isinstance(pos, dict)
+    ]
+    pnl_items.sort(
+        key=lambda item: abs(item[1].get("unrealized_pnl") or 0),
+        reverse=True,
+    )
+    return [
+        {"fund_code": fund_code, **pos}
+        for fund_code, pos in pnl_items[:n]
+    ]
