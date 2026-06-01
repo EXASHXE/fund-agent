@@ -32,6 +32,11 @@ CANONICAL_DOCS = [
     ROOT / "docs" / "archive" / "legacy-system.md",
     ROOT / "skills" / "README.md",
     ROOT / "docs" / "workflows" / "personal-fund-report.md",
+    ROOT / ".opencode" / "INSTALL.md",
+    ROOT / "docs" / "install" / "opencode.md",
+    ROOT / "docs" / "install" / "manual-host.md",
+    ROOT / "docs" / "install" / "codex.md",
+    ROOT / "docs" / "design" / "runtime-bridge.md",
 ]
 
 

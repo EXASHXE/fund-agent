@@ -1,0 +1,49 @@
+{
+  "name": "fund-agent",
+  "version": "0.4.3",
+  "description": "Host-agnostic AI financial research skill pack / agent plugin. Markdown-first skill catalog with optional deterministic Python runtime.",
+  "type": "module",
+  "main": "opencode.plugin.js",
+  "exports": {
+    ".": "./opencode.plugin.js"
+  },
+  "files": [
+    "opencode.plugin.js",
+    "skillpack/",
+    "skills/",
+    "docs/install/"
+  ],
+  "scripts": {
+    "test:install": "node --check opencode.plugin.js"
+  },
+  "keywords": [
+    "opencode",
+    "plugin",
+    "skillpack",
+    "financial-research",
+    "fund-analysis",
+    "agent-plugin",
+    "markdown-skills"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EXASHXE/fund-agent.git"
+  },
+  "bugs": {
+    "url": "https://github.com/EXASHXE/fund-agent/issues"
+  },
+  "homepage": "https://github.com/EXASHXE/fund-agent#readme",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "peerDependencies": {
+    "@opencode-ai/plugin": "*"
+  },
+  "peerDependenciesMeta": {
+    "@opencode-ai/plugin": {
+      "optional": true
+    }
+  },
+  "dependencies": {}
+}

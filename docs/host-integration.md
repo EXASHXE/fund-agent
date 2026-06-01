@@ -18,6 +18,25 @@ names.
 
 Host integrations do not need to call `src.core.research_os`.
 
+## Install Paths
+
+`fund-agent` is host-agnostic. The first native install target is
+OpenCode (metadata + docs only); the canonical Python install is the
+manual flow; Codex has a manual / light install. See:
+
+- OpenCode: [`docs/install/opencode.md`](./install/opencode.md) and
+  [`.opencode/INSTALL.md`](../.opencode/INSTALL.md)
+- Manual / Python host: [`docs/install/manual-host.md`](./install/manual-host.md)
+- Codex: [`docs/install/codex.md`](./install/codex.md)
+- Future runtime bridge: [`docs/design/runtime-bridge.md`](./design/runtime-bridge.md)
+- Other harnesses: [`docs/host-compatibility.md`](./host-compatibility.md)
+
+The OpenCode install does **not** turn `fund-agent` into an autonomous
+ResearchOS / planner loop. The plugin exposes three metadata + doc
+reader tools (`fund_agent_skills`, `fund_agent_skill_doc`,
+`fund_agent_runtime_hint`) and leaves the actual skill invocation to
+the manual host integration path.
+
 ## Integration Flow
 
 1. Load [`skillpack/fund-agent.skillpack.yaml`](../skillpack/fund-agent.skillpack.yaml).

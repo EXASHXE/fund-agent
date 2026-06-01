@@ -44,6 +44,10 @@ echo "=== install smoke ==="
 PYTHONPATH=. pytest tests/integration/test_install_smoke.py -q
 echo
 
+echo "=== install ==="
+PYTHONPATH=. pytest tests/install -q
+echo
+
 echo "=== default gate ==="
 PYTHONPATH=. pytest -q
 echo

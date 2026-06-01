@@ -18,6 +18,14 @@ __pycache__/
 *.pyc
 *.egg-info/
 
+# Node / OpenCode plugin
+node_modules/
+package-lock.json
+bun.lockb
+.opencode/plugins/
+.opencode/package.json
+.opencode/node_modules/
+
 # IDE
 .vscode/
 .idea/

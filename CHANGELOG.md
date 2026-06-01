@@ -1,5 +1,46 @@
 # Changelog
 
+## 0.4.3-installable-skillpack
+
+### Added
+
+- OpenCode project-local plugin install: `package.json` at the repo
+  root + `opencode.plugin.js` plugin entrypoint + `.opencode/INSTALL.md`
+  + `docs/install/opencode.md`. The plugin is a metadata + doc reader
+  only; it registers `fund_agent_skills`, `fund_agent_skill_doc`, and
+  `fund_agent_runtime_hint` tools and does not run an autonomous loop.
+- Manual / Python host install documented at
+  `docs/install/manual-host.md`. The canonical install path for any
+  Python host.
+- Codex install (manual / light) at `docs/install/codex.md`. No
+  OMO-style installer in v0.4.3.
+- Future runtime bridge design at `docs/design/runtime-bridge.md`.
+  Document-only, not implemented.
+- New `tests/install/` package with 55 installability tests covering
+  `package.json` metadata, the OpenCode plugin skeleton (syntax +
+  no-network + no-provider-SDK invariants), install docs honesty, and
+  manifest-runtime-id-to-doc-slug mapping consistency.
+
+### Changed
+
+- `VERSION`, `pyproject.toml`, `skillpack/fund-agent.skillpack.yaml`,
+  and `package.json` all advanced to `0.4.3`.
+- `scripts/check_plugin_gate.sh` now runs `tests/install` after the
+  install smoke suite.
+- `pyproject.toml` `tool.pytest.ini_options.testpaths` includes
+  `tests/install`.
+- `tests/docs/test_skill_doc_quality.py` canonical-docs list now
+  includes the new install docs and runtime-bridge design doc.
+
+### Honesty
+
+- The OpenCode install is **metadata + docs only**. The Python runtime
+  is host-driven; the plugin does not invoke skills or fetch data.
+- The runtime bridge is **not** in v0.4.3. The design is documented for
+  a future milestone.
+- No provider SDKs, no LLM clients, no autonomous loop. The
+  host-agnostic architecture constraints are preserved.
+
 ## 0.4.2-skill-md-first
 
 ### Added

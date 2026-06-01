@@ -126,18 +126,43 @@ Run this checklist before tagging a release.
 - [ ] Manifest validates against skillpack.v1 schema
 - [ ] `docs/host-compatibility.md` exists
 - [ ] Install smoke test passes:
-  ```bash
-  PYTHONPATH=. pytest tests/integration/test_install_smoke.py -q
-  ```
+      ```bash
+      PYTHONPATH=. pytest tests/integration/test_install_smoke.py -q
+      ```
 - [ ] Public import paths resolve:
-  ```bash
-  PYTHONPATH=. pytest tests/contracts/test_public_import_paths.py -q
-  ```
+      ```bash
+      PYTHONPATH=. pytest tests/contracts/test_public_import_paths.py -q
+      ```
 - [ ] Examples checker passes:
-  ```bash
-  python scripts/check_examples.py
-  ```
+      ```bash
+      python scripts/check_examples.py
+      ```
 - [ ] Minimal host demo emits JSON subprocess
+
+## 12. v0.4.3 Installable Skillpack
+
+- [ ] `package.json` exists at repo root
+- [ ] `package.json` version matches `VERSION`
+- [ ] `package.json` name is `fund-agent`
+- [ ] `package.json` repository points at `EXASHXE/fund-agent`
+- [ ] `package.json` declares zero runtime dependencies
+- [ ] `opencode.plugin.js` exists and passes `node --check`
+- [ ] `.opencode/INSTALL.md` exists
+- [ ] `docs/install/opencode.md` exists
+- [ ] `docs/install/manual-host.md` exists
+- [ ] `docs/install/codex.md` exists
+- [ ] `docs/design/runtime-bridge.md` exists and is marked as
+      design / future
+- [ ] `tests/install` passes:
+      ```bash
+      PYTHONPATH=. pytest tests/install -q
+      ```
+- [ ] `tests/install` is included in `scripts/check_plugin_gate.sh`
+- [ ] `tests/install` is in `pyproject.toml` testpaths
+- [ ] No provider SDK in `opencode.plugin.js` (only optional
+      `@opencode-ai/plugin` peer dep)
+- [ ] No network IO in `opencode.plugin.js` (only fs reads for docs)
+- [ ] No runtime bridge claims in v0.4.3 install docs
 
 ## Quick Verification
 
@@ -147,4 +172,5 @@ python scripts/check_examples.py
 python examples/minimal_host_news_to_decision.py
 python examples/minimal_host_portfolio_review.py
 python examples/minimal_host_trade_plan_to_decisions.py
+PYTHONPATH=. pytest tests/install -q
 ```

@@ -216,6 +216,26 @@ See `docs/archive/legacy-system.md` for details.
 7. Run `python examples/minimal_host_portfolio_review.py` — portfolio review demo.
 8. Run `bash scripts/check_plugin_gate.sh` — verify all gates pass.
 
+## Install
+
+`fund-agent` is host-agnostic. The first native install target is
+**OpenCode**; the canonical install for any Python host is the manual
+flow.
+
+- OpenCode (project-local plugin, metadata + docs only):
+  [`.opencode/INSTALL.md`](.opencode/INSTALL.md) /
+  [`docs/install/opencode.md`](docs/install/opencode.md)
+- Manual / Python host: [`docs/install/manual-host.md`](docs/install/manual-host.md)
+- Codex (manual / light): [`docs/install/codex.md`](docs/install/codex.md)
+- Other harnesses: see [`docs/host-compatibility.md`](docs/host-compatibility.md)
+- Future runtime bridge: [`docs/design/runtime-bridge.md`](docs/design/runtime-bridge.md)
+
+The OpenCode plugin exposes a `fund_agent_skills` tool, a
+`fund_agent_skill_doc` tool, and a `fund_agent_runtime_hint` tool. It
+does not run an autonomous loop, does not fetch data, and does not
+place trades. The host agent owns planning, MCP provider wiring, and
+final user interaction.
+
 ## Development
 
 ```bash

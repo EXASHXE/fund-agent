@@ -20,6 +20,19 @@ The callable skill IDs are the underscore names declared in
 External hosts must discover callable skills from
 `skillpack/fund-agent.skillpack.yaml`, not from folder names.
 
+## Install Surface
+
+`fund-agent` is host-agnostic. For install instructions, see:
+
+- OpenCode (project-local plugin, metadata + docs only):
+  [`docs/install/opencode.md`](../docs/install/opencode.md)
+- Manual / Python host: [`docs/install/manual-host.md`](../docs/install/manual-host.md)
+- Codex (manual / light): [`docs/install/codex.md`](../docs/install/codex.md)
+- Future runtime bridge: [`docs/design/runtime-bridge.md`](../docs/design/runtime-bridge.md)
+
+The OpenCode install does not turn `fund-agent` into an autonomous
+ResearchOS / planner loop. The Python runtime is host-driven.
+
 ## Directory Policy
 
 - Hyphenated directories such as `fund-analysis/` are the canonical Markdown

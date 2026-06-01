@@ -11,14 +11,14 @@ documentation slugs only. `fund-analyst` is legacy/reference-only material.
 
 ## Matrix
 
-| Host | Reads manifest | Resolves runtime | Injects MCP adapter | Runs SkillInput/SkillOutput | External orchestration | Notes |
-|---|---|---|---|---|---|---|
-| OpenCode | Yes | Yes | Yes | Yes | Yes | Read AGENTS.md, load skillpack manifest, call runtime skills |
-| Claude Code | Yes | Yes | Yes | Yes | Yes | Skill tool invocation; host owns planning |
-| Codex | Yes | Yes | Yes | Yes | Yes | Manifest-driven skill discovery |
-| OpenClaw | Yes | Yes | Yes | Yes | Yes | Plugin contract alignment required |
-| Hermes | Yes | Yes | Yes | Yes | Yes | Agent host owns full orchestration loop |
-| Generic Python Host | Yes | Yes | Yes | Yes | Yes | See `examples/minimal_host_news_to_decision.py` |
+| Host | Reads manifest | Resolves runtime | Injects MCP adapter | Runs SkillInput/SkillOutput | External orchestration | Native install | Notes |
+|---|---|---|---|---|---|---|---|
+| OpenCode | Yes | Yes | Yes | Yes | Yes | Yes (metadata + docs only) | See `docs/install/opencode.md` |
+| Claude Code | Yes | Yes | Yes | Yes | Yes | Manual only | Skill tool invocation; host owns planning |
+| Codex | Yes | Yes | Yes | Yes | Yes | Manual / light | See `docs/install/codex.md` |
+| OpenClaw | Yes | Yes | Yes | Yes | Yes | Manual only | Plugin contract alignment required |
+| Hermes | Yes | Yes | Yes | Yes | Yes | Manual only | Agent host owns full orchestration loop |
+| Generic Python Host | Yes | Yes | Yes | Yes | Yes | Yes (manual) | See `docs/install/manual-host.md` |
 
 ## Integration Principles
 
@@ -30,6 +30,21 @@ documentation slugs only. `fund-analyst` is legacy/reference-only material.
 6. **Minimal Demo:** `examples/minimal_host_news_to_decision.py`
 7. **Skill Docs:** `skills/<slug>/SKILL.md` is policy, not discovery
 8. **Directory Names:** Do not infer runtime skill IDs from folder names
+9. **Install Surface:**
+   - OpenCode: `docs/install/opencode.md` (first native target, metadata + docs only)
+   - Manual / Python host: `docs/install/manual-host.md`
+   - Codex: `docs/install/codex.md` (manual / light)
+   - Other harnesses: follow the manual host install; no native installer in v0.4.3
+
+## Install Reality Check
+
+The OpenCode install is a thin plugin wrapper that exposes a
+`fund_agent_skills` tool, a `fund_agent_skill_doc` tool, and a
+`fund_agent_runtime_hint` tool. It does **not** run the Python runtime
+from inside the OpenCode plugin in v0.4.3. The plugin is metadata +
+docs only; the actual skill invocation goes through the manual host
+integration. The future runtime bridge is design-only in
+`docs/design/runtime-bridge.md` and is explicitly **not** in v0.4.3.
 
 ## Host Requirements
 

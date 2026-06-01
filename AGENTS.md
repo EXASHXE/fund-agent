@@ -21,6 +21,10 @@ Primary entrypoints and resources:
 - `docs/agent-host-quickstart.md` — host integration quickstart
 - `docs/host-integration.md` — detailed integration guide
 - `docs/plugin-api.md` — full API reference
+- `docs/install/opencode.md` — OpenCode plugin install (first native target)
+- `docs/install/manual-host.md` — manual / Python host install
+- `docs/install/codex.md` — Codex install (manual / light)
+- `docs/design/runtime-bridge.md` — future runtime bridge (design only)
 - `src/skills_runtime/` — host-callable skill handlers
 - `src/schemas/` — typed contracts
 - `src/tools/` — pure tools and MCP adapter boundary
@@ -110,6 +114,15 @@ Agents must run:
 PYTHONPATH=. pytest -q
 bash scripts/check_plugin_gate.sh
 ```
+
+When changing install surface (OpenCode plugin, package.json, install
+docs, runtime-bridge design), also run:
+
+```bash
+PYTHONPATH=. pytest tests/install -q
+```
+
+Before changing runtime contracts, also update:
 
 Before changing runtime contracts, also update:
 
