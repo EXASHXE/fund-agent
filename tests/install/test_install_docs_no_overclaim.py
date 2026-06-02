@@ -181,7 +181,7 @@ def test_opencode_plugin_does_not_claim_full_runtime_bridge():
 
 def test_runtime_bridge_design_doc_exists_and_is_marked_future():
     """The runtime bridge design doc must exist and clearly mark itself
-    as not implemented in v0.4.4."""
+    as not implemented in the current release."""
     assert RUNTIME_BRIDGE_DOC.exists(), (
         "docs/design/runtime-bridge.md must document the future runtime bridge"
     )
@@ -189,6 +189,18 @@ def test_runtime_bridge_design_doc_exists_and_is_marked_future():
     assert "design" in text or "future" in text, (
         "runtime-bridge.md must mark itself as design / future"
     )
-    assert "v0.4.4" in text and "not implemented" in text or "not in v0.4.4" in text, (
-        "runtime-bridge.md must state the bridge is not in v0.4.4"
+    # The doc must explicitly state that the runtime bridge is not
+    # implemented in the current release. The current release at
+    # the time of writing is v0.4.5; we accept v0.4.4 or v0.4.5
+    # in the doc text so the test is forward-compatible with the
+    # next design doc refresh.
+    has_version_marker = ("v0.4.4" in text) or ("v0.4.5" in text)
+    has_not_implemented_marker = (
+        "not implemented" in text
+        or "not in v0.4.4" in text
+        or "not in v0.4.5" in text
+    )
+    assert has_version_marker and has_not_implemented_marker, (
+        "runtime-bridge.md must state the bridge is not implemented "
+        "in v0.4.4 / v0.4.5"
     )

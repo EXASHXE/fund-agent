@@ -174,3 +174,40 @@ python examples/minimal_host_portfolio_review.py
 python examples/minimal_host_trade_plan_to_decisions.py
 PYTHONPATH=. pytest tests/install -q
 ```
+
+## 13. v0.4.5 Native Skill Install Hardening
+
+- [ ] `.gitattributes` exists and enforces LF for `*.sh`, `*.yml`,
+      `*.yaml`, `*.toml`, `*.json`, `*.js`, `*.py`, `*.md`
+- [ ] `git ls-files --eol scripts/check_plugin_gate.sh .github/workflows/ci.yml .github/workflows/plugin-ci.yml opencode.plugin.js package.json skills/fund-analysis/SKILL.md`
+      shows `i/lf    w/lf` for all listed text files
+- [ ] `scripts/check_plugin_gate.sh` is executable
+      (`test -x scripts/check_plugin_gate.sh`)
+- [ ] `bash scripts/check_plugin_gate.sh` succeeds on Linux
+- [ ] `node --check opencode.plugin.js` succeeds
+- [ ] `python -m json.tool package.json >/dev/null` succeeds
+- [ ] `python -c "import tomllib; tomllib.load(open('pyproject.toml','rb'))"` succeeds
+- [ ] `python -c "import yaml; yaml.safe_load(open('skillpack/fund-agent.skillpack.yaml'))"` succeeds
+- [ ] `PYTHONPATH=. python -m compileall src tests` succeeds
+- [ ] `tests/ci/test_line_endings.py` passes (8 line-ending tests)
+- [ ] OpenCode plugin startup log says
+      `primary skill: fund-analysis; supporting skills: decision-support, news-research, sentiment-analysis, thesis-generation`
+      (i.e. `fund-analysis` MUST NOT appear in the supporting-skills
+      clause)
+- [ ] `listSkills().primary_skill` is `fund-analysis` and
+      `listSkills().supporting_skills` is exactly the four canonical
+      supporting slugs
+- [ ] `.opencode/INSTALL.md` and `docs/install/opencode.md` use the
+      corrected log example and document Mode A / Mode B / Mode C
+      install modes
+- [ ] `scripts/install_opencode_skills.py` exists, is executable, and
+      supports `--dry-run`, `--target`, and `--clean`
+- [ ] `python scripts/install_opencode_skills.py --dry-run` lists the
+      five canonical skills
+- [ ] `tests/install/test_opencode_native_skill_sync.py` passes
+      (12 sync-helper tests)
+- [ ] No provider SDKs in `opencode.plugin.js` or
+      `scripts/install_opencode_skills.py`
+- [ ] No network calls in `opencode.plugin.js` or
+      `scripts/install_opencode_skills.py`
+- [ ] No runtime / domain feature changes

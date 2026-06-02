@@ -1,8 +1,10 @@
 // fund-agent OpenCode plugin
 //
-// Scope (v0.4.4, Superpowers-compatible Markdown-first skill install):
+// Scope (v0.4.5, native skill install hardening):
 //   1. Logs that the plugin is loaded and which hyphenated skills are
-//      available.
+//      available, distinguishing the primary skill from the four
+//      supporting skills in both the message text and the structured
+//      `extra` payload.
 //   2. Registers three custom tools:
 //        - fund_agent_skills          list manifest runtime IDs + doc slugs
 //        - fund_agent_skill_doc       read a SKILL.md or reference doc
@@ -11,10 +13,13 @@
 //                                     to the Python runtime class
 //   3. Does NOT fetch data, run an autonomous loop, or place trades.
 //
-// Skill surface (v0.4.4, Superpowers-compatible):
+// Skill surface (v0.4.5, Superpowers-compatible):
 //   - Agent-facing skill names are hyphenated Markdown doc slugs:
-//       fund-analysis (primary), decision-support, news-research,
-//       sentiment-analysis, thesis-generation (all supporting).
+//       fund-analysis              (primary / default)
+//       decision-support           (supporting)
+//       news-research              (supporting)
+//       sentiment-analysis         (supporting)
+//       thesis-generation          (supporting)
 //   - Python runtime IDs remain underscore names in the manifest and
 //     Python (fund_analysis, decision_support, news_research,
 //     sentiment_analysis, thesis_generation).
@@ -30,6 +35,11 @@
 //   - No subprocess spawn. The Python runtime is host-driven; see
 //     docs/install/manual-host.md.
 //   - No planner loop. OpenCode owns planning, MCP, retries, memory, UX.
+//   - No native Agent Skills sync. The plugin is a metadata + doc
+//     reader only; the canonical skill surface is the hyphenated
+//     Markdown directories under `skills/<slug>/SKILL.md`. For the
+//     optional native OpenCode Agent Skills install, run
+//     `python scripts/install_opencode_skills.py`.
 //
 // The @opencode-ai/plugin import is optional: if it is not available in
 // the host runtime, the plugin degrades to log-only mode and still emits
@@ -40,11 +50,11 @@ import { fileURLToPath } from "node:url";
 import { dirname, join, normalize, relative } from "node:path";
 import { createRequire } from "node:module";
 
-const PLUGIN_VERSION = "0.4.4";
+const PLUGIN_VERSION = "0.4.5";
 const PLUGIN_NAME = "fund-agent";
 
 // Manifest runtime skill ID -> hyphenated Markdown doc slug.
-// This map is the source of truth for the v0.4.4 install and MUST match
+// This map is the source of truth for the v0.4.5 install and MUST match
 // skillpack/fund-agent.skillpack.yaml. A test
 // (tests/install/test_skill_doc_slug_mapping.py) guards this invariant.
 // The `role` field marks fund-analysis as the primary / default skill
@@ -360,10 +370,34 @@ function buildTools() {
   };
 }
 
+export function buildStartupLogMessage() {
+  // The agent-facing skill names are the hyphenated Markdown doc slugs.
+  // The plugin never logs or registers underscore skill slugs.
+  // Distinguish the primary skill from the supporting skills so the
+  // log message never misclassifies fund-analysis as a supporting
+  // skill. (v0.4.5 install-hardening.)
+  const primaryEntry = SKILL_CATALOG.find((s) => s.role === "primary");
+  const supportingEntries = SKILL_CATALOG.filter((s) => s.role === "supporting");
+  const primarySkill = primaryEntry ? primaryEntry.doc_slug : null;
+  const supportingSkills = supportingEntries.map((s) => s.doc_slug);
+  return {
+    primary_skill: primarySkill,
+    supporting_skills: supportingSkills,
+    message:
+      `${PLUGIN_NAME} v${PLUGIN_VERSION} plugin loaded; ` +
+      `primary skill: ${primarySkill}; ` +
+      `supporting skills: ${supportingSkills.join(", ")}`,
+  };
+}
+
 export const FundAgentPlugin = async ({ client, directory, worktree }) => {
   // The agent-facing skill names are the hyphenated Markdown doc slugs.
   // The plugin never logs or registers underscore skill slugs.
-  const skillSlugs = SKILL_CATALOG.map((s) => s.doc_slug).join(", ");
+  // Distinguish the primary skill from the supporting skills so the
+  // log message never misclassifies fund-analysis as a supporting
+  // skill. (v0.4.5 install-hardening: listSkills() already returned
+  // the right split; the startup log now matches.)
+  const { message, primary_skill, supporting_skills } = buildStartupLogMessage();
 
   // Best-effort structured log. If the OpenCode client is not available
   // (e.g. running outside OpenCode for syntax checks) we silently skip.
@@ -373,13 +407,13 @@ export const FundAgentPlugin = async ({ client, directory, worktree }) => {
         body: {
           service: PLUGIN_NAME,
           level: "info",
-          message: `${PLUGIN_NAME} v${PLUGIN_VERSION} plugin loaded; primary skill: fund-analysis; supporting skills: ${skillSlugs}`,
+          message: message,
           extra: {
             directory: directory || null,
             worktree: worktree || null,
             mode: toolHelper ? "tools+log" : "log-only",
-            primary_skill: "fund-analysis",
-            supporting_skills: SKILL_CATALOG.filter((s) => s.role === "supporting").map((s) => s.doc_slug),
+            primary_skill: primary_skill,
+            supporting_skills: supporting_skills,
           },
         },
       });

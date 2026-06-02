@@ -72,15 +72,34 @@ synthesize them.
 
 ## Install modes
 
-There are two install modes. **Mode 1** is the only one shipped in
-v0.4.4. **Mode 2** is a future runtime bridge; it is not required to
-use `fund-agent` today.
+There are three install modes. **Mode A** is the only one that runs
+fund-agent code at OpenCode startup; **Mode B** lets OpenCode's
+native Agent Skills discovery see the canonical Markdown skill
+collection; **Mode C** is a future runtime bridge that is not
+required today.
 
-### Mode 1 — Markdown-only skill install (current target)
+OpenCode itself distinguishes two things that are easy to conflate:
+
+- **Plugins** — JavaScript / TypeScript modules loaded via the
+  `plugin` field of `opencode.json`, or files under
+  `.opencode/plugins/`. Plugins can add hooks, custom tools, and
+  structured logging. The current `fund-agent` OpenCode install
+  ships a plugin.
+- **Agent Skills** — `SKILL.md` directories discovered from
+  `.opencode/skills/<name>/SKILL.md`,
+  `~/.config/opencode/skills/<name>/SKILL.md`, or
+  `.agents/skills/<name>/SKILL.md`. OpenCode reads these natively
+  and exposes them to the agent through its built-in `skill` tool.
+
+Mode A uses the plugin mechanism only. Mode B makes the canonical
+skill surface visible to OpenCode's native Agent Skills discovery
+on top of Mode A. Mode C is documented for completeness.
+
+### Mode A — Plugin metadata + doc-reader (current target)
 
 The plugin is a project-local JavaScript file that lives under
-`.opencode/plugins/`. OpenCode loads it at startup. The plugin can also
-be referenced as an npm package in the `plugin` field of your
+`.opencode/plugins/`. OpenCode loads it at startup. The plugin can
+also be referenced as an npm package in the `plugin` field of your
 project's `opencode.json` config.
 
 The full step-by-step is in [`.opencode/INSTALL.md`](../../.opencode/INSTALL.md).
@@ -98,20 +117,25 @@ ln -s /absolute/path/to/fund-agent/opencode.plugin.js .opencode/plugins/fund-age
 Restart OpenCode and you should see in the logs:
 
 ```
-fund-agent v0.4.4 plugin loaded; primary skill: fund-analysis;
-supporting skills: fund-analysis, decision-support, news-research,
-sentiment-analysis, thesis-generation
+fund-agent v0.4.5 plugin loaded; primary skill: fund-analysis;
+supporting skills: decision-support, news-research, sentiment-analysis,
+thesis-generation
 ```
+
+`fund-analysis` is the **primary / default skill**; the four
+supporting skills are loaded only when their description matches
+the subtask. See the `fund-analysis` SKILL.md "When to load
+supporting skills" table for the matching policy.
 
 #### Plugin metadata only — no runtime bridge
 
-For v0.4.4 the plugin exposes **only** the metadata + doc-reader tools
-listed above. The plugin does not shell out to Python, does not start a
-sidecar, and does not embed the deterministic Python runtime. If the
-agent wants to actually invoke `FundAnalysisSkill.run()` or
-`DecisionSupportSkill.run()`, it must follow
-[`docs/install/manual-host.md`](./manual-host.md) for a separate Python
-host integration.
+For v0.4.5 the plugin exposes **only** the metadata + doc-reader
+tools listed above. The plugin does not shell out to Python, does
+not start a sidecar, and does not embed the deterministic Python
+runtime. If the agent wants to actually invoke
+`FundAnalysisSkill.run()` or `DecisionSupportSkill.run()`, it must
+follow [`docs/install/manual-host.md`](./manual-host.md) for a
+separate Python host integration.
 
 This is a deliberate scope cut: the OpenCode install is about agent
 **discoverability** of the skill catalog, not about wiring the Python
@@ -119,41 +143,89 @@ runtime into the agent's tool call path. Wiring a runtime bridge
 through the OpenCode plugin would require either a sidecar process
 (violates "no autonomous loop" constraint) or an embedded interpreter
 (bloats the plugin and pulls in transitive npm deps), neither of which
-is appropriate for v0.4.4.
+is appropriate for v0.4.5.
 
-### Mode 2 — Future runtime bridge (not in v0.4.4)
+### Mode B — Native Agent Skills install (optional, v0.4.5+)
+
+OpenCode's native `Agent Skills` discovery looks for `SKILL.md`
+files under `.opencode/skills/<slug>/SKILL.md` (and the other
+canonical locations above). Mode A is **not** enough on its own to
+make the canonical skills visible to that native discovery — the
+plugin only exposes the metadata + doc-reader tools.
+
+To make the canonical Markdown skill collection visible to
+OpenCode's native skill discovery, run the bundled sync helper:
+
+```bash
+# From the cloned fund-agent repo
+python scripts/install_opencode_skills.py            # copy into .opencode/skills/
+python scripts/install_opencode_skills.py --dry-run  # list what would be copied
+python scripts/install_opencode_skills.py --target /elsewhere/.opencode/skills
+python scripts/install_opencode_skills.py --clean    # remove only the skills this script wrote
+```
+
+The helper copies the five canonical hyphenated skill directories
+(`fund-analysis`, `decision-support`, `news-research`,
+`sentiment-analysis`, `thesis-generation`) from `skills/` into
+`.opencode/skills/`. It writes a marker file
+(`.opencode/skills/.fund-agent-generated.json`) so `--clean` can
+remove only the skills it wrote, not user-authored files.
+
+The helper is a **plain file copy**; it does not edit
+`opencode.json`, does not install or call the Python runtime, and
+does not start a subprocess. It is metadata + Markdown only.
+
+After running the helper, OpenCode's native skill discovery will
+see the same five skills as the plugin:
+
+```
+fund-analysis              (primary)
+decision-support           (supporting)
+news-research              (supporting)
+sentiment-analysis         (supporting)
+thesis-generation          (supporting)
+```
+
+Use Mode A + Mode B together if you want both the plugin's
+metadata + doc-reader tools and OpenCode's native Agent Skills
+discovery to see the fund-agent collection.
+
+### Mode C — Future runtime bridge (not in v0.4.5)
 
 The design for a future runtime bridge is documented in
 [`docs/design/runtime-bridge.md`](../design/runtime-bridge.md). In
 short, the plugin would optionally spawn a Python subprocess
 (`python -m fund_agent.run_skill`) on demand and proxy
-`SkillInput` / `SkillOutput` JSON in/out. This is **not implemented in
-v0.4.4** and is explicitly out of scope for this milestone.
+`SkillInput` / `SkillOutput` JSON in/out. This is **not implemented
+in v0.4.5** and is explicitly out of scope for this milestone.
 
 ## Why a plugin and not just a config block
 
 OpenCode already supports loading skill docs from
 `.opencode/skills/<name>/SKILL.md`, `.claude/skills/<name>/SKILL.md`,
-and `.agents/skills/<name>/SKILL.md`. A future fund-agent install could
-symlink those locations into the cloned `skills/<slug>/` directory
-instead of shipping a JavaScript plugin at all.
+and `.agents/skills/<name>/SKILL.md`. v0.4.5 ships the
+`scripts/install_opencode_skills.py` helper (Mode B above) so the
+canonical hyphenated `skills/<slug>/SKILL.md` directories can be
+copied to one of those locations on demand.
 
-The plugin approach was chosen for v0.4.4 because:
+The plugin approach was chosen for v0.4.5 because:
 
-1. It works without any symlink gymnastics from the user's side.
+1. Mode A (the plugin) works without any user-side file copying
+   and provides the three `fund_agent_*` tools even before Mode B
+   has been run.
 2. It gives us a single integration surface for the
    `fund_agent_skills` / `fund_agent_skill_doc` /
-   `fund_agent_runtime_hint` tools.
-3. It keeps the manifest runtime ID → doc slug mapping in code, where
-   it can be tested, rather than relying on filesystem layout.
-4. It is a small, honest change: the plugin is ~50 lines, has zero
-   runtime dependencies, and is verified only for file presence and
-   metadata (not for "this works inside OpenCode" — that requires
-   running OpenCode itself, which is out of scope for the test gate).
-
-If OpenCode's `Agent Skills` feature proves to be a better fit, the
-plugin can be slimmed down in a future milestone. The
-`docs/design/runtime-bridge.md` doc calls this out.
+   `fund_agent_runtime_hint` tools, with the manifest runtime ID
+   → doc slug mapping held in code where it can be tested.
+3. Mode B (the native skill sync helper) is layered on top of Mode
+   A: it is opt-in, idempotent, and safe (`--clean` only removes
+   files this script wrote, marked by
+   `.opencode/skills/.fund-agent-generated.json`).
+4. The plugin is a small, honest change: zero runtime
+   dependencies, no provider SDKs, no network IO, and verified
+   only for file presence and metadata (not for "this works
+   inside OpenCode" — that requires running OpenCode itself, which
+   is out of scope for the test gate).
 
 ## Verifying the install
 
@@ -175,15 +247,15 @@ they assert that the install artifacts are coherent and honest.
 ## Pinning / version management
 
 `fund-agent` uses git tags for versioning. The current version is
-`v0.4.4` and matches the `VERSION` file, the `package.json` `version`
+`v0.4.5` and matches the `VERSION` file, the `package.json` `version`
 field, and the `skillpack/fund-agent.skillpack.yaml` `version` field.
 
 Pin to a specific version:
 
 ```bash
-git clone --branch v0.4.4 https://github.com/EXASHXE/fund-agent.git
+git clone --branch v0.4.5 https://github.com/EXASHXE/fund-agent.git
 cd fund-agent
-git checkout v0.4.4   # if you cloned without --branch
+git checkout v0.4.5   # if you cloned without --branch
 ```
 
 For a project that already has the symlink in place, update the
@@ -192,7 +264,7 @@ checkout:
 ```bash
 cd /path/to/fund-agent
 git fetch
-git checkout v0.4.4
+git checkout v0.4.5
 # restart OpenCode
 ```
 
@@ -211,7 +283,13 @@ the `opencode.plugin.js` file are not used by any other harness.
 
 ## Honesty about current capability
 
-- ✅ OpenCode can **discover** fund-agent skills via this plugin.
+- ✅ OpenCode can **discover** fund-agent skills via this plugin
+  (Mode A).
+- ✅ OpenCode can **discover** the same five canonical skills via
+  its native Agent Skills directory discovery **if** Mode B
+  (`python scripts/install_opencode_skills.py`) has been run
+  (the plugin alone does not install the native skill
+  directories).
 - ✅ OpenCode can **read** any `skills/<slug>/SKILL.md` or
   `skills/<slug>/references/*.md` via `fund_agent_skill_doc`.
 - ✅ OpenCode can **map** runtime IDs to doc slugs via

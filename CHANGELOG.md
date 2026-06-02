@@ -1,5 +1,90 @@
 # Changelog
 
+## 0.4.5-native-skill-install-hardening
+
+### Added
+
+- `.gitattributes` enforcing LF line endings for `*.sh`, `*.yml`,
+  `*.yaml`, `*.toml`, `*.json`, `*.js`, `*.py`, `*.md`, with `text=auto`
+  as the default. This is a regression guard for the v0.4.4 zip
+  extraction issue where `scripts/check_plugin_gate.sh` shipped with
+  CRLF line endings even though the git index was LF.
+- `scripts/install_opencode_skills.py` — Mode B of the OpenCode
+  install. Copies the five canonical hyphenated skill directories
+  from `skills/` into `.opencode/skills/<slug>/SKILL.md` so OpenCode's
+  native `Agent Skills` discovery sees the same five skills as the
+  plugin. Supports `--dry-run`, `--target <path>`, and `--clean`
+  (which only removes the skills this script wrote, identified by
+  the marker file `.opencode/skills/.fund-agent-generated.json`).
+  Does not edit `opencode.json`, does not start a subprocess, does
+  not install the Python runtime, and does not call any network.
+- `tests/ci/test_line_endings.py` — file-level CRLF guard for
+  `scripts/check_plugin_gate.sh`, `.github/workflows/*.yml`,
+  `opencode.plugin.js`, canonical `skills/<slug>/SKILL.md`, and
+  canonical `skills/<slug>/references/*.md`. The test does not
+  depend on git and catches CRLF even if the renormalize step is
+  bypassed.
+- `tests/install/test_opencode_native_skill_sync.py` — 12 tests
+  covering dry-run output, apply output, copied `SKILL.md`
+  frontmatter, references preservation, refusal to copy
+  `fund-analyst` and underscore runtime IDs, marker file behavior,
+  and `--clean` safety.
+- Four new tests in `tests/install/test_opencode_skill_surface.py`
+  guarding the startup log primary / supporting distinction: the
+  log message text must not list `fund-analysis` under
+  `supporting skills:`, the structured `extra` payload must split
+  primary from supporting, and `listSkills().supporting_skills`
+  must equal exactly the four canonical supporting slugs.
+
+### Changed
+
+- `opencode.plugin.js` startup log message now correctly splits
+  the primary skill from the four supporting skills. v0.4.4 had a
+  bug where the message joined all five slugs into the
+  `supporting skills:` clause; v0.4.5 filters by `role ===
+  "supporting"` and asserts the distinction via tests. The plugin
+  exports a new `buildStartupLogMessage()` helper for testability.
+- `.opencode/INSTALL.md` and `docs/install/opencode.md` updated to
+  use the corrected startup log example and to document three
+  install modes: Mode A (plugin metadata + doc-reader, current
+  target), Mode B (native `Agent Skills` install via the sync
+  helper, optional), and Mode C (future runtime bridge, design
+  only). The docs now distinguish OpenCode **plugins** (the JS
+  module loaded via `opencode.json`) from OpenCode **Agent Skills**
+  (`SKILL.md` directories under `.opencode/skills/<slug>/`).
+- `docs/install/opencode.md` and `.opencode/INSTALL.md` version
+  pinning examples updated to `v0.4.5`.
+- `docs/design/runtime-bridge.md` updated to reference v0.4.5
+  (the design is still not implemented).
+- `VERSION`, `pyproject.toml`, `skillpack/fund-agent.skillpack.yaml`,
+  `package.json`, and `opencode.plugin.js` `PLUGIN_VERSION` all
+  advanced to `0.4.5`.
+- `tests/install/test_opencode_plugin_skeleton.py` PLUGIN_VERSION
+  assertion bumped to `0.4.5`.
+- `tests/install/test_install_docs_no_overclaim.py` runtime-bridge
+  design doc assertion accepts `v0.4.4` or `v0.4.5` (forward-
+  compatible; the contract — "runtime bridge is not implemented in
+  the current release" — is unchanged).
+- `scripts/install_opencode_skills.py` is executable
+  (`chmod +x`).
+
+### Honesty
+
+- Mode A is **plugin metadata + doc-reader only**; it does not
+  invoke the Python runtime and does not call any network.
+- Mode B is a **plain file copy**; it does not start a subprocess,
+  does not edit `opencode.json`, does not install the Python
+  runtime, and does not call any network. The marker file is the
+  only state it writes outside the copied skill files.
+- Mode C is **design only**, not implemented in v0.4.5.
+- No provider SDKs, no LLM clients, no autonomous loop, no
+  planner loop, no new fund metrics, no new schemas, no new
+  portfolio tools, no new providers, no runtime bridge, no
+  database, no server, no autonomous agent runtime.
+- No runtime / domain feature changes. The v0.4.5 milestone is
+  purely about install-surface hardening and OpenCode install
+  honesty (Mode A vs Mode B).
+
 ## 0.4.4-superpowers-compatible-skill-surface
 
 ### Changed

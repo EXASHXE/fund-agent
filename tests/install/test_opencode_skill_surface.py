@@ -125,6 +125,8 @@ def _eval_plugin_function(function_name: str, args: dict) -> dict:
         "\n// Test harness only: re-export internal helpers so they\n"
         "// can be invoked from the test harness. This block is not\n"
         "// present in the production plugin source.\n"
+        "// `buildStartupLogMessage` is already exported by the source\n"
+        "// (added in v0.4.5) so it is intentionally NOT re-exported here.\n"
         "export { listSkills, readSkillDoc, runtimeHint };\n"
     )
     with tempfile.NamedTemporaryFile(
@@ -396,6 +398,92 @@ def test_plugin_runtime_hint_rejects_unknown_inputs():
             f"rejection error must be an INVALID_INPUT for '{bad}', "
             f"got {result.get('error')!r}"
         )
+
+
+# ---------------------------------------------------------------------------
+# Plugin source: startup log primary / supporting distinction (v0.4.5)
+# ---------------------------------------------------------------------------
+
+
+def test_plugin_startup_log_message_does_not_list_fund_analysis_under_supporting():
+    """The startup log message must not list `fund-analysis` under
+    supporting skills. v0.4.4 had a bug where the message joined all
+    five slugs into the `supporting skills:` clause; v0.4.5 splits
+    primary from supporting and asserts the distinction here."""
+    payload = _eval_plugin_function("buildStartupLogMessage", {})
+    if payload.get("__skipped__"):
+        return
+    message = payload.get("message") or ""
+    assert "primary skill: fund-analysis" in message, (
+        f"startup log must declare 'primary skill: fund-analysis', "
+        f"got: {message!r}"
+    )
+    # The supporting skills clause must contain exactly the four
+    # supporting slugs in the expected order, with no
+    # `fund-analysis` included.
+    assert "supporting skills: decision-support, news-research, sentiment-analysis, thesis-generation" in message, (
+        f"startup log supporting-skills clause must be exactly the four "
+        f"supporting slugs in canonical order, got: {message!r}"
+    )
+    # Direct guard: fund-analysis must not appear in the
+    # `supporting skills:` clause at all. The primary-skill clause
+    # contains it; the supporting-skills clause must not.
+    after_supporting_marker = message.split("supporting skills:", 1)[-1]
+    assert "fund-analysis" not in after_supporting_marker, (
+        f"startup log must not list 'fund-analysis' under supporting "
+        f"skills, got: {message!r}"
+    )
+
+
+def test_plugin_startup_log_structured_payload_splits_primary_from_supporting():
+    """The structured log payload (the `extra` block) must list
+    `primary_skill` as `fund-analysis` and `supporting_skills` as
+    exactly the four supporting slugs."""
+    payload = _eval_plugin_function("buildStartupLogMessage", {})
+    if payload.get("__skipped__"):
+        return
+    assert payload.get("primary_skill") == EXPECTED_PRIMARY, (
+        f"startup log payload must have primary_skill='{EXPECTED_PRIMARY}', "
+        f"got {payload.get('primary_skill')!r}"
+    )
+    assert payload.get("supporting_skills") == EXPECTED_SUPPORTING, (
+        f"startup log payload supporting_skills must be exactly "
+        f"{EXPECTED_SUPPORTING}, got {payload.get('supporting_skills')!r}"
+    )
+
+
+def test_plugin_list_skills_supporting_skills_excludes_fund_analysis():
+    """listSkills() must not include `fund-analysis` in
+    `supporting_skills`. This is a strict subset guard, separate
+    from the equality check below, so a future change that adds
+    extra items to supporting_skills still fails the regression
+    guard."""
+    payload = _eval_plugin_function("listSkills", {})
+    if payload.get("__skipped__"):
+        return
+    supporting = payload.get("supporting_skills", [])
+    assert "fund-analysis" not in supporting, (
+        f"listSkills() supporting_skills must not include 'fund-analysis', "
+        f"got {supporting!r}"
+    )
+
+
+def test_plugin_list_skills_supporting_skills_equals_four_canonical():
+    """listSkills() supporting_skills must equal exactly the four
+    canonical supporting slugs, in canonical order, with no extras
+    and no missing entries."""
+    payload = _eval_plugin_function("listSkills", {})
+    if payload.get("__skipped__"):
+        return
+    supporting = payload.get("supporting_skills", [])
+    assert supporting == EXPECTED_SUPPORTING, (
+        f"listSkills() supporting_skills must equal exactly "
+        f"{EXPECTED_SUPPORTING}, got {supporting!r}"
+    )
+    assert len(supporting) == 4, (
+        f"listSkills() supporting_skills must have exactly 4 entries, "
+        f"got {len(supporting)}"
+    )
 
 
 # ---------------------------------------------------------------------------

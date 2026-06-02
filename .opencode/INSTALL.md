@@ -57,12 +57,13 @@ These tools do **not** fetch data, do **not** place trades, and do
 ## Skill collection
 
 OpenCode will discover the **composable Markdown skill collection** under
-`skills/<slug>/SKILL.md`. The collection in v0.4.4+ is:
+`skills/<slug>/SKILL.md`. The collection in v0.4.5+ is:
 
 - **Primary / default:** `fund-analysis` — start here for ordinary
   fund analysis and report requests.
-- **Supporting:** `decision-support`, `news-research`, `sentiment-analysis`,
-  `thesis-generation` — load only when the subtask matches.
+- **Supporting:** `decision-support`, `news-research`,
+  `sentiment-analysis`, `thesis-generation` — load only when the
+  subtask matches.
 
 The plugin does **not** expose:
 
@@ -76,6 +77,53 @@ The plugin does **not** expose:
 Python runtime IDs remain underscore names. Hosts call
 `fund_agent_runtime_hint` with the hyphenated slug **or** the
 underscore runtime ID; both resolve to the same Python class.
+
+## Install (Mode B — native Agent Skills)
+
+OpenCode's native `Agent Skills` discovery looks for `SKILL.md`
+files under `.opencode/skills/<slug>/SKILL.md`,
+`~/.config/opencode/skills/<slug>/SKILL.md`, or
+`.agents/skills/<slug>/SKILL.md`. The plugin alone (Mode A) does
+**not** install the canonical skills into those locations — the
+plugin only exposes the metadata + doc-reader tools.
+
+To make the canonical skill surface visible to OpenCode's native
+skill discovery, run the bundled sync helper from the cloned
+fund-agent repo:
+
+```bash
+# Copy the five canonical hyphenated skills into .opencode/skills/
+python scripts/install_opencode_skills.py
+
+# Or preview what would be copied
+python scripts/install_opencode_skills.py --dry-run
+
+# Or copy into a different target
+python scripts/install_opencode_skills.py --target /elsewhere/.opencode/skills
+
+# Or remove only the skills this script wrote
+python scripts/install_opencode_skills.py --clean
+```
+
+The helper is a plain file copy: it writes
+`SKILL.md` and `references/` for each canonical skill and a
+marker file `.opencode/skills/.fund-agent-generated.json` so
+`--clean` can remove only the skills it wrote, not user-authored
+files. The helper does not edit `opencode.json`, does not start
+the Python runtime, and does not spawn a subprocess.
+
+After running the helper, OpenCode's native skill tool will see
+the same five skills as the plugin:
+
+- `fund-analysis` (primary)
+- `decision-support` (supporting)
+- `news-research` (supporting)
+- `sentiment-analysis` (supporting)
+- `thesis-generation` (supporting)
+
+Use Mode A (the plugin) and Mode B (the sync helper) together if
+you want both the plugin's `fund_agent_*` tools and OpenCode's
+native Agent Skills discovery to see the fund-agent collection.
 
 ## Install (npm-published package)
 
@@ -94,7 +142,7 @@ add it to your `opencode.json`:
 OpenCode will install it via Bun at startup and cache it under
 `~/.cache/opencode/node_modules/`.
 
-> **Note:** As of v0.4.4, the npm package is declared but not yet
+> **Note:** As of v0.4.5, the npm package is declared but not yet
 > published. Use the project-local install above until the npm
 > publication milestone is cut. The install will still work end-to-end
 > via the project-local path; only the npm convenience install is
@@ -103,7 +151,7 @@ OpenCode will install it via Bun at startup and cache it under
 ## Pin to a specific version (git tag)
 
 ```bash
-git clone --branch v0.4.4 https://github.com/EXASHXE/fund-agent.git
+git clone --branch v0.4.5 https://github.com/EXASHXE/fund-agent.git
 ```
 
 or, for a fully reproducible symlink, pin the commit:
@@ -111,7 +159,7 @@ or, for a fully reproducible symlink, pin the commit:
 ```bash
 git clone https://github.com/EXASHXE/fund-agent.git
 cd fund-agent
-git checkout v0.4.4
+git checkout v0.4.5
 # then create the symlink as above
 ```
 
@@ -122,7 +170,11 @@ For development, the project-local install with `master` is fine.
 After restarting OpenCode in your project:
 
 1. Check the logs. You should see a line such as:
-   `fund-agent v0.4.4 plugin loaded; primary skill: fund-analysis; supporting skills: fund-analysis, decision-support, news-research, sentiment-analysis, thesis-generation`
+   `fund-agent v0.4.5 plugin loaded; primary skill: fund-analysis; supporting skills: decision-support, news-research, sentiment-analysis, thesis-generation`
+   `fund-analysis` is the **primary / default skill**; the four
+   supporting skills are loaded only when their description matches
+   the subtask (see the `fund-analysis` SKILL.md "When to load
+   supporting skills" table).
 2. Ask the agent to use the `fund_agent_skills` tool. It should return
    a JSON list of the five manifest runtime skill IDs and their doc
    slugs.
