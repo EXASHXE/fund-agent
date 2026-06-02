@@ -173,23 +173,42 @@ rm .codex/skills/fund-analysis .codex/skills/news-research \
 rm -rf /path/to/fund-agent
 ```
 
+## Runtime bridge CLI (v0.4.7-dev)
+
+Codex can also drive the fund-agent runtime skills through the thin
+runtime bridge CLI shipped in v0.4.7-dev. The bridge is
+host-agnostic; it does not import any Codex-specific module and
+does not ship a Codex-only install. It is a useful process
+boundary for any host that prefers subprocess + JSON envelopes
+over in-process Python imports.
+
+```bash
+# From a Codex-owned action / exec:
+python scripts/run_skill.py \
+    --skill fund_analysis \
+    --input examples/runtime_bridge_fund_analysis_input.json \
+    --pretty
+```
+
+See [`docs/install/runtime-bridge-cli.md`](./runtime-bridge-cli.md)
+for the full contract.
+
 ## Future Codex install work
 
-The following are explicitly **not** in v0.4.6 and are tracked as
+The following are explicitly **not** shipped yet and are tracked as
 future milestones:
 
 - A Codex plugin cache publication under
   `~/.codex/plugins/fund-agent/`.
 - A `fund-agent` entry in a Codex plugin marketplace / OMO bundle.
-- A Codex-specific CLI wrapper that spawns
-  `python -m fund_agent.run_skill` and proxies `SkillInput` /
-  `SkillOutput` JSON.
 - A first-class Codex config block in `~/.codex/config.toml` that
   references the fund-agent manifest.
+- A Codex-specific tool wrapper around the runtime bridge CLI that
+  spawns `scripts/run_skill.py` from Codex-owned actions.
 
 When the Codex plugin spec stabilizes, the install can graduate from
 "manual / light" to "first-class". Until then, the manual flow above
-is the supported path.
+and the runtime bridge CLI are the supported paths.
 
 ## Separate installs for other harnesses
 
@@ -198,15 +217,19 @@ is the supported path.
 - **Manual / Python host:** see
   [`docs/install/manual-host.md`](./manual-host.md). The canonical
   install path.
+- **Process-boundary host (any harness):** use the runtime bridge
+  CLI ([`docs/install/runtime-bridge-cli.md`](./runtime-bridge-cli.md)).
 - **Claude Code, OpenClaw, Hermes:** the manual host install is
-  sufficient. No native installer is shipped in v0.4.6.
+  sufficient. No native installer is shipped.
 
 ## Honesty about current capability
 
 - ✅ Codex can read the fund-agent skill docs after the manual install.
 - ✅ Codex can discover skills from the manifest.
 - ✅ Codex can invoke the Python runtime if Python is wired.
-- ❌ There is no OMO-style installer in v0.4.6.
-- ❌ There is no `~/.codex/config.toml` plugin block in v0.4.6.
+- ✅ Codex can drive the runtime skills through the runtime bridge CLI
+  (subprocess + JSON envelopes, no in-process import required).
+- ❌ There is no OMO-style installer yet.
+- ❌ There is no `~/.codex/config.toml` plugin block yet.
 - ❌ fund-agent does not become an autonomous loop inside Codex.
   Codex owns planning.

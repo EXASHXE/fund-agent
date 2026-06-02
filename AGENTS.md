@@ -95,8 +95,15 @@ PYTHONPATH=. pytest tests/integration/test_external_host_smoke.py -q
 # Architecture boundaries
 PYTHONPATH=. pytest tests/architecture/test_architecture_boundaries.py -q
 
+# Runtime bridge CLI tests (v0.4.7-dev)
+PYTHONPATH=. pytest tests/runtime_bridge -q
+
 # Minimal host demo
 python examples/minimal_host_news_to_decision.py
+
+# Runtime bridge CLI smoke (v0.4.7-dev)
+python scripts/run_skill.py --list-skills --pretty
+python scripts/run_skill.py --skill fund_analysis --input examples/runtime_bridge_fund_analysis_input.json --pretty
 ```
 
 ## Versioning

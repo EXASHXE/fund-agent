@@ -144,8 +144,13 @@ def test_npm_pack_dry_run_emits_valid_payload():
             f"pack name must be 'fund-agent', got {name!r}"
         )
     if version is not None:
-        assert version == "0.4.6", (
-            f"pack version must be 0.4.6, got {version!r}"
+        # The pack version must equal the canonical VERSION file
+        # (i.e. the npm package advertises the same version as the
+        # rest of the repo). The test reads VERSION at runtime so
+        # it stays valid across dev tags.
+        expected = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+        assert version == expected, (
+            f"pack version must equal VERSION ({expected!r}), got {version!r}"
         )
 
 

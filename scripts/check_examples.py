@@ -26,6 +26,7 @@ DEMO_SCRIPTS = [
     "examples/minimal_host_news_to_decision.py",
     "examples/minimal_host_portfolio_review.py",
     "examples/minimal_host_trade_plan_to_decisions.py",
+    "examples/minimal_runtime_bridge_fund_analysis.py",
 ]
 
 
@@ -57,6 +58,7 @@ def main() -> int:
         checked += 1
 
     checked += _check_realistic_examples(errors)
+    checked += _check_runtime_bridge_examples(errors)
     demo_passed = _check_demo_scripts(errors)
 
     print(f"Examples checked: {checked}, Demos passed: {demo_passed}")
@@ -126,6 +128,39 @@ def _check_realistic_examples(errors: list[str]) -> int:
 
         checked += 1
 
+    return checked
+
+
+def _check_runtime_bridge_examples(errors: list[str]) -> int:
+    """Validate the runtime bridge example inputs and demos.
+
+    These are convenience inputs that the host can pipe into
+    ``scripts/run_skill.py``. We assert they parse as JSON, contain
+    a ``payload`` field, and do not reference legacy / ResearchOS.
+    """
+    bridge_examples = [
+        "examples/runtime_bridge_fund_analysis_input.json",
+        "examples/runtime_bridge_decision_support_input.json",
+    ]
+    checked = 0
+    for rel in bridge_examples:
+        path = PROJECT_ROOT / rel
+        if not path.exists():
+            errors.append(f"runtime bridge example missing: {rel}")
+            continue
+        raw = path.read_text(encoding="utf-8")
+        if "src.core.research_os" in raw:
+            errors.append(f"{rel}: references ResearchOS")
+        if "legacy" in raw.lower():
+            errors.append(f"{rel}: references legacy")
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError as exc:
+            errors.append(f"{rel}: invalid JSON: {exc}")
+            continue
+        if "payload" not in data:
+            errors.append(f"{rel}: missing 'payload' field")
+        checked += 1
     return checked
 
 

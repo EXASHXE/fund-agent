@@ -278,8 +278,10 @@ the `opencode.plugin.js` file are not used by any other harness.
   discovery under `.claude/skills/<name>/SKILL.md`).
 - For Codex: see `docs/install/codex.md`.
 - For a generic Python host: see `docs/install/manual-host.md`.
+- For a process-boundary host: see
+  `docs/install/runtime-bridge-cli.md`.
 - For OpenClaw / Hermes: see `docs/host-compatibility.md` for what is
-  supported today. No native installer is shipped in v0.4.6.
+  supported today. No native installer is shipped.
 
 ## Honesty about current capability
 
@@ -295,12 +297,15 @@ the `opencode.plugin.js` file are not used by any other harness.
 - ✅ OpenCode can **map** runtime IDs to doc slugs via
   `fund_agent_skills`.
 - ❌ OpenCode cannot yet **invoke** the Python runtime skills directly
-  through the plugin. That requires the manual host integration flow.
+  through the plugin. That requires the manual host integration flow
+  (or the runtime bridge CLI, which is host-invoked, not
+  plugin-invoked).
 - ❌ OpenCode cannot yet **fetch** NAV, news, or sentiment. The host
   must own those calls.
 - ❌ The plugin does not implement a planner loop. OpenCode owns that.
 
 The OpenCode install is therefore a discoverability + docs layer, not
-a runtime bridge. This is the smallest honest step toward
-installable-skillpack that does not violate the host-agnostic
-architecture constraints.
+a runtime bridge. The runtime bridge CLI
+([`docs/install/runtime-bridge-cli.md`](./runtime-bridge-cli.md)) is
+a **separate**, host-invoked surface that the OpenCode plugin does
+not shell out to and does not depend on.

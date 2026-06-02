@@ -54,8 +54,14 @@ def test_opencode_plugin_uses_esm_syntax():
 
 def test_opencode_plugin_has_plugin_version_constant():
     text = PLUGIN_FILE.read_text(encoding="utf-8")
-    assert re.search(r"PLUGIN_VERSION\s*=\s*[\"']0\.4\.6[\"']", text), (
-        "opencode.plugin.js must declare PLUGIN_VERSION = '0.4.6' (or current version)"
+    # PLUGIN_VERSION must equal the canonical VERSION file. The
+    # contract is that the plugin advertises the same version as
+    # the package; the test reads the current value rather than
+    # pinning a literal so it stays valid across dev tags.
+    version_text = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+    pattern = r"PLUGIN_VERSION\s*=\s*[\"']" + re.escape(version_text) + r"[\"']"
+    assert re.search(pattern, text), (
+        f"opencode.plugin.js must declare PLUGIN_VERSION = '{version_text}'"
     )
 
 

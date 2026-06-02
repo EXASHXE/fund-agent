@@ -1,6 +1,6 @@
 """Install docs must be honest about current capability.
 
-The v0.4.6 OpenCode install is a metadata + doc reader plugin only. It is
+The OpenCode install is a metadata + doc reader plugin only. It is
 NOT a runtime bridge, NOT a data fetcher, and NOT a trading system. These
 tests guard the install docs against overclaiming, which would mislead
 users and break the host-agnostic architecture constraints.
@@ -27,7 +27,7 @@ def _text(path: Path) -> str:
 
 def test_install_docs_do_not_claim_full_runtime_bridge_in_v0_4_4():
     """Install docs must not claim the OpenCode plugin runs the Python
-    runtime in v0.4.6."""
+    runtime in the current release."""
     forbidden = [
         "opencode plugin runs fund-agent",
         "opencode plugin invokes fund-analysis",
@@ -181,31 +181,35 @@ def test_opencode_plugin_does_not_claim_full_runtime_bridge():
 
 def test_runtime_bridge_design_doc_exists_and_is_marked_future():
     """The runtime bridge design doc must exist and clearly mark itself
-    as not implemented in the current release."""
+    as partially implemented (thin CLI in v0.4.7-dev) with the deeper
+    runtime bridge still future."""
     assert RUNTIME_BRIDGE_DOC.exists(), (
-        "docs/design/runtime-bridge.md must document the future runtime bridge"
+        "docs/design/runtime-bridge.md must document the runtime bridge"
     )
     text = _text(RUNTIME_BRIDGE_DOC)
     assert "design" in text or "future" in text, (
         "runtime-bridge.md must mark itself as design / future"
     )
-    # The doc must explicitly state that the runtime bridge is not
-    # implemented in the current release. The current release at
-    # the time of writing is v0.4.6; we accept v0.4.4, v0.4.5, or
-    # v0.4.6 in the doc text so the test is forward-compatible with
-    # the next design doc refresh.
+    # The doc must mention at least one of the recent milestone
+    # versions so it is not orphaned from the release narrative.
     has_version_marker = (
         "v0.4.4" in text
         or "v0.4.5" in text
         or "v0.4.6" in text
+        or "v0.4.7" in text
     )
-    has_not_implemented_marker = (
-        "not implemented" in text
+    # The doc must say that the deeper runtime bridge is still
+    # future. The thin CLI shipped in v0.4.7-dev, but the
+    # subprocess-handler and OpenCode-plugin wrapper are future.
+    has_future_marker = (
+        "future" in text
+        or "not implemented" in text
         or "not in v0.4.4" in text
         or "not in v0.4.5" in text
         or "not in v0.4.6" in text
+        or "not in v0.4.7" in text
     )
-    assert has_version_marker and has_not_implemented_marker, (
-        "runtime-bridge.md must state the bridge is not implemented "
-        "in v0.4.4 / v0.4.5 / v0.4.6"
+    assert has_version_marker and has_future_marker, (
+        "runtime-bridge.md must reference a recent version AND "
+        "mark the deeper runtime bridge as future"
     )

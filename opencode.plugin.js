@@ -50,7 +50,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join, normalize, relative } from "node:path";
 import { createRequire } from "node:module";
 
-const PLUGIN_VERSION = "0.4.6";
+const PLUGIN_VERSION = "0.4.7-dev";
 const PLUGIN_NAME = "fund-agent";
 
 // Manifest runtime skill ID -> hyphenated Markdown doc slug.

@@ -1,0 +1,36 @@
+{
+  "task_id": "runtime-bridge-decision-support",
+  "step_id": "decision-support-1",
+  "skill_name": "decision_support",
+  "payload": {
+    "evidence_graph": {
+      "items": {
+        "ev-hard-positive": {
+          "evidence_id": "ev-hard-positive",
+          "evidence_type": "HardEvidence",
+          "source_type": "local_quant_tools",
+          "timestamp": "2026-05-31T00:00:00",
+          "related_entities": ["fund:110011"],
+          "claim": "Positive local quant baseline",
+          "value": {"score": 1.0},
+          "confidence_weight": 1.0,
+          "direction": "positive",
+          "version": "evidence-contract.v2",
+          "provenance": {"tool": "local_quant_tools"}
+        }
+      },
+      "edges": [],
+      "stats": {
+        "total": 1,
+        "hard": 1,
+        "soft": 0,
+        "hybrid": 0,
+        "conflicts": 0
+      }
+    },
+    "objective": "review fund",
+    "risk_budget": {"max_drawdown": 0.1},
+    "portfolio_context": {},
+    "time_horizon": "1 year"
+  }
+}

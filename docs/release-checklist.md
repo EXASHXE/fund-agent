@@ -267,3 +267,48 @@ PYTHONPATH=. pytest tests/install -q
       underscore-skill dirs in the published npm tarball
 - [ ] No new provider SDKs, no new network calls, no new
       autonomous loop, no runtime bridge, no planner loop
+
+## 15. v0.4.7-dev Runtime Bridge CLI
+
+- [ ] `python scripts/run_skill.py --list-skills --pretty` returns
+      a JSON envelope listing all five manifest runtime IDs
+      (`fund_analysis`, `news_research`, `sentiment_analysis`,
+      `thesis_generation`, `decision_support`)
+- [ ] `python scripts/run_skill.py --skill fund_analysis --input
+      examples/runtime_bridge_fund_analysis_input.json --pretty`
+      exits 0 and emits `ok=true` JSON
+- [ ] `python scripts/run_skill.py --skill decision_support --input
+      examples/runtime_bridge_decision_support_input.json --pretty`
+      exits 0 and emits `ok=true` JSON
+- [ ] `PYTHONPATH=. pytest tests/runtime_bridge -q` passes (CLI,
+      manifest resolution, no-network, decision support, examples)
+- [ ] `scripts/run_skill.py` delegates to
+      `src.skillpack.run_skill:main`
+- [ ] `src/skillpack/run_skill.py` resolves runtime classes from
+      the manifest via `src.skillpack.loader.resolve_runtime`; it
+      does not hardcode runtime classes
+- [ ] Bridge-level error codes are exactly
+      `INVALID_INPUT | UNKNOWN_SKILL | RUNTIME_LOAD_FAILED |
+      SKILL_RUN_FAILED | JSON_SERIALIZATION_FAILED`
+- [ ] Bridge stdout is JSON only; diagnostics go to stderr
+- [ ] Bridge does not import provider SDKs, does not call
+      `requests` / `httpx` / `urllib.request` / `subprocess`, does
+      not shell out to OpenCode, and does not reference
+      `opencode.plugin.js` or `@opencode-ai/plugin`
+- [ ] `opencode.plugin.js` still does not call Python, does not
+      spawn subprocesses, does not fetch data, and does not run
+      providers (independent surface)
+- [ ] `docs/design/runtime-bridge.md` is updated to mark the thin
+      CLI bridge as implemented in v0.4.7-dev and the deeper
+      runtime bridge (subprocess handlers, OpenCode plugin tool
+      wrapper) as still future
+- [ ] `docs/install/runtime-bridge-cli.md` exists and documents
+      the JSON-in / JSON-out contract, the MCP boundary, and the
+      relationship to the plugin, the design doc, and the manifest
+- [ ] `examples/minimal_runtime_bridge_fund_analysis.py` runs
+      end-to-end (asserted by
+      `tests/runtime_bridge/test_runtime_bridge_examples.py` and
+      `scripts/check_examples.py`)
+- [ ] No new fund metrics, no new portfolio tools, no new
+      schemas, no new runtime contracts, no new MCP providers, no
+      autonomous loop, no planner loop, no server, no daemon

@@ -180,7 +180,7 @@ test fixtures and are validated by `scripts/check_examples.py`.
 ## Versioning
 
 `fund-agent` follows semantic versioning. The current version is
-`0.4.6`. The canonical sources of truth are:
+`0.4.7-dev`. The canonical sources of truth are:
 
 - `VERSION` — the version string
 - `pyproject.toml` — `project.version`
@@ -213,17 +213,47 @@ pip uninstall fund-agent
 rm -rf /path/to/fund-agent
 ```
 
+## Runtime bridge CLI (optional, v0.4.7-dev)
+
+`fund-agent` ships a thin **runtime bridge CLI** for hosts that
+want a process boundary between their code and the runtime skills
+without writing Python import boilerplate. The bridge is
+host-agnostic, JSON-in / JSON-out, and does not fetch data, import
+provider SDKs, or run an agent loop. It is **independent** of the
+OpenCode plugin (the plugin still does not call Python).
+
+```bash
+# List the available runtime skills
+python scripts/run_skill.py --list-skills --pretty
+
+# Run fund_analysis
+python scripts/run_skill.py \
+    --skill fund_analysis \
+    --input examples/runtime_bridge_fund_analysis_input.json \
+    --pretty
+
+# Run decision_support
+python scripts/run_skill.py \
+    --skill decision_support \
+    --input examples/runtime_bridge_decision_support_input.json \
+    --pretty
+```
+
+For the full contract, MCP boundary behavior, and examples, see
+[`docs/install/runtime-bridge-cli.md`](./runtime-bridge-cli.md).
+
 ## Separate installs for other harnesses
 
 - **OpenCode:** see [`docs/install/opencode.md`](./opencode.md). The
   OpenCode install is a thin plugin wrapper around this skill pack.
 - **Codex:** see [`docs/install/codex.md`](./codex.md). Codex has no
-  OMO-style installer in v0.4.6; you wire fund-agent into Codex
-  manually.
+  OMO-style installer; you wire fund-agent into Codex manually.
 - **Claude Code, OpenClaw, Hermes:** the manual host install is
-  sufficient. No native installer is shipped in v0.4.6.
+  sufficient. No native installer is shipped.
 - **Generic Python host:** this document. The Python skill pack is
   the canonical install path for any host that can `pip install`.
+- **Process-boundary host:** use the runtime bridge CLI
+  ([`docs/install/runtime-bridge-cli.md`](./runtime-bridge-cli.md)).
 
 ## Honesty about current capability
 

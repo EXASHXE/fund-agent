@@ -58,10 +58,10 @@ def test_package_json_dev_dependencies_are_minimal():
     data = json.loads(PACKAGE_JSON.read_text(encoding="utf-8"))
     dev_deps = data.get("devDependencies", {})
     # Dev deps are tolerated (e.g. for plugin linting) but must be small
-    # and obvious. We allow none by default in v0.4.6 to keep the install
+    # and obvious. We allow none by default in v0.4.7-dev to keep the install
     # surface zero-dep.
     assert dev_deps == {}, (
-        f"package.json must not declare devDependencies in v0.4.6, got {dev_deps!r}"
+        f"package.json must not declare devDependencies in v0.4.7-dev, got {dev_deps!r}"
     )
 
 

@@ -27,8 +27,13 @@ manual flow; Codex has a manual / light install. See:
 - OpenCode: [`docs/install/opencode.md`](./install/opencode.md) and
   [`.opencode/INSTALL.md`](../.opencode/INSTALL.md)
 - Manual / Python host: [`docs/install/manual-host.md`](./install/manual-host.md)
+- Runtime bridge CLI (host-agnostic, JSON-in / JSON-out subprocess
+  over the manifest runtime skills — shipped in v0.4.7-dev):
+  [`docs/install/runtime-bridge-cli.md`](./install/runtime-bridge-cli.md)
 - Codex: [`docs/install/codex.md`](./install/codex.md)
-- Future runtime bridge: [`docs/design/runtime-bridge.md`](./design/runtime-bridge.md)
+- Deeper runtime bridge design (subprocess handlers, OpenCode plugin
+  `fund_agent_run_skill` tool — still future):
+  [`docs/design/runtime-bridge.md`](./design/runtime-bridge.md)
 - Other harnesses: [`docs/host-compatibility.md`](./host-compatibility.md)
 
 The OpenCode install does **not** turn `fund-agent` into an autonomous
@@ -195,6 +200,31 @@ news_skill = NewsResearchSkill(mcp_adapter=host_mcp)
 
 or through host-specific dependency injection. MCP call results must be
 structured dictionaries.
+
+## Process-Boundary Hosts (Runtime Bridge CLI)
+
+Hosts that prefer a process boundary over in-process Python imports
+can drive the runtime skills through the **runtime bridge CLI**
+shipped in v0.4.7-dev. The bridge reads a JSON envelope from
+`--input` (path or `-` for stdin), calls one manifest runtime
+skill, and writes a JSON envelope to stdout. It accepts in-memory
+MCP canned responses via a `mcp_responses` block and never
+imports provider SDKs or makes network calls.
+
+```bash
+python scripts/run_skill.py \
+    --skill fund_analysis \
+    --input examples/runtime_bridge_fund_analysis_input.json \
+    --pretty
+```
+
+The bridge is **independent of the OpenCode plugin** — the plugin
+still does not call Python. See
+[`docs/install/runtime-bridge-cli.md`](./install/runtime-bridge-cli.md)
+for the full contract, JSON schemas, and MCP boundary behavior. The
+deeper runtime-bridge design (subprocess handlers, OpenCode plugin
+`fund_agent_run_skill` tool) is still future and lives in
+[`docs/design/runtime-bridge.md`](./design/runtime-bridge.md).
 
 ## Decision Support
 

@@ -271,15 +271,23 @@ flow.
   [`.opencode/INSTALL.md`](.opencode/INSTALL.md) /
   [`docs/install/opencode.md`](docs/install/opencode.md)
 - Manual / Python host: [`docs/install/manual-host.md`](docs/install/manual-host.md)
+- Runtime bridge CLI (thin JSON-in / JSON-out Python shim,
+  host-agnostic): [`docs/install/runtime-bridge-cli.md`](docs/install/runtime-bridge-cli.md)
 - Codex (manual / light): [`docs/install/codex.md`](docs/install/codex.md)
 - Other harnesses: see [`docs/host-compatibility.md`](docs/host-compatibility.md)
-- Future runtime bridge: [`docs/design/runtime-bridge.md`](docs/design/runtime-bridge.md)
+- Deeper runtime bridge design (subprocess handlers, OpenCode
+  plugin tool wrapper — still future):
+  [`docs/design/runtime-bridge.md`](docs/design/runtime-bridge.md)
 
 The OpenCode plugin exposes a `fund_agent_skills` tool, a
 `fund_agent_skill_doc` tool, and a `fund_agent_runtime_hint` tool. It
 does not run an autonomous loop, does not fetch data, and does not
 place trades. The host agent owns planning, MCP provider wiring, and
 final user interaction.
+
+The runtime bridge CLI is a separate, independent surface for hosts
+that want a process boundary. It is **not** wired into the OpenCode
+plugin; the plugin still does not call Python.
 
 ## Development
 

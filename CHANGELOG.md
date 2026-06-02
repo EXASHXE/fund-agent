@@ -1,5 +1,119 @@
 # Changelog
 
+## 0.4.7-dev-runtime-bridge-cli
+
+### Added
+
+- `src/skillpack/run_skill.py` — runtime bridge module. A thin local
+  JSON-in / JSON-out Python shim over the existing manifest runtime
+  skills. Resolves runtime classes from
+  `skillpack/fund-agent.skillpack.yaml` via
+  `src.skillpack.loader.resolve_runtime`. Does not import provider
+  SDKs, does not call the network, does not run an agent loop, and
+  does not become a daemon or server. For skills that require MCP,
+  the bridge accepts an in-memory `mcp_responses` block in the
+  input JSON; it never spawns subprocesses for handlers. The host
+  owns the actual provider calls.
+- `scripts/run_skill.py` — thin CLI wrapper that delegates to
+  `src.skillpack.run_skill`. Supports:
+  - `python scripts/run_skill.py --skill fund_analysis --input payload.json`
+  - `python scripts/run_skill.py --skill fund_analysis --input - < payload.json`
+  - `python scripts/run_skill.py --skill fund_analysis --input payload.json --output output.json`
+  - `python scripts/run_skill.py --skill fund_analysis --input payload.json --pretty`
+  - `python scripts/run_skill.py --list-skills`
+  - `python scripts/run_skill.py --manifest path/to/manifest.yaml --list-skills`
+  Stdout is JSON only. Diagnostics go to stderr. Exit code 0 means
+  the bridge itself succeeded; the embedded skill status is
+  reported in the JSON envelope. Bridge-level error codes:
+  `INVALID_INPUT`, `UNKNOWN_SKILL`, `RUNTIME_LOAD_FAILED`,
+  `SKILL_RUN_FAILED`, `JSON_SERIALIZATION_FAILED`.
+- `examples/runtime_bridge_fund_analysis_input.json` — minimal
+  convenience input for `fund_analysis`.
+- `examples/runtime_bridge_decision_support_input.json` — minimal
+  convenience input for `decision_support` with a one-evidence
+  graph fixture.
+- `examples/minimal_runtime_bridge_fund_analysis.py` — minimal
+  host demo that spawns the bridge CLI from Python and parses the
+  JSON envelope.
+- `docs/install/runtime-bridge-cli.md` — install / usage guide for
+  the runtime bridge CLI, including the JSON-in / JSON-out
+  contract, MCP boundary behavior, and the relationship to the
+  existing manifest, plugin, and design doc.
+- `tests/runtime_bridge/test_run_skill_cli.py` — 11 CLI tests
+  covering `--list-skills`, fund_analysis happy path, `--output`,
+  `--pretty`, invalid JSON, unknown skill, and stdout-is-JSON-only.
+- `tests/runtime_bridge/test_runtime_bridge_manifest_resolution.py`
+  — 7 tests covering manifest resolution, hyphen-slug convenience,
+  underscore runtime_id, no-legacy-imports, and
+  no-provider-SDK-imports.
+- `tests/runtime_bridge/test_runtime_bridge_no_network.py` — 5
+  tests guarding the no-network contract: no provider SDKs, no
+  `requests` / `httpx` / `urllib.request`, no subprocess, no
+  `opencode.plugin.js` reference, and a live end-to-end
+  invocation that must not touch the network.
+- `tests/runtime_bridge/test_runtime_bridge_decision_support.py`
+  — 5 tests covering DecisionSupportSkill via the bridge:
+  minimal evidence graph, JSON-serializable output, deterministic
+  mode, hyphen slug, and stdin input.
+- `tests/runtime_bridge/test_runtime_bridge_examples.py` — 6
+  tests pinning the documented example commands and
+  `examples/minimal_runtime_bridge_fund_analysis.py`.
+
+### Changed
+
+- `VERSION`, `pyproject.toml`, `skillpack/fund-agent.skillpack.yaml`,
+  `package.json`, and `opencode.plugin.js` `PLUGIN_VERSION` bumped
+  to `0.4.7-dev` (the v0.4.6 tag is preserved at the v0.4.6
+  commit; this is post-tag development).
+- `scripts/check_examples.py` adds the runtime bridge example
+  inputs to its validation pass and registers
+  `examples/minimal_runtime_bridge_fund_analysis.py` as a demo
+  script.
+- `pyproject.toml` `testpaths` includes `tests/runtime_bridge` so
+  the new test directory is part of the default gate.
+- `tests/install/test_npm_pack_contents.py` and
+  `tests/install/test_opencode_plugin_skeleton.py` now read the
+  canonical `VERSION` file at test time rather than pinning a
+  literal version string. The contract — "the npm pack version
+  equals the canonical VERSION" — is preserved; the test is now
+  forward-compatible with dev tags.
+- `tests/install/test_install_docs_no_overclaim.py` and
+  `tests/install/test_no_node_dependency_bloat.py` version
+  references updated to be version-neutral or current.
+- `docs/design/runtime-bridge.md` is now positioned as the
+  "deeper" / future runtime-bridge design (subprocess handlers,
+  OpenCode plugin tool wrapper). The thin CLI shipped in
+  v0.4.7-dev is the implementation of a subset of the full design.
+- `docs/release-checklist.md` adds a v0.4.7 section.
+
+### Honesty
+
+- The runtime bridge is a **thin CLI shim**, not an agent loop, not
+  a server, not a daemon, not a planner, not a provider
+  integration.
+- The bridge **does not fetch data**. For MCP-requiring skills, the
+  bridge returns a clear PARTIAL/FAILED envelope explaining the
+  host-owned MCP requirement when no `mcp_responses` block is
+  supplied.
+- The bridge **does not import provider SDKs** (Tavily, Finnhub,
+  Exa, Firecrawl, Reddit, AkShare, OpenAI, Anthropic, LangChain).
+- The bridge **does not shell out to OpenCode**, does not call
+  `opencode.plugin.js`, and does not import `@opencode-ai/plugin`.
+- The bridge is **host-agnostic**; it does not know whether the
+  caller is OpenCode, Codex, Claude Code, OpenClaw, Hermes, or a
+  custom CLI.
+- The bridge **does not change the existing Python runtime**. It
+  resolves runtime classes from the manifest and calls them via
+  their existing `run(skill_input)` API.
+- Only `decision_support` may produce formal `Decision` and
+  `ExecutionLedger` artifacts; the bridge does not relax this.
+- `opencode.plugin.js` still does **not** call Python, does **not**
+  spawn subprocesses, does **not** fetch data, and does **not** run
+  providers. The plugin and the bridge are independent surfaces.
+- No new fund metrics, no new portfolio tools, no new schemas, no
+  new runtime contracts, no new MCP providers, no autonomous loop.
+- All v0.4.6 install-packaging-smoke items still pass.
+
 ## 0.4.6-install-packaging-smoke
 
 ### Added

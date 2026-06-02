@@ -1,0 +1,55 @@
+{
+  "task_id": "runtime-bridge-fund-analysis",
+  "step_id": "fund-analysis-1",
+  "skill_name": "fund_analysis",
+  "payload": {
+    "portfolio": {
+      "as_of_date": "2026-06-01",
+      "total_value": 200000,
+      "cash_available": 20000,
+      "positions": [
+        {
+          "fund_code": "110011",
+          "fund_name": "Example Fund",
+          "current_value": 30000,
+          "total_cost": 32000,
+          "shares": 12345.67,
+          "target_weight": 0.12,
+          "tags": ["healthcare", "active"]
+        }
+      ]
+    },
+    "fund_profiles": {
+      "110011": {
+        "fund_code": "110011",
+        "name": "Example Fund",
+        "fund_type": "active",
+        "manager": "Manager",
+        "benchmark": "Benchmark"
+      }
+    },
+    "nav_history": {
+      "110011": [
+        {"date": "2025-06-01", "nav": 1.0},
+        {"date": "2026-06-01", "nav": 1.2}
+      ]
+    },
+    "holdings": {
+      "110011": [
+        {"name": "A", "weight": 0.08, "industry": "pharma", "region": "CN"}
+      ]
+    },
+    "risk_profile": {
+      "risk_level": "moderate",
+      "max_single_fund_weight": 0.2,
+      "max_theme_weight": 0.35,
+      "max_trade_pct": 0.1,
+      "liquidity_reserve_pct": 0.1,
+      "short_term_trade_budget_pct": 0.1
+    },
+    "constraints": {
+      "min_trade_amount": 100,
+      "forbidden_actions": []
+    }
+  }
+}

@@ -1,9 +1,14 @@
-# Runtime Bridge — Design (Future)
+# Runtime Bridge — Design
 
-> Status: **design only**. Not implemented in v0.4.6. This document
-> describes the shape of a future optional runtime bridge between an
-> OpenCode / Codex plugin and the deterministic Python runtime in
-> `src/skills_runtime/`.
+> Status: **partially implemented in v0.4.7-dev**. The thin local
+> JSON-in / JSON-out CLI bridge is shipped in v0.4.7-dev
+> (`scripts/run_skill.py`, `src/skillpack/run_skill.py`). The
+> deeper parts of this design — subprocess-based MCP handler
+> spawning, the OpenCode plugin `fund_agent_run_skill` tool, and
+> the "deeper" host-side runtime-bridge surface — are still
+> future and are not on the v0.4.7-dev critical path. This
+> document describes the **full** design; the v0.4.7-dev
+> implementation realizes a subset.
 >
 > The v0.4.6 OpenCode install is **plugin metadata + doc reader only**
 > and does not run a runtime bridge. See
@@ -17,7 +22,15 @@ The OpenCode plugin in v0.4.6 registers three custom tools
 `fund_agent_runtime_hint`) and logs at startup. It deliberately does
 **not** invoke the Python runtime from inside the plugin.
 
-A runtime bridge would require one of:
+The v0.4.7-dev runtime bridge CLI ships a **separate, independent
+surface**: a thin Python CLI that hosts can call from any process
+boundary. The bridge is **not** wired into the OpenCode plugin and
+the plugin still does not call Python. Hosts that want a process
+boundary invoke the bridge directly; hosts that already have a
+Python process continue to import the runtime classes directly.
+
+A **deeper** runtime bridge (one that lives inside the OpenCode
+plugin) would require one of:
 
 1. A sidecar Python process spawned by the plugin and proxied through
    a tool call.
@@ -37,8 +50,11 @@ All three add real complexity:
   which the user has to manage and which is not "installable" in the
   Superpowers / OMO sense.
 
-The v0.4.6 milestone therefore ships the **metadata + doc reader**
-plugin and documents a future, opt-in runtime bridge here.
+The v0.4.7-dev milestone therefore ships the **thin CLI runtime
+bridge** as an independent surface (host-invoked, not
+plugin-invoked) and continues to document the **deeper** runtime
+bridge here. The OpenCode plugin remains metadata + doc reader
+only.
 
 ## Goals of the future runtime bridge
 
@@ -57,43 +73,54 @@ plugin and documents a future, opt-in runtime bridge here.
 
 ## Proposed shape
 
-### Python CLI wrapper
+### v0.4.7-dev: thin CLI bridge (SHIPPED)
+
+The v0.4.7-dev implementation is a thin Python CLI shim that
+hosts invoke as a separate process. It is **not** wired into the
+OpenCode plugin and the plugin does not shell out to it.
 
 ```text
-python -m fund_agent.run_skill \
+python scripts/run_skill.py \
     --skill fund_analysis \
     --input payload.json
 ```
 
 Behavior:
 
-- Read `payload.json` from disk and validate it against
-  `src.schemas.skill.SkillInput`.
+- Read `payload.json` from disk (or read JSON from stdin via
+  `--input -`) and validate it.
 - Resolve the manifest runtime path
-  (`src.skills_runtime.fund_analysis:FundAnalysisSkill`).
-- If the resolved skill needs MCP capabilities, read a host-supplied
-  `MCPHostAdapter` from `--adapter-config` (path to a JSON file
-  describing capability names, schemas, and handler script paths).
+  (`src.skills_runtime.fund_analysis:FundAnalysisSkill`) via
+  `src.skillpack.loader.resolve_runtime`.
+- If the resolved skill needs MCP capabilities, the host may
+  supply an in-memory `mcp_responses` block in the input JSON.
+  The bridge wraps that block in an
+  `InMemoryMCPHostAdapter`. The bridge never spawns subprocesses
+  for MCP handlers (the deeper "subprocess handler" model is still
+  future; see below).
 - Call `skill.run(SkillInput)`.
-- Print a JSON document to stdout with `status`, `evidence_items`,
-  `artifacts`, `warnings`, and `errors`.
-- Exit 0 on success, exit 2 on validation error, exit 3 on
-  `MCP_CALL_FAILED`, exit 1 on other failures.
+- Print a JSON envelope on stdout with `ok`, `skill_name`,
+  `status`, `artifacts`, `evidence_items`, `warnings`, `errors`,
+  and `metadata`. Diagnostics go to stderr.
+- Exit 0 on bridge success, exit 2 on bridge failure. The
+  embedded skill `status` is reported inside the envelope.
 
 The same CLI works for all five manifest runtime skills
 (`fund_analysis`, `news_research`, `sentiment_analysis`,
-`thesis_generation`, `decision_support`). The `--skill` flag selects
-the runtime class; the manifest's `runtime` field is the canonical
-mapping.
+`thesis_generation`, `decision_support`). The `--skill` flag
+accepts either a runtime_id (e.g. `fund_analysis`) or a hyphenated
+agent-facing slug (e.g. `fund-analysis`); the manifest's
+`runtime` field is the canonical mapping.
 
 The CLI is small. Most of the work is in the existing Python
-runtime; the CLI is just an `argparse` shim that loads the manifest,
-parses the input, calls the skill, and prints the output.
+runtime; the CLI is just an `argparse` shim that loads the
+manifest, parses the input, calls the skill, and prints the
+output.
 
 ### JSON in / JSON out contract
 
-The input JSON is the `SkillInput` shape, with one extension for the
-adapter config:
+The input JSON is the `SkillInput` shape, with one extension for
+the optional in-memory MCP responses:
 
 ```json
 {
@@ -102,53 +129,54 @@ adapter config:
   "skill_name": "fund_analysis",
   "payload": { "...": "host-supplied data" },
   "required_mcp_capabilities": ["web_search"],
-  "adapter_config_path": "/path/to/mcp_handlers.json"
+  "mcp_responses": {
+    "web_search": { "items": [...] }
+  }
 }
 ```
 
-The output JSON is the `SkillOutput` shape, serialized with
-`to_dict()`:
+Or, a convenience envelope that the bridge expands to a full
+`SkillInput` (the bridge injects `task_id`, `step_id`, and
+`skill_name`):
 
 ```json
 {
-  "status": "OK",
-  "evidence_items": [ ... ],
-  "artifacts": { "...": "..." },
-  "warnings": [ ... ],
-  "errors": [ ... ]
+  "payload": { "...": "host-supplied data" },
+  "mcp_responses": { "...": "host-supplied canned responses" }
 }
 ```
 
-The OpenCode / Codex plugin wraps this CLI in a custom tool:
+The output JSON is a stable envelope that always parses as
+JSON:
 
-```javascript
-// Pseudocode — not part of v0.4.6
-fund_agent_run_skill: tool({
-  description: "Run a fund-agent Python runtime skill and return its output.",
-  args: {
-    skill_name: stringSchema(),
-    payload_json: stringSchema(),
-  },
-  async execute(args, ctx) {
-    // 1. Write payload_json to a temp file.
-    // 2. Spawn: python -m fund_agent.run_skill --skill <skill_name> --input <temp>
-    // 3. Capture stdout, return as the tool result.
-  },
-})
+```json
+{
+  "ok": true,
+  "skill_name": "fund_analysis",
+  "step_id": "fund-analysis-1",
+  "status": "OK",
+  "artifacts": { "...": "..." },
+  "evidence_items": [ ... ],
+  "warnings": [ ... ],
+  "errors": [ ... ],
+  "metadata": { "...": "..." }
+}
 ```
 
-This keeps the bridge opt-in: a host that does not have Python
-available simply does not call this tool. The host that does have
-Python uses the same pattern.
+Bridge-level failures look like:
 
-### Codex plugin wrapper
+```json
+{
+  "ok": false,
+  "error": {
+    "code": "INVALID_INPUT|UNKNOWN_SKILL|RUNTIME_LOAD_FAILED|SKILL_RUN_FAILED|JSON_SERIALIZATION_FAILED",
+    "message": "...",
+    "details": { "...": "..." }
+  }
+}
+```
 
-Codex has no stable plugin spec yet, so the Codex path is
-"shell out to the same CLI". A future Codex-specific plugin can
-wrap `python -m fund_agent.run_skill` once the Codex plugin spec
-stabilizes.
-
-### Keeping deterministic outputs
+### Determinism and provider isolation
 
 The bridge must not introduce nondeterminism:
 
@@ -159,56 +187,37 @@ The bridge must not introduce nondeterminism:
   `SkillInput` → one `SkillOutput`.
 - The CLI does not cache results. The host owns caching.
 
-### Keeping provider access host-owned
+The bridge must not import provider SDKs:
 
-The CLI accepts an `adapter_config_path` for MCP handlers. The CLI
-itself never imports a provider SDK; it only loads a JSON file that
-describes handler scripts. The host runs the actual providers.
+- The CLI itself never imports Tavily, Finnhub, Exa, Firecrawl,
+  Reddit, AkShare, OpenAI, Anthropic, LangChain, or similar
+  vendor SDKs.
+- The CLI never spawns subprocesses for MCP handlers.
+- The CLI never shells out to OpenCode or to
+  `opencode.plugin.js`.
 
-For example:
+The host owns provider access: the host injects `mcp_responses`
+directly into the input JSON, or calls `run_skill.py` from a
+process that already has the `MCPHostAdapter` in scope.
 
-```json
-{
-  "capabilities": [
-    {
-      "name": "web_search",
-      "handler_command": ["python", "/path/to/host_web_search.py"]
-    },
-    {
-      "name": "financial_news",
-      "handler_command": ["python", "/path/to/host_news.py"]
-    }
-  ]
-}
-```
+### Future: deeper runtime bridge
 
-The bridge spawns these as subprocesses only on demand, passes the
-MCP request as JSON on stdin, and reads the response as JSON on
-stdout. This is the same pattern `examples/minimal_host_*.py`
-already uses, just with a CLI boundary.
+A future milestone may realize the **deeper** runtime bridge
+that lives inside the OpenCode plugin. That deeper bridge would
+add:
 
-## OpenCode plugin tool wrapper (future)
+- An OpenCode plugin `fund_agent_run_skill` tool that spawns
+  `scripts/run_skill.py` as a subprocess and returns the JSON
+  envelope as the tool result.
+- A subprocess-based `adapter_config_path` mode that lets the
+  host declare MCP capability handler commands
+  (e.g. `["python", "/path/to/host_web_search.py"]`) and lets
+  the bridge spawn those handlers on demand.
+- A `PYTHON_RUNTIME_UNAVAILABLE` plugin error when `python` is
+  missing on PATH.
 
-When the runtime bridge ships, the OpenCode plugin will gain a
-fourth tool:
-
-```text
-fund_agent_run_skill
-  - args: { skill_name: string, payload_json: string }
-  - description: |
-      Run a fund-agent Python runtime skill via the CLI bridge.
-      Returns the SkillOutput JSON. Requires a `python` interpreter
-      on PATH and an adapter_config for skills that need MCP data.
-  - behavior:
-      - write payload_json to a temp file
-      - spawn `python -m fund_agent.run_skill --skill <skill_name> --input <temp>`
-      - read stdout, return as the tool result
-```
-
-The plugin will check for `python` on PATH at startup and log a
-warning if it is missing. The tool will return a structured error
-(`PYTHON_RUNTIME_UNAVAILABLE`) when `python` is missing rather than
-silently failing.
+These are **not** in v0.4.7-dev. The v0.4.7-dev thin CLI
+bridge is independent of the OpenCode plugin surface.
 
 ## What we are NOT doing in the runtime bridge
 
@@ -219,29 +228,33 @@ silently failing.
 - We are not adding a daemon / service.
 - We are not changing the Python runtime. The bridge is a thin CLI
   shim over the existing `src/skills_runtime/` classes.
+- The v0.4.7-dev thin CLI bridge does **not** wire into the
+  OpenCode plugin. The plugin still does not call Python.
 
 ## Acceptance criteria for the runtime bridge (when implemented)
 
-1. `python -m fund_agent.run_skill --help` works.
-2. `python -m fund_agent.run_skill --skill fund_analysis --input <good>`
-   exits 0 and prints a `SkillOutput` JSON.
-3. `python -m fund_agent.run_skill --skill fund_analysis --input <bad>`
+1. `python scripts/run_skill.py --help` works.
+2. `python scripts/run_skill.py --skill fund_analysis --input <good>`
+   exits 0 and prints the bridge JSON envelope.
+3. `python scripts/run_skill.py --skill fund_analysis --input <bad>`
    exits non-zero with a structured error code.
 4. The CLI never imports a provider SDK.
 5. The CLI never calls `requests`, `urllib`, `httpx`, `openai`,
    `anthropic`, `langchain`, `tavily`, `finnhub`, `exa`,
    `firecrawl`, or `praw` directly. Network access is mediated
-   only through the host-supplied `adapter_config_path`.
-6. The OpenCode plugin's `fund_agent_run_skill` tool returns a
-   structured error when `python` is missing on PATH.
+   only through the host-supplied `mcp_responses` block.
+6. The deeper OpenCode plugin `fund_agent_run_skill` tool is
+   **future** and is not in v0.4.7-dev.
 7. The OpenCode plugin still works in log-only mode when
    `@opencode-ai/plugin` peer dep is not resolved.
 
 ## Tracking
 
-This design is the candidate spec for a future milestone
-(likely `v0.5.x-runtime-bridge`). It is not on the v0.4.6
-critical path. If you need to wire the Python runtime into OpenCode
-today, use the manual host integration in
+The thin CLI bridge is shipped in v0.4.7-dev. The deeper
+runtime-bridge surface (subprocess handler spawning, OpenCode
+plugin tool wrapper) is still future and is the candidate spec
+for `v0.5.x-runtime-bridge`. If you need to wire the Python
+runtime into OpenCode today, use the manual host integration in
 [`docs/install/manual-host.md`](../install/manual-host.md) — it
-is the supported path.
+is the supported path. The runtime bridge CLI is documented in
+[`docs/install/runtime-bridge-cli.md`](../install/runtime-bridge-cli.md).
