@@ -191,16 +191,21 @@ def test_runtime_bridge_design_doc_exists_and_is_marked_future():
     )
     # The doc must explicitly state that the runtime bridge is not
     # implemented in the current release. The current release at
-    # the time of writing is v0.4.5; we accept v0.4.4 or v0.4.5
-    # in the doc text so the test is forward-compatible with the
-    # next design doc refresh.
-    has_version_marker = ("v0.4.4" in text) or ("v0.4.5" in text)
+    # the time of writing is v0.4.6; we accept v0.4.4, v0.4.5, or
+    # v0.4.6 in the doc text so the test is forward-compatible with
+    # the next design doc refresh.
+    has_version_marker = (
+        "v0.4.4" in text
+        or "v0.4.5" in text
+        or "v0.4.6" in text
+    )
     has_not_implemented_marker = (
         "not implemented" in text
         or "not in v0.4.4" in text
         or "not in v0.4.5" in text
+        or "not in v0.4.6" in text
     )
     assert has_version_marker and has_not_implemented_marker, (
         "runtime-bridge.md must state the bridge is not implemented "
-        "in v0.4.4 / v0.4.5"
+        "in v0.4.4 / v0.4.5 / v0.4.6"
     )

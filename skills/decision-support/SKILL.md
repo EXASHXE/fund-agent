@@ -1,6 +1,7 @@
 ---
 id: decision_support
 name: decision-support
+description: "Supporting skill. The only fund-agent skill that may produce a formal Decision and ExecutionLedger. Consumes an EvidenceGraph plus optional portfolio context, risk profile, constraints, and target trade amount. Active actions require evidence anchors."
 runtime: src.skills_runtime.decision_support:DecisionSupportSkill
 input_schema: src.schemas.skill:SkillInput
 output_schema: src.schemas.skill:SkillOutput

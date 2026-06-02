@@ -1,6 +1,7 @@
 ---
 id: sentiment_analysis
 name: sentiment-analysis
+description: "Supporting skill. Calls host-injected MCP social_sentiment capability to produce SoftEvidence (sentiment signals with source, timestamp, related entities). No direct provider SDK imports."
 runtime: src.skills_runtime.sentiment_analysis:SentimentAnalysisSkill
 input_schema: src.schemas.skill:SkillInput
 output_schema: src.schemas.skill:SkillOutput

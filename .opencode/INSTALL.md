@@ -10,6 +10,75 @@
 > the directory). The Python runtime is optional and host-driven.
 > There is no autonomous agent loop in this plugin.
 
+## Install modes (Mode A / Mode B / Mode C)
+
+There are three install modes for the OpenCode side. **Mode A** is
+the only one that runs fund-agent code at OpenCode startup;
+**Mode B** lets OpenCode's native `Agent Skills` discovery see the
+canonical Markdown skill collection; **Mode C** is a future runtime
+bridge that is not implemented in v0.4.6 (or any prior release).
+
+- **Mode A — Plugin metadata + doc-reader (current target).** A
+  project-local `opencode.plugin.js` registers three custom tools
+  (`fund_agent_skills`, `fund_agent_skill_doc`,
+  `fund_agent_runtime_hint`) and logs at startup. The plugin does
+  **not** shell out to Python and does **not** implement a
+  planner loop. This is what `fund-agent` ships in the npm package
+  and as the symlink target below.
+- **Mode B — Native Agent Skills install (optional).** Runs
+  `python scripts/install_opencode_skills.py` to copy the five
+  canonical `skills/<slug>/SKILL.md` directories into a target
+  OpenCode Agent Skills directory. Mode B is **git-clone-only** in
+  v0.4.6: the helper is part of the source checkout, not the npm
+  package.
+- **Mode C — Future runtime bridge (design only).** Documented at
+  `docs/design/runtime-bridge.md`. Not implemented in any shipped
+  release.
+
+Use Mode A (the plugin) alone if you only need the metadata +
+doc-reader tools. Use Mode A + Mode B together if you also want
+OpenCode's native `Agent Skills` discovery to see the same five
+skills.
+
+## Package contents — npm vs git
+
+The `package.json` at the repo root declares what ships in the
+npm package (Mode A only) and what is git-clone-only.
+
+**npm package contents** (Mode A only, no runtime, no helpers):
+
+- `package.json` — package metadata.
+- `opencode.plugin.js` — the Mode A plugin entrypoint.
+- `skillpack/` — the manifest, contracts, tools, capabilities,
+  examples, and schema.
+- `skills/<slug>/SKILL.md` and `skills/<slug>/references/*.md` for
+  the five canonical hyphenated skills.
+- `docs/install/opencode.md`, `docs/install/manual-host.md`,
+  `docs/install/codex.md` — install docs.
+- `README.md` — the package README.
+
+**Git-clone-only contents** (not in the npm package):
+
+- `scripts/install_opencode_skills.py` — the Mode B sync helper.
+  Run this from a clone of the repo.
+- `.opencode/INSTALL.md` — this file (the project-local install
+  guide).
+- `src/`, `tests/`, `examples/`, `docs/` (other than `docs/install/`)
+  — Python source, tests, host demos, and the rest of the
+  documentation.
+- `legacy/`, `docs/archive/`, `docs/design/runtime-bridge.md` —
+  the legacy pointer, the archived `fund-analyst` persona
+  material, and the future runtime bridge design doc.
+- `CHANGELOG.md`, `AGENTS.md`, `docs/release-checklist.md` —
+  developer and release docs.
+
+This split keeps the npm package small and honest: a user who
+installs the npm package gets a metadata + doc-reader plugin and
+the skill docs, with no Python runtime, no tests, no archive
+material, and no Mode B helper. A user who clones the git repo
+gets the full source tree, including the Mode B helper, all
+install docs, the Python runtime, and the host demos.
+
 ## Prerequisites
 
 - OpenCode installed (https://opencode.ai)
@@ -57,7 +126,7 @@ These tools do **not** fetch data, do **not** place trades, and do
 ## Skill collection
 
 OpenCode will discover the **composable Markdown skill collection** under
-`skills/<slug>/SKILL.md`. The collection in v0.4.5+ is:
+`skills/<slug>/SKILL.md`. The collection in v0.4.6+ is:
 
 - **Primary / default:** `fund-analysis` — start here for ordinary
   fund analysis and report requests.
@@ -142,16 +211,41 @@ add it to your `opencode.json`:
 OpenCode will install it via Bun at startup and cache it under
 `~/.cache/opencode/node_modules/`.
 
-> **Note:** As of v0.4.5, the npm package is declared but not yet
-> published. Use the project-local install above until the npm
-> publication milestone is cut. The install will still work end-to-end
-> via the project-local path; only the npm convenience install is
-> pending.
+> **Note (v0.4.6):** the npm package is **declared but not yet
+> published**. Use the project-local install above until the npm
+> publication milestone is cut. The install will still work
+> end-to-end via the project-local path; only the npm convenience
+> install is pending.
+
+### What the npm package actually contains (and what it does not)
+
+The `package.json` `files` field is the authoritative list of what
+ships in the npm tarball. The v0.4.6 npm package is **Mode A only**:
+the plugin entrypoint, the skillpack manifest and examples, the
+five canonical hyphenated `skills/<slug>/SKILL.md` directories and
+their `references/`, and the three install docs. It does **not**
+include the Mode B sync helper (`scripts/install_opencode_skills.py`),
+the Python runtime, the tests, the host demos, the archived
+`fund-analyst` persona, or the legacy pointer.
+
+If a user installs the npm package and also wants Mode B (the
+native `Agent Skills` directory copy), they must run
+`scripts/install_opencode_skills.py` from a git clone of the repo,
+not from the npm package. This is the same helper documented in
+the "Install (Mode B — native Agent Skills)" section above. The
+separation is intentional: the npm package is small, dependency-
+free, and ships a pure metadata + doc reader; the git clone ships
+the full source tree including the sync helper.
+
+The exact file list is verified by
+`tests/install/test_npm_pack_contents.py` (runs `npm pack
+--dry-run --json` and asserts both the required and forbidden
+paths). That test is the v0.4.6 install-packaging-smoke guard.
 
 ## Pin to a specific version (git tag)
 
 ```bash
-git clone --branch v0.4.5 https://github.com/EXASHXE/fund-agent.git
+git clone --branch v0.4.6 https://github.com/EXASHXE/fund-agent.git
 ```
 
 or, for a fully reproducible symlink, pin the commit:
@@ -159,7 +253,7 @@ or, for a fully reproducible symlink, pin the commit:
 ```bash
 git clone https://github.com/EXASHXE/fund-agent.git
 cd fund-agent
-git checkout v0.4.5
+git checkout v0.4.6
 # then create the symlink as above
 ```
 
@@ -170,7 +264,7 @@ For development, the project-local install with `master` is fine.
 After restarting OpenCode in your project:
 
 1. Check the logs. You should see a line such as:
-   `fund-agent v0.4.5 plugin loaded; primary skill: fund-analysis; supporting skills: decision-support, news-research, sentiment-analysis, thesis-generation`
+   `fund-agent v0.4.6 plugin loaded; primary skill: fund-analysis; supporting skills: decision-support, news-research, sentiment-analysis, thesis-generation`
    `fund-analysis` is the **primary / default skill**; the four
    supporting skills are loaded only when their description matches
    the subtask (see the `fund-analysis` SKILL.md "When to load

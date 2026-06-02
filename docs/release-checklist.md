@@ -211,3 +211,52 @@ PYTHONPATH=. pytest tests/install -q
 - [ ] No network calls in `opencode.plugin.js` or
       `scripts/install_opencode_skills.py`
 - [ ] No runtime / domain feature changes
+
+## 14. v0.4.6 Install Packaging Smoke
+
+- [ ] All v0.4.5 install-hardening items above still pass
+- [ ] `VERSION` is `0.4.6` and matches `package.json`,
+      `pyproject.toml`, `skillpack/fund-agent.skillpack.yaml`, and
+      `opencode.plugin.js` `PLUGIN_VERSION`
+- [ ] `package.json` `files` field is a curated whitelist that:
+      - includes `opencode.plugin.js`, `skillpack/`, `skills/`,
+        `docs/install/`;
+      - excludes `__pycache__/`, `*.pyc`, `__init__.py` from the
+        `skills/` subtree;
+      - does not include `tests/`, `src/`, `scripts/`, `examples/`,
+        `.opencode/INSTALL.md`, `docs/archive/`, or `legacy/`.
+- [ ] `npm pack --dry-run --json` produces a tarball listing that
+      contains the five canonical `skills/<slug>/SKILL.md` files and
+      the three install docs, and does not contain `legacy/`,
+      `docs/archive/fund-analyst/`, `tests/`, or build artifacts
+- [ ] `tests/install/test_npm_pack_contents.py` passes (6 npm-pack
+      assertions)
+- [ ] `tests/install/test_opencode_native_install_tree.py` passes
+      (6 native-install-tree assertions: full simulation, marker
+      content, `--clean` safety, dry-run, idempotency, source
+      mirror)
+- [ ] `tests/install/test_opencode_plugin_runtime_smoke.py` passes
+      (11 plugin-runtime smoke assertions: `node --check`,
+      dynamic import, `listSkills()` primary + 4 supporting,
+      `readSkillDoc` accepts `fund-analysis`, rejects
+      `fund_analysis` / `decision_support` / `fund-analyst` /
+      `../README.md`; `runtimeHint` accepts both
+      `fund-analysis` and `fund_analysis`; startup log does not
+      classify `fund-analysis` as supporting)
+- [ ] `.opencode/INSTALL.md` and `docs/install/opencode.md` both
+      mention Mode A / Mode B / Mode C, both say Mode C is a future
+      runtime bridge, both say the plugin does not shell out to
+      Python, both say the Mode B sync helper is a plain file copy,
+      and both list `fund-analysis` as primary and the four
+      supporting slugs explicitly
+- [ ] `.opencode/INSTALL.md` includes a "Package contents — npm vs
+      git" section that states the npm package is Mode A only and
+      the Mode B helper is git-clone-only
+- [ ] `tests/docs/test_install_mode_consistency.py` passes
+      (cross-doc consistency assertions: Mode A/B/C coverage,
+      primary + four supporting, no double-slash skill-path
+      placeholders, no npm-published claim)
+- [ ] No new `__pycache__/`, `*.pyc`, `__init__.py`, or
+      underscore-skill dirs in the published npm tarball
+- [ ] No new provider SDKs, no new network calls, no new
+      autonomous loop, no runtime bridge, no planner loop

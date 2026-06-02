@@ -1,5 +1,118 @@
 # Changelog
 
+## 0.4.6-install-packaging-smoke
+
+### Added
+
+- `tests/install/test_npm_pack_contents.py` — 6 assertions that
+  `npm pack --dry-run --json` produces a tarball containing the
+  five canonical `skills/<slug>/SKILL.md` files and the three
+  install docs, and does **not** contain `legacy/`,
+  `docs/archive/fund-analyst/`, `tests/`, `scripts/` (Mode B
+  helper), `.opencode/INSTALL.md`, `__pycache__/`, `*.pyc`, or
+  `__init__.py` (stale Python leftovers in `skills/`). Skipped if
+  `npm` is not on the test host.
+- `tests/install/test_opencode_native_install_tree.py` — 6
+  assertions that simulate a fresh project-local install. The
+  test creates `<project>/.opencode/skills/`, runs the sync
+  helper, and asserts: the install tree contains exactly the five
+  canonical skills, each `SKILL.md` has a YAML frontmatter with
+  `name: <slug>` and a non-empty `description`, `references/` is
+  copied where the source has it, no underscore runtime dirs are
+  written, no archived `fund-analyst` is written, no
+  `__pycache__/` / `*.pyc` / `__init__.py` files are written, the
+  marker file lists exactly the five canonical skills, `--clean`
+  removes only the generated skills (user-authored files are
+  preserved), and the install is idempotent.
+- `tests/install/test_opencode_plugin_runtime_smoke.py` — 11
+  assertions that exercise the OpenCode plugin's helper functions
+  through a dynamic-import test harness: `node --check` succeeds,
+  the plugin is dynamically importable, `listSkills()` returns
+  `primary_skill == "fund-analysis"`, exactly four
+  `supporting_skills`, and a `skills` array of length 5,
+  `readSkillDoc` accepts `fund-analysis` and rejects
+  `fund_analysis`, `decision_support`, `fund-analyst`, and
+  `../README.md` (path-traversal), `runtimeHint` accepts both
+  `fund-analysis` and `fund_analysis`, and the startup log does
+  not classify `fund-analysis` as a supporting skill.
+- `tests/docs/test_install_mode_consistency.py` — cross-doc
+  consistency assertions for the install docs. Both
+  `.opencode/INSTALL.md` and `docs/install/opencode.md` must
+  mention Mode A / Mode B / Mode C, must say Mode C is a future
+  runtime bridge, must say the plugin does not shell out to
+  Python, must say the Mode B sync helper is a plain file copy,
+  must mention `fund-analysis` as primary and the four supporting
+  slugs explicitly, and must not contain `skills//SKILL.md`
+  placeholders or claim the npm package is published.
+- `description:` field in the YAML frontmatter of all five
+  canonical `skills/<slug>/SKILL.md` files. Each description is a
+  single-quoted, non-empty scalar that captures the skill's
+  role, MCP requirements (if any), and produced artifacts. This
+  satisfies the OpenCode Agent Skills frontmatter contract that
+  requires a `description` for native skill discovery.
+
+### Changed
+
+- `package.json` `files` field is now an explicit whitelist with
+  negation patterns: includes `opencode.plugin.js`, `skillpack/`,
+  `skills/`, and `docs/install/`; excludes `__pycache__/`,
+  `*.pyc`, `*.pyo`, and `__init__.py` from the `skills/`
+  subtree. The resulting `npm pack` tarball is a clean
+  Mode-A-only install surface (plugin + skill docs + install
+  docs) with no Python build artifacts, no tests, no archive
+  material, and no Mode B helper. Verified by
+  `tests/install/test_npm_pack_contents.py`.
+- `.opencode/INSTALL.md` and `docs/install/opencode.md` updated to
+  document three install modes consistently: **Mode A** (the
+  plugin, Mode A only, npm-shipped), **Mode B** (native Agent
+  Skills sync via `scripts/install_opencode_skills.py`,
+  git-clone-only), and **Mode C** (future runtime bridge, design
+  only). `.opencode/INSTALL.md` adds an explicit
+  "Install modes (Mode A / Mode B / Mode C)" section and a
+  "Package contents — npm vs git" section that states the npm
+  package is Mode A only and the Mode B helper is
+  git-clone-only.
+- `docs/install/codex.md` and `docs/install/manual-host.md` and
+  `docs/install/opencode.md` version references updated from
+  `v0.4.4` / `v0.4.5` to `v0.4.6`.
+- `docs/design/runtime-bridge.md` version references updated
+  from `v0.4.5` to `v0.4.6` (the design is still not
+  implemented).
+- `VERSION`, `pyproject.toml`, `skillpack/fund-agent.skillpack.yaml`,
+  `package.json`, and `opencode.plugin.js` `PLUGIN_VERSION` all
+  advanced to `0.4.6`.
+- `tests/install/test_opencode_plugin_skeleton.py`
+  `PLUGIN_VERSION` assertion bumped to `0.4.6`.
+- `tests/install/test_install_docs_no_overclaim.py`
+  runtime-bridge design doc assertion now accepts `v0.4.4`,
+  `v0.4.5`, or `v0.4.6` in the doc text (forward-compatible; the
+  contract — "runtime bridge is not implemented in the current
+  release" — is unchanged).
+- `docs/release-checklist.md` adds a "v0.4.6 Install Packaging
+  Smoke" section.
+
+### Honesty
+
+- The v0.4.6 milestone is **purely about install packaging and
+  the install-side smoke test surface**. No new domain features,
+  no new schemas, no new providers, no new tools, no new
+  Python runtime bridge.
+- The npm package is **declared but not yet published**. The
+  install still works end-to-end via the project-local symlink
+  path. The npm convenience install is a future milestone.
+- The npm package is **Mode A only**. A user who installs the
+  npm package and also wants Mode B (native `Agent Skills`
+  directory copy) must run `scripts/install_opencode_skills.py`
+  from a git clone of the repo, not from the npm package. This
+  split is intentional and is documented in
+  `.opencode/INSTALL.md` and `docs/install/opencode.md`.
+- No provider SDKs, no LLM clients, no autonomous loop, no
+  planner loop, no runtime bridge, no database, no server, no
+  autonomous agent runtime.
+- All v0.4.5 install-hardening items (Mode A vs Mode B vs Mode C
+  docs, plugin startup log primary / supporting distinction,
+  sync helper safety) are still in place and still pass.
+
 ## 0.4.5-native-skill-install-hardening
 
 ### Added

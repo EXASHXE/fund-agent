@@ -14,7 +14,7 @@ final user interaction. The plugin does not become a planner loop.
 `fund-agent` registers a **composable collection of Markdown skills**,
 Superpowers-style: one hyphenated `skills/<slug>/SKILL.md` directory
 per skill, with the directory name matching the frontmatter `name`
-field. The collection in v0.4.4+ is:
+field. The collection in v0.4.6+ is:
 
 - **Primary / default skill:** `fund-analysis`. Start here for
   ordinary fund / portfolio report requests. `fund-analysis` alone is
@@ -117,7 +117,7 @@ ln -s /absolute/path/to/fund-agent/opencode.plugin.js .opencode/plugins/fund-age
 Restart OpenCode and you should see in the logs:
 
 ```
-fund-agent v0.4.5 plugin loaded; primary skill: fund-analysis;
+fund-agent v0.4.6 plugin loaded; primary skill: fund-analysis;
 supporting skills: decision-support, news-research, sentiment-analysis,
 thesis-generation
 ```
@@ -129,7 +129,7 @@ supporting skills" table for the matching policy.
 
 #### Plugin metadata only — no runtime bridge
 
-For v0.4.5 the plugin exposes **only** the metadata + doc-reader
+For v0.4.6 the plugin exposes **only** the metadata + doc-reader
 tools listed above. The plugin does not shell out to Python, does
 not start a sidecar, and does not embed the deterministic Python
 runtime. If the agent wants to actually invoke
@@ -143,9 +143,9 @@ runtime into the agent's tool call path. Wiring a runtime bridge
 through the OpenCode plugin would require either a sidecar process
 (violates "no autonomous loop" constraint) or an embedded interpreter
 (bloats the plugin and pulls in transitive npm deps), neither of which
-is appropriate for v0.4.5.
+is appropriate for v0.4.6.
 
-### Mode B — Native Agent Skills install (optional, v0.4.5+)
+### Mode B — Native Agent Skills install (optional, v0.4.6+)
 
 OpenCode's native `Agent Skills` discovery looks for `SKILL.md`
 files under `.opencode/skills/<slug>/SKILL.md` (and the other
@@ -190,25 +190,25 @@ Use Mode A + Mode B together if you want both the plugin's
 metadata + doc-reader tools and OpenCode's native Agent Skills
 discovery to see the fund-agent collection.
 
-### Mode C — Future runtime bridge (not in v0.4.5)
+### Mode C — Future runtime bridge (not in v0.4.6)
 
 The design for a future runtime bridge is documented in
 [`docs/design/runtime-bridge.md`](../design/runtime-bridge.md). In
 short, the plugin would optionally spawn a Python subprocess
 (`python -m fund_agent.run_skill`) on demand and proxy
 `SkillInput` / `SkillOutput` JSON in/out. This is **not implemented
-in v0.4.5** and is explicitly out of scope for this milestone.
+in v0.4.6** and is explicitly out of scope for this milestone.
 
 ## Why a plugin and not just a config block
 
 OpenCode already supports loading skill docs from
 `.opencode/skills/<name>/SKILL.md`, `.claude/skills/<name>/SKILL.md`,
-and `.agents/skills/<name>/SKILL.md`. v0.4.5 ships the
+and `.agents/skills/<name>/SKILL.md`. v0.4.6 ships the
 `scripts/install_opencode_skills.py` helper (Mode B above) so the
 canonical hyphenated `skills/<slug>/SKILL.md` directories can be
 copied to one of those locations on demand.
 
-The plugin approach was chosen for v0.4.5 because:
+The plugin approach was chosen for v0.4.6 because:
 
 1. Mode A (the plugin) works without any user-side file copying
    and provides the three `fund_agent_*` tools even before Mode B
@@ -247,15 +247,15 @@ they assert that the install artifacts are coherent and honest.
 ## Pinning / version management
 
 `fund-agent` uses git tags for versioning. The current version is
-`v0.4.5` and matches the `VERSION` file, the `package.json` `version`
+`v0.4.6` and matches the `VERSION` file, the `package.json` `version`
 field, and the `skillpack/fund-agent.skillpack.yaml` `version` field.
 
 Pin to a specific version:
 
 ```bash
-git clone --branch v0.4.5 https://github.com/EXASHXE/fund-agent.git
+git clone --branch v0.4.6 https://github.com/EXASHXE/fund-agent.git
 cd fund-agent
-git checkout v0.4.5   # if you cloned without --branch
+git checkout v0.4.6   # if you cloned without --branch
 ```
 
 For a project that already has the symlink in place, update the
@@ -264,7 +264,7 @@ checkout:
 ```bash
 cd /path/to/fund-agent
 git fetch
-git checkout v0.4.5
+git checkout v0.4.6
 # restart OpenCode
 ```
 
@@ -279,7 +279,7 @@ the `opencode.plugin.js` file are not used by any other harness.
 - For Codex: see `docs/install/codex.md`.
 - For a generic Python host: see `docs/install/manual-host.md`.
 - For OpenClaw / Hermes: see `docs/host-compatibility.md` for what is
-  supported today. No native installer is shipped in v0.4.4.
+  supported today. No native installer is shipped in v0.4.6.
 
 ## Honesty about current capability
 

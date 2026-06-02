@@ -1,6 +1,7 @@
 ---
 id: fund_analysis
 name: fund-analysis
+description: "Primary / default fund-agent skill. Produces HardEvidence (NAV metrics, holdings, portfolio review) from host-supplied portfolio / NAV / risk / constraints data. No network or provider calls."
 runtime: src.skills_runtime.fund_analysis:FundAnalysisSkill
 input_schema: src.schemas.skill:SkillInput
 output_schema: src.schemas.skill:SkillOutput

@@ -1,6 +1,6 @@
 # Codex Install
 
-> Scope: **manual / light install** for Codex in v0.4.4. There is no
+> Scope: **manual / light install** for Codex in v0.4.6. There is no
 > OMO-style Codex installer in this milestone. The intent is to keep
 > Codex working with `fund-agent` through the same host-agnostic
 > skill-pack flow that the Python and OpenCode installs use, without
@@ -23,9 +23,9 @@ After following this document, Codex can:
 It will **not**:
 
 - Auto-install via a Codex-specific `~/.codex/config.toml` plugin
-  block. We are not writing that file in v0.4.4.
+  block. We are not writing that file in v0.4.6.
 - Behave like an OMO-style bundle. There is no Codex marketplace entry
-  in v0.4.4.
+  in v0.4.6.
 - Fetch NAV, news, or sentiment. The host owns data fetching. The
   plugin / skill pack does not synthesize data; the host must wire
   provider implementations.
@@ -36,7 +36,7 @@ Codex as the host agent owns planning, MCP provider wiring, retries,
 memory, and final user interaction. The fund-agent skill pack is
 host-driven. The host injects any data the agent needs.
 
-## Why no OMO-style installer in v0.4.4
+## Why no OMO-style installer in v0.4.6
 
 A "Codex plugin" in the OMO sense would require either:
 
@@ -73,7 +73,7 @@ cd fund-agent
 Pin a specific version:
 
 ```bash
-git clone --branch v0.4.4 https://github.com/EXASHXE/fund-agent.git
+git clone --branch v0.4.6 https://github.com/EXASHXE/fund-agent.git
 cd fund-agent
 ```
 
@@ -175,7 +175,7 @@ rm -rf /path/to/fund-agent
 
 ## Future Codex install work
 
-The following are explicitly **not** in v0.4.4 and are tracked as
+The following are explicitly **not** in v0.4.6 and are tracked as
 future milestones:
 
 - A Codex plugin cache publication under
@@ -199,14 +199,14 @@ is the supported path.
   [`docs/install/manual-host.md`](./manual-host.md). The canonical
   install path.
 - **Claude Code, OpenClaw, Hermes:** the manual host install is
-  sufficient. No native installer is shipped in v0.4.4.
+  sufficient. No native installer is shipped in v0.4.6.
 
 ## Honesty about current capability
 
 - ✅ Codex can read the fund-agent skill docs after the manual install.
 - ✅ Codex can discover skills from the manifest.
 - ✅ Codex can invoke the Python runtime if Python is wired.
-- ❌ There is no OMO-style installer in v0.4.4.
-- ❌ There is no `~/.codex/config.toml` plugin block in v0.4.4.
+- ❌ There is no OMO-style installer in v0.4.6.
+- ❌ There is no `~/.codex/config.toml` plugin block in v0.4.6.
 - ❌ fund-agent does not become an autonomous loop inside Codex.
   Codex owns planning.
