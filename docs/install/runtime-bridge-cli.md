@@ -319,13 +319,40 @@ must wait for the deeper runtime-bridge milestone
 ## Examples
 
 - `examples/runtime_bridge_fund_analysis_input.json` — minimal
-  convenience input for `fund_analysis`.
+  convenience input for `fund_analysis` (direct portfolio mode).
 - `examples/runtime_bridge_decision_support_input.json` — minimal
   convenience input for `decision_support` with a one-evidence
   graph fixture.
+- `examples/runtime_bridge_ledger_snapshot_input.json` — derived
+  portfolio mode: transactions + current_nav only, no host portfolio.
+- `examples/runtime_bridge_research_query_plan_input.json` —
+  portfolio analysis with `research_planning: true`; produces
+  a `research_query_plan` artifact.
 - `examples/minimal_runtime_bridge_fund_analysis.py` — minimal
   host demo that spawns the bridge CLI from Python and parses
   the JSON envelope.
+
+### Derived portfolio mode
+
+When a host provides `transactions`, `current_nav`, and `as_of_date`
+without `portfolio.positions`, `fund_analysis` deterministically
+derives a position snapshot from the transaction ledger:
+
+```bash
+python scripts/run_skill.py \
+    --skill fund_analysis \
+    --input examples/runtime_bridge_ledger_snapshot_input.json \
+    --pretty
+```
+
+The output includes:
+- `derived_portfolio_snapshot` — positions with weighted-average cost basis
+- `ledger_cashflow_summary` — cashflows, dividends, fees
+- `portfolio_summary` — total value, weights, concentration
+
+Derived snapshot accuracy depends on transaction ledger completeness
+and current NAV values. The host owns ledger data and NAV sourcing;
+`fund-agent` does not fetch either.
 
 ## Testing the bridge
 

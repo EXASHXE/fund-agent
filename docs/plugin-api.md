@@ -35,6 +35,7 @@ The external host MUST provide:
 - **User interaction** — final UX, display, and user prompts
 - **Retry policy** — handle transient failures and `SkillOutput.errors`
 - **Provider credentials** — API keys, rate limits, network access
+- **Data capabilities** — all fund/profile/NAV/holdings/transaction/benchmark/peer/manager/fee/calendar/macro data is host-owned and host-provided via `SkillInput.payload`. See `skillpack/capabilities.yaml` for the complete host-owned data capability catalog.
 
 `fund-agent` does NOT own the agent loop, does NOT manage credentials, and
 does NOT make network requests outside the MCP adapter boundary.
@@ -57,7 +58,30 @@ Requires MCP: []
 Produces: HardEvidence
 ```
 
-**Personal portfolio payload** — fund_analysis accepts an expanded payload with transactions, dca_plans, cost_basis, market_scenario, and risk constraints. See `examples/portfolio_review_200k.json` for the full shape.
+**Personal portfolio payload** — `fund_analysis` accepts an expanded payload
+with transactions, dca_plans, cost_basis, market_scenario, and risk
+constraints. See `examples/portfolio_review_200k.json` for the full shape.
+
+**Two portfolio input modes:**
+
+1. **Direct mode**: Provide `portfolio.positions` as source of truth.
+2. **Derived mode**: Provide `transactions` + `current_nav` + `as_of_date`;
+   `fund_analysis` deterministically derives position snapshot from the
+   transaction ledger using weighted-average cost basis. Emits
+   `derived_portfolio_snapshot` and `ledger_cashflow_summary` artifacts.
+
+When both host portfolio and transactions exist, the skill runs a ledger
+reconciliation and emits `ledger_reconciliation_report`.
+
+**Research query planning**: When `payload.research_planning` is `true`,
+the skill generates a `research_query_plan` artifact with news/sentiment
+queries. This is a plan only — the host decides whether to call
+`news_research` or `sentiment_analysis`. No network calls are made.
+
+**Optional data pass-through**: Benchmarks, peer group, factor exposures,
+manager profiles, fee schedules, redemption rules, and other host-provided
+data are passed through to the report and artifacts without fabricating
+rankings or comparisons.
 
 Analyzes host-provided personal portfolio data: positions, fund profiles,
 NAV history, holdings, risk profile, and rebalance constraints. Returns

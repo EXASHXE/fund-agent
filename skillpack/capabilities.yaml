@@ -12,6 +12,389 @@ mcp_capabilities:
     required_by:
       - sentiment_analysis
 
+host_data_capabilities:
+  fund_profile:
+    description: >-
+      Host-provided fund profile data (fund type, benchmark, manager,
+      inception date, AUM, fee structure). Required by fund_analysis
+      for fund type classification and manager assessment.
+    required_by: [fund_analysis]
+    required: false
+    input_shape:
+      fund_code: string
+      name: string
+      fund_type: string (equity, bond, mixed, qdii, money, other)
+      manager: string (optional)
+      benchmark: string (optional)
+      inception_date: string (optional)
+      aum: number (optional)
+    output_shape:
+      fund_code: string
+      profile: object
+    missing_behavior: "fund_analysis emits warning, degrades to PARTIAL analysis"
+    canned_example:
+      110011:
+        fund_code: "110011"
+        name: "Example Equity Fund"
+        fund_type: "equity"
+        manager: "Manager Name"
+        benchmark: "CSI 300"
+        inception_date: "2015-01-01"
+        aum: 5000000000.00
+
+  fund_nav_history:
+    description: >-
+      Host-provided historical NAV (Net Asset Value) points per fund.
+      Required by fund_analysis for return, volatility, drawdown,
+      Sharpe/Sortino metrics.
+    required_by: [fund_analysis]
+    required: false
+    input_shape:
+      fund_code: string
+      nav_points:
+        - date: string (YYYY-MM-DD)
+          nav: number
+    output_shape:
+      fund_code: string
+      nav_history: list of {date, nav}
+    missing_behavior: "fund_analysis emits warning, omits fund metrics; structural analysis still runs"
+    canned_example:
+      "110011":
+        - date: "2025-06-01"
+          nav: 1.00
+        - date: "2025-12-01"
+          nav: 1.10
+        - date: "2026-06-01"
+          nav: 1.20
+
+  fund_holdings:
+    description: >-
+      Host-provided fund top holdings / constituents data.
+      Required by fund_analysis for theme, industry, region,
+      and security-level exposure analysis.
+    required_by: [fund_analysis]
+    required: false
+    input_shape:
+      fund_code: string
+      holdings:
+        - name: string
+          weight: number (0-1)
+          industry: string (optional)
+          region: string (optional)
+          ticker: string (optional)
+    output_shape: same as input
+    missing_behavior: "fund_analysis warns: industry concentration could not be assessed"
+    canned_example:
+      "110011":
+        - name: "Company A"
+          weight: 0.08
+          industry: "technology"
+          region: "CN"
+        - name: "Company B"
+          weight: 0.06
+          industry: "healthcare"
+          region: "CN"
+
+  fund_transactions:
+    description: >-
+      Host-provided transaction ledger for the user's fund portfolio.
+      Used by fund_analysis for cost basis, realized/unrealized PnL,
+      trading discipline analysis, and ledger snapshot derivation.
+    required_by: [fund_analysis]
+    required: false
+    input_shape:
+      - action: string (BUY, SELL, DIVIDEND, FEE, TRANSFER_IN, TRANSFER_OUT, CALIBRATE)
+        fund_code: string
+        date: string (YYYY-MM-DD)
+        amount: number
+        shares: number (optional)
+        nav: number (optional)
+        notes: string (optional)
+    output_shape: list of normalized transaction events
+    missing_behavior: "fund_analysis emits warning; cost basis and trading discipline not assessed"
+    canned_example:
+      - action: "BUY"
+        fund_code: "110011"
+        date: "2025-06-01"
+        amount: 10000.00
+        shares: 10000.00
+        nav: 1.00
+      - action: "BUY"
+        fund_code: "110011"
+        date: "2025-12-01"
+        amount: 20000.00
+        shares: 18181.82
+        nav: 1.10
+
+  fund_fee_schedule:
+    description: >-
+      Host-provided fund fee schedule (subscription fee, redemption fee,
+      management fee, custody fee). Used by fund_analysis for cost
+      and redemption constraint analysis.
+    required_by: [fund_analysis]
+    required: false
+    input_shape:
+      fund_code: string
+      subscription_fee_pct: number
+      redemption_fee_pct: number (possibly tiered)
+      management_fee_pct: number (annual)
+      custody_fee_pct: number (annual)
+      redemption_rules: object (optional)
+    output_shape: same as input
+    missing_behavior: "fund_analysis emits warning; fee analysis skipped"
+    canned_example:
+      "110011":
+        fund_code: "110011"
+        subscription_fee_pct: 0.015
+        redemption_fee_pct: 0.005
+        management_fee_pct: 0.015
+        custody_fee_pct: 0.0025
+        redemption_rules:
+          t_plus_days: 3
+          min_holding_days: 7
+
+  fund_benchmark:
+    description: >-
+      Host-provided fund benchmark identifier and description.
+      Used by fund_analysis for benchmark comparison (pass-through).
+      fund-agent does NOT fetch benchmark history.
+    required_by: [fund_analysis]
+    required: false
+    input_shape:
+      fund_code: string
+      benchmark_id: string
+      benchmark_name: string
+      benchmark_description: string (optional)
+    output_shape: same as input
+    missing_behavior: "fund_analysis emits warning; benchmark comparison skipped"
+    canned_example:
+      "110011":
+        fund_code: "110011"
+        benchmark_id: "CSI300"
+        benchmark_name: "CSI 300 Index"
+        benchmark_description: "Shanghai/Shenzhen 300 large-cap index"
+
+  benchmark_history:
+    description: >-
+      Host-provided benchmark return history. Used by fund_analysis
+      for benchmark-relative metrics (pass-through). fund-agent does
+      NOT fetch benchmark history.
+    required_by: [fund_analysis]
+    required: false
+    input_shape:
+      benchmark_id: string
+      history:
+        - date: string (YYYY-MM-DD)
+          value: number
+    output_shape: same as input
+    missing_behavior: "fund_analysis emits warning; benchmark-relative metrics skipped"
+    canned_example:
+      benchmark_id: "CSI300"
+      history:
+        - date: "2025-06-01"
+          value: 3500.00
+        - date: "2026-06-01"
+          value: 3850.00
+
+  fund_peer_group:
+    description: >-
+      Host-provided peer fund group data for relative comparison.
+      Used by fund_analysis for peer-relative metrics (pass-through).
+      fund-agent does NOT fetch peer data.
+    required_by: [fund_analysis]
+    required: false
+    input_shape:
+      fund_code: string
+      peers:
+        - fund_code: string
+          name: string
+          category: string
+          return_1y: number (optional)
+          volatility_1y: number (optional)
+    output_shape: same as input
+    missing_behavior: "fund_analysis emits warning; peer comparison skipped"
+    canned_example:
+      "110011":
+        peers:
+          - fund_code: "110012"
+            name: "Peer Fund A"
+            category: "large-cap equity"
+            return_1y: 0.08
+            volatility_1y: 0.18
+
+  fund_manager_profile:
+    description: >-
+      Host-provided fund manager profile (tenure, style, track record).
+      Used by fund_analysis for qualitative manager assessment.
+      fund-agent does NOT fetch manager data.
+    required_by: [fund_analysis]
+    required: false
+    input_shape:
+      fund_code: string
+      manager_name: string
+      tenure_years: number (optional)
+      style_description: string (optional)
+      past_funds: list of {fund_code, name, tenure} (optional)
+    output_shape: same as input
+    missing_behavior: "fund_analysis emits warning; manager assessment skipped"
+    canned_example:
+      "110011":
+        fund_code: "110011"
+        manager_name: "Manager Name"
+        tenure_years: 5.5
+        style_description: "Growth-at-reasonable-price, concentrated portfolio"
+
+  fund_flow:
+    description: >-
+      Host-provided fund flow data (net subscriptions/redemptions).
+      Used by fund_analysis for liquidity and demand signals.
+      fund-agent does NOT fetch flow data.
+    required_by: [fund_analysis]
+    required: false
+    input_shape:
+      fund_code: string
+      net_flow_period: string (month/quarter/year)
+      net_flow_amount: number
+      net_flow_direction: string (inflow/outflow/flat)
+    output_shape: same as input
+    missing_behavior: "fund_analysis emits warning; flow data not available"
+    canned_example:
+      "110011":
+        fund_code: "110011"
+        net_flow_period: "2026-Q1"
+        net_flow_amount: 150000000.00
+        net_flow_direction: "inflow"
+
+  index_constituents:
+    description: >-
+      Host-provided index constituent data for benchmark overlap analysis.
+      Used by fund_analysis for benchmark overlap assessment.
+      fund-agent does NOT fetch index data.
+    required_by: [fund_analysis]
+    required: false
+    input_shape:
+      index_id: string
+      constituents:
+        - ticker: string
+          name: string
+          weight: number (0-1)
+          industry: string (optional)
+    output_shape: same as input
+    missing_behavior: "fund_analysis emits warning; benchmark overlap skipped"
+    canned_example:
+      index_id: "CSI300"
+      constituents:
+        - ticker: "600519"
+          name: "Kweichow Moutai"
+          weight: 0.05
+          industry: "consumer staples"
+
+  macro_events:
+    description: >-
+      Host-provided macro event timeline (rate changes, policy shifts,
+      economic data releases). Used by fund_analysis for macro context.
+      fund-agent does NOT fetch macro data.
+    required_by: [fund_analysis]
+    required: false
+    input_shape:
+      - event_id: string
+        date: string (YYYY-MM-DD)
+        event_type: string
+        description: string
+        impact_assessment: string (host's own assessment)
+    output_shape: same as input
+    missing_behavior: "fund_analysis emits warning; macro context not available"
+    canned_example:
+      - event_id: "macro-001"
+        date: "2026-05-15"
+        event_type: "policy_rate_change"
+        description: "PBOC cuts 1-year LPR by 10bp"
+        impact_assessment: "moderate positive for equity funds"
+
+  market_calendar:
+    description: >-
+      Host-provided market calendar (trading days, holidays, settlement
+      schedule). Used by fund_analysis for settlement rule application
+      and date validation. fund-agent does NOT fetch calendar data.
+    required_by: [fund_analysis]
+    required: false
+    input_shape:
+      market: string (CN, US, HK, etc.)
+      trading_days: list of string (YYYY-MM-DD)
+      holidays: list of string (YYYY-MM-DD) (optional)
+      settlement_schedule:
+        T_plus_days: number (optional)
+    output_shape: same as input
+    missing_behavior: "fund_analysis uses default settlement assumptions, emits warning"
+    canned_example:
+      market: "CN"
+      trading_days:
+        - "2026-06-01"
+        - "2026-06-02"
+        - "2026-06-03"
+      holidays:
+        - "2026-06-05"
+      settlement_schedule:
+        T_plus_days: 3
+
+  portfolio_snapshot:
+    description: >-
+      Host-provided external portfolio snapshot for reconciliation
+      with ledger-derived positions. Host may provide this as the
+      primary portfolio.positions source or as a reconciliation target
+      when portfolio is derived from transactions.
+    required_by: [fund_analysis]
+    required: false
+    input_shape:
+      as_of_date: string (YYYY-MM-DD)
+      total_value: number
+      cash_available: number
+      positions:
+        - fund_code: string
+          fund_name: string (optional)
+          shares: number
+          current_nav: number
+          current_value: number
+          total_cost: number (optional)
+    output_shape: same as input
+    missing_behavior: "fund_analysis may derive snapshot from transactions if available"
+    canned_example:
+      as_of_date: "2026-06-01"
+      total_value: 200000.00
+      cash_available: 20000.00
+      positions:
+        - fund_code: "110011"
+          fund_name: "Example Fund"
+          shares: 28181.82
+          current_nav: 1.20
+          current_value: 33818.18
+          total_cost: 30000.00
+
+  user_investment_plan:
+    description: >-
+      Host-provided user investment plan / goals (time horizon, target
+      wealth, monthly contribution capacity, risk tolerance narrative).
+      Used by fund_analysis for plan-to-actual gap analysis.
+      fund-agent does NOT model or optimize the plan.
+    required_by: [fund_analysis]
+    required: false
+    input_shape:
+      plan_id: string
+      time_horizon_years: number
+      target_wealth: number (optional)
+      monthly_contribution: number (optional)
+      risk_tolerance: string (conservative/moderate/aggressive)
+      goal_description: string (optional)
+    output_shape: same as input
+    missing_behavior: "fund_analysis emits warning; investment plan gap analysis skipped"
+    canned_example:
+      plan_id: "retirement-2040"
+      time_horizon_years: 14
+      target_wealth: 5000000.00
+      monthly_contribution: 5000.00
+      risk_tolerance: "moderate"
+      goal_description: "Retirement fund accumulation"
+
 local_capabilities:
   evidence_compile:
     runtime: src.tools.evidence.validators:compile_evidence_graph
@@ -19,3 +402,7 @@ local_capabilities:
     runtime: src.tools.evidence.review:review_evidence_graph
   decision_support:
     runtime: src.skills_runtime.decision_support:DecisionSupportSkill
+  ledger_snapshot:
+    runtime: src.tools.portfolio.ledger_snapshot:build_position_snapshot_from_transactions
+  query_planning:
+    runtime: src.tools.research.query_plan:build_research_query_plan

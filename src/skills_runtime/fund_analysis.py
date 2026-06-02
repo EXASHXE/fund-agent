@@ -27,6 +27,10 @@ from src.tools.portfolio.analysis import (
     simulate_rebalance,
     summarize_exposure,
 )
+from src.tools.portfolio.ledger_snapshot import (
+    build_position_snapshot_from_transactions,
+    reconcile_snapshot_with_portfolio,
+)
 from src.tools.portfolio.transaction import (
     calculate_position_cost_basis,
     detect_trading_discipline_flags,
@@ -34,6 +38,7 @@ from src.tools.portfolio.transaction import (
     reconcile_portfolio_with_transactions,
     summarize_transaction_ledger,
 )
+from src.tools.research.query_plan import build_research_query_plan
 
 MAX_POSITION_EVIDENCE = 5
 
@@ -54,31 +59,115 @@ class FundAnalysisSkill:
                 "FundAnalysisSkill payload must be a dictionary",
             )
 
-        if "portfolio" not in payload:
+        portfolio = _dict_or_empty(payload.get("portfolio"))
+        positions = portfolio.get("positions")
+
+        # Determine source-of-truth for portfolio positions
+        source_of_truth: str | None = None
+        derived_snapshot: dict[str, Any] | None = None
+        reconciliation_report: dict[str, Any] | None = None
+
+        has_host_positions = isinstance(positions, list) and len(positions) > 0
+        has_transactions = isinstance(payload.get("transactions"), list) and len(payload["transactions"]) > 0
+        has_current_nav = isinstance(payload.get("current_nav"), dict) and len(payload["current_nav"]) > 0
+
+        if has_host_positions:
+            source_of_truth = "host_portfolio"
+        elif has_transactions and has_current_nav:
+            # Derive portfolio snapshot from transactions + current_nav
+            as_of_date = portfolio.get("as_of_date", payload.get("as_of_date", ""))
+            if not as_of_date:
+                return _failed_output(
+                    skill_input,
+                    "INVALID_INPUT",
+                    "Cannot derive portfolio from transactions: missing as_of_date",
+                )
+            try:
+                derived_snapshot = build_position_snapshot_from_transactions(
+                    transactions=payload["transactions"],
+                    current_nav_by_fund=payload["current_nav"],
+                    as_of_date=as_of_date,
+                    options=payload.get("settlement_options"),
+                )
+                source_of_truth = "derived_from_transactions"
+            except Exception as exc:
+                return _failed_output(
+                    skill_input,
+                    "INTERNAL_ERROR",
+                    f"Failed to derive portfolio from transactions: {exc}",
+                    details={"error_type": type(exc).__name__},
+                )
+        elif not has_host_positions:
             if _has_related_entities(payload, skill_input):
                 return self._run_baseline(skill_input)
             return _failed_output(
                 skill_input,
                 "INVALID_INPUT",
-                "FundAnalysisSkill requires payload.portfolio or related_entities",
+                "FundAnalysisSkill requires portfolio.positions or transactions+current_nav or related_entities",
             )
 
-        return self._run_portfolio_analysis(skill_input, payload)
+        # If both host portfolio and derivable transactions exist, reconcile
+        if has_host_positions and has_transactions and has_current_nav:
+            try:
+                derived_for_reconcile = build_position_snapshot_from_transactions(
+                    transactions=payload["transactions"],
+                    current_nav_by_fund=payload["current_nav"],
+                    as_of_date=portfolio.get("as_of_date", payload.get("as_of_date", "")),
+                    options=payload.get("settlement_options"),
+                )
+                reconciliation_report = reconcile_snapshot_with_portfolio(
+                    derived_for_reconcile, portfolio
+                )
+            except Exception:
+                # Reconciliation failure should not block analysis
+                pass
+
+        return self._run_portfolio_analysis(
+            skill_input=skill_input,
+            payload=payload,
+            source_of_truth=source_of_truth,
+            derived_snapshot=derived_snapshot,
+            reconciliation_report=reconciliation_report,
+        )
 
     def _run_portfolio_analysis(
         self,
         skill_input: SkillInput,
         payload: dict[str, Any],
+        source_of_truth: str | None = None,
+        derived_snapshot: dict[str, Any] | None = None,
+        reconciliation_report: dict[str, Any] | None = None,
     ) -> SkillOutput:
-        portfolio = payload.get("portfolio")
-        if not isinstance(portfolio, dict):
-            return _failed_output(
-                skill_input,
-                "INVALID_INPUT",
-                "payload.portfolio must be a dictionary",
-            )
+        portfolio = _dict_or_empty(payload.get("portfolio"))
 
-        positions = portfolio.get("positions")
+        # When derived from transactions, reconstruct portfolio from snapshot
+        if source_of_truth == "derived_from_transactions" and derived_snapshot:
+            positions = derived_snapshot.get("positions", [])
+            # Build portfolio dict from snapshot positions
+            total_value = 0.0
+            for pos in positions:
+                cv = pos.get("current_value") or 0.0
+                total_value += cv
+            portfolio = {
+                "as_of_date": derived_snapshot.get("as_of_date", payload.get("as_of_date", "")),
+                "total_value": total_value,
+                "cash_available": payload.get("current_nav", {}).get("_cash_available",
+                                    derived_snapshot.get("cashflow_summary", {}).get("implied_cash", 0.0)),
+                "positions": [
+                    {
+                        "fund_code": pos.get("fund_code", ""),
+                        "fund_name": pos.get("fund_code", ""),  # name unknown from ledger only
+                        "shares": pos.get("shares"),
+                        "current_value": pos.get("current_value"),
+                        "total_cost": pos.get("total_cost"),
+                        "tags": [],
+                    }
+                    for pos in positions
+                ],
+            }
+        else:
+            positions = portfolio.get("positions")
+
         if not isinstance(positions, list) or not positions:
             return _failed_output(
                 skill_input,
@@ -106,6 +195,16 @@ class FundAnalysisSkill:
         transactions = payload.get("transactions", [])
         dca_plans = payload.get("dca_plans", {})
         market_scenario = payload.get("market_scenario", {})
+
+        # Optional host data contract fields (pass-through)
+        benchmarks = payload.get("benchmarks") or {}
+        benchmark_history = payload.get("benchmark_history") or {}
+        peer_group = payload.get("peer_group") or {}
+        factor_exposures = payload.get("factor_exposures") or {}
+        manager_profiles = payload.get("manager_profiles") or {}
+        fee_schedules = payload.get("fee_schedules") or {}
+        redemption_rules = payload.get("redemption_rules") or {}
+        research_planning = payload.get("research_planning") is True
 
         nav_data: dict[str, float] = {}
         for fund_code, nav_points in nav_history.items():
@@ -213,6 +312,51 @@ class FundAnalysisSkill:
                     "details": {"scenario": market_scenario},
                 })
 
+            # Check for optional data dimensions host might have requested
+            _add_missing_optional_warnings(
+                warnings, fund_codes,
+                benchmarks=benchmarks,
+                benchmark_history=benchmark_history,
+                peer_group=peer_group,
+                factor_exposures=factor_exposures,
+                manager_profiles=manager_profiles,
+                fee_schedules=fee_schedules,
+                redemption_rules=redemption_rules,
+            )
+
+            # Research query plan (deterministic, no network)
+            query_plan = None
+            if research_planning:
+                try:
+                    themes = list(exposures.get("theme_exposure", {}).keys()) if isinstance(exposures, dict) else []
+                    industries = list(industry_exposure.keys()) if isinstance(industry_exposure, dict) else []
+                    query_plan = build_research_query_plan(
+                        portfolio_positions=positions,
+                        holdings=holdings,
+                        fund_profiles=fund_profiles,
+                        themes=themes[:20],
+                        industries=industries[:20],
+                        kg_context=skill_input.kg_context,
+                    )
+                except Exception:
+                    pass
+
+            # Optional data pass-through summaries
+            benchmark_summary = summarize_benchmark_gap(
+                fund_metrics, benchmarks, benchmark_history
+            ) if (benchmarks or benchmark_history) else None
+            peer_summary = summarize_peer_data(peer_group) if peer_group else None
+            fee_summary = summarize_fee_schedule(fee_schedules, fund_codes) if fee_schedules else None
+            redemption_summary = summarize_redemption_constraints(
+                redemption_rules, fund_codes
+            ) if redemption_rules else None
+            factor_summary = summarize_factor_exposures(
+                factor_exposures
+            ) if factor_exposures else None
+            manager_summary = summarize_manager_profiles(
+                manager_profiles, fund_codes
+            ) if manager_profiles else None
+
             position_map = {p["fund_code"]: p for p in positions if isinstance(p, dict) and p.get("fund_code")}
             target_weights = _target_weights_from_payload(payload, positions)
 
@@ -297,6 +441,21 @@ class FundAnalysisSkill:
                 trading_flags=trading_flags,
                 market_scenario=market_scenario if market_scenario else None,
             ).to_dict()
+            # Augment report with new optional fields
+            if benchmark_summary is not None:
+                report["benchmark_summary"] = benchmark_summary
+            if peer_summary is not None:
+                report["peer_summary"] = peer_summary
+            if fee_summary is not None:
+                report["fee_summary"] = fee_summary
+            if redemption_summary is not None:
+                report["redemption_summary"] = redemption_summary
+            if factor_summary is not None:
+                report["factor_summary"] = factor_summary
+            if manager_summary is not None:
+                report["manager_summary"] = manager_summary
+            if query_plan is not None:
+                report["research_query_plan"] = query_plan
         except Exception as exc:
             return _failed_output(
                 skill_input,
@@ -340,6 +499,41 @@ class FundAnalysisSkill:
             "market_scenario_impact": market_scenario if market_scenario else None,
         }
 
+        # Derived portfolio / ledger artifacts
+        if source_of_truth == "derived_from_transactions" and derived_snapshot:
+            warnings.append(
+                "portfolio was derived from transactions and current_nav; "
+                "accuracy depends on input completeness"
+            )
+            artifacts["derived_portfolio_snapshot"] = derived_snapshot
+            artifacts["ledger_cashflow_summary"] = derived_snapshot.get("cashflow_summary")
+            artifacts["source_of_truth"] = "derived_from_transactions"
+
+        if reconciliation_report:
+            artifacts["ledger_reconciliation_report"] = reconciliation_report
+            # Add reconciliation warnings
+            rec_warns = reconciliation_report.get("warnings", [])
+            if rec_warns:
+                warnings.extend(rec_warns)
+
+        # Query plan artifact
+        if query_plan:
+            artifacts["research_query_plan"] = query_plan
+
+        # Optional data pass-through artifacts
+        if benchmark_summary:
+            artifacts["benchmark_summary"] = benchmark_summary
+        if peer_summary:
+            artifacts["peer_summary"] = peer_summary
+        if fee_summary:
+            artifacts["fee_summary"] = fee_summary
+        if redemption_summary:
+            artifacts["redemption_summary"] = redemption_summary
+        if factor_summary:
+            artifacts["factor_summary"] = factor_summary
+        if manager_summary:
+            artifacts["manager_summary"] = manager_summary
+
         evidence_items = []
         errors: list[dict[str, Any]] = []
         evidence_specs = _evidence_specs(
@@ -355,6 +549,9 @@ class FundAnalysisSkill:
             dca_review=dca_review,
             market_scenario=market_scenario,
             pnl_summary=pnl_summary,
+            source_of_truth=source_of_truth,
+            derived_snapshot=derived_snapshot,
+            reconciliation_report=reconciliation_report,
         )
         for spec in evidence_specs:
             try:
@@ -462,6 +659,9 @@ def _evidence_specs(
     dca_review: dict[str, Any] | None = None,
     market_scenario: dict[str, Any] | None = None,
     pnl_summary: dict[str, Any] | None = None,
+    source_of_truth: str | None = None,
+    derived_snapshot: dict[str, Any] | None = None,
+    reconciliation_report: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     entities = [f"fund:{code}" for code in fund_codes] or ["portfolio"]
     specs: list[dict[str, Any]] = [
@@ -603,6 +803,36 @@ def _evidence_specs(
                 "provenance": {
                     "skill_name": skill_input.skill_name,
                     "tool": "src.tools.portfolio.analysis",
+                },
+            }
+        )
+
+    if source_of_truth == "derived_from_transactions" and derived_snapshot:
+        specs.append(
+            {
+                "metric_name": "derived_portfolio_snapshot",
+                "metric_value": derived_snapshot,
+                "claim": "Portfolio snapshot was deterministically derived from transaction ledger and current NAV",
+                "related_entities": entities,
+                "direction": "neutral",
+                "provenance": {
+                    "skill_name": skill_input.skill_name,
+                    "tool": "src.tools.portfolio.ledger_snapshot",
+                },
+            }
+        )
+
+    if reconciliation_report and reconciliation_report.get("mismatches"):
+        specs.append(
+            {
+                "metric_name": "ledger_reconciliation_mismatch",
+                "metric_value": reconciliation_report,
+                "claim": f"Ledger-portfolio reconciliation found {len(reconciliation_report['mismatches'])} mismatches",
+                "related_entities": entities,
+                "direction": "negative",
+                "provenance": {
+                    "skill_name": skill_input.skill_name,
+                    "tool": "src.tools.portfolio.ledger_snapshot",
                 },
             }
         )
@@ -767,3 +997,106 @@ def _top_n_pnl_positions(pnl_summary: dict[str, Any], n: int) -> list[dict[str, 
         {"fund_code": fund_code, **pos}
         for fund_code, pos in pnl_items[:n]
     ]
+
+
+# ————————————————————————————— Optional Data Pass-Through Summaries
+
+def summarize_benchmark_gap(
+    fund_metrics: dict[str, Any],
+    benchmarks: dict[str, Any],
+    benchmark_history: dict[str, Any],
+) -> dict[str, Any] | None:
+    """Minimal pass-through benchmark gap summary. Does not fabricate rankings."""
+    result: dict[str, Any] = {
+        "benchmarks_available": list(benchmarks.keys()) if benchmarks else [],
+    }
+    if benchmarks:
+        result["benchmarks"] = benchmarks
+    if benchmark_history:
+        result["benchmark_history"] = benchmark_history
+    return result if (benchmarks or benchmark_history) else None
+
+
+def summarize_peer_data(peer_group: dict[str, Any]) -> dict[str, Any] | None:
+    """Minimal pass-through peer group summary."""
+    if not peer_group:
+        return None
+    return {
+        "funds_with_peers": list(peer_group.keys()),
+        "peer_data": peer_group,
+    }
+
+
+def summarize_fee_schedule(
+    fee_schedules: dict[str, Any],
+    fund_codes: list[str],
+) -> dict[str, Any] | None:
+    """Minimal pass-through fee schedule summary."""
+    if not fee_schedules:
+        return None
+    fees_found = {fc: fee_schedules.get(fc) for fc in fund_codes if fc in fee_schedules}
+    return {
+        "funds_with_fees": list(fees_found.keys()),
+        "fee_schedules": fees_found,
+    }
+
+
+def summarize_redemption_constraints(
+    redemption_rules: dict[str, Any],
+    fund_codes: list[str],
+) -> dict[str, Any] | None:
+    """Minimal pass-through redemption constraints summary."""
+    if not redemption_rules:
+        return None
+    rules_found = {fc: redemption_rules.get(fc) for fc in fund_codes if fc in redemption_rules}
+    return {
+        "funds_with_rules": list(rules_found.keys()),
+        "redemption_constraints": rules_found,
+    }
+
+
+def summarize_factor_exposures(
+    factor_exposures: dict[str, Any],
+) -> dict[str, Any] | None:
+    """Minimal pass-through factor exposure summary."""
+    if not factor_exposures:
+        return None
+    return {
+        "factors": list(factor_exposures.keys()),
+        "factor_exposures": factor_exposures,
+    }
+
+
+def summarize_manager_profiles(
+    manager_profiles: dict[str, Any],
+    fund_codes: list[str],
+) -> dict[str, Any] | None:
+    """Minimal pass-through manager profile summary."""
+    if not manager_profiles:
+        return None
+    profiles_found = {fc: manager_profiles.get(fc) for fc in fund_codes if fc in manager_profiles}
+    return {
+        "funds_with_profiles": list(profiles_found.keys()),
+        "manager_profiles": profiles_found,
+    }
+
+
+def _add_missing_optional_warnings(
+    warnings: list[str],
+    fund_codes: list[str],
+    *,
+    benchmarks: dict[str, Any],
+    benchmark_history: dict[str, Any],
+    peer_group: dict[str, Any],
+    factor_exposures: dict[str, Any],
+    manager_profiles: dict[str, Any],
+    fee_schedules: dict[str, Any],
+    redemption_rules: dict[str, Any],
+) -> None:
+    """Emit warnings when host requests optional data dimensions but data is missing."""
+    if not benchmarks and not benchmark_history:
+        # Not requested, no warning needed
+        pass
+    if not peer_group:
+        # Not requested
+        pass

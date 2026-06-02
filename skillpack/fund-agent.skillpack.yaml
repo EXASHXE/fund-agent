@@ -1,5 +1,5 @@
 name: fund-agent
-version: 0.4.7-dev
+version: 0.4.8-dev
 schema_version: skillpack.v1
 package_role: agent_plugin
 type: host-agnostic-financial-research-skill-pack
@@ -91,6 +91,12 @@ tools:
   - src.tools.portfolio.transaction:normalize_fund_transactions
   - src.tools.portfolio.transaction:calculate_position_cost_basis
   - src.tools.portfolio.transaction:summarize_transaction_ledger
+  - src.tools.portfolio.ledger_snapshot:normalize_transaction_events
+  - src.tools.portfolio.ledger_snapshot:build_position_snapshot_from_transactions
+  - src.tools.portfolio.ledger_snapshot:reconcile_snapshot_with_portfolio
+  - src.tools.portfolio.ledger_snapshot:calculate_realized_unrealized_pnl
+  - src.tools.portfolio.ledger_snapshot:apply_settlement_rules
+  - src.tools.research.query_plan:build_research_query_plan
   - src.tools.adapters.mcp:MCPHostAdapter
 
 schemas:

@@ -1,5 +1,57 @@
 # Changelog
 
+## 0.4.8-dev-data-contract-and-portfolio-ledger-core
+
+### Added
+
+- **Host-owned data capability catalog** — 15 new host-owned capability
+  contracts defined in `skillpack/capabilities.yaml`:
+  `fund_profile`, `fund_nav_history`, `fund_holdings`,
+  `fund_transactions`, `fund_fee_schedule`, `fund_benchmark`,
+  `benchmark_history`, `fund_peer_group`, `fund_manager_profile`,
+  `fund_flow`, `index_constituents`, `macro_events`,
+  `market_calendar`, `portfolio_snapshot`, `user_investment_plan`.
+  Each includes purpose, required_by, input/output shape, missing
+  behavior, and canned test examples. All are host-owned; fund-agent
+  does not fetch them directly.
+- **Portfolio ledger snapshot core** — `src/tools/portfolio/ledger_snapshot.py`
+  provides deterministic transaction-to-position-snapshot tools:
+  `normalize_transaction_events`, `build_position_snapshot_from_transactions`,
+  `reconcile_snapshot_with_portfolio`, `calculate_realized_unrealized_pnl`,
+  `apply_settlement_rules`. No network calls, all JSON-serializable.
+  Weighted-average cost basis is the default.
+- **Derived portfolio mode** — `FundAnalysisSkill` now accepts
+  `transactions` + `current_nav` + `as_of_date` as an alternative to
+  `portfolio.positions`. When both exist, a ledger-portfolio reconciliation
+  runs automatically. New artifacts: `derived_portfolio_snapshot`,
+  `ledger_cashflow_summary`, `ledger_reconciliation_report`.
+- **Research query planning** — `src/tools/research/query_plan.py`
+  provides `build_research_query_plan` for deterministic query planning
+  from portfolio positions, holdings, themes, and industries. Sets
+  `research_planning: true` in the payload to trigger. No network calls
+  or provider imports. Outputs include news_queries, sentiment_queries,
+  entities, themes, industries, and required_capabilities.
+- **Optional data pass-through** — Benchmarks, peer groups, factor
+  exposures, manager profiles, fee schedules, and redemption rules are
+  accepted as optional host-provided payload fields and passed through
+  to the fund_analysis_report. Minimal summarization helpers included
+  (`summarize_benchmark_gap`, `summarize_fee_schedule`, etc.).
+- **New runtime bridge examples**:
+  `examples/runtime_bridge_ledger_snapshot_input.json` (derived mode),
+  `examples/runtime_bridge_research_query_plan_input.json` (query planning).
+- **Tests**: 27 ledger_snapshot tests, 10 query_plan tests, 8 derived
+  portfolio tests, 6 runtime bridge tests for new examples, 10 data
+  capability documentation consistency tests.
+
+### Changed
+
+- FundAnalysisSkill `run()` restructured to support three portfolio modes:
+  host-provided, derived-from-transactions, and hybrid with reconciliation.
+- Evidence specs now include `derived_portfolio_snapshot` and
+  `ledger_reconciliation_mismatch` when applicable.
+- `skillpack/fund-agent.skillpack.yaml` tools section includes new
+  ledger snapshot and query plan tools.
+
 ## 0.4.7-dev-runtime-bridge-hardening
 
 ### Changed

@@ -10,6 +10,18 @@ This workflow is the canonical host-side guide for the user request:
 fetching, data-fetching policy, user prompts, credentials, MCP providers, final
 UX, and whether to escalate to formal decision support.
 
+Portfolio can be provided directly via `portfolio.positions` or derived from
+`transactions` + `current_nav` + `as_of_date`. The derived portfolio snapshot is
+deterministic (weighted-average cost basis) but depends on input completeness.
+Realized PnL is weighted-average and limited; if incomplete, the skill outputs
+a warning and `null` rather than overclaiming.
+
+Research query plan is only a plan; the host decides whether to call
+news/sentiment skills. New capabilities (benchmarks, peers, managers, fees,
+redemption rules, macro events, market calendar, etc.) are host-owned
+contracts, not built-in providers. `fund-agent` still does not fetch NAV,
+news, sentiment, or fund profiles directly.
+
 ## 1. User request
 
 A user asking `分析下我的基金给出报告` is asking for an analysis report, not
@@ -48,6 +60,11 @@ Collect as much of the following from the host data layer as available:
 
 If portfolio positions exist but optional data is missing, proceed with
 `PARTIAL` analysis and label the missing data in warnings.
+
+If `portfolio.positions` is missing but `transactions` + `current_nav` +
+`as_of_date` exist, `fund_analysis` will deterministically derive a position
+snapshot from the transaction ledger. The derived snapshot emits
+`derived_portfolio_snapshot` and `ledger_cashflow_summary` artifacts.
 
 ## 4. Required vs optional data
 

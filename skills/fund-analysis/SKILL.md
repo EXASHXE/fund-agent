@@ -103,14 +103,38 @@ MCP capabilities required: none.
 - `risk_profile` with concentration, liquidity, and trade budget limits
 - `constraints` such as minimum trade amount and forbidden actions
 
+### Derived portfolio mode
+
+When `portfolio.positions` is not available, `fund_analysis` accepts:
+- `transactions` — transaction ledger with BUY/SELL/DIVIDEND/FEE events
+- `current_nav` — `{fund_code: current_nav}` map
+- `as_of_date` — the snapshot date
+
+The skill deterministically derives a position snapshot from the ledger
+using weighted-average cost basis. Emits `derived_portfolio_snapshot` and
+`ledger_cashflow_summary` artifacts with a warning that the portfolio was
+derived. Accuracy depends on transaction ledger completeness and current NAV.
+
+### Reconciliation
+
+When both host portfolio and transactions exist, `fund_analysis` runs a
+ledger-portfolio reconciliation and emits `ledger_reconciliation_report`.
+Mismatches are listed as warnings; analysis continues on the host portfolio
+as source of truth.
+
 ### Optional data
 
 - `fund_profiles` for fund type, benchmark, manager, and tags
 - `nav_history` for deterministic risk-return metrics
 - `holdings` for theme, industry, region, and security exposure
-- `transactions` for cost basis, cashflow, and trading discipline analysis
+- `transactions` for cost basis, cashflow, trading discipline analysis,
+  and optional ledger-derived portfolio snapshot
 - `dca_plans` for recurring investment review
 - `market_scenario` supplied by the host
+- `benchmarks`, `benchmark_history`, `peer_group`, `factor_exposures`,
+  `manager_profiles`, `fee_schedules`, `redemption_rules` — pass-through
+  optional data (host-owned, not fetched by fund-agent)
+- `research_planning` — when `true`, produces `research_query_plan` artifact
 
 See `references/input-contract.md` for the expanded payload contract.
 

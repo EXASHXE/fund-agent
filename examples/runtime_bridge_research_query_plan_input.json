@@ -1,0 +1,71 @@
+{
+  "payload": {
+    "portfolio": {
+      "as_of_date": "2026-06-01",
+      "total_value": 200000,
+      "cash_available": 20000,
+      "positions": [
+        {
+          "fund_code": "110011",
+          "fund_name": "Example Equity Fund",
+          "current_value": 60000,
+          "total_cost": 58000,
+          "shares": 50000,
+          "target_weight": 0.25,
+          "tags": ["broad_market", "equity"]
+        },
+        {
+          "fund_code": "000001",
+          "fund_name": "Bond Fund",
+          "current_value": 80000,
+          "total_cost": 78000,
+          "shares": 40000,
+          "target_weight": 0.40,
+          "tags": ["bond", "fixed_income"]
+        },
+        {
+          "fund_code": "000002",
+          "fund_name": "QDII Fund",
+          "current_value": 40000,
+          "total_cost": 42000,
+          "shares": 20000,
+          "target_weight": 0.20,
+          "tags": ["qdii", "global"]
+        }
+      ]
+    },
+    "fund_profiles": {
+      "110011": {"fund_code": "110011", "name": "Example Equity Fund", "fund_type": "equity", "benchmark": "CSI 300"},
+      "000001": {"fund_code": "000001", "name": "Bond Fund", "fund_type": "bond", "benchmark": "ChinaBond Index"},
+      "000002": {"fund_code": "000002", "name": "QDII Fund", "fund_type": "qdii", "benchmark": "MSCI World"}
+    },
+    "holdings": {
+      "110011": [
+        {"name": "Company A", "weight": 0.08, "industry": "technology", "region": "CN"},
+        {"name": "Company B", "weight": 0.06, "industry": "healthcare", "region": "CN"},
+        {"name": "Company C", "weight": 0.05, "industry": "consumer", "region": "CN"}
+      ],
+      "000001": [
+        {"name": "Treasury Bond 2028", "weight": 0.30, "industry": "government", "region": "CN"},
+        {"name": "Corporate Bond X", "weight": 0.20, "industry": "corporate", "region": "CN"}
+      ],
+      "000002": [
+        {"name": "Apple Inc", "weight": 0.10, "industry": "technology", "region": "US", "ticker": "AAPL"},
+        {"name": "Microsoft Corp", "weight": 0.08, "industry": "technology", "region": "US", "ticker": "MSFT"}
+      ]
+    },
+    "risk_profile": {
+      "risk_level": "moderate",
+      "max_single_fund_weight": 0.3,
+      "max_theme_weight": 0.4,
+      "max_trade_pct": 0.1,
+      "liquidity_reserve_pct": 0.1,
+      "short_term_trade_budget_pct": 0.1
+    },
+    "constraints": {
+      "min_trade_amount": 100,
+      "forbidden_actions": []
+    },
+    "research_planning": true
+  }
+}

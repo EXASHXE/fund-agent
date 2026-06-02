@@ -86,6 +86,54 @@ data in `SkillInput.payload`.
 - `market_scenario` must be supplied by the host and must not be invented by
   `fund-agent`.
 
+## Derived Portfolio Mode
+
+When `portfolio.positions` is not available, the host may provide:
+
+```json
+{
+  "transactions": [
+    {"action": "BUY", "fund_code": "110011", "date": "2025-06-01", "amount": 10000.00, "shares": 10000.00, "nav": 1.00}
+  ],
+  "current_nav": {"110011": 1.20},
+  "as_of_date": "2026-06-01",
+  "risk_profile": {},
+  "constraints": {}
+}
+```
+
+`fund_analysis` will deterministically build a position snapshot from the
+transaction ledger using weighted-average cost basis. The derived snapshot is
+emitted as `derived_portfolio_snapshot` artifact along with
+`ledger_cashflow_summary`.
+
+## Reconciliation Mode
+
+When both host `portfolio.positions` and `transactions` + `current_nav` exist,
+`fund_analysis` runs a ledger-portfolio reconciliation and emits
+`ledger_reconciliation_report` listing mismatches.
+
+## Research Query Planning
+
+When `payload.research_planning` is `true`, `fund_analysis` produces a
+`research_query_plan` artifact with suggested news and sentiment queries.
+This is a plan only — the host decides whether to call `news_research` or
+`sentiment_analysis`. No network calls are made.
+
+## Optional Data Fields
+
+The following host-owned data fields are accepted and passed through:
+
+- `benchmarks` — fund benchmark identifiers
+- `benchmark_history` — benchmark return history
+- `peer_group` — peer fund comparison data
+- `factor_exposures` — factor exposure data
+- `manager_profiles` — fund manager information
+- `fee_schedules` — fund fee structures
+- `redemption_rules` — redemption/settlement rules
+
+All are host-provided pass-through; `fund-agent` does not fetch them.
+
 ## Compatibility Fallback
 
 Payloads with only `related_entities` can produce baseline HardEvidence for

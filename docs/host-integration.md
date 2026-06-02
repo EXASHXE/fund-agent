@@ -9,12 +9,18 @@ The skill layer is Markdown-first. Hosts should discover callable skills from
 agent-facing workflow and policy. Do not infer runtime skill IDs from folder
 names.
 
+All data capabilities (fund profiles, NAV history, holdings, transactions,
+benchmarks, peer data, manager profiles, fee schedules, market calendar, etc.)
+are **host-owned**. `fund-agent` does NOT fetch NAV, holdings, news, sentiment,
+or fund profiles directly. The host provides data in `SkillInput.payload`. See
+`skillpack/capabilities.yaml` for the full host-owned data capability catalog.
+
 ## Responsibilities
 
 - Host agent: planning, skill order, task memory, MCP provider wiring,
-  orchestration, retries, and final UX.
+  orchestration, retries, and final UX. Host owns all data fetching.
 - `fund-agent`: callable skills, pure tools, evidence contracts, graph helpers,
-  decision support, and audit-friendly outputs.
+  decision support, deterministic ledger snapshot, and audit-friendly outputs.
 
 Host integrations do not need to call `src.core.research_os`.
 
@@ -73,8 +79,17 @@ The callable tool catalog lives at
 ### Portfolio Review
 
 For personal portfolio review, the host supplies local or host-fetched fund
-data directly to `fund_analysis`. `fund-agent` does not fetch NAV, holdings, or
-profiles.
+data directly to `fund_analysis`. There are two modes:
+
+1. **Direct portfolio mode**: Host provides `portfolio.positions` directly.
+2. **Derived portfolio mode**: Host provides `transactions` + `current_nav`
+   and `as_of_date`; `fund_analysis` deterministically builds a position
+   snapshot from the transaction ledger using weighted-average cost basis.
+
+When both host portfolio and transactions exist, `fund_analysis` runs a
+ledger-portfolio reconciliation and emits a `ledger_reconciliation_report`.
+
+`fund-agent` does not fetch NAV, holdings, or profiles.
 
 ```python
 from src.schemas.skill import SkillInput
