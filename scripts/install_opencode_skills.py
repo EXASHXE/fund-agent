@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Sync canonical fund-agent skills into an OpenCode Agent Skills directory.
 
-v0.4.5 native skill install helper. The OpenCode plugin alone (Mode A)
+v0.4.6 native skill install helper. The OpenCode plugin alone (Mode A)
 exposes fund-agent as ``fund_agent_skills`` / ``fund_agent_skill_doc`` /
 ``fund_agent_runtime_hint`` custom tools. OpenCode's **native** Agent
 Skills discovery is a separate mechanism: it looks for ``SKILL.md``
@@ -276,7 +276,7 @@ def build_parser() -> argparse.ArgumentParser:
         prog="install_opencode_skills.py",
         description=(
             "Sync canonical fund-agent skills into an OpenCode Agent "
-            "Skills directory. Mode B of the v0.4.5 native skill "
+            "Skills directory. Mode B of the v0.4.6 native skill "
             "install."
         ),
     )

@@ -1,6 +1,6 @@
 """Install docs must be honest about current capability.
 
-The v0.4.4 OpenCode install is a metadata + doc reader plugin only. It is
+The v0.4.6 OpenCode install is a metadata + doc reader plugin only. It is
 NOT a runtime bridge, NOT a data fetcher, and NOT a trading system. These
 tests guard the install docs against overclaiming, which would mislead
 users and break the host-agnostic architecture constraints.
@@ -27,7 +27,7 @@ def _text(path: Path) -> str:
 
 def test_install_docs_do_not_claim_full_runtime_bridge_in_v0_4_4():
     """Install docs must not claim the OpenCode plugin runs the Python
-    runtime in v0.4.4."""
+    runtime in v0.4.6."""
     forbidden = [
         "opencode plugin runs fund-agent",
         "opencode plugin invokes fund-analysis",

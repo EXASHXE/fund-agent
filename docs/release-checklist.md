@@ -88,6 +88,13 @@ Run this checklist before tagging a release.
       contracts, skillpack, examples, skills, tools, integration, install smoke,
       and default pytest
 - [ ] `scripts/check_plugin_gate.sh` exists and is executable
+- [ ] `scripts/check_plugin_gate.sh` auto-installs only `pytest` and
+      `pyyaml` (via `python -m pip install --quiet pytest pyyaml`) if
+      they are missing on the host. This keeps the gate runnable on a
+      fresh `pip install`-less environment (such as a minimal CI
+      runner). The script does **not** install any other dependency,
+      does **not** add new auto-install targets, and does **not**
+      mutate the project requirements.
 
 ## 9. Host Integration UX
 

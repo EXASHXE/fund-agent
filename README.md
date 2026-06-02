@@ -289,6 +289,12 @@ PYTHONPATH=. pytest -q
 bash scripts/check_plugin_gate.sh
 ```
 
+`scripts/check_plugin_gate.sh` auto-installs only `pytest` and `pyyaml`
+(via `pip install --quiet pytest pyyaml`) if they are missing on the
+host, so a fresh `pip install`-less environment can still run the
+gate. The script does not install any other dependency and does not
+mutate the project requirements.
+
 Provider credentials are host concerns. The skill pack itself only declares MCP
 capabilities and contracts.
 
