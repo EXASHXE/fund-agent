@@ -10,14 +10,14 @@
 > document describes the **full** design; the v0.4.7-dev
 > implementation realizes a subset.
 >
-> The v0.4.6 OpenCode install is **plugin metadata + doc reader only**
-> and does not run a runtime bridge. See
+> The OpenCode plugin (current release) is **plugin metadata + doc
+> reader only** and does not run a runtime bridge. See
 > [`docs/install/opencode.md`](../install/opencode.md) for the current
 > install.
 
-## Why a runtime bridge is a future concern, not a v0.4.6 one
+## Why the deeper runtime bridge is still future
 
-The OpenCode plugin in v0.4.6 registers three custom tools
+Historically, the OpenCode plugin registers three custom tools
 (`fund_agent_skills`, `fund_agent_skill_doc`,
 `fund_agent_runtime_hint`) and logs at startup. It deliberately does
 **not** invoke the Python runtime from inside the plugin.
@@ -169,7 +169,7 @@ Bridge-level failures look like:
 {
   "ok": false,
   "error": {
-    "code": "INVALID_INPUT|UNKNOWN_SKILL|RUNTIME_LOAD_FAILED|SKILL_RUN_FAILED|JSON_SERIALIZATION_FAILED",
+    "code": "INVALID_INPUT|UNKNOWN_SKILL|RUNTIME_LOAD_FAILED|SKILL_RUN_FAILED|JSON_SERIALIZATION_FAILED|MISSING_MCP_CAPABILITY",
     "message": "...",
     "details": { "...": "..." }
   }

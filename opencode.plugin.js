@@ -1,6 +1,6 @@
 // fund-agent OpenCode plugin
 //
-// Scope (v0.4.6, native skill install hardening):
+// Scope (current release; native skill install hardening):
 //   1. Logs that the plugin is loaded and which hyphenated skills are
 //      available, distinguishing the primary skill from the four
 //      supporting skills in both the message text and the structured
@@ -12,8 +12,11 @@
 //        - fund_agent_runtime_hint    map hyphenated slug or runtime ID
 //                                     to the Python runtime class
 //   3. Does NOT fetch data, run an autonomous loop, or place trades.
+//   4. Does NOT shell out to Python or invoke the runtime bridge
+//      CLI. The runtime bridge is a host-invoked surface, not a
+//      plugin-invoked one.
 //
-// Skill surface (v0.4.6, Superpowers-compatible):
+// Skill surface (Superpowers-compatible, version-neutral):
 //   - Agent-facing skill names are hyphenated Markdown doc slugs:
 //       fund-analysis              (primary / default)
 //       decision-support           (supporting)
@@ -54,8 +57,8 @@ const PLUGIN_VERSION = "0.4.7-dev";
 const PLUGIN_NAME = "fund-agent";
 
 // Manifest runtime skill ID -> hyphenated Markdown doc slug.
-// This map is the source of truth for the v0.4.6 install and MUST match
-// skillpack/fund-agent.skillpack.yaml. A test
+// This map is the source of truth for the runtime-id ↔ doc-slug
+// mapping and MUST match skillpack/fund-agent.skillpack.yaml. A test
 // (tests/install/test_skill_doc_slug_mapping.py) guards this invariant.
 // The `role` field marks fund-analysis as the primary / default skill
 // and the rest as supporting skills. It is metadata only.
@@ -375,7 +378,7 @@ export function buildStartupLogMessage() {
   // The plugin never logs or registers underscore skill slugs.
   // Distinguish the primary skill from the supporting skills so the
   // log message never misclassifies fund-analysis as a supporting
-  // skill. (v0.4.6 install-hardening.)
+  // skill.
   const primaryEntry = SKILL_CATALOG.find((s) => s.role === "primary");
   const supportingEntries = SKILL_CATALOG.filter((s) => s.role === "supporting");
   const primarySkill = primaryEntry ? primaryEntry.doc_slug : null;
@@ -395,8 +398,8 @@ export const FundAgentPlugin = async ({ client, directory, worktree }) => {
   // The plugin never logs or registers underscore skill slugs.
   // Distinguish the primary skill from the supporting skills so the
   // log message never misclassifies fund-analysis as a supporting
-  // skill. (v0.4.6 install-hardening: listSkills() already returned
-  // the right split; the startup log now matches.)
+  // skill. listSkills() already returns the right split; the
+  // startup log now matches.
   const { message, primary_skill, supporting_skills } = buildStartupLogMessage();
 
   // Best-effort structured log. If the OpenCode client is not available

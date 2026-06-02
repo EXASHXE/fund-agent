@@ -1,5 +1,67 @@
 # Changelog
 
+## 0.4.7-dev-runtime-bridge-hardening
+
+### Changed
+
+- Runtime bridge MCP resolution now unions the manifest
+  `requires_mcp` declaration with the host's
+  `SkillInput.required_mcp_capabilities` to compute the
+  **effective required MCP set**. Skills like `news_research` and
+  `sentiment_analysis` no longer silently lose their manifest
+  requirements when the host passes a convenience `{"payload":
+  {...}}` envelope without `required_mcp_capabilities`.
+- Bridge output envelope metadata now always includes
+  `required_mcp_capabilities` and `missing_mcp_capabilities`,
+  even when the skill has no MCP requirements. The keys are
+  always present so hosts can rely on them.
+- `_emit_envelope` returns exit code **2** whenever the
+  `JSON_SERIALIZATION_FAILED` fallback fires, even if the
+  original envelope had `ok=true`. A non-serializable output is
+  a bridge-level failure regardless of skill intent.
+- Bridge-level error code `MISSING_MCP_CAPABILITY` is now
+  included in `BRIDGE_ERROR_CODES` and downgrades `ok` to
+  `false` whenever at least one required MCP capability is
+  missing — including cases where the embedded skill returned
+  `FAILED` with its own `MISSING_MCP_CAPABILITY` error.
+- `opencode.plugin.js` top-of-file comments are now
+  version-neutral; the runtime version constant
+  `PLUGIN_VERSION` remains the single source of truth.
+
+### Added
+
+- `tests/runtime_bridge/test_runtime_bridge_mcp_capabilities.py`
+  — 8 tests covering: manifest requires_mcp surfacing for
+  `news_research` and `sentiment_analysis`, canned MCP
+  round-trip, convenience input without `required_mcp_capabilities`
+  still respecting manifest requirements, host-added
+  capabilities extending the union, no-synthetic-missing for
+  `fund_analysis`, and `JSON_SERIALIZATION_FAILED` exit code 2
+  semantics.
+- `tests/runtime_bridge/test_runtime_bridge_output_contract.py`
+  — 7 golden-ish contract tests for the bridge envelope shape,
+  metadata keys, and the no-traceback-on-stdout property.
+- `tests/docs/test_runtime_bridge_doc_consistency.py` — 6
+  doc consistency tests for the runtime bridge CLI doc and
+  the install matrix (`docs/install/runtime-bridge-cli.md`,
+  `.opencode/INSTALL.md`, `docs/install/opencode.md`).
+
+### Documented
+
+- `docs/install/runtime-bridge-cli.md` now has an explicit
+  "Install (source checkout only)" section. The runtime bridge
+  is **git-clone-only** in v0.4.7-dev; the npm package
+  (Mode A: plugin + skill docs) does **not** ship
+  `scripts/run_skill.py`, `src/skillpack/run_skill.py`, or the
+  runtime bridge examples.
+- `docs/release-checklist.md` adds a "v0.4.7-dev hardening
+  additions" subsection.
+- `docs/design/runtime-bridge.md` reframes the "Why the
+  runtime bridge is still future" section to acknowledge the
+  thin CLI bridge is shipped and only the **deeper** bridge
+  is still future.
+- `CHANGELOG.md` adds this section.
+
 ## 0.4.7-dev-runtime-bridge-cli
 
 ### Added
@@ -26,7 +88,8 @@
   the bridge itself succeeded; the embedded skill status is
   reported in the JSON envelope. Bridge-level error codes:
   `INVALID_INPUT`, `UNKNOWN_SKILL`, `RUNTIME_LOAD_FAILED`,
-  `SKILL_RUN_FAILED`, `JSON_SERIALIZATION_FAILED`.
+  `SKILL_RUN_FAILED`, `JSON_SERIALIZATION_FAILED`,
+  `MISSING_MCP_CAPABILITY`.
 - `examples/runtime_bridge_fund_analysis_input.json` — minimal
   convenience input for `fund_analysis`.
 - `examples/runtime_bridge_decision_support_input.json` — minimal

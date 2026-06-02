@@ -281,7 +281,8 @@ PYTHONPATH=. pytest tests/install -q
       examples/runtime_bridge_decision_support_input.json --pretty`
       exits 0 and emits `ok=true` JSON
 - [ ] `PYTHONPATH=. pytest tests/runtime_bridge -q` passes (CLI,
-      manifest resolution, no-network, decision support, examples)
+      manifest resolution, no-network, decision support, examples,
+      MCP capability resolution, output contract)
 - [ ] `scripts/run_skill.py` delegates to
       `src.skillpack.run_skill:main`
 - [ ] `src/skillpack/run_skill.py` resolves runtime classes from
@@ -289,7 +290,8 @@ PYTHONPATH=. pytest tests/install -q
       does not hardcode runtime classes
 - [ ] Bridge-level error codes are exactly
       `INVALID_INPUT | UNKNOWN_SKILL | RUNTIME_LOAD_FAILED |
-      SKILL_RUN_FAILED | JSON_SERIALIZATION_FAILED`
+      SKILL_RUN_FAILED | JSON_SERIALIZATION_FAILED |
+      MISSING_MCP_CAPABILITY`
 - [ ] Bridge stdout is JSON only; diagnostics go to stderr
 - [ ] Bridge does not import provider SDKs, does not call
       `requests` / `httpx` / `urllib.request` / `subprocess`, does
@@ -312,3 +314,52 @@ PYTHONPATH=. pytest tests/install -q
 - [ ] No new fund metrics, no new portfolio tools, no new
       schemas, no new runtime contracts, no new MCP providers, no
       autonomous loop, no planner loop, no server, no daemon
+
+### v0.4.7-dev hardening additions
+
+- [ ] `python scripts/run_skill.py --skill news_research --input
+      <news_research with no mcp_responses>` exits 2 and emits
+      `ok=false` with `error.code = MISSING_MCP_CAPABILITY`,
+      `metadata.required_mcp_capabilities` includes `web_search`
+      and `financial_news`, and
+      `metadata.missing_mcp_capabilities` is the same set
+- [ ] `python scripts/run_skill.py --skill sentiment_analysis
+      --input <sentiment_analysis with no mcp_responses>` exits 2
+      and emits `ok=false` with
+      `metadata.missing_mcp_capabilities` containing
+      `social_sentiment`
+- [ ] `python scripts/run_skill.py --skill news_research --input
+      <news_research with canned web_search + financial_news
+      mcp_responses>` exits 0, runs the skill, and reports
+      `missing_mcp_capabilities = []`
+- [ ] A convenience `{"payload": {...}}` envelope with no
+      `required_mcp_capabilities` still surfaces the manifest
+      `requires_mcp` (asserted by
+      `tests/runtime_bridge/test_runtime_bridge_mcp_capabilities.py`)
+- [ ] `_emit_envelope` returns exit code 2 when the
+      `JSON_SERIALIZATION_FAILED` fallback fires, even if the
+      original envelope had `ok=true` (asserted by
+      `tests/runtime_bridge/test_runtime_bridge_mcp_capabilities.py`)
+- [ ] Bridge output envelope has stable top-level keys
+      (`ok, skill_name, step_id, status, artifacts,
+      evidence_items, warnings, errors, used_mcp_capabilities,
+      metadata`) and metadata keys (`manifest_path, runtime_path,
+      required_mcp_capabilities, missing_mcp_capabilities`) for
+      successful skill runs (asserted by
+      `tests/runtime_bridge/test_runtime_bridge_output_contract.py`)
+- [ ] Bridge-failure envelopes have top-level `ok=false` and
+      `error.{code, message, details}`; stdout contains no
+      Python traceback (asserted by
+      `tests/runtime_bridge/test_runtime_bridge_output_contract.py`)
+- [ ] `package.json` does NOT include runtime bridge files
+      (`scripts/run_skill.py`, `src/skillpack/run_skill.py`,
+      `examples/runtime_bridge_*`, `tests/runtime_bridge/`).
+      The bridge is git-clone-only; the npm package remains
+      Mode A only (asserted by
+      `tests/install/test_npm_pack_contents.py`)
+- [ ] `docs/install/runtime-bridge-cli.md` and the install
+      matrix in `.opencode/INSTALL.md` /
+      `docs/install/opencode.md` agree that the runtime bridge
+      is a separate, host-invoked, source-checkout surface
+      (asserted by
+      `tests/docs/test_runtime_bridge_doc_consistency.py`)

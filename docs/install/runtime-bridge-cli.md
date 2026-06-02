@@ -10,6 +10,29 @@ external hosts call `fund-agent` runtime skills without importing
 internal Python modules directly, by spawning a Python subprocess
 and reading JSON envelopes from stdout.
 
+## Install (source checkout only)
+
+The runtime bridge is **git-clone-only** in v0.4.7-dev. The npm
+package (Mode A: plugin + skill docs) does **not** ship
+`scripts/run_skill.py`, `src/skillpack/run_skill.py`, or the
+runtime bridge examples. To use the bridge, hosts must work from a
+Python source checkout:
+
+```bash
+git clone --branch v0.4.7-dev https://github.com/EXASHXE/fund-agent.git
+cd fund-agent
+pip install -e .        # editable install into your Python environment
+```
+
+The bridge then lives at `scripts/run_skill.py` (executable
+wrapper) and `src/skillpack/run_skill.py` (importable module).
+Examples live at `examples/runtime_bridge_*_input.json` and
+`examples/minimal_runtime_bridge_fund_analysis.py`.
+
+The bridge requires **no** npm dependency, **no** OpenCode install,
+and **no** provider SDK. A working `python` (3.10+) interpreter is
+the only prerequisite.
+
 ## What it is and is not
 
 The runtime bridge:

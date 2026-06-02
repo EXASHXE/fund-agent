@@ -46,6 +46,7 @@ BRIDGE_ERROR_CODES = frozenset({
     "RUNTIME_LOAD_FAILED",
     "SKILL_RUN_FAILED",
     "JSON_SERIALIZATION_FAILED",
+    "MISSING_MCP_CAPABILITY",
 })
 
 # Slug -> runtime_id map for the optional convenience that accepts
@@ -68,15 +69,27 @@ def _emit_envelope(
     output_path: Path | None,
 ) -> int:
     """Serialize ``envelope`` to JSON and write it to ``output_path``
-    or stdout. Returns the intended process exit code based on the
-    envelope's ``ok`` field. The caller is responsible for
-    ``sys.exit(returncode)`` if running as ``__main__``.
+    or stdout. Returns the intended process exit code.
+
+    The caller is responsible for ``sys.exit(returncode)`` if running
+    as ``__main__``.
+
+    Exit-code semantics:
+
+    - ``0`` — the bridge itself succeeded; the original envelope
+      had ``ok=true`` and was serialized successfully.
+    - ``2`` — bridge-level failure. This includes any case where a
+      JSON serialization fallback is used, even if the original
+      envelope had ``ok=true`` (a non-serializable output is a
+      bridge-level failure regardless of skill intent).
     """
     indent = 2 if pretty else None
     separators = None if pretty else (",", ":")
+    fallback_used = False
     try:
         text = json.dumps(envelope, indent=indent, separators=separators, default=str)
     except (TypeError, ValueError) as exc:
+        fallback_used = True
         fallback = {
             "ok": False,
             "error": {
@@ -92,6 +105,8 @@ def _emit_envelope(
     else:
         sys.stdout.write(text + "\n")
         sys.stdout.flush()
+    if fallback_used:
+        return 2
     return 0 if envelope.get("ok") is True else 2
 
 
@@ -285,12 +300,19 @@ def _list_skills_envelope(
 def _resolve_skill(
     skill_arg: str,
     manifest_path: str,
-) -> tuple[str, str]:
-    """Resolve a CLI ``--skill`` value to ``(runtime_id, runtime_path)``.
+) -> tuple[str, str, list[str]]:
+    """Resolve a CLI ``--skill`` value to
+    ``(runtime_id, runtime_path, manifest_requires_mcp)``.
 
     Accepts both runtime IDs (``fund_analysis``) and agent-facing
     hyphenated slugs (``fund-analysis``). The slug form is a
     convenience only and is documented as such.
+
+    The returned ``manifest_requires_mcp`` is the canonical list
+    declared by ``skillpack/fund-agent.skillpack.yaml`` for this
+    runtime skill. The bridge unions this with the host's
+    ``SkillInput.required_mcp_capabilities`` to compute the
+    effective required MCP set.
     """
     manifest = load_skillpack_manifest(manifest_path)
     candidate = skill_arg
@@ -298,8 +320,28 @@ def _resolve_skill(
         candidate = SLUG_TO_RUNTIME_ID.get(candidate, candidate)
     for spec in manifest.skills:
         if spec.name == candidate:
-            return spec.name, spec.runtime
+            return spec.name, spec.runtime, list(spec.requires_mcp or [])
     raise KeyError(candidate)
+
+
+def _effective_required_mcp(
+    manifest_requires: list[str],
+    skill_input_requires: list[str],
+) -> list[str]:
+    """Compute the effective required MCP capability set as the
+    union of the manifest declaration and the host-supplied
+    ``SkillInput.required_mcp_capabilities``.
+
+    Order is preserved (manifest first, then any extras the host
+    added that are not already declared), with duplicates removed.
+    """
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for name in list(manifest_requires or []) + list(skill_input_requires or []):
+        if name not in seen:
+            seen.add(name)
+            ordered.append(name)
+    return ordered
 
 
 def run_bridge(
@@ -351,7 +393,9 @@ def run_bridge(
         )
 
     try:
-        runtime_id, runtime_path = _resolve_skill(skill_name, manifest_path)
+        runtime_id, runtime_path, manifest_requires_mcp = _resolve_skill(
+            skill_name, manifest_path
+        )
     except KeyError:
         return _emit_envelope(
             {
@@ -414,8 +458,12 @@ def run_bridge(
         )
 
     mcp_responses = parsed.get("mcp_responses") if isinstance(parsed, dict) else None
+    effective_required_mcp = _effective_required_mcp(
+        manifest_requires_mcp,
+        list(skill_input.required_mcp_capabilities or []),
+    )
     adapter, missing_mcp = _build_mcp_adapter(
-        mcp_responses, list(skill_input.required_mcp_capabilities or [])
+        mcp_responses, effective_required_mcp
     )
 
     try:
@@ -492,12 +540,15 @@ def run_bridge(
     metadata = {
         "manifest_path": manifest_path,
         "runtime_path": runtime_path,
+        "required_mcp_capabilities": list(effective_required_mcp),
         "missing_mcp_capabilities": list(missing_mcp),
     }
     envelope = _envelope_from_output(output, metadata=metadata)
-    # If the skill required MCP and the bridge couldn't provide it,
-    # downgrade ok to False so callers can branch on it.
-    if missing_mcp and output.status != "FAILED":
+    # If the skill required MCP and the bridge could not provide
+    # at least one required capability, downgrade ok to False so
+    # callers can branch on it. The embedded skill status / errors
+    # remain in the envelope for transparency.
+    if missing_mcp:
         envelope["ok"] = False
         envelope["error"] = {
             "code": "MISSING_MCP_CAPABILITY",

@@ -67,9 +67,18 @@ FORBIDDEN_PACKAGE_PATHS = (
     "tests/tools",
     "tests/integration",
     "tests/deprecated",
+    "tests/runtime_bridge",
     # Mode B helper. v0.4.6 npm package is Mode A only; the
     # helper is git-clone-only.
     "scripts/install_opencode_skills.py",
+    # Runtime bridge CLI. v0.4.7-dev npm package remains Mode A
+    # (plugin + skill docs) only; the runtime bridge is a Python
+    # CLI shipped via git clone / source checkout, not via npm.
+    "scripts/run_skill.py",
+    "src/skillpack/run_skill.py",
+    "examples/runtime_bridge_fund_analysis_input.json",
+    "examples/runtime_bridge_decision_support_input.json",
+    "examples/minimal_runtime_bridge_fund_analysis.py",
     # Project-local OpenCode install doc. Lives at .opencode/INSTALL.md
     # in the source repo only.
     ".opencode/INSTALL.md",
