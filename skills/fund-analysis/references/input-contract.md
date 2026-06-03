@@ -76,7 +76,30 @@ data in `SkillInput.payload`.
 }
 ```
 
-## Field Guidance
+## Transaction Event Semantics
+
+Each transaction event in the host-provided ledger must carry an `action`
+(or `type` alias) drawn from: `BUY`, `SELL`, `DIVIDEND`, `FEE`,
+`TRANSFER_IN`, `TRANSFER_OUT`, `CALIBRATE`.
+
+| Action | Shares | Cost basis | Cashflow / Realized PnL |
+|--------|--------|------------|--------------------------|
+| BUY | += shares (or amount/nav) | += amount | Cash outflow |
+| SELL | -= shares (or amount/nav) | -= pro-rata cost | Cash inflow; realized PnL = amount - cost_of_sold |
+| DIVIDEND | Unchanged | Unchanged | +amount as realized income |
+| FEE | Unchanged | Unchanged | -amount as realized expense |
+| TRANSFER_IN | += shares (or amount/nav) | += amount | Position movement only; NOT cash flow |
+| TRANSFER_OUT | -= shares (or amount/nav) | -= pro-rata cost | Position movement only; NO realized PnL |
+| CALIBRATE | Overwritten | Overwritten | No cashflow; warns it overrides ledger state |
+
+**Policy notes:**
+- Weighted-average cost basis is used (not FIFO/LIFO).
+- Dividend reinvestment must be expressed as `DIVIDEND + BUY`.
+- Fees do NOT capitalize into cost basis.
+- TRANSFER_OUT has no realized PnL; use SELL if realized PnL is needed.
+- SELL beyond shares is clamped and warned; shares never go negative.
+- BUY/SELL with amount only (no shares, no nav) is marked unresolved.
+- CALIBRATE resets position state and realized PnL.
 
 - `portfolio.positions[].target_weight` enables `suggested_rebalance_plan`.
 - `transactions` enables transaction ledger, cost basis, reconciliation, and

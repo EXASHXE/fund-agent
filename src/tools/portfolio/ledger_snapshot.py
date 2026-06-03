@@ -4,6 +4,47 @@ No network calls, no provider SDKs, no IO beyond dataclass/JSON serialization.
 Weighted-average cost basis is the default. FIFO/LIFO are out of scope.
 
 All outputs are JSON-serializable via dict/list/number/str/None.
+
+## Transaction event semantics
+
+Each event in the host-supplied transaction ledger must carry an
+`action` (or `type` alias) drawn from this fixed vocabulary. The
+semantics below are deterministic and explicitly chosen so that the
+ledger snapshot is fully reproducible from host-provided data only.
+
+| Action        | Shares          | Cost basis             | Cashflow / realized PnL   |
+|---------------|-----------------|------------------------|---------------------------|
+| BUY           | += shares (or amount/nav) | += amount        | cash out (negative cashflow) |
+| SELL          | -= shares (or amount/nav) | -= pro-rata cost | cash in (positive cashflow), realized PnL = amount - cost_of_sold |
+| DIVIDEND      | unchanged       | unchanged              | +amount as realized income |
+| FEE           | unchanged       | unchanged              | -amount as realized expense |
+| TRANSFER_IN   | += shares (or amount/nav) | += amount        | not treated as new cash; position movement only |
+| TRANSFER_OUT  | -= shares (or amount/nav) | -= pro-rata cost | position movement only; no realized PnL |
+| CALIBRATE     | overwritten     | overwritten            | no cashflow; warns that it overrides ledger state |
+
+Policy choices that downstream callers MUST know:
+
+- **Weighted-average cost basis** is used. FIFO/LIFO are out of scope.
+- **DIVIDEND** is treated as cash income (realized PnL). Dividend
+  reinvestment must be expressed as `DIVIDEND + BUY` (or as a
+  reinvest flag, when supported in a future version).
+- **FEE** is treated as a realized expense. It does NOT increase
+  the cost basis of the position. The alternative policy
+  ("capitalize fees into cost basis") is explicitly NOT used here.
+- **TRANSFER_IN** does NOT count as a new external cash inflow. It is
+  treated as a position movement with cost basis set to amount (or
+  amount/nav-inferred). If broker statements are missing cost basis
+  for a transfer-in, the host should supply amount as a proxy.
+- **TRANSFER_OUT** does NOT generate realized PnL. It reduces shares
+  and pro-rata cost basis. If the host needs realized PnL on a
+  transfer, it should use SELL.
+- **CALIBRATE** overwrites position state from a single host event
+  and warns that subsequent realized_pnl is reset.
+- **SELL beyond shares** is clamped to available shares, and a
+  warning is emitted. The clamp is deterministic.
+- **BUY/SELL with amount only (no shares, no nav)** is marked
+  unresolved: the action is normalized, but a warning is emitted
+  and the event does NOT change shares or cashflow silently.
 """
 
 from __future__ import annotations
@@ -23,6 +64,18 @@ _VALID_ACTIONS = frozenset({
 
 _BUY_ACTIONS = frozenset({"BUY", "TRANSFER_IN"})
 _SELL_ACTIONS = frozenset({"SELL", "TRANSFER_OUT"})
+_POSITION_INCREASE = frozenset({"BUY", "TRANSFER_IN"})
+_POSITION_DECREASE = frozenset({"SELL", "TRANSFER_OUT"})
+
+# Number of decimal places for cost basis / share rounding
+_COST_ROUND = 2
+_SHARE_ROUND = 8
+_VALUE_ROUND = 2
+_PCT_ROUND = 6
+
+# Default tolerances for reconciliation
+_DEFAULT_SHARES_TOLERANCE = 0.01
+_DEFAULT_VALUE_TOLERANCE = 0.50
 
 
 # ———————————————————————————————————————————————— Normalize
@@ -35,7 +88,17 @@ def normalize_transaction_events(
     Accepts either 'action' or 'type' as the action field.
     Returns (normalized_events, warnings).
 
-    Does NOT perform network calls, IO, or provider lookups.
+    Normalization steps:
+
+    1. Uppercase the action/type field.
+    2. Move 'type' into 'action' if needed.
+    3. Convert amount/shares/nav to float when possible; convert
+       invalid values to None and emit a warning.
+    4. Clamp negative amount/shares for buy-type actions to 0 and
+       warn.
+    5. Mark missing action/fund_code/date with warnings.
+    6. Unknown actions are kept in the normalized list and
+       marked with a warning so the caller can quarantine them.
     """
     normalized: list[dict[str, Any]] = []
     warnings: list[str] = []
@@ -50,23 +113,32 @@ def normalize_transaction_events(
 
         event = dict(item)
 
-        # Normalize action/type to 'action'
+        # Normalize action/type to 'action', uppercase
         if "action" not in event and "type" in event:
             event["action"] = event.pop("type")
+        if isinstance(event.get("action"), str):
+            event["action"] = event["action"].strip().upper()
 
         action = event.get("action", "")
+        if not action:
+            warnings.append(f"transaction[{idx}]: missing action/type; skipped")
+            continue
+
         if action not in _VALID_ACTIONS:
             warnings.append(
                 f"transaction[{idx}]: unknown action '{action}', "
-                f"expected one of {sorted(_VALID_ACTIONS)}; keeping as-is"
+                f"expected one of {sorted(_VALID_ACTIONS)}; marked invalid"
             )
-            # Keep it but mark for downstream handling
+            event["valid"] = False
+            event["invalid_reason"] = f"unknown_action:{action}"
             normalized.append(event)
             continue
 
+        event["valid"] = True
+
         # Ensure required fields exist
         for field_name in ("fund_code", "date"):
-            if field_name not in event:
+            if not event.get(field_name):
                 warnings.append(
                     f"transaction[{idx}]: missing '{field_name}' for action '{action}'"
                 )
@@ -79,12 +151,21 @@ def normalize_transaction_events(
                 except (TypeError, ValueError):
                     warnings.append(
                         f"transaction[{idx}]: could not convert '{num_field}' "
-                        f"to float: {event.get(num_field)!r}"
+                        f"to float: {event.get(num_field)!r}; set to None"
                     )
                     event[num_field] = None
 
-        # Enforce non-negative amount/shares for buys
+        # Enforce non-negative amount/shares for buy-type actions
         if action in _BUY_ACTIONS:
+            for nf in ("amount", "shares"):
+                if nf in event and event[nf] is not None and event[nf] < 0:
+                    warnings.append(
+                        f"transaction[{idx}]: negative {nf} for {action}, clamped to 0"
+                    )
+                    event[nf] = 0.0
+
+        # For SELL-type actions, also clamp negatives (data hygiene)
+        if action in _SELL_ACTIONS:
             for nf in ("amount", "shares"):
                 if nf in event and event[nf] is not None and event[nf] < 0:
                     warnings.append(
@@ -190,6 +271,19 @@ def calculate_realized_unrealized_pnl(
 ) -> dict[str, Any]:
     """Calculate realized and unrealized PnL using weighted-average cost basis.
 
+    Transaction semantics (see module docstring for full policy):
+
+    - BUY / TRANSFER_IN: increase shares and cost.
+    - SELL: decrease shares, realized PnL = amount - cost_of_sold.
+    - TRANSFER_OUT: decrease shares and pro-rata cost. NO realized PnL.
+    - DIVIDEND: realized income (cash), no share change.
+    - FEE: realized expense, no share change.
+    - CALIBRATE: overwrite position state, reset realized PnL.
+
+    Events with ``valid=False`` or ``valid`` absent are skipped with
+    a warning. Events with amount only (no shares, no nav) are marked
+    unresolved and skipped silently (they do not change state).
+
     Args:
         transactions: Normalized transaction events in chronological order.
         current_nav_by_fund: {fund_code: current_nav}.
@@ -200,6 +294,8 @@ def calculate_realized_unrealized_pnl(
                            current_nav, current_value, unrealized_pnl,
                            unrealized_pnl_pct, realized_pnl, warnings}],
             "overall": {total_cost, current_value, unrealized_pnl, realized_pnl},
+            "invalid_events_count": n,
+            "unresolved_events": [...],
             "warnings": [...],
         }
     """
@@ -207,8 +303,15 @@ def calculate_realized_unrealized_pnl(
     funds: dict[str, dict[str, Any]] = {}
     overall_realized_pnl = 0.0
     warnings: list[str] = []
+    invalid_count = 0
+    unresolved: list[dict[str, Any]] = []
 
     for txn in transactions:
+        # Skip invalid events
+        if txn.get("valid") is False:
+            invalid_count += 1
+            continue
+
         fund_code = txn.get("fund_code", "")
         if not fund_code:
             continue
@@ -229,23 +332,58 @@ def calculate_realized_unrealized_pnl(
 
         f = funds[fund_code]
 
-        if action in _BUY_ACTIONS:
-            if amount is not None and amount > 0:
+        # --- BUY / TRANSFER_IN: increase shares and cost ---
+        if action in _POSITION_INCREASE:
+            has_shares = shares is not None and shares > 0
+            has_amount = amount is not None and amount > 0
+            can_infer = amount is not None and nav is not None and nav > 0
+
+            if not has_shares and not has_amount:
+                # Nothing to add, mark unresolved
+                unresolved.append({
+                    "fund_code": fund_code,
+                    "action": action,
+                    "issue": "BUY with no shares and no amount",
+                })
+                continue
+            if not has_shares and not can_infer:
+                # Amount provided but no shares and no nav → unresolved
+                unresolved.append({
+                    "fund_code": fund_code,
+                    "action": action,
+                    "issue": "BUY with amount only, no shares/nav to infer shares",
+                    "amount": amount,
+                })
+                # Still apply cost if amount is present
+                if has_amount:
+                    f["total_cost"] += amount
+                continue
+            if has_amount:
                 f["total_cost"] += amount
-            if shares is not None and shares > 0:
+            if has_shares:
                 f["total_shares"] += shares
-            elif amount is not None and nav is not None and nav > 0 and shares is None:
-                # Infer shares from amount and nav
+            elif can_infer and not has_shares:
                 inferred = amount / nav
                 f["total_shares"] += inferred
 
-        elif action in _SELL_ACTIONS:
+        # --- SELL: decrease shares, realized PnL ---
+        elif action == "SELL":
             sell_shares = shares if shares is not None else 0.0
             sell_amount = amount if amount is not None else 0.0
 
             if sell_shares <= 0 and sell_amount > 0 and nav is not None and nav > 0:
-                # Infer shares from amount and nav when only amount provided
+                # Infer shares from amount and nav
                 sell_shares = sell_amount / nav
+
+            if sell_shares <= 0:
+                unresolved.append({
+                    "fund_code": fund_code,
+                    "action": "SELL",
+                    "issue": "SELL with amount only, no shares/nav to infer shares",
+                    "amount": sell_amount,
+                })
+                # Do NOT silently change cashflow for unresolved SELL
+                continue
 
             if sell_shares > f["total_shares"]:
                 warnings.append(
@@ -257,7 +395,6 @@ def calculate_realized_unrealized_pnl(
                 sell_shares = f["total_shares"]
 
             if sell_shares > 0 and f["total_shares"] > 0:
-                # Weighted-average cost of sold portion
                 avg_cost = _weighted_average_cost(f["total_cost"], f["total_shares"])
                 cost_of_sold = avg_cost * sell_shares if avg_cost is not None else 0.0
                 realized = sell_amount - cost_of_sold
@@ -271,26 +408,62 @@ def calculate_realized_unrealized_pnl(
                 f["total_cost"] -= cost_reduction
                 f["total_shares"] -= sell_shares
 
+        # --- TRANSFER_OUT: decrease shares, NO realized PnL ---
+        elif action == "TRANSFER_OUT":
+            sell_shares = shares if shares is not None else 0.0
+
+            if sell_shares <= 0 and amount is not None and amount > 0 and nav is not None and nav > 0:
+                sell_shares = amount / nav
+
+            if sell_shares <= 0:
+                unresolved.append({
+                    "fund_code": fund_code,
+                    "action": "TRANSFER_OUT",
+                    "issue": "TRANSFER_OUT with no resolvable shares",
+                    "amount": amount,
+                })
+                continue
+
+            if sell_shares > f["total_shares"]:
+                warnings.append(
+                    f"{fund_code}: TRANSFER_OUT of {sell_shares} shares exceeds "
+                    f"holdings of {f['total_shares']} shares; clamping to "
+                    f"available shares"
+                )
+                f["fund_warnings"].append("TRANSFER_OUT_EXCEEDS_SHARES_CLAMPED")
+                sell_shares = f["total_shares"]
+
+            if sell_shares > 0 and f["total_shares"] > 0:
+                cost_reduction = (
+                    f["total_cost"] * sell_shares / f["total_shares"]
+                )
+                f["total_cost"] -= cost_reduction
+                f["total_shares"] -= sell_shares
+                # No realized PnL recorded
+
+        # --- DIVIDEND: realized income, no share change ---
         elif action == "DIVIDEND":
-            # Dividend increases cash but doesn't change shares/cost basis
-            # Record as realized income (cash received)
             if amount is not None and amount > 0:
                 f["realized_pnl"] += amount
                 overall_realized_pnl += amount
 
+        # --- FEE: realized expense, no share change ---
         elif action == "FEE":
-            # Fees reduce realized PnL, don't affect shares
             if amount is not None and amount > 0:
                 f["realized_pnl"] -= amount
                 overall_realized_pnl -= amount
 
+        # --- CALIBRATE: overwrite position state ---
         elif action == "CALIBRATE":
-            # CALIBRATE overrides position data
+            warnings.append(
+                f"{fund_code}: CALIBRATE event overrides ledger-derived state; "
+                f"realized_pnl is reset"
+            )
+            f["fund_warnings"].append("CALIBRATE_OVERRIDE")
             if amount is not None:
                 f["total_cost"] = amount
             if shares is not None and shares > 0:
                 f["total_shares"] = shares
-            # Reset realized PnL on calibrate unless host carries it forward
             if txn.get("reset_realized_pnl", True):
                 f["realized_pnl"] = 0.0
 
@@ -350,11 +523,13 @@ def calculate_realized_unrealized_pnl(
     return {
         "positions": positions,
         "overall": {
-            "total_cost": round(overall_cost, 2),
-            "current_value": round(overall_value, 2) if overall_value > 0 else None,
-            "unrealized_pnl": round(overall_value - overall_cost, 2) if overall_value > 0 else None,
-            "realized_pnl": round(overall_realized_pnl, 2),
+            "total_cost": round(overall_cost, _COST_ROUND),
+            "current_value": round(overall_value, _VALUE_ROUND) if overall_value > 0 else None,
+            "unrealized_pnl": round(overall_value - overall_cost, _VALUE_ROUND) if overall_value > 0 else None,
+            "realized_pnl": round(overall_realized_pnl, _VALUE_ROUND),
         },
+        "invalid_events_count": invalid_count,
+        "unresolved_events": unresolved,
         "warnings": warnings,
     }
 
@@ -424,6 +599,21 @@ def build_position_snapshot_from_transactions(
     pnl_result = calculate_realized_unrealized_pnl(confirmed, current_nav_by_fund)
     all_warnings.extend(pnl_result.get("warnings", []))
 
+    # Snapshot sanity: ensure no negative shares or cost
+    for pos in pnl_result.get("positions", []):
+        if (pos.get("shares") or 0.0) < 0:
+            all_warnings.append(
+                f"{pos.get('fund_code','?')}: negative shares after processing; "
+                f"clamped to 0"
+            )
+            pos["shares"] = 0.0
+        if (pos.get("total_cost") or 0.0) < 0:
+            all_warnings.append(
+                f"{pos.get('fund_code','?')}: negative cost basis after processing; "
+                f"clamped to 0"
+            )
+            pos["total_cost"] = 0.0
+
     # Build cashflow summary (from all normalized, not just confirmed)
     total_inflows = 0.0
     total_outflows = 0.0
@@ -433,23 +623,23 @@ def build_position_snapshot_from_transactions(
     for txn in normalized:
         action = txn.get("action", "")
         amount = txn.get("amount", 0.0) or 0.0
-        # For BUY-type, exclude TRANSFER_IN from inflows for cashflow
-        # (TRANSFER_IN is a position movement, not new cash)
-        if action in ("BUY",):
+        # BUY: cash outflow
+        if action == "BUY":
             total_outflows += amount
-        elif action in ("SELL",):
+        # SELL: cash inflow
+        elif action == "SELL":
             total_inflows += amount
+        # DIVIDEND: cash inflow (income)
         elif action == "DIVIDEND":
             dividend_income += amount
             total_inflows += amount
+        # FEE: cash outflow (expense)
         elif action == "FEE":
             fee_expense += amount
             total_outflows += amount
-        elif action == "TRANSFER_IN":
-            total_inflows += amount
-        elif action == "TRANSFER_OUT":
-            total_outflows += amount
-        # CALIBRATE has no cashflow impact
+        # TRANSFER_IN and TRANSFER_OUT are position movements only,
+        # NOT cashflow events. They do not affect the cash account.
+        # CALIBRATE has no cashflow impact.
 
     initial_cash = opts.get("initial_cash", 0.0)
     net_cashflow = total_inflows - total_outflows
@@ -459,6 +649,8 @@ def build_position_snapshot_from_transactions(
         "as_of_date": as_of_date,
         "positions": pnl_result["positions"],
         "pnl_overall": pnl_result["overall"],
+        "invalid_events_count": pnl_result.get("invalid_events_count", 0),
+        "unresolved_events": pnl_result.get("unresolved_events", []),
         "cashflow_summary": {
             "total_inflows": round(total_inflows, 2),
             "total_outflows": round(total_outflows, 2),
@@ -483,6 +675,7 @@ def build_position_snapshot_from_transactions(
 def reconcile_snapshot_with_portfolio(
     snapshot: dict[str, Any],
     portfolio: dict[str, Any],
+    options: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Compare a host-provided portfolio.positions with a ledger-derived snapshot.
 
@@ -492,16 +685,24 @@ def reconcile_snapshot_with_portfolio(
     Args:
         snapshot: Output of build_position_snapshot_from_transactions.
         portfolio: Host-provided portfolio dict with 'positions' list.
+        options: Optional config:
+            - shares_tolerance: max absolute shares delta. Default 0.01.
+            - value_tolerance: max absolute value delta. Default 0.50.
 
     Returns:
         {
             "matched": true/false,
             "comparisons": [{fund_code, snapshot_value, portfolio_value,
-                              delta, delta_pct, matched}],
-            "mismatches": [{fund_code, reason, snapshot_value, portfolio_value}],
+                              delta, delta_pct, matched, severity}],
+            "mismatches": [{fund_code, reason, severity, snapshot_value,
+                            portfolio_value}],
             "warnings": [...],
         }
     """
+    opts = options or {}
+    shares_tolerance = float(opts.get("shares_tolerance", _DEFAULT_SHARES_TOLERANCE))
+    value_tolerance = float(opts.get("value_tolerance", _DEFAULT_VALUE_TOLERANCE))
+
     warnings: list[str] = []
     mismatch_warnings: list[dict[str, Any]] = []
     comparisons: list[dict[str, Any]] = []
@@ -519,6 +720,7 @@ def reconcile_snapshot_with_portfolio(
             mismatch_warnings.append({
                 "fund_code": fund_code,
                 "reason": "MISSING_IN_PORTFOLIO",
+                "severity": "high",
                 "snapshot_shares": snap_pos.get("shares"),
                 "snapshot_value": snap_pos.get("current_value"),
                 "portfolio_shares": None,
@@ -538,6 +740,7 @@ def reconcile_snapshot_with_portfolio(
                 "portfolio_value": None,
                 "value_delta": None,
                 "matched": False,
+                "severity": "high",
             })
             continue
 
@@ -547,37 +750,54 @@ def reconcile_snapshot_with_portfolio(
         port_value = port_pos.get("current_value")
 
         shares_delta = snap_shares - port_shares
-        shares_tolerance = 0.01  # 1 share cent tolerance
+        value_delta = (
+            round((snap_value - port_value), _VALUE_ROUND)
+            if snap_value is not None and port_value is not None
+            else None
+        )
 
-        if abs(shares_delta) > shares_tolerance:
+        # Determine severity based on delta magnitude
+        shares_match = abs(shares_delta) <= shares_tolerance
+        value_match = (value_delta is None or abs(value_delta) <= value_tolerance)
+        matched = shares_match and value_match
+
+        severity = "ok"
+        if not shares_match:
+            severity = "high" if abs(shares_delta) > shares_tolerance * 100 else "medium"
+        elif not value_match:
+            severity = "medium" if value_delta is not None and abs(value_delta) > value_tolerance * 10 else "low"
+
+        if not matched:
             mismatch_warnings.append({
                 "fund_code": fund_code,
-                "reason": "SHARES_MISMATCH",
+                "reason": "SHARES_MISMATCH" if not shares_match else "VALUE_MISMATCH",
+                "severity": severity,
                 "snapshot_shares": snap_shares,
                 "portfolio_shares": port_shares,
-                "delta": round(shares_delta, 8),
+                "shares_delta": round(shares_delta, _SHARE_ROUND),
+                "snapshot_value": snap_value,
+                "portfolio_value": port_value,
+                "value_delta": value_delta,
             })
             warnings.append(
-                f"{fund_code}: shares mismatch — snapshot={snap_shares:.4f}, "
-                f"portfolio={port_shares:.4f}, delta={shares_delta:.4f}"
+                f"{fund_code}: {'shares' if not shares_match else 'value'} mismatch "
+                f"[{severity}] — snapshot={snap_shares:.4f}/{snap_value}, "
+                f"portfolio={port_shares:.4f}/{port_value}, "
+                f"delta={shares_delta:.4f}/{value_delta}"
             )
             all_matched = False
 
-        comp = {
+        comparisons.append({
             "fund_code": fund_code,
             "snapshot_shares": snap_shares,
             "portfolio_shares": port_shares,
-            "shares_delta": round(shares_delta, 8),
+            "shares_delta": round(shares_delta, _SHARE_ROUND),
             "snapshot_value": snap_value,
             "portfolio_value": port_value,
-            "value_delta": (
-                round((snap_value - port_value), 2)
-                if snap_value is not None and port_value is not None
-                else None
-            ),
-            "matched": abs(shares_delta) <= shares_tolerance,
-        }
-        comparisons.append(comp)
+            "value_delta": value_delta,
+            "matched": matched,
+            "severity": severity,
+        })
 
     # Check for portfolio funds not in snapshot
     for fund_code in port_positions:
@@ -586,6 +806,7 @@ def reconcile_snapshot_with_portfolio(
             mismatch_warnings.append({
                 "fund_code": fund_code,
                 "reason": "MISSING_IN_SNAPSHOT",
+                "severity": "medium",
                 "snapshot_shares": None,
                 "snapshot_value": None,
                 "portfolio_shares": port_pos.get("shares"),
@@ -604,6 +825,7 @@ def reconcile_snapshot_with_portfolio(
                 "portfolio_value": port_pos.get("current_value"),
                 "value_delta": None,
                 "matched": False,
+                "severity": "medium",
             })
 
     return {

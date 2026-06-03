@@ -297,6 +297,100 @@ def _list_skills_envelope(
     }
 
 
+def _load_capabilities(manifest_path: str) -> list[dict[str, Any]]:
+    """Load host-owned data capabilities from the capabilities YAML.
+
+    Reads ``skillpack/capabilities.yaml`` and returns a list of
+    capability descriptors. Each includes name, owner, purpose,
+    required_by, required, input_shape, output_shape, and
+    missing_behavior.
+    """
+    import yaml
+    cap_path = Path(manifest_path).parent / "capabilities.yaml"
+    if not cap_path.exists():
+        return []
+    raw = yaml.safe_load(cap_path.read_text(encoding="utf-8"))
+
+    capabilities: list[dict[str, Any]] = []
+
+    # MCP capabilities section
+    for name, info in (raw.get("mcp_capabilities") or {}).items():
+        capabilities.append({
+            "name": name,
+            "owner": "host",
+            "category": "mcp_capability",
+            "purpose": info.get("description", ""),
+            "required_by": info.get("required_by", []),
+            "required": False,
+        })
+
+    # Host data capabilities section
+    for name, info in (raw.get("host_data_capabilities") or {}).items():
+        capabilities.append({
+            "name": name,
+            "owner": "host",
+            "category": "host_data_capability",
+            "purpose": info.get("description", "").strip(),
+            "required_by": info.get("required_by", []),
+            "required": info.get("required", False),
+            "input_shape": info.get("input_shape"),
+            "output_shape": info.get("output_shape"),
+            "missing_behavior": info.get("missing_behavior"),
+            "canned_example": info.get("canned_example"),
+        })
+
+    # Local capabilities section
+    for name, info in (raw.get("local_capabilities") or {}).items():
+        capabilities.append({
+            "name": name,
+            "owner": "fund-agent",
+            "category": "local_capability",
+            "purpose": "",
+            "runtime": info.get("runtime"),
+            "required_by": [],
+            "required": False,
+        })
+
+    return capabilities
+
+
+def _list_capabilities_envelope(manifest_path: str) -> dict[str, Any]:
+    """Build the ``--list-capabilities`` envelope."""
+    capabilities = _load_capabilities(manifest_path)
+    return {
+        "ok": True,
+        "capabilities": capabilities,
+        "count": len(capabilities),
+        "metadata": {"command": "list-capabilities", "manifest_path": manifest_path},
+    }
+
+
+def _describe_capability_envelope(
+    capability_name: str,
+    manifest_path: str,
+) -> dict[str, Any]:
+    """Build the ``--describe-capability`` envelope."""
+    capabilities = _load_capabilities(manifest_path)
+    matches = [c for c in capabilities if c["name"] == capability_name]
+    if not matches:
+        return {
+            "ok": False,
+            "error": {
+                "code": "UNKNOWN_CAPABILITY",
+                "message": f"unknown capability: {capability_name!r}",
+                "details": {
+                    "valid_capabilities": sorted(c["name"] for c in capabilities),
+                },
+            },
+            "metadata": {"command": "describe-capability", "manifest_path": manifest_path},
+        }
+    return {
+        "ok": True,
+        "capability": matches[0],
+        "metadata": {"command": "describe-capability", "manifest_path": manifest_path},
+    }
+
+
 def _resolve_skill(
     skill_arg: str,
     manifest_path: str,
@@ -353,6 +447,8 @@ def run_bridge(
     pretty: bool = False,
     manifest_path: str = DEFAULT_MANIFEST_PATH,
     list_skills: bool = False,
+    list_capabilities: bool = False,
+    describe_capability: str | None = None,
 ) -> int:
     """Top-level bridge entry point.
 
@@ -370,6 +466,42 @@ def run_bridge(
                     "error": {
                         "code": "RUNTIME_LOAD_FAILED",
                         "message": f"failed to load manifest: {exc}",
+                        "details": {"exception_type": type(exc).__name__},
+                    },
+                },
+                pretty=pretty,
+                output_path=output_path,
+            )
+        return _emit_envelope(envelope, pretty=pretty, output_path=output_path)
+
+    if list_capabilities:
+        try:
+            envelope = _list_capabilities_envelope(manifest_path)
+        except Exception as exc:
+            return _emit_envelope(
+                {
+                    "ok": False,
+                    "error": {
+                        "code": "RUNTIME_LOAD_FAILED",
+                        "message": f"failed to load capabilities: {exc}",
+                        "details": {"exception_type": type(exc).__name__},
+                    },
+                },
+                pretty=pretty,
+                output_path=output_path,
+            )
+        return _emit_envelope(envelope, pretty=pretty, output_path=output_path)
+
+    if describe_capability:
+        try:
+            envelope = _describe_capability_envelope(describe_capability, manifest_path)
+        except Exception as exc:
+            return _emit_envelope(
+                {
+                    "ok": False,
+                    "error": {
+                        "code": "RUNTIME_LOAD_FAILED",
+                        "message": f"failed to describe capability: {exc}",
                         "details": {"exception_type": type(exc).__name__},
                     },
                 },
@@ -608,6 +740,16 @@ def build_parser() -> argparse.ArgumentParser:
         help="List the manifest runtime skills and exit. JSON envelope on stdout.",
     )
     parser.add_argument(
+        "--list-capabilities",
+        action="store_true",
+        help="List all host-owned and local capabilities from capabilities.yaml. JSON envelope on stdout.",
+    )
+    parser.add_argument(
+        "--describe-capability",
+        default=None,
+        help="Describe a single capability by name. JSON envelope on stdout.",
+    )
+    parser.add_argument(
         "--pretty",
         action="store_true",
         help="Pretty-print the JSON output (indent=2).",
@@ -626,6 +768,8 @@ def main(argv: list[str] | None = None) -> int:
         pretty=args.pretty,
         manifest_path=args.manifest,
         list_skills=args.list_skills,
+        list_capabilities=args.list_capabilities,
+        describe_capability=args.describe_capability,
     )
 
 

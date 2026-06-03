@@ -98,6 +98,68 @@ class TestBuildResearchQueryPlan:
         parsed = json.loads(json_str)
         assert isinstance(parsed["news_queries"], list)
 
+    def test_deduplicate_news_queries(self):
+        """Duplicate holdings across funds should not produce duplicate queries."""
+        result = build_research_query_plan(
+            portfolio_positions=[
+                {"fund_code": "110011", "fund_name": "Fund A"},
+                {"fund_code": "000001", "fund_name": "Fund B"},
+            ],
+            holdings={
+                "110011": [{"name": "Company X", "weight": 0.08, "industry": "tech"}],
+                "000001": [{"name": "Company X", "weight": 0.05, "industry": "tech"}],
+            },
+        )
+        # Company X should appear only once in news_queries
+        x_count = sum(1 for q in result["news_queries"] if "Company X" in q)
+        assert x_count == 1, f"Expected 1 Company X query, got {x_count}"
+
+    def test_query_budget_summary(self):
+        result = build_research_query_plan(
+            portfolio_positions=[
+                {"fund_code": f"F{i:04d}", "fund_name": f"Fund{i}"}
+                for i in range(50)
+            ],
+            options={"max_news_queries": 5},
+        )
+        assert "query_budget_summary" in result
+        budget = result["query_budget_summary"]
+        assert budget["max_news_queries"] == 5
+        assert budget["generated_news_queries"] <= 5
+        assert budget["dropped_news_queries"] > 0
+
+    def test_sorted_by_value_descending(self):
+        """Positions sorted by current_value should prioritize high-value funds."""
+        result = build_research_query_plan(
+            portfolio_positions=[
+                {"fund_code": "small", "fund_name": "Small Fund", "current_value": 100},
+                {"fund_code": "large", "fund_name": "Large Fund", "current_value": 100000},
+            ],
+            options={"max_news_queries": 1},
+        )
+        assert len(result["news_queries"]) == 1
+        # High-current-value fund should be queried first (fund_code "large")
+        assert "large" in result["news_queries"][0].lower()
+
+    def test_per_fund_holding_limit(self):
+        many_holdings = [
+            {"name": f"Stock {i}", "weight": 0.1 - i * 0.01}
+            for i in range(10)
+        ]
+        result = build_research_query_plan(
+            portfolio_positions=[{"fund_code": "110011", "fund_name": "Test"}],
+            holdings={"110011": many_holdings},
+            options={"per_fund_holding_limit": 3, "max_news_queries": 30},
+        )
+        # Only top 3 holdings should generate queries
+        hq_count = sum(1 for q in result["news_queries"] if "Stock" in q)
+        assert hq_count <= 3
+
+    def test_empty_input_required_capabilities_empty(self):
+        result = build_research_query_plan()
+        assert result["required_capabilities"] == []
+
+
     def test_manager_news_included_when_opted_in(self):
         result = build_research_query_plan(
             portfolio_positions=[

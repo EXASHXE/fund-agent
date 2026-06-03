@@ -52,6 +52,29 @@
 - `skillpack/fund-agent.skillpack.yaml` tools section includes new
   ledger snapshot and query plan tools.
 
+### Ledger and Capability Hardening (v0.4.8-dev)
+
+- **Formalized transaction event semantics** with explicit policies:
+  TRANSFER_OUT has no realized PnL (use SELL if needed),
+  TRANSFER_IN is not a cashflow event, FEE is a realized expense (not
+  capitalized), BUY/SELL with amount-only is marked unresolved.
+- **Invalid event quarantine**: unknown actions marked `valid=false`
+  and skipped in PnL calculation; unresolved events tracked in output.
+- **Snapshot sanity**: negative shares/cost clamped with warnings.
+- **Reconciliation hardening**: configurable tolerances
+  (`shares_tolerance`, `value_tolerance`), mismatch severity field
+  (`ok`, `low`, `medium`, `high`).
+- **Capability discovery**: `--list-capabilities` and
+  `--describe-capability NAME` added to runtime bridge CLI.
+  Outputs JSON only, reads `skillpack/capabilities.yaml`.
+- **Query plan improvements**: deduplication, sorting by value/weight
+  descending, `per_fund_holding_limit`, `query_budget_summary` with
+  dropped counts, deterministic prioritization.
+- **Cashflow hardening**: TRANSFER_IN/TRANSFER_OUT no longer counted
+  as cashflow events (position movements only).
+- **Documentation**: transaction semantics added to input-contract.md,
+  capability discovery documented in runtime-bridge-cli.md.
+
 ## 0.4.7-dev-runtime-bridge-hardening
 
 ### Changed

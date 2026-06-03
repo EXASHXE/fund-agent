@@ -130,6 +130,18 @@ python scripts/run_skill.py \
 The bridge writes the JSON envelope to stdout and exits 0 on
 success.
 
+### 2b. List host-owned data capabilities
+
+```bash
+python scripts/run_skill.py --list-capabilities --pretty
+```
+
+### 2c. Describe a single capability
+
+```bash
+python scripts/run_skill.py --describe-capability fund_nav_history --pretty
+```
+
 ### 3. Run from stdin
 
 ```bash
@@ -152,12 +164,10 @@ python scripts/run_skill.py \
 python scripts/run_skill.py [options]
 
   --skill RUNTIME_ID_OR_SLUG
-      Required unless --list-skills is passed. Accepts either a
-      manifest runtime_id (fund_analysis, decision_support,
-      news_research, sentiment_analysis, thesis_generation) or a
-      hyphenated agent-facing slug (fund-analysis, ...). The slug
-      form is a documented convenience; the runtime_id form is the
-      canonical identifier.
+      Required unless --list-skills, --list-capabilities, or
+      --describe-capability is passed. Accepts either a manifest
+      runtime_id (fund_analysis, decision_support, ...) or a
+      hyphenated agent-facing slug (fund-analysis, ...).
 
   --input PATH
       Path to a JSON input file. Use '-' to read JSON from stdin.
@@ -165,16 +175,22 @@ python scripts/run_skill.py [options]
       {"payload": {...}} shape is accepted.
 
   --output PATH
-      Optional path to write the JSON output to. Defaults to
-      stdout.
+      Optional path to write the JSON output to. Defaults to stdout.
 
   --manifest PATH
       Path to the skillpack manifest YAML. Defaults to
       skillpack/fund-agent.skillpack.yaml.
 
   --list-skills
-      List the manifest runtime skills and exit. JSON envelope on
-      stdout.
+      List the manifest runtime skills and exit. JSON envelope on stdout.
+
+  --list-capabilities
+      List all host-owned data capabilities, MCP capabilities, and
+      local capabilities from skillpack/capabilities.yaml. JSON only.
+
+  --describe-capability NAME
+      Describe a single capability by name (e.g. fund_nav_history).
+      JSON envelope on stdout. Returns UNKNOWN_CAPABILITY for unknown names.
 
   --pretty
       Pretty-print the JSON output (indent=2). Default is compact.

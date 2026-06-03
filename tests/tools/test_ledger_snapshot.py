@@ -313,3 +313,185 @@ class TestCalculateRealizedUnrealizedPnl:
         assert len(result["positions"]) == 1
         assert result["positions"][0]["unrealized_pnl"] == 5000.0
         assert result["positions"][0]["realized_pnl"] is None
+
+
+class TestHardenedTransactionSemantics:
+    """Tests for explicit transaction semantics hardened in v0.4.8-dev."""
+
+    def test_buy_amount_nav_infers_shares(self):
+        txn = [
+            {"action": "BUY", "fund_code": "110011", "date": "2025-01-01", "amount": 10000, "nav": 1.25},
+        ]
+        result = calculate_realized_unrealized_pnl(txn, {"110011": 1.50})
+        pos = result["positions"][0]
+        assert pos["shares"] == 8000.0  # 10000 / 1.25
+
+    def test_buy_amount_only_warns_unresolved(self):
+        txn = [
+            {"action": "BUY", "fund_code": "110011", "date": "2025-01-01", "amount": 10000},
+        ]
+        result = calculate_realized_unrealized_pnl(txn, {"110011": 1.50})
+        # amount-only BUY: cost applied but shares unresolved
+        pos = result["positions"][0]
+        assert pos["shares"] == 0.0  # No shares inferred without nav
+        assert pos["total_cost"] == 10000.0  # Cost is still recorded
+        assert len(result["unresolved_events"]) >= 1
+
+    def test_sell_amount_nav_infers_shares(self):
+        txn = [
+            {"action": "BUY", "fund_code": "110011", "date": "2025-01-01", "amount": 10000, "shares": 10000},
+            {"action": "SELL", "fund_code": "110011", "date": "2025-06-01", "amount": 3000, "nav": 1.50},
+        ]
+        result = calculate_realized_unrealized_pnl(txn, {"110011": 1.50})
+        pos = result["positions"][0]
+        assert pos["shares"] == 8000.0  # Sold 3000/1.50 = 2000 shares
+
+    def test_sell_amount_only_unresolved_no_cashflow(self):
+        txn = [
+            {"action": "BUY", "fund_code": "110011", "date": "2025-01-01", "amount": 10000, "shares": 10000},
+            {"action": "SELL", "fund_code": "110011", "date": "2025-06-01", "amount": 3000},
+        ]
+        result = calculate_realized_unrealized_pnl(txn, {"110011": 1.50})
+        # Unresolved SELL: no nav to infer shares, so skip
+        pos = result["positions"][0]
+        assert pos["shares"] == 10000.0  # Unchanged
+        assert len(result["unresolved_events"]) >= 1
+
+    def test_transfer_out_no_realized_pnl(self):
+        """TRANSFER_OUT reduces shares and pro-rata cost but no realized PnL."""
+        txn = [
+            {"action": "BUY", "fund_code": "110011", "date": "2025-01-01", "amount": 10000, "shares": 10000},
+            {"action": "TRANSFER_OUT", "fund_code": "110011", "date": "2025-06-01", "shares": 5000},
+        ]
+        result = calculate_realized_unrealized_pnl(txn, {"110011": 1.50})
+        pos = result["positions"][0]
+        assert pos["shares"] == 5000.0
+        assert pos["total_cost"] == 5000.0  # Pro-rata cost reduction
+        assert pos["realized_pnl"] is None or pos["realized_pnl"] == 0.0
+
+    def test_transfer_in_increases_position(self):
+        """TRANSFER_IN adds shares and cost but is NOT a cash inflow."""
+        txn = [
+            {"action": "BUY", "fund_code": "110011", "date": "2025-01-01", "amount": 5000, "shares": 5000},
+            {"action": "TRANSFER_IN", "fund_code": "110011", "date": "2025-06-01", "amount": 10000, "shares": 10000},
+        ]
+        result = calculate_realized_unrealized_pnl(txn, {"110011": 1.50})
+        pos = result["positions"][0]
+        assert pos["shares"] == 15000.0
+        assert pos["total_cost"] == 15000.0
+
+    def test_dividend_adds_realized_income(self):
+        txn = [
+            {"action": "BUY", "fund_code": "110011", "date": "2025-01-01", "amount": 10000, "shares": 10000},
+            {"action": "DIVIDEND", "fund_code": "110011", "date": "2025-06-01", "amount": 500},
+        ]
+        result = calculate_realized_unrealized_pnl(txn, {"110011": 1.20})
+        pos = result["positions"][0]
+        assert pos["shares"] == 10000.0  # Unchanged
+        assert pos["realized_pnl"] == 500.0
+
+    def test_fee_reduces_realized_income(self):
+        txn = [
+            {"action": "BUY", "fund_code": "110011", "date": "2025-01-01", "amount": 10000, "shares": 10000},
+            {"action": "DIVIDEND", "fund_code": "110011", "date": "2025-06-01", "amount": 500},
+            {"action": "FEE", "fund_code": "110011", "date": "2025-06-01", "amount": 50},
+        ]
+        result = calculate_realized_unrealized_pnl(txn, {"110011": 1.20})
+        pos = result["positions"][0]
+        assert pos["realized_pnl"] == 450.0  # 500 - 50
+
+    def test_calibrate_warns(self):
+        txn = [
+            {"action": "BUY", "fund_code": "110011", "date": "2025-01-01", "amount": 1000, "shares": 1000},
+            {"action": "CALIBRATE", "fund_code": "110011", "date": "2025-06-01", "amount": 5000, "shares": 5000},
+        ]
+        result = calculate_realized_unrealized_pnl(txn, {"110011": 1.50})
+        pos = result["positions"][0]
+        assert pos["total_cost"] == 5000.0
+        assert pos["shares"] == 5000.0
+        assert "CALIBRATE_OVERRIDE" in pos["warnings"]
+
+    def test_unknown_action_marked_invalid(self):
+        raw = [{"action": "BAD_ACTION", "fund_code": "110011", "date": "2025-01-01", "amount": 100}]
+        normalized, warnings = normalize_transaction_events(raw)
+        assert len(normalized) == 1
+        assert normalized[0].get("valid") is False
+        assert "unknown_action" in normalized[0].get("invalid_reason", "")
+
+    def test_invalid_events_skipped_in_pnl(self):
+        txn = [
+            {"action": "BUY", "fund_code": "110011", "date": "2025-01-01", "amount": 10000, "shares": 10000},
+            {"action": "BAD_ACTION", "fund_code": "110011", "date": "2025-06-01", "amount": 9999,
+             "valid": False, "invalid_reason": "unknown_action:BAD_ACTION"},
+        ]
+        result = calculate_realized_unrealized_pnl(txn, {"110011": 1.50})
+        assert result["invalid_events_count"] >= 1
+        pos = result["positions"][0]
+        assert pos["shares"] == 10000.0  # Invalid event skipped, no change
+
+    def test_cost_basis_never_negative(self):
+        """After extreme sells, cost basis should not go negative."""
+        txn = [
+            {"action": "BUY", "fund_code": "110011", "date": "2025-01-01", "amount": 10000, "shares": 10000},
+            {"action": "SELL", "fund_code": "110011", "date": "2025-06-01", "amount": 50000, "shares": 10000, "nav": 5.0},
+        ]
+        result = calculate_realized_unrealized_pnl(txn, {"110011": 1.50})
+        pos = result["positions"][0]
+        assert pos["shares"] == 0.0
+        assert pos["total_cost"] >= 0.0
+
+    def test_shares_never_negative(self):
+        """SELL beyond available shares should clamp, not go negative."""
+        txn = [
+            {"action": "BUY", "fund_code": "110011", "date": "2025-01-01", "amount": 5000, "shares": 5000},
+            {"action": "SELL", "fund_code": "110011", "date": "2025-06-01", "amount": 12000, "shares": 10000, "nav": 1.2},
+        ]
+        snapshot = build_position_snapshot_from_transactions(txn, {"110011": 1.30}, "2026-01-01")
+        pos = snapshot["positions"][0]
+        assert pos["shares"] >= 0.0
+        assert any("exceeds" in w.lower() or "clamp" in w.lower() for w in snapshot["warnings"])
+
+    def test_json_serializable_after_hardening(self):
+        txn = [
+            {"action": "BUY", "fund_code": "110011", "date": "2025-01-01", "amount": 10000, "shares": 10000},
+            {"action": "DIVIDEND", "fund_code": "110011", "date": "2025-06-01", "amount": 500},
+            {"action": "FEE", "fund_code": "110011", "date": "2025-06-01", "amount": 50},
+        ]
+        result = build_position_snapshot_from_transactions(txn, {"110011": 1.20}, "2026-06-01")
+        json_str = json.dumps(result, default=str)
+        parsed = json.loads(json_str)
+        assert parsed["as_of_date"] == "2026-06-01"
+
+    def test_transfer_not_cashflow(self):
+        """TRANSFER_IN/TRANSFER_OUT are position movements, not cashflow."""
+        txn = [
+            {"action": "BUY", "fund_code": "110011", "date": "2025-01-01", "amount": 5000, "shares": 5000},
+            {"action": "TRANSFER_IN", "fund_code": "110011", "date": "2025-06-01", "amount": 3000, "shares": 3000},
+            {"action": "TRANSFER_OUT", "fund_code": "110011", "date": "2025-09-01", "amount": 2000, "shares": 2000},
+        ]
+        snapshot = build_position_snapshot_from_transactions(txn, {"110011": 1.50}, "2026-01-01")
+        cf = snapshot["cashflow_summary"]
+        # Only BUY is a cash outflow; TRANSFER_IN/OUT are not cashflow
+        assert cf["total_outflows"] == 5000.0
+        assert cf["total_inflows"] == 0.0
+
+
+class TestHardenedReconciliation:
+    def test_configurable_tolerances(self):
+        snapshot = {"positions": [{"fund_code": "110011", "shares": 100.0, "current_value": 120.0}]}
+        portfolio = {"positions": [{"fund_code": "110011", "shares": 100.5, "current_value": 120.5}]}
+        # With high tolerance, this should match
+        result = reconcile_snapshot_with_portfolio(
+            snapshot, portfolio,
+            options={"shares_tolerance": 1.0, "value_tolerance": 1.0}
+        )
+        assert result["matched"] is True
+
+    def test_severity_included(self):
+        snapshot = {"positions": [{"fund_code": "110011", "shares": 100.0, "current_value": 120.0}]}
+        portfolio = {"positions": [{"fund_code": "110011", "shares": 200.0, "current_value": 240.0}]}
+        result = reconcile_snapshot_with_portfolio(snapshot, portfolio)
+        for m in result["mismatches"]:
+            assert "severity" in m
+        for c in result["comparisons"]:
+            assert "severity" in c

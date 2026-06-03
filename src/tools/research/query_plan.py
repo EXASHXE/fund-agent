@@ -5,6 +5,13 @@ Generates query plans that the host may use to drive news_research
 and sentiment_analysis skills. The host decides whether to execute.
 
 Outputs are fully JSON-serializable and deterministic.
+
+Query prioritization:
+- Portfolio positions are sorted by current_value or weight descending.
+- Holdings are sorted by weight descending.
+- Fund-level queries are generated first, then holdings, then
+  themes/industries within the budget.
+- Deduplication runs across all query types.
 """
 
 from __future__ import annotations
@@ -15,6 +22,7 @@ from typing import Any
 # Max query count to prevent explosion for large portfolios
 _DEFAULT_MAX_QUERIES = 30
 _DEFAULT_MAX_SENTIMENT_QUERIES = 15
+_DEFAULT_PER_FUND_HOLDING_LIMIT = 5
 
 
 def build_research_query_plan(
@@ -56,6 +64,7 @@ def build_research_query_plan(
     opts = options or {}
     max_news = int(opts.get("max_news_queries", _DEFAULT_MAX_QUERIES))
     max_sentiment = int(opts.get("max_sentiment_queries", _DEFAULT_MAX_SENTIMENT_QUERIES))
+    per_fund_holding_limit = int(opts.get("per_fund_holding_limit", _DEFAULT_PER_FUND_HOLDING_LIMIT))
     include_fund = opts.get("include_fund_news", True)
     include_manager = opts.get("include_manager_news", False)
     include_macro = opts.get("include_macro_news", False)
@@ -69,20 +78,64 @@ def build_research_query_plan(
 
     warnings: list[str] = []
     news_queries: list[str] = []
+    seen_news: set[str] = set()
     sentiment_queries: list[str] = []
-    query_entities: list[str] = []
+    seen_sentiment: set[str] = set()
+    query_entities: set[str] = set()
     query_themes: list[str] = []
     query_industries: list[str] = []
 
-    # --- Collect entities from positions
+    # News query counters for budget tracking
+    generated_news = 0
+    dropped_news = 0
+    generated_sentiment = 0
+    dropped_sentiment = 0
+
+    def _add_news(query: str) -> bool:
+        nonlocal generated_news, dropped_news
+        if len(news_queries) >= max_news:
+            dropped_news += 1
+            return False
+        key = query.lower().strip()
+        if key in seen_news:
+            return False
+        seen_news.add(key)
+        news_queries.append(query)
+        generated_news += 1
+        return True
+
+    def _add_sentiment(query: str) -> bool:
+        nonlocal generated_sentiment, dropped_sentiment
+        if len(sentiment_queries) >= max_sentiment:
+            dropped_sentiment += 1
+            return False
+        key = query.lower().strip()
+        if key in seen_sentiment:
+            return False
+        seen_sentiment.add(key)
+        sentiment_queries.append(query)
+        generated_sentiment += 1
+        return True
+
+    # --- Sort positions by current_value / weight descending ---
+    def _position_sort_key(p: dict[str, Any]) -> float:
+        return p.get("current_value", p.get("weight", 0.0) or 0.0) or 0.0
+
+    sorted_positions = sorted(
+        [p for p in position_list if isinstance(p, dict)],
+        key=_position_sort_key,
+        reverse=True,
+    )
+
+    # --- Collect entities from positions ---
     fund_codes: list[str] = []
     fund_names: list[str] = []
 
-    for pos in position_list:
-        fc = pos.get("fund_code", "") if isinstance(pos, dict) else ""
+    for pos in sorted_positions:
+        fc = pos.get("fund_code", "")
         if fc and fc not in fund_codes:
             fund_codes.append(fc)
-        fn = pos.get("fund_name", "") if isinstance(pos, dict) else ""
+        fn = pos.get("fund_name", "")
         if fn and fn not in fund_names:
             fund_names.append(fn)
 
@@ -94,85 +147,85 @@ def build_research_query_plan(
             "entities": [],
             "themes": [],
             "industries": [],
-            "required_capabilities": ["web_search", "financial_news", "social_sentiment"],
+            "required_capabilities": [],
+            "query_budget_summary": {
+                "max_news_queries": max_news,
+                "generated_news_queries": 0,
+                "dropped_news_queries": 0,
+                "max_sentiment_queries": max_sentiment,
+                "generated_sentiment_queries": 0,
+                "dropped_sentiment_queries": 0,
+            },
             "warnings": warnings,
         }
 
-    # --- Fund-level news queries
+    # --- Fund-level news queries ---
     if include_fund:
         for fc in fund_codes:
-            if len(news_queries) >= max_news:
-                warnings.append(f"news query limit ({max_news}) reached; truncating")
-                break
             profile = profile_map.get(fc, {})
             fname = profile.get("name", "") or fc
-            # Chinese fund news query
-            news_queries.append(f"基金 {fc} {fname} 最新动态 业绩 表现")
-            query_entities.append(fc)
+            _add_news(f"基金 {fc} {fname} 最新动态 业绩 表现")
+            query_entities.add(fc)
 
         for fn in fund_names:
-            if len(news_queries) >= max_news:
-                break
-            if fn not in [profile_map.get(fc, {}).get("name", "") for fc in fund_codes]:
-                news_queries.append(f"基金 {fn} 最新消息 持仓")
-                query_entities.append(fn)
+            existing = [profile_map.get(fc, {}).get("name", "") for fc in fund_codes]
+            if fn not in existing:
+                _add_news(f"基金 {fn} 最新消息 持仓")
+                query_entities.add(fn)
 
-    # --- Manager-level news queries
+    # --- Manager-level news queries ---
     if include_manager:
         managers_seen: set[str] = set()
         for fc in fund_codes:
-            if len(news_queries) >= max_news:
-                break
             profile = profile_map.get(fc, {})
             manager = profile.get("manager", "")
             if manager and manager not in managers_seen:
                 managers_seen.add(manager)
-                news_queries.append(f"基金经理 {manager} 最新动态 投资观点")
-                query_entities.append(manager)
+                _add_news(f"基金经理 {manager} 最新动态 投资观点")
+                query_entities.add(manager)
 
-    # --- Holdings-level queries
+    # --- Holdings-level queries (sorted by weight descending, per-fund limit) ---
     if holding_map:
-        holding_names_seen: set[str] = set()
+        all_holdings: list[tuple[str, str, float, str | None]] = []  # (fund_code, name, weight, ticker)
         for fc in fund_codes:
-            if len(news_queries) >= max_news:
-                break
             fund_holdings = holding_map.get(fc, [])
-            for h in fund_holdings:
-                if len(news_queries) >= max_news:
-                    break
-                if not isinstance(h, dict):
-                    continue
+            sorted_holdings = sorted(
+                [h for h in fund_holdings if isinstance(h, dict)],
+                key=lambda h: h.get("weight", 0.0) or 0.0,
+                reverse=True,
+            )
+            for h in sorted_holdings[:per_fund_holding_limit]:
                 name = h.get("name", "")
-                ticker = h.get("ticker", "")
-                if name and name not in holding_names_seen:
-                    holding_names_seen.add(name)
-                    q = f"{name}"
-                    if ticker:
-                        q += f" {ticker}"
-                    q += " 最新消息 财务 业绩"
-                    news_queries.append(q)
-                    query_entities.append(name)
+                weight = h.get("weight", 0.0) or 0.0
+                ticker = h.get("ticker")
+                if name:
+                    all_holdings.append((fc, name, weight, ticker))
 
-    # --- Theme queries
-    if theme_list:
-        for theme in theme_list:
-            if len(news_queries) >= max_news:
-                break
-            if theme not in query_themes:
-                query_themes.append(theme)
-            news_queries.append(f"{theme} 投资主题 最新趋势 政策 行业")
-            sentiment_queries.append(f"{theme} 市场情绪 投资者观点")
+        # Sort all holdings by weight descending (cross-fund)
+        all_holdings.sort(key=lambda x: x[2], reverse=True)
 
-    # --- Industry queries
-    if industry_list:
-        for ind in industry_list:
-            if len(news_queries) >= max_news:
-                break
-            if ind not in query_industries:
-                query_industries.append(ind)
-            news_queries.append(f"{ind} 行业 最新动态 政策 龙头企业")
+        for _fc, name, _weight, ticker in all_holdings:
+            q = f"{name}"
+            if ticker:
+                q += f" {ticker}"
+            q += " 最新消息 财务 业绩"
+            _add_news(q)
+            query_entities.add(name)
 
-    # --- Macro queries
+    # --- Theme queries ---
+    for theme in theme_list:
+        if theme not in query_themes:
+            query_themes.append(theme)
+        _add_news(f"{theme} 投资主题 最新趋势 政策 行业")
+        _add_sentiment(f"{theme} 市场情绪 投资者观点")
+
+    # --- Industry queries ---
+    for ind in industry_list:
+        if ind not in query_industries:
+            query_industries.append(ind)
+        _add_news(f"{ind} 行业 最新动态 政策 龙头企业")
+
+    # --- Macro queries ---
     if include_macro:
         macro_topics = [
             "中国宏观经济 央行政策 利率",
@@ -180,32 +233,15 @@ def build_research_query_plan(
             "基金市场 资金流向 行业配置",
         ]
         for topic in macro_topics:
-            if len(news_queries) >= max_news:
-                break
-            news_queries.append(topic)
+            _add_news(topic)
 
-    # --- Sentiment queries
-    # Deduplicate and cap
-    seen_sentiment: set[str] = set()
-    trimmed_sentiment: list[str] = []
-    for q in sentiment_queries:
-        if len(trimmed_sentiment) >= max_sentiment:
-            warnings.append(f"sentiment query limit ({max_sentiment}) reached; truncating")
-            break
-        if q not in seen_sentiment:
-            seen_sentiment.add(q)
-            trimmed_sentiment.append(q)
+    # --- Fund-level sentiment queries ---
+    for fc in fund_codes:
+        profile = profile_map.get(fc, {})
+        fname = profile.get("name", "") or fc
+        _add_sentiment(f"基金 {fc} {fname} 市场情绪 评价 讨论")
 
-    # Add fund-level sentiment queries if not done yet
-    if not trimmed_sentiment and fund_codes:
-        for fc in fund_codes:
-            if len(trimmed_sentiment) >= max_sentiment:
-                break
-            profile = profile_map.get(fc, {})
-            fname = profile.get("name", "") or fc
-            trimmed_sentiment.append(f"基金 {fc} {fname} 市场情绪 评价 讨论")
-
-    # --- KG context enrichment
+    # --- KG context enrichment ---
     kg_entities = kg.get("entities", [])
     if kg_entities:
         for ent in kg_entities:
@@ -215,29 +251,35 @@ def build_research_query_plan(
                 ent_name = ent
             else:
                 continue
-            if ent_name and ent_name not in query_entities:
-                query_entities.append(ent_name)
+            if ent_name:
+                query_entities.add(ent_name)
 
     # Determine required capabilities
     required_capabilities = []
     if news_queries:
         required_capabilities.extend(["web_search", "financial_news"])
-    if trimmed_sentiment:
-        required_capabilities.append("social_sentiment")
-
-    # Deduplicate
+    if sentiment_queries:
+        if "social_sentiment" not in required_capabilities:
+            required_capabilities.append("social_sentiment")
     required_capabilities = sorted(set(required_capabilities))
 
-    # If no data at all to query
     if not news_queries:
         warnings.append("no news queries generated; supply positions, themes, or industries")
 
     return {
         "news_queries": news_queries,
-        "sentiment_queries": trimmed_sentiment,
-        "entities": sorted(set(query_entities)),
+        "sentiment_queries": sentiment_queries,
+        "entities": sorted(query_entities),
         "themes": sorted(set(query_themes)),
         "industries": sorted(set(query_industries)),
         "required_capabilities": required_capabilities,
+        "query_budget_summary": {
+            "max_news_queries": max_news,
+            "generated_news_queries": generated_news,
+            "dropped_news_queries": dropped_news,
+            "max_sentiment_queries": max_sentiment,
+            "generated_sentiment_queries": generated_sentiment,
+            "dropped_sentiment_queries": dropped_sentiment,
+        },
         "warnings": warnings,
     }
