@@ -1,6 +1,6 @@
 // fund-agent OpenCode plugin
 //
-// Scope (current release; native skill install hardening):
+// Scope: OpenCode metadata/doc-reader plugin.
 //   1. Logs that the plugin is loaded and which hyphenated skills are
 //      available, distinguishing the primary skill from the four
 //      supporting skills in both the message text and the structured

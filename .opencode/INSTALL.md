@@ -16,7 +16,7 @@ There are three install modes for the OpenCode side. **Mode A** is
 the only one that runs fund-agent code at OpenCode startup;
 **Mode B** lets OpenCode's native `Agent Skills` discovery see the
 canonical Markdown skill collection; **Mode C** is a future runtime
-bridge that is not implemented in v0.4.6 (or any prior release).
+bridge that is not implemented in the current release.
 
 - **Mode A — Plugin metadata + doc-reader (current target).** A
   project-local `opencode.plugin.js` registers three custom tools
@@ -28,8 +28,8 @@ bridge that is not implemented in v0.4.6 (or any prior release).
 - **Mode B — Native Agent Skills install (optional).** Runs
   `python scripts/install_opencode_skills.py` to copy the five
   canonical `skills/<slug>/SKILL.md` directories into a target
-  OpenCode Agent Skills directory. Mode B is **git-clone-only** in
-  v0.4.6: the helper is part of the source checkout, not the npm
+  OpenCode Agent Skills directory. Mode B is **git-clone-only**:
+  the helper is part of the source checkout, not the npm
   package.
 - **Mode C — Future runtime bridge (design only).** Documented at
   `docs/design/runtime-bridge.md`. Not implemented in any shipped
@@ -240,12 +240,12 @@ the full source tree including the sync helper.
 The exact file list is verified by
 `tests/install/test_npm_pack_contents.py` (runs `npm pack
 --dry-run --json` and asserts both the required and forbidden
-paths). That test is the v0.4.6 install-packaging-smoke guard.
+paths). That test is the install-packaging-smoke guard.
 
 ## Pin to a specific version (git tag)
 
 ```bash
-git clone --branch v0.4.6 https://github.com/EXASHXE/fund-agent.git
+git clone --branch v0.4.8-dev https://github.com/EXASHXE/fund-agent.git
 ```
 
 or, for a fully reproducible symlink, pin the commit:
@@ -253,7 +253,7 @@ or, for a fully reproducible symlink, pin the commit:
 ```bash
 git clone https://github.com/EXASHXE/fund-agent.git
 cd fund-agent
-git checkout v0.4.6
+git checkout v0.4.8-dev
 # then create the symlink as above
 ```
 

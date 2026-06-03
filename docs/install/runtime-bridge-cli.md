@@ -12,14 +12,14 @@ and reading JSON envelopes from stdout.
 
 ## Install (source checkout only)
 
-The runtime bridge is **git-clone-only** in v0.4.7-dev. The npm
+The runtime bridge is **git-clone-only**. The npm
 package (Mode A: plugin + skill docs) does **not** ship
 `scripts/run_skill.py`, `src/skillpack/run_skill.py`, or the
 runtime bridge examples. To use the bridge, hosts must work from a
 Python source checkout:
 
 ```bash
-git clone --branch v0.4.7-dev https://github.com/EXASHXE/fund-agent.git
+git clone --branch v0.4.8-dev https://github.com/EXASHXE/fund-agent.git
 cd fund-agent
 pip install -e .        # editable install into your Python environment
 ```
@@ -102,7 +102,7 @@ Output (truncated):
 ```json
 {
   "ok": true,
-  "manifest_version": "0.4.7-dev",
+  "manifest_version": "0.4.8-dev",
   "schema_version": "skillpack.v1",
   "skills": [
     {

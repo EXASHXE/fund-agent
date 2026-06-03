@@ -1,6 +1,6 @@
 # Codex Install
 
-> Scope: **manual / light install** for Codex in v0.4.6. There is no
+> Scope: **manual / light install** for Codex. There is no
 > OMO-style Codex installer in this milestone. The intent is to keep
 > Codex working with `fund-agent` through the same host-agnostic
 > skill-pack flow that the Python and OpenCode installs use, without
@@ -23,9 +23,9 @@ After following this document, Codex can:
 It will **not**:
 
 - Auto-install via a Codex-specific `~/.codex/config.toml` plugin
-  block. We are not writing that file in v0.4.6.
+  block. We are not writing that file in the current release.
 - Behave like an OMO-style bundle. There is no Codex marketplace entry
-  in v0.4.6.
+  in the current release.
 - Fetch NAV, news, or sentiment. The host owns data fetching. The
   plugin / skill pack does not synthesize data; the host must wire
   provider implementations.
@@ -36,7 +36,7 @@ Codex as the host agent owns planning, MCP provider wiring, retries,
 memory, and final user interaction. The fund-agent skill pack is
 host-driven. The host injects any data the agent needs.
 
-## Why no OMO-style installer in v0.4.6
+## Why no OMO-style installer
 
 A "Codex plugin" in the OMO sense would require either:
 
@@ -73,7 +73,7 @@ cd fund-agent
 Pin a specific version:
 
 ```bash
-git clone --branch v0.4.6 https://github.com/EXASHXE/fund-agent.git
+git clone --branch v0.4.8-dev https://github.com/EXASHXE/fund-agent.git
 cd fund-agent
 ```
 
@@ -173,10 +173,10 @@ rm .codex/skills/fund-analysis .codex/skills/news-research \
 rm -rf /path/to/fund-agent
 ```
 
-## Runtime bridge CLI (v0.4.7-dev)
+## Runtime bridge CLI
 
 Codex can also drive the fund-agent runtime skills through the thin
-runtime bridge CLI shipped in v0.4.7-dev. The bridge is
+runtime bridge CLI. The bridge is
 host-agnostic; it does not import any Codex-specific module and
 does not ship a Codex-only install. It is a useful process
 boundary for any host that prefers subprocess + JSON envelopes

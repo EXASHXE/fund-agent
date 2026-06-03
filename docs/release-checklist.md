@@ -182,7 +182,54 @@ python examples/minimal_host_trade_plan_to_decisions.py
 PYTHONPATH=. pytest tests/install -q
 ```
 
-## 13. v0.4.5 Native Skill Install Hardening
+## 13. v0.4.8-dev Release Hygiene and Readability
+
+- [ ] All version-bearing files agree on the current version:
+  `VERSION`, `package.json`, `pyproject.toml`,
+  `skillpack/fund-agent.skillpack.yaml`, `opencode.plugin.js`
+  `PLUGIN_VERSION`, and `CHANGELOG.md` current section.
+  ```bash
+  cat VERSION
+  python -c "import json; print(json.load(open('package.json'))['version'])"
+  python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])"
+  python -c "import yaml; print(yaml.safe_load(open('skillpack/fund-agent.skillpack.yaml'))['version'])"
+  grep 'const PLUGIN_VERSION' opencode.plugin.js
+  ```
+- [ ] No broken double-slash skill-path placeholder strings
+  anywhere in the repo. Run the quality guard:
+  ```bash
+  PYTHONPATH=. pytest tests/docs/test_skill_doc_quality.py \
+    tests/docs/test_skill_surface_docs.py \
+    tests/docs/test_install_mode_consistency.py -q
+  ```
+- [ ] Readability regression tests pass (key source line counts,
+  config parseability, plugin placeholder check, version consistency).
+  ```bash
+  PYTHONPATH=. pytest tests/docs/test_readability_regression.py -q
+  ```
+- [ ] Capability discovery CLI works:
+  ```bash
+  python scripts/run_skill.py --list-capabilities --pretty
+  python scripts/run_skill.py --describe-capability fund_nav_history --pretty
+  ```
+- [ ] Ledger and research query plan runtime bridge examples work:
+  ```bash
+  python scripts/run_skill.py --skill fund_analysis \
+    --input examples/runtime_bridge_ledger_snapshot_input.json --pretty
+  python scripts/run_skill.py --skill fund_analysis \
+    --input examples/runtime_bridge_research_query_plan_input.json --pretty
+  ```
+- [ ] Package Mode A boundary is intact:
+  ```bash
+  PYTHONPATH=. pytest tests/install/test_npm_pack_contents.py -q
+  PYTHONPATH=. pytest tests/docs/test_install_mode_consistency.py -q
+  ```
+- [ ] No provider SDKs in `skills_runtime` or plugin.
+- [ ] No network calls in plugin or runtime bridge.
+- [ ] `opencode.plugin.js` comments are version-neutral (no pinned
+  `v0.4.X` claims in Scope / Skill surface headers).
+
+## 14. v0.4.5 Native Skill Install Hardening
 
 - [ ] `.gitattributes` exists and enforces LF for `*.sh`, `*.yml`,
       `*.yaml`, `*.toml`, `*.json`, `*.js`, `*.py`, `*.md`
@@ -219,7 +266,7 @@ PYTHONPATH=. pytest tests/install -q
       `scripts/install_opencode_skills.py`
 - [ ] No runtime / domain feature changes
 
-## 14. v0.4.6 Install Packaging Smoke
+## 15. v0.4.6 Install Packaging Smoke
 
 - [ ] All v0.4.5 install-hardening items above still pass
 - [ ] `VERSION` is `0.4.6` and matches `package.json`,
@@ -268,7 +315,7 @@ PYTHONPATH=. pytest tests/install -q
 - [ ] No new provider SDKs, no new network calls, no new
       autonomous loop, no runtime bridge, no planner loop
 
-## 15. v0.4.7-dev Runtime Bridge CLI
+## 16. v0.4.7-dev Runtime Bridge CLI
 
 - [ ] `python scripts/run_skill.py --list-skills --pretty` returns
       a JSON envelope listing all five manifest runtime IDs

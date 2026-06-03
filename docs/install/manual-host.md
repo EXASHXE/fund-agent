@@ -180,7 +180,7 @@ test fixtures and are validated by `scripts/check_examples.py`.
 ## Versioning
 
 `fund-agent` follows semantic versioning. The current version is
-`0.4.7-dev`. The canonical sources of truth are:
+`0.4.8-dev`. The canonical sources of truth are:
 
 - `VERSION` — the version string
 - `pyproject.toml` — `project.version`
@@ -192,7 +192,7 @@ test fixtures and are validated by `scripts/check_examples.py`.
 Pin a specific version with a git tag:
 
 ```bash
-git clone --branch v0.4.6 https://github.com/EXASHXE/fund-agent.git
+git clone --branch v0.4.8-dev https://github.com/EXASHXE/fund-agent.git
 cd fund-agent
 pip install -e .
 ```
@@ -213,7 +213,7 @@ pip uninstall fund-agent
 rm -rf /path/to/fund-agent
 ```
 
-## Runtime bridge CLI (optional, v0.4.7-dev)
+## Runtime bridge CLI (optional)
 
 `fund-agent` ships a thin **runtime bridge CLI** for hosts that
 want a process boundary between their code and the runtime skills
