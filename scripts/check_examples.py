@@ -141,6 +141,7 @@ def _check_runtime_bridge_examples(errors: list[str]) -> int:
     bridge_examples = [
         "examples/runtime_bridge_fund_analysis_input.json",
         "examples/runtime_bridge_decision_support_input.json",
+        "examples/runtime_bridge_personal_report_quality_input.json",
     ]
     checked = 0
     for rel in bridge_examples:

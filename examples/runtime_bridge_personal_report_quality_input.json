@@ -1,0 +1,226 @@
+{
+  "task_id": "runtime-bridge-personal-report-quality",
+  "step_id": "fund-analysis-report-quality-1",
+  "skill_name": "fund_analysis",
+  "payload": {
+    "portfolio": {
+      "as_of_date": "2026-06-01",
+      "total_value": 500000,
+      "cash_available": 50000,
+      "positions": [
+        {
+          "fund_code": "110011",
+          "fund_name": "Sample Equity Growth Fund",
+          "current_value": 200000,
+          "total_cost": 180000,
+          "shares": 140000,
+          "target_weight": 0.40,
+          "tags": ["equity", "growth", "active"]
+        },
+        {
+          "fund_code": "220022",
+          "fund_name": "Sample Bond Income Fund",
+          "current_value": 180000,
+          "total_cost": 175000,
+          "shares": 150000,
+          "target_weight": 0.36,
+          "tags": ["bond", "income", "stable"]
+        },
+        {
+          "fund_code": "330033",
+          "fund_name": "Sample Balanced Fund",
+          "current_value": 70000,
+          "total_cost": 65000,
+          "shares": 60000,
+          "target_weight": 0.14,
+          "tags": ["balanced", "moderate"]
+        }
+      ]
+    },
+    "fund_profiles": {
+      "110011": {
+        "fund_code": "110011",
+        "name": "Sample Equity Growth Fund",
+        "fund_type": "equity",
+        "manager": "Zhang Wei",
+        "benchmark": "CSI 300 Index"
+      },
+      "220022": {
+        "fund_code": "220022",
+        "name": "Sample Bond Income Fund",
+        "fund_type": "bond",
+        "manager": "Li Ming",
+        "benchmark": "ChinaBond Composite Index"
+      },
+      "330033": {
+        "fund_code": "330033",
+        "name": "Sample Balanced Fund",
+        "fund_type": "balanced",
+        "manager": "Wang Fang",
+        "benchmark": "CSI 300 (50%) + ChinaBond (50%)"
+      }
+    },
+    "nav_history": {
+      "110011": [
+        {"date": "2024-06-01", "nav": 1.00, "accumulated_nav": 1.00},
+        {"date": "2024-12-01", "nav": 1.15, "accumulated_nav": 1.20},
+        {"date": "2025-06-01", "nav": 1.30, "accumulated_nav": 1.42},
+        {"date": "2025-12-01", "nav": 1.38, "accumulated_nav": 1.52},
+        {"date": "2026-06-01", "nav": 1.43, "accumulated_nav": 1.60}
+      ],
+      "220022": [
+        {"date": "2024-06-01", "nav": 1.10, "accumulated_nav": 1.10},
+        {"date": "2024-12-01", "nav": 1.13, "accumulated_nav": 1.15},
+        {"date": "2025-06-01", "nav": 1.16, "accumulated_nav": 1.20},
+        {"date": "2025-12-01", "nav": 1.18, "accumulated_nav": 1.24},
+        {"date": "2026-06-01", "nav": 1.20, "accumulated_nav": 1.28}
+      ],
+      "330033": [
+        {"date": "2024-06-01", "nav": 1.05, "accumulated_nav": 1.05},
+        {"date": "2024-12-01", "nav": 1.08, "accumulated_nav": 1.12},
+        {"date": "2025-06-01", "nav": 1.12, "accumulated_nav": 1.18},
+        {"date": "2025-12-01", "nav": 1.10, "accumulated_nav": 1.17},
+        {"date": "2026-06-01", "nav": 1.14, "accumulated_nav": 1.22}
+      ]
+    },
+    "holdings": {
+      "110011": [
+        {"name": "Kweichow Moutai", "weight": 0.05, "code": "600519", "asset_type": "stock", "industry": "consumer_staples", "region": "CN"},
+        {"name": "CATL", "weight": 0.04, "code": "300750", "asset_type": "stock", "industry": "new_energy", "region": "CN"},
+        {"name": "BYD", "weight": 0.03, "code": "002594", "asset_type": "stock", "industry": "auto", "region": "CN"},
+        {"name": "Tencent", "weight": 0.03, "code": "0700", "asset_type": "stock", "industry": "internet", "region": "HK"},
+        {"name": "Ping An", "weight": 0.025, "code": "601318", "asset_type": "stock", "industry": "insurance", "region": "CN"}
+      ],
+      "220022": [
+        {"name": "China Govt Bond 2028", "weight": 0.10, "asset_type": "bond", "industry": "govt", "region": "CN"},
+        {"name": "Policy Bank Bond 2027", "weight": 0.08, "asset_type": "bond", "industry": "policy_bank", "region": "CN"},
+        {"name": "AAA Corp Bond", "weight": 0.05, "asset_type": "bond", "industry": "corp", "region": "CN"}
+      ],
+      "330033": [
+        {"name": "CSI 300 ETF", "weight": 0.15, "code": "510300", "asset_type": "etf", "industry": "broad_market", "region": "CN"},
+        {"name": "China Govt Bond ETF", "weight": 0.10, "code": "511010", "asset_type": "etf", "industry": "govt", "region": "CN"}
+      ]
+    },
+    "risk_profile": {
+      "risk_level": "moderate",
+      "max_single_fund_weight": 0.45,
+      "max_theme_weight": 0.50,
+      "max_industry_weight": 0.40,
+      "max_trade_pct": 0.15,
+      "liquidity_reserve_pct": 0.10,
+      "short_term_trade_budget_pct": 0.10
+    },
+    "constraints": {
+      "max_buy_amount": 100000,
+      "max_sell_amount": 100000,
+      "min_trade_amount": 1000,
+      "forbidden_actions": ["LEVERAGE", "SHORT"],
+      "notes": ["No single fund > 45%", "Cash reserve >= 10%"]
+    },
+    "benchmark_history": {
+      "csi300": [
+        {"date": "2024-06-01", "value": 3500},
+        {"date": "2024-12-01", "value": 3800},
+        {"date": "2025-06-01", "value": 4000},
+        {"date": "2025-12-01", "value": 4100},
+        {"date": "2026-06-01", "value": 4200}
+      ],
+      "chinabond": [
+        {"date": "2024-06-01", "value": 180},
+        {"date": "2024-12-01", "value": 185},
+        {"date": "2025-06-01", "value": 190},
+        {"date": "2025-12-01", "value": 193},
+        {"date": "2026-06-01", "value": 196}
+      ]
+    },
+    "peer_group": {
+      "110011": {"rank": 12, "total": 80, "percentile": 15, "category": "equity_large_cap"},
+      "220022": {"rank": 8, "total": 50, "percentile": 16, "category": "bond_aggregate"},
+      "330033": {"rank": 20, "total": 45, "percentile": 44, "category": "balanced"}
+    },
+    "factor_exposures": {
+      "value": {"110011": 0.20, "220022": 0.05, "330033": 0.15},
+      "momentum": {"110011": 0.45, "220022": 0.0, "330033": 0.25},
+      "quality": {"110011": 0.30, "220022": 0.0, "330033": 0.20},
+      "size": {"110011": 0.60, "220022": 0.0, "330033": 0.30}
+    },
+    "fee_schedules": {
+      "110011": {
+        "management_fee": 0.015,
+        "custody_fee": 0.0025,
+        "sales_fee": 0.0015,
+        "redemption_fee": 0.005,
+        "total_expense_ratio": 0.019
+      },
+      "220022": {
+        "management_fee": 0.008,
+        "custody_fee": 0.002,
+        "sales_fee": 0.0,
+        "redemption_fee": 0.001,
+        "total_expense_ratio": 0.010
+      },
+      "330033": {
+        "management_fee": 0.012,
+        "custody_fee": 0.002,
+        "sales_fee": 0.001,
+        "redemption_fee": 0.003,
+        "total_expense_ratio": 0.015
+      }
+    },
+    "redemption_rules": {
+      "110011": {
+        "holding_period_days": 7,
+        "redemption_fee_pct": 0.005,
+        "redemption_fee_schedule": "0-7d:1.5%, 7-30d:0.75%, 30-365d:0.5%, >365d:0%",
+        "liquidity_note": "T+2 settlement for redemptions",
+        "suspended": false
+      },
+      "220022": {
+        "holding_period_days": 30,
+        "redemption_fee_pct": 0.001,
+        "redemption_fee_schedule": "0-30d:0.1%, >30d:0%",
+        "liquidity_note": "T+1 settlement"
+      },
+      "330033": {
+        "holding_period_days": 7,
+        "redemption_fee_pct": 0.003,
+        "redemption_fee_schedule": "0-7d:1.0%, 7-30d:0.5%, >30d:0.3%",
+        "liquidity_note": "T+2 settlement"
+      }
+    },
+    "manager_profiles": {
+      "110011": {
+        "manager_name": "Zhang Wei",
+        "tenure_years": 6,
+        "start_date": "2020-01-15",
+        "manager_change_risk": "low",
+        "team_size": 8
+      },
+      "220022": {
+        "manager_name": "Li Ming",
+        "tenure_years": 4,
+        "start_date": "2022-03-01",
+        "manager_change_risk": "low",
+        "team_size": 5
+      },
+      "330033": {
+        "manager_name": "Wang Fang",
+        "tenure_years": 1.5,
+        "start_date": "2024-12-01",
+        "manager_change_risk": "elevated",
+        "team_size": 6
+      }
+    },
+    "macro_events": [
+      {"type": "rate_cut", "date": "2025-12-15", "description": "PBOC cut LPR by 10bp"},
+      {"type": "policy_support", "date": "2026-03-05", "description": "New energy sector policy support announced"}
+    ],
+    "user_investment_plan": {
+      "monthly_contribution": 5000,
+      "investment_horizon_years": 10,
+      "goal": "retirement",
+      "target_annual_return": 0.07
+    },
+    "research_planning": true
+  }
+}

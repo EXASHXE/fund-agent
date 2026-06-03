@@ -207,6 +207,9 @@ If `formal_decision=false`, the host writes the final report directly from:
 - `fund_output.artifacts["risk_flags"]`
 - `fund_output.artifacts["fund_analysis_report"]`
 - `fund_output.artifacts["suggested_rebalance_plan"]`
+- `fund_output.artifacts["data_completeness"]`
+- `fund_output.artifacts["analysis_coverage"]`
+- `fund_output.artifacts["report_limitations"]`
 - `fund_output.evidence_items`
 - `fund_output.warnings`
 
@@ -278,7 +281,8 @@ decision_output = DecisionSupportSkill().run(
 13. Suggested rebalance plan
 14. WAIT/HOLD/BUY/SELL explanation
 15. Data gaps and warnings
-16. Evidence appendix
+16. Report quality and data completeness
+17. Evidence appendix
 
 ## 14. Warning and uncertainty language
 
@@ -294,6 +298,33 @@ Use concrete, bounded wording:
 
 ```text
 市场情景来自主机提供的数据，fund-agent 未自行抓取或推断市场状态。
+```
+
+## 14.5. Report quality and data completeness
+
+The skill now produces `data_completeness` (score 0.0-1.0 and grade A-D),
+`analysis_coverage` (per-section availability), and `report_limitations`
+(concise user-facing caveats). Use these to set reader expectations:
+
+- Grade **A**: near-complete input — all required + most optional data present.
+- Grade **B**: all required data present, some optional missing — adequate.
+- Grade **C**/**D**: significant data gaps — broker/fund statements remain
+  authoritative; formal decisions should NOT be made on grade-C/D data alone.
+
+In the report, include:
+
+```text
+数据完整性评级: B (评分 0.78)
+缺失数据: 无费率数据、无同类基金排名
+分析覆盖: 组合=可用, 业绩=可用, 持仓=可用, 基准=缺失, 同业=缺失
+```
+
+If `redemption_summary` warns about lockup funds, elevate that warning to the
+executive summary. If `fee_summary` flags high-fee funds, suggest cost review.
+
+```text
+⚠️ 赎回限制: 基金 110011 持有不足30天需支付0.5%赎回费
+⚠️ 费率提醒: 基金 110011 综合费率2.15%高于同类均值
 ```
 
 ## 15. Evidence appendix guidance

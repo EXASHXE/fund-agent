@@ -75,6 +75,34 @@
 - **Documentation**: transaction semantics added to input-contract.md,
   capability discovery documented in runtime-bridge-cli.md.
 
+### Report Quality and Completeness (v0.4.8-dev)
+
+- **Report quality core** — `src/tools/portfolio/report_quality.py`:
+  `calculate_data_completeness()` (score 0.0-1.0, grade A-D),
+  `summarize_analysis_coverage()` (per-section availability),
+  `build_report_limitations()` (user-facing caveats). All deterministic,
+  no network, no provider SDKs.
+- **Enhanced FundAnalysisSkill report artifact** — `fund_analysis_report`
+  and artifacts now include `data_completeness`, `analysis_coverage`,
+  and `report_limitations`. Optional summary functions enhanced:
+  benchmark comparison, peer ranking extraction, fee schedule analysis,
+  redemption constraint warnings, factor concentration detection,
+  manager change-risk flags. All optional summaries are host-data-driven;
+  no rankings, comparisons, or attributions are fabricated.
+- **Enhanced status semantics** — `OK` only when data completeness is
+  grade A or B and no errors; `PARTIAL` when grade C/D, derived ledger
+  has unresolved events, or optional data requested but missing.
+  Warning categories: MISSING_DATA, LEDGER_PARTIAL, OPTIONAL_ANALYSIS_UNAVAILABLE.
+- **New example**: `examples/runtime_bridge_personal_report_quality_input.json`
+  — complete payload with all optional data sections for full report quality
+  demonstration.
+- **Tests**: 16 report quality tool tests, 12 skill integration tests,
+  5 runtime bridge example tests.
+- **Documentation**: Report quality sections added to plugin-api.md,
+  personal-fund-report.md, host-integration.md, runtime-bridge-cli.md,
+  and all skill reference docs (SKILL.md, input-contract.md,
+  report-template.md, missing-data-policy.md).
+
 ## 0.4.7-dev-runtime-bridge-hardening
 
 ### Changed

@@ -158,6 +158,20 @@ python scripts/run_skill.py \
     --output /tmp/fund_analysis_output.json
 ```
 
+### 5. Personal report quality example
+
+```bash
+python scripts/run_skill.py \
+    --skill fund_analysis \
+    --input examples/runtime_bridge_personal_report_quality_input.json \
+    --pretty
+```
+
+This example includes all optional data (benchmarks, peer group, factor
+exposures, fee schedules, redemption rules, manager profiles). The output
+includes `data_completeness` (grade A-D), `analysis_coverage` (per-section
+availability), and `report_limitations` (user-facing caveats).
+
 ## CLI reference
 
 ```text

@@ -161,6 +161,17 @@ PYTHONPATH=. pytest tests/install -q
   python scripts/run_skill.py --skill fund_analysis \
     --input examples/runtime_bridge_research_query_plan_input.json --pretty
   ```
+- [ ] Report quality example works:
+  ```bash
+  python scripts/run_skill.py --skill fund_analysis \
+    --input examples/runtime_bridge_personal_report_quality_input.json --pretty
+  ```
+- [ ] Report quality tests pass:
+  ```bash
+  PYTHONPATH=. pytest tests/tools/test_report_quality.py \
+    tests/skills/test_fund_analysis_report_quality.py \
+    tests/runtime_bridge/test_runtime_bridge_report_quality_examples.py -q
+  ```
 - [ ] Package Mode A boundary is intact:
   ```bash
   PYTHONPATH=. pytest tests/install/test_npm_pack_contents.py -q

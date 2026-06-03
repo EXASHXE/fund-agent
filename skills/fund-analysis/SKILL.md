@@ -141,12 +141,14 @@ See `references/input-contract.md` for the expanded payload contract.
 ## Missing-data degradation policy
 
 Proceed with `PARTIAL` analysis when enough portfolio data exists to calculate
-structure and risk. Emit explicit `warnings` for missing fund profiles, NAV
-history, holdings, transactions, DCA plans, or scenario data. Do not fabricate
-missing data. If `portfolio.positions` is absent or empty, return an
-`INVALID_INPUT` error. If only `related_entities` is supplied, use the baseline
-HardEvidence compatibility path and warn that structured portfolio analysis was
-not possible.
+structure and risk. The skill computes a formal `data_completeness` score
+(0.0-1.0) and grade (A-D) via `calculate_data_completeness()`. Grades C or D
+trigger `PARTIAL` status automatically. Emit explicit `warnings` for missing
+fund profiles, NAV history, holdings, transactions, DCA plans, or scenario
+data. Do not fabricate missing data. If `portfolio.positions` is absent or
+empty, return an `INVALID_INPUT` error. If only `related_entities` is
+supplied, use the baseline HardEvidence compatibility path and warn that
+structured portfolio analysis was not possible.
 
 ## Standard workflow
 
@@ -230,6 +232,9 @@ See `references/market-scenario-policy.md`.
 - `cost_basis_summary`
 - `reconciliation`
 - `suggested_rebalance_plan`
+- `data_completeness` — host-provided data completeness score and grade (A-D)
+- `analysis_coverage` — per-section availability summary
+- `report_limitations` — user-facing limitations and caveats
 - `warnings`
 
 Artifact availability depends on host-provided data.
@@ -336,6 +341,12 @@ facts. For Chinese user requests, a concise Chinese report is appropriate:
   suggested next checks. If formal trade advice is requested, call
   `decision_support`.
 - `证据附录`: include evidence IDs or artifact names used for each claim.
+- `数据质量`: include `data_completeness` grade (A-D) and score; flag missing
+  sections from `analysis_coverage`; surface `report_limitations` in the
+  report preamble so readers understand what the report can and cannot say.
+- `可选分析`: benchmark comparison, peer ranking, factor exposure, fee review,
+  redemption constraints, and manager risk are available only when host provides
+  the corresponding data. Do not fabricate missing optional analysis.
 
 See `references/report-template.md` and `references/examples.md`.
 

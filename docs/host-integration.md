@@ -157,8 +157,8 @@ decision_output = DecisionSupportSkill().run(
 ```
 
 `fund_output.artifacts` includes `fund_analysis_report`, `portfolio_summary`,
-`risk_flags`, and, when target weights are supplied,
-`suggested_rebalance_plan`.
+`risk_flags`, `suggested_rebalance_plan`, `data_completeness`,
+`analysis_coverage`, and `report_limitations`.
 
 ### News To Decision
 

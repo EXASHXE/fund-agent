@@ -154,8 +154,13 @@ The following host-owned data fields are accepted and passed through:
 - `manager_profiles` — fund manager information
 - `fee_schedules` — fund fee structures
 - `redemption_rules` — redemption/settlement rules
+- `fund_flow` — fund-level inflow/outflow data
+- `macro_events` — macro-economic event descriptions
+- `user_investment_plan` — user's investment plan parameters
 
 All are host-provided pass-through; `fund-agent` does not fetch them.
+Missing optional data is reflected in `data_completeness` and
+`analysis_coverage` artifacts.
 
 ## Compatibility Fallback
 

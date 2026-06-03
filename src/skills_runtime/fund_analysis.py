@@ -38,6 +38,11 @@ from src.tools.portfolio.transaction import (
     reconcile_portfolio_with_transactions,
     summarize_transaction_ledger,
 )
+from src.tools.portfolio.report_quality import (
+    build_report_limitations,
+    calculate_data_completeness,
+    summarize_analysis_coverage,
+)
 from src.tools.research.query_plan import build_research_query_plan
 
 MAX_POSITION_EVIDENCE = 5
@@ -563,6 +568,20 @@ class FundAnalysisSkill:
         if manager_summary:
             artifacts["manager_summary"] = manager_summary
 
+        # Data completeness, analysis coverage, and report limitations
+        data_completeness = calculate_data_completeness(payload)
+        analysis_coverage = summarize_analysis_coverage(payload, artifacts)
+        report_limitations_list = build_report_limitations(
+            data_completeness,
+            artifacts.get("ledger_quality_summary"),
+        )
+        report["data_completeness"] = data_completeness
+        report["analysis_coverage"] = analysis_coverage
+        report["report_limitations"] = report_limitations_list
+        artifacts["data_completeness"] = data_completeness
+        artifacts["analysis_coverage"] = analysis_coverage
+        artifacts["report_limitations"] = report_limitations_list
+
         evidence_items = []
         errors: list[dict[str, Any]] = []
         evidence_specs = _evidence_specs(
@@ -614,7 +633,24 @@ class FundAnalysisSkill:
                 status="FAILED",
             )
 
-        status = "PARTIAL" if warnings or errors else "OK"
+        # Enhanced status semantics:
+        # OK    — enough data for a coherent portfolio report, no errors
+        # PARTIAL — derived ledger unresolved, optional data requested but missing,
+        #           stale data, or non-critical warnings exist
+        # FAILED — no usable positions (caught earlier), no evidence produced
+        if errors:
+            status = "PARTIAL"
+        elif data_completeness["grade"] in ("C", "D"):
+            status = "PARTIAL"
+            if "Report data completeness grade is" not in " ".join(warnings):
+                warnings.append(
+                    f"Report data completeness grade is {data_completeness['grade']} "
+                    f"(score {data_completeness['score']:.2f})"
+                )
+        elif warnings:
+            status = "PARTIAL"
+        else:
+            status = "OK"
         return SkillOutput(
             step_id=skill_input.step_id,
             skill_name=skill_input.skill_name,
@@ -1035,7 +1071,11 @@ def summarize_benchmark_gap(
     benchmarks: dict[str, Any],
     benchmark_history: dict[str, Any],
 ) -> dict[str, Any] | None:
-    """Minimal pass-through benchmark gap summary. Does not fabricate rankings."""
+    """Summarise benchmark gap from host-provided data. Does not fabricate rankings.
+
+    If benchmark_history provides point-in-time values alongside fund nav history,
+    produces a simple performance comparison; otherwise pass-through only.
+    """
     result: dict[str, Any] = {
         "benchmarks_available": list(benchmarks.keys()) if benchmarks else [],
     }
@@ -1043,71 +1083,268 @@ def summarize_benchmark_gap(
         result["benchmarks"] = benchmarks
     if benchmark_history:
         result["benchmark_history"] = benchmark_history
+        # Attempt simple host-driven comparison if data shape allows
+        comparison = _derive_benchmark_comparison(benchmark_history, fund_metrics)
+        if comparison:
+            result["comparison"] = comparison
     return result if (benchmarks or benchmark_history) else None
 
 
+def _derive_benchmark_comparison(
+    benchmark_history: dict[str, Any],
+    fund_metrics: dict[str, Any],
+) -> list[dict[str, Any]] | None:
+    """Derive a simple point-in-time comparison from benchmark history and fund metrics.
+
+    Only uses host-provided data shapes; does not compute missing returns.
+    """
+    comparisons: list[dict[str, Any]] = []
+    for fund_code, metrics in fund_metrics.items():
+        fund_return = metrics.get("total_return")
+        if fund_return is None:
+            continue
+        for bm_key, bm_data in benchmark_history.items():
+            if not isinstance(bm_data, list) or len(bm_data) < 2:
+                continue
+            # Use first and last benchmark data point
+            try:
+                first_val = float(bm_data[0].get("value", bm_data[0].get("nav", 0)))
+                last_val = float(bm_data[-1].get("value", bm_data[-1].get("nav", 0)))
+                if first_val > 0:
+                    bm_return = (last_val - first_val) / first_val
+                    comparisons.append(
+                        {
+                            "fund_code": fund_code,
+                            "benchmark": bm_key,
+                            "fund_return": round(float(fund_return), 4),
+                            "benchmark_return": round(bm_return, 4),
+                            "excess_return": round(float(fund_return) - bm_return, 4),
+                            "note": "host-provided data only; not a ranking or attribution analysis",
+                        }
+                    )
+            except (TypeError, ValueError, IndexError):
+                continue
+    return comparisons if comparisons else None
+
+
 def summarize_peer_data(peer_group: dict[str, Any]) -> dict[str, Any] | None:
-    """Minimal pass-through peer group summary."""
+    """Summarise peer group data. Extracts rank/percentile if host-provided.
+
+    Does NOT invent peer ranking — only surfaces what the host already provides.
+    """
     if not peer_group:
         return None
-    return {
+    result: dict[str, Any] = {
         "funds_with_peers": list(peer_group.keys()),
         "peer_data": peer_group,
     }
+    # Extract rankings where host-provided
+    rankings: list[dict[str, Any]] = []
+    for fund_code, peer_info in peer_group.items():
+        if isinstance(peer_info, dict):
+            entry: dict[str, Any] = {"fund_code": fund_code}
+            rank = peer_info.get("rank")
+            total = peer_info.get("total")
+            percentile = peer_info.get("percentile")
+            category = peer_info.get("category", "")
+            if rank is not None:
+                entry["rank"] = rank
+            if total is not None:
+                entry["total"] = total
+            if percentile is not None:
+                entry["percentile"] = percentile
+            if category:
+                entry["category"] = category
+            if rank is not None or percentile is not None:
+                rankings.append(entry)
+    if rankings:
+        result["rankings"] = rankings
+    return result
 
 
 def summarize_fee_schedule(
     fee_schedules: dict[str, Any],
     fund_codes: list[str],
 ) -> dict[str, Any] | None:
-    """Minimal pass-through fee schedule summary."""
+    """Summarise fee schedules from host-provided data.
+
+    Extracts management_fee, custody_fee, sales_fee, redemption_fee where present.
+    """
     if not fee_schedules:
         return None
-    fees_found = {fc: fee_schedules.get(fc) for fc in fund_codes if fc in fee_schedules}
-    return {
+    fees_found: dict[str, Any] = {}
+    fee_totals: dict[str, float] = {}
+    for fc in fund_codes:
+        fs = fee_schedules.get(fc)
+        if fs and isinstance(fs, dict):
+            extracted: dict[str, Any] = {}
+            for key in ("management_fee", "custody_fee", "sales_fee", "redemption_fee", "total_expense_ratio"):
+                val = fs.get(key)
+                if val is not None:
+                    try:
+                        extracted[key] = float(val)
+                    except (TypeError, ValueError):
+                        extracted[key] = val
+            if extracted:
+                fees_found[fc] = extracted
+                fee_totals[fc] = sum(
+                    float(v) for v in extracted.values()
+                    if isinstance(v, (int, float)) and v > 0
+                )
+    if not fees_found:
+        return None
+    result: dict[str, Any] = {
         "funds_with_fees": list(fees_found.keys()),
         "fee_schedules": fees_found,
     }
+    # Flag high-fee funds
+    high_fee_funds = [
+        fc for fc, total in fee_totals.items()
+        if isinstance(total, (int, float)) and total > 0.025
+    ]
+    if high_fee_funds:
+        result["high_fee_funds"] = high_fee_funds
+        result["fee_warning"] = (
+            f"Fund(s) {', '.join(high_fee_funds)} have total fees > 2.5% p.a.; "
+            f"consider lower-cost alternatives if available"
+        )
+    return result
 
 
 def summarize_redemption_constraints(
     redemption_rules: dict[str, Any],
     fund_codes: list[str],
 ) -> dict[str, Any] | None:
-    """Minimal pass-through redemption constraints summary."""
+    """Summarise redemption rules from host-provided data.
+
+    Extracts lockup, holding period, redemption fee risk, and liquidity notes.
+    """
     if not redemption_rules:
         return None
-    rules_found = {fc: redemption_rules.get(fc) for fc in fund_codes if fc in redemption_rules}
-    return {
+    rules_found: dict[str, Any] = {}
+    lockup_funds: list[str] = []
+    high_fee_funds: list[str] = []
+    for fc in fund_codes:
+        rules = redemption_rules.get(fc)
+        if rules and isinstance(rules, dict):
+            summary: dict[str, Any] = {}
+            for key in ("lockup_days", "lockup_months", "holding_period_days",
+                        "redemption_fee_pct", "redemption_fee_schedule",
+                        "liquidity_note", "suspended"):
+                val = rules.get(key)
+                if val is not None:
+                    summary[key] = val
+            if summary:
+                rules_found[fc] = summary
+                lockup = summary.get("lockup_days", summary.get("lockup_months"))
+                if lockup and (isinstance(lockup, (int, float)) and float(lockup) > 0):
+                    lockup_funds.append(fc)
+                rfee = summary.get("redemption_fee_pct")
+                if rfee and isinstance(rfee, (int, float)) and float(rfee) > 0.01:
+                    high_fee_funds.append(fc)
+                suspended = summary.get("suspended")
+                if suspended:
+                    lockup_funds.append(fc)
+    if not rules_found:
+        return None
+    result: dict[str, Any] = {
         "funds_with_rules": list(rules_found.keys()),
         "redemption_constraints": rules_found,
     }
+    warnings: list[str] = []
+    if lockup_funds:
+        result["lockup_funds"] = lockup_funds
+        warnings.append(
+            f"Fund(s) {', '.join(lockup_funds)} have lockup or suspension "
+            f"constraints — verify redemption eligibility"
+        )
+    if high_fee_funds:
+        result["high_redemption_fee_funds"] = high_fee_funds
+        warnings.append(
+            f"Fund(s) {', '.join(high_fee_funds)} charge >1% redemption fees "
+            f"— early redemption may be costly"
+        )
+    if warnings:
+        result["warnings"] = warnings
+    return result
 
 
 def summarize_factor_exposures(
     factor_exposures: dict[str, Any],
 ) -> dict[str, Any] | None:
-    """Minimal pass-through factor exposure summary."""
+    """Summarise style/factor exposures from host-provided data.
+
+    Flags concentration or missing style data; does not invent exposures.
+    """
     if not factor_exposures:
         return None
-    return {
+    result: dict[str, Any] = {
         "factors": list(factor_exposures.keys()),
         "factor_exposures": factor_exposures,
     }
+    # Detect concentration in any single factor
+    concentration_warnings: list[str] = []
+    for factor_name, exposure_data in factor_exposures.items():
+        if isinstance(exposure_data, dict):
+            for fund_code, exp_val in exposure_data.items():
+                try:
+                    abs_val = abs(float(exp_val))
+                    if abs_val > 0.5:
+                        concentration_warnings.append(
+                            f"Fund {fund_code} has high {factor_name} exposure ({abs_val:.2f})"
+                        )
+                except (TypeError, ValueError):
+                    pass
+    if concentration_warnings:
+        result["concentration_warnings"] = concentration_warnings
+    return result
 
 
 def summarize_manager_profiles(
     manager_profiles: dict[str, Any],
     fund_codes: list[str],
 ) -> dict[str, Any] | None:
-    """Minimal pass-through manager profile summary."""
+    """Summarise manager profiles from host-provided data.
+
+    Extracts tenure, start_date, and change-risk flags from provided fields only.
+    """
     if not manager_profiles:
         return None
-    profiles_found = {fc: manager_profiles.get(fc) for fc in fund_codes if fc in manager_profiles}
-    return {
+    profiles_found: dict[str, Any] = {}
+    change_risk_funds: list[str] = []
+    for fc in fund_codes:
+        profile = manager_profiles.get(fc)
+        if profile and isinstance(profile, dict):
+            summary: dict[str, Any] = {}
+            for key in ("manager_name", "tenure", "tenure_years", "start_date",
+                        "manager_change_risk", "team_size"):
+                val = profile.get(key)
+                if val is not None:
+                    summary[key] = val
+            if summary:
+                profiles_found[fc] = summary
+                # Flag manager-change risk
+                risk = summary.get("manager_change_risk")
+                if risk and str(risk).lower() in ("high", "true", "1", "yes", "elevated"):
+                    change_risk_funds.append(fc)
+                # Flag short tenure
+                tenure_yrs = summary.get("tenure_years", summary.get("tenure"))
+                if tenure_yrs and isinstance(tenure_yrs, (int, float)) and float(tenure_yrs) < 2.0:
+                    if fc not in change_risk_funds:
+                        change_risk_funds.append(fc)
+    if not profiles_found:
+        return None
+    result: dict[str, Any] = {
         "funds_with_profiles": list(profiles_found.keys()),
         "manager_profiles": profiles_found,
     }
+    if change_risk_funds:
+        result["manager_change_risk_funds"] = change_risk_funds
+        result["manager_risk_warning"] = (
+            f"Fund(s) {', '.join(change_risk_funds)} have elevated "
+            f"manager-change risk or short manager tenure"
+        )
+    return result
 
 
 def _add_missing_optional_warnings(
@@ -1122,10 +1359,58 @@ def _add_missing_optional_warnings(
     fee_schedules: dict[str, Any],
     redemption_rules: dict[str, Any],
 ) -> None:
-    """Emit warnings when host requests optional data dimensions but data is missing."""
-    if not benchmarks and not benchmark_history:
-        # Not requested, no warning needed
-        pass
-    if not peer_group:
-        # Not requested
-        pass
+    """Emit warnings when host provides optional data dimensions but data is missing
+    or only partially available for the requested fund codes."""
+    # Benchmark: host provided benchmarks/history but some funds are not covered
+    if benchmarks or benchmark_history:
+        all_bm_codes: set[str] = set()
+        if benchmarks:
+            all_bm_codes.update(benchmarks.keys())
+        if benchmark_history:
+            all_bm_codes.update(benchmark_history.keys())
+        missing_bm = [fc for fc in fund_codes if fc not in all_bm_codes]
+        if missing_bm and all_bm_codes:
+            warnings.append(
+                f"Benchmark data missing for fund(s): {', '.join(missing_bm)}; "
+                f"benchmark comparison incomplete"
+            )
+
+    if peer_group:
+        missing_peer = [fc for fc in fund_codes if fc not in peer_group]
+        if missing_peer:
+            warnings.append(
+                f"Peer group data missing for fund(s): {', '.join(missing_peer)}; "
+                f"peer comparison partial"
+            )
+
+    if factor_exposures:
+        covered_codes: set[str] = set()
+        for exposure_data in factor_exposures.values():
+            if isinstance(exposure_data, dict):
+                covered_codes.update(exposure_data.keys())
+        missing_factor = [fc for fc in fund_codes if fc not in covered_codes]
+        if missing_factor and covered_codes:
+            warnings.append(
+                f"Factor exposure data missing for fund(s): {', '.join(missing_factor)}"
+            )
+
+    if manager_profiles:
+        missing_mgr = [fc for fc in fund_codes if fc not in manager_profiles]
+        if missing_mgr:
+            warnings.append(
+                f"Manager profile missing for fund(s): {', '.join(missing_mgr)}"
+            )
+
+    if fee_schedules:
+        missing_fee = [fc for fc in fund_codes if fc not in fee_schedules]
+        if missing_fee:
+            warnings.append(
+                f"Fee schedule missing for fund(s): {', '.join(missing_fee)}"
+            )
+
+    if redemption_rules:
+        missing_rule = [fc for fc in fund_codes if fc not in redemption_rules]
+        if missing_rule:
+            warnings.append(
+                f"Redemption rules missing for fund(s): {', '.join(missing_rule)}"
+            )

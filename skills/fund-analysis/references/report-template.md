@@ -6,7 +6,8 @@ warnings, or evidence IDs.
 ## 1. Executive summary
 
 Summarize the portfolio state, main risk flags, whether the analysis is full or
-partial, and whether formal decisions were requested.
+partial, and include the **data completeness grade** (A-D) with a brief note
+about what's missing. State whether formal decisions were requested.
 
 Chinese example:
 
@@ -89,7 +90,17 @@ trigger to change, and invalidating conditions.
 ## 15. Data gaps and warnings
 
 List missing profiles, NAV history, holdings, transactions, DCA plans, market
-scenario, or reconciliation mismatches.
+scenario, or reconciliation mismatches. Include the `data_completeness` grade
+(A-D, score 0.0-1.0) and `analysis_coverage` summary from the artifacts.
+Surface `report_limitations` in this section.
+
+```text
+数据完整性: 评级 B (评分 0.78)
+可用数据: 组合快照, 净值历史, 基金档案, 持仓, 风险画像, 约束, 费率
+缺失数据: 基准比较, 同业排名, 因子暴露
+分析覆盖: 组合=可用, 业绩=可用, 持仓=可用, 费率=可用, 基准=缺失, 同业=缺失
+报告局限: 基准比较不可用, 同业排名不可用
+```
 
 ## 16. Evidence appendix
 

@@ -81,11 +81,13 @@ queries. This is a plan only — the host decides whether to call
 **Optional data pass-through**: Benchmarks, peer group, factor exposures,
 manager profiles, fee schedules, redemption rules, and other host-provided
 data are passed through to the report and artifacts without fabricating
-rankings or comparisons.
+rankings or comparisons. Missing data is reflected in `data_completeness`
+and `analysis_coverage` artifacts, with a grade (A-D) and coverage map.
 
 Analyzes host-provided personal portfolio data: positions, fund profiles,
 NAV history, holdings, risk profile, and rebalance constraints. Returns
-portfolio summary artifacts, risk flags, optional suggested rebalance plan, and
+portfolio summary artifacts, risk flags, optional suggested rebalance plan,
+`data_completeness`, `analysis_coverage`, `report_limitations`, and
 `HardEvidence` items with `confidence_weight=1.0`. No MCP capabilities are
 required and no data is fetched by the skill.
 
@@ -155,7 +157,10 @@ required and no data is fetched by the skill.
     "fund_analysis_report": {},
     "portfolio_summary": {},
     "risk_flags": [],
-    "suggested_rebalance_plan": {}
+    "suggested_rebalance_plan": {},
+    "data_completeness": {},
+    "analysis_coverage": {},
+    "report_limitations": []
   },
   "warnings": [],
   "errors": []

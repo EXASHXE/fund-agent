@@ -17,6 +17,11 @@ from src.tools.portfolio.analysis import (
     summarize_exposure,
 )
 from src.tools.portfolio.builder import build_portfolio_risk_matrix, portfolio_summary
+from src.tools.portfolio.report_quality import (
+    build_report_limitations,
+    calculate_data_completeness,
+    summarize_analysis_coverage,
+)
 from src.tools.portfolio.transaction import (
     calculate_cashflow_summary,
     calculate_position_cost_basis,
@@ -29,9 +34,11 @@ from src.tools.portfolio.transaction import (
 __all__ = [
     "apply_trade_constraints",
     "build_portfolio_risk_matrix",
+    "build_report_limitations",
     "calculate_cash_ratio",
     "calculate_cashflow_summary",
     "calculate_concentration_metrics",
+    "calculate_data_completeness",
     "calculate_industry_exposure",
     "calculate_portfolio_pnl",
     "calculate_position_cost_basis",
@@ -47,6 +54,7 @@ __all__ = [
     "reconcile_portfolio_with_transactions",
     "review_dca_plan",
     "simulate_rebalance",
+    "summarize_analysis_coverage",
     "summarize_exposure",
     "summarize_transaction_ledger",
 ]
