@@ -326,16 +326,20 @@ class TestHardenedTransactionSemantics:
         pos = result["positions"][0]
         assert pos["shares"] == 8000.0  # 10000 / 1.25
 
-    def test_buy_amount_only_warns_unresolved(self):
+    def test_buy_amount_only_warns_unresolved_and_no_cost_change(self):
+        """BUY amount-only (no shares, no nav): unresolved, no cost/shares change."""
         txn = [
             {"action": "BUY", "fund_code": "110011", "date": "2025-01-01", "amount": 10000},
         ]
         result = calculate_realized_unrealized_pnl(txn, {"110011": 1.50})
-        # amount-only BUY: cost applied but shares unresolved
         pos = result["positions"][0]
-        assert pos["shares"] == 0.0  # No shares inferred without nav
-        assert pos["total_cost"] == 10000.0  # Cost is still recorded
+        assert pos["shares"] == 0.0      # No shares inferred without nav
+        assert pos["total_cost"] == 0.0  # Cost NOT recorded for unresolved event
         assert len(result["unresolved_events"]) >= 1
+        ue = result["unresolved_events"][0]
+        assert ue["date"] == "2025-01-01"
+        assert ue["action"] == "BUY"
+        assert ue["amount"] == 10000.0
 
     def test_sell_amount_nav_infers_shares(self):
         txn = [
@@ -495,3 +499,113 @@ class TestHardenedReconciliation:
             assert "severity" in m
         for c in result["comparisons"]:
             assert "severity" in c
+
+
+class TestAmountOnlySemantics:
+    """Amount-only semantics — the central hygiene pass for v0.4.8-dev."""
+
+    def test_buy_amount_only_no_cost_or_shares_change(self):
+        """BUY amount-only (no shares, no nav): DO NOT change shares or cost."""
+        txn = [
+            {"action": "BUY", "fund_code": "110011", "date": "2025-01-01", "amount": 10000},
+        ]
+        result = calculate_realized_unrealized_pnl(txn, {"110011": 1.50})
+        pos = result["positions"][0]
+        assert pos["shares"] == 0.0
+        assert pos["total_cost"] == 0.0
+        assert len(result["unresolved_events"]) == 1
+        assert result["unresolved_events"][0]["date"] == "2025-01-01"
+
+    def test_sell_amount_only_no_shares_realized_pnl_change(self):
+        """SELL amount-only (no shares, no nav): DO NOT change shares or PnL."""
+        txn = [
+            {"action": "BUY", "fund_code": "110011", "date": "2025-01-01", "amount": 10000, "shares": 10000},
+            {"action": "SELL", "fund_code": "110011", "date": "2025-06-01", "amount": 3000},
+        ]
+        result = calculate_realized_unrealized_pnl(txn, {"110011": 1.50})
+        pos = result["positions"][0]
+        assert pos["shares"] == 10000.0  # Unchanged — SELL unresolved
+        assert pos["realized_pnl"] == 0.0 or pos["realized_pnl"] is None
+        assert len(result["unresolved_events"]) >= 1
+
+    def test_unresolved_events_include_date_field(self):
+        """All unresolved events must include fund_code, action, date, amount."""
+        txn = [
+            {"action": "BUY", "fund_code": "110011", "date": "2025-03-15", "amount": 5000},
+            {"action": "SELL", "fund_code": "000001", "date": "2025-08-20", "amount": 2000},
+        ]
+        result = calculate_realized_unrealized_pnl(txn, {"110011": 1.50, "000001": 2.00})
+        for ue in result["unresolved_events"]:
+            assert "fund_code" in ue
+            assert "action" in ue
+            assert "date" in ue
+            assert "amount" in ue
+            assert "issue" in ue
+
+    def test_dividend_amount_only_still_valid(self):
+        """DIVIDEND amount-only is valid cash income."""
+        txn = [
+            {"action": "DIVIDEND", "fund_code": "110011", "date": "2025-06-01", "amount": 500},
+        ]
+        snapshot = build_position_snapshot_from_transactions(
+            txn, {"110011": 1.50}, "2026-01-01"
+        )
+        cf = snapshot["cashflow_summary"]
+        assert cf["dividend_income"] == 500.0
+        assert cf["total_inflows"] == 500.0
+        assert len(snapshot["unresolved_events"]) == 0
+
+    def test_fee_amount_only_still_valid(self):
+        """FEE amount-only is a valid expense."""
+        txn = [
+            {"action": "FEE", "fund_code": "110011", "date": "2025-06-01", "amount": 50},
+        ]
+        snapshot = build_position_snapshot_from_transactions(
+            txn, {"110011": 1.50}, "2026-01-01"
+        )
+        cf = snapshot["cashflow_summary"]
+        assert cf["fee_expense"] == 50.0
+        assert cf["total_outflows"] == 50.0
+
+    def test_unresolved_buy_excluded_from_cashflow(self):
+        """Unresolved BUY must NOT count as cash outflow in cashflow_summary."""
+        txn = [
+            {"action": "BUY", "fund_code": "110011", "date": "2025-01-01", "amount": 10000},
+            {"action": "BUY", "fund_code": "110011", "date": "2025-02-01", "amount": 5000, "shares": 5000},
+        ]
+        snapshot = build_position_snapshot_from_transactions(
+            txn, {"110011": 1.50}, "2026-01-01"
+        )
+        cf = snapshot["cashflow_summary"]
+        # Only the second BUY (with shares) counts as outflow
+        assert cf["total_outflows"] == 5000.0
+
+    def test_unresolved_sell_excluded_from_cashflow(self):
+        """Unresolved SELL must NOT count as cash inflow in cashflow_summary."""
+        txn = [
+            {"action": "BUY", "fund_code": "110011", "date": "2025-01-01", "amount": 10000, "shares": 10000},
+            {"action": "SELL", "fund_code": "110011", "date": "2025-06-01", "amount": 3000},
+        ]
+        snapshot = build_position_snapshot_from_transactions(
+            txn, {"110011": 1.50}, "2026-01-01"
+        )
+        cf = snapshot["cashflow_summary"]
+        # Only the BUY counts; SELL is unresolved
+        assert cf["total_outflows"] == 10000.0
+        assert cf["total_inflows"] == 0.0
+
+    def test_allow_unresolved_cashflow_true(self):
+        """With allow_unresolved_cashflow=True, unresolved BUY/SELL DO count."""
+        txn = [
+            {"action": "BUY", "fund_code": "110011", "date": "2025-01-01", "amount": 10000},
+            {"action": "SELL", "fund_code": "110011", "date": "2025-06-01", "amount": 5000},
+        ]
+        snapshot = build_position_snapshot_from_transactions(
+            txn, {"110011": 1.50}, "2026-01-01",
+            options={"allow_unresolved_cashflow": True},
+        )
+        cf = snapshot["cashflow_summary"]
+        # Both count when allow_unresolved_cashflow=True
+        assert cf["total_outflows"] == 10000.0
+        assert cf["total_inflows"] == 5000.0
+        assert cf["net_cashflow"] == -5000.0

@@ -63,11 +63,14 @@ python -m venv .venv
 source .venv/bin/activate     # Linux / macOS
 # .venv\Scripts\activate      # Windows PowerShell
 
-# 3. Install in editable mode
+# 3. Install in editable mode (minimal — no provider SDKs)
 pip install -e .
 
 # 4. (Optional) Install dev / test dependencies
-pip install pytest pyyaml
+pip install -r requirements-dev.txt
+
+# 5. (Optional) Install local analysis helpers for demos
+pip install -r requirements-optional.txt
 ```
 
 ## Verify

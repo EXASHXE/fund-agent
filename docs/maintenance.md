@@ -100,6 +100,25 @@ adapt it through `src.tools.adapters.mcp.MCPHostAdapter`.
 - `src/workflows/research_os.py` — optional reference wrapper
 - Provider-specific SDKs — host concern
 
+## Dependency Policy
+
+The project maintains four requirements files:
+
+- `requirements.txt` — **default, minimal**. Contains only `pyyaml`.
+  The default install does **not** bundle provider SDKs. Provider SDKs
+  belong to host implementations.
+- `requirements-dev.txt` — test/dev tooling (pytest, pyyaml).
+- `requirements-optional.txt` — local analysis helpers (numpy, pandas,
+  networkx) for local demos and notebooks, not required for production.
+- `requirements-legacy.txt` — **historical / reference-only**. Contains
+  all legacy dependencies (akshare, finnhub, tavily, langchain-core,
+  langgraph, streamlit, qdrant-client, sqlalchemy, etc.) that were part
+  of the old ResearchOS architecture. These are NOT installed by
+  default and are NOT required for the current host-agnostic skill pack.
+
+The architecture boundary tests in `tests/architecture/` and
+`tests/ci/test_dependency_boundary.py` enforce this policy.
+
 ## Running The Gate Locally
 
 ```bash

@@ -1,0 +1,18 @@
+# fund-agent development requirements
+#
+# Install for local development and test gate runs:
+#   pip install -r requirements-dev.txt
+#
+# These are NOT required for production host integration.
+
+# Core runtime dependency (YAML manifest parsing)
+pyyaml>=6.0
+
+# Test runner (auto-installed by scripts/check_plugin_gate.sh if missing)
+pytest>=8.0
+
+# Optional: data tooling for local demos and analysis
+# Uncomment if needed for local dev:
+# numpy>=1.20.0
+# pandas>=1.3.0
+# networkx>=3.2

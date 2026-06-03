@@ -1,0 +1,31 @@
+# fund-agent LEGACY / ARCHIVED dependencies
+#
+# WARNING: This file is HISTORICAL and REFERENCE-ONLY.
+# It is NOT the default install surface for fund-agent v0.4.8-dev+.
+#
+# These dependencies were part of the old ResearchOS architecture that
+# included bundled provider SDKs, a local UI, and an in-process vector
+# store. They are preserved here for archival purposes and for anyone
+# who wants to explore the legacy code under src/infra/.
+#
+# The current host-agnostic skill pack does NOT depend on any of these.
+# Provider SDKs belong to host implementations. The `src/infra/`
+# directory is legacy support code, not active runtime.
+
+# Provider SDKs (host-owned in current architecture)
+akshare>=1.14.0
+finnhub-python>=2.4.0
+tavily-python>=0.5.0
+
+# NLP / sentiment (legacy local tooling)
+snownlp>=0.12.3
+jieba>=0.42.1
+
+# LLM framework (legacy; host owns LLM integration)
+langchain-core>=0.3.0
+langgraph>=0.2.0
+
+# Legacy infrastructure
+streamlit>=1.28.0
+sqlalchemy>=2.0
+qdrant-client>=1.7.0

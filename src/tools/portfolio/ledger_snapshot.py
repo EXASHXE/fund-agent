@@ -343,6 +343,8 @@ def calculate_realized_unrealized_pnl(
                 unresolved.append({
                     "fund_code": fund_code,
                     "action": action,
+                    "date": txn.get("date", ""),
+                    "amount": amount,
                     "issue": "BUY with no shares and no amount",
                 })
                 continue
@@ -351,12 +353,12 @@ def calculate_realized_unrealized_pnl(
                 unresolved.append({
                     "fund_code": fund_code,
                     "action": action,
-                    "issue": "BUY with amount only, no shares/nav to infer shares",
+                    "date": txn.get("date", ""),
                     "amount": amount,
+                    "issue": "BUY with amount only, no shares/nav to infer shares",
                 })
-                # Still apply cost if amount is present
-                if has_amount:
-                    f["total_cost"] += amount
+                # Do NOT change shares or cost for unresolved events.
+                # The event is recorded in unresolved_events for host review.
                 continue
             if has_amount:
                 f["total_cost"] += amount
@@ -379,8 +381,9 @@ def calculate_realized_unrealized_pnl(
                 unresolved.append({
                     "fund_code": fund_code,
                     "action": "SELL",
-                    "issue": "SELL with amount only, no shares/nav to infer shares",
+                    "date": txn.get("date", ""),
                     "amount": sell_amount,
+                    "issue": "SELL with amount only, no shares/nav to infer shares",
                 })
                 # Do NOT silently change cashflow for unresolved SELL
                 continue
@@ -419,8 +422,9 @@ def calculate_realized_unrealized_pnl(
                 unresolved.append({
                     "fund_code": fund_code,
                     "action": "TRANSFER_OUT",
-                    "issue": "TRANSFER_OUT with no resolvable shares",
+                    "date": txn.get("date", ""),
                     "amount": amount,
+                    "issue": "TRANSFER_OUT with no resolvable shares",
                 })
                 continue
 
@@ -554,6 +558,10 @@ def build_position_snapshot_from_transactions(
             - include_pending (bool): include pending settlements. Default False.
             - cash_available (float): host-provided cash balance.
             - initial_cash (float): starting cash for cashflow calc.
+            - allow_unresolved_cashflow (bool): if True, count BUY/SELL
+              amounts from unresolved amount-only events in cashflow
+              summary. Default False (strict — unresolved events do not
+              affect cashflow).
 
     Returns:
         {
@@ -620,15 +628,38 @@ def build_position_snapshot_from_transactions(
     dividend_income = 0.0
     fee_expense = 0.0
 
+    # Build unresolved key set for cashflow filtering
+    allow_unresolved_cf = bool(opts.get("allow_unresolved_cashflow", False))
+    unresolved_keys: set[tuple[str, str, str]] = set()
+    if not allow_unresolved_cf:
+        for ue in pnl_result.get("unresolved_events", []):
+            key = (
+                str(ue.get("fund_code", "")),
+                str(ue.get("action", "")),
+                str(ue.get("date", "")),
+            )
+            unresolved_keys.add(key)
+
     for txn in normalized:
         action = txn.get("action", "")
         amount = txn.get("amount", 0.0) or 0.0
+
+        # Check if this transaction matches an unresolved event
+        txn_key = (
+            str(txn.get("fund_code", "")),
+            str(action),
+            str(txn.get("date", "")),
+        )
+        is_unresolved = txn_key in unresolved_keys
+
         # BUY: cash outflow
         if action == "BUY":
-            total_outflows += amount
+            if not is_unresolved:
+                total_outflows += amount
         # SELL: cash inflow
         elif action == "SELL":
-            total_inflows += amount
+            if not is_unresolved:
+                total_inflows += amount
         # DIVIDEND: cash inflow (income)
         elif action == "DIVIDEND":
             dividend_income += amount

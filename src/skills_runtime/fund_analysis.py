@@ -509,6 +509,35 @@ class FundAnalysisSkill:
             artifacts["ledger_cashflow_summary"] = derived_snapshot.get("cashflow_summary")
             artifacts["source_of_truth"] = "derived_from_transactions"
 
+            # Build ledger quality summary
+            invalid = derived_snapshot.get("invalid_events_count", 0)
+            unresolved_events = derived_snapshot.get("unresolved_events", [])
+            unresolved_count = len(unresolved_events)
+            ledger_quality = {
+                "invalid_events_count": invalid,
+                "unresolved_events_count": unresolved_count,
+                "is_complete": invalid == 0 and unresolved_count == 0,
+                "limitations": [],
+            }
+            if invalid > 0:
+                ledger_quality["limitations"].append(
+                    f"{invalid} transaction event(s) were invalid and excluded"
+                )
+                warnings.append(
+                    f"ledger contains {invalid} invalid transaction event(s); "
+                    f"derived portfolio may be incomplete"
+                )
+            if unresolved_count > 0:
+                ledger_quality["limitations"].append(
+                    f"{unresolved_count} transaction event(s) could not be "
+                    f"resolved (e.g. amount-only BUY/SELL with no shares/nav)"
+                )
+                warnings.append(
+                    f"ledger contains {unresolved_count} unresolved transaction "
+                    f"event(s); shares and cost basis may be incomplete"
+                )
+            artifacts["ledger_quality_summary"] = ledger_quality
+
         if reconciliation_report:
             artifacts["ledger_reconciliation_report"] = reconciliation_report
             # Add reconciliation warnings
