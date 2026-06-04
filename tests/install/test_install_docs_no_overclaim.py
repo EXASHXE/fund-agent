@@ -197,6 +197,7 @@ def test_runtime_bridge_design_doc_exists_and_is_marked_future():
         or "v0.4.5" in text
         or "v0.4.6" in text
         or "v0.4.7" in text
+        or "v0.4.8" in text
     )
     # The doc must say that the deeper runtime bridge is still
     # future. The thin CLI shipped in v0.4.7-dev, but the

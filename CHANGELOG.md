@@ -127,6 +127,27 @@
   not invented comparisons, rankings, manager stability, fees, or liquidity
   facts.
 
+### Report Contract and Doc Consistency (v0.4.8-dev)
+
+- **Report output contract** — `docs/contracts/report-output-contract.v1.md`
+  defines the stable shape of `report_sections`, `report_outline`,
+  `report_quality_gate`, Markdown rendering, decision boundary, and
+  stability guarantees.
+- **Contract tests** — `tests/contracts/test_report_output_contract_v1.py`
+  (19 tests) asserts section IDs/order, required keys, status enum,
+  outline mirroring, quality gate shape, Markdown rendering, JSON
+  serialization, and decision boundary.
+- **Stale doc cleanup** — Updated `AGENTS.md` (removed duplicate line,
+  added report contract pointers, fixed stale version tags, corrected
+  runtime bridge status), `docs/host-compatibility.md` (removed v0.4.6
+  stale references, corrected runtime bridge availability),
+  `docs/design/runtime-bridge.md` (all v0.4.7-dev → v0.4.8-dev),
+  `docs/skill-io-examples.md` (full report composer output shape with
+  report_sections/outline/gate/completeness/coverage/limitations).
+- **Doc consistency tests** — 22 new tests across
+  `test_skill_io_examples_current.py`, `test_agent_docs_current.py`,
+  `test_host_compatibility_current.py`.
+
 ## 0.4.7-dev-runtime-bridge-hardening
 
 ### Changed

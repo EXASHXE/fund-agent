@@ -122,18 +122,55 @@ runtime IDs from folder names.
       "concentration": {},
       "risk_flags": [],
       "suggested_watchlist": [],
-      "warnings": []
+      "warnings": [],
+      "data_completeness": {"grade": "B", "score": 0.78},
+      "analysis_coverage": {"portfolio": "available", "performance": "available"},
+      "report_limitations": ["Benchmark comparison unavailable"]
     },
     "portfolio_summary": {},
     "risk_flags": [],
-    "suggested_rebalance_plan": {}
+    "suggested_rebalance_plan": {},
+    "report_sections": [
+      {"id": "executive_summary", "title": "Executive summary", "status": "OK", "bullets": ["..."], "data_sources": ["portfolio_summary"], "limitations": []},
+      {"id": "benchmark_and_peer", "title": "Benchmark and peer", "status": "MISSING", "bullets": [], "data_sources": [], "limitations": ["No benchmark or peer data provided"]}
+    ],
+    "report_outline": [
+      {"id": "executive_summary", "title": "Executive summary", "status": "OK"},
+      {"id": "benchmark_and_peer", "title": "Benchmark and peer", "status": "MISSING"}
+    ],
+    "report_quality_gate": {
+      "grade": "B",
+      "can_publish_professional_report": true,
+      "reason": "Report meets professional quality bar with adequate data completeness grade B."
+    },
+    "data_completeness": {"grade": "B", "score": 0.78, "available_sections": ["Portfolio Snapshot", ...], "missing_sections": ["Benchmark History", ...]},
+    "analysis_coverage": {"portfolio": "available", "benchmark": "missing", "peer": "missing", ...},
+    "report_limitations": ["Benchmark comparison unavailable", "Peer ranking unavailable"]
   },
   "errors": []
 }
 ```
 
-When a host only provides `related_entities`, this skill returns baseline
-HardEvidence and a warning that no structured portfolio analysis was possible.
+`report_sections` are deterministic host-display sections produced by
+`compose_personal_fund_report()` in `src/tools/portfolio/report_composer.py`.
+Each section has `id`, `title`, `status` (OK/PARTIAL/MISSING), `bullets`,
+`data_sources`, and `limitations`. Hosts may render via
+`render_report_markdown()` or replace with their own UX renderer.
+
+`report_quality_gate` tells whether the report meets professional quality
+bar (`can_publish_professional_report`) based on `data_completeness` grade.
+Grade C reports are publishable with prominent limitations; grade D requires
+`minimal_report` mode.
+
+`report_outline` mirrors the section `id`/`title`/`status` in order for
+host table-of-contents rendering.
+
+Missing optional data becomes `PARTIAL` or `MISSING` sections and
+corresponding `data_completeness` / `analysis_coverage` entries.
+No analysis is fabricated for missing data.
+
+Formal `BUY`/`SELL`/`HOLD` actions require `decision_support`;
+`FundAnalysisSkill` does not produce `Decision` or `ExecutionLedger`.
 
 ## news_research
 

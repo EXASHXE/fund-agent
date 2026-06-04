@@ -21,13 +21,15 @@ Primary entrypoints and resources:
 - `docs/agent-host-quickstart.md` — host integration quickstart
 - `docs/host-integration.md` — detailed integration guide
 - `docs/plugin-api.md` — full API reference
+- `docs/contracts/report-output-contract.v1.md` — report output shape contract
 - `docs/install/opencode.md` — OpenCode plugin install (first native target)
 - `docs/install/manual-host.md` — manual / Python host install
 - `docs/install/codex.md` — Codex install (manual / light)
-- `docs/design/runtime-bridge.md` — future runtime bridge (design only)
+- `docs/design/runtime-bridge.md` — runtime bridge design (thin CLI shipped; deeper bridge future)
 - `src/skills_runtime/` — host-callable skill handlers
 - `src/schemas/` — typed contracts
 - `src/tools/` — pure tools and MCP adapter boundary
+- `src/tools/portfolio/report_composer.py` — deterministic report sections
 - `src/graph/` — KnowledgeGraph helpers
 - `src/tools/adapters/mcp.py` — MCP adapter abstraction
 
@@ -52,15 +54,18 @@ Primary entrypoints and resources:
 6. Inject a `MCPHostAdapter` implementation if the skill needs MCP data
 7. Call `skill.run(skill_input)`
 8. Collect `SkillOutput.evidence_items` from the result
-9. Call `compile_evidence_graph(evidence_items)` to consolidate evidence
-10. Call `DecisionSupportSkill` when you need a formal `Decision`
-11. Return `Decision` / `ExecutionLedger` to the user
+9. For fund_analysis, use `compose_personal_fund_report(artifacts)` for
+   deterministic report sections (`report_sections`, `report_outline`,
+   `report_quality_gate`); hosts may render via `render_report_markdown`.
+10. Call `compile_evidence_graph(evidence_items)` to consolidate evidence
+11. Call `DecisionSupportSkill` when you need a formal `Decision`
+12. Return `Decision` / `ExecutionLedger` to the user
 
 ## Skill Map
 
 | Skill | Runtime | Requires MCP | Produces | Forbidden |
 |---|---|---|---|---|
-| `fund_analysis` | `src.skills_runtime.fund_analysis:FundAnalysisSkill` | none | `HardEvidence` | — |
+| `fund_analysis` | `src.skills_runtime.fund_analysis:FundAnalysisSkill` | none | `HardEvidence`, `report_sections`, `report_outline`, `report_quality_gate`, `data_completeness` | `Decision`, `ExecutionLedger` |
 | `news_research` | `src.skills_runtime.news_research:NewsResearchSkill` | `web_search`, `financial_news` | `SoftEvidence` | — |
 | `sentiment_analysis` | `src.skills_runtime.sentiment_analysis:SentimentAnalysisSkill` | `social_sentiment` | `SoftEvidence` | — |
 | `thesis_generation` | `src.skills_runtime.thesis_generation:ThesisGenerationSkill` | none | `ThesisDraft` | `formal_decision_generation` |
@@ -95,13 +100,13 @@ PYTHONPATH=. pytest tests/integration/test_external_host_smoke.py -q
 # Architecture boundaries
 PYTHONPATH=. pytest tests/architecture/test_architecture_boundaries.py -q
 
-# Runtime bridge CLI tests (v0.4.7-dev)
+# Runtime bridge CLI tests
 PYTHONPATH=. pytest tests/runtime_bridge -q
 
 # Minimal host demo
 python examples/minimal_host_news_to_decision.py
 
-# Runtime bridge CLI smoke (v0.4.7-dev)
+# Runtime bridge CLI smoke
 python scripts/run_skill.py --list-skills --pretty
 python scripts/run_skill.py --skill fund_analysis --input examples/runtime_bridge_fund_analysis_input.json --pretty
 ```
@@ -131,9 +136,8 @@ PYTHONPATH=. pytest tests/install -q
 
 Before changing runtime contracts, also update:
 
-Before changing runtime contracts, also update:
-
 - `docs/CONTRACT_FREEZE.md`
+- `docs/contracts/report-output-contract.v1.md`
 - `skillpack/fund-agent.skillpack.yaml`
 - `tests/contracts`
 - `tests/skillpack`

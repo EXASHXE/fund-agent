@@ -34,17 +34,20 @@ documentation slugs only. `fund-analyst` is legacy/reference-only material.
    - OpenCode: `docs/install/opencode.md` (first native target, metadata + docs only)
    - Manual / Python host: `docs/install/manual-host.md`
    - Codex: `docs/install/codex.md` (manual / light)
-   - Other harnesses: follow the manual host install; no native installer in v0.4.6
+   - Other harnesses: follow the manual host install; native installers are
+     available for OpenCode only (Mode A/B); other hosts use manual Python
+     integration.
 
 ## Install Reality Check
 
 The OpenCode install is a thin plugin wrapper that exposes a
 `fund_agent_skills` tool, a `fund_agent_skill_doc` tool, and a
 `fund_agent_runtime_hint` tool. It does **not** run the Python runtime
-from inside the OpenCode plugin in v0.4.6. The plugin is metadata +
-docs only; the actual skill invocation goes through the manual host
-integration. The future runtime bridge is design-only in
-`docs/design/runtime-bridge.md` and is explicitly **not** in v0.4.6.
+from inside the OpenCode plugin. The plugin is metadata +
+docs only (Mode A/B). The runtime bridge CLI (`scripts/run_skill.py`)
+is available for source-checkout and manual-host users as a thin,
+host-invoked JSON CLI. A deeper OpenCode plugin runtime wrapper
+remains future, as documented in `docs/design/runtime-bridge.md`.
 
 ## Host Requirements
 
