@@ -164,3 +164,15 @@ Also verify:
 
 See `examples/minimal_host_news_to_decision.py` for a complete,
 self-contained host integration flow using only in-memory adapters.
+
+For the end-to-end personal fund report flow:
+
+```bash
+python examples/minimal_personal_fund_report_flow.py
+python examples/minimal_personal_fund_report_flow.py --output /tmp/report.md
+```
+
+This demonstrates the canonical report-only path: host data →
+`FundAnalysisSkill` → `report_sections` → `render_report_markdown()`.
+For formal decisions, add `--with-decision` via
+`examples/minimal_personal_fund_report_with_decision_handoff.py`.

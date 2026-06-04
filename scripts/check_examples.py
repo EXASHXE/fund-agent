@@ -27,6 +27,8 @@ DEMO_SCRIPTS = [
     "examples/minimal_host_portfolio_review.py",
     "examples/minimal_host_trade_plan_to_decisions.py",
     "examples/minimal_runtime_bridge_fund_analysis.py",
+    "examples/minimal_personal_fund_report_flow.py",
+    "examples/minimal_personal_fund_report_with_decision_handoff.py",
 ]
 
 

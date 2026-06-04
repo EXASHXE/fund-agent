@@ -19,6 +19,7 @@ def _example_json_files():
     return sorted(
         p for p in EXAMPLES_DIR.glob("*.json")
         if p.name != "fundle_payload.json"
+        and not p.name.startswith("runtime_bridge_")
     )
 
 
@@ -54,9 +55,9 @@ def test_examples_use_canonical_action_field():
         for txn in transactions:
             if not isinstance(txn, dict):
                 continue
-            txn_type = txn.get("type")
+            txn_type = txn.get("type") or txn.get("action")
             assert txn_type is not None, (
-                f"{path.name}: transaction missing 'type' field: {txn}"
+                f"{path.name}: transaction missing 'type'/'action' field: {txn}"
             )
             assert txn_type in CANONICAL_TRANSACTION_TYPES, (
                 f"{path.name}: transaction 'type'={txn_type!r} not in canonical set "

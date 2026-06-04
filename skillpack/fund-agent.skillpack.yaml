@@ -1,5 +1,5 @@
 name: fund-agent
-version: 0.4.8
+version: 0.4.9-dev
 schema_version: skillpack.v1
 package_role: agent_plugin
 type: host-agnostic-financial-research-skill-pack

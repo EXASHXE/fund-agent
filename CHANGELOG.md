@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.4.9-dev-end-to-end-personal-fund-flow
+
+### Added
+
+- **End-to-end report flow** — `examples/minimal_personal_fund_report_flow.py`
+  demonstrates the canonical report-only path: host data →
+  `FundAnalysisSkill` → `report_sections` → `render_report_markdown()`.
+  Supports `--output` for Markdown file output. No network, no provider SDKs,
+  no formal decisions.
+- **Decision handoff example** — `examples/minimal_personal_fund_report_with_decision_handoff.py`
+  extends the report flow with optional `DecisionSupportSkill` handoff via
+  `--with-decision`. Clearly separates analysis output from formal decisions.
+- **Integration tests** — `tests/integration/test_personal_fund_report_flow.py`
+  (8 tests): deterministic output, required section titles, no Decision/
+  ExecutionLedger in markdown, data_completeness/coverage/gate present.
+- **Example tests** — `tests/examples/test_personal_report_flow_examples.py`
+  (6 tests): no-network validation, `--output` file writing, invalid-input
+  handling, decision handoff semantics.
+- **Doc consistency tests** — `tests/docs/test_personal_report_flow_docs.py`
+  (6 tests): docs mention report-only flow, decision handoff, report_sections,
+  and do not overclaim OpenCode plugin capabilities.
+
+### Changed
+
+- `scripts/check_examples.py` — validates both new flow scripts as demos (6 total).
+- `docs/workflows/personal-fund-report.md` — added quick-start end-to-end
+  flow section with CLI examples.
+- `AGENTS.md` — added end-to-end report flow examples to Minimal Example
+  section.
+
 ## 0.4.8
 
 ### Release Summary

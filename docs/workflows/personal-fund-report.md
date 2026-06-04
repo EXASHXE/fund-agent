@@ -10,6 +10,35 @@ This workflow is the canonical host-side guide for the user request:
 fetching, data-fetching policy, user prompts, credentials, MCP providers, final
 UX, and whether to escalate to formal decision support.
 
+## Quick-start: end-to-end report flow
+
+Run the reference end-to-end report flow to see the canonical report-only path:
+
+```bash
+python examples/minimal_personal_fund_report_flow.py
+python examples/minimal_personal_fund_report_flow.py --output /tmp/fund-report.md
+```
+
+The flow:
+1. Loads a host-provided payload.
+2. Runs `FundAnalysisSkill` (deterministic, no network, no provider SDKs).
+3. Produces `report_sections`, `report_outline`, `report_quality_gate`,
+   `data_completeness`, `analysis_coverage`, and `report_limitations`.
+4. Renders a Markdown report via `render_report_markdown()`.
+5. Stops — no formal decisions are produced.
+
+For formal action, use `minimal_personal_fund_report_with_decision_handoff.py`
+which adds `DecisionSupportSkill` when `--with-decision` is passed.
+
+```bash
+python examples/minimal_personal_fund_report_with_decision_handoff.py
+python examples/minimal_personal_fund_report_with_decision_handoff.py --with-decision
+```
+
+Note: `DecisionSupportSkill` requires evidence-anchored active decisions
+(BUY/SELL/INCREASE/REDUCE) or defaults to WAIT/HOLD when evidence is
+insufficient.
+
 Portfolio can be provided directly via `portfolio.positions` or derived from
 `transactions` + `current_nav` + `as_of_date`. The derived portfolio snapshot is
 deterministic (weighted-average cost basis) but depends on input completeness.
