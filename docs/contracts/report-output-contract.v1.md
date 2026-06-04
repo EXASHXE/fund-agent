@@ -1,7 +1,7 @@
 # Report Output Contract v1
 
 **Version:** 1.0
-**Effective:** v0.4.8-dev
+**Effective:** v0.4.8
 **Scope:** Determines the stable shape of FundAnalysisSkill report composer output.
 
 ## 1. `report_sections`

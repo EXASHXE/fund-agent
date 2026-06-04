@@ -245,7 +245,7 @@ paths). That test is the install-packaging-smoke guard.
 ## Pin to a specific version (git tag)
 
 ```bash
-git clone --branch v0.4.8-dev https://github.com/EXASHXE/fund-agent.git
+git clone --branch v0.4.8 https://github.com/EXASHXE/fund-agent.git
 ```
 
 or, for a fully reproducible symlink, pin the commit:
@@ -253,7 +253,7 @@ or, for a fully reproducible symlink, pin the commit:
 ```bash
 git clone https://github.com/EXASHXE/fund-agent.git
 cd fund-agent
-git checkout v0.4.8-dev
+git checkout v0.4.8
 # then create the symlink as above
 ```
 

@@ -1,6 +1,59 @@
 # Changelog
 
-## 0.4.8-dev-data-contract-and-portfolio-ledger-core
+## 0.4.8
+
+### Release Summary
+
+**Host-owned data capability catalog** — 15 capability contracts in
+`skillpack/capabilities.yaml` defining the host-data interface for fund
+profiles, NAV history, holdings, transactions, fees, benchmarks, peer
+groups, manager profiles, fund flows, macro events, and more.
+
+**Portfolio ledger snapshot core** — `src/tools/portfolio/ledger_snapshot.py`
+provides deterministic transaction-to-position-snapshot tools including
+event normalization, settlement rules, PnL calculation, and
+portfolio-ledger reconciliation. Weighted-average cost basis is default.
+
+**Derived portfolio mode** — `FundAnalysisSkill` accepts
+`transactions` + `current_nav` + `as_of_date` as an alternative to
+`portfolio.positions`. Automatic reconciliation when both exist.
+
+**Runtime bridge CLI** — `scripts/run_skill.py` provides a thin,
+host-invoked JSON CLI bridge: skill listing, capability discovery, skill
+execution with JSON stdin/stdout. No server, no daemon, no provider SDKs.
+
+**Dependency boundary cleanup** — `requirements.txt` minimal (`pyyaml` only);
+provider SDKs moved to `requirements-legacy.txt`. Default install does not
+pull Tavily, Finnhub, Exa, Firecrawl, Reddit, AkShare, OpenAI, Anthropic,
+or LangChain.
+
+**Report quality core** — `src/tools/portfolio/report_quality.py`:
+`calculate_data_completeness()` (score 0-1, grade A-D),
+`summarize_analysis_coverage()` (per-section availability),
+`build_report_limitations()` (user-facing caveats). All deterministic.
+
+**Deterministic report composer** — `src/tools/portfolio/report_composer.py`:
+`compose_personal_fund_report()` produces 15 ordered `report_sections`
+with `id/title/status/bullets/data_sources/limitations`, `report_outline`,
+and `report_quality_gate`. `render_report_markdown()` for default UX.
+
+**Enhanced optional summaries** — Benchmark comparison, peer ranking
+extraction, fee schedule analysis, redemption constraint warnings, factor
+concentration detection, manager change-risk flags. All host-data-driven;
+no rankings or comparisons fabricated.
+
+**Report output contract v1** — `docs/contracts/report-output-contract.v1.md`
+defines the stable shape of report composer output, status semantics,
+Markdown rendering contract, and decision boundary.
+
+**Documentation and consistency** — 22 doc consistency tests, AGENTS.md
+cleanup (removed duplicate, added report contract pointers), stale doc
+wording fixed (host-compatibility, runtime-bridge design), skill-io-examples
+updated with full report composer output shape.
+
+### Detailed changelog
+
+## 0.4.8-dev-data-contract-and-portfolio-ledger-core (development)
 
 ### Added
 

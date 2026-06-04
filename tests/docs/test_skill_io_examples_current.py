@@ -1,4 +1,4 @@
-"""Verify docs/skill-io-examples.md reflects current v0.4.8-dev report contract."""
+"""Verify docs/skill-io-examples.md reflects current v0.4.8 report contract."""
 
 from __future__ import annotations
 

@@ -126,7 +126,7 @@ python examples/minimal_host_trade_plan_to_decisions.py
 PYTHONPATH=. pytest tests/install -q
 ```
 
-## 10. v0.4.8-dev Release Hygiene and Readability
+## 10. v0.4.8 Release Hygiene and Readability
 
 - [ ] All version-bearing files agree on the current version:
   `VERSION`, `package.json`, `pyproject.toml`,
@@ -190,6 +190,50 @@ PYTHONPATH=. pytest tests/install -q
 - [ ] Default `requirements.txt` contains only `pyyaml` (no
   provider SDKs). Provider SDKs are in `requirements-legacy.txt`
   only.
+
+## 11. v0.4.8 Final Release Verification
+
+- [ ] All version-bearing files agree on `0.4.8`:
+  ```bash
+  cat VERSION
+  python -c "import json; print(json.load(open('package.json'))['version'])"
+  python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])"
+  python -c "import yaml; print(yaml.safe_load(open('skillpack/fund-agent.skillpack.yaml'))['version'])"
+  grep PLUGIN_VERSION opencode.plugin.js
+  ```
+- [ ] Report output contract tests pass:
+  ```bash
+  PYTHONPATH=. pytest tests/contracts/test_report_output_contract_v1.py -q
+  ```
+- [ ] Report composer tests pass:
+  ```bash
+  PYTHONPATH=. pytest tests/tools/test_report_composer.py -q
+  ```
+- [ ] Doc consistency tests pass:
+  ```bash
+  PYTHONPATH=. pytest tests/docs/test_agent_docs_current.py \
+    tests/docs/test_host_compatibility_current.py \
+    tests/docs/test_skill_io_examples_current.py -q
+  ```
+- [ ] No stale `0.4.8-dev` references in active docs:
+  ```bash
+  grep -rn "0.4.8-dev" docs/ skills/ README.md AGENTS.md || echo "(none — clean)"
+  ```
+- [ ] No stale old-dev-version references in active docs:
+  ```bash
+  grep -rn "0.4.7-dev" AGENTS.md docs/host-compatibility.md || echo "(none — clean)"
+  ```
+- [ ] Full plugin gate passes:
+  ```bash
+  bash scripts/check_plugin_gate.sh
+  ```
+- [ ] No Decision or ExecutionLedger produced by fund_analysis.
+- [ ] Runtime bridge CLI examples all work (see section 8).
+- [ ] CHANGELOG `## 0.4.8` release heading is present and complete.
+- [ ] `npm pack --dry-run` passes with correct contents (Mode A only).
+- [ ] Legacy directory contains only `README.md`.
+- [ ] No `tests/deprecated` directory exists.
+- [ ] `test ! -e tests/deprecated` passes.
 
 ## Historical Checklists
 

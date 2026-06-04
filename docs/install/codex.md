@@ -73,7 +73,7 @@ cd fund-agent
 Pin a specific version:
 
 ```bash
-git clone --branch v0.4.8-dev https://github.com/EXASHXE/fund-agent.git
+git clone --branch v0.4.8 https://github.com/EXASHXE/fund-agent.git
 cd fund-agent
 ```
 

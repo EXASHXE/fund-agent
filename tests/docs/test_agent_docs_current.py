@@ -1,4 +1,4 @@
-"""Verify AGENTS.md is current for v0.4.8-dev."""
+"""Verify AGENTS.md is current for v0.4.8."""
 
 from __future__ import annotations
 

@@ -19,7 +19,7 @@ runtime bridge examples. To use the bridge, hosts must work from a
 Python source checkout:
 
 ```bash
-git clone --branch v0.4.8-dev https://github.com/EXASHXE/fund-agent.git
+git clone --branch v0.4.8 https://github.com/EXASHXE/fund-agent.git
 cd fund-agent
 pip install -e .        # editable install into your Python environment
 ```
@@ -102,7 +102,7 @@ Output (truncated):
 ```json
 {
   "ok": true,
-  "manifest_version": "0.4.8-dev",
+  "manifest_version": "0.4.8",
   "schema_version": "skillpack.v1",
   "skills": [
     {

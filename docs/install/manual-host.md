@@ -183,7 +183,7 @@ test fixtures and are validated by `scripts/check_examples.py`.
 ## Versioning
 
 `fund-agent` follows semantic versioning. The current version is
-`0.4.8-dev`. The canonical sources of truth are:
+`0.4.8`. The canonical sources of truth are:
 
 - `VERSION` — the version string
 - `pyproject.toml` — `project.version`
@@ -195,7 +195,7 @@ test fixtures and are validated by `scripts/check_examples.py`.
 Pin a specific version with a git tag:
 
 ```bash
-git clone --branch v0.4.8-dev https://github.com/EXASHXE/fund-agent.git
+git clone --branch v0.4.8 https://github.com/EXASHXE/fund-agent.git
 cd fund-agent
 pip install -e .
 ```

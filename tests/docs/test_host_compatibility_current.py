@@ -1,4 +1,4 @@
-"""Verify docs/host-compatibility.md reflects current v0.4.8-dev reality."""
+"""Verify docs/host-compatibility.md reflects current v0.4.8 reality."""
 
 from __future__ import annotations
 
