@@ -50,12 +50,22 @@ Collect as much of the following from the host data layer as available:
 
 - `portfolio`
 - `transactions`
+- `current_nav`
 - `fund_profiles`
 - `nav_history`
 - `holdings`
 - `dca_plans`
 - `risk_profile`
 - `constraints`
+- `benchmark_history`
+- `peer_group`
+- `factor_exposures`
+- `manager_profiles`
+- `fee_schedules`
+- `redemption_rules`
+- `fund_flow`
+- `macro_events`
+- `user_investment_plan`
 - `market_scenario` (if a stress or drawdown view is in scope)
 
 If portfolio positions exist but optional data is missing, proceed with
@@ -68,27 +78,36 @@ snapshot from the transaction ledger. The derived snapshot emits
 
 ## 4. Required vs optional data
 
-Required to produce any portfolio analysis:
+Required data groups for a professional personal report:
 
-- `portfolio.as_of_date`
-- `portfolio.total_value`
-- `portfolio.cash_available`
-- `portfolio.positions[]` with `fund_code` and `current_value`
-- `risk_profile` with concentration, liquidity, and trade budget limits
-- `constraints` such as minimum trade amount and forbidden actions
+- portfolio snapshot via `portfolio.positions`, or a derived snapshot from
+  `transactions` + `current_nav` + `as_of_date`
+- current value or `current_nav` sufficient to value positions
+- `fund_profiles`
+- `nav_history`
+- `holdings`
+- `risk_profile`
+- `constraints`
 
-Optional (improves analysis quality but not strictly required):
+Optional data groups that improve analysis quality:
 
-- `fund_profiles` for fund type, benchmark, manager, and tags
-- `nav_history` for deterministic risk-return metrics
-- `holdings` for theme, industry, region, and security exposure
-- `transactions` for cost basis, cashflow, and trading discipline analysis
-- `dca_plans` for recurring investment review
-- `market_scenario` supplied by the host (never fetched by `fund-agent`)
+- `benchmark_history`
+- `peer_group`
+- `factor_exposures`
+- `manager_profiles`
+- `fee_schedules`
+- `redemption_rules`
+- `fund_flow`
+- `macro_events`
+- `user_investment_plan`
 
-If required data is absent, return `INVALID_INPUT`. If only `related_entities`
-is supplied, use the baseline `HardEvidence` compatibility path and warn that
-structured portfolio analysis was not possible.
+Missing portfolio or a derivable snapshot is critical and returns
+`INVALID_INPUT`. Missing `risk_profile` or `constraints` does not necessarily
+fail the skill, but it lowers `data_completeness` and adds limitations.
+Missing `nav_history` or `holdings` lowers the grade and marks performance or
+holding sections `PARTIAL`/`MISSING`. If only `related_entities` is supplied,
+use the baseline `HardEvidence` compatibility path and warn that structured
+portfolio analysis was not possible.
 
 ## 5. When to ask the user for missing data
 
@@ -202,6 +221,9 @@ or `PARTIAL` status when optional data is missing.
 
 If `formal_decision=false`, the host writes the final report directly from:
 
+- `fund_output.artifacts["report_sections"]`
+- `fund_output.artifacts["report_outline"]`
+- `fund_output.artifacts["report_quality_gate"]`
 - `fund_output.artifacts["portfolio_summary"]`
 - `fund_output.artifacts["exposure_summary"]`
 - `fund_output.artifacts["risk_flags"]`
@@ -212,6 +234,11 @@ If `formal_decision=false`, the host writes the final report directly from:
 - `fund_output.artifacts["report_limitations"]`
 - `fund_output.evidence_items`
 - `fund_output.warnings`
+
+`report_sections` are deterministic and host-displayable. Missing optional data
+appears as `PARTIAL` or `MISSING` sections with limitations rather than
+fabricated analysis. `report_quality_gate` says whether the artifact set is
+publishable as a professional report.
 
 Do not turn `suggested_rebalance_plan` into executable advice by itself. The
 host should label it as a suggested plan, not a decision.
@@ -266,23 +293,28 @@ decision_output = DecisionSupportSkill().run(
 
 ## 13. Report section template
 
-1. Executive summary
-2. Portfolio overview
-3. Position table
-4. Cost and PnL summary
-5. Fund type allocation
-6. Theme exposure
-7. Industry exposure
-8. Cash ratio
-9. Fund metrics
-10. Risk flags
-11. DCA review
-12. Short-term budget review
-13. Suggested rebalance plan
-14. WAIT/HOLD/BUY/SELL explanation
-15. Data gaps and warnings
-16. Report quality and data completeness
-17. Evidence appendix
+Use `fund_output.artifacts["report_sections"]` as the canonical structured
+outline:
+
+1. `executive_summary`
+2. `portfolio_snapshot`
+3. `pnl_and_cost_basis`
+4. `allocation_and_exposure`
+5. `risk_flags`
+6. `performance_and_nav`
+7. `benchmark_and_peer`
+8. `factor_and_style`
+9. `fees_and_redemption`
+10. `manager_and_fund_profile`
+11. `dca_and_trade_budget`
+12. `rebalance_plan`
+13. `research_query_plan`
+14. `data_completeness_and_limitations`
+15. `evidence_appendix`
+
+Each section has `id`, `title`, `status`, `bullets`, `data_sources`, and
+`limitations`. Hosts may render these sections directly or adapt them to their
+UX, but should preserve `PARTIAL` and `MISSING` statuses.
 
 ## 14. Warning and uncertainty language
 
@@ -303,13 +335,21 @@ Use concrete, bounded wording:
 ## 14.5. Report quality and data completeness
 
 The skill now produces `data_completeness` (score 0.0-1.0 and grade A-D),
-`analysis_coverage` (per-section availability), and `report_limitations`
-(concise user-facing caveats). Use these to set reader expectations:
+`analysis_coverage` (per-section availability), `report_limitations`
+(concise user-facing caveats), `report_sections`, and `report_quality_gate`.
+Use these to set reader expectations:
 
 - Grade **A**: near-complete input — all required + most optional data present.
 - Grade **B**: all required data present, some optional missing — adequate.
-- Grade **C**/**D**: significant data gaps — broker/fund statements remain
-  authoritative; formal decisions should NOT be made on grade-C/D data alone.
+- Grade **C**: usable report with important limitations; keep limitations
+  prominent.
+- Grade **D**: insufficient for a professional report unless the host
+  explicitly requested minimal report mode and core portfolio data exists.
+
+`report_quality_gate.can_publish_professional_report` is true for grade A/B,
+true for grade C with prominent limitations, and false for grade D unless
+minimal report mode is requested. Formal actions still require
+`DecisionSupportSkill`.
 
 In the report, include:
 

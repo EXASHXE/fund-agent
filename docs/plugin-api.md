@@ -83,13 +83,17 @@ manager profiles, fee schedules, redemption rules, and other host-provided
 data are passed through to the report and artifacts without fabricating
 rankings or comparisons. Missing data is reflected in `data_completeness`
 and `analysis_coverage` artifacts, with a grade (A-D) and coverage map.
+The deterministic report composer converts these artifacts into ordered
+`report_sections` and a `report_quality_gate` for host display.
 
 Analyzes host-provided personal portfolio data: positions, fund profiles,
 NAV history, holdings, risk profile, and rebalance constraints. Returns
 portfolio summary artifacts, risk flags, optional suggested rebalance plan,
 `data_completeness`, `analysis_coverage`, `report_limitations`, and
+structured `report_sections` with a `report_quality_gate`. Returns
 `HardEvidence` items with `confidence_weight=1.0`. No MCP capabilities are
-required and no data is fetched by the skill.
+required and no data is fetched by the skill. Formal `Decision` and
+`ExecutionLedger` outputs remain exclusive to `decision_support`.
 
 **SkillInput shape:**
 ```json
@@ -160,7 +164,14 @@ required and no data is fetched by the skill.
     "suggested_rebalance_plan": {},
     "data_completeness": {},
     "analysis_coverage": {},
-    "report_limitations": []
+    "report_limitations": [],
+    "report_sections": [],
+    "report_outline": [],
+    "report_quality_gate": {
+      "grade": "A",
+      "can_publish_professional_report": true,
+      "reason": "Data completeness grade A supports a professional report."
+    }
   },
   "warnings": [],
   "errors": []

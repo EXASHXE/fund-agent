@@ -22,6 +22,10 @@ from src.tools.portfolio.report_quality import (
     calculate_data_completeness,
     summarize_analysis_coverage,
 )
+from src.tools.portfolio.report_composer import (
+    compose_personal_fund_report,
+    render_report_markdown,
+)
 from src.tools.portfolio.transaction import (
     calculate_cashflow_summary,
     calculate_position_cost_basis,
@@ -47,12 +51,14 @@ __all__ = [
     "calculate_short_term_budget_usage",
     "calculate_theme_exposure",
     "calculate_trade_budget",
+    "compose_personal_fund_report",
     "detect_portfolio_risk_flags",
     "detect_trading_discipline_flags",
     "normalize_fund_transactions",
     "portfolio_summary",
     "reconcile_portfolio_with_transactions",
     "review_dca_plan",
+    "render_report_markdown",
     "simulate_rebalance",
     "summarize_analysis_coverage",
     "summarize_exposure",

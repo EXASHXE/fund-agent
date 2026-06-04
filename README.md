@@ -261,6 +261,18 @@ See `docs/archive/legacy-system.md` for details.
 7. Run `python examples/minimal_host_portfolio_review.py` — portfolio review demo.
 8. Run `bash scripts/check_plugin_gate.sh` — verify all gates pass.
 
+## Personal Fund Reports
+
+`fund_analysis` now produces deterministic, host-displayable report artifacts:
+`report_sections`, `report_outline`, and `report_quality_gate`, alongside
+`data_completeness`, `analysis_coverage`, and `report_limitations`. Hosts can
+render these structured sections directly or adapt them to their final UX.
+
+Missing benchmark, peer, manager, factor, fee, or redemption data produces
+`PARTIAL` or `MISSING` report sections and limitations. The composer does not
+fabricate absent comparisons, rankings, manager stability, fee warnings, or
+liquidity facts. Formal actions still require `DecisionSupportSkill`.
+
 ## Install
 
 `fund-agent` is host-agnostic. The first native install target is

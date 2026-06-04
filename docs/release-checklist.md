@@ -108,6 +108,12 @@ Run this checklist before tagging a release.
 - [ ] `docs/workflows/personal-fund-report.md` exists
 - [ ] `docs/plugin-api.md` documents `SkillError` standard codes
 - [ ] Minimal host demo does not import ResearchOS or legacy
+- [ ] `fund_analysis` artifacts include deterministic `report_sections`,
+      `report_outline`, and `report_quality_gate`
+- [ ] `report_quality_gate` documents whether a professional report is
+      publishable; formal actions still require `DecisionSupportSkill`
+- [ ] Missing benchmark, peer, manager, factor, fee, and redemption data
+      produces `PARTIAL`/`MISSING` sections rather than fabricated analysis
 
 ## Quick Verification
 

@@ -128,6 +128,122 @@ class TestCalculateDataCompleteness:
         assert result["grade"] == "A"
         assert result["score"] >= 0.9
 
+    def test_grade_a_when_full_required_and_most_optional_present(self):
+        payload = {
+            "portfolio": {
+                "as_of_date": "2026-06-01",
+                "total_value": 200000,
+                "positions": [{"fund_code": "110011", "current_value": 30000, "total_cost": 32000}],
+            },
+            "fund_profiles": {"110011": {"fund_code": "110011"}},
+            "nav_history": {"110011": [{"date": "2026-06-01", "nav": 1.2}]},
+            "holdings": {"110011": [{"name": "A", "weight": 0.08}]},
+            "risk_profile": {"risk_level": "moderate"},
+            "constraints": {"min_trade_amount": 100},
+            "benchmark_history": {"bench": [{"date": "2026-06-01", "value": 100}]},
+            "peer_group": {"110011": {"rank": 3, "total": 50}},
+            "factor_exposures": {"value": {"110011": 0.8}},
+            "manager_profiles": {"110011": {"tenure_years": 5}},
+            "fee_schedules": {"110011": {"management_fee": 0.015}},
+            "redemption_rules": {"110011": {"lockup_days": 30}},
+        }
+        result = calculate_data_completeness(payload)
+        assert result["grade"] == "A"
+
+    def test_grade_b_when_required_present_and_optional_mostly_missing(self):
+        payload = {
+            "portfolio": {
+                "as_of_date": "2026-06-01",
+                "total_value": 200000,
+                "positions": [{"fund_code": "110011", "current_value": 30000, "total_cost": 32000}],
+            },
+            "fund_profiles": {"110011": {"fund_code": "110011"}},
+            "nav_history": {"110011": [{"date": "2026-06-01", "nav": 1.2}]},
+            "holdings": {"110011": [{"name": "A", "weight": 0.08}]},
+            "risk_profile": {"risk_level": "moderate"},
+            "constraints": {"min_trade_amount": 100},
+        }
+        result = calculate_data_completeness(payload)
+        assert result["grade"] == "B"
+        assert "Peer Group" in result["optional_missing"]
+
+    def test_grade_c_when_nav_and_holdings_missing_but_portfolio_exists(self):
+        payload = {
+            "portfolio": {
+                "as_of_date": "2026-06-01",
+                "total_value": 200000,
+                "positions": [{"fund_code": "110011", "current_value": 30000}],
+            },
+            "fund_profiles": {"110011": {"fund_code": "110011"}},
+            "risk_profile": {"risk_level": "moderate"},
+            "constraints": {"min_trade_amount": 100},
+        }
+        result = calculate_data_completeness(payload)
+        assert result["grade"] == "C"
+        assert "Nav History" in result["missing_sections"]
+        assert "Holdings" in result["missing_sections"]
+
+    def test_grade_d_when_no_usable_portfolio(self):
+        payload = {
+            "fund_profiles": {"110011": {"fund_code": "110011"}},
+            "nav_history": {"110011": [{"date": "2026-06-01", "nav": 1.2}]},
+            "holdings": {"110011": [{"name": "A", "weight": 0.08}]},
+            "risk_profile": {"risk_level": "moderate"},
+            "constraints": {"min_trade_amount": 100},
+        }
+        result = calculate_data_completeness(payload)
+        assert result["grade"] == "D"
+        assert "Portfolio Snapshot" in result["critical_missing"]
+
+    def test_derived_portfolio_with_unresolved_events_lowers_grade(self):
+        payload = {
+            "transactions": [
+                {"action": "BUY", "fund_code": "110011", "date": "2026-01-01", "amount": 10000, "nav": 1.0, "shares": 10000},
+            ],
+            "current_nav": {"110011": 1.20},
+            "as_of_date": "2026-06-01",
+            "fund_profiles": {"110011": {"fund_code": "110011"}},
+            "nav_history": {"110011": [{"date": "2026-06-01", "nav": 1.2}]},
+            "holdings": {"110011": [{"name": "A", "weight": 0.08}]},
+            "risk_profile": {"risk_level": "moderate"},
+            "constraints": {"min_trade_amount": 100},
+            "benchmark_history": {"bench": [{"date": "2026-06-01", "value": 100}]},
+            "peer_group": {"110011": {"rank": 3, "total": 50}},
+            "factor_exposures": {"value": {"110011": 0.8}},
+            "manager_profiles": {"110011": {"tenure_years": 5}},
+            "fee_schedules": {"110011": {"management_fee": 0.015}},
+            "redemption_rules": {"110011": {"lockup_days": 30}},
+        }
+        result = calculate_data_completeness(
+            payload,
+            {"invalid_events_count": 0, "unresolved_events_count": 1},
+        )
+        assert result["grade"] == "B"
+        assert any("ledger" in item.lower() for item in result["limitations"])
+
+    def test_output_order_is_deterministic(self):
+        payload = {
+            "constraints": {"min_trade_amount": 100},
+            "risk_profile": {"risk_level": "moderate"},
+            "holdings": {"110011": [{"name": "A", "weight": 0.08}]},
+            "nav_history": {"110011": [{"date": "2026-06-01", "nav": 1.2}]},
+            "fund_profiles": {"110011": {"fund_code": "110011"}},
+            "portfolio": {
+                "positions": [{"fund_code": "110011", "current_value": 30000}],
+                "total_value": 30000,
+            },
+        }
+        result = calculate_data_completeness(payload)
+        assert result["available_sections"][:7] == [
+            "Portfolio Snapshot",
+            "Current Value Or Nav",
+            "Fund Profiles",
+            "Nav History",
+            "Holdings",
+            "Risk Profile",
+            "Constraints",
+        ]
+
     def test_no_portfolio_produces_critical_missing(self):
         payload = {
             "fund_profiles": {"110011": {"fund_code": "110011"}},

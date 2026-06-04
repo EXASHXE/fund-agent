@@ -103,6 +103,30 @@
   and all skill reference docs (SKILL.md, input-contract.md,
   report-template.md, missing-data-policy.md).
 
+### Report Quality Hardening and Composer (v0.4.8-dev)
+
+- **Hardened completeness semantics** — `calculate_data_completeness()`
+  now uses explicit required and optional report data groups, distinguishes
+  current value / current NAV availability, treats missing portfolio data as
+  critical, lowers grade for incomplete derived ledgers, and keeps output order
+  deterministic.
+- **Deterministic personal report composer** —
+  `src/tools/portfolio/report_composer.py` adds
+  `compose_personal_fund_report()` and `render_report_markdown()`. The composer
+  turns existing `FundAnalysisSkill` artifacts into 15 structured
+  host-displayable sections plus `report_outline` and `report_quality_gate`.
+  It is JSON-serializable and does not call providers, network, LLMs, or
+  decision support.
+- **FundAnalysisSkill integration** — `fund_analysis_report` and top-level
+  artifacts now include `report_sections`, `report_outline`, and
+  `report_quality_gate` alongside `data_completeness`, `analysis_coverage`,
+  and `report_limitations`.
+- **No-fabrication hardening** — optional benchmark, peer, manager, fee,
+  redemption, and factor summaries surface only host-provided facts. Missing
+  optional data produces `PARTIAL`/`MISSING` report sections and limitations,
+  not invented comparisons, rankings, manager stability, fees, or liquidity
+  facts.
+
 ## 0.4.7-dev-runtime-bridge-hardening
 
 ### Changed

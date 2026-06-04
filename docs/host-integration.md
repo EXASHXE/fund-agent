@@ -158,7 +158,15 @@ decision_output = DecisionSupportSkill().run(
 
 `fund_output.artifacts` includes `fund_analysis_report`, `portfolio_summary`,
 `risk_flags`, `suggested_rebalance_plan`, `data_completeness`,
-`analysis_coverage`, and `report_limitations`.
+`analysis_coverage`, `report_limitations`, `report_sections`,
+`report_outline`, and `report_quality_gate`.
+
+`report_sections` are deterministic, JSON-serializable sections suitable for
+host display. `report_quality_gate` states whether the artifact set is
+publishable as a professional report. Missing optional data becomes
+`PARTIAL` or `MISSING` section status and limitations; the host remains
+responsible for data fetching, final UX, and any escalation to
+`DecisionSupportSkill` for formal actions.
 
 ### News To Decision
 

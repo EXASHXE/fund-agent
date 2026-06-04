@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 from src.schemas.skill import SkillInput
 from src.skills_runtime.fund_analysis import FundAnalysisSkill
 
@@ -109,6 +111,18 @@ class TestReportQualityIntegration:
         assert "data_completeness" in output.artifacts
         assert "analysis_coverage" in output.artifacts
         assert "report_limitations" in output.artifacts
+        assert "report_sections" in output.artifacts
+        assert "report_outline" in output.artifacts
+        assert "report_quality_gate" in output.artifacts
+        assert output.artifacts["report_quality_gate"]["can_publish_professional_report"] is True
+
+    def test_fund_analysis_report_includes_composed_sections(self):
+        skill = FundAnalysisSkill()
+        output = skill.run(_skill_input(_base_payload()))
+        report = output.artifacts["fund_analysis_report"]
+        assert "report_sections" in report
+        assert "report_outline" in report
+        assert "report_quality_gate" in report
 
     def test_missing_benchmark_does_not_fabricate_benchmark_summary(self):
         skill = FundAnalysisSkill()
@@ -166,7 +180,7 @@ class TestReportQualityIntegration:
         skill = FundAnalysisSkill()
         payload = _base_payload(
             peer_group={
-                "110011": {"rank": 3, "total": 50, "category": "equity"},
+                "110011": {"rank": 3, "total": 50, "percentile": 6, "category": "equity"},
             },
         )
         output = skill.run(_skill_input(payload))
@@ -174,6 +188,7 @@ class TestReportQualityIntegration:
         assert report.get("peer_summary") is not None
         peer = report["peer_summary"]
         assert "rankings" in peer
+        assert peer["rankings"][0]["percentile"] == 6
 
     def test_peer_group_without_rank_does_not_invent_ranking(self):
         skill = FundAnalysisSkill()
@@ -193,7 +208,7 @@ class TestReportQualityIntegration:
         payload = _base_payload(
             factor_exposures={
                 "value": {"110011": 0.3, "220022": 0.1},
-                "momentum": {"110011": 0.5, "220022": 0.0},
+                "momentum": {"110011": 0.6, "220022": 0.0},
             },
         )
         output = skill.run(_skill_input(payload))
@@ -201,6 +216,104 @@ class TestReportQualityIntegration:
         assert report.get("factor_summary") is not None
         factor = report["factor_summary"]
         assert "factors" in factor
+        assert "concentration_warnings" in factor
+
+    def test_benchmark_history_with_comparable_series_summarizes_gap(self):
+        skill = FundAnalysisSkill()
+        payload = _base_payload(
+            benchmark_history={
+                "csi300": [
+                    {"date": "2025-06-01", "value": 1000},
+                    {"date": "2026-06-01", "value": 1100},
+                ],
+            },
+        )
+        output = skill.run(_skill_input(payload))
+        report = output.artifacts["fund_analysis_report"]
+        benchmark = report.get("benchmark_summary")
+        assert benchmark is not None
+        assert benchmark["comparison"]
+        assert "excess_return" in benchmark["comparison"][0]
+
+    def test_manager_profile_with_manager_change_flag_creates_risk_note(self):
+        skill = FundAnalysisSkill()
+        payload = _base_payload(
+            manager_profiles={
+                "110011": {"manager_name": "Alice", "manager_change": True},
+            },
+        )
+        output = skill.run(_skill_input(payload))
+        manager = output.artifacts["fund_analysis_report"]["manager_summary"]
+        assert "manager_change_risk_funds" in manager
+        assert "110011" in manager["manager_change_risk_funds"]
+        assert "manager_risk_warning" in manager
+
+    def test_manager_profile_without_change_or_tenure_does_not_invent_stability(self):
+        skill = FundAnalysisSkill()
+        payload = _base_payload(
+            manager_profiles={
+                "110011": {"manager_name": "Alice"},
+            },
+        )
+        output = skill.run(_skill_input(payload))
+        manager = output.artifacts["fund_analysis_report"]["manager_summary"]
+        assert "manager_change_risk_funds" not in manager
+        assert "manager_risk_warning" not in manager
+        assert "stable" not in json.dumps(manager).lower()
+
+    def test_high_fee_fields_create_fee_warning(self):
+        skill = FundAnalysisSkill()
+        payload = _base_payload(
+            fee_schedules={
+                "110011": {"total_expense_ratio": 0.035},
+            },
+        )
+        output = skill.run(_skill_input(payload))
+        fee = output.artifacts["fund_analysis_report"]["fee_summary"]
+        assert "110011" in fee["high_fee_funds"]
+        assert "fee_warning" in fee
+
+    def test_redemption_lockup_or_suspension_creates_liquidity_warning(self):
+        skill = FundAnalysisSkill()
+        payload = _base_payload(
+            redemption_rules={
+                "110011": {"lockup_days": 30},
+                "220022": {"suspended": True},
+            },
+        )
+        output = skill.run(_skill_input(payload))
+        redemption = output.artifacts["fund_analysis_report"]["redemption_summary"]
+        assert redemption["lockup_funds"] == ["110011", "220022"]
+        assert redemption["warnings"]
+
+    def test_optional_summaries_are_json_serializable(self):
+        skill = FundAnalysisSkill()
+        payload = _base_payload(
+            benchmark_history={
+                "csi300": [
+                    {"date": "2025-06-01", "value": 1000},
+                    {"date": "2026-06-01", "value": 1100},
+                ],
+            },
+            peer_group={"110011": {"rank": 3, "total": 50, "percentile": 6}},
+            factor_exposures={"momentum": {"110011": 0.6}},
+            manager_profiles={"110011": {"manager_name": "Alice", "manager_change": True}},
+            fee_schedules={"110011": {"total_expense_ratio": 0.035}},
+            redemption_rules={"110011": {"lockup_days": 30}},
+        )
+        output = skill.run(_skill_input(payload))
+        optional = {
+            key: output.artifacts[key]
+            for key in (
+                "benchmark_summary",
+                "peer_summary",
+                "factor_summary",
+                "manager_summary",
+                "fee_summary",
+                "redemption_summary",
+            )
+        }
+        assert json.loads(json.dumps(optional)) == optional
 
     def test_no_decision_or_execution_ledger_emitted(self):
         skill = FundAnalysisSkill()

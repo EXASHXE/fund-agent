@@ -170,7 +170,12 @@ python scripts/run_skill.py \
 This example includes all optional data (benchmarks, peer group, factor
 exposures, fee schedules, redemption rules, manager profiles). The output
 includes `data_completeness` (grade A-D), `analysis_coverage` (per-section
-availability), and `report_limitations` (user-facing caveats).
+availability), `report_limitations` (user-facing caveats),
+`report_sections` (deterministic host-displayable sections), and
+`report_quality_gate` (whether the report is publishable as a professional
+report). The CLI still only runs host-invoked JSON skill calls; it does not
+fetch data, call providers, or generate formal decisions outside
+`decision_support`.
 
 ## CLI reference
 

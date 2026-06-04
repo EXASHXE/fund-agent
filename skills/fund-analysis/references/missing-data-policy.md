@@ -4,15 +4,30 @@
 
 ## Proceed With PARTIAL Analysis
 
-Proceed when portfolio positions exist but one or more optional datasets are
-missing:
+Proceed when a usable portfolio snapshot exists but one or more required
+analytical datasets are partial, or optional datasets are missing.
 
+Required report data groups:
+
+- portfolio snapshot or derived portfolio snapshot
+- current value or `current_nav` sufficient to value positions
 - `fund_profiles`
 - `nav_history`
 - `holdings`
-- `transactions`
-- `dca_plans`
-- `market_scenario`
+- `risk_profile`
+- `constraints`
+
+Optional report data groups:
+
+- `benchmark_history`
+- `peer_group`
+- `factor_exposures`
+- `manager_profiles`
+- `fee_schedules`
+- `redemption_rules`
+- `fund_flow`
+- `macro_events`
+- `user_investment_plan`
 
 The output should include `warnings` naming the missing dataset and affected
 fund codes when possible.
@@ -25,9 +40,19 @@ more heavily than optional sections (benchmark history, peer group, factor
 exposures, manager profiles, fee schedules, redemption rules, fund flow, macro
 events, user investment plan).
 
+Grade A requires all required groups and most optional groups. Grade B requires
+all required groups with optional gaps. Grade C means the report is usable but
+important analytical sections are partial. Grade D means insufficient data for
+a professional report. Missing portfolio data is critical. Missing
+`risk_profile` or `constraints` lowers the grade and adds limitations but does
+not necessarily fail. Derived portfolios count as available, but unresolved or
+invalid transaction events lower completeness.
+
 `analysis_coverage` provides a per-section availability summary (available,
 partial, derived, missing). `report_limitations` provides concise user-facing
-caveats based on completeness and ledger quality.
+caveats based on completeness and ledger quality. `report_sections` and
+`report_quality_gate` provide deterministic host-displayable sections and a
+publishability gate.
 
 ## Stop With INVALID_INPUT
 
@@ -35,7 +60,8 @@ Return `INVALID_INPUT` when:
 
 - `payload` is not a dictionary;
 - `payload.portfolio` is missing and no compatibility `related_entities` exist;
-- `payload.portfolio.positions` is missing or empty;
+- `payload.portfolio.positions` is missing or empty and the skill cannot derive
+  a snapshot from `transactions` + `current_nav`;
 - positions do not include usable `fund_code` values.
 
 ## Compatibility Fallback
@@ -58,3 +84,12 @@ Use direct uncertainty language, surfaced through `data_completeness` grade:
 ```text
 由于缺少 110011 的持仓明细，本报告无法判断其行业集中度；相关风险结论仅基于组合权重和已提供净值。
 ```
+
+When optional data is absent, use section status language:
+
+```text
+benchmark_and_peer: MISSING — 未提供基准或同业数据，本报告不生成基准超额收益或同业排名。
+```
+
+Formal actions still require `DecisionSupportSkill`; `fund_analysis` report
+sections do not emit `Decision` or `ExecutionLedger`.

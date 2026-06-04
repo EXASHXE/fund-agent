@@ -11,6 +11,24 @@ import pytest
 
 EXAMPLES_DIR = Path(__file__).resolve().parent.parent.parent / "examples"
 
+REQUIRED_REPORT_SECTION_IDS = [
+    "executive_summary",
+    "portfolio_snapshot",
+    "pnl_and_cost_basis",
+    "allocation_and_exposure",
+    "risk_flags",
+    "performance_and_nav",
+    "benchmark_and_peer",
+    "factor_and_style",
+    "fees_and_redemption",
+    "manager_and_fund_profile",
+    "dca_and_trade_budget",
+    "rebalance_plan",
+    "research_query_plan",
+    "data_completeness_and_limitations",
+    "evidence_appendix",
+]
+
 
 def _run_skill(skill: str, example_path: Path) -> dict:
     result = subprocess.run(
@@ -46,8 +64,17 @@ class TestPersonalReportQualityExample:
         assert "data_completeness" in artifacts
         assert "analysis_coverage" in artifacts
         assert "report_limitations" in artifacts
+        assert "report_sections" in artifacts
+        assert "report_quality_gate" in artifacts
         report = artifacts["fund_analysis_report"]
         assert "data_completeness" in report
+        assert "report_sections" in report
+        assert "report_quality_gate" in report
+        section_ids = [section["id"] for section in artifacts["report_sections"]]
+        assert section_ids == REQUIRED_REPORT_SECTION_IDS
+        assert artifacts["report_quality_gate"]["grade"] in ("A", "B", "C", "D")
+        assert "decision" not in artifacts
+        assert "execution_ledger" not in artifacts
 
     def test_ledger_quality_summary_present_when_derived(self):
         """Ledger snapshot example includes ledger_quality_summary."""
@@ -69,18 +96,23 @@ class TestPersonalReportQualityExample:
         artifacts = output["artifacts"]
         assert "data_completeness" in artifacts
         assert "analysis_coverage" in artifacts
+        assert "report_sections" in artifacts
+        assert "report_quality_gate" in artifacts
         report = artifacts.get("fund_analysis_report", {})
         assert "data_completeness" in report
 
     def test_no_network_access_in_report_quality(self):
         """Verify the report quality helpers do not reach any network."""
         import importlib
-        import sys as _sys
 
-        mod = importlib.import_module("src.tools.portfolio.report_quality")
-        source = __import__("inspect").getsource(mod)
-        # No urllib, requests, httpx, socket, aiohttp
-        for banned in ("import urllib", "import requests", "import httpx",
-                       "import socket", "import aiohttp", "import ssl",
-                       "from urllib", "from requests", "from httpx"):
-            assert banned not in source, f"network import found: {banned}"
+        for module_name in (
+            "src.tools.portfolio.report_quality",
+            "src.tools.portfolio.report_composer",
+        ):
+            mod = importlib.import_module(module_name)
+            source = __import__("inspect").getsource(mod)
+            # No urllib, requests, httpx, socket, aiohttp
+            for banned in ("import urllib", "import requests", "import httpx",
+                           "import socket", "import aiohttp", "import ssl",
+                           "from urllib", "from requests", "from httpx"):
+                assert banned not in source, f"network import found in {module_name}: {banned}"
