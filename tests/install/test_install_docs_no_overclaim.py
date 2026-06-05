@@ -198,10 +198,8 @@ def test_runtime_bridge_design_doc_exists_and_is_marked_future():
         or "v0.4.6" in text
         or "v0.4.7" in text
         or "v0.4.8" in text
+        or "v0.4.9" in text
     )
-    # The doc must say that the deeper runtime bridge is still
-    # future. The thin CLI shipped in v0.4.7-dev, but the
-    # subprocess-handler and OpenCode-plugin wrapper are future.
     has_future_marker = (
         "future" in text
         or "not implemented" in text
@@ -209,6 +207,7 @@ def test_runtime_bridge_design_doc_exists_and_is_marked_future():
         or "not in v0.4.5" in text
         or "not in v0.4.6" in text
         or "not in v0.4.7" in text
+        or "not in v0.4.9" in text
     )
     assert has_version_marker and has_future_marker, (
         "runtime-bridge.md must reference a recent version AND "

@@ -1,13 +1,13 @@
 # Runtime Bridge — Design
 
-> Status: **partially implemented in v0.4.8**. The thin local
-> JSON-in / JSON-out CLI bridge is shipped in v0.4.8
+> Status: **partially implemented in v0.4.9-dev**. The thin local
+> JSON-in / JSON-out CLI bridge is shipped in v0.4.9-dev
 > (`scripts/run_skill.py`, `src/skillpack/run_skill.py`). The
 > deeper parts of this design — subprocess-based MCP handler
 > spawning, the OpenCode plugin `fund_agent_run_skill` tool, and
 > the "deeper" host-side runtime-bridge surface — are still
-> future and are not on the v0.4.8 critical path. This
-> document describes the **full** design; the v0.4.8
+> future and are not on the v0.4.9-dev critical path. This
+> document describes the **full** design; the v0.4.9-dev
 > implementation realizes a subset.
 >
 > The OpenCode plugin (current release) is **plugin metadata + doc
@@ -22,7 +22,7 @@ Historically, the OpenCode plugin registers three custom tools
 `fund_agent_runtime_hint`) and logs at startup. It deliberately does
 **not** invoke the Python runtime from inside the plugin.
 
-The v0.4.8 runtime bridge CLI ships a **separate, independent
+The v0.4.9-dev runtime bridge CLI ships a **separate, independent
 surface**: a thin Python CLI that hosts can call from any process
 boundary. The bridge is **not** wired into the OpenCode plugin and
 the plugin still does not call Python. Hosts that want a process
@@ -50,7 +50,7 @@ All three add real complexity:
   which the user has to manage and which is not "installable" in the
   Superpowers / OMO sense.
 
-The v0.4.8 milestone therefore ships the **thin CLI runtime
+The v0.4.9-dev milestone therefore ships the **thin CLI runtime
 bridge** as an independent surface (host-invoked, not
 plugin-invoked) and continues to document the **deeper** runtime
 bridge here. The OpenCode plugin remains metadata + doc reader
@@ -73,9 +73,9 @@ only.
 
 ## Proposed shape
 
-### v0.4.8: thin CLI bridge (SHIPPED)
+### v0.4.9-dev: thin CLI bridge (SHIPPED)
 
-The v0.4.8 implementation is a thin Python CLI shim that
+The v0.4.9-dev implementation is a thin Python CLI shim that
 hosts invoke as a separate process. It is **not** wired into the
 OpenCode plugin and the plugin does not shell out to it.
 
@@ -216,7 +216,7 @@ add:
 - A `PYTHON_RUNTIME_UNAVAILABLE` plugin error when `python` is
   missing on PATH.
 
-These are **not** in v0.4.8. The v0.4.8 thin CLI
+These are **not** in v0.4.9-dev. The v0.4.9-dev thin CLI
 bridge is independent of the OpenCode plugin surface.
 
 ## What we are NOT doing in the runtime bridge
@@ -228,7 +228,7 @@ bridge is independent of the OpenCode plugin surface.
 - We are not adding a daemon / service.
 - We are not changing the Python runtime. The bridge is a thin CLI
   shim over the existing `src/skills_runtime/` classes.
-- The v0.4.8 thin CLI bridge does **not** wire into the
+- The v0.4.9-dev thin CLI bridge does **not** wire into the
   OpenCode plugin. The plugin still does not call Python.
 
 ## Acceptance criteria for the runtime bridge (when implemented)
@@ -244,13 +244,13 @@ bridge is independent of the OpenCode plugin surface.
    `firecrawl`, or `praw` directly. Network access is mediated
    only through the host-supplied `mcp_responses` block.
 6. The deeper OpenCode plugin `fund_agent_run_skill` tool is
-   **future** and is not in v0.4.8.
+   **future** and is not in v0.4.9-dev.
 7. The OpenCode plugin still works in log-only mode when
    `@opencode-ai/plugin` peer dep is not resolved.
 
 ## Tracking
 
-The thin CLI bridge is shipped in v0.4.8. The deeper
+The thin CLI bridge is shipped in v0.4.9-dev. The deeper
 runtime-bridge surface (subprocess handler spawning, OpenCode
 plugin tool wrapper) is still future and is the candidate spec
 for `v0.5.x-runtime-bridge`. If you need to wire the Python

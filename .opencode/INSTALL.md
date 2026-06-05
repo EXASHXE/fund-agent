@@ -126,7 +126,7 @@ These tools do **not** fetch data, do **not** place trades, and do
 ## Skill collection
 
 OpenCode will discover the **composable Markdown skill collection** under
-`skills/<slug>/SKILL.md`. The collection in v0.4.6+ is:
+`skills/<slug>/SKILL.md`. The collection in v0.4.9-dev+ is:
 
 - **Primary / default:** `fund-analysis` — start here for ordinary
   fund analysis and report requests.
@@ -211,7 +211,7 @@ add it to your `opencode.json`:
 OpenCode will install it via Bun at startup and cache it under
 `~/.cache/opencode/node_modules/`.
 
-> **Note (v0.4.6):** the npm package is **declared but not yet
+> **Note (v0.4.9-dev):** the npm package is **declared but not yet
 > published**. Use the project-local install above until the npm
 > publication milestone is cut. The install will still work
 > end-to-end via the project-local path; only the npm convenience
@@ -220,7 +220,7 @@ OpenCode will install it via Bun at startup and cache it under
 ### What the npm package actually contains (and what it does not)
 
 The `package.json` `files` field is the authoritative list of what
-ships in the npm tarball. The v0.4.6 npm package is **Mode A only**:
+ships in the npm tarball. The v0.4.9-dev npm package is **Mode A only**:
 the plugin entrypoint, the skillpack manifest and examples, the
 five canonical hyphenated `skills/<slug>/SKILL.md` directories and
 their `references/`, and the three install docs. It does **not**
@@ -245,7 +245,7 @@ paths). That test is the install-packaging-smoke guard.
 ## Pin to a specific version (git tag)
 
 ```bash
-git clone --branch v0.4.8 https://github.com/EXASHXE/fund-agent.git
+git clone --branch v0.4.9-dev https://github.com/EXASHXE/fund-agent.git
 ```
 
 or, for a fully reproducible symlink, pin the commit:
@@ -253,7 +253,7 @@ or, for a fully reproducible symlink, pin the commit:
 ```bash
 git clone https://github.com/EXASHXE/fund-agent.git
 cd fund-agent
-git checkout v0.4.8
+git checkout v0.4.9-dev
 # then create the symlink as above
 ```
 
@@ -264,7 +264,7 @@ For development, the project-local install with `master` is fine.
 After restarting OpenCode in your project:
 
 1. Check the logs. You should see a line such as:
-   `fund-agent v0.4.6 plugin loaded; primary skill: fund-analysis; supporting skills: decision-support, news-research, sentiment-analysis, thesis-generation`
+   `fund-agent v0.4.9-dev plugin loaded; primary skill: fund-analysis; supporting skills: decision-support, news-research, sentiment-analysis, thesis-generation`
    `fund-analysis` is the **primary / default skill**; the four
    supporting skills are loaded only when their description matches
    the subtask (see the `fund-analysis` SKILL.md "When to load

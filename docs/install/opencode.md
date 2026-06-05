@@ -117,7 +117,7 @@ ln -s /absolute/path/to/fund-agent/opencode.plugin.js .opencode/plugins/fund-age
 Restart OpenCode and you should see in the logs:
 
 ```
-fund-agent v0.4.8 plugin loaded; primary skill: fund-analysis;
+fund-agent v0.4.9-dev plugin loaded; primary skill: fund-analysis;
 supporting skills: decision-support, news-research, sentiment-analysis,
 thesis-generation
 ```
@@ -247,15 +247,15 @@ they assert that the install artifacts are coherent and honest.
 ## Pinning / version management
 
 `fund-agent` uses git tags for versioning. The current version is
-`v0.4.8` and matches the `VERSION` file, the `package.json` `version`
+`v0.4.9-dev` and matches the `VERSION` file, the `package.json` `version`
 field, and the `skillpack/fund-agent.skillpack.yaml` `version` field.
 
 Pin to a specific version:
 
 ```bash
-git clone --branch v0.4.8 https://github.com/EXASHXE/fund-agent.git
+git clone --branch v0.4.9-dev https://github.com/EXASHXE/fund-agent.git
 cd fund-agent
-git checkout v0.4.8   # if you cloned without --branch
+git checkout v0.4.9-dev # if you cloned without --branch
 ```
 
 For a project that already has the symlink in place, update the
@@ -264,7 +264,7 @@ checkout:
 ```bash
 cd /path/to/fund-agent
 git fetch
-git checkout v0.4.8
+git checkout v0.4.9-dev
 # restart OpenCode
 ```
 

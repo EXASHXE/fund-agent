@@ -1,6 +1,6 @@
 # Runtime Bridge CLI
 
-> Status: **shipped in v0.4.7-dev**. The runtime bridge CLI is a
+> Status: **shipped in v0.4.9-dev**. The runtime bridge CLI is a
 > thin local JSON-in / JSON-out Python shim over the existing
 > manifest runtime skills. It is independent of the OpenCode
 > plugin; the plugin still does not call Python.
@@ -19,7 +19,7 @@ runtime bridge examples. To use the bridge, hosts must work from a
 Python source checkout:
 
 ```bash
-git clone --branch v0.4.8 https://github.com/EXASHXE/fund-agent.git
+git clone --branch v0.4.9-dev https://github.com/EXASHXE/fund-agent.git
 cd fund-agent
 pip install -e .        # editable install into your Python environment
 ```
@@ -30,7 +30,7 @@ Examples live at `examples/runtime_bridge_*_input.json` and
 `examples/minimal_runtime_bridge_fund_analysis.py`.
 
 The bridge requires **no** npm dependency, **no** OpenCode install,
-and **no** provider SDK. A working `python` (3.10+) interpreter is
+and **no** provider SDK. A working `python` (3.11+) interpreter is
 the only prerequisite.
 
 ## What it is and is not
@@ -102,7 +102,7 @@ Output (truncated):
 ```json
 {
   "ok": true,
-  "manifest_version": "0.4.8",
+  "manifest_version": "0.4.9-dev",
   "schema_version": "skillpack.v1",
   "skills": [
     {
