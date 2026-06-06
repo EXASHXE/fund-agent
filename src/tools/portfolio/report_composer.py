@@ -102,6 +102,7 @@ def render_report_markdown(report_sections: list[dict[str, Any]] | dict[str, Any
         sections = []
 
     lines: list[str] = ["# Personal fund report", ""]
+    global_limitations: list[str] = []
     for section in sections:
         if not isinstance(section, dict):
             continue
@@ -120,6 +121,21 @@ def render_report_markdown(report_sections: list[dict[str, Any]] | dict[str, Any
             lines.append("Limitations:")
             for limitation in limitations:
                 lines.append(f"- {limitation}")
+        if status in {"PARTIAL", "MISSING"}:
+            for limitation in limitations:
+                item = f"{title}: {limitation}"
+                if item not in global_limitations:
+                    global_limitations.append(item)
+        lines.append("")
+    if any(
+        isinstance(section, dict)
+        and str(section.get("status", "MISSING")) in {"PARTIAL", "MISSING"}
+        for section in sections
+    ):
+        lines.append("## Limitations")
+        lines.append("")
+        for limitation in global_limitations:
+            lines.append(f"- {limitation}")
         lines.append("")
     return "\n".join(lines).rstrip() + "\n"
 

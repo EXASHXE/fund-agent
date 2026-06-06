@@ -18,7 +18,9 @@ Architecture constraints (do not relax):
   output explaining the host-owned MCP requirement.
 - Stdout is JSON only. Diagnostics go to stderr. Exit code 0
   means the bridge itself succeeded; the embedded skill status
-  is reported in the JSON envelope.
+  is reported in the JSON envelope. The only exception is the
+  explicit ``--emit-report markdown`` success mode, which writes a
+  deterministic Markdown report for ``fund_analysis``.
 """
 
 from __future__ import annotations
@@ -41,6 +43,7 @@ from src.tools.adapters.mcp import (
     MCPCapability,
     MCPHostAdapter,
 )
+from src.tools.portfolio.report_composer import render_report_markdown
 
 DEFAULT_MANIFEST_PATH = "skillpack/fund-agent.skillpack.yaml"
 
@@ -52,6 +55,8 @@ BRIDGE_ERROR_CODES = frozenset({
     "SKILL_RUN_FAILED",
     "JSON_SERIALIZATION_FAILED",
     "MISSING_MCP_CAPABILITY",
+    "MISSING_REPORT_SECTIONS",
+    "UNSUPPORTED_EMIT_REPORT",
 })
 
 # Slug -> runtime_id map for the optional convenience that accepts
@@ -113,6 +118,21 @@ def _emit_envelope(
     if fallback_used:
         return 2
     return 0 if envelope.get("ok") is True else 2
+
+
+def _emit_text(
+    text: str,
+    *,
+    output_path: Path | None,
+) -> int:
+    """Write a non-JSON success payload to ``output_path`` or stdout."""
+    if output_path is not None:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(text, encoding="utf-8")
+    else:
+        sys.stdout.write(text)
+        sys.stdout.flush()
+    return 0
 
 
 def _read_input(
@@ -457,6 +477,7 @@ def run_bridge(
     explain_input: bool = False,
     validate_input: bool = False,
     output_schema: bool = False,
+    emit_report: str | None = None,
 ) -> int:
     """Top-level bridge entry point.
 
@@ -709,6 +730,43 @@ def run_bridge(
             output_path=output_path,
         )
 
+    if emit_report is not None and emit_report != "markdown":
+        return _emit_envelope(
+            {
+                "ok": False,
+                "skill_name": runtime_id,
+                "error": {
+                    "code": "INVALID_INPUT",
+                    "message": (
+                        "--emit-report currently supports only 'markdown'"
+                    ),
+                    "details": {"emit_report": emit_report},
+                },
+            },
+            pretty=pretty,
+            output_path=output_path,
+        )
+
+    if emit_report == "markdown" and runtime_id != "fund_analysis":
+        return _emit_envelope(
+            {
+                "ok": False,
+                "skill_name": runtime_id,
+                "error": {
+                    "code": "UNSUPPORTED_EMIT_REPORT",
+                    "message": (
+                        "--emit-report markdown is supported only for fund_analysis"
+                    ),
+                    "details": {
+                        "supported_skill": "fund_analysis",
+                        "requested_skill": runtime_id,
+                    },
+                },
+            },
+            pretty=pretty,
+            output_path=output_path,
+        )
+
     try:
         skill_input = _build_skill_input(parsed, skill_name=runtime_id)
     except ValueError as exc:
@@ -826,6 +884,33 @@ def run_bridge(
             ),
             "details": {"missing_mcp_capabilities": list(missing_mcp)},
         }
+    if emit_report == "markdown":
+        if envelope.get("ok") is not True or output.status == "FAILED":
+            return _emit_envelope(envelope, pretty=pretty, output_path=output_path)
+        artifacts = dict(output.artifacts or {})
+        report_sections = artifacts.get("report_sections")
+        if not isinstance(report_sections, list) or not report_sections:
+            return _emit_envelope(
+                {
+                    "ok": False,
+                    "skill_name": runtime_id,
+                    "error": {
+                        "code": "MISSING_REPORT_SECTIONS",
+                        "message": (
+                            "fund_analysis did not produce artifacts.report_sections; "
+                            "cannot emit Markdown report"
+                        ),
+                        "details": {
+                            "available_artifact_keys": sorted(artifacts.keys()),
+                        },
+                    },
+                    "metadata": dict(metadata),
+                },
+                pretty=pretty,
+                output_path=output_path,
+            )
+        markdown = render_report_markdown(report_sections)
+        return _emit_text(markdown, output_path=output_path)
     return _emit_envelope(envelope, pretty=pretty, output_path=output_path)
 
 
@@ -911,6 +996,15 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--emit-report",
+        default=None,
+        help=(
+            "Explicit success output mode. Use 'markdown' with fund_analysis "
+            "to run the skill normally and render artifacts.report_sections "
+            "as deterministic Markdown. Error outputs remain JSON envelopes."
+        ),
+    )
+    parser.add_argument(
         "--pretty",
         action="store_true",
         help="Pretty-print the JSON output (indent=2).",
@@ -934,6 +1028,7 @@ def main(argv: list[str] | None = None) -> int:
         explain_input=args.explain_input,
         validate_input=args.validate_input,
         output_schema=args.output_schema,
+        emit_report=args.emit_report,
     )
 
 

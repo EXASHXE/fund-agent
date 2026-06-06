@@ -244,6 +244,13 @@ python scripts/run_skill.py \
 # Inspect the output envelope and known artifact keys
 python scripts/run_skill.py --skill fund_analysis --output-schema --pretty
 
+# Render a deterministic Markdown report from fund_analysis report_sections
+python scripts/run_skill.py \
+    --skill fund_analysis \
+    --input examples/runtime_bridge_personal_report_quality_input.json \
+    --emit-report markdown \
+    --output report.md
+
 # Run fund_analysis
 python scripts/run_skill.py \
     --skill fund_analysis \
@@ -263,6 +270,14 @@ decisions, fetch data, import provider SDKs, call the network, or
 start an agent loop. The command exits 0 when it successfully
 returns a validation envelope, even if
 `validation_result.valid=false`.
+
+`--emit-report markdown` is explicit opt-in. It runs
+`fund_analysis` normally and renders the resulting
+`artifacts.report_sections` as deterministic Markdown. Success
+output is Markdown instead of JSON, but errors remain JSON
+envelopes. The renderer does not call LLMs and does not create
+formal `Decision` or `ExecutionLedger` artifacts; formal actions
+still require `decision_support`.
 
 For the full contract, MCP boundary behavior, and examples, see
 [`docs/install/runtime-bridge-cli.md`](./runtime-bridge-cli.md).

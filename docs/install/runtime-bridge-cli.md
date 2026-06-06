@@ -42,6 +42,9 @@ The runtime bridge:
 - Is a **thin CLI shim** over `src/skills_runtime/`.
 - Reads a JSON input, calls one manifest runtime skill, and prints
   a JSON envelope to stdout.
+- Can explicitly render `fund_analysis` `artifacts.report_sections`
+  as deterministic Markdown when `--emit-report markdown` is
+  requested.
 - Can explain expected input data, structurally validate a proposed
   input envelope, and summarize the output envelope without running
   a skill.
@@ -86,6 +89,8 @@ Use the runtime bridge CLI when:
 - You want to test the runtime skills without writing a Python
   import boilerplate.
 - You want a JSON-only envelope you can log, diff, or pipe.
+- You explicitly want a deterministic Markdown personal fund report
+  rendered from `fund_analysis` report sections.
 
 Do not use the runtime bridge CLI when:
 
@@ -227,6 +232,29 @@ report). The CLI still only runs host-invoked JSON skill calls; it does not
 fetch data, call providers, or generate formal decisions outside
 `decision_support`.
 
+### 6. Emit a Markdown report
+
+```bash
+python scripts/run_skill.py \
+    --skill fund_analysis \
+    --input examples/runtime_bridge_personal_report_quality_input.json \
+    --emit-report markdown \
+    --output report.md
+```
+
+`--emit-report markdown` is explicit opt-in. It runs
+`fund_analysis` normally, reads `artifacts.report_sections`, renders
+those sections with `render_report_markdown()`, and writes Markdown
+instead of JSON on success. If `--output` is omitted, Markdown is
+written to stdout.
+
+Without `--emit-report markdown`, normal runtime bridge execution
+remains JSON-only. Error output also remains a JSON envelope so
+hosts can diagnose failures. Markdown rendering is deterministic,
+does not call LLMs, does not fetch data, and does not create formal
+`Decision` or `ExecutionLedger` artifacts. Formal actions still
+require `decision_support`.
+
 ## CLI reference
 
 ```text
@@ -277,6 +305,12 @@ python scripts/run_skill.py [options]
       Summarize the bridge output envelope, SkillOutput fields, known
       artifacts, evidence item shape, and status values for --skill.
       Does not require --input and does not run the skill.
+
+  --emit-report markdown
+      Explicit success output mode for fund_analysis only. Runs the
+      skill normally, renders artifacts.report_sections as deterministic
+      Markdown, and writes Markdown to stdout or --output. Error outputs
+      remain JSON envelopes.
 
   --pretty
       Pretty-print the JSON output (indent=2). Default is compact.
@@ -422,13 +456,36 @@ or run an agent loop.
 The `status` field is the embedded skill's status and may be
 `OK`, `PARTIAL`, or `FAILED`.
 
+### Output (`--emit-report markdown` success)
+
+When explicitly requested for `fund_analysis`, success output is
+Markdown rather than JSON:
+
+```markdown
+# Personal fund report
+
+## Executive summary [OK]
+
+- Portfolio value 500,000.00 across 3 position(s); cash 50,000.00.
+```
+
+The renderer uses only `artifacts.report_sections`. It preserves the
+report output contract: section titles are `##` headings, PARTIAL
+and MISSING sections are annotated, and a global `## Limitations`
+footer is appended when any section is partial or missing.
+
+If `fund_analysis` does not produce `artifacts.report_sections`, the
+bridge returns a JSON error envelope with
+`MISSING_REPORT_SECTIONS`. Non-`fund_analysis` skills return a JSON
+`UNSUPPORTED_EMIT_REPORT` error for this mode.
+
 ### Output (bridge-level failure)
 
 ```json
 {
   "ok": false,
   "error": {
-    "code": "INVALID_INPUT|UNKNOWN_SKILL|RUNTIME_LOAD_FAILED|SKILL_RUN_FAILED|JSON_SERIALIZATION_FAILED",
+    "code": "INVALID_INPUT|UNKNOWN_SKILL|RUNTIME_LOAD_FAILED|SKILL_RUN_FAILED|JSON_SERIALIZATION_FAILED|MISSING_REPORT_SECTIONS|UNSUPPORTED_EMIT_REPORT",
     "message": "...",
     "details": { "...": "..." }
   }
@@ -445,6 +502,8 @@ Bridge-level error codes:
 | `SKILL_RUN_FAILED` | The skill raised an exception while running. |
 | `JSON_SERIALIZATION_FAILED` | The output envelope could not be serialized to JSON. |
 | `MISSING_MCP_CAPABILITY` | Normal skill execution needed host-owned MCP capabilities that were not supplied through an adapter / `mcp_responses`. |
+| `MISSING_REPORT_SECTIONS` | `--emit-report markdown` was requested but `fund_analysis` did not produce `artifacts.report_sections`. |
+| `UNSUPPORTED_EMIT_REPORT` | `--emit-report markdown` was requested for a skill other than `fund_analysis`. |
 
 ### Exit codes
 
@@ -456,6 +515,10 @@ For `--validate-input`, exit code `0` means the validation command
 parsed the JSON and produced a validation envelope. It does not mean
 the proposed skill input is valid. Read `validation_result.valid`,
 `severity`, `errors`, and `warnings`.
+
+For `--emit-report markdown`, exit code `0` means the skill ran and
+Markdown was rendered successfully. Bridge failures and unsupported
+report emission return JSON error envelopes and exit `2`.
 
 ## MCP boundary
 
@@ -556,5 +619,6 @@ python scripts/run_skill.py --skill fund_analysis --explain-input --pretty
 python scripts/run_skill.py --skill fund_analysis --input examples/runtime_bridge_fund_analysis_input.json --validate-input --pretty
 python scripts/run_skill.py --skill fund_analysis --output-schema --pretty
 python scripts/run_skill.py --skill fund_analysis --input examples/runtime_bridge_fund_analysis_input.json --pretty
+python scripts/run_skill.py --skill fund_analysis --input examples/runtime_bridge_personal_report_quality_input.json --emit-report markdown --output /tmp/report.md
 python scripts/run_skill.py --skill decision_support --input examples/runtime_bridge_decision_support_input.json --pretty
 ```
