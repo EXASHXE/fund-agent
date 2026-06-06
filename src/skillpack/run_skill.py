@@ -29,6 +29,11 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from src.skillpack.input_contracts import (
+    explain_skill_input,
+    output_schema_for_skill,
+    validate_skill_input,
+)
 from src.skillpack.loader import load_skillpack_manifest, resolve_runtime
 from src.schemas.skill import SkillInput, SkillOutput
 from src.tools.adapters.mcp import (
@@ -449,6 +454,9 @@ def run_bridge(
     list_skills: bool = False,
     list_capabilities: bool = False,
     describe_capability: str | None = None,
+    explain_input: bool = False,
+    validate_input: bool = False,
+    output_schema: bool = False,
 ) -> int:
     """Top-level bridge entry point.
 
@@ -507,8 +515,28 @@ def run_bridge(
                 },
                 pretty=pretty,
                 output_path=output_path,
-            )
+        )
         return _emit_envelope(envelope, pretty=pretty, output_path=output_path)
+
+    metadata_command_count = sum(
+        1 for enabled in (explain_input, validate_input, output_schema) if enabled
+    )
+    if metadata_command_count > 1:
+        return _emit_envelope(
+            {
+                "ok": False,
+                "error": {
+                    "code": "INVALID_INPUT",
+                    "message": (
+                        "choose only one of --explain-input, "
+                        "--validate-input, or --output-schema"
+                    ),
+                    "details": {},
+                },
+            },
+            pretty=pretty,
+            output_path=output_path,
+        )
 
     if not skill_name:
         return _emit_envelope(
@@ -516,7 +544,10 @@ def run_bridge(
                 "ok": False,
                 "error": {
                     "code": "INVALID_INPUT",
-                    "message": "--skill is required unless --list-skills is passed",
+                    "message": (
+                        "--skill is required unless --list-skills, "
+                        "--list-capabilities, or --describe-capability is passed"
+                    ),
                     "details": {},
                 },
             },
@@ -557,6 +588,81 @@ def run_bridge(
             output_path=output_path,
         )
 
+    if explain_input:
+        try:
+            contract = explain_skill_input(runtime_id, manifest_path)
+        except Exception as exc:
+            return _emit_envelope(
+                {
+                    "ok": False,
+                    "skill_name": runtime_id,
+                    "error": {
+                        "code": "RUNTIME_LOAD_FAILED",
+                        "message": f"failed to explain input contract: {exc}",
+                        "details": {"exception_type": type(exc).__name__},
+                    },
+                },
+                pretty=pretty,
+                output_path=output_path,
+            )
+        return _emit_envelope(
+            {
+                "ok": True,
+                "skill_name": contract["skill_name"],
+                "doc_slug": contract["doc_slug"],
+                "command": "explain-input",
+                "input_contract": contract["input_contract"],
+                "metadata": {"manifest_path": manifest_path},
+            },
+            pretty=pretty,
+            output_path=output_path,
+        )
+
+    if output_schema:
+        try:
+            schema = output_schema_for_skill(runtime_id, manifest_path)
+        except Exception as exc:
+            return _emit_envelope(
+                {
+                    "ok": False,
+                    "skill_name": runtime_id,
+                    "error": {
+                        "code": "RUNTIME_LOAD_FAILED",
+                        "message": f"failed to build output schema summary: {exc}",
+                        "details": {"exception_type": type(exc).__name__},
+                    },
+                },
+                pretty=pretty,
+                output_path=output_path,
+            )
+        return _emit_envelope(
+            {
+                "ok": True,
+                "skill_name": schema["skill_name"],
+                "doc_slug": schema["doc_slug"],
+                "command": "output-schema",
+                "output_schema": schema["output_schema"],
+                "metadata": {"manifest_path": manifest_path},
+            },
+            pretty=pretty,
+            output_path=output_path,
+        )
+
+    if validate_input and not input_path:
+        return _emit_envelope(
+            {
+                "ok": False,
+                "skill_name": runtime_id,
+                "error": {
+                    "code": "INVALID_INPUT",
+                    "message": "--validate-input requires --input <path> or --input -",
+                    "details": {},
+                },
+            },
+            pretty=pretty,
+            output_path=output_path,
+        )
+
     try:
         parsed = _read_input(input_path, skill_name=runtime_id, input_text=input_text)
     except ValueError as exc:
@@ -568,6 +674,36 @@ def run_bridge(
                     "message": str(exc),
                     "details": {},
                 },
+            },
+            pretty=pretty,
+            output_path=output_path,
+        )
+
+    if validate_input:
+        try:
+            validation = validate_skill_input(runtime_id, parsed, manifest_path)
+        except Exception as exc:
+            return _emit_envelope(
+                {
+                    "ok": False,
+                    "skill_name": runtime_id,
+                    "error": {
+                        "code": "RUNTIME_LOAD_FAILED",
+                        "message": f"failed to validate input contract: {exc}",
+                        "details": {"exception_type": type(exc).__name__},
+                    },
+                },
+                pretty=pretty,
+                output_path=output_path,
+            )
+        return _emit_envelope(
+            {
+                "ok": True,
+                "skill_name": validation["skill_name"],
+                "doc_slug": validation["doc_slug"],
+                "command": "validate-input",
+                "validation_result": validation["validation_result"],
+                "metadata": {"manifest_path": manifest_path},
             },
             pretty=pretty,
             output_path=output_path,
@@ -750,6 +886,31 @@ def build_parser() -> argparse.ArgumentParser:
         help="Describe a single capability by name. JSON envelope on stdout.",
     )
     parser.add_argument(
+        "--explain-input",
+        action="store_true",
+        help=(
+            "Explain the selected skill's accepted input envelope shapes and "
+            "host-owned data requirements. Requires --skill; does not run "
+            "the skill or require --input."
+        ),
+    )
+    parser.add_argument(
+        "--validate-input",
+        action="store_true",
+        help=(
+            "Structurally validate the selected skill input envelope. "
+            "Requires --skill and --input; does not run the skill."
+        ),
+    )
+    parser.add_argument(
+        "--output-schema",
+        action="store_true",
+        help=(
+            "Describe the selected skill's bridge output envelope and known "
+            "artifact shape. Requires --skill; does not run the skill."
+        ),
+    )
+    parser.add_argument(
         "--pretty",
         action="store_true",
         help="Pretty-print the JSON output (indent=2).",
@@ -770,6 +931,9 @@ def main(argv: list[str] | None = None) -> int:
         list_skills=args.list_skills,
         list_capabilities=args.list_capabilities,
         describe_capability=args.describe_capability,
+        explain_input=args.explain_input,
+        validate_input=args.validate_input,
+        output_schema=args.output_schema,
     )
 
 

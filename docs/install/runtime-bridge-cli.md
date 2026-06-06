@@ -4,6 +4,8 @@
 > thin local JSON-in / JSON-out Python shim over the existing
 > manifest runtime skills. It is independent of the OpenCode
 > plugin; the plugin still does not call Python.
+> This release also includes JSON-only input introspection and
+> structural validation helpers.
 
 The runtime bridge is for **host integration and testing**. It lets
 external hosts call `fund-agent` runtime skills without importing
@@ -40,6 +42,9 @@ The runtime bridge:
 - Is a **thin CLI shim** over `src/skills_runtime/`.
 - Reads a JSON input, calls one manifest runtime skill, and prints
   a JSON envelope to stdout.
+- Can explain expected input data, structurally validate a proposed
+  input envelope, and summarize the output envelope without running
+  a skill.
 - Resolves runtime classes from the manifest
   (`skillpack/fund-agent.skillpack.yaml`) via
   `src.skillpack.loader.resolve_runtime`.
@@ -58,6 +63,8 @@ The runtime bridge is **not**:
   Firecrawl, Reddit, AkShare, OpenAI, Anthropic, or LangChain.
 - A network caller. It does not call `requests`, `httpx`, or
   `urllib.request`.
+- A formal investment correctness validator. `--validate-input`
+  checks structure and host data coverage only.
 - A subprocess caller. It does not shell out to OpenCode, does not
   call `opencode.plugin.js`, and does not import
   `@opencode-ai/plugin`.
@@ -130,13 +137,56 @@ python scripts/run_skill.py \
 The bridge writes the JSON envelope to stdout and exits 0 on
 success.
 
-### 2b. List host-owned data capabilities
+### 2b. Explain a skill input contract
+
+```bash
+python scripts/run_skill.py --skill fund_analysis --explain-input --pretty
+```
+
+This command does not require `--input`, does not import or run the
+skill runtime, and prints a JSON-only contract summary. For
+`fund_analysis`, it lists the accepted full `SkillInput` and
+`{"payload": {...}}` envelopes, minimum portfolio / ledger /
+baseline alternatives, recommended fields, optional host-owned data,
+and degradation policy.
+
+### 2c. Validate a proposed input envelope
+
+```bash
+python scripts/run_skill.py \
+    --skill fund_analysis \
+    --input examples/runtime_bridge_fund_analysis_input.json \
+    --validate-input \
+    --pretty
+```
+
+This command parses the same input envelopes as normal skill
+execution but stops before runtime import and skill execution. It
+returns `ok=true` when the validation command itself succeeds, even
+when `validation_result.valid=false`; hosts should branch on
+`validation_result.valid` and `validation_result.severity`.
+
+Validation is structural and host-assistive. It is not a guarantee
+of investment correctness, data freshness, report publishability, or
+decision quality.
+
+### 2d. Inspect the bridge output shape
+
+```bash
+python scripts/run_skill.py --skill fund_analysis --output-schema --pretty
+```
+
+This command does not require `--input`, does not import or run the
+skill runtime, and prints known bridge envelope fields plus
+skill-specific artifact keys.
+
+### 2e. List host-owned data capabilities
 
 ```bash
 python scripts/run_skill.py --list-capabilities --pretty
 ```
 
-### 2c. Describe a single capability
+### 2f. Describe a single capability
 
 ```bash
 python scripts/run_skill.py --describe-capability fund_nav_history --pretty
@@ -211,6 +261,23 @@ python scripts/run_skill.py [options]
       Describe a single capability by name (e.g. fund_nav_history).
       JSON envelope on stdout. Returns UNKNOWN_CAPABILITY for unknown names.
 
+  --explain-input
+      Explain accepted input envelope shapes, minimum data alternatives,
+      recommended fields, optional fields, required MCP capabilities,
+      host-owned data capabilities, and degradation policy for --skill.
+      Does not require --input and does not run the skill.
+
+  --validate-input
+      Structurally validate --input for --skill. Requires --input.
+      Does not import or run the skill runtime. The command exits 0
+      when the bridge command succeeds even if validation_result.valid
+      is false.
+
+  --output-schema
+      Summarize the bridge output envelope, SkillOutput fields, known
+      artifacts, evidence item shape, and status values for --skill.
+      Does not require --input and does not run the skill.
+
   --pretty
       Pretty-print the JSON output (indent=2). Default is compact.
 ```
@@ -251,6 +318,85 @@ The bridge accepts two envelope shapes.
 When the convenience envelope is used, the bridge injects
 `task_id` (`runtime-bridge-task`), `step_id` (`<skill>-1`), and
 `skill_name` (from `--skill`).
+
+### Introspection output
+
+`--explain-input` returns a JSON envelope with this top-level shape:
+
+```json
+{
+  "ok": true,
+  "skill_name": "fund_analysis",
+  "doc_slug": "fund-analysis",
+  "command": "explain-input",
+  "input_contract": {
+    "accepted_envelope_shapes": [],
+    "minimum_required": [],
+    "recommended": [],
+    "optional": [],
+    "required_mcp_capabilities": [],
+    "host_owned_data_capabilities": [],
+    "degradation_policy": []
+  },
+  "metadata": {
+    "manifest_path": "skillpack/fund-agent.skillpack.yaml"
+  }
+}
+```
+
+`--validate-input` returns:
+
+```json
+{
+  "ok": true,
+  "skill_name": "fund_analysis",
+  "doc_slug": "fund-analysis",
+  "command": "validate-input",
+  "validation_result": {
+    "valid": true,
+    "severity": "OK",
+    "errors": [],
+    "warnings": [],
+    "missing_recommended": [],
+    "missing_optional": [],
+    "detected_input_mode": "portfolio_snapshot",
+    "capability_coverage": {
+      "score": 0.0,
+      "present": [],
+      "missing": []
+    }
+  },
+  "metadata": {
+    "manifest_path": "skillpack/fund-agent.skillpack.yaml"
+  }
+}
+```
+
+`--output-schema` returns:
+
+```json
+{
+  "ok": true,
+  "skill_name": "fund_analysis",
+  "doc_slug": "fund-analysis",
+  "command": "output-schema",
+  "output_schema": {
+    "bridge_envelope": {},
+    "skill_output_fields": {},
+    "artifacts": {},
+    "evidence_items": {},
+    "status_values": ["OK", "PARTIAL", "FAILED"]
+  },
+  "metadata": {
+    "manifest_path": "skillpack/fund-agent.skillpack.yaml"
+  }
+}
+```
+
+These three commands load only the manifest and
+`skillpack/capabilities.yaml`. They do not fetch data, import
+provider SDKs, call the network, instantiate runtime skill classes,
+or run an agent loop.
 
 ### Output (success)
 
@@ -298,12 +444,18 @@ Bridge-level error codes:
 | `RUNTIME_LOAD_FAILED` | Manifest could not be loaded, the runtime path could not be imported, or the skill class could not be instantiated. |
 | `SKILL_RUN_FAILED` | The skill raised an exception while running. |
 | `JSON_SERIALIZATION_FAILED` | The output envelope could not be serialized to JSON. |
+| `MISSING_MCP_CAPABILITY` | Normal skill execution needed host-owned MCP capabilities that were not supplied through an adapter / `mcp_responses`. |
 
 ### Exit codes
 
 - `0` — the bridge itself succeeded. The embedded skill's `status`
   is reported inside the envelope.
 - `2` — the bridge itself failed (one of the error codes above).
+
+For `--validate-input`, exit code `0` means the validation command
+parsed the JSON and produced a validation envelope. It does not mean
+the proposed skill input is valid. Read `validation_result.valid`,
+`severity`, `errors`, and `warnings`.
 
 ## MCP boundary
 
@@ -317,6 +469,9 @@ requires `web_search` and `financial_news`):
 - The host can supply a `mcp_responses` block in the input JSON.
   The bridge wraps that block in an
   `InMemoryMCPHostAdapter` and passes it to the skill.
+- `--validate-input` checks whether manifest-required MCP capability
+  names are present in `mcp_responses` for bridge testing, but it
+  does not call providers.
 - If no `mcp_responses` is supplied for a required capability, the
   bridge reports the skill output and downgrades `ok` to `false`
   with a `MISSING_MCP_CAPABILITY` error. The host is expected to
@@ -397,6 +552,9 @@ PYTHONPATH=. pytest tests/runtime_bridge -q
 
 # Run the documented examples end-to-end.
 python scripts/run_skill.py --list-skills --pretty
+python scripts/run_skill.py --skill fund_analysis --explain-input --pretty
+python scripts/run_skill.py --skill fund_analysis --input examples/runtime_bridge_fund_analysis_input.json --validate-input --pretty
+python scripts/run_skill.py --skill fund_analysis --output-schema --pretty
 python scripts/run_skill.py --skill fund_analysis --input examples/runtime_bridge_fund_analysis_input.json --pretty
 python scripts/run_skill.py --skill decision_support --input examples/runtime_bridge_decision_support_input.json --pretty
 ```

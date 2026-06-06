@@ -42,7 +42,9 @@ You will **not** get:
 - An autonomous planner loop. The host owns that.
 - Provider SDKs. The host injects provider implementations through
   `MCPHostAdapter`.
-- A ready-made CLI command. The host wraps the runtime as it sees fit.
+- An installed console entry point. Source checkouts include the
+  optional `scripts/run_skill.py` runtime bridge; the host still
+  decides whether to import Python directly or spawn a process.
 
 ## Prerequisites
 
@@ -229,6 +231,19 @@ OpenCode plugin (the plugin still does not call Python).
 # List the available runtime skills
 python scripts/run_skill.py --list-skills --pretty
 
+# Inspect fund_analysis input expectations
+python scripts/run_skill.py --skill fund_analysis --explain-input --pretty
+
+# Structurally validate a proposed input envelope without running the skill
+python scripts/run_skill.py \
+    --skill fund_analysis \
+    --input examples/runtime_bridge_fund_analysis_input.json \
+    --validate-input \
+    --pretty
+
+# Inspect the output envelope and known artifact keys
+python scripts/run_skill.py --skill fund_analysis --output-schema --pretty
+
 # Run fund_analysis
 python scripts/run_skill.py \
     --skill fund_analysis \
@@ -241,6 +256,13 @@ python scripts/run_skill.py \
     --input examples/runtime_bridge_decision_support_input.json \
     --pretty
 ```
+
+`--validate-input` is structural and host-assistive only. It does
+not run the skill, build evidence, compose reports, create
+decisions, fetch data, import provider SDKs, call the network, or
+start an agent loop. The command exits 0 when it successfully
+returns a validation envelope, even if
+`validation_result.valid=false`.
 
 For the full contract, MCP boundary behavior, and examples, see
 [`docs/install/runtime-bridge-cli.md`](./runtime-bridge-cli.md).
