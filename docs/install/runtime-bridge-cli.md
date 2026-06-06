@@ -185,6 +185,16 @@ This command does not require `--input`, does not import or run the
 skill runtime, and prints known bridge envelope fields plus
 skill-specific artifact keys.
 
+For `fund_analysis`, artifact keys in this output are read from the
+machine-readable artifact contract at
+`skillpack/artifact-contracts.yaml`. The human-readable contract is
+[`docs/contracts/fund-analysis-artifacts.v1.md`](../contracts/fund-analysis-artifacts.v1.md).
+This is a host-facing stability contract, not a guarantee that every optional
+artifact appears in every run. Optional artifacts depend on host-supplied data;
+missing optional data must become limitations, warnings, `PARTIAL` behavior, or
+omitted optional artifacts rather than fabricated values. Formal `Decision` and
+`ExecutionLedger` artifacts remain `decision_support`-only.
+
 ### 2e. List host-owned data capabilities
 
 ```bash
@@ -427,10 +437,10 @@ When the convenience envelope is used, the bridge injects
 }
 ```
 
-These three commands load only the manifest and
-`skillpack/capabilities.yaml`. They do not fetch data, import
-provider SDKs, call the network, instantiate runtime skill classes,
-or run an agent loop.
+These three commands load only metadata: the manifest,
+`skillpack/capabilities.yaml`, and, for `fund_analysis --output-schema`,
+`skillpack/artifact-contracts.yaml`. They do not fetch data, import provider
+SDKs, call the network, instantiate runtime skill classes, or run an agent loop.
 
 ### Output (success)
 

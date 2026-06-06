@@ -271,6 +271,16 @@ start an agent loop. The command exits 0 when it successfully
 returns a validation envelope, even if
 `validation_result.valid=false`.
 
+For `fund_analysis`, `--output-schema` reads the machine-readable artifact
+contract at `skillpack/artifact-contracts.yaml`. The human-readable artifact
+contract is
+[`docs/contracts/fund-analysis-artifacts.v1.md`](../contracts/fund-analysis-artifacts.v1.md).
+It is a host-facing stability contract, not a promise that every optional
+artifact appears in every run. Optional artifacts depend on host-supplied data;
+missing optional data must produce limitations, warnings, `PARTIAL` behavior,
+or omitted optional artifacts, not fabricated values. Formal `Decision` and
+`ExecutionLedger` artifacts remain `decision_support`-only.
+
 `--emit-report markdown` is explicit opt-in. It runs
 `fund_analysis` normally and renders the resulting
 `artifacts.report_sections` as deterministic Markdown. Success

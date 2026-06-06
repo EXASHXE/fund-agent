@@ -168,6 +168,11 @@ publishable as a professional report. Missing optional data becomes
 responsible for data fetching, final UX, and any escalation to
 `DecisionSupportSkill` for formal actions.
 
+The stable `fund_analysis` artifact key contract is documented in
+[`docs/contracts/fund-analysis-artifacts.v1.md`](./contracts/fund-analysis-artifacts.v1.md)
+and machine-readable at `skillpack/artifact-contracts.yaml`. Optional artifacts
+depend on host-supplied data and must not be fabricated.
+
 ### News To Decision
 
 ```python

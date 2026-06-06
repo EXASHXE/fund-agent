@@ -13,6 +13,7 @@ from typing import Any
 
 import yaml
 
+from src.skillpack.artifact_contracts import get_skill_artifact_contract
 from src.skillpack.loader import load_skillpack_manifest
 from src.skillpack.manifest import SkillSpec
 
@@ -41,28 +42,6 @@ FUND_OPTIONAL_FIELDS = [
     "market_scenario",
     "report_options",
     "research_planning",
-]
-
-FUND_ARTIFACT_KEYS = [
-    "portfolio_summary",
-    "position_summary",
-    "exposure_summary",
-    "risk_flags",
-    "pnl_summary",
-    "trade_budget",
-    "short_term_trade_budget",
-    "dca_plan_review",
-    "transaction_summary",
-    "cost_basis_summary",
-    "reconciliation",
-    "suggested_rebalance_plan",
-    "data_completeness",
-    "analysis_coverage",
-    "report_limitations",
-    "report_sections",
-    "report_outline",
-    "report_quality_gate",
-    "warnings",
 ]
 
 FUND_CAPABILITY_FIELDS = {
@@ -157,20 +136,29 @@ def output_schema_for_skill(
     spec, doc_slug = _resolve_skill_spec(skill_id, manifest_path)
     schema = _base_output_schema(spec)
     if spec.name == "fund_analysis":
+        artifact_contract = get_skill_artifact_contract(
+            spec.name,
+            _artifact_contract_path_for_manifest(manifest_path),
+        )
         schema["artifacts"] = {
-            "known_keys": [
-                {"key": key, "required": False}
-                for key in FUND_ARTIFACT_KEYS
-            ],
+            "contract_version": artifact_contract.get("contract_version"),
+            "doc": artifact_contract.get("doc"),
+            "known_keys": _artifact_entries_for_output_schema(artifact_contract),
+            "artifact_categories": artifact_contract.get("artifact_categories", {}),
+            "forbidden_artifacts": list(artifact_contract.get("forbidden_artifacts") or []),
             "notes": [
+                "fund_analysis artifact keys are governed by docs/contracts/fund-analysis-artifacts.v1.md and skillpack/artifact-contracts.yaml.",
                 "Artifact presence depends on host-supplied portfolio, ledger, NAV, holdings, benchmark, peer, fee, manager, and scenario data.",
-                "Missing optional data may produce PARTIAL status, warnings, report_limitations, or missing report sections; data must not be fabricated.",
+                "Optional artifacts are present only when the host supplies the corresponding data; missing optional data may produce PARTIAL status, warnings, report_limitations, or omitted optional artifacts.",
+                "Missing data must not be fabricated.",
+                "Formal Decision and ExecutionLedger artifacts belong only to decision_support.",
             ],
         }
         schema["evidence_items"] = {
             "produces": ["HardEvidence"],
             "confidence_weight": "HardEvidence confidence_weight is always 1.0.",
         }
+        schema["status_values"] = list(artifact_contract.get("status_values") or STATUS_VALUES)
     elif spec.name in {"news_research", "sentiment_analysis"}:
         schema["artifacts"] = {
             "known_keys": [{"key": "mcp_response", "required": False}],
@@ -256,6 +244,37 @@ def _load_capabilities(manifest_path: str) -> dict[str, Any]:
         "host_data_capabilities": dict(raw.get("host_data_capabilities") or {}),
         "local_capabilities": dict(raw.get("local_capabilities") or {}),
     }
+
+
+def _artifact_contract_path_for_manifest(manifest_path: str) -> Path:
+    return Path(manifest_path).parent / "artifact-contracts.yaml"
+
+
+def _artifact_entries_for_output_schema(
+    artifact_contract: dict[str, Any],
+) -> list[dict[str, Any]]:
+    entries: list[dict[str, Any]] = []
+    fields = (
+        "key",
+        "required",
+        "category",
+        "type",
+        "produced_when",
+        "description",
+        "top_level",
+        "path",
+        "aliases",
+        "expected_for_structured_report",
+    )
+    for artifact in artifact_contract.get("artifacts") or []:
+        if not isinstance(artifact, dict):
+            continue
+        entries.append({
+            field: artifact[field]
+            for field in fields
+            if field in artifact
+        })
+    return entries
 
 
 def _accepted_envelope_shapes(skill_name: str) -> list[dict[str, Any]]:

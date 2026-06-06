@@ -4,6 +4,10 @@
 **Effective:** v0.4.8
 **Scope:** Determines the stable shape of FundAnalysisSkill report composer output.
 
+For the broader `fund_analysis` artifact key contract, see
+[`fund-analysis-artifacts.v1.md`](./fund-analysis-artifacts.v1.md) and the
+machine-readable catalog at `skillpack/artifact-contracts.yaml`.
+
 ## 1. `report_sections`
 
 The `report_sections` list is produced by `compose_personal_fund_report()` in

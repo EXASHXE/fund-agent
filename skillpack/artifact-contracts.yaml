@@ -1,0 +1,274 @@
+schema_version: artifact-contracts.v1
+contracts:
+  fund_analysis:
+    contract_version: fund-analysis-artifacts.v1
+    doc: docs/contracts/fund-analysis-artifacts.v1.md
+    runtime_id: fund_analysis
+    doc_slug: fund-analysis
+    forbidden_artifacts:
+      - decision
+      - decisions
+      - execution_ledger
+      - execution_ledgers
+    status_values:
+      - OK
+      - PARTIAL
+      - FAILED
+    artifact_categories:
+      core_portfolio:
+        description: Portfolio snapshot, position, and source-of-truth outputs derived from host data.
+      ledger_and_pnl:
+        description: Ledger-derived, cost-basis, cashflow, reconciliation, and PnL outputs.
+      exposure_and_risk:
+        description: Allocation, exposure, risk flag, and scenario-impact outputs.
+      planning_and_budget:
+        description: Deterministic budget, DCA review, research planning, and suggested rebalance outputs.
+      optional_context:
+        description: Optional benchmark, peer, factor, fee, redemption, and manager context supplied by the host.
+      report_output:
+        description: Deterministic structured report artifacts and Markdown-rendering inputs.
+      diagnostics:
+        description: Warnings, data completeness, analysis coverage, limitations, and quality diagnostics.
+    artifacts:
+      - key: fund_analysis_report
+        category: report_output
+        required: false
+        type: object
+        top_level: true
+        produced_when: normal structured fund_analysis portfolio/report run
+        description: Aggregated deterministic analysis report payload containing summary fields and optional nested context.
+      - key: portfolio_summary
+        category: core_portfolio
+        required: false
+        type: object
+        top_level: true
+        produced_when: portfolio snapshot or ledger-derived snapshot is available
+        description: Portfolio-level value, weight, cash, and concentration summary.
+      - key: position_summary
+        category: core_portfolio
+        required: false
+        type: object
+        top_level: true
+        produced_when: usable portfolio positions are available
+        description: Position-level summary keyed by fund code.
+      - key: exposure_summary
+        category: exposure_and_risk
+        required: false
+        type: object
+        top_level: true
+        produced_when: portfolio positions and holdings or tags are available
+        description: Deterministic exposure rollup across theme, industry, and fund-type dimensions.
+      - key: risk_flags
+        category: exposure_and_risk
+        required: false
+        type: list
+        top_level: true
+        produced_when: portfolio risk rules can run from host-supplied portfolio and constraints
+        description: Deterministic portfolio, trading, and scenario risk flags.
+      - key: pnl_summary
+        category: ledger_and_pnl
+        required: false
+        type: object|null
+        top_level: true
+        produced_when: cost and current value data are available for positions
+        description: Unrealized and realized PnL summary derived from host-supplied cost, NAV, and ledger data.
+      - key: trade_budget
+        category: planning_and_budget
+        required: false
+        type: object|null
+        top_level: false
+        path: fund_analysis_report.trade_budget
+        produced_when: portfolio value and risk profile are available
+        description: Deterministic trade budget stored inside fund_analysis_report under the current v1 runtime.
+      - key: short_term_trade_budget
+        category: planning_and_budget
+        required: false
+        type: object|null
+        top_level: true
+        produced_when: transaction data is available
+        description: Short-term trade budget derived from risk profile and transaction context.
+      - key: dca_plan_review
+        category: planning_and_budget
+        required: false
+        type: object|null
+        top_level: true
+        produced_when: host supplies dca_plans
+        description: Deterministic review of host-supplied DCA plans.
+      - key: transaction_summary
+        category: ledger_and_pnl
+        required: false
+        type: object|null
+        top_level: false
+        path: fund_analysis_report.transaction_summary
+        produced_when: host supplies fund transaction data
+        description: Transaction ledger summary stored inside fund_analysis_report under the current v1 runtime.
+      - key: cost_basis_summary
+        category: ledger_and_pnl
+        required: false
+        type: object|null
+        top_level: true
+        produced_when: host supplies transaction data
+        description: Per-position cost basis summary derived from host-supplied transactions.
+      - key: reconciliation
+        category: ledger_and_pnl
+        required: false
+        type: object|null
+        top_level: false
+        path: fund_analysis_report.reconciliation
+        produced_when: reconciliation can be computed from host-supplied portfolio and ledger data
+        description: Portfolio/ledger reconciliation summary stored inside fund_analysis_report under the current v1 runtime.
+      - key: suggested_rebalance_plan
+        category: planning_and_budget
+        required: false
+        type: object|null
+        top_level: true
+        produced_when: target weights or rebalance constraints are available
+        description: Suggested analysis plan for rebalancing; not a formal Decision or executable order.
+      - key: benchmark_summary
+        category: optional_context
+        required: false
+        type: object
+        top_level: true
+        produced_when: host supplies benchmark or benchmark_history data
+        description: Optional benchmark comparison summary derived only from host-supplied benchmark data.
+      - key: peer_summary
+        category: optional_context
+        required: false
+        type: object
+        top_level: true
+        produced_when: host supplies peer_group data
+        description: Optional peer-group comparison summary derived only from host-supplied peer data.
+      - key: factor_summary
+        category: optional_context
+        required: false
+        type: object
+        top_level: true
+        produced_when: host supplies factor_exposures data
+        description: Optional factor/style summary derived only from host-supplied factor exposure data.
+      - key: fee_summary
+        category: optional_context
+        required: false
+        type: object
+        top_level: true
+        produced_when: host supplies fee_schedules data
+        description: Optional fee schedule summary derived only from host-supplied fee data.
+      - key: redemption_summary
+        category: optional_context
+        required: false
+        type: object
+        top_level: true
+        produced_when: host supplies redemption_rules data
+        description: Optional redemption and lockup constraint summary derived only from host-supplied redemption rules.
+      - key: manager_summary
+        category: optional_context
+        required: false
+        type: object
+        top_level: true
+        produced_when: host supplies manager_profiles data
+        description: Optional manager profile summary derived only from host-supplied manager data.
+      - key: market_scenario_impact
+        category: exposure_and_risk
+        required: false
+        type: object|null
+        top_level: true
+        aliases:
+          - scenario_summary
+        produced_when: host supplies market_scenario data
+        description: Current runtime key for scenario-summary style impact data derived from host-supplied scenarios.
+      - key: derived_portfolio_snapshot
+        category: core_portfolio
+        required: false
+        type: object
+        top_level: true
+        produced_when: portfolio is derived from transactions plus current_nav and as_of_date
+        description: Ledger-derived portfolio snapshot used when the host does not supply a direct portfolio snapshot.
+      - key: ledger_cashflow_summary
+        category: ledger_and_pnl
+        required: false
+        type: object|null
+        top_level: true
+        produced_when: portfolio is derived from transactions
+        description: Cashflow, dividend, fee, and related ledger summary from the derived snapshot.
+      - key: source_of_truth
+        category: diagnostics
+        required: false
+        type: string
+        top_level: true
+        produced_when: portfolio is derived from transactions
+        description: Source indicator such as derived_from_transactions for host auditability.
+      - key: ledger_quality_summary
+        category: diagnostics
+        required: false
+        type: object
+        top_level: true
+        produced_when: portfolio is derived from transactions
+        description: Completeness and unresolved-event diagnostics for ledger-derived portfolio data.
+      - key: ledger_reconciliation_report
+        category: ledger_and_pnl
+        required: false
+        type: object
+        top_level: true
+        produced_when: host supplies data that enables portfolio/ledger reconciliation
+        description: Detailed reconciliation report for ledger and portfolio snapshot comparison.
+      - key: research_query_plan
+        category: planning_and_budget
+        required: false
+        type: object
+        top_level: true
+        produced_when: host enables research_planning context
+        description: Deterministic research query plan for the host to execute externally.
+      - key: data_completeness
+        category: diagnostics
+        required: false
+        type: object
+        top_level: true
+        expected_for_structured_report: true
+        produced_when: normal structured fund_analysis portfolio/report run
+        description: Data completeness grade and score computed from available host-supplied inputs.
+      - key: analysis_coverage
+        category: diagnostics
+        required: false
+        type: object
+        top_level: true
+        expected_for_structured_report: true
+        produced_when: normal structured fund_analysis portfolio/report run
+        description: Per-section coverage map showing available, partial, or missing analysis inputs.
+      - key: report_limitations
+        category: diagnostics
+        required: false
+        type: list
+        top_level: true
+        expected_for_structured_report: true
+        produced_when: normal structured fund_analysis portfolio/report run
+        description: User-facing limitations caused by missing optional data or degraded ledger quality.
+      - key: report_sections
+        category: report_output
+        required: false
+        type: list
+        top_level: true
+        expected_for_structured_report: true
+        produced_when: normal structured fund_analysis portfolio/report run
+        description: Deterministic structured report sections governed by report-output-contract.v1.
+      - key: report_outline
+        category: report_output
+        required: false
+        type: list
+        top_level: true
+        expected_for_structured_report: true
+        produced_when: normal structured fund_analysis portfolio/report run
+        description: Ordered report table-of-contents derived from report_sections.
+      - key: report_quality_gate
+        category: report_output
+        required: false
+        type: object
+        top_level: true
+        expected_for_structured_report: true
+        produced_when: normal structured fund_analysis portfolio/report run
+        description: Deterministic report publishability gate with grade and reason.
+      - key: warnings
+        category: diagnostics
+        required: false
+        type: list
+        top_level: true
+        produced_when: warnings or limitations are detected
+        description: Artifact-level warning list mirrored from SkillOutput.warnings when available.

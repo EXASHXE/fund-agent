@@ -83,6 +83,21 @@ This document lists contracts that are frozen at `rc-stable` for
 - **Allowed changes:** add new tools, add optional fields
 - **Breaking:** removing required fields (`id`, `import_path`, `category`)
 
+### 12. Report Output Contract
+
+- **Location:** `docs/contracts/report-output-contract.v1.md`
+- **Stability:** dev-stable
+- **Allowed changes:** add optional section fields, append optional sections
+- **Breaking:** removing or reordering existing sections, changing status semantics
+
+### 13. Fund Analysis Artifact Contract
+
+- **Location:** `docs/contracts/fund-analysis-artifacts.v1.md`
+- **Machine-readable:** `skillpack/artifact-contracts.yaml`
+- **Stability:** dev-stable
+- **Allowed changes:** add optional artifact keys, add optional metadata fields
+- **Breaking:** removing or renaming existing contract keys, changing core artifact semantics
+
 ## Versioning Policy
 
 - `v0.x.y` — pre-1.0, minor breaking changes allowed with notice

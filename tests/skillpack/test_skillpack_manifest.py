@@ -89,6 +89,7 @@ def test_skillpack_sidecar_files_exist():
         Path("skillpack/capabilities.yaml"),
         Path("skillpack/tools.yaml"),
         Path("skillpack/contracts.yaml"),
+        Path("skillpack/artifact-contracts.yaml"),
     ):
         assert path.exists()
 

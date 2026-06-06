@@ -48,12 +48,13 @@ def runtime_bridge_doc() -> Path:
 
 
 def test_runtime_bridge_doc_exists_and_is_versioned() -> None:
-    """The runtime bridge CLI doc must exist and be tagged as
-    shipped-in-v0.4.7-dev (so hosts know when it landed)."""
+    """The runtime bridge CLI doc must exist and be tagged with the
+    current package version so hosts know which source checkout it describes."""
     assert RUNTIME_BRIDGE_DOC.exists()
     text = _lower(RUNTIME_BRIDGE_DOC)
-    assert "v0.4.7-dev" in text, (
-        "runtime bridge doc must be tagged with v0.4.7-dev"
+    version = (ROOT / "VERSION").read_text(encoding="utf-8").strip().lower()
+    assert f"v{version}" in text, (
+        f"runtime bridge doc must be tagged with v{version}"
     )
 
 
