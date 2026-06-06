@@ -14,53 +14,13 @@ from typing import Any
 import yaml
 
 from src.skillpack.artifact_contracts import get_skill_artifact_contract
+from src.skillpack.input_contract_catalog import get_skill_input_contract
 from src.skillpack.loader import load_skillpack_manifest
 from src.skillpack.manifest import SkillSpec
 
 DEFAULT_MANIFEST_PATH = "skillpack/fund-agent.skillpack.yaml"
 
 STATUS_VALUES = ["OK", "PARTIAL", "FAILED"]
-
-FUND_RECOMMENDED_FIELDS = [
-    "risk_profile",
-    "constraints",
-    "fund_profiles",
-    "nav_history",
-    "holdings",
-    "transactions",
-    "dca_plans",
-]
-
-FUND_OPTIONAL_FIELDS = [
-    "benchmarks",
-    "benchmark_history",
-    "peer_group",
-    "factor_exposures",
-    "manager_profiles",
-    "fee_schedules",
-    "redemption_rules",
-    "market_scenario",
-    "report_options",
-    "research_planning",
-]
-
-FUND_CAPABILITY_FIELDS = {
-    "portfolio_snapshot": ["portfolio"],
-    "fund_profile": ["fund_profiles", "fund_profile"],
-    "fund_nav_history": ["nav_history"],
-    "fund_holdings": ["holdings"],
-    "fund_transactions": ["transactions"],
-    "fund_fee_schedule": ["fee_schedules", "fee_schedule"],
-    "fund_benchmark": ["benchmarks", "benchmark", "fund_benchmark"],
-    "benchmark_history": ["benchmark_history"],
-    "fund_peer_group": ["peer_group", "peer_groups"],
-    "fund_manager_profile": ["manager_profiles", "manager_profile"],
-    "fund_flow": ["fund_flows", "fund_flow"],
-    "index_constituents": ["index_constituents"],
-    "macro_events": ["macro_events", "market_scenario"],
-    "market_calendar": ["market_calendar"],
-    "user_investment_plan": ["investment_plan", "user_investment_plan"],
-}
 
 ACTIVE_ACTIONS = ["BUY", "SELL", "INCREASE", "REDUCE"]
 PASSIVE_ACTIONS = ["WAIT", "HOLD", "PAUSE_DCA"]
@@ -74,7 +34,11 @@ def explain_skill_input(
     spec, doc_slug = _resolve_skill_spec(skill_id, manifest_path)
     capabilities = _load_capabilities(manifest_path)
     if spec.name == "fund_analysis":
-        contract = _fund_analysis_input_contract(capabilities)
+        input_contract = get_skill_input_contract(
+            spec.name,
+            _input_contract_path_for_manifest(manifest_path),
+        )
+        contract = _fund_analysis_input_contract(capabilities, input_contract)
     elif spec.name in {"news_research", "sentiment_analysis"}:
         contract = _mcp_skill_input_contract(spec, capabilities)
     elif spec.name == "decision_support":
@@ -107,7 +71,16 @@ def validate_skill_input(
             errors=[payload_error],
         )
     elif spec.name == "fund_analysis":
-        result = _validate_fund_analysis(parsed_input, payload, capabilities)
+        input_contract = get_skill_input_contract(
+            spec.name,
+            _input_contract_path_for_manifest(manifest_path),
+        )
+        result = _validate_fund_analysis(
+            parsed_input,
+            payload,
+            capabilities,
+            input_contract,
+        )
     elif spec.name in {"news_research", "sentiment_analysis"}:
         result = _validate_mcp_skill(parsed_input, payload, spec)
     elif spec.name == "decision_support":
@@ -250,6 +223,10 @@ def _artifact_contract_path_for_manifest(manifest_path: str) -> Path:
     return Path(manifest_path).parent / "artifact-contracts.yaml"
 
 
+def _input_contract_path_for_manifest(manifest_path: str) -> Path:
+    return Path(manifest_path).parent / "input-contracts.yaml"
+
+
 def _artifact_entries_for_output_schema(
     artifact_contract: dict[str, Any],
 ) -> list[dict[str, Any]]:
@@ -307,58 +284,25 @@ def _accepted_envelope_shapes(skill_name: str) -> list[dict[str, Any]]:
 
 def _fund_analysis_input_contract(
     capabilities: dict[str, Any],
+    input_contract: dict[str, Any],
 ) -> dict[str, Any]:
+    capability_mapping = _capability_field_mapping(input_contract)
     return {
-        "accepted_envelope_shapes": _accepted_envelope_shapes("fund_analysis"),
-        "minimum_required": [
-            {
-                "mode": "portfolio_snapshot",
-                "description": "Structured portfolio snapshot supplied by the host.",
-                "required": [
-                    "payload.portfolio",
-                    "payload.portfolio.positions[]",
-                    "payload.portfolio.positions[].fund_code",
-                ],
-                "recommended_for_each_position": [
-                    "current_value",
-                    "shares",
-                    "current_nav",
-                    "total_cost",
-                ],
-            },
-            {
-                "mode": "ledger_derived",
-                "description": "Derive a portfolio snapshot from transactions and current NAV.",
-                "required": [
-                    "payload.transactions[]",
-                    "payload.current_nav",
-                    "payload.as_of_date or payload.portfolio.as_of_date",
-                ],
-            },
-            {
-                "mode": "related_entities_baseline",
-                "description": "Compatibility path for baseline-only HardEvidence.",
-                "required": [
-                    "payload.related_entities[] or kg_context.fund_codes[]",
-                ],
-                "degraded": True,
-                "limitations": [
-                    "Structured portfolio analysis, PnL, weights, and report sections are not possible.",
-                ],
-            },
-        ],
-        "recommended": list(FUND_RECOMMENDED_FIELDS),
-        "optional": list(FUND_OPTIONAL_FIELDS),
-        "required_mcp_capabilities": [],
+        "contract_version": input_contract.get("contract_version"),
+        "doc": input_contract.get("doc"),
+        "accepted_envelope_shapes": list(input_contract.get("accepted_envelope_shapes") or []),
+        "minimum_required": list(input_contract.get("minimum_required") or []),
+        "recommended": _recommended_field_keys(input_contract),
+        "optional": _optional_field_keys(input_contract),
+        "required_mcp_capabilities": list(input_contract.get("required_mcp_capabilities") or []),
         "host_owned_data_capabilities": _host_data_capabilities_for_skill(
             "fund_analysis",
             capabilities,
+            capability_mapping,
         ),
-        "degradation_policy": [
-            "Missing optional data should produce PARTIAL analysis, warnings, report_limitations, or skipped sections; fund-agent must not fabricate data.",
-            "Missing usable portfolio.positions, transactions+current_nav+as_of_date, and related_entities baseline is INVALID_INPUT.",
-            "The host owns all NAV, holdings, benchmark, peer, fee, manager, market scenario, news, and sentiment data.",
-        ],
+        "host_data_capability_fields": capability_mapping,
+        "validation": dict(input_contract.get("validation") or {}),
+        "degradation_policy": list(input_contract.get("degradation_policy") or []),
     }
 
 
@@ -476,6 +420,7 @@ def _generic_input_contract(spec: SkillSpec) -> dict[str, Any]:
 def _host_data_capabilities_for_skill(
     skill_name: str,
     capabilities: dict[str, Any],
+    capability_field_mapping: dict[str, list[str]],
 ) -> list[dict[str, Any]]:
     result: list[dict[str, Any]] = []
     for name, info in sorted((capabilities.get("host_data_capabilities") or {}).items()):
@@ -484,7 +429,7 @@ def _host_data_capabilities_for_skill(
         result.append({
             "name": name,
             "owner": "host",
-            "payload_fields": FUND_CAPABILITY_FIELDS.get(name, []),
+            "payload_fields": capability_field_mapping.get(name, []),
             "description": str(info.get("description", "")).strip(),
             "required": bool(info.get("required", False)),
             "missing_behavior": info.get("missing_behavior"),
@@ -534,6 +479,7 @@ def _validate_fund_analysis(
     parsed_input: dict[str, Any],
     payload: dict[str, Any],
     capabilities: dict[str, Any],
+    input_contract: dict[str, Any],
 ) -> dict[str, Any]:
     errors: list[dict[str, Any]] = []
     warnings: list[dict[str, Any]] = []
@@ -605,11 +551,13 @@ def _validate_fund_analysis(
             "payload",
         ))
 
+    recommended_fields = _recommended_field_keys(input_contract)
+    optional_fields = _optional_field_keys(input_contract)
     missing_recommended = [
-        field for field in FUND_RECOMMENDED_FIELDS if not _has_payload_field(payload, field)
+        field for field in recommended_fields if not _has_payload_field(payload, field)
     ]
     missing_optional = [
-        field for field in FUND_OPTIONAL_FIELDS if not _has_payload_field(payload, field)
+        field for field in optional_fields if not _has_payload_field(payload, field)
     ]
     for field in missing_recommended:
         warnings.append(_warning(
@@ -618,7 +566,11 @@ def _validate_fund_analysis(
             f"payload.{field}",
         ))
 
-    coverage = _fund_capability_coverage(payload, capabilities)
+    coverage = _fund_capability_coverage(
+        payload,
+        capabilities,
+        _capability_field_mapping(input_contract),
+    )
     if errors:
         valid = False
         severity = "INVALID"
@@ -811,6 +763,7 @@ def _base_validation_result(
 def _fund_capability_coverage(
     payload: dict[str, Any],
     capabilities: dict[str, Any],
+    capability_field_mapping: dict[str, list[str]],
 ) -> dict[str, Any]:
     expected = [
         name
@@ -820,9 +773,41 @@ def _fund_capability_coverage(
     present = [
         name
         for name in expected
-        if any(_has_payload_field(payload, field) for field in FUND_CAPABILITY_FIELDS.get(name, []))
+        if any(_has_payload_field(payload, field) for field in capability_field_mapping.get(name, []))
     ]
     return _coverage(expected=expected, present=present)
+
+
+def _recommended_field_keys(input_contract: dict[str, Any]) -> list[str]:
+    return _field_keys(input_contract.get("recommended_fields") or [])
+
+
+def _optional_field_keys(input_contract: dict[str, Any]) -> list[str]:
+    return _field_keys(input_contract.get("optional_fields") or [])
+
+
+def _field_keys(fields: list[Any]) -> list[str]:
+    keys: list[str] = []
+    for field in fields:
+        if isinstance(field, dict) and field.get("key") is not None:
+            keys.append(str(field["key"]))
+        elif isinstance(field, str):
+            keys.append(field)
+    return keys
+
+
+def _capability_field_mapping(input_contract: dict[str, Any]) -> dict[str, list[str]]:
+    raw_mapping = input_contract.get("host_data_capability_fields") or {}
+    if not isinstance(raw_mapping, dict):
+        return {}
+    result: dict[str, list[str]] = {}
+    for name, info in raw_mapping.items():
+        if isinstance(info, dict):
+            fields = info.get("payload_fields") or []
+        else:
+            fields = info
+        result[str(name)] = [str(field) for field in fields] if isinstance(fields, list) else []
+    return result
 
 
 def _coverage(expected: list[str], present: list[str]) -> dict[str, Any]:

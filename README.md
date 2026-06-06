@@ -27,6 +27,8 @@ mount them as a plugin. It does not require a resident autonomous runtime.
 - `skillpack/capabilities.yaml`: host MCP capability declarations
 - `skillpack/tools.yaml`: callable tool declarations
 - `skillpack/contracts.yaml`: schema and contract declarations
+- `skillpack/input-contracts.yaml`: machine-readable `fund_analysis` input contract
+- `skillpack/artifact-contracts.yaml`: machine-readable `fund_analysis` artifact contract
 - `skills/README.md`: Markdown-first skill directory policy
 - `skills/SKILL.md`: host-readable skill pack index
 - `skills/<slug>/SKILL.md`: primary agent-facing skill instructions
@@ -194,6 +196,8 @@ make direct network requests.
 ## Contracts And Tools
 
 - `SkillInput` / `SkillOutput`: `src.schemas.skill`
+- Fund analysis input contract: `docs/contracts/fund-analysis-input-contract.v1.md`
+- Fund analysis artifact contract: `docs/contracts/fund-analysis-artifacts.v1.md`
 - `EvidenceItem`: `src.schemas.evidence`
 - `EvidenceGraph`: `src.schemas.evidence_graph`
 - `Decision` / `ExecutionLedger`: `src.schemas.decision`

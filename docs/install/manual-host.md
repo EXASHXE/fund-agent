@@ -271,6 +271,14 @@ start an agent loop. The command exits 0 when it successfully
 returns a validation envelope, even if
 `validation_result.valid=false`.
 
+For `fund_analysis`, `--explain-input` and `--validate-input` read the
+machine-readable input contract at `skillpack/input-contracts.yaml`. The
+human-readable input contract is
+[`docs/contracts/fund-analysis-input-contract.v1.md`](../contracts/fund-analysis-input-contract.v1.md).
+Validation is structural and host-assistive; it is not a guarantee of
+investment correctness or data freshness. The host owns all data fetching and
+provider integration, and formal decisions remain `decision_support`-only.
+
 For `fund_analysis`, `--output-schema` reads the machine-readable artifact
 contract at `skillpack/artifact-contracts.yaml`. The human-readable artifact
 contract is

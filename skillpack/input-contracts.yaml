@@ -1,0 +1,178 @@
+schema_version: input-contracts.v1
+contracts:
+  fund_analysis:
+    contract_version: fund-analysis-input.v1
+    doc: docs/contracts/fund-analysis-input-contract.v1.md
+    runtime_id: fund_analysis
+    doc_slug: fund-analysis
+    accepted_envelope_shapes:
+      - name: full_skill_input
+        description: Full SkillInput-shaped envelope with host-supplied payload.
+        shape:
+          task_id: string
+          step_id: string
+          skill_name: fund_analysis
+          payload: object
+          kg_context: object
+          required_mcp_capabilities: list[string]
+          evidence_context: list[string]
+          metadata: object
+          mcp_responses: object optional for runtime bridge testing
+      - name: payload_only
+        description: Convenience envelope; bridge fills task_id, step_id, and skill_name.
+        shape:
+          payload: object
+          mcp_responses: object optional for runtime bridge testing
+    minimum_required:
+      - mode: portfolio_snapshot
+        description: Structured portfolio snapshot supplied by the host.
+        required:
+          - payload.portfolio
+          - payload.portfolio.positions[]
+          - payload.portfolio.positions[].fund_code
+        recommended_for_each_position:
+          - current_value
+          - shares
+          - current_nav
+          - total_cost
+        valid_when: portfolio.positions has at least one usable fund_code
+      - mode: ledger_derived
+        description: Derive a portfolio snapshot from transactions and current NAV.
+        required:
+          - payload.transactions[]
+          - payload.current_nav
+          - payload.as_of_date or payload.portfolio.as_of_date
+        valid_when: transactions and current_nav are non-empty and as_of_date is present
+      - mode: related_entities_baseline
+        description: Compatibility path for baseline-only HardEvidence.
+        required:
+          - payload.related_entities[] or kg_context.fund_codes[]
+        degraded: true
+        valid_when: related entities are present but structured portfolio/ledger data is absent
+        limitations:
+          - Structured portfolio analysis, PnL, weights, and report sections are not possible.
+    recommended_fields:
+      - key: risk_profile
+        description: User risk profile and risk tolerance.
+        missing_behavior: warning
+      - key: constraints
+        description: User constraints such as caps, liquidity needs, or no-buy/no-sell rules.
+        missing_behavior: warning
+      - key: fund_profiles
+        description: Host-supplied fund profile data keyed by fund code.
+        missing_behavior: warning
+      - key: nav_history
+        description: Host-supplied historical NAV points keyed by fund code.
+        missing_behavior: warning
+      - key: holdings
+        description: Host-supplied fund holdings or constituents keyed by fund code.
+        missing_behavior: warning
+      - key: transactions
+        description: Host-supplied transaction ledger for cost basis, PnL, and derived snapshots.
+        missing_behavior: warning
+      - key: dca_plans
+        description: Host-supplied DCA plan data for deterministic plan review.
+        missing_behavior: warning
+    optional_fields:
+      - key: benchmarks
+        description: Fund or portfolio benchmark mapping.
+        missing_behavior: omit_optional_analysis
+      - key: benchmark_history
+        description: Host-supplied benchmark return or value history.
+        missing_behavior: omit_optional_analysis
+      - key: peer_group
+        description: Host-supplied peer group data for relative comparison.
+        missing_behavior: omit_optional_analysis
+      - key: factor_exposures
+        description: Host-supplied factor or style exposure data.
+        missing_behavior: omit_optional_analysis
+      - key: manager_profiles
+        description: Host-supplied fund manager profile data.
+        missing_behavior: omit_optional_analysis
+      - key: fee_schedules
+        description: Host-supplied fee schedule data.
+        missing_behavior: omit_optional_analysis
+      - key: redemption_rules
+        description: Host-supplied redemption and lockup rule data.
+        missing_behavior: omit_optional_analysis
+      - key: market_scenario
+        description: Host-supplied market scenario data for deterministic scenario impact analysis.
+        missing_behavior: omit_optional_analysis
+      - key: report_options
+        description: Host-supplied report composition options.
+        missing_behavior: use_defaults
+      - key: research_planning
+        description: Host-supplied research planning context for deterministic query plan generation.
+        missing_behavior: omit_optional_analysis
+    host_data_capability_fields:
+      portfolio_snapshot:
+        payload_fields:
+          - portfolio
+      fund_profile:
+        payload_fields:
+          - fund_profiles
+          - fund_profile
+      fund_nav_history:
+        payload_fields:
+          - nav_history
+      fund_holdings:
+        payload_fields:
+          - holdings
+      fund_transactions:
+        payload_fields:
+          - transactions
+      fund_fee_schedule:
+        payload_fields:
+          - fee_schedules
+          - fee_schedule
+      fund_benchmark:
+        payload_fields:
+          - benchmarks
+          - benchmark
+          - fund_benchmark
+      benchmark_history:
+        payload_fields:
+          - benchmark_history
+      fund_peer_group:
+        payload_fields:
+          - peer_group
+          - peer_groups
+      fund_manager_profile:
+        payload_fields:
+          - manager_profiles
+          - manager_profile
+      fund_flow:
+        payload_fields:
+          - fund_flows
+          - fund_flow
+      index_constituents:
+        payload_fields:
+          - index_constituents
+      macro_events:
+        payload_fields:
+          - macro_events
+          - market_scenario
+      market_calendar:
+        payload_fields:
+          - market_calendar
+      user_investment_plan:
+        payload_fields:
+          - investment_plan
+          - user_investment_plan
+    validation:
+      severity_values:
+        - OK
+        - PARTIAL
+        - INVALID
+      missing_recommended_behavior: warning
+      missing_optional_behavior: missing_optional
+      missing_current_value_behavior: warning_and_partial
+      no_fabrication_policy: Missing host-owned data must not be fabricated.
+      structural_only: true
+    degradation_policy:
+      - Missing optional data should produce PARTIAL analysis, warnings, report_limitations, or skipped sections; fund-agent must not fabricate data.
+      - Missing usable portfolio.positions, transactions+current_nav+as_of_date, and related_entities baseline is INVALID_INPUT.
+      - Missing current_value warns because useful portfolio analysis depends on it, but is not a hard failure.
+      - Missing recommended fields should appear as missing_recommended and warnings, not hard errors.
+      - The host owns all NAV, holdings, benchmark, peer, fee, manager, market scenario, news, and sentiment data.
+    required_mcp_capabilities: []

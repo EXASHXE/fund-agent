@@ -90,7 +90,15 @@ This document lists contracts that are frozen at `rc-stable` for
 - **Allowed changes:** add optional section fields, append optional sections
 - **Breaking:** removing or reordering existing sections, changing status semantics
 
-### 13. Fund Analysis Artifact Contract
+### 13. Fund Analysis Input Contract
+
+- **Location:** `docs/contracts/fund-analysis-input-contract.v1.md`
+- **Machine-readable:** `skillpack/input-contracts.yaml`
+- **Stability:** dev-stable
+- **Allowed changes:** add optional input fields, add optional metadata fields
+- **Breaking:** removing or renaming existing contract fields, changing minimum input mode semantics
+
+### 14. Fund Analysis Artifact Contract
 
 - **Location:** `docs/contracts/fund-analysis-artifacts.v1.md`
 - **Machine-readable:** `skillpack/artifact-contracts.yaml`

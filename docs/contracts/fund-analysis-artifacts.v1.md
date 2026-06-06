@@ -6,6 +6,10 @@
 **Markdown skill slug:** `fund-analysis`
 **Machine-readable contract:** `skillpack/artifact-contracts.yaml`
 
+For the corresponding host-facing input contract, see
+[`fund-analysis-input-contract.v1.md`](./fund-analysis-input-contract.v1.md)
+and `skillpack/input-contracts.yaml`.
+
 This document defines the stable host-facing artifact contract for
 `FundAnalysisSkill`.
 

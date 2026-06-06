@@ -36,6 +36,7 @@ REQUIRED_PACKAGE_PATHS = (
     "package.json",
     "opencode.plugin.js",
     "skillpack/fund-agent.skillpack.yaml",
+    "skillpack/input-contracts.yaml",
     "skillpack/artifact-contracts.yaml",
     "skills/fund-analysis/SKILL.md",
     "skills/decision-support/SKILL.md",

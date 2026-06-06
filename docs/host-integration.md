@@ -173,6 +173,11 @@ The stable `fund_analysis` artifact key contract is documented in
 and machine-readable at `skillpack/artifact-contracts.yaml`. Optional artifacts
 depend on host-supplied data and must not be fabricated.
 
+The stable `fund_analysis` input contract is documented in
+[`docs/contracts/fund-analysis-input-contract.v1.md`](./contracts/fund-analysis-input-contract.v1.md)
+and machine-readable at `skillpack/input-contracts.yaml`. Runtime bridge
+validation is structural and host-assistive.
+
 ### News To Decision
 
 ```python

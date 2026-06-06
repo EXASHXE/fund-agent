@@ -17,8 +17,12 @@ schemas:
 contract_docs:
   evidence: docs/contracts/evidence-contract.v2.md
   decision: docs/contracts/decision-contract.v2.md
+  fund_analysis_input: docs/contracts/fund-analysis-input-contract.v1.md
   report_output: docs/contracts/report-output-contract.v1.md
   fund_analysis_artifacts: docs/contracts/fund-analysis-artifacts.v1.md
+
+input_contracts:
+  fund_analysis: skillpack/input-contracts.yaml
 
 artifact_contracts:
   fund_analysis: skillpack/artifact-contracts.yaml

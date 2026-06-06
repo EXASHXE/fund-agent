@@ -155,6 +155,14 @@ skill runtime, and prints a JSON-only contract summary. For
 baseline alternatives, recommended fields, optional host-owned data,
 and degradation policy.
 
+For `fund_analysis`, these field lists and minimum modes are read from the
+machine-readable input contract at `skillpack/input-contracts.yaml`. The
+human-readable contract is
+[`docs/contracts/fund-analysis-input-contract.v1.md`](../contracts/fund-analysis-input-contract.v1.md).
+This is a host-facing structural contract, not a provider integration spec or
+a guarantee of investment correctness, data freshness, report publishability,
+or decision quality.
+
 ### 2c. Validate a proposed input envelope
 
 ```bash
@@ -174,6 +182,8 @@ when `validation_result.valid=false`; hosts should branch on
 Validation is structural and host-assistive. It is not a guarantee
 of investment correctness, data freshness, report publishability, or
 decision quality.
+For `fund_analysis`, `missing_recommended`, `missing_optional`, and structural
+capability coverage use field lists from `skillpack/input-contracts.yaml`.
 
 ### 2d. Inspect the bridge output shape
 
@@ -438,8 +448,8 @@ When the convenience envelope is used, the bridge injects
 ```
 
 These three commands load only metadata: the manifest,
-`skillpack/capabilities.yaml`, and, for `fund_analysis --output-schema`,
-`skillpack/artifact-contracts.yaml`. They do not fetch data, import provider
+`skillpack/capabilities.yaml`, and, for `fund_analysis`, the input/artifact
+contract YAML files under `skillpack/`. They do not fetch data, import provider
 SDKs, call the network, instantiate runtime skill classes, or run an agent loop.
 
 ### Output (success)

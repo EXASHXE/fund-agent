@@ -9,10 +9,14 @@ import sys
 from pathlib import Path
 
 import pytest
+import yaml
+
+from src.skillpack import input_contracts
 
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "run_skill.py"
+INPUT_CONTRACT_PATH = ROOT / "skillpack" / "input-contracts.yaml"
 
 
 def _run(args: list[str]) -> subprocess.CompletedProcess:
@@ -37,6 +41,19 @@ def _write(tmp_path: Path, payload: dict) -> Path:
 def _json(proc: subprocess.CompletedProcess) -> dict:
     assert proc.stdout.strip(), f"stdout must contain JSON, stderr={proc.stderr!r}"
     return json.loads(proc.stdout)
+
+
+def _fund_input_contract() -> dict:
+    data = yaml.safe_load(INPUT_CONTRACT_PATH.read_text(encoding="utf-8"))
+    return data["contracts"]["fund_analysis"]
+
+
+def _recommended_keys() -> list[str]:
+    return [item["key"] for item in _fund_input_contract()["recommended_fields"]]
+
+
+def _optional_keys() -> list[str]:
+    return [item["key"] for item in _fund_input_contract()["optional_fields"]]
 
 
 def _minimal_portfolio() -> dict:
@@ -180,6 +197,58 @@ def test_missing_recommended_fields_are_not_hard_errors(tmp_path: Path) -> None:
     assert "risk_profile" in result["missing_recommended"]
     assert any(warn["code"] == "MISSING_RECOMMENDED" for warn in result["warnings"])
     assert not result["errors"]
+
+
+def test_missing_recommended_and_optional_fields_match_yaml(tmp_path: Path) -> None:
+    input_path = _write(tmp_path, _minimal_portfolio())
+    proc = _run([
+        "--skill",
+        "fund_analysis",
+        "--input",
+        str(input_path),
+        "--validate-input",
+        "--pretty",
+    ])
+    assert proc.returncode == 0, proc.stderr
+    result = _json(proc)["validation_result"]
+    assert result["valid"] is True
+    assert set(result["missing_recommended"]) == set(_recommended_keys())
+    assert set(result["missing_optional"]) == set(_optional_keys())
+    assert not result["errors"]
+
+
+def test_validate_input_field_lists_are_contract_loader_driven(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake_contract = {
+        "recommended_fields": [
+            {"key": "fake_recommended", "description": "fake", "missing_behavior": "warning"}
+        ],
+        "optional_fields": [
+            {"key": "fake_optional", "description": "fake", "missing_behavior": "missing"}
+        ],
+        "host_data_capability_fields": {
+            "portfolio_snapshot": {"payload_fields": ["fake_portfolio"]}
+        },
+    }
+
+    monkeypatch.setattr(
+        input_contracts,
+        "get_skill_input_contract",
+        lambda _skill_id, _path: fake_contract,
+    )
+
+    result = input_contracts.validate_skill_input("fund_analysis", _minimal_portfolio())
+    validation = result["validation_result"]
+    assert validation["valid"] is True
+    assert validation["missing_recommended"] == ["fake_recommended"]
+    assert validation["missing_optional"] == ["fake_optional"]
+    assert any(
+        warn["code"] == "MISSING_RECOMMENDED"
+        and warn["path"] == "payload.fake_recommended"
+        for warn in validation["warnings"]
+    )
+    assert "portfolio_snapshot" in validation["capability_coverage"]["missing"]
 
 
 def test_validate_input_does_not_import_or_run_fund_analysis(
