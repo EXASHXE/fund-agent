@@ -39,6 +39,9 @@ mount them as a plugin. It does not require a resident autonomous runtime.
 - `src/graph/`: KnowledgeGraph implementation and query helpers
 - `src/tools/adapters/mcp.py`: host-native MCP adapter abstraction
 
+For host-specific integration recipes, see
+[`docs/host-integrations/README.md`](docs/host-integrations/README.md).
+
 The external host decides which skill to call, in what order, with which MCP
 provider implementations, and how to use the returned evidence.
 

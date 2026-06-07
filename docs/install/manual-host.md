@@ -227,6 +227,9 @@ host-agnostic, JSON-in / JSON-out, and does not fetch data, import
 provider SDKs, or run an agent loop. It is **independent** of the
 OpenCode plugin (the plugin still does not call Python).
 
+For host-specific runtime bridge recipes, see
+[`docs/host-integrations/README.md`](../host-integrations/README.md).
+
 ```bash
 # List the available runtime skills
 python scripts/run_skill.py --list-skills --pretty

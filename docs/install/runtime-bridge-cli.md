@@ -12,6 +12,9 @@ external hosts call `fund-agent` runtime skills without importing
 internal Python modules directly, by spawning a Python subprocess
 and reading JSON envelopes from stdout.
 
+For host-specific subprocess recipes, see
+[`docs/host-integrations/README.md`](../host-integrations/README.md).
+
 ## Install (source checkout only)
 
 The runtime bridge is **git-clone-only**. The npm

@@ -192,6 +192,8 @@ python scripts/run_skill.py \
 
 See [`docs/install/runtime-bridge-cli.md`](./runtime-bridge-cli.md)
 for the full contract.
+For a Codex-focused cookbook, see
+[`docs/host-integrations/codex.md`](../host-integrations/codex.md).
 
 ## Future Codex install work
 

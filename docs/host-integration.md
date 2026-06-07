@@ -4,6 +4,9 @@
 planner and orchestrator. `fund-agent` provides manifest metadata, runtime
 skills, schemas, tools, and contracts.
 
+For host-specific cookbooks, see
+[`docs/host-integrations/README.md`](./host-integrations/README.md).
+
 The skill layer is Markdown-first. Hosts should discover callable skills from
 `skillpack/fund-agent.skillpack.yaml`, then read `skills/<slug>/SKILL.md` for
 agent-facing workflow and policy. Do not infer runtime skill IDs from folder

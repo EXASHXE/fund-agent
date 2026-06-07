@@ -9,6 +9,9 @@ Hosts should also read the Markdown-first skill docs at
 IDs such as `fund_analysis`; hyphenated folders such as `fund-analysis` are
 documentation slugs only. `fund-analyst` is legacy/reference-only material.
 
+For host-specific cookbooks, see
+[`docs/host-integrations/README.md`](./host-integrations/README.md).
+
 ## Matrix
 
 | Host | Reads manifest | Resolves runtime | Injects MCP adapter | Runs SkillInput/SkillOutput | External orchestration | Native install | Notes |

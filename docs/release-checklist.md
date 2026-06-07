@@ -20,6 +20,7 @@ Run this checklist before tagging a release.
 ## 2. Host Integration
 
 - [ ] `docs/host-integration.md` exists and describes host-owned orchestration
+- [ ] `docs/host-integrations/README.md` exists and links host-specific cookbooks
 - [ ] `docs/agent-host-quickstart.md` exists
 - [ ] External host smoke test passes:
   ```bash

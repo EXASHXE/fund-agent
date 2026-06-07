@@ -36,6 +36,8 @@ For other harnesses see:
 - `docs/install/manual-host.md` — manual / Python host install
 - `docs/install/codex.md` — Codex install (manual, light)
 - `docs/host-compatibility.md` — full host compatibility matrix
+- `docs/host-integrations/opencode.md` — OpenCode cookbook and
+  Mode A / Mode B boundary
 
 ## What this install actually does
 
