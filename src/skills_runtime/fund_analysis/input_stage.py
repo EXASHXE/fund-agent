@@ -6,6 +6,8 @@ from typing import Any
 
 from src.schemas.skill import SkillInput
 
+from .context import PortfolioInputBundle
+
 
 def dict_or_empty(value: Any) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
@@ -35,6 +37,61 @@ def latest_nav_by_fund(nav_history: dict[str, Any]) -> dict[str, float]:
             if isinstance(latest, dict) and latest.get("nav") is not None:
                 nav_data[fund_code] = float(latest["nav"])
     return nav_data
+
+
+def build_portfolio_input_bundle(
+    *,
+    payload: dict[str, Any],
+    portfolio: dict[str, Any],
+    positions: list[dict[str, Any]],
+    fund_codes: list[str],
+) -> PortfolioInputBundle:
+    fund_profiles = dict_or_empty(payload.get("fund_profiles"))
+    nav_history = dict_or_empty(payload.get("nav_history"))
+    holdings = dict_or_empty(payload.get("holdings"))
+    risk_profile = dict_or_empty(payload.get("risk_profile"))
+    constraints = dict_or_empty(payload.get("constraints"))
+    transactions = payload.get("transactions", [])
+    dca_plans = payload.get("dca_plans", {})
+    market_scenario = payload.get("market_scenario", {})
+
+    # Optional host data contract fields (pass-through)
+    benchmarks = payload.get("benchmarks") or {}
+    benchmark_history = payload.get("benchmark_history") or {}
+    peer_group = payload.get("peer_group") or {}
+    factor_exposures = payload.get("factor_exposures") or {}
+    manager_profiles = payload.get("manager_profiles") or {}
+    fee_schedules = payload.get("fee_schedules") or {}
+    redemption_rules = payload.get("redemption_rules") or {}
+    research_planning = payload.get("research_planning") is True
+
+    nav_data = latest_nav_by_fund(nav_history)
+    as_of_date = portfolio.get("as_of_date", "")
+
+    return PortfolioInputBundle(
+        payload=payload,
+        portfolio=portfolio,
+        positions=positions,
+        fund_codes=fund_codes,
+        fund_profiles=fund_profiles,
+        nav_history=nav_history,
+        holdings=holdings,
+        risk_profile=risk_profile,
+        constraints=constraints,
+        transactions=transactions,
+        dca_plans=dca_plans,
+        market_scenario=market_scenario,
+        benchmarks=benchmarks,
+        benchmark_history=benchmark_history,
+        peer_group=peer_group,
+        factor_exposures=factor_exposures,
+        manager_profiles=manager_profiles,
+        fee_schedules=fee_schedules,
+        redemption_rules=redemption_rules,
+        research_planning=research_planning,
+        nav_data=nav_data,
+        as_of_date=as_of_date,
+    )
 
 
 def target_weights_from_payload(

@@ -4,6 +4,81 @@ from __future__ import annotations
 
 from typing import Any
 
+from src.schemas.skill import SkillInput
+from src.tools.research.query_plan import build_research_query_plan
+
+from .context import CoreMetricsBundle, OptionalSummariesBundle, PortfolioInputBundle
+
+
+def build_optional_summaries(
+    bundle: PortfolioInputBundle,
+    metrics: CoreMetricsBundle,
+    skill_input: SkillInput,
+    warnings: list[str],
+) -> OptionalSummariesBundle:
+    # Check for optional data dimensions host might have requested
+    add_missing_optional_warnings(
+        warnings,
+        bundle.fund_codes,
+        benchmarks=bundle.benchmarks,
+        benchmark_history=bundle.benchmark_history,
+        peer_group=bundle.peer_group,
+        factor_exposures=bundle.factor_exposures,
+        manager_profiles=bundle.manager_profiles,
+        fee_schedules=bundle.fee_schedules,
+        redemption_rules=bundle.redemption_rules,
+    )
+
+    # Research query plan (deterministic, no network)
+    query_plan = None
+    if bundle.research_planning:
+        try:
+            themes = list(metrics.exposures.get("theme_exposure", {}).keys()) if isinstance(metrics.exposures, dict) else []
+            industries = list(metrics.industry_exposure.keys()) if isinstance(metrics.industry_exposure, dict) else []
+            query_plan = build_research_query_plan(
+                portfolio_positions=bundle.positions,
+                holdings=bundle.holdings,
+                fund_profiles=bundle.fund_profiles,
+                themes=themes[:20],
+                industries=industries[:20],
+                kg_context=skill_input.kg_context,
+            )
+        except Exception:
+            pass
+
+    # Optional data pass-through summaries
+    benchmark_summary = summarize_benchmark_gap(
+        metrics.fund_metrics,
+        bundle.benchmarks,
+        bundle.benchmark_history,
+    ) if (bundle.benchmarks or bundle.benchmark_history) else None
+    peer_summary = summarize_peer_data(bundle.peer_group) if bundle.peer_group else None
+    fee_summary = summarize_fee_schedule(
+        bundle.fee_schedules,
+        bundle.fund_codes,
+    ) if bundle.fee_schedules else None
+    redemption_summary = summarize_redemption_constraints(
+        bundle.redemption_rules,
+        bundle.fund_codes,
+    ) if bundle.redemption_rules else None
+    factor_summary = summarize_factor_exposures(
+        bundle.factor_exposures
+    ) if bundle.factor_exposures else None
+    manager_summary = summarize_manager_profiles(
+        bundle.manager_profiles,
+        bundle.fund_codes,
+    ) if bundle.manager_profiles else None
+
+    return OptionalSummariesBundle(
+        benchmark_summary=benchmark_summary,
+        peer_summary=peer_summary,
+        fee_summary=fee_summary,
+        redemption_summary=redemption_summary,
+        factor_summary=factor_summary,
+        manager_summary=manager_summary,
+        query_plan=query_plan,
+    )
+
 
 def summarize_benchmark_gap(
     fund_metrics: dict[str, Any],

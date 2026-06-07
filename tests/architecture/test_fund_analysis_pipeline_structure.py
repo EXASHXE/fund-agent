@@ -81,6 +81,13 @@ DAEMON_SERVER_TOKENS = {
     "uvicorn",
 }
 
+SKILL_LOW_LEVEL_TOOL_IMPORTS = {
+    "src.tools.fund.metrics",
+    "src.tools.portfolio.analysis",
+    "src.tools.portfolio.transaction",
+    "src.tools.research.query_plan",
+}
+
 
 def _imports_for(path: Path) -> set[str]:
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
@@ -163,5 +170,12 @@ def test_fund_analysis_stage_modules_do_not_introduce_daemon_or_server_construct
         matches = sorted(token for token in DAEMON_SERVER_TOKENS if token in text)
         if matches:
             violations[path.name] = matches
+
+    assert not violations
+
+
+def test_fund_analysis_skill_orchestrator_does_not_import_low_level_tools() -> None:
+    imports = _imports_for(PACKAGE / "skill.py")
+    violations = sorted(imports & SKILL_LOW_LEVEL_TOOL_IMPORTS)
 
     assert not violations
