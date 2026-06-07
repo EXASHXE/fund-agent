@@ -52,6 +52,12 @@ manager assessments, NAV history, ledger details, or scenario conclusions.
 normal structured portfolio/report runs, but minimal or baseline paths may
 produce fewer artifacts.
 
+Golden regression snapshots for representative `fund_analysis` fixture outputs
+live under [`tests/golden/`](../../tests/golden/README.md) and can be
+regenerated with
+[`scripts/update_fund_analysis_golden.py`](../../scripts/update_fund_analysis_golden.py)
+after intentional review.
+
 ## Artifact Categories
 
 | Category | Meaning |

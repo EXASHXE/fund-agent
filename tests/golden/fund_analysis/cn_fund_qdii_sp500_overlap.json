@@ -1,0 +1,2729 @@
+{
+  "artifacts": {
+    "analysis_coverage": {
+      "benchmark": "available",
+      "factor": "available",
+      "fees": "available",
+      "holdings": "available",
+      "ledger": "missing",
+      "peer": "missing",
+      "performance": "available",
+      "portfolio": "available",
+      "redemption": "available",
+      "research_plan": "not_requested"
+    },
+    "benchmark_summary": {
+      "benchmark_history": {
+        "synthetic_nasdaq100": [
+          {
+            "date": "2025-06-30",
+            "value": 1000.0
+          },
+          {
+            "date": "2025-09-30",
+            "value": 1120.0
+          },
+          {
+            "date": "2025-12-31",
+            "value": 1260.0
+          },
+          {
+            "date": "2026-03-31",
+            "value": 1195.0
+          }
+        ],
+        "synthetic_sp500": [
+          {
+            "date": "2025-06-30",
+            "value": 1000.0
+          },
+          {
+            "date": "2025-09-30",
+            "value": 1080.0
+          },
+          {
+            "date": "2025-12-31",
+            "value": 1140.0
+          },
+          {
+            "date": "2026-03-31",
+            "value": 1180.0
+          }
+        ]
+      },
+      "benchmark_history_keys": [
+        "synthetic_nasdaq100",
+        "synthetic_sp500"
+      ],
+      "benchmarks": {
+        "SYNQD001": "Synthetic S&P 500 Benchmark",
+        "SYNQD002": "Synthetic Nasdaq 100 Benchmark",
+        "SYNQD003": "Synthetic Global AI Benchmark",
+        "SYNQD004": "Synthetic CN Bond Benchmark"
+      },
+      "benchmarks_available": [
+        "SYNQD001",
+        "SYNQD002",
+        "SYNQD003",
+        "SYNQD004"
+      ],
+      "comparison": [
+        {
+          "benchmark": "synthetic_nasdaq100",
+          "benchmark_return": 0.195,
+          "excess_return": 0.005,
+          "fund_code": "SYNQD001",
+          "fund_return": 0.2,
+          "note": "host-provided data only; not a ranking or attribution analysis"
+        },
+        {
+          "benchmark": "synthetic_sp500",
+          "benchmark_return": 0.18,
+          "excess_return": 0.02,
+          "fund_code": "SYNQD001",
+          "fund_return": 0.2,
+          "note": "host-provided data only; not a ranking or attribution analysis"
+        },
+        {
+          "benchmark": "synthetic_nasdaq100",
+          "benchmark_return": 0.195,
+          "excess_return": 0.005,
+          "fund_code": "SYNQD002",
+          "fund_return": 0.2,
+          "note": "host-provided data only; not a ranking or attribution analysis"
+        },
+        {
+          "benchmark": "synthetic_sp500",
+          "benchmark_return": 0.18,
+          "excess_return": 0.02,
+          "fund_code": "SYNQD002",
+          "fund_return": 0.2,
+          "note": "host-provided data only; not a ranking or attribution analysis"
+        },
+        {
+          "benchmark": "synthetic_nasdaq100",
+          "benchmark_return": 0.195,
+          "excess_return": 0.055,
+          "fund_code": "SYNQD003",
+          "fund_return": 0.25,
+          "note": "host-provided data only; not a ranking or attribution analysis"
+        },
+        {
+          "benchmark": "synthetic_sp500",
+          "benchmark_return": 0.18,
+          "excess_return": 0.07,
+          "fund_code": "SYNQD003",
+          "fund_return": 0.25,
+          "note": "host-provided data only; not a ranking or attribution analysis"
+        },
+        {
+          "benchmark": "synthetic_nasdaq100",
+          "benchmark_return": 0.195,
+          "excess_return": -0.1849,
+          "fund_code": "SYNQD004",
+          "fund_return": 0.0101,
+          "note": "host-provided data only; not a ranking or attribution analysis"
+        },
+        {
+          "benchmark": "synthetic_sp500",
+          "benchmark_return": 0.18,
+          "excess_return": -0.1699,
+          "fund_code": "SYNQD004",
+          "fund_return": 0.0101,
+          "note": "host-provided data only; not a ranking or attribution analysis"
+        }
+      ]
+    },
+    "cost_basis_summary": {
+      "SYNQD001": {
+        "average_cost_per_share": 1.12,
+        "current_nav": 1.2,
+        "current_value": 60000.0,
+        "fund_code": "SYNQD001",
+        "method": "weighted_average",
+        "total_cost": 56000.0,
+        "total_shares": 50000.0,
+        "transaction_count": 1,
+        "unrealized_pnl": 4000.0,
+        "unrealized_pnl_pct": 7.14
+      },
+      "SYNQD002": {
+        "average_cost_per_share": 1.248,
+        "current_nav": 1.2,
+        "current_value": 50000.0,
+        "fund_code": "SYNQD002",
+        "method": "weighted_average",
+        "total_cost": 52000.0,
+        "total_shares": 41666.6667,
+        "transaction_count": 1,
+        "unrealized_pnl": -2000.0,
+        "unrealized_pnl_pct": -3.85
+      },
+      "SYNQD003": {
+        "average_cost_per_share": 1.166667,
+        "current_nav": 1.25,
+        "current_value": 45000.0,
+        "fund_code": "SYNQD003",
+        "method": "weighted_average",
+        "total_cost": 42000.0,
+        "total_shares": 36000.0,
+        "transaction_count": 1,
+        "unrealized_pnl": 3000.0,
+        "unrealized_pnl_pct": 7.14
+      },
+      "SYNQD004": {
+        "average_cost_per_share": 1.0,
+        "current_nav": 1.0,
+        "current_value": 15000.0,
+        "fund_code": "SYNQD004",
+        "method": "weighted_average",
+        "total_cost": 15000.0,
+        "total_shares": 15000.0,
+        "transaction_count": 1,
+        "unrealized_pnl": 0.0,
+        "unrealized_pnl_pct": 0.0
+      }
+    },
+    "data_completeness": {
+      "available_sections": [
+        "Portfolio Snapshot",
+        "Current Value Or Nav",
+        "Fund Profiles",
+        "Nav History",
+        "Holdings",
+        "Risk Profile",
+        "Constraints",
+        "Benchmark History",
+        "Factor Exposures",
+        "Fee Schedule",
+        "Redemption Rules"
+      ],
+      "critical_missing": [],
+      "grade": "B",
+      "limitations": [],
+      "missing_sections": [
+        "Peer Group",
+        "Manager Profile",
+        "Fund Flow",
+        "Macro Events",
+        "User Investment Plan"
+      ],
+      "optional_missing": [
+        "Peer Group",
+        "Manager Profile",
+        "Fund Flow",
+        "Macro Events",
+        "User Investment Plan"
+      ],
+      "score": 0.833
+    },
+    "dca_plan_review": {
+      "plans": [
+        {
+          "annual_amount": 18000.0,
+          "current_weight": 0.333333,
+          "exceeds_limit": true,
+          "fund_code": "SYNQD001",
+          "monthly_amount": 1500.0,
+          "plan_id": "sample_global_monthly",
+          "suggestion": "REDUCE"
+        }
+      ],
+      "suggestions": [
+        {
+          "annual_amount": 18000.0,
+          "current_weight": 0.333333,
+          "exceeds_limit": true,
+          "fund_code": "SYNQD001",
+          "monthly_amount": 1500.0,
+          "plan_id": "sample_global_monthly",
+          "suggestion": "REDUCE"
+        }
+      ],
+      "warnings": [
+        "DCA plan sample_global_monthly for SYNQD001 exceeds concentration limit"
+      ]
+    },
+    "exposure_summary": {
+      "fund_type_exposure": {
+        "fund_type:bond": 0.088235,
+        "fund_type:qdii_active": 0.264706,
+        "fund_type:qdii_index": 0.647059
+      },
+      "industry_exposure": {
+        "industry:ai_semiconductor": 0.076176,
+        "industry:automation": 0.015882,
+        "industry:cloud_platform": 0.081176,
+        "industry:government": 0.026471,
+        "industry:internet_platform": 0.015882,
+        "industry:policy_bank": 0.030882,
+        "industry:software": 0.017647
+      },
+      "theme_exposure": {
+        "asset_type:bond": 0.057353,
+        "asset_type:stock": 0.206765,
+        "industry:ai_semiconductor": 0.076176,
+        "industry:automation": 0.015882,
+        "industry:cloud_platform": 0.081176,
+        "industry:government": 0.026471,
+        "industry:internet_platform": 0.015882,
+        "industry:policy_bank": 0.030882,
+        "industry:software": 0.017647,
+        "region:CN": 0.057353,
+        "region:JP": 0.015882,
+        "region:US": 0.190882
+      }
+    },
+    "factor_summary": {
+      "concentration_warnings": [
+        "Fund SYNQD003 has high ai_theme exposure (0.80)",
+        "Fund SYNQD001 has high growth exposure (0.55)",
+        "Fund SYNQD002 has high growth exposure (0.72)",
+        "Fund SYNQD003 has high growth exposure (0.68)",
+        "Fund SYNQD001 has high usd_equity exposure (0.90)",
+        "Fund SYNQD002 has high usd_equity exposure (0.95)",
+        "Fund SYNQD003 has high usd_equity exposure (0.70)"
+      ],
+      "factor_exposures": {
+        "ai_theme": {
+          "SYNQD001": 0.25,
+          "SYNQD002": 0.38,
+          "SYNQD003": 0.8,
+          "SYNQD004": 0.0
+        },
+        "growth": {
+          "SYNQD001": 0.55,
+          "SYNQD002": 0.72,
+          "SYNQD003": 0.68,
+          "SYNQD004": 0.05
+        },
+        "usd_equity": {
+          "SYNQD001": 0.9,
+          "SYNQD002": 0.95,
+          "SYNQD003": 0.7,
+          "SYNQD004": 0.0
+        }
+      },
+      "factors": [
+        "ai_theme",
+        "growth",
+        "usd_equity"
+      ]
+    },
+    "fee_summary": {
+      "fee_schedules": {
+        "SYNQD001": {
+          "custody_fee": 0.002,
+          "management_fee": 0.008,
+          "redemption_fee": 0.005,
+          "sales_fee": 0.001,
+          "total_expense_ratio": 0.011
+        },
+        "SYNQD002": {
+          "custody_fee": 0.002,
+          "management_fee": 0.009,
+          "redemption_fee": 0.005,
+          "sales_fee": 0.001,
+          "total_expense_ratio": 0.012
+        },
+        "SYNQD003": {
+          "custody_fee": 0.002,
+          "management_fee": 0.015,
+          "redemption_fee": 0.006,
+          "sales_fee": 0.001,
+          "total_expense_ratio": 0.018
+        },
+        "SYNQD004": {
+          "custody_fee": 0.001,
+          "management_fee": 0.005,
+          "redemption_fee": 0.001,
+          "sales_fee": 0.0,
+          "total_expense_ratio": 0.006
+        }
+      },
+      "funds_with_fees": [
+        "SYNQD001",
+        "SYNQD002",
+        "SYNQD003",
+        "SYNQD004"
+      ]
+    },
+    "fund_analysis_report": {
+      "analysis_coverage": {
+        "benchmark": "available",
+        "factor": "available",
+        "fees": "available",
+        "holdings": "available",
+        "ledger": "missing",
+        "peer": "missing",
+        "performance": "available",
+        "portfolio": "available",
+        "redemption": "available",
+        "research_plan": "not_requested"
+      },
+      "benchmark_summary": {
+        "benchmark_history": {
+          "synthetic_nasdaq100": [
+            {
+              "date": "2025-06-30",
+              "value": 1000.0
+            },
+            {
+              "date": "2025-09-30",
+              "value": 1120.0
+            },
+            {
+              "date": "2025-12-31",
+              "value": 1260.0
+            },
+            {
+              "date": "2026-03-31",
+              "value": 1195.0
+            }
+          ],
+          "synthetic_sp500": [
+            {
+              "date": "2025-06-30",
+              "value": 1000.0
+            },
+            {
+              "date": "2025-09-30",
+              "value": 1080.0
+            },
+            {
+              "date": "2025-12-31",
+              "value": 1140.0
+            },
+            {
+              "date": "2026-03-31",
+              "value": 1180.0
+            }
+          ]
+        },
+        "benchmark_history_keys": [
+          "synthetic_nasdaq100",
+          "synthetic_sp500"
+        ],
+        "benchmarks": {
+          "SYNQD001": "Synthetic S&P 500 Benchmark",
+          "SYNQD002": "Synthetic Nasdaq 100 Benchmark",
+          "SYNQD003": "Synthetic Global AI Benchmark",
+          "SYNQD004": "Synthetic CN Bond Benchmark"
+        },
+        "benchmarks_available": [
+          "SYNQD001",
+          "SYNQD002",
+          "SYNQD003",
+          "SYNQD004"
+        ],
+        "comparison": [
+          {
+            "benchmark": "synthetic_nasdaq100",
+            "benchmark_return": 0.195,
+            "excess_return": 0.005,
+            "fund_code": "SYNQD001",
+            "fund_return": 0.2,
+            "note": "host-provided data only; not a ranking or attribution analysis"
+          },
+          {
+            "benchmark": "synthetic_sp500",
+            "benchmark_return": 0.18,
+            "excess_return": 0.02,
+            "fund_code": "SYNQD001",
+            "fund_return": 0.2,
+            "note": "host-provided data only; not a ranking or attribution analysis"
+          },
+          {
+            "benchmark": "synthetic_nasdaq100",
+            "benchmark_return": 0.195,
+            "excess_return": 0.005,
+            "fund_code": "SYNQD002",
+            "fund_return": 0.2,
+            "note": "host-provided data only; not a ranking or attribution analysis"
+          },
+          {
+            "benchmark": "synthetic_sp500",
+            "benchmark_return": 0.18,
+            "excess_return": 0.02,
+            "fund_code": "SYNQD002",
+            "fund_return": 0.2,
+            "note": "host-provided data only; not a ranking or attribution analysis"
+          },
+          {
+            "benchmark": "synthetic_nasdaq100",
+            "benchmark_return": 0.195,
+            "excess_return": 0.055,
+            "fund_code": "SYNQD003",
+            "fund_return": 0.25,
+            "note": "host-provided data only; not a ranking or attribution analysis"
+          },
+          {
+            "benchmark": "synthetic_sp500",
+            "benchmark_return": 0.18,
+            "excess_return": 0.07,
+            "fund_code": "SYNQD003",
+            "fund_return": 0.25,
+            "note": "host-provided data only; not a ranking or attribution analysis"
+          },
+          {
+            "benchmark": "synthetic_nasdaq100",
+            "benchmark_return": 0.195,
+            "excess_return": -0.1849,
+            "fund_code": "SYNQD004",
+            "fund_return": 0.0101,
+            "note": "host-provided data only; not a ranking or attribution analysis"
+          },
+          {
+            "benchmark": "synthetic_sp500",
+            "benchmark_return": 0.18,
+            "excess_return": -0.1699,
+            "fund_code": "SYNQD004",
+            "fund_return": 0.0101,
+            "note": "host-provided data only; not a ranking or attribution analysis"
+          }
+        ]
+      },
+      "concentration": {
+        "duplicate_tags": [
+          "qdii",
+          "us_equity"
+        ],
+        "hhi": 0.288927,
+        "max_fund_code": "SYNQD001",
+        "position_count": 4,
+        "single_fund_max_weight": 0.352941,
+        "top_n": 3,
+        "top_n_concentration": 0.911765
+      },
+      "cost_basis_summary": {
+        "SYNQD001": {
+          "average_cost_per_share": 1.12,
+          "current_nav": 1.2,
+          "current_value": 60000.0,
+          "fund_code": "SYNQD001",
+          "method": "weighted_average",
+          "total_cost": 56000.0,
+          "total_shares": 50000.0,
+          "transaction_count": 1,
+          "unrealized_pnl": 4000.0,
+          "unrealized_pnl_pct": 7.14
+        },
+        "SYNQD002": {
+          "average_cost_per_share": 1.248,
+          "current_nav": 1.2,
+          "current_value": 50000.0,
+          "fund_code": "SYNQD002",
+          "method": "weighted_average",
+          "total_cost": 52000.0,
+          "total_shares": 41666.6667,
+          "transaction_count": 1,
+          "unrealized_pnl": -2000.0,
+          "unrealized_pnl_pct": -3.85
+        },
+        "SYNQD003": {
+          "average_cost_per_share": 1.166667,
+          "current_nav": 1.25,
+          "current_value": 45000.0,
+          "fund_code": "SYNQD003",
+          "method": "weighted_average",
+          "total_cost": 42000.0,
+          "total_shares": 36000.0,
+          "transaction_count": 1,
+          "unrealized_pnl": 3000.0,
+          "unrealized_pnl_pct": 7.14
+        },
+        "SYNQD004": {
+          "average_cost_per_share": 1.0,
+          "current_nav": 1.0,
+          "current_value": 15000.0,
+          "fund_code": "SYNQD004",
+          "method": "weighted_average",
+          "total_cost": 15000.0,
+          "total_shares": 15000.0,
+          "transaction_count": 1,
+          "unrealized_pnl": 0.0,
+          "unrealized_pnl_pct": 0.0
+        }
+      },
+      "data_completeness": {
+        "available_sections": [
+          "Portfolio Snapshot",
+          "Current Value Or Nav",
+          "Fund Profiles",
+          "Nav History",
+          "Holdings",
+          "Risk Profile",
+          "Constraints",
+          "Benchmark History",
+          "Factor Exposures",
+          "Fee Schedule",
+          "Redemption Rules"
+        ],
+        "critical_missing": [],
+        "grade": "B",
+        "limitations": [],
+        "missing_sections": [
+          "Peer Group",
+          "Manager Profile",
+          "Fund Flow",
+          "Macro Events",
+          "User Investment Plan"
+        ],
+        "optional_missing": [
+          "Peer Group",
+          "Manager Profile",
+          "Fund Flow",
+          "Macro Events",
+          "User Investment Plan"
+        ],
+        "score": 0.833
+      },
+      "dca_review": {
+        "plans": [
+          {
+            "annual_amount": 18000.0,
+            "current_weight": 0.333333,
+            "exceeds_limit": true,
+            "fund_code": "SYNQD001",
+            "monthly_amount": 1500.0,
+            "plan_id": "sample_global_monthly",
+            "suggestion": "REDUCE"
+          }
+        ],
+        "suggestions": [
+          {
+            "annual_amount": 18000.0,
+            "current_weight": 0.333333,
+            "exceeds_limit": true,
+            "fund_code": "SYNQD001",
+            "monthly_amount": 1500.0,
+            "plan_id": "sample_global_monthly",
+            "suggestion": "REDUCE"
+          }
+        ],
+        "warnings": [
+          "DCA plan sample_global_monthly for SYNQD001 exceeds concentration limit"
+        ]
+      },
+      "exposure_summary": {
+        "fund_type_exposure": {
+          "fund_type:bond": 0.088235,
+          "fund_type:qdii_active": 0.264706,
+          "fund_type:qdii_index": 0.647059
+        },
+        "industry_exposure": {
+          "industry:ai_semiconductor": 0.076176,
+          "industry:automation": 0.015882,
+          "industry:cloud_platform": 0.081176,
+          "industry:government": 0.026471,
+          "industry:internet_platform": 0.015882,
+          "industry:policy_bank": 0.030882,
+          "industry:software": 0.017647
+        },
+        "theme_exposure": {
+          "asset_type:bond": 0.057353,
+          "asset_type:stock": 0.206765,
+          "industry:ai_semiconductor": 0.076176,
+          "industry:automation": 0.015882,
+          "industry:cloud_platform": 0.081176,
+          "industry:government": 0.026471,
+          "industry:internet_platform": 0.015882,
+          "industry:policy_bank": 0.030882,
+          "industry:software": 0.017647,
+          "region:CN": 0.057353,
+          "region:JP": 0.015882,
+          "region:US": 0.190882
+        }
+      },
+      "exposures": {
+        "asset_type:bond": 0.057353,
+        "asset_type:stock": 0.206765,
+        "fund_type:bond": 0.088235,
+        "fund_type:qdii_active": 0.264706,
+        "fund_type:qdii_index": 0.647059,
+        "industry:ai_semiconductor": 0.076176,
+        "industry:automation": 0.015882,
+        "industry:cloud_platform": 0.081176,
+        "industry:government": 0.026471,
+        "industry:internet_platform": 0.015882,
+        "industry:policy_bank": 0.030882,
+        "industry:software": 0.017647,
+        "region:CN": 0.057353,
+        "region:JP": 0.015882,
+        "region:US": 0.190882
+      },
+      "factor_summary": {
+        "concentration_warnings": [
+          "Fund SYNQD003 has high ai_theme exposure (0.80)",
+          "Fund SYNQD001 has high growth exposure (0.55)",
+          "Fund SYNQD002 has high growth exposure (0.72)",
+          "Fund SYNQD003 has high growth exposure (0.68)",
+          "Fund SYNQD001 has high usd_equity exposure (0.90)",
+          "Fund SYNQD002 has high usd_equity exposure (0.95)",
+          "Fund SYNQD003 has high usd_equity exposure (0.70)"
+        ],
+        "factor_exposures": {
+          "ai_theme": {
+            "SYNQD001": 0.25,
+            "SYNQD002": 0.38,
+            "SYNQD003": 0.8,
+            "SYNQD004": 0.0
+          },
+          "growth": {
+            "SYNQD001": 0.55,
+            "SYNQD002": 0.72,
+            "SYNQD003": 0.68,
+            "SYNQD004": 0.05
+          },
+          "usd_equity": {
+            "SYNQD001": 0.9,
+            "SYNQD002": 0.95,
+            "SYNQD003": 0.7,
+            "SYNQD004": 0.0
+          }
+        },
+        "factors": [
+          "ai_theme",
+          "growth",
+          "usd_equity"
+        ]
+      },
+      "fee_summary": {
+        "fee_schedules": {
+          "SYNQD001": {
+            "custody_fee": 0.002,
+            "management_fee": 0.008,
+            "redemption_fee": 0.005,
+            "sales_fee": 0.001,
+            "total_expense_ratio": 0.011
+          },
+          "SYNQD002": {
+            "custody_fee": 0.002,
+            "management_fee": 0.009,
+            "redemption_fee": 0.005,
+            "sales_fee": 0.001,
+            "total_expense_ratio": 0.012
+          },
+          "SYNQD003": {
+            "custody_fee": 0.002,
+            "management_fee": 0.015,
+            "redemption_fee": 0.006,
+            "sales_fee": 0.001,
+            "total_expense_ratio": 0.018
+          },
+          "SYNQD004": {
+            "custody_fee": 0.001,
+            "management_fee": 0.005,
+            "redemption_fee": 0.001,
+            "sales_fee": 0.0,
+            "total_expense_ratio": 0.006
+          }
+        },
+        "funds_with_fees": [
+          "SYNQD001",
+          "SYNQD002",
+          "SYNQD003",
+          "SYNQD004"
+        ]
+      },
+      "fund_metrics": {
+        "SYNQD001": {
+          "annualized_volatility": 0.29125,
+          "max_drawdown": 0.0,
+          "observation_count": 4,
+          "recent_momentum": 0.066022,
+          "return_1m": 0.043478,
+          "return_1y": 0.2,
+          "return_3m": 0.043478,
+          "return_6m": 0.111111,
+          "return_count": 3,
+          "risk_adjusted_score": 0.226685,
+          "rolling_drawdown": {
+            "max_drawdown": 0.0,
+            "peak_nav": 1.2,
+            "trough_nav": 1.0
+          },
+          "sharpe": 54.238048,
+          "sortino": 0.0,
+          "total_return": 0.2
+        },
+        "SYNQD002": {
+          "annualized_volatility": 1.559672,
+          "max_drawdown": 0.047619,
+          "observation_count": 4,
+          "recent_momentum": -0.007936,
+          "return_1m": -0.047619,
+          "return_1y": 0.2,
+          "return_3m": -0.047619,
+          "return_6m": 0.071429,
+          "return_count": 3,
+          "risk_adjusted_score": -0.005088,
+          "rolling_drawdown": {
+            "max_drawdown": 0.047619,
+            "peak_nav": 1.26,
+            "trough_nav": 1.2
+          },
+          "sharpe": 10.617744,
+          "sortino": 0.0,
+          "total_return": 0.2
+        },
+        "SYNQD003": {
+          "annualized_volatility": 0.638061,
+          "max_drawdown": 0.0,
+          "observation_count": 4,
+          "recent_momentum": 0.10304,
+          "return_1m": 0.059322,
+          "return_1y": 0.25,
+          "return_3m": 0.059322,
+          "return_6m": 0.190476,
+          "return_count": 3,
+          "risk_adjusted_score": 0.161489,
+          "rolling_drawdown": {
+            "max_drawdown": 0.0,
+            "peak_nav": 1.25,
+            "trough_nav": 1.0
+          },
+          "sharpe": 30.660457,
+          "sortino": 0.0,
+          "total_return": 0.25
+        },
+        "SYNQD004": {
+          "annualized_volatility": 0.024632,
+          "max_drawdown": 0.0,
+          "observation_count": 4,
+          "recent_momentum": 0.003011,
+          "return_1m": 0.002004,
+          "return_1y": 0.010101,
+          "return_3m": 0.002004,
+          "return_6m": 0.005025,
+          "return_count": 3,
+          "risk_adjusted_score": 0.122238,
+          "rolling_drawdown": {
+            "max_drawdown": 0.0,
+            "peak_nav": 1.0,
+            "trough_nav": 0.99
+          },
+          "sharpe": 33.53498,
+          "sortino": 0.0,
+          "total_return": 0.010101
+        }
+      },
+      "market_scenario": null,
+      "pnl_summary": {
+        "positions": {
+          "SYNQD001": {
+            "current_value": 60000.0,
+            "total_cost": 56000.0,
+            "unrealized_pnl": 4000.0,
+            "unrealized_pnl_pct": 0.071429
+          },
+          "SYNQD002": {
+            "current_value": 50000.0,
+            "total_cost": 52000.0,
+            "unrealized_pnl": -2000.0,
+            "unrealized_pnl_pct": -0.038462
+          },
+          "SYNQD003": {
+            "current_value": 45000.0,
+            "total_cost": 42000.0,
+            "unrealized_pnl": 3000.0,
+            "unrealized_pnl_pct": 0.071429
+          },
+          "SYNQD004": {
+            "current_value": 15000.0,
+            "total_cost": 15000.0,
+            "unrealized_pnl": 0.0,
+            "unrealized_pnl_pct": 0.0
+          }
+        },
+        "total_cost": 165000.0,
+        "total_value": 170000.0,
+        "unrealized_pnl": 5000.0,
+        "unrealized_pnl_pct": 0.030303
+      },
+      "portfolio_metrics": {
+        "as_of_date": "2026-03-31",
+        "cash_available": 10000.0,
+        "position_count": 4,
+        "position_weights": {
+          "SYNQD001": 0.333333,
+          "SYNQD002": 0.277778,
+          "SYNQD003": 0.25,
+          "SYNQD004": 0.083333
+        },
+        "total_value": 180000.0
+      },
+      "reconciliation": {
+        "match_count": 4,
+        "matches": [
+          {
+            "cost_basis_cost": 56000.0,
+            "cost_basis_shares": 50000.0,
+            "fund_code": "SYNQD001",
+            "portfolio_cost": 56000.0,
+            "portfolio_shares": 50000.0
+          },
+          {
+            "cost_basis_cost": 52000.0,
+            "cost_basis_shares": 41666.6667,
+            "fund_code": "SYNQD002",
+            "portfolio_cost": 52000.0,
+            "portfolio_shares": 41666.6667
+          },
+          {
+            "cost_basis_cost": 42000.0,
+            "cost_basis_shares": 36000.0,
+            "fund_code": "SYNQD003",
+            "portfolio_cost": 42000.0,
+            "portfolio_shares": 36000.0
+          },
+          {
+            "cost_basis_cost": 15000.0,
+            "cost_basis_shares": 15000.0,
+            "fund_code": "SYNQD004",
+            "portfolio_cost": 15000.0,
+            "portfolio_shares": 15000.0
+          }
+        ],
+        "mismatch_count": 0,
+        "mismatches": [],
+        "warnings": []
+      },
+      "redemption_summary": {
+        "funds_with_rules": [
+          "SYNQD001",
+          "SYNQD002",
+          "SYNQD003",
+          "SYNQD004"
+        ],
+        "redemption_constraints": {
+          "SYNQD001": {
+            "holding_period_days": 7,
+            "liquidity_note": "Sample QDII T+5 liquidity note.",
+            "redemption_fee_pct": 0.005,
+            "suspended": false
+          },
+          "SYNQD002": {
+            "holding_period_days": 7,
+            "liquidity_note": "Sample QDII T+5 liquidity note.",
+            "redemption_fee_pct": 0.005,
+            "suspended": false
+          },
+          "SYNQD003": {
+            "holding_period_days": 30,
+            "liquidity_note": "Sample active QDII liquidity note.",
+            "redemption_fee_pct": 0.006,
+            "suspended": false
+          },
+          "SYNQD004": {
+            "holding_period_days": 1,
+            "liquidity_note": "Sample bond fund liquidity note.",
+            "redemption_fee_pct": 0.001,
+            "suspended": false
+          }
+        }
+      },
+      "report_limitations": [
+        "Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data"
+      ],
+      "report_outline": [
+        {
+          "id": "executive_summary",
+          "status": "OK",
+          "title": "Executive summary"
+        },
+        {
+          "id": "portfolio_snapshot",
+          "status": "OK",
+          "title": "Portfolio snapshot"
+        },
+        {
+          "id": "pnl_and_cost_basis",
+          "status": "OK",
+          "title": "PnL and cost basis"
+        },
+        {
+          "id": "allocation_and_exposure",
+          "status": "OK",
+          "title": "Allocation and exposure"
+        },
+        {
+          "id": "risk_flags",
+          "status": "OK",
+          "title": "Risk flags"
+        },
+        {
+          "id": "performance_and_nav",
+          "status": "OK",
+          "title": "Performance and NAV"
+        },
+        {
+          "id": "benchmark_and_peer",
+          "status": "PARTIAL",
+          "title": "Benchmark and peer"
+        },
+        {
+          "id": "factor_and_style",
+          "status": "OK",
+          "title": "Factor and style"
+        },
+        {
+          "id": "fees_and_redemption",
+          "status": "OK",
+          "title": "Fees and redemption"
+        },
+        {
+          "id": "manager_and_fund_profile",
+          "status": "PARTIAL",
+          "title": "Manager and fund profile"
+        },
+        {
+          "id": "dca_and_trade_budget",
+          "status": "OK",
+          "title": "DCA and trade budget"
+        },
+        {
+          "id": "rebalance_plan",
+          "status": "OK",
+          "title": "Rebalance plan"
+        },
+        {
+          "id": "research_query_plan",
+          "status": "MISSING",
+          "title": "Research query plan"
+        },
+        {
+          "id": "data_completeness_and_limitations",
+          "status": "OK",
+          "title": "Data completeness and limitations"
+        },
+        {
+          "id": "evidence_appendix",
+          "status": "OK",
+          "title": "Evidence appendix"
+        }
+      ],
+      "report_quality_gate": {
+        "can_publish_professional_report": true,
+        "grade": "B",
+        "reason": "Data completeness grade B supports a professional report."
+      },
+      "report_sections": [
+        {
+          "bullets": [
+            "Portfolio value 180,000.00 across 4 position(s); cash 10,000.00.",
+            "Data completeness grade B with score 0.833.",
+            "Risk scan surfaced 4 flag(s) from available inputs.",
+            "No formal decision generated; call decision-support for formal action."
+          ],
+          "data_sources": [
+            "portfolio_summary",
+            "data_completeness",
+            "risk_flags"
+          ],
+          "id": "executive_summary",
+          "limitations": [],
+          "status": "OK",
+          "title": "Executive summary"
+        },
+        {
+          "bullets": [
+            "As of 2026-03-31, total value is 180,000.00 with 10,000.00 cash.",
+            "Largest position is SYNQD001 at 33.33% of portfolio value.",
+            "Position detail is available for 4 fund(s)."
+          ],
+          "data_sources": [
+            "portfolio_summary",
+            "position_summary"
+          ],
+          "id": "portfolio_snapshot",
+          "limitations": [],
+          "status": "OK",
+          "title": "Portfolio snapshot"
+        },
+        {
+          "bullets": [
+            "Unrealized PnL is 5,000.00 (3.03%) on total cost 165,000.00.",
+            "Position-level PnL is available for 4 fund(s).",
+            "Transaction-derived cost basis is available for 4 fund(s)."
+          ],
+          "data_sources": [
+            "pnl_summary",
+            "cost_basis_summary"
+          ],
+          "id": "pnl_and_cost_basis",
+          "limitations": [],
+          "status": "OK",
+          "title": "PnL and cost basis"
+        },
+        {
+          "bullets": [
+            "Top fund type exposure is fund_type:qdii_index at 64.71%.",
+            "Top industry exposure is industry:cloud_platform at 8.12%.",
+            "Top theme exposure is asset_type:stock at 20.68%.",
+            "Single-fund max weight is 35.29%; HHI is 0.288927."
+          ],
+          "data_sources": [
+            "exposure_summary",
+            "concentration"
+          ],
+          "id": "allocation_and_exposure",
+          "limitations": [],
+          "status": "OK",
+          "title": "Allocation and exposure"
+        },
+        {
+          "bullets": [
+            "Risk flags by severity: low=2, medium=2."
+          ],
+          "data_sources": [
+            "risk_flags",
+            "data_completeness"
+          ],
+          "id": "risk_flags",
+          "limitations": [],
+          "status": "OK",
+          "title": "Risk flags"
+        },
+        {
+          "bullets": [
+            "NAV-derived metrics are available for 4 fund(s).",
+            "Highest total return in provided NAV history is SYNQD003 at 25.00%."
+          ],
+          "data_sources": [
+            "fund_analysis_report.fund_metrics"
+          ],
+          "id": "performance_and_nav",
+          "limitations": [],
+          "status": "OK",
+          "title": "Performance and NAV"
+        },
+        {
+          "bullets": [
+            "Benchmark gap comparison is available for 8 fund-benchmark pair(s)."
+          ],
+          "data_sources": [
+            "benchmark_summary",
+            "peer_summary"
+          ],
+          "id": "benchmark_and_peer",
+          "limitations": [
+            "Peer group data is missing; no peer ranking is fabricated."
+          ],
+          "status": "PARTIAL",
+          "title": "Benchmark and peer"
+        },
+        {
+          "bullets": [
+            "Host-provided factor dimensions: ai_theme, growth, usd_equity.",
+            "Fund SYNQD003 has high ai_theme exposure (0.80)",
+            "Fund SYNQD001 has high growth exposure (0.55)",
+            "Fund SYNQD002 has high growth exposure (0.72)",
+            "Fund SYNQD003 has high growth exposure (0.68)",
+            "Fund SYNQD001 has high usd_equity exposure (0.90)",
+            "Fund SYNQD002 has high usd_equity exposure (0.95)",
+            "Fund SYNQD003 has high usd_equity exposure (0.70)"
+          ],
+          "data_sources": [
+            "factor_summary"
+          ],
+          "id": "factor_and_style",
+          "limitations": [],
+          "status": "OK",
+          "title": "Factor and style"
+        },
+        {
+          "bullets": [
+            "Fee schedule is available for 4 fund(s).",
+            "Redemption rules are available for 4 fund(s)."
+          ],
+          "data_sources": [
+            "fee_summary",
+            "redemption_summary"
+          ],
+          "id": "fees_and_redemption",
+          "limitations": [],
+          "status": "OK",
+          "title": "Fees and redemption"
+        },
+        {
+          "bullets": [
+            "Fund profile data is present, but manager profile details were not provided."
+          ],
+          "data_sources": [
+            "manager_summary",
+            "data_completeness"
+          ],
+          "id": "manager_and_fund_profile",
+          "limitations": [
+            "Manager tenure and manager-change analysis are unavailable."
+          ],
+          "status": "PARTIAL",
+          "title": "Manager and fund profile"
+        },
+        {
+          "bullets": [
+            "Trade budget: max buy 12,000.00, max sell 15,000.00, liquidity reserve 14,400.00.",
+            "Short-term trade budget usage is available.",
+            "DCA review includes 1 suggestion(s)."
+          ],
+          "data_sources": [
+            "trade_budget",
+            "short_term_trade_budget",
+            "dca_plan_review"
+          ],
+          "id": "dca_and_trade_budget",
+          "limitations": [],
+          "status": "OK",
+          "title": "DCA and trade budget"
+        },
+        {
+          "bullets": [
+            "Rebalance simulation produced 4 trade leg(s) with total trade amount 30,000.00.",
+            "Sample host-supplied caps are informational unless the runtime consumes them.",
+            "Overlap review uses synthetic holdings only."
+          ],
+          "data_sources": [
+            "suggested_rebalance_plan"
+          ],
+          "id": "rebalance_plan",
+          "limitations": [],
+          "status": "OK",
+          "title": "Rebalance plan"
+        },
+        {
+          "bullets": [],
+          "data_sources": [
+            "research_query_plan"
+          ],
+          "id": "research_query_plan",
+          "limitations": [
+            "Research planning was not requested by the host."
+          ],
+          "status": "MISSING",
+          "title": "Research query plan"
+        },
+        {
+          "bullets": [
+            "Completeness grade B with score 0.833.",
+            "Missing data groups: Peer Group, Manager Profile, Fund Flow, Macro Events, User Investment Plan.",
+            "Optional gaps: Peer Group, Manager Profile, Fund Flow, Macro Events, User Investment Plan."
+          ],
+          "data_sources": [
+            "data_completeness",
+            "report_limitations"
+          ],
+          "id": "data_completeness_and_limitations",
+          "limitations": [
+            "Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data"
+          ],
+          "status": "OK",
+          "title": "Data completeness and limitations"
+        },
+        {
+          "bullets": [
+            "FundAnalysisSkill emits HardEvidence separately in SkillOutput.evidence_items.",
+            "This composed report does not create formal decisions or execution ledgers."
+          ],
+          "data_sources": [
+            "SkillOutput.evidence_items"
+          ],
+          "id": "evidence_appendix",
+          "limitations": [],
+          "status": "OK",
+          "title": "Evidence appendix"
+        }
+      ],
+      "risk_flags": [
+        {
+          "details": {
+            "limit": 0.55,
+            "theme": "fund_type:qdii_index",
+            "value": 0.647059
+          },
+          "message": "theme exposure exceeds risk profile limit",
+          "severity": "medium",
+          "type": "overweight_theme"
+        },
+        {
+          "details": {
+            "limit": 0.08,
+            "value": 0.055556
+          },
+          "message": "cash reserve is below liquidity reserve target",
+          "severity": "medium",
+          "type": "insufficient_cash_reserve"
+        },
+        {
+          "details": {
+            "tag": "qdii"
+          },
+          "message": "multiple funds share the same exposure tag",
+          "severity": "low",
+          "type": "duplicate_exposure"
+        },
+        {
+          "details": {
+            "tag": "us_equity"
+          },
+          "message": "multiple funds share the same exposure tag",
+          "severity": "low",
+          "type": "duplicate_exposure"
+        }
+      ],
+      "short_term_budget": {
+        "exceeded": false,
+        "recent_buys": 0,
+        "recent_sells": 0,
+        "remaining": 13600.0,
+        "short_term_budget": 13600.0,
+        "usage_pct": 0.0,
+        "used": 0
+      },
+      "suggested_watchlist": [],
+      "trade_budget": {
+        "cash_available": 10000.0,
+        "liquidity_reserve": 14400.0,
+        "max_buy_amount": 12000.0,
+        "max_sell_amount": 15000.0,
+        "max_trade_amount": 18000.0,
+        "min_trade_amount": 1000.0,
+        "short_term_budget": 14400.0,
+        "total_value": 180000.0
+      },
+      "trading_flags": [],
+      "transaction_summary": {
+        "as_of_date": "2026-03-31",
+        "buy_count": 4,
+        "cashflow_by_fund": {
+          "SYNQD001": -56000.0,
+          "SYNQD002": -52000.0,
+          "SYNQD003": -42000.0,
+          "SYNQD004": -15000.0
+        },
+        "net_flow": -165000.0,
+        "position_costs": {
+          "SYNQD001": {
+            "average_cost_per_share": 1.12,
+            "current_nav": 1.2,
+            "current_value": 60000.0,
+            "fund_code": "SYNQD001",
+            "method": "weighted_average",
+            "total_cost": 56000.0,
+            "total_shares": 50000.0,
+            "transaction_count": 1,
+            "unrealized_pnl": 4000.0,
+            "unrealized_pnl_pct": 7.14
+          },
+          "SYNQD002": {
+            "average_cost_per_share": 1.248,
+            "current_nav": 1.2,
+            "current_value": 50000.0,
+            "fund_code": "SYNQD002",
+            "method": "weighted_average",
+            "total_cost": 52000.0,
+            "total_shares": 41666.6667,
+            "transaction_count": 1,
+            "unrealized_pnl": -2000.0,
+            "unrealized_pnl_pct": -3.85
+          },
+          "SYNQD003": {
+            "average_cost_per_share": 1.166667,
+            "current_nav": 1.25,
+            "current_value": 45000.0,
+            "fund_code": "SYNQD003",
+            "method": "weighted_average",
+            "total_cost": 42000.0,
+            "total_shares": 36000.0,
+            "transaction_count": 1,
+            "unrealized_pnl": 3000.0,
+            "unrealized_pnl_pct": 7.14
+          },
+          "SYNQD004": {
+            "average_cost_per_share": 1.0,
+            "current_nav": 1.0,
+            "current_value": 15000.0,
+            "fund_code": "SYNQD004",
+            "method": "weighted_average",
+            "total_cost": 15000.0,
+            "total_shares": 15000.0,
+            "transaction_count": 1,
+            "unrealized_pnl": 0.0,
+            "unrealized_pnl_pct": 0.0
+          }
+        },
+        "sell_count": 0,
+        "total_buys": 165000.0,
+        "total_dividends": 0.0,
+        "total_fees": 0.0,
+        "total_sells": 0.0,
+        "warnings": []
+      },
+      "warnings": []
+    },
+    "ledger_reconciliation_report": {
+      "comparisons": [
+        {
+          "fund_code": "SYNQD001",
+          "matched": true,
+          "portfolio_shares": 50000.0,
+          "portfolio_value": 60000.0,
+          "severity": "ok",
+          "shares_delta": 0.0,
+          "snapshot_shares": 50000.0,
+          "snapshot_value": 60000.0,
+          "value_delta": 0.0
+        },
+        {
+          "fund_code": "SYNQD002",
+          "matched": true,
+          "portfolio_shares": 41666.6667,
+          "portfolio_value": 50000.0,
+          "severity": "ok",
+          "shares_delta": 0.0,
+          "snapshot_shares": 41666.6667,
+          "snapshot_value": 50000.0,
+          "value_delta": 0.0
+        },
+        {
+          "fund_code": "SYNQD003",
+          "matched": true,
+          "portfolio_shares": 36000.0,
+          "portfolio_value": 45000.0,
+          "severity": "ok",
+          "shares_delta": 0.0,
+          "snapshot_shares": 36000.0,
+          "snapshot_value": 45000.0,
+          "value_delta": 0.0
+        },
+        {
+          "fund_code": "SYNQD004",
+          "matched": true,
+          "portfolio_shares": 15000.0,
+          "portfolio_value": 15000.0,
+          "severity": "ok",
+          "shares_delta": 0.0,
+          "snapshot_shares": 15000.0,
+          "snapshot_value": 15000.0,
+          "value_delta": 0.0
+        }
+      ],
+      "matched": true,
+      "mismatches": [],
+      "warnings": []
+    },
+    "market_scenario_impact": null,
+    "pnl_summary": {
+      "positions": {
+        "SYNQD001": {
+          "current_value": 60000.0,
+          "total_cost": 56000.0,
+          "unrealized_pnl": 4000.0,
+          "unrealized_pnl_pct": 0.071429
+        },
+        "SYNQD002": {
+          "current_value": 50000.0,
+          "total_cost": 52000.0,
+          "unrealized_pnl": -2000.0,
+          "unrealized_pnl_pct": -0.038462
+        },
+        "SYNQD003": {
+          "current_value": 45000.0,
+          "total_cost": 42000.0,
+          "unrealized_pnl": 3000.0,
+          "unrealized_pnl_pct": 0.071429
+        },
+        "SYNQD004": {
+          "current_value": 15000.0,
+          "total_cost": 15000.0,
+          "unrealized_pnl": 0.0,
+          "unrealized_pnl_pct": 0.0
+        }
+      },
+      "total_cost": 165000.0,
+      "total_value": 170000.0,
+      "unrealized_pnl": 5000.0,
+      "unrealized_pnl_pct": 0.030303
+    },
+    "portfolio_summary": {
+      "as_of_date": "2026-03-31",
+      "cash_available": 10000.0,
+      "position_count": 4,
+      "position_weights": {
+        "SYNQD001": 0.333333,
+        "SYNQD002": 0.277778,
+        "SYNQD003": 0.25,
+        "SYNQD004": 0.083333
+      },
+      "total_value": 180000.0
+    },
+    "position_summary": {
+      "SYNQD001": {
+        "current_value": 60000.0,
+        "fund_code": "SYNQD001",
+        "fund_name": "Sample QDII S&P 500 Index Fund",
+        "pending_amount": 0.0,
+        "shares": 50000.0,
+        "tags": [
+          "qdii",
+          "us_equity",
+          "sp500_style"
+        ],
+        "target_weight": 0.3,
+        "total_cost": 56000.0
+      },
+      "SYNQD002": {
+        "current_value": 50000.0,
+        "fund_code": "SYNQD002",
+        "fund_name": "Sample Nasdaq Growth Index Fund",
+        "pending_amount": 0.0,
+        "shares": 41666.6667,
+        "tags": [
+          "qdii",
+          "us_equity",
+          "nasdaq_style"
+        ],
+        "target_weight": 0.25,
+        "total_cost": 52000.0
+      },
+      "SYNQD003": {
+        "current_value": 45000.0,
+        "fund_code": "SYNQD003",
+        "fund_name": "Sample Global AI Leaders Fund",
+        "pending_amount": 0.0,
+        "shares": 36000.0,
+        "tags": [
+          "qdii",
+          "ai_theme",
+          "global_equity"
+        ],
+        "target_weight": 0.2,
+        "total_cost": 42000.0
+      },
+      "SYNQD004": {
+        "current_value": 15000.0,
+        "fund_code": "SYNQD004",
+        "fund_name": "Sample China Bond Buffer Fund",
+        "pending_amount": 0.0,
+        "shares": 15000.0,
+        "tags": [
+          "cn_bond",
+          "buffer"
+        ],
+        "target_weight": 0.15,
+        "total_cost": 15000.0
+      }
+    },
+    "redemption_summary": {
+      "funds_with_rules": [
+        "SYNQD001",
+        "SYNQD002",
+        "SYNQD003",
+        "SYNQD004"
+      ],
+      "redemption_constraints": {
+        "SYNQD001": {
+          "holding_period_days": 7,
+          "liquidity_note": "Sample QDII T+5 liquidity note.",
+          "redemption_fee_pct": 0.005,
+          "suspended": false
+        },
+        "SYNQD002": {
+          "holding_period_days": 7,
+          "liquidity_note": "Sample QDII T+5 liquidity note.",
+          "redemption_fee_pct": 0.005,
+          "suspended": false
+        },
+        "SYNQD003": {
+          "holding_period_days": 30,
+          "liquidity_note": "Sample active QDII liquidity note.",
+          "redemption_fee_pct": 0.006,
+          "suspended": false
+        },
+        "SYNQD004": {
+          "holding_period_days": 1,
+          "liquidity_note": "Sample bond fund liquidity note.",
+          "redemption_fee_pct": 0.001,
+          "suspended": false
+        }
+      }
+    },
+    "report_limitations": [
+      "Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data"
+    ],
+    "report_outline": [
+      {
+        "id": "executive_summary",
+        "status": "OK",
+        "title": "Executive summary"
+      },
+      {
+        "id": "portfolio_snapshot",
+        "status": "OK",
+        "title": "Portfolio snapshot"
+      },
+      {
+        "id": "pnl_and_cost_basis",
+        "status": "OK",
+        "title": "PnL and cost basis"
+      },
+      {
+        "id": "allocation_and_exposure",
+        "status": "OK",
+        "title": "Allocation and exposure"
+      },
+      {
+        "id": "risk_flags",
+        "status": "OK",
+        "title": "Risk flags"
+      },
+      {
+        "id": "performance_and_nav",
+        "status": "OK",
+        "title": "Performance and NAV"
+      },
+      {
+        "id": "benchmark_and_peer",
+        "status": "PARTIAL",
+        "title": "Benchmark and peer"
+      },
+      {
+        "id": "factor_and_style",
+        "status": "OK",
+        "title": "Factor and style"
+      },
+      {
+        "id": "fees_and_redemption",
+        "status": "OK",
+        "title": "Fees and redemption"
+      },
+      {
+        "id": "manager_and_fund_profile",
+        "status": "PARTIAL",
+        "title": "Manager and fund profile"
+      },
+      {
+        "id": "dca_and_trade_budget",
+        "status": "OK",
+        "title": "DCA and trade budget"
+      },
+      {
+        "id": "rebalance_plan",
+        "status": "OK",
+        "title": "Rebalance plan"
+      },
+      {
+        "id": "research_query_plan",
+        "status": "MISSING",
+        "title": "Research query plan"
+      },
+      {
+        "id": "data_completeness_and_limitations",
+        "status": "OK",
+        "title": "Data completeness and limitations"
+      },
+      {
+        "id": "evidence_appendix",
+        "status": "OK",
+        "title": "Evidence appendix"
+      }
+    ],
+    "report_quality_gate": {
+      "can_publish_professional_report": true,
+      "grade": "B",
+      "reason": "Data completeness grade B supports a professional report."
+    },
+    "report_sections": [
+      {
+        "bullets": [
+          "Portfolio value 180,000.00 across 4 position(s); cash 10,000.00.",
+          "Data completeness grade B with score 0.833.",
+          "Risk scan surfaced 4 flag(s) from available inputs.",
+          "No formal decision generated; call decision-support for formal action."
+        ],
+        "data_sources": [
+          "portfolio_summary",
+          "data_completeness",
+          "risk_flags"
+        ],
+        "id": "executive_summary",
+        "limitations": [],
+        "status": "OK",
+        "title": "Executive summary"
+      },
+      {
+        "bullets": [
+          "As of 2026-03-31, total value is 180,000.00 with 10,000.00 cash.",
+          "Largest position is SYNQD001 at 33.33% of portfolio value.",
+          "Position detail is available for 4 fund(s)."
+        ],
+        "data_sources": [
+          "portfolio_summary",
+          "position_summary"
+        ],
+        "id": "portfolio_snapshot",
+        "limitations": [],
+        "status": "OK",
+        "title": "Portfolio snapshot"
+      },
+      {
+        "bullets": [
+          "Unrealized PnL is 5,000.00 (3.03%) on total cost 165,000.00.",
+          "Position-level PnL is available for 4 fund(s).",
+          "Transaction-derived cost basis is available for 4 fund(s)."
+        ],
+        "data_sources": [
+          "pnl_summary",
+          "cost_basis_summary"
+        ],
+        "id": "pnl_and_cost_basis",
+        "limitations": [],
+        "status": "OK",
+        "title": "PnL and cost basis"
+      },
+      {
+        "bullets": [
+          "Top fund type exposure is fund_type:qdii_index at 64.71%.",
+          "Top industry exposure is industry:cloud_platform at 8.12%.",
+          "Top theme exposure is asset_type:stock at 20.68%.",
+          "Single-fund max weight is 35.29%; HHI is 0.288927."
+        ],
+        "data_sources": [
+          "exposure_summary",
+          "concentration"
+        ],
+        "id": "allocation_and_exposure",
+        "limitations": [],
+        "status": "OK",
+        "title": "Allocation and exposure"
+      },
+      {
+        "bullets": [
+          "Risk flags by severity: low=2, medium=2."
+        ],
+        "data_sources": [
+          "risk_flags",
+          "data_completeness"
+        ],
+        "id": "risk_flags",
+        "limitations": [],
+        "status": "OK",
+        "title": "Risk flags"
+      },
+      {
+        "bullets": [
+          "NAV-derived metrics are available for 4 fund(s).",
+          "Highest total return in provided NAV history is SYNQD003 at 25.00%."
+        ],
+        "data_sources": [
+          "fund_analysis_report.fund_metrics"
+        ],
+        "id": "performance_and_nav",
+        "limitations": [],
+        "status": "OK",
+        "title": "Performance and NAV"
+      },
+      {
+        "bullets": [
+          "Benchmark gap comparison is available for 8 fund-benchmark pair(s)."
+        ],
+        "data_sources": [
+          "benchmark_summary",
+          "peer_summary"
+        ],
+        "id": "benchmark_and_peer",
+        "limitations": [
+          "Peer group data is missing; no peer ranking is fabricated."
+        ],
+        "status": "PARTIAL",
+        "title": "Benchmark and peer"
+      },
+      {
+        "bullets": [
+          "Host-provided factor dimensions: ai_theme, growth, usd_equity.",
+          "Fund SYNQD003 has high ai_theme exposure (0.80)",
+          "Fund SYNQD001 has high growth exposure (0.55)",
+          "Fund SYNQD002 has high growth exposure (0.72)",
+          "Fund SYNQD003 has high growth exposure (0.68)",
+          "Fund SYNQD001 has high usd_equity exposure (0.90)",
+          "Fund SYNQD002 has high usd_equity exposure (0.95)",
+          "Fund SYNQD003 has high usd_equity exposure (0.70)"
+        ],
+        "data_sources": [
+          "factor_summary"
+        ],
+        "id": "factor_and_style",
+        "limitations": [],
+        "status": "OK",
+        "title": "Factor and style"
+      },
+      {
+        "bullets": [
+          "Fee schedule is available for 4 fund(s).",
+          "Redemption rules are available for 4 fund(s)."
+        ],
+        "data_sources": [
+          "fee_summary",
+          "redemption_summary"
+        ],
+        "id": "fees_and_redemption",
+        "limitations": [],
+        "status": "OK",
+        "title": "Fees and redemption"
+      },
+      {
+        "bullets": [
+          "Fund profile data is present, but manager profile details were not provided."
+        ],
+        "data_sources": [
+          "manager_summary",
+          "data_completeness"
+        ],
+        "id": "manager_and_fund_profile",
+        "limitations": [
+          "Manager tenure and manager-change analysis are unavailable."
+        ],
+        "status": "PARTIAL",
+        "title": "Manager and fund profile"
+      },
+      {
+        "bullets": [
+          "Trade budget: max buy 12,000.00, max sell 15,000.00, liquidity reserve 14,400.00.",
+          "Short-term trade budget usage is available.",
+          "DCA review includes 1 suggestion(s)."
+        ],
+        "data_sources": [
+          "trade_budget",
+          "short_term_trade_budget",
+          "dca_plan_review"
+        ],
+        "id": "dca_and_trade_budget",
+        "limitations": [],
+        "status": "OK",
+        "title": "DCA and trade budget"
+      },
+      {
+        "bullets": [
+          "Rebalance simulation produced 4 trade leg(s) with total trade amount 30,000.00.",
+          "Sample host-supplied caps are informational unless the runtime consumes them.",
+          "Overlap review uses synthetic holdings only."
+        ],
+        "data_sources": [
+          "suggested_rebalance_plan"
+        ],
+        "id": "rebalance_plan",
+        "limitations": [],
+        "status": "OK",
+        "title": "Rebalance plan"
+      },
+      {
+        "bullets": [],
+        "data_sources": [
+          "research_query_plan"
+        ],
+        "id": "research_query_plan",
+        "limitations": [
+          "Research planning was not requested by the host."
+        ],
+        "status": "MISSING",
+        "title": "Research query plan"
+      },
+      {
+        "bullets": [
+          "Completeness grade B with score 0.833.",
+          "Missing data groups: Peer Group, Manager Profile, Fund Flow, Macro Events, User Investment Plan.",
+          "Optional gaps: Peer Group, Manager Profile, Fund Flow, Macro Events, User Investment Plan."
+        ],
+        "data_sources": [
+          "data_completeness",
+          "report_limitations"
+        ],
+        "id": "data_completeness_and_limitations",
+        "limitations": [
+          "Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data"
+        ],
+        "status": "OK",
+        "title": "Data completeness and limitations"
+      },
+      {
+        "bullets": [
+          "FundAnalysisSkill emits HardEvidence separately in SkillOutput.evidence_items.",
+          "This composed report does not create formal decisions or execution ledgers."
+        ],
+        "data_sources": [
+          "SkillOutput.evidence_items"
+        ],
+        "id": "evidence_appendix",
+        "limitations": [],
+        "status": "OK",
+        "title": "Evidence appendix"
+      }
+    ],
+    "risk_flags": [
+      {
+        "details": {
+          "limit": 0.55,
+          "theme": "fund_type:qdii_index",
+          "value": 0.647059
+        },
+        "message": "theme exposure exceeds risk profile limit",
+        "severity": "medium",
+        "type": "overweight_theme"
+      },
+      {
+        "details": {
+          "limit": 0.08,
+          "value": 0.055556
+        },
+        "message": "cash reserve is below liquidity reserve target",
+        "severity": "medium",
+        "type": "insufficient_cash_reserve"
+      },
+      {
+        "details": {
+          "tag": "qdii"
+        },
+        "message": "multiple funds share the same exposure tag",
+        "severity": "low",
+        "type": "duplicate_exposure"
+      },
+      {
+        "details": {
+          "tag": "us_equity"
+        },
+        "message": "multiple funds share the same exposure tag",
+        "severity": "low",
+        "type": "duplicate_exposure"
+      }
+    ],
+    "short_term_trade_budget": {
+      "exceeded": false,
+      "recent_buys": 0,
+      "recent_sells": 0,
+      "remaining": 13600.0,
+      "short_term_budget": 13600.0,
+      "usage_pct": 0.0,
+      "used": 0
+    },
+    "suggested_rebalance_plan": {
+      "suggested_trade_plan": [
+        {
+          "action": "SELL",
+          "amount": 6000.0,
+          "cap_reasons": [],
+          "capped": false,
+          "current_cost": 56000.0,
+          "current_value": 60000.0,
+          "current_weight": 0.333333,
+          "evidence_refs": [
+            "ev:portfolio_allocation_concentration",
+            "ev:fund_risk_return_metrics",
+            "ev:fund_risk_return_metrics",
+            "ev:fund_risk_return_metrics",
+            "ev:fund_risk_return_metrics",
+            "ev:portfolio_risk_flags",
+            "ev:position_cost_basis",
+            "ev:short_term_budget_usage",
+            "ev:dca_plan_review",
+            "ev:portfolio_pnl_summary"
+          ],
+          "fund_code": "SYNQD001",
+          "fund_name": "Sample QDII S&P 500 Index Fund",
+          "rationale": "Within constraint bounds",
+          "requested_amount": 6000.0,
+          "risk_flags_refs": [
+            "overweight_theme",
+            "insufficient_cash_reserve",
+            "duplicate_exposure",
+            "duplicate_exposure"
+          ],
+          "tags": [
+            "qdii",
+            "us_equity",
+            "sp500_style"
+          ],
+          "target_weight": 0.3,
+          "trade_id": "SYNQD001_SELL_0",
+          "unrealized_pnl": 4000.0
+        },
+        {
+          "action": "SELL",
+          "amount": 5000.0,
+          "cap_reasons": [],
+          "capped": false,
+          "current_cost": 52000.0,
+          "current_value": 50000.0,
+          "current_weight": 0.277778,
+          "evidence_refs": [
+            "ev:portfolio_allocation_concentration",
+            "ev:fund_risk_return_metrics",
+            "ev:fund_risk_return_metrics",
+            "ev:fund_risk_return_metrics",
+            "ev:fund_risk_return_metrics",
+            "ev:portfolio_risk_flags",
+            "ev:position_cost_basis",
+            "ev:short_term_budget_usage",
+            "ev:dca_plan_review",
+            "ev:portfolio_pnl_summary"
+          ],
+          "fund_code": "SYNQD002",
+          "fund_name": "Sample Nasdaq Growth Index Fund",
+          "rationale": "Within constraint bounds",
+          "requested_amount": 5000.0,
+          "risk_flags_refs": [
+            "overweight_theme",
+            "insufficient_cash_reserve",
+            "duplicate_exposure",
+            "duplicate_exposure"
+          ],
+          "tags": [
+            "qdii",
+            "us_equity",
+            "nasdaq_style"
+          ],
+          "target_weight": 0.25,
+          "trade_id": "SYNQD002_SELL_1",
+          "unrealized_pnl": -2000.0
+        },
+        {
+          "action": "SELL",
+          "amount": 9000.0,
+          "cap_reasons": [],
+          "capped": false,
+          "current_cost": 42000.0,
+          "current_value": 45000.0,
+          "current_weight": 0.25,
+          "evidence_refs": [
+            "ev:portfolio_allocation_concentration",
+            "ev:fund_risk_return_metrics",
+            "ev:fund_risk_return_metrics",
+            "ev:fund_risk_return_metrics",
+            "ev:fund_risk_return_metrics",
+            "ev:portfolio_risk_flags",
+            "ev:position_cost_basis",
+            "ev:short_term_budget_usage",
+            "ev:dca_plan_review",
+            "ev:portfolio_pnl_summary"
+          ],
+          "fund_code": "SYNQD003",
+          "fund_name": "Sample Global AI Leaders Fund",
+          "rationale": "Within constraint bounds",
+          "requested_amount": 9000.0,
+          "risk_flags_refs": [
+            "overweight_theme",
+            "insufficient_cash_reserve",
+            "duplicate_exposure",
+            "duplicate_exposure"
+          ],
+          "tags": [
+            "qdii",
+            "ai_theme",
+            "global_equity"
+          ],
+          "target_weight": 0.2,
+          "trade_id": "SYNQD003_SELL_2",
+          "unrealized_pnl": 3000.0
+        },
+        {
+          "action": "BUY",
+          "amount": 10000.0,
+          "cap_reasons": [
+            "capped by cash_available (10000.0)"
+          ],
+          "capped": true,
+          "current_cost": 15000.0,
+          "current_value": 15000.0,
+          "current_weight": 0.083333,
+          "evidence_refs": [
+            "ev:portfolio_allocation_concentration",
+            "ev:fund_risk_return_metrics",
+            "ev:fund_risk_return_metrics",
+            "ev:fund_risk_return_metrics",
+            "ev:fund_risk_return_metrics",
+            "ev:portfolio_risk_flags",
+            "ev:position_cost_basis",
+            "ev:short_term_budget_usage",
+            "ev:dca_plan_review",
+            "ev:portfolio_pnl_summary"
+          ],
+          "fund_code": "SYNQD004",
+          "fund_name": "Sample China Bond Buffer Fund",
+          "rationale": "Capped by constraints: capped by cash_available (10000.0)",
+          "requested_amount": 12000.0,
+          "risk_flags_refs": [
+            "overweight_theme",
+            "insufficient_cash_reserve",
+            "duplicate_exposure",
+            "duplicate_exposure"
+          ],
+          "tags": [
+            "cn_bond",
+            "buffer"
+          ],
+          "target_weight": 0.15,
+          "trade_id": "SYNQD004_BUY_3",
+          "unrealized_pnl": 0.0
+        }
+      ],
+      "total_trade_amount": 30000.0,
+      "warnings": [
+        "Sample host-supplied caps are informational unless the runtime consumes them.",
+        "Overlap review uses synthetic holdings only."
+      ]
+    },
+    "warnings": []
+  },
+  "errors": [],
+  "evidence_items": [
+    {
+      "claim": "Portfolio allocation and concentration metrics were computed",
+      "confidence_weight": 1.0,
+      "direction": "negative",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:SYNQD001",
+        "fund:SYNQD002",
+        "fund:SYNQD003",
+        "fund:SYNQD004"
+      ],
+      "source_type": "portfolio_allocation_concentration",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "concentration": {
+          "duplicate_tags": [
+            "qdii",
+            "us_equity"
+          ],
+          "hhi": 0.288927,
+          "max_fund_code": "SYNQD001",
+          "position_count": 4,
+          "single_fund_max_weight": 0.352941,
+          "top_n": 3,
+          "top_n_concentration": 0.911765
+        },
+        "portfolio_summary": {
+          "as_of_date": "2026-03-31",
+          "cash_available": 10000.0,
+          "position_count": 4,
+          "position_weights": {
+            "SYNQD001": 0.333333,
+            "SYNQD002": 0.277778,
+            "SYNQD003": 0.25,
+            "SYNQD004": 0.083333
+          },
+          "total_value": 180000.0
+        }
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Risk-return metrics were computed for fund SYNQD001",
+      "confidence_weight": 1.0,
+      "direction": "positive",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.fund.metrics"
+      },
+      "related_entities": [
+        "fund:SYNQD001"
+      ],
+      "source_type": "fund_risk_return_metrics",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "annualized_volatility": 0.29125,
+        "max_drawdown": 0.0,
+        "observation_count": 4,
+        "recent_momentum": 0.066022,
+        "return_1m": 0.043478,
+        "return_1y": 0.2,
+        "return_3m": 0.043478,
+        "return_6m": 0.111111,
+        "return_count": 3,
+        "risk_adjusted_score": 0.226685,
+        "rolling_drawdown": {
+          "max_drawdown": 0.0,
+          "peak_nav": 1.2,
+          "trough_nav": 1.0
+        },
+        "sharpe": 54.238048,
+        "sortino": 0.0,
+        "total_return": 0.2
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Risk-return metrics were computed for fund SYNQD002",
+      "confidence_weight": 1.0,
+      "direction": "positive",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.fund.metrics"
+      },
+      "related_entities": [
+        "fund:SYNQD002"
+      ],
+      "source_type": "fund_risk_return_metrics",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "annualized_volatility": 1.559672,
+        "max_drawdown": 0.047619,
+        "observation_count": 4,
+        "recent_momentum": -0.007936,
+        "return_1m": -0.047619,
+        "return_1y": 0.2,
+        "return_3m": -0.047619,
+        "return_6m": 0.071429,
+        "return_count": 3,
+        "risk_adjusted_score": -0.005088,
+        "rolling_drawdown": {
+          "max_drawdown": 0.047619,
+          "peak_nav": 1.26,
+          "trough_nav": 1.2
+        },
+        "sharpe": 10.617744,
+        "sortino": 0.0,
+        "total_return": 0.2
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Risk-return metrics were computed for fund SYNQD003",
+      "confidence_weight": 1.0,
+      "direction": "positive",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.fund.metrics"
+      },
+      "related_entities": [
+        "fund:SYNQD003"
+      ],
+      "source_type": "fund_risk_return_metrics",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "annualized_volatility": 0.638061,
+        "max_drawdown": 0.0,
+        "observation_count": 4,
+        "recent_momentum": 0.10304,
+        "return_1m": 0.059322,
+        "return_1y": 0.25,
+        "return_3m": 0.059322,
+        "return_6m": 0.190476,
+        "return_count": 3,
+        "risk_adjusted_score": 0.161489,
+        "rolling_drawdown": {
+          "max_drawdown": 0.0,
+          "peak_nav": 1.25,
+          "trough_nav": 1.0
+        },
+        "sharpe": 30.660457,
+        "sortino": 0.0,
+        "total_return": 0.25
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Risk-return metrics were computed for fund SYNQD004",
+      "confidence_weight": 1.0,
+      "direction": "neutral",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.fund.metrics"
+      },
+      "related_entities": [
+        "fund:SYNQD004"
+      ],
+      "source_type": "fund_risk_return_metrics",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "annualized_volatility": 0.024632,
+        "max_drawdown": 0.0,
+        "observation_count": 4,
+        "recent_momentum": 0.003011,
+        "return_1m": 0.002004,
+        "return_1y": 0.010101,
+        "return_3m": 0.002004,
+        "return_6m": 0.005025,
+        "return_count": 3,
+        "risk_adjusted_score": 0.122238,
+        "rolling_drawdown": {
+          "max_drawdown": 0.0,
+          "peak_nav": 1.0,
+          "trough_nav": 0.99
+        },
+        "sharpe": 33.53498,
+        "sortino": 0.0,
+        "total_return": 0.010101
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Portfolio risk flag scan found 4 issue(s)",
+      "confidence_weight": 1.0,
+      "direction": "negative",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:SYNQD001",
+        "fund:SYNQD002",
+        "fund:SYNQD003",
+        "fund:SYNQD004"
+      ],
+      "source_type": "portfolio_risk_flags",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "risk_flags": [
+          {
+            "details": {
+              "limit": 0.55,
+              "theme": "fund_type:qdii_index",
+              "value": 0.647059
+            },
+            "message": "theme exposure exceeds risk profile limit",
+            "severity": "medium",
+            "type": "overweight_theme"
+          },
+          {
+            "details": {
+              "limit": 0.08,
+              "value": 0.055556
+            },
+            "message": "cash reserve is below liquidity reserve target",
+            "severity": "medium",
+            "type": "insufficient_cash_reserve"
+          },
+          {
+            "details": {
+              "tag": "qdii"
+            },
+            "message": "multiple funds share the same exposure tag",
+            "severity": "low",
+            "type": "duplicate_exposure"
+          },
+          {
+            "details": {
+              "tag": "us_equity"
+            },
+            "message": "multiple funds share the same exposure tag",
+            "severity": "low",
+            "type": "duplicate_exposure"
+          }
+        ]
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Portfolio rebalance simulation was generated",
+      "confidence_weight": 1.0,
+      "direction": "neutral",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:SYNQD001",
+        "fund:SYNQD002",
+        "fund:SYNQD003",
+        "fund:SYNQD004"
+      ],
+      "source_type": "portfolio_rebalance_simulation",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "suggested_trade_plan": [
+          {
+            "action": "SELL",
+            "amount": 6000.0,
+            "cap_reasons": [],
+            "capped": false,
+            "current_cost": 56000.0,
+            "current_value": 60000.0,
+            "current_weight": 0.333333,
+            "evidence_refs": [
+              "ev:portfolio_allocation_concentration",
+              "ev:fund_risk_return_metrics",
+              "ev:fund_risk_return_metrics",
+              "ev:fund_risk_return_metrics",
+              "ev:fund_risk_return_metrics",
+              "ev:portfolio_risk_flags",
+              "ev:position_cost_basis",
+              "ev:short_term_budget_usage",
+              "ev:dca_plan_review",
+              "ev:portfolio_pnl_summary"
+            ],
+            "fund_code": "SYNQD001",
+            "fund_name": "Sample QDII S&P 500 Index Fund",
+            "rationale": "Within constraint bounds",
+            "requested_amount": 6000.0,
+            "risk_flags_refs": [
+              "overweight_theme",
+              "insufficient_cash_reserve",
+              "duplicate_exposure",
+              "duplicate_exposure"
+            ],
+            "tags": [
+              "qdii",
+              "us_equity",
+              "sp500_style"
+            ],
+            "target_weight": 0.3,
+            "trade_id": "SYNQD001_SELL_0",
+            "unrealized_pnl": 4000.0
+          },
+          {
+            "action": "SELL",
+            "amount": 5000.0,
+            "cap_reasons": [],
+            "capped": false,
+            "current_cost": 52000.0,
+            "current_value": 50000.0,
+            "current_weight": 0.277778,
+            "evidence_refs": [
+              "ev:portfolio_allocation_concentration",
+              "ev:fund_risk_return_metrics",
+              "ev:fund_risk_return_metrics",
+              "ev:fund_risk_return_metrics",
+              "ev:fund_risk_return_metrics",
+              "ev:portfolio_risk_flags",
+              "ev:position_cost_basis",
+              "ev:short_term_budget_usage",
+              "ev:dca_plan_review",
+              "ev:portfolio_pnl_summary"
+            ],
+            "fund_code": "SYNQD002",
+            "fund_name": "Sample Nasdaq Growth Index Fund",
+            "rationale": "Within constraint bounds",
+            "requested_amount": 5000.0,
+            "risk_flags_refs": [
+              "overweight_theme",
+              "insufficient_cash_reserve",
+              "duplicate_exposure",
+              "duplicate_exposure"
+            ],
+            "tags": [
+              "qdii",
+              "us_equity",
+              "nasdaq_style"
+            ],
+            "target_weight": 0.25,
+            "trade_id": "SYNQD002_SELL_1",
+            "unrealized_pnl": -2000.0
+          },
+          {
+            "action": "SELL",
+            "amount": 9000.0,
+            "cap_reasons": [],
+            "capped": false,
+            "current_cost": 42000.0,
+            "current_value": 45000.0,
+            "current_weight": 0.25,
+            "evidence_refs": [
+              "ev:portfolio_allocation_concentration",
+              "ev:fund_risk_return_metrics",
+              "ev:fund_risk_return_metrics",
+              "ev:fund_risk_return_metrics",
+              "ev:fund_risk_return_metrics",
+              "ev:portfolio_risk_flags",
+              "ev:position_cost_basis",
+              "ev:short_term_budget_usage",
+              "ev:dca_plan_review",
+              "ev:portfolio_pnl_summary"
+            ],
+            "fund_code": "SYNQD003",
+            "fund_name": "Sample Global AI Leaders Fund",
+            "rationale": "Within constraint bounds",
+            "requested_amount": 9000.0,
+            "risk_flags_refs": [
+              "overweight_theme",
+              "insufficient_cash_reserve",
+              "duplicate_exposure",
+              "duplicate_exposure"
+            ],
+            "tags": [
+              "qdii",
+              "ai_theme",
+              "global_equity"
+            ],
+            "target_weight": 0.2,
+            "trade_id": "SYNQD003_SELL_2",
+            "unrealized_pnl": 3000.0
+          },
+          {
+            "action": "BUY",
+            "amount": 10000.0,
+            "cap_reasons": [
+              "capped by cash_available (10000.0)"
+            ],
+            "capped": true,
+            "current_cost": 15000.0,
+            "current_value": 15000.0,
+            "current_weight": 0.083333,
+            "evidence_refs": [
+              "ev:portfolio_allocation_concentration",
+              "ev:fund_risk_return_metrics",
+              "ev:fund_risk_return_metrics",
+              "ev:fund_risk_return_metrics",
+              "ev:fund_risk_return_metrics",
+              "ev:portfolio_risk_flags",
+              "ev:position_cost_basis",
+              "ev:short_term_budget_usage",
+              "ev:dca_plan_review",
+              "ev:portfolio_pnl_summary"
+            ],
+            "fund_code": "SYNQD004",
+            "fund_name": "Sample China Bond Buffer Fund",
+            "rationale": "Capped by constraints: capped by cash_available (10000.0)",
+            "requested_amount": 12000.0,
+            "risk_flags_refs": [
+              "overweight_theme",
+              "insufficient_cash_reserve",
+              "duplicate_exposure",
+              "duplicate_exposure"
+            ],
+            "tags": [
+              "cn_bond",
+              "buffer"
+            ],
+            "target_weight": 0.15,
+            "trade_id": "SYNQD004_BUY_3",
+            "unrealized_pnl": 0.0
+          }
+        ],
+        "total_trade_amount": 30000.0,
+        "warnings": [
+          "Sample host-supplied caps are informational unless the runtime consumes them.",
+          "Overlap review uses synthetic holdings only."
+        ]
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Position cost basis computed from transaction history",
+      "confidence_weight": 1.0,
+      "direction": "neutral",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.transaction"
+      },
+      "related_entities": [
+        "fund:SYNQD001",
+        "fund:SYNQD002",
+        "fund:SYNQD003",
+        "fund:SYNQD004"
+      ],
+      "source_type": "position_cost_basis",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "SYNQD001": {
+          "average_cost_per_share": 1.12,
+          "current_nav": 1.2,
+          "current_value": 60000.0,
+          "fund_code": "SYNQD001",
+          "method": "weighted_average",
+          "total_cost": 56000.0,
+          "total_shares": 50000.0,
+          "transaction_count": 1,
+          "unrealized_pnl": 4000.0,
+          "unrealized_pnl_pct": 7.14
+        },
+        "SYNQD002": {
+          "average_cost_per_share": 1.248,
+          "current_nav": 1.2,
+          "current_value": 50000.0,
+          "fund_code": "SYNQD002",
+          "method": "weighted_average",
+          "total_cost": 52000.0,
+          "total_shares": 41666.6667,
+          "transaction_count": 1,
+          "unrealized_pnl": -2000.0,
+          "unrealized_pnl_pct": -3.85
+        },
+        "SYNQD003": {
+          "average_cost_per_share": 1.166667,
+          "current_nav": 1.25,
+          "current_value": 45000.0,
+          "fund_code": "SYNQD003",
+          "method": "weighted_average",
+          "total_cost": 42000.0,
+          "total_shares": 36000.0,
+          "transaction_count": 1,
+          "unrealized_pnl": 3000.0,
+          "unrealized_pnl_pct": 7.14
+        },
+        "SYNQD004": {
+          "average_cost_per_share": 1.0,
+          "current_nav": 1.0,
+          "current_value": 15000.0,
+          "fund_code": "SYNQD004",
+          "method": "weighted_average",
+          "total_cost": 15000.0,
+          "total_shares": 15000.0,
+          "transaction_count": 1,
+          "unrealized_pnl": 0.0,
+          "unrealized_pnl_pct": 0.0
+        }
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Short-term trading budget usage computed",
+      "confidence_weight": 1.0,
+      "direction": "neutral",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:SYNQD001",
+        "fund:SYNQD002",
+        "fund:SYNQD003",
+        "fund:SYNQD004"
+      ],
+      "source_type": "short_term_budget_usage",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "exceeded": false,
+        "recent_buys": 0,
+        "recent_sells": 0,
+        "remaining": 13600.0,
+        "short_term_budget": 13600.0,
+        "usage_pct": 0.0,
+        "used": 0
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "DCA plan review completed with 1 action(s) suggested",
+      "confidence_weight": 1.0,
+      "direction": "neutral",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:SYNQD001",
+        "fund:SYNQD002",
+        "fund:SYNQD003",
+        "fund:SYNQD004"
+      ],
+      "source_type": "dca_plan_review",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "plans": [
+          {
+            "annual_amount": 18000.0,
+            "current_weight": 0.333333,
+            "exceeds_limit": true,
+            "fund_code": "SYNQD001",
+            "monthly_amount": 1500.0,
+            "plan_id": "sample_global_monthly",
+            "suggestion": "REDUCE"
+          }
+        ],
+        "suggestions": [
+          {
+            "annual_amount": 18000.0,
+            "current_weight": 0.333333,
+            "exceeds_limit": true,
+            "fund_code": "SYNQD001",
+            "monthly_amount": 1500.0,
+            "plan_id": "sample_global_monthly",
+            "suggestion": "REDUCE"
+          }
+        ],
+        "warnings": [
+          "DCA plan sample_global_monthly for SYNQD001 exceeds concentration limit"
+        ]
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Portfolio-level PnL summary with top positions computed",
+      "confidence_weight": 1.0,
+      "direction": "positive",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:SYNQD001",
+        "fund:SYNQD002",
+        "fund:SYNQD003",
+        "fund:SYNQD004"
+      ],
+      "source_type": "portfolio_pnl_summary",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "top_positions": [
+          {
+            "current_value": 60000.0,
+            "fund_code": "SYNQD001",
+            "total_cost": 56000.0,
+            "unrealized_pnl": 4000.0,
+            "unrealized_pnl_pct": 0.071429
+          },
+          {
+            "current_value": 45000.0,
+            "fund_code": "SYNQD003",
+            "total_cost": 42000.0,
+            "unrealized_pnl": 3000.0,
+            "unrealized_pnl_pct": 0.071429
+          },
+          {
+            "current_value": 50000.0,
+            "fund_code": "SYNQD002",
+            "total_cost": 52000.0,
+            "unrealized_pnl": -2000.0,
+            "unrealized_pnl_pct": -0.038462
+          },
+          {
+            "current_value": 15000.0,
+            "fund_code": "SYNQD004",
+            "total_cost": 15000.0,
+            "unrealized_pnl": 0.0,
+            "unrealized_pnl_pct": 0.0
+          }
+        ],
+        "total_cost": 165000.0,
+        "total_value": 170000.0,
+        "unrealized_pnl": 5000.0,
+        "unrealized_pnl_pct": 0.030303
+      },
+      "version": "evidence-contract.v2"
+    }
+  ],
+  "metadata": {
+    "missing_mcp_capabilities": [],
+    "required_mcp_capabilities": []
+  },
+  "ok": true,
+  "skill_name": "fund_analysis",
+  "status": "OK",
+  "used_mcp_capabilities": [],
+  "warnings": []
+}

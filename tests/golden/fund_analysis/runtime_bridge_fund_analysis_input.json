@@ -1,0 +1,1150 @@
+{
+  "artifacts": {
+    "analysis_coverage": {
+      "benchmark": "missing",
+      "factor": "missing",
+      "fees": "missing",
+      "holdings": "available",
+      "ledger": "missing",
+      "peer": "missing",
+      "performance": "available",
+      "portfolio": "available",
+      "redemption": "missing",
+      "research_plan": "not_requested"
+    },
+    "cost_basis_summary": null,
+    "data_completeness": {
+      "available_sections": [
+        "Portfolio Snapshot",
+        "Current Value Or Nav",
+        "Fund Profiles",
+        "Nav History",
+        "Holdings",
+        "Risk Profile",
+        "Constraints"
+      ],
+      "critical_missing": [],
+      "grade": "B",
+      "limitations": [],
+      "missing_sections": [
+        "Benchmark History",
+        "Peer Group",
+        "Factor Exposures",
+        "Manager Profile",
+        "Fee Schedule",
+        "Redemption Rules",
+        "Fund Flow",
+        "Macro Events",
+        "User Investment Plan"
+      ],
+      "optional_missing": [
+        "Benchmark History",
+        "Peer Group",
+        "Factor Exposures",
+        "Manager Profile",
+        "Fee Schedule",
+        "Redemption Rules",
+        "Fund Flow",
+        "Macro Events",
+        "User Investment Plan"
+      ],
+      "score": 0.7
+    },
+    "dca_plan_review": null,
+    "exposure_summary": {
+      "fund_type_exposure": {
+        "fund_type:active": 1.0
+      },
+      "industry_exposure": {
+        "industry:pharma": 0.08
+      },
+      "theme_exposure": {
+        "industry:pharma": 0.08,
+        "region:CN": 0.08
+      }
+    },
+    "fund_analysis_report": {
+      "analysis_coverage": {
+        "benchmark": "missing",
+        "factor": "missing",
+        "fees": "missing",
+        "holdings": "available",
+        "ledger": "missing",
+        "peer": "missing",
+        "performance": "available",
+        "portfolio": "available",
+        "redemption": "missing",
+        "research_plan": "not_requested"
+      },
+      "concentration": {
+        "duplicate_tags": [],
+        "hhi": 1.0,
+        "max_fund_code": "110011",
+        "position_count": 1,
+        "single_fund_max_weight": 1.0,
+        "top_n": 3,
+        "top_n_concentration": 1.0
+      },
+      "cost_basis_summary": null,
+      "data_completeness": {
+        "available_sections": [
+          "Portfolio Snapshot",
+          "Current Value Or Nav",
+          "Fund Profiles",
+          "Nav History",
+          "Holdings",
+          "Risk Profile",
+          "Constraints"
+        ],
+        "critical_missing": [],
+        "grade": "B",
+        "limitations": [],
+        "missing_sections": [
+          "Benchmark History",
+          "Peer Group",
+          "Factor Exposures",
+          "Manager Profile",
+          "Fee Schedule",
+          "Redemption Rules",
+          "Fund Flow",
+          "Macro Events",
+          "User Investment Plan"
+        ],
+        "optional_missing": [
+          "Benchmark History",
+          "Peer Group",
+          "Factor Exposures",
+          "Manager Profile",
+          "Fee Schedule",
+          "Redemption Rules",
+          "Fund Flow",
+          "Macro Events",
+          "User Investment Plan"
+        ],
+        "score": 0.7
+      },
+      "dca_review": null,
+      "exposure_summary": {
+        "fund_type_exposure": {
+          "fund_type:active": 1.0
+        },
+        "industry_exposure": {
+          "industry:pharma": 0.08
+        },
+        "theme_exposure": {
+          "industry:pharma": 0.08,
+          "region:CN": 0.08
+        }
+      },
+      "exposures": {
+        "fund_type:active": 1.0,
+        "industry:pharma": 0.08,
+        "region:CN": 0.08
+      },
+      "fund_metrics": {
+        "110011": {
+          "annualized_volatility": 0.0,
+          "max_drawdown": 0.0,
+          "observation_count": 2,
+          "recent_momentum": 0.2,
+          "return_1m": 0.2,
+          "return_1y": 0.2,
+          "return_3m": 0.2,
+          "return_6m": 0.2,
+          "return_count": 1,
+          "risk_adjusted_score": 0.0,
+          "rolling_drawdown": {
+            "max_drawdown": 0.0,
+            "peak_nav": 1.2,
+            "trough_nav": 1.0
+          },
+          "sharpe": 0.0,
+          "sortino": 0.0,
+          "total_return": 0.2
+        }
+      },
+      "market_scenario": null,
+      "pnl_summary": {
+        "positions": {
+          "110011": {
+            "current_value": 30000.0,
+            "total_cost": 32000.0,
+            "unrealized_pnl": -2000.0,
+            "unrealized_pnl_pct": -0.0625
+          }
+        },
+        "total_cost": 32000.0,
+        "total_value": 30000.0,
+        "unrealized_pnl": -2000.0,
+        "unrealized_pnl_pct": -0.0625
+      },
+      "portfolio_metrics": {
+        "as_of_date": "2026-06-01",
+        "cash_available": 20000.0,
+        "position_count": 1,
+        "position_weights": {
+          "110011": 0.15
+        },
+        "total_value": 200000.0
+      },
+      "reconciliation": null,
+      "report_limitations": [
+        "Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data"
+      ],
+      "report_outline": [
+        {
+          "id": "executive_summary",
+          "status": "OK",
+          "title": "Executive summary"
+        },
+        {
+          "id": "portfolio_snapshot",
+          "status": "OK",
+          "title": "Portfolio snapshot"
+        },
+        {
+          "id": "pnl_and_cost_basis",
+          "status": "OK",
+          "title": "PnL and cost basis"
+        },
+        {
+          "id": "allocation_and_exposure",
+          "status": "OK",
+          "title": "Allocation and exposure"
+        },
+        {
+          "id": "risk_flags",
+          "status": "OK",
+          "title": "Risk flags"
+        },
+        {
+          "id": "performance_and_nav",
+          "status": "OK",
+          "title": "Performance and NAV"
+        },
+        {
+          "id": "benchmark_and_peer",
+          "status": "MISSING",
+          "title": "Benchmark and peer"
+        },
+        {
+          "id": "factor_and_style",
+          "status": "MISSING",
+          "title": "Factor and style"
+        },
+        {
+          "id": "fees_and_redemption",
+          "status": "MISSING",
+          "title": "Fees and redemption"
+        },
+        {
+          "id": "manager_and_fund_profile",
+          "status": "PARTIAL",
+          "title": "Manager and fund profile"
+        },
+        {
+          "id": "dca_and_trade_budget",
+          "status": "PARTIAL",
+          "title": "DCA and trade budget"
+        },
+        {
+          "id": "rebalance_plan",
+          "status": "OK",
+          "title": "Rebalance plan"
+        },
+        {
+          "id": "research_query_plan",
+          "status": "MISSING",
+          "title": "Research query plan"
+        },
+        {
+          "id": "data_completeness_and_limitations",
+          "status": "OK",
+          "title": "Data completeness and limitations"
+        },
+        {
+          "id": "evidence_appendix",
+          "status": "OK",
+          "title": "Evidence appendix"
+        }
+      ],
+      "report_quality_gate": {
+        "can_publish_professional_report": true,
+        "grade": "B",
+        "reason": "Data completeness grade B supports a professional report."
+      },
+      "report_sections": [
+        {
+          "bullets": [
+            "Portfolio value 200,000.00 across 1 position(s); cash 20,000.00.",
+            "Data completeness grade B with score 0.700.",
+            "Risk scan surfaced 2 flag(s) from available inputs.",
+            "No formal decision generated; call decision-support for formal action."
+          ],
+          "data_sources": [
+            "portfolio_summary",
+            "data_completeness",
+            "risk_flags"
+          ],
+          "id": "executive_summary",
+          "limitations": [],
+          "status": "OK",
+          "title": "Executive summary"
+        },
+        {
+          "bullets": [
+            "As of 2026-06-01, total value is 200,000.00 with 20,000.00 cash.",
+            "Largest position is 110011 at 15.00% of portfolio value.",
+            "Position detail is available for 1 fund(s)."
+          ],
+          "data_sources": [
+            "portfolio_summary",
+            "position_summary"
+          ],
+          "id": "portfolio_snapshot",
+          "limitations": [],
+          "status": "OK",
+          "title": "Portfolio snapshot"
+        },
+        {
+          "bullets": [
+            "Unrealized PnL is -2,000.00 (-6.25%) on total cost 32,000.00.",
+            "Position-level PnL is available for 1 fund(s)."
+          ],
+          "data_sources": [
+            "pnl_summary",
+            "cost_basis_summary"
+          ],
+          "id": "pnl_and_cost_basis",
+          "limitations": [
+            "Transaction-level cost-basis summary is absent; PnL uses provided position cost fields."
+          ],
+          "status": "OK",
+          "title": "PnL and cost basis"
+        },
+        {
+          "bullets": [
+            "Top fund type exposure is fund_type:active at 100.00%.",
+            "Top industry exposure is industry:pharma at 8.00%.",
+            "Top theme exposure is industry:pharma at 8.00%.",
+            "Single-fund max weight is 100.00%; HHI is 1.000000."
+          ],
+          "data_sources": [
+            "exposure_summary",
+            "concentration"
+          ],
+          "id": "allocation_and_exposure",
+          "limitations": [],
+          "status": "OK",
+          "title": "Allocation and exposure"
+        },
+        {
+          "bullets": [
+            "Risk flags by severity: high=1, medium=1."
+          ],
+          "data_sources": [
+            "risk_flags",
+            "data_completeness"
+          ],
+          "id": "risk_flags",
+          "limitations": [],
+          "status": "OK",
+          "title": "Risk flags"
+        },
+        {
+          "bullets": [
+            "NAV-derived metrics are available for 1 fund(s).",
+            "Highest total return in provided NAV history is 110011 at 20.00%."
+          ],
+          "data_sources": [
+            "fund_analysis_report.fund_metrics"
+          ],
+          "id": "performance_and_nav",
+          "limitations": [],
+          "status": "OK",
+          "title": "Performance and NAV"
+        },
+        {
+          "bullets": [],
+          "data_sources": [
+            "benchmark_summary",
+            "peer_summary"
+          ],
+          "id": "benchmark_and_peer",
+          "limitations": [
+            "Benchmark data is missing; no benchmark comparison is fabricated.",
+            "Peer group data is missing; no peer ranking is fabricated."
+          ],
+          "status": "MISSING",
+          "title": "Benchmark and peer"
+        },
+        {
+          "bullets": [],
+          "data_sources": [
+            "factor_summary"
+          ],
+          "id": "factor_and_style",
+          "limitations": [
+            "Factor exposure data is missing; no style exposure is fabricated."
+          ],
+          "status": "MISSING",
+          "title": "Factor and style"
+        },
+        {
+          "bullets": [],
+          "data_sources": [
+            "fee_summary",
+            "redemption_summary"
+          ],
+          "id": "fees_and_redemption",
+          "limitations": [
+            "Fee schedule is missing; fee analysis is not fabricated.",
+            "Redemption rules are missing; liquidity restrictions are not fabricated."
+          ],
+          "status": "MISSING",
+          "title": "Fees and redemption"
+        },
+        {
+          "bullets": [
+            "Fund profile data is present, but manager profile details were not provided."
+          ],
+          "data_sources": [
+            "manager_summary",
+            "data_completeness"
+          ],
+          "id": "manager_and_fund_profile",
+          "limitations": [
+            "Manager tenure and manager-change analysis are unavailable."
+          ],
+          "status": "PARTIAL",
+          "title": "Manager and fund profile"
+        },
+        {
+          "bullets": [
+            "Trade budget: max buy 0.00, max sell 0.00, liquidity reserve 20,000.00."
+          ],
+          "data_sources": [
+            "trade_budget",
+            "short_term_trade_budget",
+            "dca_plan_review"
+          ],
+          "id": "dca_and_trade_budget",
+          "limitations": [
+            "DCA plan review is absent; host did not provide DCA inputs."
+          ],
+          "status": "PARTIAL",
+          "title": "DCA and trade budget"
+        },
+        {
+          "bullets": [
+            "Rebalance simulation produced 1 trade leg(s) with total trade amount 6,000.00."
+          ],
+          "data_sources": [
+            "suggested_rebalance_plan"
+          ],
+          "id": "rebalance_plan",
+          "limitations": [],
+          "status": "OK",
+          "title": "Rebalance plan"
+        },
+        {
+          "bullets": [],
+          "data_sources": [
+            "research_query_plan"
+          ],
+          "id": "research_query_plan",
+          "limitations": [
+            "Research planning was not requested by the host."
+          ],
+          "status": "MISSING",
+          "title": "Research query plan"
+        },
+        {
+          "bullets": [
+            "Completeness grade B with score 0.700.",
+            "Missing data groups: Benchmark History, Peer Group, Factor Exposures, Manager Profile, Fee Schedule, Redemption Rules, Fund Flow, Macro Events, User Investment Plan.",
+            "Optional gaps: Benchmark History, Peer Group, Factor Exposures, Manager Profile, Fee Schedule, Redemption Rules, Fund Flow, Macro Events, User Investment Plan."
+          ],
+          "data_sources": [
+            "data_completeness",
+            "report_limitations"
+          ],
+          "id": "data_completeness_and_limitations",
+          "limitations": [
+            "Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data"
+          ],
+          "status": "OK",
+          "title": "Data completeness and limitations"
+        },
+        {
+          "bullets": [
+            "FundAnalysisSkill emits HardEvidence separately in SkillOutput.evidence_items.",
+            "This composed report does not create formal decisions or execution ledgers."
+          ],
+          "data_sources": [
+            "SkillOutput.evidence_items"
+          ],
+          "id": "evidence_appendix",
+          "limitations": [],
+          "status": "OK",
+          "title": "Evidence appendix"
+        }
+      ],
+      "risk_flags": [
+        {
+          "details": {
+            "fund_code": "110011",
+            "limit": 0.2,
+            "value": 1.0
+          },
+          "message": "single fund weight exceeds risk profile limit",
+          "severity": "high",
+          "type": "overweight_single_fund"
+        },
+        {
+          "details": {
+            "limit": 0.35,
+            "theme": "fund_type:active",
+            "value": 1.0
+          },
+          "message": "theme exposure exceeds risk profile limit",
+          "severity": "medium",
+          "type": "overweight_theme"
+        }
+      ],
+      "short_term_budget": null,
+      "suggested_watchlist": [
+        {
+          "fund_code": "110011",
+          "reason": "drawdown or concentration risk requires monitoring"
+        }
+      ],
+      "trade_budget": {
+        "cash_available": 20000.0,
+        "liquidity_reserve": 20000.0,
+        "max_buy_amount": null,
+        "max_sell_amount": null,
+        "max_trade_amount": 20000.0,
+        "min_trade_amount": 100.0,
+        "short_term_budget": 20000.0,
+        "total_value": 200000.0
+      },
+      "trading_flags": [],
+      "transaction_summary": null,
+      "warnings": []
+    },
+    "market_scenario_impact": null,
+    "pnl_summary": {
+      "positions": {
+        "110011": {
+          "current_value": 30000.0,
+          "total_cost": 32000.0,
+          "unrealized_pnl": -2000.0,
+          "unrealized_pnl_pct": -0.0625
+        }
+      },
+      "total_cost": 32000.0,
+      "total_value": 30000.0,
+      "unrealized_pnl": -2000.0,
+      "unrealized_pnl_pct": -0.0625
+    },
+    "portfolio_summary": {
+      "as_of_date": "2026-06-01",
+      "cash_available": 20000.0,
+      "position_count": 1,
+      "position_weights": {
+        "110011": 0.15
+      },
+      "total_value": 200000.0
+    },
+    "position_summary": {
+      "110011": {
+        "current_value": 30000,
+        "fund_code": "110011",
+        "fund_name": "Example Fund",
+        "pending_amount": 0.0,
+        "shares": 12345.67,
+        "tags": [
+          "healthcare",
+          "active"
+        ],
+        "target_weight": 0.12,
+        "total_cost": 32000
+      }
+    },
+    "report_limitations": [
+      "Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data"
+    ],
+    "report_outline": [
+      {
+        "id": "executive_summary",
+        "status": "OK",
+        "title": "Executive summary"
+      },
+      {
+        "id": "portfolio_snapshot",
+        "status": "OK",
+        "title": "Portfolio snapshot"
+      },
+      {
+        "id": "pnl_and_cost_basis",
+        "status": "OK",
+        "title": "PnL and cost basis"
+      },
+      {
+        "id": "allocation_and_exposure",
+        "status": "OK",
+        "title": "Allocation and exposure"
+      },
+      {
+        "id": "risk_flags",
+        "status": "OK",
+        "title": "Risk flags"
+      },
+      {
+        "id": "performance_and_nav",
+        "status": "OK",
+        "title": "Performance and NAV"
+      },
+      {
+        "id": "benchmark_and_peer",
+        "status": "MISSING",
+        "title": "Benchmark and peer"
+      },
+      {
+        "id": "factor_and_style",
+        "status": "MISSING",
+        "title": "Factor and style"
+      },
+      {
+        "id": "fees_and_redemption",
+        "status": "MISSING",
+        "title": "Fees and redemption"
+      },
+      {
+        "id": "manager_and_fund_profile",
+        "status": "PARTIAL",
+        "title": "Manager and fund profile"
+      },
+      {
+        "id": "dca_and_trade_budget",
+        "status": "PARTIAL",
+        "title": "DCA and trade budget"
+      },
+      {
+        "id": "rebalance_plan",
+        "status": "OK",
+        "title": "Rebalance plan"
+      },
+      {
+        "id": "research_query_plan",
+        "status": "MISSING",
+        "title": "Research query plan"
+      },
+      {
+        "id": "data_completeness_and_limitations",
+        "status": "OK",
+        "title": "Data completeness and limitations"
+      },
+      {
+        "id": "evidence_appendix",
+        "status": "OK",
+        "title": "Evidence appendix"
+      }
+    ],
+    "report_quality_gate": {
+      "can_publish_professional_report": true,
+      "grade": "B",
+      "reason": "Data completeness grade B supports a professional report."
+    },
+    "report_sections": [
+      {
+        "bullets": [
+          "Portfolio value 200,000.00 across 1 position(s); cash 20,000.00.",
+          "Data completeness grade B with score 0.700.",
+          "Risk scan surfaced 2 flag(s) from available inputs.",
+          "No formal decision generated; call decision-support for formal action."
+        ],
+        "data_sources": [
+          "portfolio_summary",
+          "data_completeness",
+          "risk_flags"
+        ],
+        "id": "executive_summary",
+        "limitations": [],
+        "status": "OK",
+        "title": "Executive summary"
+      },
+      {
+        "bullets": [
+          "As of 2026-06-01, total value is 200,000.00 with 20,000.00 cash.",
+          "Largest position is 110011 at 15.00% of portfolio value.",
+          "Position detail is available for 1 fund(s)."
+        ],
+        "data_sources": [
+          "portfolio_summary",
+          "position_summary"
+        ],
+        "id": "portfolio_snapshot",
+        "limitations": [],
+        "status": "OK",
+        "title": "Portfolio snapshot"
+      },
+      {
+        "bullets": [
+          "Unrealized PnL is -2,000.00 (-6.25%) on total cost 32,000.00.",
+          "Position-level PnL is available for 1 fund(s)."
+        ],
+        "data_sources": [
+          "pnl_summary",
+          "cost_basis_summary"
+        ],
+        "id": "pnl_and_cost_basis",
+        "limitations": [
+          "Transaction-level cost-basis summary is absent; PnL uses provided position cost fields."
+        ],
+        "status": "OK",
+        "title": "PnL and cost basis"
+      },
+      {
+        "bullets": [
+          "Top fund type exposure is fund_type:active at 100.00%.",
+          "Top industry exposure is industry:pharma at 8.00%.",
+          "Top theme exposure is industry:pharma at 8.00%.",
+          "Single-fund max weight is 100.00%; HHI is 1.000000."
+        ],
+        "data_sources": [
+          "exposure_summary",
+          "concentration"
+        ],
+        "id": "allocation_and_exposure",
+        "limitations": [],
+        "status": "OK",
+        "title": "Allocation and exposure"
+      },
+      {
+        "bullets": [
+          "Risk flags by severity: high=1, medium=1."
+        ],
+        "data_sources": [
+          "risk_flags",
+          "data_completeness"
+        ],
+        "id": "risk_flags",
+        "limitations": [],
+        "status": "OK",
+        "title": "Risk flags"
+      },
+      {
+        "bullets": [
+          "NAV-derived metrics are available for 1 fund(s).",
+          "Highest total return in provided NAV history is 110011 at 20.00%."
+        ],
+        "data_sources": [
+          "fund_analysis_report.fund_metrics"
+        ],
+        "id": "performance_and_nav",
+        "limitations": [],
+        "status": "OK",
+        "title": "Performance and NAV"
+      },
+      {
+        "bullets": [],
+        "data_sources": [
+          "benchmark_summary",
+          "peer_summary"
+        ],
+        "id": "benchmark_and_peer",
+        "limitations": [
+          "Benchmark data is missing; no benchmark comparison is fabricated.",
+          "Peer group data is missing; no peer ranking is fabricated."
+        ],
+        "status": "MISSING",
+        "title": "Benchmark and peer"
+      },
+      {
+        "bullets": [],
+        "data_sources": [
+          "factor_summary"
+        ],
+        "id": "factor_and_style",
+        "limitations": [
+          "Factor exposure data is missing; no style exposure is fabricated."
+        ],
+        "status": "MISSING",
+        "title": "Factor and style"
+      },
+      {
+        "bullets": [],
+        "data_sources": [
+          "fee_summary",
+          "redemption_summary"
+        ],
+        "id": "fees_and_redemption",
+        "limitations": [
+          "Fee schedule is missing; fee analysis is not fabricated.",
+          "Redemption rules are missing; liquidity restrictions are not fabricated."
+        ],
+        "status": "MISSING",
+        "title": "Fees and redemption"
+      },
+      {
+        "bullets": [
+          "Fund profile data is present, but manager profile details were not provided."
+        ],
+        "data_sources": [
+          "manager_summary",
+          "data_completeness"
+        ],
+        "id": "manager_and_fund_profile",
+        "limitations": [
+          "Manager tenure and manager-change analysis are unavailable."
+        ],
+        "status": "PARTIAL",
+        "title": "Manager and fund profile"
+      },
+      {
+        "bullets": [
+          "Trade budget: max buy 0.00, max sell 0.00, liquidity reserve 20,000.00."
+        ],
+        "data_sources": [
+          "trade_budget",
+          "short_term_trade_budget",
+          "dca_plan_review"
+        ],
+        "id": "dca_and_trade_budget",
+        "limitations": [
+          "DCA plan review is absent; host did not provide DCA inputs."
+        ],
+        "status": "PARTIAL",
+        "title": "DCA and trade budget"
+      },
+      {
+        "bullets": [
+          "Rebalance simulation produced 1 trade leg(s) with total trade amount 6,000.00."
+        ],
+        "data_sources": [
+          "suggested_rebalance_plan"
+        ],
+        "id": "rebalance_plan",
+        "limitations": [],
+        "status": "OK",
+        "title": "Rebalance plan"
+      },
+      {
+        "bullets": [],
+        "data_sources": [
+          "research_query_plan"
+        ],
+        "id": "research_query_plan",
+        "limitations": [
+          "Research planning was not requested by the host."
+        ],
+        "status": "MISSING",
+        "title": "Research query plan"
+      },
+      {
+        "bullets": [
+          "Completeness grade B with score 0.700.",
+          "Missing data groups: Benchmark History, Peer Group, Factor Exposures, Manager Profile, Fee Schedule, Redemption Rules, Fund Flow, Macro Events, User Investment Plan.",
+          "Optional gaps: Benchmark History, Peer Group, Factor Exposures, Manager Profile, Fee Schedule, Redemption Rules, Fund Flow, Macro Events, User Investment Plan."
+        ],
+        "data_sources": [
+          "data_completeness",
+          "report_limitations"
+        ],
+        "id": "data_completeness_and_limitations",
+        "limitations": [
+          "Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data"
+        ],
+        "status": "OK",
+        "title": "Data completeness and limitations"
+      },
+      {
+        "bullets": [
+          "FundAnalysisSkill emits HardEvidence separately in SkillOutput.evidence_items.",
+          "This composed report does not create formal decisions or execution ledgers."
+        ],
+        "data_sources": [
+          "SkillOutput.evidence_items"
+        ],
+        "id": "evidence_appendix",
+        "limitations": [],
+        "status": "OK",
+        "title": "Evidence appendix"
+      }
+    ],
+    "risk_flags": [
+      {
+        "details": {
+          "fund_code": "110011",
+          "limit": 0.2,
+          "value": 1.0
+        },
+        "message": "single fund weight exceeds risk profile limit",
+        "severity": "high",
+        "type": "overweight_single_fund"
+      },
+      {
+        "details": {
+          "limit": 0.35,
+          "theme": "fund_type:active",
+          "value": 1.0
+        },
+        "message": "theme exposure exceeds risk profile limit",
+        "severity": "medium",
+        "type": "overweight_theme"
+      }
+    ],
+    "short_term_trade_budget": null,
+    "suggested_rebalance_plan": {
+      "suggested_trade_plan": [
+        {
+          "action": "SELL",
+          "amount": 6000.0,
+          "cap_reasons": [],
+          "capped": false,
+          "current_cost": 32000,
+          "current_value": 30000,
+          "current_weight": 0.15,
+          "evidence_refs": [
+            "ev:portfolio_allocation_concentration",
+            "ev:fund_risk_return_metrics",
+            "ev:portfolio_risk_flags",
+            "ev:portfolio_pnl_summary"
+          ],
+          "fund_code": "110011",
+          "fund_name": "Example Fund",
+          "rationale": "Within constraint bounds",
+          "requested_amount": 6000.0,
+          "risk_flags_refs": [
+            "overweight_single_fund",
+            "overweight_theme"
+          ],
+          "tags": [
+            "healthcare",
+            "active"
+          ],
+          "target_weight": 0.12,
+          "trade_id": "110011_SELL_0",
+          "unrealized_pnl": -2000.0
+        }
+      ],
+      "total_trade_amount": 6000.0,
+      "warnings": []
+    },
+    "warnings": []
+  },
+  "errors": [],
+  "evidence_items": [
+    {
+      "claim": "Portfolio allocation and concentration metrics were computed",
+      "confidence_weight": 1.0,
+      "direction": "negative",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:110011"
+      ],
+      "source_type": "portfolio_allocation_concentration",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "concentration": {
+          "duplicate_tags": [],
+          "hhi": 1.0,
+          "max_fund_code": "110011",
+          "position_count": 1,
+          "single_fund_max_weight": 1.0,
+          "top_n": 3,
+          "top_n_concentration": 1.0
+        },
+        "portfolio_summary": {
+          "as_of_date": "2026-06-01",
+          "cash_available": 20000.0,
+          "position_count": 1,
+          "position_weights": {
+            "110011": 0.15
+          },
+          "total_value": 200000.0
+        }
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Risk-return metrics were computed for fund 110011",
+      "confidence_weight": 1.0,
+      "direction": "positive",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.fund.metrics"
+      },
+      "related_entities": [
+        "fund:110011"
+      ],
+      "source_type": "fund_risk_return_metrics",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "annualized_volatility": 0.0,
+        "max_drawdown": 0.0,
+        "observation_count": 2,
+        "recent_momentum": 0.2,
+        "return_1m": 0.2,
+        "return_1y": 0.2,
+        "return_3m": 0.2,
+        "return_6m": 0.2,
+        "return_count": 1,
+        "risk_adjusted_score": 0.0,
+        "rolling_drawdown": {
+          "max_drawdown": 0.0,
+          "peak_nav": 1.2,
+          "trough_nav": 1.0
+        },
+        "sharpe": 0.0,
+        "sortino": 0.0,
+        "total_return": 0.2
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Portfolio risk flag scan found 2 issue(s)",
+      "confidence_weight": 1.0,
+      "direction": "negative",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:110011"
+      ],
+      "source_type": "portfolio_risk_flags",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "risk_flags": [
+          {
+            "details": {
+              "fund_code": "110011",
+              "limit": 0.2,
+              "value": 1.0
+            },
+            "message": "single fund weight exceeds risk profile limit",
+            "severity": "high",
+            "type": "overweight_single_fund"
+          },
+          {
+            "details": {
+              "limit": 0.35,
+              "theme": "fund_type:active",
+              "value": 1.0
+            },
+            "message": "theme exposure exceeds risk profile limit",
+            "severity": "medium",
+            "type": "overweight_theme"
+          }
+        ]
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Portfolio rebalance simulation was generated",
+      "confidence_weight": 1.0,
+      "direction": "neutral",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:110011"
+      ],
+      "source_type": "portfolio_rebalance_simulation",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "suggested_trade_plan": [
+          {
+            "action": "SELL",
+            "amount": 6000.0,
+            "cap_reasons": [],
+            "capped": false,
+            "current_cost": 32000,
+            "current_value": 30000,
+            "current_weight": 0.15,
+            "evidence_refs": [
+              "ev:portfolio_allocation_concentration",
+              "ev:fund_risk_return_metrics",
+              "ev:portfolio_risk_flags",
+              "ev:portfolio_pnl_summary"
+            ],
+            "fund_code": "110011",
+            "fund_name": "Example Fund",
+            "rationale": "Within constraint bounds",
+            "requested_amount": 6000.0,
+            "risk_flags_refs": [
+              "overweight_single_fund",
+              "overweight_theme"
+            ],
+            "tags": [
+              "healthcare",
+              "active"
+            ],
+            "target_weight": 0.12,
+            "trade_id": "110011_SELL_0",
+            "unrealized_pnl": -2000.0
+          }
+        ],
+        "total_trade_amount": 6000.0,
+        "warnings": []
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Portfolio-level PnL summary with top positions computed",
+      "confidence_weight": 1.0,
+      "direction": "negative",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:110011"
+      ],
+      "source_type": "portfolio_pnl_summary",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "top_positions": [
+          {
+            "current_value": 30000.0,
+            "fund_code": "110011",
+            "total_cost": 32000.0,
+            "unrealized_pnl": -2000.0,
+            "unrealized_pnl_pct": -0.0625
+          }
+        ],
+        "total_cost": 32000.0,
+        "total_value": 30000.0,
+        "unrealized_pnl": -2000.0,
+        "unrealized_pnl_pct": -0.0625
+      },
+      "version": "evidence-contract.v2"
+    }
+  ],
+  "metadata": {
+    "missing_mcp_capabilities": [],
+    "required_mcp_capabilities": []
+  },
+  "ok": true,
+  "skill_name": "fund_analysis",
+  "status": "OK",
+  "used_mcp_capabilities": [],
+  "warnings": []
+}

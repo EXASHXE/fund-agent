@@ -10,6 +10,10 @@ MCP providers, retries, planning, orchestration, memory, and final UX.
 report sections, and optional Markdown reports only. Formal decisions require
 `decision_support`.
 
+The golden regression snapshots for selected fixtures are documented in
+[`tests/golden/README.md`](../../tests/golden/README.md) and regenerated with
+[`scripts/update_fund_analysis_golden.py`](../../scripts/update_fund_analysis_golden.py).
+
 All fixtures use the runtime bridge convenience envelope:
 
 ```json

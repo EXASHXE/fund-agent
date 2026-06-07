@@ -1,0 +1,2149 @@
+{
+  "artifacts": {
+    "analysis_coverage": {
+      "benchmark": "missing",
+      "factor": "missing",
+      "fees": "available",
+      "holdings": "available",
+      "ledger": "missing",
+      "peer": "missing",
+      "performance": "available",
+      "portfolio": "available",
+      "redemption": "available",
+      "research_plan": "not_requested"
+    },
+    "cost_basis_summary": {
+      "SYN7D001": {
+        "average_cost_per_share": 1.025759,
+        "current_nav": 1.076,
+        "current_value": 41959.18,
+        "fund_code": "SYN7D001",
+        "method": "weighted_average",
+        "total_cost": 40000.0,
+        "total_shares": 38995.5239,
+        "transaction_count": 2,
+        "unrealized_pnl": 1959.18,
+        "unrealized_pnl_pct": 4.9
+      },
+      "SYN7D002": {
+        "average_cost_per_share": 1.0,
+        "current_nav": 1.075,
+        "current_value": 51600.0,
+        "fund_code": "SYN7D002",
+        "method": "weighted_average",
+        "total_cost": 48000.0,
+        "total_shares": 48000.0,
+        "transaction_count": 1,
+        "unrealized_pnl": 3600.0,
+        "unrealized_pnl_pct": 7.5
+      },
+      "SYN7D003": {
+        "average_cost_per_share": 1.0,
+        "current_nav": 1.01,
+        "current_value": 20200.0,
+        "fund_code": "SYN7D003",
+        "method": "weighted_average",
+        "total_cost": 20000.0,
+        "total_shares": 20000.0,
+        "transaction_count": 1,
+        "unrealized_pnl": 200.0,
+        "unrealized_pnl_pct": 1.0
+      }
+    },
+    "data_completeness": {
+      "available_sections": [
+        "Portfolio Snapshot",
+        "Current Value Or Nav",
+        "Fund Profiles",
+        "Nav History",
+        "Holdings",
+        "Risk Profile",
+        "Constraints",
+        "Fee Schedule",
+        "Redemption Rules"
+      ],
+      "critical_missing": [],
+      "grade": "B",
+      "limitations": [],
+      "missing_sections": [
+        "Benchmark History",
+        "Peer Group",
+        "Factor Exposures",
+        "Manager Profile",
+        "Fund Flow",
+        "Macro Events",
+        "User Investment Plan"
+      ],
+      "optional_missing": [
+        "Benchmark History",
+        "Peer Group",
+        "Factor Exposures",
+        "Manager Profile",
+        "Fund Flow",
+        "Macro Events",
+        "User Investment Plan"
+      ],
+      "score": 0.767
+    },
+    "dca_plan_review": {
+      "plans": [
+        {
+          "annual_amount": 12000.0,
+          "current_weight": 0.166667,
+          "exceeds_limit": false,
+          "fund_code": "SYN7D003",
+          "monthly_amount": 1000.0,
+          "plan_id": "sample_cash_buffer_plan",
+          "suggestion": "CONTINUE"
+        }
+      ],
+      "suggestions": [],
+      "warnings": []
+    },
+    "exposure_summary": {
+      "fund_type_exposure": {
+        "fund_type:bond": 0.446429,
+        "fund_type:cash_management": 0.178571,
+        "fund_type:mixed_equity": 0.375
+      },
+      "industry_exposure": {
+        "industry:consumer": 0.0675,
+        "industry:credit": 0.098214,
+        "industry:deposit": 0.071429,
+        "industry:healthcare": 0.045,
+        "industry:industrial": 0.05625,
+        "industry:money_market": 0.0625,
+        "industry:policy_bank": 0.133929
+      },
+      "theme_exposure": {
+        "asset_type:bill": 0.0625,
+        "asset_type:bond": 0.232143,
+        "asset_type:cash": 0.071429,
+        "asset_type:stock": 0.16875,
+        "industry:consumer": 0.0675,
+        "industry:credit": 0.098214,
+        "industry:deposit": 0.071429,
+        "industry:healthcare": 0.045,
+        "industry:industrial": 0.05625,
+        "industry:money_market": 0.0625,
+        "industry:policy_bank": 0.133929,
+        "region:CN": 0.534821
+      }
+    },
+    "fee_summary": {
+      "fee_schedules": {
+        "SYN7D001": {
+          "custody_fee": 0.002,
+          "management_fee": 0.012,
+          "redemption_fee": 0.015,
+          "sales_fee": 0.001,
+          "total_expense_ratio": 0.015
+        },
+        "SYN7D002": {
+          "custody_fee": 0.001,
+          "management_fee": 0.006,
+          "redemption_fee": 0.001,
+          "sales_fee": 0.0,
+          "total_expense_ratio": 0.007
+        },
+        "SYN7D003": {
+          "custody_fee": 0.001,
+          "management_fee": 0.003,
+          "redemption_fee": 0.0,
+          "sales_fee": 0.0,
+          "total_expense_ratio": 0.004
+        }
+      },
+      "funds_with_fees": [
+        "SYN7D001",
+        "SYN7D002",
+        "SYN7D003"
+      ]
+    },
+    "fund_analysis_report": {
+      "analysis_coverage": {
+        "benchmark": "missing",
+        "factor": "missing",
+        "fees": "available",
+        "holdings": "available",
+        "ledger": "missing",
+        "peer": "missing",
+        "performance": "available",
+        "portfolio": "available",
+        "redemption": "available",
+        "research_plan": "not_requested"
+      },
+      "concentration": {
+        "duplicate_tags": [],
+        "hhi": 0.371811,
+        "max_fund_code": "SYN7D002",
+        "position_count": 3,
+        "single_fund_max_weight": 0.446429,
+        "top_n": 3,
+        "top_n_concentration": 1.0
+      },
+      "cost_basis_summary": {
+        "SYN7D001": {
+          "average_cost_per_share": 1.025759,
+          "current_nav": 1.076,
+          "current_value": 41959.18,
+          "fund_code": "SYN7D001",
+          "method": "weighted_average",
+          "total_cost": 40000.0,
+          "total_shares": 38995.5239,
+          "transaction_count": 2,
+          "unrealized_pnl": 1959.18,
+          "unrealized_pnl_pct": 4.9
+        },
+        "SYN7D002": {
+          "average_cost_per_share": 1.0,
+          "current_nav": 1.075,
+          "current_value": 51600.0,
+          "fund_code": "SYN7D002",
+          "method": "weighted_average",
+          "total_cost": 48000.0,
+          "total_shares": 48000.0,
+          "transaction_count": 1,
+          "unrealized_pnl": 3600.0,
+          "unrealized_pnl_pct": 7.5
+        },
+        "SYN7D003": {
+          "average_cost_per_share": 1.0,
+          "current_nav": 1.01,
+          "current_value": 20200.0,
+          "fund_code": "SYN7D003",
+          "method": "weighted_average",
+          "total_cost": 20000.0,
+          "total_shares": 20000.0,
+          "transaction_count": 1,
+          "unrealized_pnl": 200.0,
+          "unrealized_pnl_pct": 1.0
+        }
+      },
+      "data_completeness": {
+        "available_sections": [
+          "Portfolio Snapshot",
+          "Current Value Or Nav",
+          "Fund Profiles",
+          "Nav History",
+          "Holdings",
+          "Risk Profile",
+          "Constraints",
+          "Fee Schedule",
+          "Redemption Rules"
+        ],
+        "critical_missing": [],
+        "grade": "B",
+        "limitations": [],
+        "missing_sections": [
+          "Benchmark History",
+          "Peer Group",
+          "Factor Exposures",
+          "Manager Profile",
+          "Fund Flow",
+          "Macro Events",
+          "User Investment Plan"
+        ],
+        "optional_missing": [
+          "Benchmark History",
+          "Peer Group",
+          "Factor Exposures",
+          "Manager Profile",
+          "Fund Flow",
+          "Macro Events",
+          "User Investment Plan"
+        ],
+        "score": 0.767
+      },
+      "dca_review": {
+        "plans": [
+          {
+            "annual_amount": 12000.0,
+            "current_weight": 0.166667,
+            "exceeds_limit": false,
+            "fund_code": "SYN7D003",
+            "monthly_amount": 1000.0,
+            "plan_id": "sample_cash_buffer_plan",
+            "suggestion": "CONTINUE"
+          }
+        ],
+        "suggestions": [],
+        "warnings": []
+      },
+      "exposure_summary": {
+        "fund_type_exposure": {
+          "fund_type:bond": 0.446429,
+          "fund_type:cash_management": 0.178571,
+          "fund_type:mixed_equity": 0.375
+        },
+        "industry_exposure": {
+          "industry:consumer": 0.0675,
+          "industry:credit": 0.098214,
+          "industry:deposit": 0.071429,
+          "industry:healthcare": 0.045,
+          "industry:industrial": 0.05625,
+          "industry:money_market": 0.0625,
+          "industry:policy_bank": 0.133929
+        },
+        "theme_exposure": {
+          "asset_type:bill": 0.0625,
+          "asset_type:bond": 0.232143,
+          "asset_type:cash": 0.071429,
+          "asset_type:stock": 0.16875,
+          "industry:consumer": 0.0675,
+          "industry:credit": 0.098214,
+          "industry:deposit": 0.071429,
+          "industry:healthcare": 0.045,
+          "industry:industrial": 0.05625,
+          "industry:money_market": 0.0625,
+          "industry:policy_bank": 0.133929,
+          "region:CN": 0.534821
+        }
+      },
+      "exposures": {
+        "asset_type:bill": 0.0625,
+        "asset_type:bond": 0.232143,
+        "asset_type:cash": 0.071429,
+        "asset_type:stock": 0.16875,
+        "fund_type:bond": 0.446429,
+        "fund_type:cash_management": 0.178571,
+        "fund_type:mixed_equity": 0.375,
+        "industry:consumer": 0.0675,
+        "industry:credit": 0.098214,
+        "industry:deposit": 0.071429,
+        "industry:healthcare": 0.045,
+        "industry:industrial": 0.05625,
+        "industry:money_market": 0.0625,
+        "industry:policy_bank": 0.133929,
+        "region:CN": 0.534821
+      },
+      "fee_summary": {
+        "fee_schedules": {
+          "SYN7D001": {
+            "custody_fee": 0.002,
+            "management_fee": 0.012,
+            "redemption_fee": 0.015,
+            "sales_fee": 0.001,
+            "total_expense_ratio": 0.015
+          },
+          "SYN7D002": {
+            "custody_fee": 0.001,
+            "management_fee": 0.006,
+            "redemption_fee": 0.001,
+            "sales_fee": 0.0,
+            "total_expense_ratio": 0.007
+          },
+          "SYN7D003": {
+            "custody_fee": 0.001,
+            "management_fee": 0.003,
+            "redemption_fee": 0.0,
+            "sales_fee": 0.0,
+            "total_expense_ratio": 0.004
+          }
+        },
+        "funds_with_fees": [
+          "SYN7D001",
+          "SYN7D002",
+          "SYN7D003"
+        ]
+      },
+      "fund_metrics": {
+        "SYN7D001": {
+          "annualized_volatility": 0.222051,
+          "max_drawdown": 0.0,
+          "observation_count": 6,
+          "recent_momentum": 0.082819,
+          "return_1m": 0.029665,
+          "return_1y": 0.120833,
+          "return_3m": 0.097959,
+          "return_6m": 0.120833,
+          "return_count": 5,
+          "risk_adjusted_score": 0.372974,
+          "rolling_drawdown": {
+            "max_drawdown": 0.0,
+            "peak_nav": 1.076,
+            "trough_nav": 0.96
+          },
+          "sharpe": 26.187602,
+          "sortino": 0.0,
+          "total_return": 0.120833
+        },
+        "SYN7D002": {
+          "annualized_volatility": 0.110641,
+          "max_drawdown": 0.0,
+          "observation_count": 5,
+          "recent_momentum": 0.04439,
+          "return_1m": 0.00939,
+          "return_1y": 0.075,
+          "return_3m": 0.04878,
+          "return_6m": 0.075,
+          "return_count": 4,
+          "risk_adjusted_score": 0.401209,
+          "rolling_drawdown": {
+            "max_drawdown": 0.0,
+            "peak_nav": 1.075,
+            "trough_nav": 1.0
+          },
+          "sharpe": 41.416502,
+          "sortino": 0.0,
+          "total_return": 0.075
+        },
+        "SYN7D003": {
+          "annualized_volatility": 0.009252,
+          "max_drawdown": 0.0,
+          "observation_count": 5,
+          "recent_momentum": 0.006321,
+          "return_1m": 0.001984,
+          "return_1y": 0.01,
+          "return_3m": 0.006979,
+          "return_6m": 0.01,
+          "return_count": 4,
+          "risk_adjusted_score": 0.683229,
+          "rolling_drawdown": {
+            "max_drawdown": 0.0,
+            "peak_nav": 1.01,
+            "trough_nav": 1.0
+          },
+          "sharpe": 65.705001,
+          "sortino": 0.0,
+          "total_return": 0.01
+        }
+      },
+      "market_scenario": null,
+      "pnl_summary": {
+        "positions": {
+          "SYN7D001": {
+            "current_value": 42000.0,
+            "total_cost": 40000.0,
+            "unrealized_pnl": 2000.0,
+            "unrealized_pnl_pct": 0.05
+          },
+          "SYN7D002": {
+            "current_value": 50000.0,
+            "total_cost": 48000.0,
+            "unrealized_pnl": 2000.0,
+            "unrealized_pnl_pct": 0.041667
+          },
+          "SYN7D003": {
+            "current_value": 20000.0,
+            "total_cost": 20000.0,
+            "unrealized_pnl": 0.0,
+            "unrealized_pnl_pct": 0.0
+          }
+        },
+        "total_cost": 108000.0,
+        "total_value": 112000.0,
+        "unrealized_pnl": 4000.0,
+        "unrealized_pnl_pct": 0.037037
+      },
+      "portfolio_metrics": {
+        "as_of_date": "2026-03-31",
+        "cash_available": 8000.0,
+        "position_count": 3,
+        "position_weights": {
+          "SYN7D001": 0.35,
+          "SYN7D002": 0.416667,
+          "SYN7D003": 0.166667
+        },
+        "total_value": 120000.0
+      },
+      "reconciliation": {
+        "match_count": 0,
+        "matches": [],
+        "mismatch_count": 3,
+        "mismatches": [
+          {
+            "cost_basis": {
+              "average_cost_per_share": 1.025759,
+              "current_nav": 1.076,
+              "current_value": 41959.18,
+              "fund_code": "SYN7D001",
+              "method": "weighted_average",
+              "total_cost": 40000.0,
+              "total_shares": 38995.5239,
+              "transaction_count": 2,
+              "unrealized_pnl": 1959.18,
+              "unrealized_pnl_pct": 4.9
+            },
+            "cost_diff": 0.0,
+            "fund_code": "SYN7D001",
+            "portfolio": {
+              "current_nav": 1.076,
+              "current_value": 42000.0,
+              "fund_code": "SYN7D001",
+              "fund_name": "Sample Recent Growth Mix",
+              "shares": 39024.3902,
+              "tags": [
+                "cn_equity",
+                "recent_buy",
+                "redemption_fee_window"
+              ],
+              "target_weight": 0.3,
+              "total_cost": 40000.0
+            },
+            "shares_diff": 28.8663,
+            "source": "mismatch"
+          },
+          {
+            "cost_basis": {
+              "average_cost_per_share": 1.0,
+              "current_nav": 1.075,
+              "current_value": 51600.0,
+              "fund_code": "SYN7D002",
+              "method": "weighted_average",
+              "total_cost": 48000.0,
+              "total_shares": 48000.0,
+              "transaction_count": 1,
+              "unrealized_pnl": 3600.0,
+              "unrealized_pnl_pct": 7.5
+            },
+            "cost_diff": 0.0,
+            "fund_code": "SYN7D002",
+            "portfolio": {
+              "current_nav": 1.075,
+              "current_value": 50000.0,
+              "fund_code": "SYN7D002",
+              "fund_name": "Sample Long Hold Income Bond",
+              "shares": 46511.6279,
+              "tags": [
+                "cn_bond",
+                "income",
+                "longer_holding"
+              ],
+              "target_weight": 0.42,
+              "total_cost": 48000.0
+            },
+            "shares_diff": 1488.3721,
+            "source": "mismatch"
+          },
+          {
+            "cost_basis": {
+              "average_cost_per_share": 1.0,
+              "current_nav": 1.01,
+              "current_value": 20200.0,
+              "fund_code": "SYN7D003",
+              "method": "weighted_average",
+              "total_cost": 20000.0,
+              "total_shares": 20000.0,
+              "transaction_count": 1,
+              "unrealized_pnl": 200.0,
+              "unrealized_pnl_pct": 1.0
+            },
+            "cost_diff": 0.0,
+            "fund_code": "SYN7D003",
+            "portfolio": {
+              "current_nav": 1.01,
+              "current_value": 20000.0,
+              "fund_code": "SYN7D003",
+              "fund_name": "Sample Cash Plus Fund",
+              "shares": 19801.9802,
+              "tags": [
+                "cash_management",
+                "liquidity"
+              ],
+              "target_weight": 0.18,
+              "total_cost": 20000.0
+            },
+            "shares_diff": 198.0198,
+            "source": "mismatch"
+          }
+        ],
+        "warnings": []
+      },
+      "redemption_summary": {
+        "funds_with_rules": [
+          "SYN7D001",
+          "SYN7D002",
+          "SYN7D003"
+        ],
+        "high_redemption_fee_funds": [
+          "SYN7D001"
+        ],
+        "redemption_constraints": {
+          "SYN7D001": {
+            "holding_period_days": 7,
+            "liquidity_note": "Sample T+2 redemption settlement. Recent buy is inside a 7-day sample fee window.",
+            "redemption_fee_pct": 0.015,
+            "redemption_fee_schedule": "sample schedule: <7d 1.5%, 7-30d 0.75%, >30d 0.25%",
+            "suspended": false
+          },
+          "SYN7D002": {
+            "holding_period_days": 30,
+            "liquidity_note": "Sample holding is older than 30 days.",
+            "redemption_fee_pct": 0.001,
+            "redemption_fee_schedule": "sample schedule: <30d 0.1%, >30d 0%",
+            "suspended": false
+          },
+          "SYN7D003": {
+            "holding_period_days": 1,
+            "liquidity_note": "Sample cash management liquidity sleeve.",
+            "redemption_fee_pct": 0.0,
+            "redemption_fee_schedule": "sample schedule: no redemption fee after confirmation",
+            "suspended": false
+          }
+        },
+        "warnings": [
+          "Fund(s) SYN7D001 charge >1% redemption fees — early redemption may be costly"
+        ]
+      },
+      "report_limitations": [
+        "Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data"
+      ],
+      "report_outline": [
+        {
+          "id": "executive_summary",
+          "status": "OK",
+          "title": "Executive summary"
+        },
+        {
+          "id": "portfolio_snapshot",
+          "status": "OK",
+          "title": "Portfolio snapshot"
+        },
+        {
+          "id": "pnl_and_cost_basis",
+          "status": "OK",
+          "title": "PnL and cost basis"
+        },
+        {
+          "id": "allocation_and_exposure",
+          "status": "OK",
+          "title": "Allocation and exposure"
+        },
+        {
+          "id": "risk_flags",
+          "status": "OK",
+          "title": "Risk flags"
+        },
+        {
+          "id": "performance_and_nav",
+          "status": "OK",
+          "title": "Performance and NAV"
+        },
+        {
+          "id": "benchmark_and_peer",
+          "status": "MISSING",
+          "title": "Benchmark and peer"
+        },
+        {
+          "id": "factor_and_style",
+          "status": "MISSING",
+          "title": "Factor and style"
+        },
+        {
+          "id": "fees_and_redemption",
+          "status": "OK",
+          "title": "Fees and redemption"
+        },
+        {
+          "id": "manager_and_fund_profile",
+          "status": "PARTIAL",
+          "title": "Manager and fund profile"
+        },
+        {
+          "id": "dca_and_trade_budget",
+          "status": "OK",
+          "title": "DCA and trade budget"
+        },
+        {
+          "id": "rebalance_plan",
+          "status": "OK",
+          "title": "Rebalance plan"
+        },
+        {
+          "id": "research_query_plan",
+          "status": "MISSING",
+          "title": "Research query plan"
+        },
+        {
+          "id": "data_completeness_and_limitations",
+          "status": "OK",
+          "title": "Data completeness and limitations"
+        },
+        {
+          "id": "evidence_appendix",
+          "status": "OK",
+          "title": "Evidence appendix"
+        }
+      ],
+      "report_quality_gate": {
+        "can_publish_professional_report": true,
+        "grade": "B",
+        "reason": "Data completeness grade B supports a professional report."
+      },
+      "report_sections": [
+        {
+          "bullets": [
+            "Portfolio value 120,000.00 across 3 position(s); cash 8,000.00.",
+            "Data completeness grade B with score 0.767.",
+            "Risk scan surfaced 1 flag(s) from available inputs.",
+            "No formal decision generated; call decision-support for formal action."
+          ],
+          "data_sources": [
+            "portfolio_summary",
+            "data_completeness",
+            "risk_flags"
+          ],
+          "id": "executive_summary",
+          "limitations": [],
+          "status": "OK",
+          "title": "Executive summary"
+        },
+        {
+          "bullets": [
+            "As of 2026-03-31, total value is 120,000.00 with 8,000.00 cash.",
+            "Largest position is SYN7D002 at 41.67% of portfolio value.",
+            "Position detail is available for 3 fund(s)."
+          ],
+          "data_sources": [
+            "portfolio_summary",
+            "position_summary"
+          ],
+          "id": "portfolio_snapshot",
+          "limitations": [],
+          "status": "OK",
+          "title": "Portfolio snapshot"
+        },
+        {
+          "bullets": [
+            "Unrealized PnL is 4,000.00 (3.70%) on total cost 108,000.00.",
+            "Position-level PnL is available for 3 fund(s).",
+            "Transaction-derived cost basis is available for 3 fund(s)."
+          ],
+          "data_sources": [
+            "pnl_summary",
+            "cost_basis_summary"
+          ],
+          "id": "pnl_and_cost_basis",
+          "limitations": [],
+          "status": "OK",
+          "title": "PnL and cost basis"
+        },
+        {
+          "bullets": [
+            "Top fund type exposure is fund_type:bond at 44.64%.",
+            "Top industry exposure is industry:policy_bank at 13.39%.",
+            "Top theme exposure is region:CN at 53.48%.",
+            "Single-fund max weight is 44.64%; HHI is 0.371811."
+          ],
+          "data_sources": [
+            "exposure_summary",
+            "concentration"
+          ],
+          "id": "allocation_and_exposure",
+          "limitations": [],
+          "status": "OK",
+          "title": "Allocation and exposure"
+        },
+        {
+          "bullets": [
+            "Risk flags by severity: medium=1."
+          ],
+          "data_sources": [
+            "risk_flags",
+            "data_completeness"
+          ],
+          "id": "risk_flags",
+          "limitations": [],
+          "status": "OK",
+          "title": "Risk flags"
+        },
+        {
+          "bullets": [
+            "NAV-derived metrics are available for 3 fund(s).",
+            "Highest total return in provided NAV history is SYN7D001 at 12.08%."
+          ],
+          "data_sources": [
+            "fund_analysis_report.fund_metrics"
+          ],
+          "id": "performance_and_nav",
+          "limitations": [],
+          "status": "OK",
+          "title": "Performance and NAV"
+        },
+        {
+          "bullets": [],
+          "data_sources": [
+            "benchmark_summary",
+            "peer_summary"
+          ],
+          "id": "benchmark_and_peer",
+          "limitations": [
+            "Benchmark data is missing; no benchmark comparison is fabricated.",
+            "Peer group data is missing; no peer ranking is fabricated."
+          ],
+          "status": "MISSING",
+          "title": "Benchmark and peer"
+        },
+        {
+          "bullets": [],
+          "data_sources": [
+            "factor_summary"
+          ],
+          "id": "factor_and_style",
+          "limitations": [
+            "Factor exposure data is missing; no style exposure is fabricated."
+          ],
+          "status": "MISSING",
+          "title": "Factor and style"
+        },
+        {
+          "bullets": [
+            "Fee schedule is available for 3 fund(s).",
+            "Redemption rules are available for 3 fund(s).",
+            "Fund(s) SYN7D001 charge >1% redemption fees — early redemption may be costly"
+          ],
+          "data_sources": [
+            "fee_summary",
+            "redemption_summary"
+          ],
+          "id": "fees_and_redemption",
+          "limitations": [],
+          "status": "OK",
+          "title": "Fees and redemption"
+        },
+        {
+          "bullets": [
+            "Fund profile data is present, but manager profile details were not provided."
+          ],
+          "data_sources": [
+            "manager_summary",
+            "data_completeness"
+          ],
+          "id": "manager_and_fund_profile",
+          "limitations": [
+            "Manager tenure and manager-change analysis are unavailable."
+          ],
+          "status": "PARTIAL",
+          "title": "Manager and fund profile"
+        },
+        {
+          "bullets": [
+            "Trade budget: max buy 15,000.00, max sell 12,000.00, liquidity reserve 9,600.00.",
+            "Short-term trade budget usage is available.",
+            "DCA review includes 0 suggestion(s)."
+          ],
+          "data_sources": [
+            "trade_budget",
+            "short_term_trade_budget",
+            "dca_plan_review"
+          ],
+          "id": "dca_and_trade_budget",
+          "limitations": [],
+          "status": "OK",
+          "title": "DCA and trade budget"
+        },
+        {
+          "bullets": [
+            "Rebalance simulation produced 2 trade leg(s) with total trade amount 7,600.00.",
+            "Sample account prefers preserving at least 8% cash.",
+            "Host supplies redemption fee and holding-period data."
+          ],
+          "data_sources": [
+            "suggested_rebalance_plan"
+          ],
+          "id": "rebalance_plan",
+          "limitations": [],
+          "status": "OK",
+          "title": "Rebalance plan"
+        },
+        {
+          "bullets": [],
+          "data_sources": [
+            "research_query_plan"
+          ],
+          "id": "research_query_plan",
+          "limitations": [
+            "Research planning was not requested by the host."
+          ],
+          "status": "MISSING",
+          "title": "Research query plan"
+        },
+        {
+          "bullets": [
+            "Completeness grade B with score 0.767.",
+            "Missing data groups: Benchmark History, Peer Group, Factor Exposures, Manager Profile, Fund Flow, Macro Events, User Investment Plan.",
+            "Optional gaps: Benchmark History, Peer Group, Factor Exposures, Manager Profile, Fund Flow, Macro Events, User Investment Plan."
+          ],
+          "data_sources": [
+            "data_completeness",
+            "report_limitations"
+          ],
+          "id": "data_completeness_and_limitations",
+          "limitations": [
+            "Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data"
+          ],
+          "status": "OK",
+          "title": "Data completeness and limitations"
+        },
+        {
+          "bullets": [
+            "FundAnalysisSkill emits HardEvidence separately in SkillOutput.evidence_items.",
+            "This composed report does not create formal decisions or execution ledgers."
+          ],
+          "data_sources": [
+            "SkillOutput.evidence_items"
+          ],
+          "id": "evidence_appendix",
+          "limitations": [],
+          "status": "OK",
+          "title": "Evidence appendix"
+        }
+      ],
+      "risk_flags": [
+        {
+          "details": {
+            "limit": 0.08,
+            "value": 0.066667
+          },
+          "message": "cash reserve is below liquidity reserve target",
+          "severity": "medium",
+          "type": "insufficient_cash_reserve"
+        }
+      ],
+      "short_term_budget": {
+        "exceeded": true,
+        "recent_buys": 20000.0,
+        "recent_sells": 0,
+        "remaining": 0,
+        "short_term_budget": 11200.0,
+        "usage_pct": 1.785714,
+        "used": 20000.0
+      },
+      "suggested_watchlist": [],
+      "trade_budget": {
+        "cash_available": 8000.0,
+        "liquidity_reserve": 9600.0,
+        "max_buy_amount": 15000.0,
+        "max_sell_amount": 12000.0,
+        "max_trade_amount": 14400.0,
+        "min_trade_amount": 1000.0,
+        "short_term_budget": 12000.0,
+        "total_value": 120000.0
+      },
+      "trading_flags": [],
+      "transaction_summary": {
+        "as_of_date": "2026-03-31",
+        "buy_count": 4,
+        "cashflow_by_fund": {
+          "SYN7D001": -40000.0,
+          "SYN7D002": -48000.0,
+          "SYN7D003": -20000.0
+        },
+        "net_flow": -108000.0,
+        "position_costs": {
+          "SYN7D001": {
+            "average_cost_per_share": 1.025759,
+            "current_nav": 1.076,
+            "current_value": 41959.18,
+            "fund_code": "SYN7D001",
+            "method": "weighted_average",
+            "total_cost": 40000.0,
+            "total_shares": 38995.5239,
+            "transaction_count": 2,
+            "unrealized_pnl": 1959.18,
+            "unrealized_pnl_pct": 4.9
+          },
+          "SYN7D002": {
+            "average_cost_per_share": 1.0,
+            "current_nav": 1.075,
+            "current_value": 51600.0,
+            "fund_code": "SYN7D002",
+            "method": "weighted_average",
+            "total_cost": 48000.0,
+            "total_shares": 48000.0,
+            "transaction_count": 1,
+            "unrealized_pnl": 3600.0,
+            "unrealized_pnl_pct": 7.5
+          },
+          "SYN7D003": {
+            "average_cost_per_share": 1.0,
+            "current_nav": 1.01,
+            "current_value": 20200.0,
+            "fund_code": "SYN7D003",
+            "method": "weighted_average",
+            "total_cost": 20000.0,
+            "total_shares": 20000.0,
+            "transaction_count": 1,
+            "unrealized_pnl": 200.0,
+            "unrealized_pnl_pct": 1.0
+          }
+        },
+        "sell_count": 0,
+        "total_buys": 108000.0,
+        "total_dividends": 0.0,
+        "total_fees": 0.0,
+        "total_sells": 0.0,
+        "warnings": []
+      },
+      "warnings": [
+        "SYN7D001: shares mismatch [high] — snapshot=38995.5239/41959.18, portfolio=39024.3902/42000.0, delta=-28.8663/-40.82",
+        "SYN7D002: shares mismatch [high] — snapshot=48000.0000/51600.0, portfolio=46511.6279/50000.0, delta=1488.3721/1600.0",
+        "SYN7D003: shares mismatch [high] — snapshot=20000.0000/20200.0, portfolio=19801.9802/20000.0, delta=198.0198/200.0"
+      ]
+    },
+    "ledger_reconciliation_report": {
+      "comparisons": [
+        {
+          "fund_code": "SYN7D001",
+          "matched": false,
+          "portfolio_shares": 39024.3902,
+          "portfolio_value": 42000.0,
+          "severity": "high",
+          "shares_delta": -28.8663,
+          "snapshot_shares": 38995.5239,
+          "snapshot_value": 41959.18,
+          "value_delta": -40.82
+        },
+        {
+          "fund_code": "SYN7D002",
+          "matched": false,
+          "portfolio_shares": 46511.6279,
+          "portfolio_value": 50000.0,
+          "severity": "high",
+          "shares_delta": 1488.3721,
+          "snapshot_shares": 48000.0,
+          "snapshot_value": 51600.0,
+          "value_delta": 1600.0
+        },
+        {
+          "fund_code": "SYN7D003",
+          "matched": false,
+          "portfolio_shares": 19801.9802,
+          "portfolio_value": 20000.0,
+          "severity": "high",
+          "shares_delta": 198.0198,
+          "snapshot_shares": 20000.0,
+          "snapshot_value": 20200.0,
+          "value_delta": 200.0
+        }
+      ],
+      "matched": false,
+      "mismatches": [
+        {
+          "fund_code": "SYN7D001",
+          "portfolio_shares": 39024.3902,
+          "portfolio_value": 42000.0,
+          "reason": "SHARES_MISMATCH",
+          "severity": "high",
+          "shares_delta": -28.8663,
+          "snapshot_shares": 38995.5239,
+          "snapshot_value": 41959.18,
+          "value_delta": -40.82
+        },
+        {
+          "fund_code": "SYN7D002",
+          "portfolio_shares": 46511.6279,
+          "portfolio_value": 50000.0,
+          "reason": "SHARES_MISMATCH",
+          "severity": "high",
+          "shares_delta": 1488.3721,
+          "snapshot_shares": 48000.0,
+          "snapshot_value": 51600.0,
+          "value_delta": 1600.0
+        },
+        {
+          "fund_code": "SYN7D003",
+          "portfolio_shares": 19801.9802,
+          "portfolio_value": 20000.0,
+          "reason": "SHARES_MISMATCH",
+          "severity": "high",
+          "shares_delta": 198.0198,
+          "snapshot_shares": 20000.0,
+          "snapshot_value": 20200.0,
+          "value_delta": 200.0
+        }
+      ],
+      "warnings": [
+        "SYN7D001: shares mismatch [high] — snapshot=38995.5239/41959.18, portfolio=39024.3902/42000.0, delta=-28.8663/-40.82",
+        "SYN7D002: shares mismatch [high] — snapshot=48000.0000/51600.0, portfolio=46511.6279/50000.0, delta=1488.3721/1600.0",
+        "SYN7D003: shares mismatch [high] — snapshot=20000.0000/20200.0, portfolio=19801.9802/20000.0, delta=198.0198/200.0"
+      ]
+    },
+    "market_scenario_impact": null,
+    "pnl_summary": {
+      "positions": {
+        "SYN7D001": {
+          "current_value": 42000.0,
+          "total_cost": 40000.0,
+          "unrealized_pnl": 2000.0,
+          "unrealized_pnl_pct": 0.05
+        },
+        "SYN7D002": {
+          "current_value": 50000.0,
+          "total_cost": 48000.0,
+          "unrealized_pnl": 2000.0,
+          "unrealized_pnl_pct": 0.041667
+        },
+        "SYN7D003": {
+          "current_value": 20000.0,
+          "total_cost": 20000.0,
+          "unrealized_pnl": 0.0,
+          "unrealized_pnl_pct": 0.0
+        }
+      },
+      "total_cost": 108000.0,
+      "total_value": 112000.0,
+      "unrealized_pnl": 4000.0,
+      "unrealized_pnl_pct": 0.037037
+    },
+    "portfolio_summary": {
+      "as_of_date": "2026-03-31",
+      "cash_available": 8000.0,
+      "position_count": 3,
+      "position_weights": {
+        "SYN7D001": 0.35,
+        "SYN7D002": 0.416667,
+        "SYN7D003": 0.166667
+      },
+      "total_value": 120000.0
+    },
+    "position_summary": {
+      "SYN7D001": {
+        "current_value": 42000.0,
+        "fund_code": "SYN7D001",
+        "fund_name": "Sample Recent Growth Mix",
+        "pending_amount": 0.0,
+        "shares": 39024.3902,
+        "tags": [
+          "cn_equity",
+          "recent_buy",
+          "redemption_fee_window"
+        ],
+        "target_weight": 0.3,
+        "total_cost": 40000.0
+      },
+      "SYN7D002": {
+        "current_value": 50000.0,
+        "fund_code": "SYN7D002",
+        "fund_name": "Sample Long Hold Income Bond",
+        "pending_amount": 0.0,
+        "shares": 46511.6279,
+        "tags": [
+          "cn_bond",
+          "income",
+          "longer_holding"
+        ],
+        "target_weight": 0.42,
+        "total_cost": 48000.0
+      },
+      "SYN7D003": {
+        "current_value": 20000.0,
+        "fund_code": "SYN7D003",
+        "fund_name": "Sample Cash Plus Fund",
+        "pending_amount": 0.0,
+        "shares": 19801.9802,
+        "tags": [
+          "cash_management",
+          "liquidity"
+        ],
+        "target_weight": 0.18,
+        "total_cost": 20000.0
+      }
+    },
+    "redemption_summary": {
+      "funds_with_rules": [
+        "SYN7D001",
+        "SYN7D002",
+        "SYN7D003"
+      ],
+      "high_redemption_fee_funds": [
+        "SYN7D001"
+      ],
+      "redemption_constraints": {
+        "SYN7D001": {
+          "holding_period_days": 7,
+          "liquidity_note": "Sample T+2 redemption settlement. Recent buy is inside a 7-day sample fee window.",
+          "redemption_fee_pct": 0.015,
+          "redemption_fee_schedule": "sample schedule: <7d 1.5%, 7-30d 0.75%, >30d 0.25%",
+          "suspended": false
+        },
+        "SYN7D002": {
+          "holding_period_days": 30,
+          "liquidity_note": "Sample holding is older than 30 days.",
+          "redemption_fee_pct": 0.001,
+          "redemption_fee_schedule": "sample schedule: <30d 0.1%, >30d 0%",
+          "suspended": false
+        },
+        "SYN7D003": {
+          "holding_period_days": 1,
+          "liquidity_note": "Sample cash management liquidity sleeve.",
+          "redemption_fee_pct": 0.0,
+          "redemption_fee_schedule": "sample schedule: no redemption fee after confirmation",
+          "suspended": false
+        }
+      },
+      "warnings": [
+        "Fund(s) SYN7D001 charge >1% redemption fees — early redemption may be costly"
+      ]
+    },
+    "report_limitations": [
+      "Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data"
+    ],
+    "report_outline": [
+      {
+        "id": "executive_summary",
+        "status": "OK",
+        "title": "Executive summary"
+      },
+      {
+        "id": "portfolio_snapshot",
+        "status": "OK",
+        "title": "Portfolio snapshot"
+      },
+      {
+        "id": "pnl_and_cost_basis",
+        "status": "OK",
+        "title": "PnL and cost basis"
+      },
+      {
+        "id": "allocation_and_exposure",
+        "status": "OK",
+        "title": "Allocation and exposure"
+      },
+      {
+        "id": "risk_flags",
+        "status": "OK",
+        "title": "Risk flags"
+      },
+      {
+        "id": "performance_and_nav",
+        "status": "OK",
+        "title": "Performance and NAV"
+      },
+      {
+        "id": "benchmark_and_peer",
+        "status": "MISSING",
+        "title": "Benchmark and peer"
+      },
+      {
+        "id": "factor_and_style",
+        "status": "MISSING",
+        "title": "Factor and style"
+      },
+      {
+        "id": "fees_and_redemption",
+        "status": "OK",
+        "title": "Fees and redemption"
+      },
+      {
+        "id": "manager_and_fund_profile",
+        "status": "PARTIAL",
+        "title": "Manager and fund profile"
+      },
+      {
+        "id": "dca_and_trade_budget",
+        "status": "OK",
+        "title": "DCA and trade budget"
+      },
+      {
+        "id": "rebalance_plan",
+        "status": "OK",
+        "title": "Rebalance plan"
+      },
+      {
+        "id": "research_query_plan",
+        "status": "MISSING",
+        "title": "Research query plan"
+      },
+      {
+        "id": "data_completeness_and_limitations",
+        "status": "OK",
+        "title": "Data completeness and limitations"
+      },
+      {
+        "id": "evidence_appendix",
+        "status": "OK",
+        "title": "Evidence appendix"
+      }
+    ],
+    "report_quality_gate": {
+      "can_publish_professional_report": true,
+      "grade": "B",
+      "reason": "Data completeness grade B supports a professional report."
+    },
+    "report_sections": [
+      {
+        "bullets": [
+          "Portfolio value 120,000.00 across 3 position(s); cash 8,000.00.",
+          "Data completeness grade B with score 0.767.",
+          "Risk scan surfaced 1 flag(s) from available inputs.",
+          "No formal decision generated; call decision-support for formal action."
+        ],
+        "data_sources": [
+          "portfolio_summary",
+          "data_completeness",
+          "risk_flags"
+        ],
+        "id": "executive_summary",
+        "limitations": [],
+        "status": "OK",
+        "title": "Executive summary"
+      },
+      {
+        "bullets": [
+          "As of 2026-03-31, total value is 120,000.00 with 8,000.00 cash.",
+          "Largest position is SYN7D002 at 41.67% of portfolio value.",
+          "Position detail is available for 3 fund(s)."
+        ],
+        "data_sources": [
+          "portfolio_summary",
+          "position_summary"
+        ],
+        "id": "portfolio_snapshot",
+        "limitations": [],
+        "status": "OK",
+        "title": "Portfolio snapshot"
+      },
+      {
+        "bullets": [
+          "Unrealized PnL is 4,000.00 (3.70%) on total cost 108,000.00.",
+          "Position-level PnL is available for 3 fund(s).",
+          "Transaction-derived cost basis is available for 3 fund(s)."
+        ],
+        "data_sources": [
+          "pnl_summary",
+          "cost_basis_summary"
+        ],
+        "id": "pnl_and_cost_basis",
+        "limitations": [],
+        "status": "OK",
+        "title": "PnL and cost basis"
+      },
+      {
+        "bullets": [
+          "Top fund type exposure is fund_type:bond at 44.64%.",
+          "Top industry exposure is industry:policy_bank at 13.39%.",
+          "Top theme exposure is region:CN at 53.48%.",
+          "Single-fund max weight is 44.64%; HHI is 0.371811."
+        ],
+        "data_sources": [
+          "exposure_summary",
+          "concentration"
+        ],
+        "id": "allocation_and_exposure",
+        "limitations": [],
+        "status": "OK",
+        "title": "Allocation and exposure"
+      },
+      {
+        "bullets": [
+          "Risk flags by severity: medium=1."
+        ],
+        "data_sources": [
+          "risk_flags",
+          "data_completeness"
+        ],
+        "id": "risk_flags",
+        "limitations": [],
+        "status": "OK",
+        "title": "Risk flags"
+      },
+      {
+        "bullets": [
+          "NAV-derived metrics are available for 3 fund(s).",
+          "Highest total return in provided NAV history is SYN7D001 at 12.08%."
+        ],
+        "data_sources": [
+          "fund_analysis_report.fund_metrics"
+        ],
+        "id": "performance_and_nav",
+        "limitations": [],
+        "status": "OK",
+        "title": "Performance and NAV"
+      },
+      {
+        "bullets": [],
+        "data_sources": [
+          "benchmark_summary",
+          "peer_summary"
+        ],
+        "id": "benchmark_and_peer",
+        "limitations": [
+          "Benchmark data is missing; no benchmark comparison is fabricated.",
+          "Peer group data is missing; no peer ranking is fabricated."
+        ],
+        "status": "MISSING",
+        "title": "Benchmark and peer"
+      },
+      {
+        "bullets": [],
+        "data_sources": [
+          "factor_summary"
+        ],
+        "id": "factor_and_style",
+        "limitations": [
+          "Factor exposure data is missing; no style exposure is fabricated."
+        ],
+        "status": "MISSING",
+        "title": "Factor and style"
+      },
+      {
+        "bullets": [
+          "Fee schedule is available for 3 fund(s).",
+          "Redemption rules are available for 3 fund(s).",
+          "Fund(s) SYN7D001 charge >1% redemption fees — early redemption may be costly"
+        ],
+        "data_sources": [
+          "fee_summary",
+          "redemption_summary"
+        ],
+        "id": "fees_and_redemption",
+        "limitations": [],
+        "status": "OK",
+        "title": "Fees and redemption"
+      },
+      {
+        "bullets": [
+          "Fund profile data is present, but manager profile details were not provided."
+        ],
+        "data_sources": [
+          "manager_summary",
+          "data_completeness"
+        ],
+        "id": "manager_and_fund_profile",
+        "limitations": [
+          "Manager tenure and manager-change analysis are unavailable."
+        ],
+        "status": "PARTIAL",
+        "title": "Manager and fund profile"
+      },
+      {
+        "bullets": [
+          "Trade budget: max buy 15,000.00, max sell 12,000.00, liquidity reserve 9,600.00.",
+          "Short-term trade budget usage is available.",
+          "DCA review includes 0 suggestion(s)."
+        ],
+        "data_sources": [
+          "trade_budget",
+          "short_term_trade_budget",
+          "dca_plan_review"
+        ],
+        "id": "dca_and_trade_budget",
+        "limitations": [],
+        "status": "OK",
+        "title": "DCA and trade budget"
+      },
+      {
+        "bullets": [
+          "Rebalance simulation produced 2 trade leg(s) with total trade amount 7,600.00.",
+          "Sample account prefers preserving at least 8% cash.",
+          "Host supplies redemption fee and holding-period data."
+        ],
+        "data_sources": [
+          "suggested_rebalance_plan"
+        ],
+        "id": "rebalance_plan",
+        "limitations": [],
+        "status": "OK",
+        "title": "Rebalance plan"
+      },
+      {
+        "bullets": [],
+        "data_sources": [
+          "research_query_plan"
+        ],
+        "id": "research_query_plan",
+        "limitations": [
+          "Research planning was not requested by the host."
+        ],
+        "status": "MISSING",
+        "title": "Research query plan"
+      },
+      {
+        "bullets": [
+          "Completeness grade B with score 0.767.",
+          "Missing data groups: Benchmark History, Peer Group, Factor Exposures, Manager Profile, Fund Flow, Macro Events, User Investment Plan.",
+          "Optional gaps: Benchmark History, Peer Group, Factor Exposures, Manager Profile, Fund Flow, Macro Events, User Investment Plan."
+        ],
+        "data_sources": [
+          "data_completeness",
+          "report_limitations"
+        ],
+        "id": "data_completeness_and_limitations",
+        "limitations": [
+          "Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data"
+        ],
+        "status": "OK",
+        "title": "Data completeness and limitations"
+      },
+      {
+        "bullets": [
+          "FundAnalysisSkill emits HardEvidence separately in SkillOutput.evidence_items.",
+          "This composed report does not create formal decisions or execution ledgers."
+        ],
+        "data_sources": [
+          "SkillOutput.evidence_items"
+        ],
+        "id": "evidence_appendix",
+        "limitations": [],
+        "status": "OK",
+        "title": "Evidence appendix"
+      }
+    ],
+    "risk_flags": [
+      {
+        "details": {
+          "limit": 0.08,
+          "value": 0.066667
+        },
+        "message": "cash reserve is below liquidity reserve target",
+        "severity": "medium",
+        "type": "insufficient_cash_reserve"
+      }
+    ],
+    "short_term_trade_budget": {
+      "exceeded": true,
+      "recent_buys": 20000.0,
+      "recent_sells": 0,
+      "remaining": 0,
+      "short_term_budget": 11200.0,
+      "usage_pct": 1.785714,
+      "used": 20000.0
+    },
+    "suggested_rebalance_plan": {
+      "suggested_trade_plan": [
+        {
+          "action": "SELL",
+          "amount": 6000.0,
+          "cap_reasons": [],
+          "capped": false,
+          "current_cost": 40000.0,
+          "current_value": 42000.0,
+          "current_weight": 0.35,
+          "evidence_refs": [
+            "ev:portfolio_allocation_concentration",
+            "ev:fund_risk_return_metrics",
+            "ev:fund_risk_return_metrics",
+            "ev:fund_risk_return_metrics",
+            "ev:portfolio_risk_flags",
+            "ev:position_cost_basis",
+            "ev:short_term_budget_usage",
+            "ev:dca_plan_review",
+            "ev:portfolio_pnl_summary"
+          ],
+          "fund_code": "SYN7D001",
+          "fund_name": "Sample Recent Growth Mix",
+          "rationale": "Within constraint bounds",
+          "requested_amount": 6000.0,
+          "risk_flags_refs": [
+            "insufficient_cash_reserve"
+          ],
+          "tags": [
+            "cn_equity",
+            "recent_buy",
+            "redemption_fee_window"
+          ],
+          "target_weight": 0.3,
+          "trade_id": "SYN7D001_SELL_0",
+          "unrealized_pnl": 2000.0
+        },
+        {
+          "action": "BUY",
+          "amount": 1600.0,
+          "cap_reasons": [],
+          "capped": false,
+          "current_cost": 20000.0,
+          "current_value": 20000.0,
+          "current_weight": 0.166667,
+          "evidence_refs": [
+            "ev:portfolio_allocation_concentration",
+            "ev:fund_risk_return_metrics",
+            "ev:fund_risk_return_metrics",
+            "ev:fund_risk_return_metrics",
+            "ev:portfolio_risk_flags",
+            "ev:position_cost_basis",
+            "ev:short_term_budget_usage",
+            "ev:dca_plan_review",
+            "ev:portfolio_pnl_summary"
+          ],
+          "fund_code": "SYN7D003",
+          "fund_name": "Sample Cash Plus Fund",
+          "rationale": "Within constraint bounds",
+          "requested_amount": 1600.0,
+          "risk_flags_refs": [
+            "insufficient_cash_reserve"
+          ],
+          "tags": [
+            "cash_management",
+            "liquidity"
+          ],
+          "target_weight": 0.18,
+          "trade_id": "SYN7D003_BUY_1",
+          "unrealized_pnl": 0.0
+        }
+      ],
+      "total_trade_amount": 7600.0,
+      "warnings": [
+        "Sample account prefers preserving at least 8% cash.",
+        "Host supplies redemption fee and holding-period data."
+      ]
+    },
+    "warnings": [
+      "SYN7D001: shares mismatch [high] — snapshot=38995.5239/41959.18, portfolio=39024.3902/42000.0, delta=-28.8663/-40.82",
+      "SYN7D002: shares mismatch [high] — snapshot=48000.0000/51600.0, portfolio=46511.6279/50000.0, delta=1488.3721/1600.0",
+      "SYN7D003: shares mismatch [high] — snapshot=20000.0000/20200.0, portfolio=19801.9802/20000.0, delta=198.0198/200.0"
+    ]
+  },
+  "errors": [],
+  "evidence_items": [
+    {
+      "claim": "Portfolio allocation and concentration metrics were computed",
+      "confidence_weight": 1.0,
+      "direction": "negative",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:SYN7D001",
+        "fund:SYN7D002",
+        "fund:SYN7D003"
+      ],
+      "source_type": "portfolio_allocation_concentration",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "concentration": {
+          "duplicate_tags": [],
+          "hhi": 0.371811,
+          "max_fund_code": "SYN7D002",
+          "position_count": 3,
+          "single_fund_max_weight": 0.446429,
+          "top_n": 3,
+          "top_n_concentration": 1.0
+        },
+        "portfolio_summary": {
+          "as_of_date": "2026-03-31",
+          "cash_available": 8000.0,
+          "position_count": 3,
+          "position_weights": {
+            "SYN7D001": 0.35,
+            "SYN7D002": 0.416667,
+            "SYN7D003": 0.166667
+          },
+          "total_value": 120000.0
+        }
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Risk-return metrics were computed for fund SYN7D001",
+      "confidence_weight": 1.0,
+      "direction": "positive",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.fund.metrics"
+      },
+      "related_entities": [
+        "fund:SYN7D001"
+      ],
+      "source_type": "fund_risk_return_metrics",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "annualized_volatility": 0.222051,
+        "max_drawdown": 0.0,
+        "observation_count": 6,
+        "recent_momentum": 0.082819,
+        "return_1m": 0.029665,
+        "return_1y": 0.120833,
+        "return_3m": 0.097959,
+        "return_6m": 0.120833,
+        "return_count": 5,
+        "risk_adjusted_score": 0.372974,
+        "rolling_drawdown": {
+          "max_drawdown": 0.0,
+          "peak_nav": 1.076,
+          "trough_nav": 0.96
+        },
+        "sharpe": 26.187602,
+        "sortino": 0.0,
+        "total_return": 0.120833
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Risk-return metrics were computed for fund SYN7D002",
+      "confidence_weight": 1.0,
+      "direction": "positive",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.fund.metrics"
+      },
+      "related_entities": [
+        "fund:SYN7D002"
+      ],
+      "source_type": "fund_risk_return_metrics",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "annualized_volatility": 0.110641,
+        "max_drawdown": 0.0,
+        "observation_count": 5,
+        "recent_momentum": 0.04439,
+        "return_1m": 0.00939,
+        "return_1y": 0.075,
+        "return_3m": 0.04878,
+        "return_6m": 0.075,
+        "return_count": 4,
+        "risk_adjusted_score": 0.401209,
+        "rolling_drawdown": {
+          "max_drawdown": 0.0,
+          "peak_nav": 1.075,
+          "trough_nav": 1.0
+        },
+        "sharpe": 41.416502,
+        "sortino": 0.0,
+        "total_return": 0.075
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Risk-return metrics were computed for fund SYN7D003",
+      "confidence_weight": 1.0,
+      "direction": "neutral",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.fund.metrics"
+      },
+      "related_entities": [
+        "fund:SYN7D003"
+      ],
+      "source_type": "fund_risk_return_metrics",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "annualized_volatility": 0.009252,
+        "max_drawdown": 0.0,
+        "observation_count": 5,
+        "recent_momentum": 0.006321,
+        "return_1m": 0.001984,
+        "return_1y": 0.01,
+        "return_3m": 0.006979,
+        "return_6m": 0.01,
+        "return_count": 4,
+        "risk_adjusted_score": 0.683229,
+        "rolling_drawdown": {
+          "max_drawdown": 0.0,
+          "peak_nav": 1.01,
+          "trough_nav": 1.0
+        },
+        "sharpe": 65.705001,
+        "sortino": 0.0,
+        "total_return": 0.01
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Portfolio risk flag scan found 1 issue(s)",
+      "confidence_weight": 1.0,
+      "direction": "negative",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:SYN7D001",
+        "fund:SYN7D002",
+        "fund:SYN7D003"
+      ],
+      "source_type": "portfolio_risk_flags",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "risk_flags": [
+          {
+            "details": {
+              "limit": 0.08,
+              "value": 0.066667
+            },
+            "message": "cash reserve is below liquidity reserve target",
+            "severity": "medium",
+            "type": "insufficient_cash_reserve"
+          }
+        ]
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Portfolio rebalance simulation was generated",
+      "confidence_weight": 1.0,
+      "direction": "neutral",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:SYN7D001",
+        "fund:SYN7D002",
+        "fund:SYN7D003"
+      ],
+      "source_type": "portfolio_rebalance_simulation",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "suggested_trade_plan": [
+          {
+            "action": "SELL",
+            "amount": 6000.0,
+            "cap_reasons": [],
+            "capped": false,
+            "current_cost": 40000.0,
+            "current_value": 42000.0,
+            "current_weight": 0.35,
+            "evidence_refs": [
+              "ev:portfolio_allocation_concentration",
+              "ev:fund_risk_return_metrics",
+              "ev:fund_risk_return_metrics",
+              "ev:fund_risk_return_metrics",
+              "ev:portfolio_risk_flags",
+              "ev:position_cost_basis",
+              "ev:short_term_budget_usage",
+              "ev:dca_plan_review",
+              "ev:portfolio_pnl_summary"
+            ],
+            "fund_code": "SYN7D001",
+            "fund_name": "Sample Recent Growth Mix",
+            "rationale": "Within constraint bounds",
+            "requested_amount": 6000.0,
+            "risk_flags_refs": [
+              "insufficient_cash_reserve"
+            ],
+            "tags": [
+              "cn_equity",
+              "recent_buy",
+              "redemption_fee_window"
+            ],
+            "target_weight": 0.3,
+            "trade_id": "SYN7D001_SELL_0",
+            "unrealized_pnl": 2000.0
+          },
+          {
+            "action": "BUY",
+            "amount": 1600.0,
+            "cap_reasons": [],
+            "capped": false,
+            "current_cost": 20000.0,
+            "current_value": 20000.0,
+            "current_weight": 0.166667,
+            "evidence_refs": [
+              "ev:portfolio_allocation_concentration",
+              "ev:fund_risk_return_metrics",
+              "ev:fund_risk_return_metrics",
+              "ev:fund_risk_return_metrics",
+              "ev:portfolio_risk_flags",
+              "ev:position_cost_basis",
+              "ev:short_term_budget_usage",
+              "ev:dca_plan_review",
+              "ev:portfolio_pnl_summary"
+            ],
+            "fund_code": "SYN7D003",
+            "fund_name": "Sample Cash Plus Fund",
+            "rationale": "Within constraint bounds",
+            "requested_amount": 1600.0,
+            "risk_flags_refs": [
+              "insufficient_cash_reserve"
+            ],
+            "tags": [
+              "cash_management",
+              "liquidity"
+            ],
+            "target_weight": 0.18,
+            "trade_id": "SYN7D003_BUY_1",
+            "unrealized_pnl": 0.0
+          }
+        ],
+        "total_trade_amount": 7600.0,
+        "warnings": [
+          "Sample account prefers preserving at least 8% cash.",
+          "Host supplies redemption fee and holding-period data."
+        ]
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Position cost basis computed from transaction history",
+      "confidence_weight": 1.0,
+      "direction": "neutral",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.transaction"
+      },
+      "related_entities": [
+        "fund:SYN7D001",
+        "fund:SYN7D002",
+        "fund:SYN7D003"
+      ],
+      "source_type": "position_cost_basis",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "SYN7D001": {
+          "average_cost_per_share": 1.025759,
+          "current_nav": 1.076,
+          "current_value": 41959.18,
+          "fund_code": "SYN7D001",
+          "method": "weighted_average",
+          "total_cost": 40000.0,
+          "total_shares": 38995.5239,
+          "transaction_count": 2,
+          "unrealized_pnl": 1959.18,
+          "unrealized_pnl_pct": 4.9
+        },
+        "SYN7D002": {
+          "average_cost_per_share": 1.0,
+          "current_nav": 1.075,
+          "current_value": 51600.0,
+          "fund_code": "SYN7D002",
+          "method": "weighted_average",
+          "total_cost": 48000.0,
+          "total_shares": 48000.0,
+          "transaction_count": 1,
+          "unrealized_pnl": 3600.0,
+          "unrealized_pnl_pct": 7.5
+        },
+        "SYN7D003": {
+          "average_cost_per_share": 1.0,
+          "current_nav": 1.01,
+          "current_value": 20200.0,
+          "fund_code": "SYN7D003",
+          "method": "weighted_average",
+          "total_cost": 20000.0,
+          "total_shares": 20000.0,
+          "transaction_count": 1,
+          "unrealized_pnl": 200.0,
+          "unrealized_pnl_pct": 1.0
+        }
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Short-term trading budget usage computed",
+      "confidence_weight": 1.0,
+      "direction": "negative",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:SYN7D001",
+        "fund:SYN7D002",
+        "fund:SYN7D003"
+      ],
+      "source_type": "short_term_budget_usage",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "exceeded": true,
+        "recent_buys": 20000.0,
+        "recent_sells": 0,
+        "remaining": 0,
+        "short_term_budget": 11200.0,
+        "usage_pct": 1.785714,
+        "used": 20000.0
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "DCA plan review completed with 0 action(s) suggested",
+      "confidence_weight": 1.0,
+      "direction": "neutral",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:SYN7D001",
+        "fund:SYN7D002",
+        "fund:SYN7D003"
+      ],
+      "source_type": "dca_plan_review",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "plans": [
+          {
+            "annual_amount": 12000.0,
+            "current_weight": 0.166667,
+            "exceeds_limit": false,
+            "fund_code": "SYN7D003",
+            "monthly_amount": 1000.0,
+            "plan_id": "sample_cash_buffer_plan",
+            "suggestion": "CONTINUE"
+          }
+        ],
+        "suggestions": [],
+        "warnings": []
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Portfolio-level PnL summary with top positions computed",
+      "confidence_weight": 1.0,
+      "direction": "positive",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:SYN7D001",
+        "fund:SYN7D002",
+        "fund:SYN7D003"
+      ],
+      "source_type": "portfolio_pnl_summary",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "top_positions": [
+          {
+            "current_value": 42000.0,
+            "fund_code": "SYN7D001",
+            "total_cost": 40000.0,
+            "unrealized_pnl": 2000.0,
+            "unrealized_pnl_pct": 0.05
+          },
+          {
+            "current_value": 50000.0,
+            "fund_code": "SYN7D002",
+            "total_cost": 48000.0,
+            "unrealized_pnl": 2000.0,
+            "unrealized_pnl_pct": 0.041667
+          },
+          {
+            "current_value": 20000.0,
+            "fund_code": "SYN7D003",
+            "total_cost": 20000.0,
+            "unrealized_pnl": 0.0,
+            "unrealized_pnl_pct": 0.0
+          }
+        ],
+        "total_cost": 108000.0,
+        "total_value": 112000.0,
+        "unrealized_pnl": 4000.0,
+        "unrealized_pnl_pct": 0.037037
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Ledger-portfolio reconciliation found 3 mismatches",
+      "confidence_weight": 1.0,
+      "direction": "negative",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.ledger_snapshot"
+      },
+      "related_entities": [
+        "fund:SYN7D001",
+        "fund:SYN7D002",
+        "fund:SYN7D003"
+      ],
+      "source_type": "ledger_reconciliation_mismatch",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "comparisons": [
+          {
+            "fund_code": "SYN7D001",
+            "matched": false,
+            "portfolio_shares": 39024.3902,
+            "portfolio_value": 42000.0,
+            "severity": "high",
+            "shares_delta": -28.8663,
+            "snapshot_shares": 38995.5239,
+            "snapshot_value": 41959.18,
+            "value_delta": -40.82
+          },
+          {
+            "fund_code": "SYN7D002",
+            "matched": false,
+            "portfolio_shares": 46511.6279,
+            "portfolio_value": 50000.0,
+            "severity": "high",
+            "shares_delta": 1488.3721,
+            "snapshot_shares": 48000.0,
+            "snapshot_value": 51600.0,
+            "value_delta": 1600.0
+          },
+          {
+            "fund_code": "SYN7D003",
+            "matched": false,
+            "portfolio_shares": 19801.9802,
+            "portfolio_value": 20000.0,
+            "severity": "high",
+            "shares_delta": 198.0198,
+            "snapshot_shares": 20000.0,
+            "snapshot_value": 20200.0,
+            "value_delta": 200.0
+          }
+        ],
+        "matched": false,
+        "mismatches": [
+          {
+            "fund_code": "SYN7D001",
+            "portfolio_shares": 39024.3902,
+            "portfolio_value": 42000.0,
+            "reason": "SHARES_MISMATCH",
+            "severity": "high",
+            "shares_delta": -28.8663,
+            "snapshot_shares": 38995.5239,
+            "snapshot_value": 41959.18,
+            "value_delta": -40.82
+          },
+          {
+            "fund_code": "SYN7D002",
+            "portfolio_shares": 46511.6279,
+            "portfolio_value": 50000.0,
+            "reason": "SHARES_MISMATCH",
+            "severity": "high",
+            "shares_delta": 1488.3721,
+            "snapshot_shares": 48000.0,
+            "snapshot_value": 51600.0,
+            "value_delta": 1600.0
+          },
+          {
+            "fund_code": "SYN7D003",
+            "portfolio_shares": 19801.9802,
+            "portfolio_value": 20000.0,
+            "reason": "SHARES_MISMATCH",
+            "severity": "high",
+            "shares_delta": 198.0198,
+            "snapshot_shares": 20000.0,
+            "snapshot_value": 20200.0,
+            "value_delta": 200.0
+          }
+        ],
+        "warnings": [
+          "SYN7D001: shares mismatch [high] — snapshot=38995.5239/41959.18, portfolio=39024.3902/42000.0, delta=-28.8663/-40.82",
+          "SYN7D002: shares mismatch [high] — snapshot=48000.0000/51600.0, portfolio=46511.6279/50000.0, delta=1488.3721/1600.0",
+          "SYN7D003: shares mismatch [high] — snapshot=20000.0000/20200.0, portfolio=19801.9802/20000.0, delta=198.0198/200.0"
+        ]
+      },
+      "version": "evidence-contract.v2"
+    }
+  ],
+  "metadata": {
+    "missing_mcp_capabilities": [],
+    "required_mcp_capabilities": []
+  },
+  "ok": true,
+  "skill_name": "fund_analysis",
+  "status": "PARTIAL",
+  "used_mcp_capabilities": [],
+  "warnings": [
+    "SYN7D001: shares mismatch [high] — snapshot=38995.5239/41959.18, portfolio=39024.3902/42000.0, delta=-28.8663/-40.82",
+    "SYN7D002: shares mismatch [high] — snapshot=48000.0000/51600.0, portfolio=46511.6279/50000.0, delta=1488.3721/1600.0",
+    "SYN7D003: shares mismatch [high] — snapshot=20000.0000/20200.0, portfolio=19801.9802/20000.0, delta=198.0198/200.0"
+  ]
+}

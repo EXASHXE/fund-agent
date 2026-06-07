@@ -1,0 +1,2679 @@
+{
+  "artifacts": {
+    "analysis_coverage": {
+      "benchmark": "missing",
+      "factor": "available",
+      "fees": "available",
+      "holdings": "available",
+      "ledger": "missing",
+      "peer": "missing",
+      "performance": "available",
+      "portfolio": "available",
+      "redemption": "available",
+      "research_plan": "not_requested"
+    },
+    "cost_basis_summary": {
+      "SYNAI001": {
+        "average_cost_per_share": 1.24,
+        "current_nav": 1.4,
+        "current_value": 70000.0,
+        "fund_code": "SYNAI001",
+        "method": "weighted_average",
+        "total_cost": 62000.0,
+        "total_shares": 50000.0,
+        "transaction_count": 2,
+        "unrealized_pnl": 8000.0,
+        "unrealized_pnl_pct": 12.9
+      },
+      "SYNAI002": {
+        "average_cost_per_share": 1.253333,
+        "current_nav": 1.2,
+        "current_value": 45000.0,
+        "fund_code": "SYNAI002",
+        "method": "weighted_average",
+        "total_cost": 47000.0,
+        "total_shares": 37500.0,
+        "transaction_count": 1,
+        "unrealized_pnl": -2000.0,
+        "unrealized_pnl_pct": -4.26
+      },
+      "SYNAI003": {
+        "average_cost_per_share": 1.045,
+        "current_nav": 1.1,
+        "current_value": 20000.0,
+        "fund_code": "SYNAI003",
+        "method": "weighted_average",
+        "total_cost": 19000.0,
+        "total_shares": 18181.8182,
+        "transaction_count": 1,
+        "unrealized_pnl": 1000.0,
+        "unrealized_pnl_pct": 5.26
+      },
+      "SYNBOND01": {
+        "average_cost_per_share": 1.0,
+        "current_nav": 1.0,
+        "current_value": 10000.0,
+        "fund_code": "SYNBOND01",
+        "method": "weighted_average",
+        "total_cost": 10000.0,
+        "total_shares": 10000.0,
+        "transaction_count": 1,
+        "unrealized_pnl": 0.0,
+        "unrealized_pnl_pct": 0.0
+      }
+    },
+    "data_completeness": {
+      "available_sections": [
+        "Portfolio Snapshot",
+        "Current Value Or Nav",
+        "Fund Profiles",
+        "Nav History",
+        "Holdings",
+        "Risk Profile",
+        "Constraints",
+        "Factor Exposures",
+        "Fee Schedule",
+        "Redemption Rules"
+      ],
+      "critical_missing": [],
+      "grade": "B",
+      "limitations": [],
+      "missing_sections": [
+        "Benchmark History",
+        "Peer Group",
+        "Manager Profile",
+        "Fund Flow",
+        "Macro Events",
+        "User Investment Plan"
+      ],
+      "optional_missing": [
+        "Benchmark History",
+        "Peer Group",
+        "Manager Profile",
+        "Fund Flow",
+        "Macro Events",
+        "User Investment Plan"
+      ],
+      "score": 0.8
+    },
+    "dca_plan_review": {
+      "plans": [
+        {
+          "annual_amount": 36000.0,
+          "current_weight": 0.466667,
+          "exceeds_limit": true,
+          "fund_code": "SYNAI001",
+          "monthly_amount": 3000.0,
+          "plan_id": "sample_ai_monthly",
+          "suggestion": "PAUSE"
+        }
+      ],
+      "suggestions": [
+        {
+          "annual_amount": 36000.0,
+          "current_weight": 0.466667,
+          "exceeds_limit": true,
+          "fund_code": "SYNAI001",
+          "monthly_amount": 3000.0,
+          "plan_id": "sample_ai_monthly",
+          "suggestion": "PAUSE"
+        }
+      ],
+      "warnings": [
+        "DCA plan sample_ai_monthly for SYNAI001 exceeds concentration limit"
+      ]
+    },
+    "exposure_summary": {
+      "fund_type_exposure": {
+        "fund_type:bond": 0.068966,
+        "fund_type:equity": 0.482759,
+        "fund_type:etf": 0.310345,
+        "fund_type:mixed_equity": 0.137931
+      },
+      "industry_exposure": {
+        "industry:ai_hardware": 0.086897,
+        "industry:ai_semiconductor": 0.152759,
+        "industry:cloud_platform": 0.084828,
+        "industry:communications_equipment": 0.015172,
+        "industry:government": 0.02069,
+        "industry:policy_bank": 0.027586,
+        "industry:semiconductor": 0.024828,
+        "industry:semiconductor_equipment": 0.037241
+      },
+      "theme_exposure": {
+        "asset_type:bond": 0.048276,
+        "asset_type:stock": 0.401724,
+        "industry:ai_hardware": 0.086897,
+        "industry:ai_semiconductor": 0.152759,
+        "industry:cloud_platform": 0.084828,
+        "industry:communications_equipment": 0.015172,
+        "industry:government": 0.02069,
+        "industry:policy_bank": 0.027586,
+        "industry:semiconductor": 0.024828,
+        "industry:semiconductor_equipment": 0.037241,
+        "region:CN": 0.45
+      }
+    },
+    "factor_summary": {
+      "concentration_warnings": [
+        "Fund SYNAI001 has high ai_theme exposure (0.88)",
+        "Fund SYNAI002 has high ai_theme exposure (0.70)",
+        "Fund SYNAI001 has high semiconductor_beta exposure (0.82)",
+        "Fund SYNAI002 has high semiconductor_beta exposure (0.90)"
+      ],
+      "factor_exposures": {
+        "ai_theme": {
+          "SYNAI001": 0.88,
+          "SYNAI002": 0.7,
+          "SYNAI003": 0.42,
+          "SYNBOND01": 0.0
+        },
+        "duration": {
+          "SYNAI001": 0.0,
+          "SYNAI002": 0.0,
+          "SYNAI003": 0.0,
+          "SYNBOND01": 0.28
+        },
+        "semiconductor_beta": {
+          "SYNAI001": 0.82,
+          "SYNAI002": 0.9,
+          "SYNAI003": 0.2,
+          "SYNBOND01": 0.0
+        }
+      },
+      "factors": [
+        "ai_theme",
+        "duration",
+        "semiconductor_beta"
+      ]
+    },
+    "fee_summary": {
+      "fee_schedules": {
+        "SYNAI001": {
+          "custody_fee": 0.002,
+          "management_fee": 0.016,
+          "redemption_fee": 0.006,
+          "sales_fee": 0.001,
+          "total_expense_ratio": 0.019
+        },
+        "SYNAI002": {
+          "custody_fee": 0.001,
+          "management_fee": 0.005,
+          "redemption_fee": 0.003,
+          "sales_fee": 0.0,
+          "total_expense_ratio": 0.006
+        },
+        "SYNAI003": {
+          "custody_fee": 0.002,
+          "management_fee": 0.012,
+          "redemption_fee": 0.004,
+          "sales_fee": 0.001,
+          "total_expense_ratio": 0.015
+        },
+        "SYNBOND01": {
+          "custody_fee": 0.001,
+          "management_fee": 0.004,
+          "redemption_fee": 0.001,
+          "sales_fee": 0.0,
+          "total_expense_ratio": 0.005
+        }
+      },
+      "funds_with_fees": [
+        "SYNAI001",
+        "SYNAI002",
+        "SYNAI003",
+        "SYNBOND01"
+      ]
+    },
+    "fund_analysis_report": {
+      "analysis_coverage": {
+        "benchmark": "missing",
+        "factor": "available",
+        "fees": "available",
+        "holdings": "available",
+        "ledger": "missing",
+        "peer": "missing",
+        "performance": "available",
+        "portfolio": "available",
+        "redemption": "available",
+        "research_plan": "not_requested"
+      },
+      "concentration": {
+        "duplicate_tags": [
+          "semiconductor"
+        ],
+        "hhi": 0.353151,
+        "max_fund_code": "SYNAI001",
+        "position_count": 4,
+        "single_fund_max_weight": 0.482759,
+        "top_n": 3,
+        "top_n_concentration": 0.931034
+      },
+      "cost_basis_summary": {
+        "SYNAI001": {
+          "average_cost_per_share": 1.24,
+          "current_nav": 1.4,
+          "current_value": 70000.0,
+          "fund_code": "SYNAI001",
+          "method": "weighted_average",
+          "total_cost": 62000.0,
+          "total_shares": 50000.0,
+          "transaction_count": 2,
+          "unrealized_pnl": 8000.0,
+          "unrealized_pnl_pct": 12.9
+        },
+        "SYNAI002": {
+          "average_cost_per_share": 1.253333,
+          "current_nav": 1.2,
+          "current_value": 45000.0,
+          "fund_code": "SYNAI002",
+          "method": "weighted_average",
+          "total_cost": 47000.0,
+          "total_shares": 37500.0,
+          "transaction_count": 1,
+          "unrealized_pnl": -2000.0,
+          "unrealized_pnl_pct": -4.26
+        },
+        "SYNAI003": {
+          "average_cost_per_share": 1.045,
+          "current_nav": 1.1,
+          "current_value": 20000.0,
+          "fund_code": "SYNAI003",
+          "method": "weighted_average",
+          "total_cost": 19000.0,
+          "total_shares": 18181.8182,
+          "transaction_count": 1,
+          "unrealized_pnl": 1000.0,
+          "unrealized_pnl_pct": 5.26
+        },
+        "SYNBOND01": {
+          "average_cost_per_share": 1.0,
+          "current_nav": 1.0,
+          "current_value": 10000.0,
+          "fund_code": "SYNBOND01",
+          "method": "weighted_average",
+          "total_cost": 10000.0,
+          "total_shares": 10000.0,
+          "transaction_count": 1,
+          "unrealized_pnl": 0.0,
+          "unrealized_pnl_pct": 0.0
+        }
+      },
+      "data_completeness": {
+        "available_sections": [
+          "Portfolio Snapshot",
+          "Current Value Or Nav",
+          "Fund Profiles",
+          "Nav History",
+          "Holdings",
+          "Risk Profile",
+          "Constraints",
+          "Factor Exposures",
+          "Fee Schedule",
+          "Redemption Rules"
+        ],
+        "critical_missing": [],
+        "grade": "B",
+        "limitations": [],
+        "missing_sections": [
+          "Benchmark History",
+          "Peer Group",
+          "Manager Profile",
+          "Fund Flow",
+          "Macro Events",
+          "User Investment Plan"
+        ],
+        "optional_missing": [
+          "Benchmark History",
+          "Peer Group",
+          "Manager Profile",
+          "Fund Flow",
+          "Macro Events",
+          "User Investment Plan"
+        ],
+        "score": 0.8
+      },
+      "dca_review": {
+        "plans": [
+          {
+            "annual_amount": 36000.0,
+            "current_weight": 0.466667,
+            "exceeds_limit": true,
+            "fund_code": "SYNAI001",
+            "monthly_amount": 3000.0,
+            "plan_id": "sample_ai_monthly",
+            "suggestion": "PAUSE"
+          }
+        ],
+        "suggestions": [
+          {
+            "annual_amount": 36000.0,
+            "current_weight": 0.466667,
+            "exceeds_limit": true,
+            "fund_code": "SYNAI001",
+            "monthly_amount": 3000.0,
+            "plan_id": "sample_ai_monthly",
+            "suggestion": "PAUSE"
+          }
+        ],
+        "warnings": [
+          "DCA plan sample_ai_monthly for SYNAI001 exceeds concentration limit"
+        ]
+      },
+      "exposure_summary": {
+        "fund_type_exposure": {
+          "fund_type:bond": 0.068966,
+          "fund_type:equity": 0.482759,
+          "fund_type:etf": 0.310345,
+          "fund_type:mixed_equity": 0.137931
+        },
+        "industry_exposure": {
+          "industry:ai_hardware": 0.086897,
+          "industry:ai_semiconductor": 0.152759,
+          "industry:cloud_platform": 0.084828,
+          "industry:communications_equipment": 0.015172,
+          "industry:government": 0.02069,
+          "industry:policy_bank": 0.027586,
+          "industry:semiconductor": 0.024828,
+          "industry:semiconductor_equipment": 0.037241
+        },
+        "theme_exposure": {
+          "asset_type:bond": 0.048276,
+          "asset_type:stock": 0.401724,
+          "industry:ai_hardware": 0.086897,
+          "industry:ai_semiconductor": 0.152759,
+          "industry:cloud_platform": 0.084828,
+          "industry:communications_equipment": 0.015172,
+          "industry:government": 0.02069,
+          "industry:policy_bank": 0.027586,
+          "industry:semiconductor": 0.024828,
+          "industry:semiconductor_equipment": 0.037241,
+          "region:CN": 0.45
+        }
+      },
+      "exposures": {
+        "asset_type:bond": 0.048276,
+        "asset_type:stock": 0.401724,
+        "fund_type:bond": 0.068966,
+        "fund_type:equity": 0.482759,
+        "fund_type:etf": 0.310345,
+        "fund_type:mixed_equity": 0.137931,
+        "industry:ai_hardware": 0.086897,
+        "industry:ai_semiconductor": 0.152759,
+        "industry:cloud_platform": 0.084828,
+        "industry:communications_equipment": 0.015172,
+        "industry:government": 0.02069,
+        "industry:policy_bank": 0.027586,
+        "industry:semiconductor": 0.024828,
+        "industry:semiconductor_equipment": 0.037241,
+        "region:CN": 0.45
+      },
+      "factor_summary": {
+        "concentration_warnings": [
+          "Fund SYNAI001 has high ai_theme exposure (0.88)",
+          "Fund SYNAI002 has high ai_theme exposure (0.70)",
+          "Fund SYNAI001 has high semiconductor_beta exposure (0.82)",
+          "Fund SYNAI002 has high semiconductor_beta exposure (0.90)"
+        ],
+        "factor_exposures": {
+          "ai_theme": {
+            "SYNAI001": 0.88,
+            "SYNAI002": 0.7,
+            "SYNAI003": 0.42,
+            "SYNBOND01": 0.0
+          },
+          "duration": {
+            "SYNAI001": 0.0,
+            "SYNAI002": 0.0,
+            "SYNAI003": 0.0,
+            "SYNBOND01": 0.28
+          },
+          "semiconductor_beta": {
+            "SYNAI001": 0.82,
+            "SYNAI002": 0.9,
+            "SYNAI003": 0.2,
+            "SYNBOND01": 0.0
+          }
+        },
+        "factors": [
+          "ai_theme",
+          "duration",
+          "semiconductor_beta"
+        ]
+      },
+      "fee_summary": {
+        "fee_schedules": {
+          "SYNAI001": {
+            "custody_fee": 0.002,
+            "management_fee": 0.016,
+            "redemption_fee": 0.006,
+            "sales_fee": 0.001,
+            "total_expense_ratio": 0.019
+          },
+          "SYNAI002": {
+            "custody_fee": 0.001,
+            "management_fee": 0.005,
+            "redemption_fee": 0.003,
+            "sales_fee": 0.0,
+            "total_expense_ratio": 0.006
+          },
+          "SYNAI003": {
+            "custody_fee": 0.002,
+            "management_fee": 0.012,
+            "redemption_fee": 0.004,
+            "sales_fee": 0.001,
+            "total_expense_ratio": 0.015
+          },
+          "SYNBOND01": {
+            "custody_fee": 0.001,
+            "management_fee": 0.004,
+            "redemption_fee": 0.001,
+            "sales_fee": 0.0,
+            "total_expense_ratio": 0.005
+          }
+        },
+        "funds_with_fees": [
+          "SYNAI001",
+          "SYNAI002",
+          "SYNAI003",
+          "SYNBOND01"
+        ]
+      },
+      "fund_metrics": {
+        "SYNAI001": {
+          "annualized_volatility": 2.574346,
+          "max_drawdown": 0.113333,
+          "observation_count": 5,
+          "recent_momentum": 0.044502,
+          "return_1m": 0.052632,
+          "return_1y": 0.4,
+          "return_3m": -0.066667,
+          "return_6m": 0.147541,
+          "return_count": 4,
+          "risk_adjusted_score": 0.017287,
+          "rolling_drawdown": {
+            "max_drawdown": 0.113333,
+            "peak_nav": 1.5,
+            "trough_nav": 1.33
+          },
+          "sharpe": 9.50727,
+          "sortino": 0.0,
+          "total_return": 0.4
+        },
+        "SYNAI002": {
+          "annualized_volatility": 2.121395,
+          "max_drawdown": 0.128788,
+          "observation_count": 5,
+          "recent_momentum": -0.010161,
+          "return_1m": 0.043478,
+          "return_1y": 0.2,
+          "return_3m": -0.090909,
+          "return_6m": 0.016949,
+          "return_count": 4,
+          "risk_adjusted_score": -0.00479,
+          "rolling_drawdown": {
+            "max_drawdown": 0.128788,
+            "peak_nav": 1.32,
+            "trough_nav": 1.15
+          },
+          "sharpe": 6.326152,
+          "sortino": 0.0,
+          "total_return": 0.2
+        },
+        "SYNAI003": {
+          "annualized_volatility": 0.88178,
+          "max_drawdown": 0.053571,
+          "observation_count": 5,
+          "recent_momentum": 0.025857,
+          "return_1m": 0.037736,
+          "return_1y": 0.1,
+          "return_3m": -0.017857,
+          "return_6m": 0.057692,
+          "return_count": 4,
+          "risk_adjusted_score": 0.029324,
+          "rolling_drawdown": {
+            "max_drawdown": 0.053571,
+            "peak_nav": 1.12,
+            "trough_nav": 1.06
+          },
+          "sharpe": 7.199878,
+          "sortino": 0.0,
+          "total_return": 0.1
+        },
+        "SYNBOND01": {
+          "annualized_volatility": 0.0275,
+          "max_drawdown": 0.001996,
+          "observation_count": 5,
+          "recent_momentum": -0.000998,
+          "return_1m": -0.000999,
+          "return_1y": 0.002004,
+          "return_3m": -0.001996,
+          "return_6m": 0.0,
+          "return_count": 4,
+          "risk_adjusted_score": -0.036291,
+          "rolling_drawdown": {
+            "max_drawdown": 0.001996,
+            "peak_nav": 1.002,
+            "trough_nav": 1.0
+          },
+          "sharpe": 3.877722,
+          "sortino": 0.0,
+          "total_return": 0.002004
+        }
+      },
+      "market_scenario": {
+        "assumptions": {
+          "ai_semiconductor_factor_shock": -0.15,
+          "bond_factor_shock": 0.01
+        },
+        "description": "Fake scenario: AI and semiconductor sentiment cools while defensive bonds are stable.",
+        "name": "Synthetic AI semiconductor multiple compression",
+        "risk_level": "high"
+      },
+      "pnl_summary": {
+        "positions": {
+          "SYNAI001": {
+            "current_value": 70000.0,
+            "total_cost": 62000.0,
+            "unrealized_pnl": 8000.0,
+            "unrealized_pnl_pct": 0.129032
+          },
+          "SYNAI002": {
+            "current_value": 45000.0,
+            "total_cost": 47000.0,
+            "unrealized_pnl": -2000.0,
+            "unrealized_pnl_pct": -0.042553
+          },
+          "SYNAI003": {
+            "current_value": 20000.0,
+            "total_cost": 19000.0,
+            "unrealized_pnl": 1000.0,
+            "unrealized_pnl_pct": 0.052632
+          },
+          "SYNBOND01": {
+            "current_value": 10000.0,
+            "total_cost": 10000.0,
+            "unrealized_pnl": 0.0,
+            "unrealized_pnl_pct": 0.0
+          }
+        },
+        "total_cost": 138000.0,
+        "total_value": 145000.0,
+        "unrealized_pnl": 7000.0,
+        "unrealized_pnl_pct": 0.050725
+      },
+      "portfolio_metrics": {
+        "as_of_date": "2026-03-31",
+        "cash_available": 5000.0,
+        "position_count": 4,
+        "position_weights": {
+          "SYNAI001": 0.466667,
+          "SYNAI002": 0.3,
+          "SYNAI003": 0.133333,
+          "SYNBOND01": 0.066667
+        },
+        "total_value": 150000.0
+      },
+      "reconciliation": {
+        "match_count": 4,
+        "matches": [
+          {
+            "cost_basis_cost": 62000.0,
+            "cost_basis_shares": 50000.0,
+            "fund_code": "SYNAI001",
+            "portfolio_cost": 62000.0,
+            "portfolio_shares": 50000.0
+          },
+          {
+            "cost_basis_cost": 47000.0,
+            "cost_basis_shares": 37500.0,
+            "fund_code": "SYNAI002",
+            "portfolio_cost": 47000.0,
+            "portfolio_shares": 37500.0
+          },
+          {
+            "cost_basis_cost": 19000.0,
+            "cost_basis_shares": 18181.8182,
+            "fund_code": "SYNAI003",
+            "portfolio_cost": 19000.0,
+            "portfolio_shares": 18181.8182
+          },
+          {
+            "cost_basis_cost": 10000.0,
+            "cost_basis_shares": 10000.0,
+            "fund_code": "SYNBOND01",
+            "portfolio_cost": 10000.0,
+            "portfolio_shares": 10000.0
+          }
+        ],
+        "mismatch_count": 0,
+        "mismatches": [],
+        "warnings": []
+      },
+      "redemption_summary": {
+        "funds_with_rules": [
+          "SYNAI001",
+          "SYNAI002",
+          "SYNAI003",
+          "SYNBOND01"
+        ],
+        "redemption_constraints": {
+          "SYNAI001": {
+            "holding_period_days": 7,
+            "liquidity_note": "Sample T+2 redemption note.",
+            "redemption_fee_pct": 0.006,
+            "suspended": false
+          },
+          "SYNAI002": {
+            "holding_period_days": 7,
+            "liquidity_note": "Sample T+1 redemption note.",
+            "redemption_fee_pct": 0.003,
+            "suspended": false
+          },
+          "SYNAI003": {
+            "holding_period_days": 30,
+            "liquidity_note": "Sample T+2 redemption note.",
+            "redemption_fee_pct": 0.004,
+            "suspended": false
+          },
+          "SYNBOND01": {
+            "holding_period_days": 1,
+            "liquidity_note": "Sample bond liquidity note.",
+            "redemption_fee_pct": 0.001,
+            "suspended": false
+          }
+        }
+      },
+      "report_limitations": [
+        "Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data"
+      ],
+      "report_outline": [
+        {
+          "id": "executive_summary",
+          "status": "OK",
+          "title": "Executive summary"
+        },
+        {
+          "id": "portfolio_snapshot",
+          "status": "OK",
+          "title": "Portfolio snapshot"
+        },
+        {
+          "id": "pnl_and_cost_basis",
+          "status": "OK",
+          "title": "PnL and cost basis"
+        },
+        {
+          "id": "allocation_and_exposure",
+          "status": "OK",
+          "title": "Allocation and exposure"
+        },
+        {
+          "id": "risk_flags",
+          "status": "OK",
+          "title": "Risk flags"
+        },
+        {
+          "id": "performance_and_nav",
+          "status": "OK",
+          "title": "Performance and NAV"
+        },
+        {
+          "id": "benchmark_and_peer",
+          "status": "MISSING",
+          "title": "Benchmark and peer"
+        },
+        {
+          "id": "factor_and_style",
+          "status": "OK",
+          "title": "Factor and style"
+        },
+        {
+          "id": "fees_and_redemption",
+          "status": "OK",
+          "title": "Fees and redemption"
+        },
+        {
+          "id": "manager_and_fund_profile",
+          "status": "PARTIAL",
+          "title": "Manager and fund profile"
+        },
+        {
+          "id": "dca_and_trade_budget",
+          "status": "OK",
+          "title": "DCA and trade budget"
+        },
+        {
+          "id": "rebalance_plan",
+          "status": "OK",
+          "title": "Rebalance plan"
+        },
+        {
+          "id": "research_query_plan",
+          "status": "MISSING",
+          "title": "Research query plan"
+        },
+        {
+          "id": "data_completeness_and_limitations",
+          "status": "OK",
+          "title": "Data completeness and limitations"
+        },
+        {
+          "id": "evidence_appendix",
+          "status": "OK",
+          "title": "Evidence appendix"
+        }
+      ],
+      "report_quality_gate": {
+        "can_publish_professional_report": true,
+        "grade": "B",
+        "reason": "Data completeness grade B supports a professional report."
+      },
+      "report_sections": [
+        {
+          "bullets": [
+            "Portfolio value 150,000.00 across 4 position(s); cash 5,000.00.",
+            "Data completeness grade B with score 0.800.",
+            "Risk scan surfaced 7 flag(s) from available inputs.",
+            "No formal decision generated; call decision-support for formal action."
+          ],
+          "data_sources": [
+            "portfolio_summary",
+            "data_completeness",
+            "risk_flags"
+          ],
+          "id": "executive_summary",
+          "limitations": [],
+          "status": "OK",
+          "title": "Executive summary"
+        },
+        {
+          "bullets": [
+            "As of 2026-03-31, total value is 150,000.00 with 5,000.00 cash.",
+            "Largest position is SYNAI001 at 46.67% of portfolio value.",
+            "Position detail is available for 4 fund(s)."
+          ],
+          "data_sources": [
+            "portfolio_summary",
+            "position_summary"
+          ],
+          "id": "portfolio_snapshot",
+          "limitations": [],
+          "status": "OK",
+          "title": "Portfolio snapshot"
+        },
+        {
+          "bullets": [
+            "Unrealized PnL is 7,000.00 (5.07%) on total cost 138,000.00.",
+            "Position-level PnL is available for 4 fund(s).",
+            "Transaction-derived cost basis is available for 4 fund(s)."
+          ],
+          "data_sources": [
+            "pnl_summary",
+            "cost_basis_summary"
+          ],
+          "id": "pnl_and_cost_basis",
+          "limitations": [],
+          "status": "OK",
+          "title": "PnL and cost basis"
+        },
+        {
+          "bullets": [
+            "Top fund type exposure is fund_type:equity at 48.28%.",
+            "Top industry exposure is industry:ai_semiconductor at 15.28%.",
+            "Top theme exposure is region:CN at 45.00%.",
+            "Single-fund max weight is 48.28%; HHI is 0.353151."
+          ],
+          "data_sources": [
+            "exposure_summary",
+            "concentration"
+          ],
+          "id": "allocation_and_exposure",
+          "limitations": [],
+          "status": "OK",
+          "title": "Allocation and exposure"
+        },
+        {
+          "bullets": [
+            "Risk flags by severity: high=2, low=1, medium=4."
+          ],
+          "data_sources": [
+            "risk_flags",
+            "data_completeness"
+          ],
+          "id": "risk_flags",
+          "limitations": [],
+          "status": "OK",
+          "title": "Risk flags"
+        },
+        {
+          "bullets": [
+            "NAV-derived metrics are available for 4 fund(s).",
+            "Highest total return in provided NAV history is SYNAI001 at 40.00%."
+          ],
+          "data_sources": [
+            "fund_analysis_report.fund_metrics"
+          ],
+          "id": "performance_and_nav",
+          "limitations": [],
+          "status": "OK",
+          "title": "Performance and NAV"
+        },
+        {
+          "bullets": [],
+          "data_sources": [
+            "benchmark_summary",
+            "peer_summary"
+          ],
+          "id": "benchmark_and_peer",
+          "limitations": [
+            "Benchmark data is missing; no benchmark comparison is fabricated.",
+            "Peer group data is missing; no peer ranking is fabricated."
+          ],
+          "status": "MISSING",
+          "title": "Benchmark and peer"
+        },
+        {
+          "bullets": [
+            "Host-provided factor dimensions: ai_theme, duration, semiconductor_beta.",
+            "Fund SYNAI001 has high ai_theme exposure (0.88)",
+            "Fund SYNAI002 has high ai_theme exposure (0.70)",
+            "Fund SYNAI001 has high semiconductor_beta exposure (0.82)",
+            "Fund SYNAI002 has high semiconductor_beta exposure (0.90)"
+          ],
+          "data_sources": [
+            "factor_summary"
+          ],
+          "id": "factor_and_style",
+          "limitations": [],
+          "status": "OK",
+          "title": "Factor and style"
+        },
+        {
+          "bullets": [
+            "Fee schedule is available for 4 fund(s).",
+            "Redemption rules are available for 4 fund(s)."
+          ],
+          "data_sources": [
+            "fee_summary",
+            "redemption_summary"
+          ],
+          "id": "fees_and_redemption",
+          "limitations": [],
+          "status": "OK",
+          "title": "Fees and redemption"
+        },
+        {
+          "bullets": [
+            "Fund profile data is present, but manager profile details were not provided."
+          ],
+          "data_sources": [
+            "manager_summary",
+            "data_completeness"
+          ],
+          "id": "manager_and_fund_profile",
+          "limitations": [
+            "Manager tenure and manager-change analysis are unavailable."
+          ],
+          "status": "PARTIAL",
+          "title": "Manager and fund profile"
+        },
+        {
+          "bullets": [
+            "Trade budget: max buy 8,000.00, max sell 12,000.00, liquidity reserve 15,000.00.",
+            "Short-term trade budget usage is available.",
+            "DCA review includes 1 suggestion(s)."
+          ],
+          "data_sources": [
+            "trade_budget",
+            "short_term_trade_budget",
+            "dca_plan_review"
+          ],
+          "id": "dca_and_trade_budget",
+          "limitations": [],
+          "status": "OK",
+          "title": "DCA and trade budget"
+        },
+        {
+          "bullets": [
+            "Rebalance simulation produced 4 trade leg(s) with total trade amount 32,500.00.",
+            "Synthetic max_single_theme_weight included as host context.",
+            "FundAnalysisSkill analysis remains artifact/report only."
+          ],
+          "data_sources": [
+            "suggested_rebalance_plan"
+          ],
+          "id": "rebalance_plan",
+          "limitations": [],
+          "status": "OK",
+          "title": "Rebalance plan"
+        },
+        {
+          "bullets": [],
+          "data_sources": [
+            "research_query_plan"
+          ],
+          "id": "research_query_plan",
+          "limitations": [
+            "Research planning was not requested by the host."
+          ],
+          "status": "MISSING",
+          "title": "Research query plan"
+        },
+        {
+          "bullets": [
+            "Completeness grade B with score 0.800.",
+            "Missing data groups: Benchmark History, Peer Group, Manager Profile, Fund Flow, Macro Events, User Investment Plan.",
+            "Optional gaps: Benchmark History, Peer Group, Manager Profile, Fund Flow, Macro Events, User Investment Plan."
+          ],
+          "data_sources": [
+            "data_completeness",
+            "report_limitations"
+          ],
+          "id": "data_completeness_and_limitations",
+          "limitations": [
+            "Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data"
+          ],
+          "status": "OK",
+          "title": "Data completeness and limitations"
+        },
+        {
+          "bullets": [
+            "FundAnalysisSkill emits HardEvidence separately in SkillOutput.evidence_items.",
+            "This composed report does not create formal decisions or execution ledgers."
+          ],
+          "data_sources": [
+            "SkillOutput.evidence_items"
+          ],
+          "id": "evidence_appendix",
+          "limitations": [],
+          "status": "OK",
+          "title": "Evidence appendix"
+        }
+      ],
+      "risk_flags": [
+        {
+          "details": {
+            "fund_code": "SYNAI001",
+            "limit": 0.4,
+            "value": 0.482759
+          },
+          "message": "single fund weight exceeds risk profile limit",
+          "severity": "high",
+          "type": "overweight_single_fund"
+        },
+        {
+          "details": {
+            "limit": 0.35,
+            "theme": "asset_type:stock",
+            "value": 0.401724
+          },
+          "message": "theme exposure exceeds risk profile limit",
+          "severity": "medium",
+          "type": "overweight_theme"
+        },
+        {
+          "details": {
+            "limit": 0.35,
+            "theme": "fund_type:equity",
+            "value": 0.482759
+          },
+          "message": "theme exposure exceeds risk profile limit",
+          "severity": "medium",
+          "type": "overweight_theme"
+        },
+        {
+          "details": {
+            "limit": 0.35,
+            "theme": "region:CN",
+            "value": 0.45
+          },
+          "message": "theme exposure exceeds risk profile limit",
+          "severity": "medium",
+          "type": "overweight_theme"
+        },
+        {
+          "details": {
+            "limit": 0.1,
+            "value": 0.033333
+          },
+          "message": "cash reserve is below liquidity reserve target",
+          "severity": "medium",
+          "type": "insufficient_cash_reserve"
+        },
+        {
+          "details": {
+            "tag": "semiconductor"
+          },
+          "message": "multiple funds share the same exposure tag",
+          "severity": "low",
+          "type": "duplicate_exposure"
+        },
+        {
+          "details": {
+            "scenario": {
+              "assumptions": {
+                "ai_semiconductor_factor_shock": -0.15,
+                "bond_factor_shock": 0.01
+              },
+              "description": "Fake scenario: AI and semiconductor sentiment cools while defensive bonds are stable.",
+              "name": "Synthetic AI semiconductor multiple compression",
+              "risk_level": "high"
+            }
+          },
+          "message": "Host-provided market scenario: Synthetic AI semiconductor multiple compression",
+          "severity": "high",
+          "type": "market_scenario"
+        }
+      ],
+      "short_term_budget": {
+        "exceeded": false,
+        "recent_buys": 0,
+        "recent_sells": 0,
+        "remaining": 11600.0,
+        "short_term_budget": 11600.0,
+        "usage_pct": 0.0,
+        "used": 0
+      },
+      "suggested_watchlist": [
+        {
+          "fund_code": "SYNAI001",
+          "reason": "drawdown or concentration risk requires monitoring"
+        }
+      ],
+      "trade_budget": {
+        "cash_available": 5000.0,
+        "liquidity_reserve": 15000.0,
+        "max_buy_amount": 8000.0,
+        "max_sell_amount": 12000.0,
+        "max_trade_amount": 15000.0,
+        "min_trade_amount": 1000.0,
+        "short_term_budget": 12000.0,
+        "total_value": 150000.0
+      },
+      "trading_flags": [],
+      "transaction_summary": {
+        "as_of_date": "2026-03-31",
+        "buy_count": 5,
+        "cashflow_by_fund": {
+          "SYNAI001": -62000.0,
+          "SYNAI002": -47000.0,
+          "SYNAI003": -19000.0,
+          "SYNBOND01": -10000.0
+        },
+        "net_flow": -138000.0,
+        "position_costs": {
+          "SYNAI001": {
+            "average_cost_per_share": 1.24,
+            "current_nav": 1.4,
+            "current_value": 70000.0,
+            "fund_code": "SYNAI001",
+            "method": "weighted_average",
+            "total_cost": 62000.0,
+            "total_shares": 50000.0,
+            "transaction_count": 2,
+            "unrealized_pnl": 8000.0,
+            "unrealized_pnl_pct": 12.9
+          },
+          "SYNAI002": {
+            "average_cost_per_share": 1.253333,
+            "current_nav": 1.2,
+            "current_value": 45000.0,
+            "fund_code": "SYNAI002",
+            "method": "weighted_average",
+            "total_cost": 47000.0,
+            "total_shares": 37500.0,
+            "transaction_count": 1,
+            "unrealized_pnl": -2000.0,
+            "unrealized_pnl_pct": -4.26
+          },
+          "SYNAI003": {
+            "average_cost_per_share": 1.045,
+            "current_nav": 1.1,
+            "current_value": 20000.0,
+            "fund_code": "SYNAI003",
+            "method": "weighted_average",
+            "total_cost": 19000.0,
+            "total_shares": 18181.8182,
+            "transaction_count": 1,
+            "unrealized_pnl": 1000.0,
+            "unrealized_pnl_pct": 5.26
+          },
+          "SYNBOND01": {
+            "average_cost_per_share": 1.0,
+            "current_nav": 1.0,
+            "current_value": 10000.0,
+            "fund_code": "SYNBOND01",
+            "method": "weighted_average",
+            "total_cost": 10000.0,
+            "total_shares": 10000.0,
+            "transaction_count": 1,
+            "unrealized_pnl": 0.0,
+            "unrealized_pnl_pct": 0.0
+          }
+        },
+        "sell_count": 0,
+        "total_buys": 138000.0,
+        "total_dividends": 0.0,
+        "total_fees": 0.0,
+        "total_sells": 0.0,
+        "warnings": []
+      },
+      "warnings": []
+    },
+    "ledger_reconciliation_report": {
+      "comparisons": [
+        {
+          "fund_code": "SYNAI001",
+          "matched": true,
+          "portfolio_shares": 50000.0,
+          "portfolio_value": 70000.0,
+          "severity": "ok",
+          "shares_delta": 0.0,
+          "snapshot_shares": 50000.0,
+          "snapshot_value": 70000.0,
+          "value_delta": 0.0
+        },
+        {
+          "fund_code": "SYNAI002",
+          "matched": true,
+          "portfolio_shares": 37500.0,
+          "portfolio_value": 45000.0,
+          "severity": "ok",
+          "shares_delta": 0.0,
+          "snapshot_shares": 37500.0,
+          "snapshot_value": 45000.0,
+          "value_delta": 0.0
+        },
+        {
+          "fund_code": "SYNAI003",
+          "matched": true,
+          "portfolio_shares": 18181.8182,
+          "portfolio_value": 20000.0,
+          "severity": "ok",
+          "shares_delta": 0.0,
+          "snapshot_shares": 18181.8182,
+          "snapshot_value": 20000.0,
+          "value_delta": 0.0
+        },
+        {
+          "fund_code": "SYNBOND01",
+          "matched": true,
+          "portfolio_shares": 10000.0,
+          "portfolio_value": 10000.0,
+          "severity": "ok",
+          "shares_delta": 0.0,
+          "snapshot_shares": 10000.0,
+          "snapshot_value": 10000.0,
+          "value_delta": 0.0
+        }
+      ],
+      "matched": true,
+      "mismatches": [],
+      "warnings": []
+    },
+    "market_scenario_impact": {
+      "assumptions": {
+        "ai_semiconductor_factor_shock": -0.15,
+        "bond_factor_shock": 0.01
+      },
+      "description": "Fake scenario: AI and semiconductor sentiment cools while defensive bonds are stable.",
+      "name": "Synthetic AI semiconductor multiple compression",
+      "risk_level": "high"
+    },
+    "pnl_summary": {
+      "positions": {
+        "SYNAI001": {
+          "current_value": 70000.0,
+          "total_cost": 62000.0,
+          "unrealized_pnl": 8000.0,
+          "unrealized_pnl_pct": 0.129032
+        },
+        "SYNAI002": {
+          "current_value": 45000.0,
+          "total_cost": 47000.0,
+          "unrealized_pnl": -2000.0,
+          "unrealized_pnl_pct": -0.042553
+        },
+        "SYNAI003": {
+          "current_value": 20000.0,
+          "total_cost": 19000.0,
+          "unrealized_pnl": 1000.0,
+          "unrealized_pnl_pct": 0.052632
+        },
+        "SYNBOND01": {
+          "current_value": 10000.0,
+          "total_cost": 10000.0,
+          "unrealized_pnl": 0.0,
+          "unrealized_pnl_pct": 0.0
+        }
+      },
+      "total_cost": 138000.0,
+      "total_value": 145000.0,
+      "unrealized_pnl": 7000.0,
+      "unrealized_pnl_pct": 0.050725
+    },
+    "portfolio_summary": {
+      "as_of_date": "2026-03-31",
+      "cash_available": 5000.0,
+      "position_count": 4,
+      "position_weights": {
+        "SYNAI001": 0.466667,
+        "SYNAI002": 0.3,
+        "SYNAI003": 0.133333,
+        "SYNBOND01": 0.066667
+      },
+      "total_value": 150000.0
+    },
+    "position_summary": {
+      "SYNAI001": {
+        "current_value": 70000.0,
+        "fund_code": "SYNAI001",
+        "fund_name": "Sample AI Semiconductor Active Fund",
+        "pending_amount": 0.0,
+        "shares": 50000.0,
+        "tags": [
+          "ai",
+          "semiconductor",
+          "active_equity"
+        ],
+        "target_weight": 0.32,
+        "total_cost": 62000.0
+      },
+      "SYNAI002": {
+        "current_value": 45000.0,
+        "fund_code": "SYNAI002",
+        "fund_name": "Sample China Chip ETF",
+        "pending_amount": 0.0,
+        "shares": 37500.0,
+        "tags": [
+          "semiconductor",
+          "hardware",
+          "etf"
+        ],
+        "target_weight": 0.23,
+        "total_cost": 47000.0
+      },
+      "SYNAI003": {
+        "current_value": 20000.0,
+        "fund_code": "SYNAI003",
+        "fund_name": "Sample Digital Infrastructure Mix",
+        "pending_amount": 0.0,
+        "shares": 18181.8182,
+        "tags": [
+          "cloud",
+          "infrastructure",
+          "mixed"
+        ],
+        "target_weight": 0.18,
+        "total_cost": 19000.0
+      },
+      "SYNBOND01": {
+        "current_value": 10000.0,
+        "fund_code": "SYNBOND01",
+        "fund_name": "Sample Short Duration Bond Fund",
+        "pending_amount": 0.0,
+        "shares": 10000.0,
+        "tags": [
+          "bond",
+          "defensive"
+        ],
+        "target_weight": 0.2,
+        "total_cost": 10000.0
+      }
+    },
+    "redemption_summary": {
+      "funds_with_rules": [
+        "SYNAI001",
+        "SYNAI002",
+        "SYNAI003",
+        "SYNBOND01"
+      ],
+      "redemption_constraints": {
+        "SYNAI001": {
+          "holding_period_days": 7,
+          "liquidity_note": "Sample T+2 redemption note.",
+          "redemption_fee_pct": 0.006,
+          "suspended": false
+        },
+        "SYNAI002": {
+          "holding_period_days": 7,
+          "liquidity_note": "Sample T+1 redemption note.",
+          "redemption_fee_pct": 0.003,
+          "suspended": false
+        },
+        "SYNAI003": {
+          "holding_period_days": 30,
+          "liquidity_note": "Sample T+2 redemption note.",
+          "redemption_fee_pct": 0.004,
+          "suspended": false
+        },
+        "SYNBOND01": {
+          "holding_period_days": 1,
+          "liquidity_note": "Sample bond liquidity note.",
+          "redemption_fee_pct": 0.001,
+          "suspended": false
+        }
+      }
+    },
+    "report_limitations": [
+      "Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data"
+    ],
+    "report_outline": [
+      {
+        "id": "executive_summary",
+        "status": "OK",
+        "title": "Executive summary"
+      },
+      {
+        "id": "portfolio_snapshot",
+        "status": "OK",
+        "title": "Portfolio snapshot"
+      },
+      {
+        "id": "pnl_and_cost_basis",
+        "status": "OK",
+        "title": "PnL and cost basis"
+      },
+      {
+        "id": "allocation_and_exposure",
+        "status": "OK",
+        "title": "Allocation and exposure"
+      },
+      {
+        "id": "risk_flags",
+        "status": "OK",
+        "title": "Risk flags"
+      },
+      {
+        "id": "performance_and_nav",
+        "status": "OK",
+        "title": "Performance and NAV"
+      },
+      {
+        "id": "benchmark_and_peer",
+        "status": "MISSING",
+        "title": "Benchmark and peer"
+      },
+      {
+        "id": "factor_and_style",
+        "status": "OK",
+        "title": "Factor and style"
+      },
+      {
+        "id": "fees_and_redemption",
+        "status": "OK",
+        "title": "Fees and redemption"
+      },
+      {
+        "id": "manager_and_fund_profile",
+        "status": "PARTIAL",
+        "title": "Manager and fund profile"
+      },
+      {
+        "id": "dca_and_trade_budget",
+        "status": "OK",
+        "title": "DCA and trade budget"
+      },
+      {
+        "id": "rebalance_plan",
+        "status": "OK",
+        "title": "Rebalance plan"
+      },
+      {
+        "id": "research_query_plan",
+        "status": "MISSING",
+        "title": "Research query plan"
+      },
+      {
+        "id": "data_completeness_and_limitations",
+        "status": "OK",
+        "title": "Data completeness and limitations"
+      },
+      {
+        "id": "evidence_appendix",
+        "status": "OK",
+        "title": "Evidence appendix"
+      }
+    ],
+    "report_quality_gate": {
+      "can_publish_professional_report": true,
+      "grade": "B",
+      "reason": "Data completeness grade B supports a professional report."
+    },
+    "report_sections": [
+      {
+        "bullets": [
+          "Portfolio value 150,000.00 across 4 position(s); cash 5,000.00.",
+          "Data completeness grade B with score 0.800.",
+          "Risk scan surfaced 7 flag(s) from available inputs.",
+          "No formal decision generated; call decision-support for formal action."
+        ],
+        "data_sources": [
+          "portfolio_summary",
+          "data_completeness",
+          "risk_flags"
+        ],
+        "id": "executive_summary",
+        "limitations": [],
+        "status": "OK",
+        "title": "Executive summary"
+      },
+      {
+        "bullets": [
+          "As of 2026-03-31, total value is 150,000.00 with 5,000.00 cash.",
+          "Largest position is SYNAI001 at 46.67% of portfolio value.",
+          "Position detail is available for 4 fund(s)."
+        ],
+        "data_sources": [
+          "portfolio_summary",
+          "position_summary"
+        ],
+        "id": "portfolio_snapshot",
+        "limitations": [],
+        "status": "OK",
+        "title": "Portfolio snapshot"
+      },
+      {
+        "bullets": [
+          "Unrealized PnL is 7,000.00 (5.07%) on total cost 138,000.00.",
+          "Position-level PnL is available for 4 fund(s).",
+          "Transaction-derived cost basis is available for 4 fund(s)."
+        ],
+        "data_sources": [
+          "pnl_summary",
+          "cost_basis_summary"
+        ],
+        "id": "pnl_and_cost_basis",
+        "limitations": [],
+        "status": "OK",
+        "title": "PnL and cost basis"
+      },
+      {
+        "bullets": [
+          "Top fund type exposure is fund_type:equity at 48.28%.",
+          "Top industry exposure is industry:ai_semiconductor at 15.28%.",
+          "Top theme exposure is region:CN at 45.00%.",
+          "Single-fund max weight is 48.28%; HHI is 0.353151."
+        ],
+        "data_sources": [
+          "exposure_summary",
+          "concentration"
+        ],
+        "id": "allocation_and_exposure",
+        "limitations": [],
+        "status": "OK",
+        "title": "Allocation and exposure"
+      },
+      {
+        "bullets": [
+          "Risk flags by severity: high=2, low=1, medium=4."
+        ],
+        "data_sources": [
+          "risk_flags",
+          "data_completeness"
+        ],
+        "id": "risk_flags",
+        "limitations": [],
+        "status": "OK",
+        "title": "Risk flags"
+      },
+      {
+        "bullets": [
+          "NAV-derived metrics are available for 4 fund(s).",
+          "Highest total return in provided NAV history is SYNAI001 at 40.00%."
+        ],
+        "data_sources": [
+          "fund_analysis_report.fund_metrics"
+        ],
+        "id": "performance_and_nav",
+        "limitations": [],
+        "status": "OK",
+        "title": "Performance and NAV"
+      },
+      {
+        "bullets": [],
+        "data_sources": [
+          "benchmark_summary",
+          "peer_summary"
+        ],
+        "id": "benchmark_and_peer",
+        "limitations": [
+          "Benchmark data is missing; no benchmark comparison is fabricated.",
+          "Peer group data is missing; no peer ranking is fabricated."
+        ],
+        "status": "MISSING",
+        "title": "Benchmark and peer"
+      },
+      {
+        "bullets": [
+          "Host-provided factor dimensions: ai_theme, duration, semiconductor_beta.",
+          "Fund SYNAI001 has high ai_theme exposure (0.88)",
+          "Fund SYNAI002 has high ai_theme exposure (0.70)",
+          "Fund SYNAI001 has high semiconductor_beta exposure (0.82)",
+          "Fund SYNAI002 has high semiconductor_beta exposure (0.90)"
+        ],
+        "data_sources": [
+          "factor_summary"
+        ],
+        "id": "factor_and_style",
+        "limitations": [],
+        "status": "OK",
+        "title": "Factor and style"
+      },
+      {
+        "bullets": [
+          "Fee schedule is available for 4 fund(s).",
+          "Redemption rules are available for 4 fund(s)."
+        ],
+        "data_sources": [
+          "fee_summary",
+          "redemption_summary"
+        ],
+        "id": "fees_and_redemption",
+        "limitations": [],
+        "status": "OK",
+        "title": "Fees and redemption"
+      },
+      {
+        "bullets": [
+          "Fund profile data is present, but manager profile details were not provided."
+        ],
+        "data_sources": [
+          "manager_summary",
+          "data_completeness"
+        ],
+        "id": "manager_and_fund_profile",
+        "limitations": [
+          "Manager tenure and manager-change analysis are unavailable."
+        ],
+        "status": "PARTIAL",
+        "title": "Manager and fund profile"
+      },
+      {
+        "bullets": [
+          "Trade budget: max buy 8,000.00, max sell 12,000.00, liquidity reserve 15,000.00.",
+          "Short-term trade budget usage is available.",
+          "DCA review includes 1 suggestion(s)."
+        ],
+        "data_sources": [
+          "trade_budget",
+          "short_term_trade_budget",
+          "dca_plan_review"
+        ],
+        "id": "dca_and_trade_budget",
+        "limitations": [],
+        "status": "OK",
+        "title": "DCA and trade budget"
+      },
+      {
+        "bullets": [
+          "Rebalance simulation produced 4 trade leg(s) with total trade amount 32,500.00.",
+          "Synthetic max_single_theme_weight included as host context.",
+          "FundAnalysisSkill analysis remains artifact/report only."
+        ],
+        "data_sources": [
+          "suggested_rebalance_plan"
+        ],
+        "id": "rebalance_plan",
+        "limitations": [],
+        "status": "OK",
+        "title": "Rebalance plan"
+      },
+      {
+        "bullets": [],
+        "data_sources": [
+          "research_query_plan"
+        ],
+        "id": "research_query_plan",
+        "limitations": [
+          "Research planning was not requested by the host."
+        ],
+        "status": "MISSING",
+        "title": "Research query plan"
+      },
+      {
+        "bullets": [
+          "Completeness grade B with score 0.800.",
+          "Missing data groups: Benchmark History, Peer Group, Manager Profile, Fund Flow, Macro Events, User Investment Plan.",
+          "Optional gaps: Benchmark History, Peer Group, Manager Profile, Fund Flow, Macro Events, User Investment Plan."
+        ],
+        "data_sources": [
+          "data_completeness",
+          "report_limitations"
+        ],
+        "id": "data_completeness_and_limitations",
+        "limitations": [
+          "Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data"
+        ],
+        "status": "OK",
+        "title": "Data completeness and limitations"
+      },
+      {
+        "bullets": [
+          "FundAnalysisSkill emits HardEvidence separately in SkillOutput.evidence_items.",
+          "This composed report does not create formal decisions or execution ledgers."
+        ],
+        "data_sources": [
+          "SkillOutput.evidence_items"
+        ],
+        "id": "evidence_appendix",
+        "limitations": [],
+        "status": "OK",
+        "title": "Evidence appendix"
+      }
+    ],
+    "risk_flags": [
+      {
+        "details": {
+          "fund_code": "SYNAI001",
+          "limit": 0.4,
+          "value": 0.482759
+        },
+        "message": "single fund weight exceeds risk profile limit",
+        "severity": "high",
+        "type": "overweight_single_fund"
+      },
+      {
+        "details": {
+          "limit": 0.35,
+          "theme": "asset_type:stock",
+          "value": 0.401724
+        },
+        "message": "theme exposure exceeds risk profile limit",
+        "severity": "medium",
+        "type": "overweight_theme"
+      },
+      {
+        "details": {
+          "limit": 0.35,
+          "theme": "fund_type:equity",
+          "value": 0.482759
+        },
+        "message": "theme exposure exceeds risk profile limit",
+        "severity": "medium",
+        "type": "overweight_theme"
+      },
+      {
+        "details": {
+          "limit": 0.35,
+          "theme": "region:CN",
+          "value": 0.45
+        },
+        "message": "theme exposure exceeds risk profile limit",
+        "severity": "medium",
+        "type": "overweight_theme"
+      },
+      {
+        "details": {
+          "limit": 0.1,
+          "value": 0.033333
+        },
+        "message": "cash reserve is below liquidity reserve target",
+        "severity": "medium",
+        "type": "insufficient_cash_reserve"
+      },
+      {
+        "details": {
+          "tag": "semiconductor"
+        },
+        "message": "multiple funds share the same exposure tag",
+        "severity": "low",
+        "type": "duplicate_exposure"
+      },
+      {
+        "details": {
+          "scenario": {
+            "assumptions": {
+              "ai_semiconductor_factor_shock": -0.15,
+              "bond_factor_shock": 0.01
+            },
+            "description": "Fake scenario: AI and semiconductor sentiment cools while defensive bonds are stable.",
+            "name": "Synthetic AI semiconductor multiple compression",
+            "risk_level": "high"
+          }
+        },
+        "message": "Host-provided market scenario: Synthetic AI semiconductor multiple compression",
+        "severity": "high",
+        "type": "market_scenario"
+      }
+    ],
+    "short_term_trade_budget": {
+      "exceeded": false,
+      "recent_buys": 0,
+      "recent_sells": 0,
+      "remaining": 11600.0,
+      "short_term_budget": 11600.0,
+      "usage_pct": 0.0,
+      "used": 0
+    },
+    "suggested_rebalance_plan": {
+      "suggested_trade_plan": [
+        {
+          "action": "SELL",
+          "amount": 12000.0,
+          "cap_reasons": [
+            "capped by max_sell_amount (12000.0)"
+          ],
+          "capped": true,
+          "current_cost": 62000.0,
+          "current_value": 70000.0,
+          "current_weight": 0.466667,
+          "evidence_refs": [
+            "ev:portfolio_allocation_concentration",
+            "ev:fund_risk_return_metrics",
+            "ev:fund_risk_return_metrics",
+            "ev:fund_risk_return_metrics",
+            "ev:fund_risk_return_metrics",
+            "ev:portfolio_risk_flags",
+            "ev:position_cost_basis",
+            "ev:short_term_budget_usage",
+            "ev:dca_plan_review",
+            "ev:market_scenario_impact",
+            "ev:portfolio_pnl_summary"
+          ],
+          "fund_code": "SYNAI001",
+          "fund_name": "Sample AI Semiconductor Active Fund",
+          "rationale": "Capped by constraints: capped by max_sell_amount (12000.0)",
+          "requested_amount": 22000.0,
+          "risk_flags_refs": [
+            "overweight_single_fund",
+            "overweight_theme",
+            "overweight_theme",
+            "overweight_theme",
+            "insufficient_cash_reserve",
+            "duplicate_exposure",
+            "market_scenario"
+          ],
+          "tags": [
+            "ai",
+            "semiconductor",
+            "active_equity"
+          ],
+          "target_weight": 0.32,
+          "trade_id": "SYNAI001_SELL_0",
+          "unrealized_pnl": 8000.0
+        },
+        {
+          "action": "SELL",
+          "amount": 10500.0,
+          "cap_reasons": [],
+          "capped": false,
+          "current_cost": 47000.0,
+          "current_value": 45000.0,
+          "current_weight": 0.3,
+          "evidence_refs": [
+            "ev:portfolio_allocation_concentration",
+            "ev:fund_risk_return_metrics",
+            "ev:fund_risk_return_metrics",
+            "ev:fund_risk_return_metrics",
+            "ev:fund_risk_return_metrics",
+            "ev:portfolio_risk_flags",
+            "ev:position_cost_basis",
+            "ev:short_term_budget_usage",
+            "ev:dca_plan_review",
+            "ev:market_scenario_impact",
+            "ev:portfolio_pnl_summary"
+          ],
+          "fund_code": "SYNAI002",
+          "fund_name": "Sample China Chip ETF",
+          "rationale": "Within constraint bounds",
+          "requested_amount": 10500.0,
+          "risk_flags_refs": [
+            "overweight_single_fund",
+            "overweight_theme",
+            "overweight_theme",
+            "overweight_theme",
+            "insufficient_cash_reserve",
+            "duplicate_exposure",
+            "market_scenario"
+          ],
+          "tags": [
+            "semiconductor",
+            "hardware",
+            "etf"
+          ],
+          "target_weight": 0.23,
+          "trade_id": "SYNAI002_SELL_1",
+          "unrealized_pnl": -2000.0
+        },
+        {
+          "action": "BUY",
+          "amount": 5000.0,
+          "cap_reasons": [
+            "capped by cash_available (5000.0)"
+          ],
+          "capped": true,
+          "current_cost": 19000.0,
+          "current_value": 20000.0,
+          "current_weight": 0.133333,
+          "evidence_refs": [
+            "ev:portfolio_allocation_concentration",
+            "ev:fund_risk_return_metrics",
+            "ev:fund_risk_return_metrics",
+            "ev:fund_risk_return_metrics",
+            "ev:fund_risk_return_metrics",
+            "ev:portfolio_risk_flags",
+            "ev:position_cost_basis",
+            "ev:short_term_budget_usage",
+            "ev:dca_plan_review",
+            "ev:market_scenario_impact",
+            "ev:portfolio_pnl_summary"
+          ],
+          "fund_code": "SYNAI003",
+          "fund_name": "Sample Digital Infrastructure Mix",
+          "rationale": "Capped by constraints: capped by cash_available (5000.0)",
+          "requested_amount": 7000.0,
+          "risk_flags_refs": [
+            "overweight_single_fund",
+            "overweight_theme",
+            "overweight_theme",
+            "overweight_theme",
+            "insufficient_cash_reserve",
+            "duplicate_exposure",
+            "market_scenario"
+          ],
+          "tags": [
+            "cloud",
+            "infrastructure",
+            "mixed"
+          ],
+          "target_weight": 0.18,
+          "trade_id": "SYNAI003_BUY_2",
+          "unrealized_pnl": 1000.0
+        },
+        {
+          "action": "BUY",
+          "amount": 5000.0,
+          "cap_reasons": [
+            "capped by cash_available (5000.0)"
+          ],
+          "capped": true,
+          "current_cost": 10000.0,
+          "current_value": 10000.0,
+          "current_weight": 0.066667,
+          "evidence_refs": [
+            "ev:portfolio_allocation_concentration",
+            "ev:fund_risk_return_metrics",
+            "ev:fund_risk_return_metrics",
+            "ev:fund_risk_return_metrics",
+            "ev:fund_risk_return_metrics",
+            "ev:portfolio_risk_flags",
+            "ev:position_cost_basis",
+            "ev:short_term_budget_usage",
+            "ev:dca_plan_review",
+            "ev:market_scenario_impact",
+            "ev:portfolio_pnl_summary"
+          ],
+          "fund_code": "SYNBOND01",
+          "fund_name": "Sample Short Duration Bond Fund",
+          "rationale": "Capped by constraints: capped by cash_available (5000.0)",
+          "requested_amount": 20000.0,
+          "risk_flags_refs": [
+            "overweight_single_fund",
+            "overweight_theme",
+            "overweight_theme",
+            "overweight_theme",
+            "insufficient_cash_reserve",
+            "duplicate_exposure",
+            "market_scenario"
+          ],
+          "tags": [
+            "bond",
+            "defensive"
+          ],
+          "target_weight": 0.2,
+          "trade_id": "SYNBOND01_BUY_3",
+          "unrealized_pnl": 0.0
+        }
+      ],
+      "total_trade_amount": 32500.0,
+      "warnings": [
+        "Synthetic max_single_theme_weight included as host context.",
+        "FundAnalysisSkill analysis remains artifact/report only."
+      ]
+    },
+    "warnings": []
+  },
+  "errors": [],
+  "evidence_items": [
+    {
+      "claim": "Portfolio allocation and concentration metrics were computed",
+      "confidence_weight": 1.0,
+      "direction": "negative",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:SYNAI001",
+        "fund:SYNAI002",
+        "fund:SYNAI003",
+        "fund:SYNBOND01"
+      ],
+      "source_type": "portfolio_allocation_concentration",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "concentration": {
+          "duplicate_tags": [
+            "semiconductor"
+          ],
+          "hhi": 0.353151,
+          "max_fund_code": "SYNAI001",
+          "position_count": 4,
+          "single_fund_max_weight": 0.482759,
+          "top_n": 3,
+          "top_n_concentration": 0.931034
+        },
+        "portfolio_summary": {
+          "as_of_date": "2026-03-31",
+          "cash_available": 5000.0,
+          "position_count": 4,
+          "position_weights": {
+            "SYNAI001": 0.466667,
+            "SYNAI002": 0.3,
+            "SYNAI003": 0.133333,
+            "SYNBOND01": 0.066667
+          },
+          "total_value": 150000.0
+        }
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Risk-return metrics were computed for fund SYNAI001",
+      "confidence_weight": 1.0,
+      "direction": "positive",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.fund.metrics"
+      },
+      "related_entities": [
+        "fund:SYNAI001"
+      ],
+      "source_type": "fund_risk_return_metrics",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "annualized_volatility": 2.574346,
+        "max_drawdown": 0.113333,
+        "observation_count": 5,
+        "recent_momentum": 0.044502,
+        "return_1m": 0.052632,
+        "return_1y": 0.4,
+        "return_3m": -0.066667,
+        "return_6m": 0.147541,
+        "return_count": 4,
+        "risk_adjusted_score": 0.017287,
+        "rolling_drawdown": {
+          "max_drawdown": 0.113333,
+          "peak_nav": 1.5,
+          "trough_nav": 1.33
+        },
+        "sharpe": 9.50727,
+        "sortino": 0.0,
+        "total_return": 0.4
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Risk-return metrics were computed for fund SYNAI002",
+      "confidence_weight": 1.0,
+      "direction": "positive",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.fund.metrics"
+      },
+      "related_entities": [
+        "fund:SYNAI002"
+      ],
+      "source_type": "fund_risk_return_metrics",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "annualized_volatility": 2.121395,
+        "max_drawdown": 0.128788,
+        "observation_count": 5,
+        "recent_momentum": -0.010161,
+        "return_1m": 0.043478,
+        "return_1y": 0.2,
+        "return_3m": -0.090909,
+        "return_6m": 0.016949,
+        "return_count": 4,
+        "risk_adjusted_score": -0.00479,
+        "rolling_drawdown": {
+          "max_drawdown": 0.128788,
+          "peak_nav": 1.32,
+          "trough_nav": 1.15
+        },
+        "sharpe": 6.326152,
+        "sortino": 0.0,
+        "total_return": 0.2
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Risk-return metrics were computed for fund SYNAI003",
+      "confidence_weight": 1.0,
+      "direction": "positive",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.fund.metrics"
+      },
+      "related_entities": [
+        "fund:SYNAI003"
+      ],
+      "source_type": "fund_risk_return_metrics",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "annualized_volatility": 0.88178,
+        "max_drawdown": 0.053571,
+        "observation_count": 5,
+        "recent_momentum": 0.025857,
+        "return_1m": 0.037736,
+        "return_1y": 0.1,
+        "return_3m": -0.017857,
+        "return_6m": 0.057692,
+        "return_count": 4,
+        "risk_adjusted_score": 0.029324,
+        "rolling_drawdown": {
+          "max_drawdown": 0.053571,
+          "peak_nav": 1.12,
+          "trough_nav": 1.06
+        },
+        "sharpe": 7.199878,
+        "sortino": 0.0,
+        "total_return": 0.1
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Risk-return metrics were computed for fund SYNBOND01",
+      "confidence_weight": 1.0,
+      "direction": "neutral",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.fund.metrics"
+      },
+      "related_entities": [
+        "fund:SYNBOND01"
+      ],
+      "source_type": "fund_risk_return_metrics",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "annualized_volatility": 0.0275,
+        "max_drawdown": 0.001996,
+        "observation_count": 5,
+        "recent_momentum": -0.000998,
+        "return_1m": -0.000999,
+        "return_1y": 0.002004,
+        "return_3m": -0.001996,
+        "return_6m": 0.0,
+        "return_count": 4,
+        "risk_adjusted_score": -0.036291,
+        "rolling_drawdown": {
+          "max_drawdown": 0.001996,
+          "peak_nav": 1.002,
+          "trough_nav": 1.0
+        },
+        "sharpe": 3.877722,
+        "sortino": 0.0,
+        "total_return": 0.002004
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Portfolio risk flag scan found 7 issue(s)",
+      "confidence_weight": 1.0,
+      "direction": "negative",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:SYNAI001",
+        "fund:SYNAI002",
+        "fund:SYNAI003",
+        "fund:SYNBOND01"
+      ],
+      "source_type": "portfolio_risk_flags",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "risk_flags": [
+          {
+            "details": {
+              "fund_code": "SYNAI001",
+              "limit": 0.4,
+              "value": 0.482759
+            },
+            "message": "single fund weight exceeds risk profile limit",
+            "severity": "high",
+            "type": "overweight_single_fund"
+          },
+          {
+            "details": {
+              "limit": 0.35,
+              "theme": "asset_type:stock",
+              "value": 0.401724
+            },
+            "message": "theme exposure exceeds risk profile limit",
+            "severity": "medium",
+            "type": "overweight_theme"
+          },
+          {
+            "details": {
+              "limit": 0.35,
+              "theme": "fund_type:equity",
+              "value": 0.482759
+            },
+            "message": "theme exposure exceeds risk profile limit",
+            "severity": "medium",
+            "type": "overweight_theme"
+          },
+          {
+            "details": {
+              "limit": 0.35,
+              "theme": "region:CN",
+              "value": 0.45
+            },
+            "message": "theme exposure exceeds risk profile limit",
+            "severity": "medium",
+            "type": "overweight_theme"
+          },
+          {
+            "details": {
+              "limit": 0.1,
+              "value": 0.033333
+            },
+            "message": "cash reserve is below liquidity reserve target",
+            "severity": "medium",
+            "type": "insufficient_cash_reserve"
+          },
+          {
+            "details": {
+              "tag": "semiconductor"
+            },
+            "message": "multiple funds share the same exposure tag",
+            "severity": "low",
+            "type": "duplicate_exposure"
+          },
+          {
+            "details": {
+              "scenario": {
+                "assumptions": {
+                  "ai_semiconductor_factor_shock": -0.15,
+                  "bond_factor_shock": 0.01
+                },
+                "description": "Fake scenario: AI and semiconductor sentiment cools while defensive bonds are stable.",
+                "name": "Synthetic AI semiconductor multiple compression",
+                "risk_level": "high"
+              }
+            },
+            "message": "Host-provided market scenario: Synthetic AI semiconductor multiple compression",
+            "severity": "high",
+            "type": "market_scenario"
+          }
+        ]
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Portfolio rebalance simulation was generated",
+      "confidence_weight": 1.0,
+      "direction": "neutral",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:SYNAI001",
+        "fund:SYNAI002",
+        "fund:SYNAI003",
+        "fund:SYNBOND01"
+      ],
+      "source_type": "portfolio_rebalance_simulation",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "suggested_trade_plan": [
+          {
+            "action": "SELL",
+            "amount": 12000.0,
+            "cap_reasons": [
+              "capped by max_sell_amount (12000.0)"
+            ],
+            "capped": true,
+            "current_cost": 62000.0,
+            "current_value": 70000.0,
+            "current_weight": 0.466667,
+            "evidence_refs": [
+              "ev:portfolio_allocation_concentration",
+              "ev:fund_risk_return_metrics",
+              "ev:fund_risk_return_metrics",
+              "ev:fund_risk_return_metrics",
+              "ev:fund_risk_return_metrics",
+              "ev:portfolio_risk_flags",
+              "ev:position_cost_basis",
+              "ev:short_term_budget_usage",
+              "ev:dca_plan_review",
+              "ev:market_scenario_impact",
+              "ev:portfolio_pnl_summary"
+            ],
+            "fund_code": "SYNAI001",
+            "fund_name": "Sample AI Semiconductor Active Fund",
+            "rationale": "Capped by constraints: capped by max_sell_amount (12000.0)",
+            "requested_amount": 22000.0,
+            "risk_flags_refs": [
+              "overweight_single_fund",
+              "overweight_theme",
+              "overweight_theme",
+              "overweight_theme",
+              "insufficient_cash_reserve",
+              "duplicate_exposure",
+              "market_scenario"
+            ],
+            "tags": [
+              "ai",
+              "semiconductor",
+              "active_equity"
+            ],
+            "target_weight": 0.32,
+            "trade_id": "SYNAI001_SELL_0",
+            "unrealized_pnl": 8000.0
+          },
+          {
+            "action": "SELL",
+            "amount": 10500.0,
+            "cap_reasons": [],
+            "capped": false,
+            "current_cost": 47000.0,
+            "current_value": 45000.0,
+            "current_weight": 0.3,
+            "evidence_refs": [
+              "ev:portfolio_allocation_concentration",
+              "ev:fund_risk_return_metrics",
+              "ev:fund_risk_return_metrics",
+              "ev:fund_risk_return_metrics",
+              "ev:fund_risk_return_metrics",
+              "ev:portfolio_risk_flags",
+              "ev:position_cost_basis",
+              "ev:short_term_budget_usage",
+              "ev:dca_plan_review",
+              "ev:market_scenario_impact",
+              "ev:portfolio_pnl_summary"
+            ],
+            "fund_code": "SYNAI002",
+            "fund_name": "Sample China Chip ETF",
+            "rationale": "Within constraint bounds",
+            "requested_amount": 10500.0,
+            "risk_flags_refs": [
+              "overweight_single_fund",
+              "overweight_theme",
+              "overweight_theme",
+              "overweight_theme",
+              "insufficient_cash_reserve",
+              "duplicate_exposure",
+              "market_scenario"
+            ],
+            "tags": [
+              "semiconductor",
+              "hardware",
+              "etf"
+            ],
+            "target_weight": 0.23,
+            "trade_id": "SYNAI002_SELL_1",
+            "unrealized_pnl": -2000.0
+          },
+          {
+            "action": "BUY",
+            "amount": 5000.0,
+            "cap_reasons": [
+              "capped by cash_available (5000.0)"
+            ],
+            "capped": true,
+            "current_cost": 19000.0,
+            "current_value": 20000.0,
+            "current_weight": 0.133333,
+            "evidence_refs": [
+              "ev:portfolio_allocation_concentration",
+              "ev:fund_risk_return_metrics",
+              "ev:fund_risk_return_metrics",
+              "ev:fund_risk_return_metrics",
+              "ev:fund_risk_return_metrics",
+              "ev:portfolio_risk_flags",
+              "ev:position_cost_basis",
+              "ev:short_term_budget_usage",
+              "ev:dca_plan_review",
+              "ev:market_scenario_impact",
+              "ev:portfolio_pnl_summary"
+            ],
+            "fund_code": "SYNAI003",
+            "fund_name": "Sample Digital Infrastructure Mix",
+            "rationale": "Capped by constraints: capped by cash_available (5000.0)",
+            "requested_amount": 7000.0,
+            "risk_flags_refs": [
+              "overweight_single_fund",
+              "overweight_theme",
+              "overweight_theme",
+              "overweight_theme",
+              "insufficient_cash_reserve",
+              "duplicate_exposure",
+              "market_scenario"
+            ],
+            "tags": [
+              "cloud",
+              "infrastructure",
+              "mixed"
+            ],
+            "target_weight": 0.18,
+            "trade_id": "SYNAI003_BUY_2",
+            "unrealized_pnl": 1000.0
+          },
+          {
+            "action": "BUY",
+            "amount": 5000.0,
+            "cap_reasons": [
+              "capped by cash_available (5000.0)"
+            ],
+            "capped": true,
+            "current_cost": 10000.0,
+            "current_value": 10000.0,
+            "current_weight": 0.066667,
+            "evidence_refs": [
+              "ev:portfolio_allocation_concentration",
+              "ev:fund_risk_return_metrics",
+              "ev:fund_risk_return_metrics",
+              "ev:fund_risk_return_metrics",
+              "ev:fund_risk_return_metrics",
+              "ev:portfolio_risk_flags",
+              "ev:position_cost_basis",
+              "ev:short_term_budget_usage",
+              "ev:dca_plan_review",
+              "ev:market_scenario_impact",
+              "ev:portfolio_pnl_summary"
+            ],
+            "fund_code": "SYNBOND01",
+            "fund_name": "Sample Short Duration Bond Fund",
+            "rationale": "Capped by constraints: capped by cash_available (5000.0)",
+            "requested_amount": 20000.0,
+            "risk_flags_refs": [
+              "overweight_single_fund",
+              "overweight_theme",
+              "overweight_theme",
+              "overweight_theme",
+              "insufficient_cash_reserve",
+              "duplicate_exposure",
+              "market_scenario"
+            ],
+            "tags": [
+              "bond",
+              "defensive"
+            ],
+            "target_weight": 0.2,
+            "trade_id": "SYNBOND01_BUY_3",
+            "unrealized_pnl": 0.0
+          }
+        ],
+        "total_trade_amount": 32500.0,
+        "warnings": [
+          "Synthetic max_single_theme_weight included as host context.",
+          "FundAnalysisSkill analysis remains artifact/report only."
+        ]
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Position cost basis computed from transaction history",
+      "confidence_weight": 1.0,
+      "direction": "neutral",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.transaction"
+      },
+      "related_entities": [
+        "fund:SYNAI001",
+        "fund:SYNAI002",
+        "fund:SYNAI003",
+        "fund:SYNBOND01"
+      ],
+      "source_type": "position_cost_basis",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "SYNAI001": {
+          "average_cost_per_share": 1.24,
+          "current_nav": 1.4,
+          "current_value": 70000.0,
+          "fund_code": "SYNAI001",
+          "method": "weighted_average",
+          "total_cost": 62000.0,
+          "total_shares": 50000.0,
+          "transaction_count": 2,
+          "unrealized_pnl": 8000.0,
+          "unrealized_pnl_pct": 12.9
+        },
+        "SYNAI002": {
+          "average_cost_per_share": 1.253333,
+          "current_nav": 1.2,
+          "current_value": 45000.0,
+          "fund_code": "SYNAI002",
+          "method": "weighted_average",
+          "total_cost": 47000.0,
+          "total_shares": 37500.0,
+          "transaction_count": 1,
+          "unrealized_pnl": -2000.0,
+          "unrealized_pnl_pct": -4.26
+        },
+        "SYNAI003": {
+          "average_cost_per_share": 1.045,
+          "current_nav": 1.1,
+          "current_value": 20000.0,
+          "fund_code": "SYNAI003",
+          "method": "weighted_average",
+          "total_cost": 19000.0,
+          "total_shares": 18181.8182,
+          "transaction_count": 1,
+          "unrealized_pnl": 1000.0,
+          "unrealized_pnl_pct": 5.26
+        },
+        "SYNBOND01": {
+          "average_cost_per_share": 1.0,
+          "current_nav": 1.0,
+          "current_value": 10000.0,
+          "fund_code": "SYNBOND01",
+          "method": "weighted_average",
+          "total_cost": 10000.0,
+          "total_shares": 10000.0,
+          "transaction_count": 1,
+          "unrealized_pnl": 0.0,
+          "unrealized_pnl_pct": 0.0
+        }
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Short-term trading budget usage computed",
+      "confidence_weight": 1.0,
+      "direction": "neutral",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:SYNAI001",
+        "fund:SYNAI002",
+        "fund:SYNAI003",
+        "fund:SYNBOND01"
+      ],
+      "source_type": "short_term_budget_usage",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "exceeded": false,
+        "recent_buys": 0,
+        "recent_sells": 0,
+        "remaining": 11600.0,
+        "short_term_budget": 11600.0,
+        "usage_pct": 0.0,
+        "used": 0
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "DCA plan review completed with 1 action(s) suggested",
+      "confidence_weight": 1.0,
+      "direction": "neutral",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:SYNAI001",
+        "fund:SYNAI002",
+        "fund:SYNAI003",
+        "fund:SYNBOND01"
+      ],
+      "source_type": "dca_plan_review",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "plans": [
+          {
+            "annual_amount": 36000.0,
+            "current_weight": 0.466667,
+            "exceeds_limit": true,
+            "fund_code": "SYNAI001",
+            "monthly_amount": 3000.0,
+            "plan_id": "sample_ai_monthly",
+            "suggestion": "PAUSE"
+          }
+        ],
+        "suggestions": [
+          {
+            "annual_amount": 36000.0,
+            "current_weight": 0.466667,
+            "exceeds_limit": true,
+            "fund_code": "SYNAI001",
+            "monthly_amount": 3000.0,
+            "plan_id": "sample_ai_monthly",
+            "suggestion": "PAUSE"
+          }
+        ],
+        "warnings": [
+          "DCA plan sample_ai_monthly for SYNAI001 exceeds concentration limit"
+        ]
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Market scenario impact assessed: Synthetic AI semiconductor multiple compression",
+      "confidence_weight": 1.0,
+      "direction": "negative",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "host_provided"
+      },
+      "related_entities": [
+        "fund:SYNAI001",
+        "fund:SYNAI002",
+        "fund:SYNAI003",
+        "fund:SYNBOND01"
+      ],
+      "source_type": "market_scenario_impact",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "scenario": {
+          "assumptions": {
+            "ai_semiconductor_factor_shock": -0.15,
+            "bond_factor_shock": 0.01
+          },
+          "description": "Fake scenario: AI and semiconductor sentiment cools while defensive bonds are stable.",
+          "name": "Synthetic AI semiconductor multiple compression",
+          "risk_level": "high"
+        }
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Portfolio-level PnL summary with top positions computed",
+      "confidence_weight": 1.0,
+      "direction": "positive",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:SYNAI001",
+        "fund:SYNAI002",
+        "fund:SYNAI003",
+        "fund:SYNBOND01"
+      ],
+      "source_type": "portfolio_pnl_summary",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "top_positions": [
+          {
+            "current_value": 70000.0,
+            "fund_code": "SYNAI001",
+            "total_cost": 62000.0,
+            "unrealized_pnl": 8000.0,
+            "unrealized_pnl_pct": 0.129032
+          },
+          {
+            "current_value": 45000.0,
+            "fund_code": "SYNAI002",
+            "total_cost": 47000.0,
+            "unrealized_pnl": -2000.0,
+            "unrealized_pnl_pct": -0.042553
+          },
+          {
+            "current_value": 20000.0,
+            "fund_code": "SYNAI003",
+            "total_cost": 19000.0,
+            "unrealized_pnl": 1000.0,
+            "unrealized_pnl_pct": 0.052632
+          },
+          {
+            "current_value": 10000.0,
+            "fund_code": "SYNBOND01",
+            "total_cost": 10000.0,
+            "unrealized_pnl": 0.0,
+            "unrealized_pnl_pct": 0.0
+          }
+        ],
+        "total_cost": 138000.0,
+        "total_value": 145000.0,
+        "unrealized_pnl": 7000.0,
+        "unrealized_pnl_pct": 0.050725
+      },
+      "version": "evidence-contract.v2"
+    }
+  ],
+  "metadata": {
+    "missing_mcp_capabilities": [],
+    "required_mcp_capabilities": []
+  },
+  "ok": true,
+  "skill_name": "fund_analysis",
+  "status": "OK",
+  "used_mcp_capabilities": [],
+  "warnings": []
+}

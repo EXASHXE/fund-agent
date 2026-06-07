@@ -1,0 +1,1776 @@
+{
+  "artifacts": {
+    "analysis_coverage": {
+      "benchmark": "missing",
+      "factor": "missing",
+      "fees": "available",
+      "holdings": "available",
+      "ledger": "complete",
+      "peer": "missing",
+      "performance": "available",
+      "portfolio": "derived",
+      "redemption": "available",
+      "research_plan": "not_requested"
+    },
+    "cost_basis_summary": {
+      "SYNLED001": {
+        "average_cost_per_share": 1.05,
+        "current_nav": 1.18,
+        "current_value": 47200.0,
+        "fund_code": "SYNLED001",
+        "method": "weighted_average",
+        "total_cost": 42000.0,
+        "total_shares": 40000.0,
+        "transaction_count": 3,
+        "unrealized_pnl": 5200.0,
+        "unrealized_pnl_pct": 12.38
+      },
+      "SYNLED002": {
+        "average_cost_per_share": 1.0,
+        "current_nav": 1.15,
+        "current_value": 24150.0,
+        "fund_code": "SYNLED002",
+        "method": "weighted_average",
+        "total_cost": 21000.0,
+        "total_shares": 21000.0,
+        "transaction_count": 3,
+        "unrealized_pnl": 3150.0,
+        "unrealized_pnl_pct": 15.0
+      }
+    },
+    "data_completeness": {
+      "available_sections": [
+        "Portfolio Snapshot",
+        "Current Value Or Nav",
+        "Fund Profiles",
+        "Nav History",
+        "Holdings",
+        "Risk Profile",
+        "Constraints",
+        "Fee Schedule",
+        "Redemption Rules"
+      ],
+      "critical_missing": [],
+      "grade": "B",
+      "limitations": [],
+      "missing_sections": [
+        "Benchmark History",
+        "Peer Group",
+        "Factor Exposures",
+        "Manager Profile",
+        "Fund Flow",
+        "Macro Events",
+        "User Investment Plan"
+      ],
+      "optional_missing": [
+        "Benchmark History",
+        "Peer Group",
+        "Factor Exposures",
+        "Manager Profile",
+        "Fund Flow",
+        "Macro Events",
+        "User Investment Plan"
+      ],
+      "score": 0.767
+    },
+    "dca_plan_review": {
+      "plans": [
+        {
+          "annual_amount": 18000.0,
+          "current_weight": 0.661528,
+          "exceeds_limit": true,
+          "fund_code": "SYNLED001",
+          "monthly_amount": 1500.0,
+          "plan_id": "sample_ledger_monthly",
+          "suggestion": "PAUSE"
+        }
+      ],
+      "suggestions": [
+        {
+          "annual_amount": 18000.0,
+          "current_weight": 0.661528,
+          "exceeds_limit": true,
+          "fund_code": "SYNLED001",
+          "monthly_amount": 1500.0,
+          "plan_id": "sample_ledger_monthly",
+          "suggestion": "PAUSE"
+        }
+      ],
+      "warnings": [
+        "DCA plan sample_ledger_monthly for SYNLED001 exceeds concentration limit"
+      ]
+    },
+    "derived_portfolio_snapshot": {
+      "as_of_date": "2026-03-31",
+      "cashflow_summary": {
+        "dividend_income": 300.0,
+        "fee_expense": 30.0,
+        "implied_cash": -61730.0,
+        "initial_cash": 0.0,
+        "net_cashflow": -61730.0,
+        "total_inflows": 5300.0,
+        "total_outflows": 67030.0
+      },
+      "invalid_events_count": 0,
+      "pnl_overall": {
+        "current_value": 71350.0,
+        "realized_pnl": 1270.0,
+        "total_cost": 63000.0,
+        "unrealized_pnl": 8350.0
+      },
+      "positions": [
+        {
+          "average_cost_nav": 1.05,
+          "current_nav": 1.18,
+          "current_value": 47200.0,
+          "fund_code": "SYNLED001",
+          "realized_pnl": 300.0,
+          "shares": 40000.0,
+          "total_cost": 42000.0,
+          "unrealized_pnl": 5200.0,
+          "unrealized_pnl_pct": 0.12381,
+          "warnings": []
+        },
+        {
+          "average_cost_nav": 1.0,
+          "current_nav": 1.15,
+          "current_value": 24150.0,
+          "fund_code": "SYNLED002",
+          "realized_pnl": 970.0,
+          "shares": 21000.0,
+          "total_cost": 21000.0,
+          "unrealized_pnl": 3150.0,
+          "unrealized_pnl_pct": 0.15,
+          "warnings": []
+        }
+      ],
+      "settlement": {
+        "confirmed_count": 6,
+        "include_pending": false,
+        "lag_days": 3,
+        "pending_count": 0
+      },
+      "unresolved_events": [],
+      "warnings": []
+    },
+    "exposure_summary": {
+      "fund_type_exposure": {
+        "fund_type:balanced": 0.338472,
+        "fund_type:equity": 0.661528
+      },
+      "industry_exposure": {
+        "industry:aggregate_bond": 0.152313,
+        "industry:broad_market": 0.482306,
+        "industry:dividend": 0.132306
+      },
+      "theme_exposure": {
+        "asset_type:bond": 0.152313,
+        "asset_type:stock": 0.614611,
+        "industry:aggregate_bond": 0.152313,
+        "industry:broad_market": 0.482306,
+        "industry:dividend": 0.132306,
+        "region:CN": 0.766924
+      }
+    },
+    "fee_summary": {
+      "fee_schedules": {
+        "SYNLED001": {
+          "custody_fee": 0.002,
+          "management_fee": 0.01,
+          "redemption_fee": 0.004,
+          "sales_fee": 0.001,
+          "total_expense_ratio": 0.013
+        },
+        "SYNLED002": {
+          "custody_fee": 0.002,
+          "management_fee": 0.009,
+          "redemption_fee": 0.003,
+          "sales_fee": 0.001,
+          "total_expense_ratio": 0.012
+        }
+      },
+      "funds_with_fees": [
+        "SYNLED001",
+        "SYNLED002"
+      ]
+    },
+    "fund_analysis_report": {
+      "analysis_coverage": {
+        "benchmark": "missing",
+        "factor": "missing",
+        "fees": "available",
+        "holdings": "available",
+        "ledger": "complete",
+        "peer": "missing",
+        "performance": "available",
+        "portfolio": "derived",
+        "redemption": "available",
+        "research_plan": "not_requested"
+      },
+      "concentration": {
+        "duplicate_tags": [],
+        "hhi": 0.552182,
+        "max_fund_code": "SYNLED001",
+        "position_count": 2,
+        "single_fund_max_weight": 0.661528,
+        "top_n": 3,
+        "top_n_concentration": 1.0
+      },
+      "cost_basis_summary": {
+        "SYNLED001": {
+          "average_cost_per_share": 1.05,
+          "current_nav": 1.18,
+          "current_value": 47200.0,
+          "fund_code": "SYNLED001",
+          "method": "weighted_average",
+          "total_cost": 42000.0,
+          "total_shares": 40000.0,
+          "transaction_count": 3,
+          "unrealized_pnl": 5200.0,
+          "unrealized_pnl_pct": 12.38
+        },
+        "SYNLED002": {
+          "average_cost_per_share": 1.0,
+          "current_nav": 1.15,
+          "current_value": 24150.0,
+          "fund_code": "SYNLED002",
+          "method": "weighted_average",
+          "total_cost": 21000.0,
+          "total_shares": 21000.0,
+          "transaction_count": 3,
+          "unrealized_pnl": 3150.0,
+          "unrealized_pnl_pct": 15.0
+        }
+      },
+      "data_completeness": {
+        "available_sections": [
+          "Portfolio Snapshot",
+          "Current Value Or Nav",
+          "Fund Profiles",
+          "Nav History",
+          "Holdings",
+          "Risk Profile",
+          "Constraints",
+          "Fee Schedule",
+          "Redemption Rules"
+        ],
+        "critical_missing": [],
+        "grade": "B",
+        "limitations": [],
+        "missing_sections": [
+          "Benchmark History",
+          "Peer Group",
+          "Factor Exposures",
+          "Manager Profile",
+          "Fund Flow",
+          "Macro Events",
+          "User Investment Plan"
+        ],
+        "optional_missing": [
+          "Benchmark History",
+          "Peer Group",
+          "Factor Exposures",
+          "Manager Profile",
+          "Fund Flow",
+          "Macro Events",
+          "User Investment Plan"
+        ],
+        "score": 0.767
+      },
+      "dca_review": {
+        "plans": [
+          {
+            "annual_amount": 18000.0,
+            "current_weight": 0.661528,
+            "exceeds_limit": true,
+            "fund_code": "SYNLED001",
+            "monthly_amount": 1500.0,
+            "plan_id": "sample_ledger_monthly",
+            "suggestion": "PAUSE"
+          }
+        ],
+        "suggestions": [
+          {
+            "annual_amount": 18000.0,
+            "current_weight": 0.661528,
+            "exceeds_limit": true,
+            "fund_code": "SYNLED001",
+            "monthly_amount": 1500.0,
+            "plan_id": "sample_ledger_monthly",
+            "suggestion": "PAUSE"
+          }
+        ],
+        "warnings": [
+          "DCA plan sample_ledger_monthly for SYNLED001 exceeds concentration limit"
+        ]
+      },
+      "exposure_summary": {
+        "fund_type_exposure": {
+          "fund_type:balanced": 0.338472,
+          "fund_type:equity": 0.661528
+        },
+        "industry_exposure": {
+          "industry:aggregate_bond": 0.152313,
+          "industry:broad_market": 0.482306,
+          "industry:dividend": 0.132306
+        },
+        "theme_exposure": {
+          "asset_type:bond": 0.152313,
+          "asset_type:stock": 0.614611,
+          "industry:aggregate_bond": 0.152313,
+          "industry:broad_market": 0.482306,
+          "industry:dividend": 0.132306,
+          "region:CN": 0.766924
+        }
+      },
+      "exposures": {
+        "asset_type:bond": 0.152313,
+        "asset_type:stock": 0.614611,
+        "fund_type:balanced": 0.338472,
+        "fund_type:equity": 0.661528,
+        "industry:aggregate_bond": 0.152313,
+        "industry:broad_market": 0.482306,
+        "industry:dividend": 0.132306,
+        "region:CN": 0.766924
+      },
+      "fee_summary": {
+        "fee_schedules": {
+          "SYNLED001": {
+            "custody_fee": 0.002,
+            "management_fee": 0.01,
+            "redemption_fee": 0.004,
+            "sales_fee": 0.001,
+            "total_expense_ratio": 0.013
+          },
+          "SYNLED002": {
+            "custody_fee": 0.002,
+            "management_fee": 0.009,
+            "redemption_fee": 0.003,
+            "sales_fee": 0.001,
+            "total_expense_ratio": 0.012
+          }
+        },
+        "funds_with_fees": [
+          "SYNLED001",
+          "SYNLED002"
+        ]
+      },
+      "fund_metrics": {
+        "SYNLED001": {
+          "annualized_volatility": 0.869595,
+          "max_drawdown": 0.0,
+          "observation_count": 4,
+          "recent_momentum": 0.083604,
+          "return_1m": 0.017241,
+          "return_1y": 0.18,
+          "return_3m": 0.053571,
+          "return_6m": 0.18,
+          "return_count": 3,
+          "risk_adjusted_score": 0.096141,
+          "rolling_drawdown": {
+            "max_drawdown": 0.0,
+            "peak_nav": 1.18,
+            "trough_nav": 1.0
+          },
+          "sharpe": 16.684167,
+          "sortino": 0.0,
+          "total_return": 0.18
+        },
+        "SYNLED002": {
+          "annualized_volatility": 0.574549,
+          "max_drawdown": 0.0,
+          "observation_count": 4,
+          "recent_momentum": 0.074529,
+          "return_1m": 0.008772,
+          "return_1y": 0.15,
+          "return_3m": 0.064815,
+          "return_6m": 0.15,
+          "return_count": 3,
+          "risk_adjusted_score": 0.129717,
+          "rolling_drawdown": {
+            "max_drawdown": 0.0,
+            "peak_nav": 1.15,
+            "trough_nav": 1.0
+          },
+          "sharpe": 21.06645,
+          "sortino": 0.0,
+          "total_return": 0.15
+        }
+      },
+      "market_scenario": null,
+      "pnl_summary": {
+        "positions": {
+          "SYNLED001": {
+            "current_value": 47200.0,
+            "total_cost": 42000.0,
+            "unrealized_pnl": 5200.0,
+            "unrealized_pnl_pct": 0.12381
+          },
+          "SYNLED002": {
+            "current_value": 24150.0,
+            "total_cost": 21000.0,
+            "unrealized_pnl": 3150.0,
+            "unrealized_pnl_pct": 0.15
+          }
+        },
+        "total_cost": 63000.0,
+        "total_value": 71350.0,
+        "unrealized_pnl": 8350.0,
+        "unrealized_pnl_pct": 0.13254
+      },
+      "portfolio_metrics": {
+        "as_of_date": "2026-03-31",
+        "cash_available": 7000.0,
+        "position_count": 2,
+        "position_weights": {
+          "SYNLED001": 0.661528,
+          "SYNLED002": 0.338472
+        },
+        "total_value": 71350.0
+      },
+      "reconciliation": {
+        "match_count": 2,
+        "matches": [
+          {
+            "cost_basis_cost": 42000.0,
+            "cost_basis_shares": 40000.0,
+            "fund_code": "SYNLED001",
+            "portfolio_cost": 42000.0,
+            "portfolio_shares": 40000.0
+          },
+          {
+            "cost_basis_cost": 21000.0,
+            "cost_basis_shares": 21000.0,
+            "fund_code": "SYNLED002",
+            "portfolio_cost": 21000.0,
+            "portfolio_shares": 21000.0
+          }
+        ],
+        "mismatch_count": 0,
+        "mismatches": [],
+        "warnings": []
+      },
+      "redemption_summary": {
+        "funds_with_rules": [
+          "SYNLED001",
+          "SYNLED002"
+        ],
+        "redemption_constraints": {
+          "SYNLED001": {
+            "holding_period_days": 7,
+            "liquidity_note": "Sample T+2 redemption note.",
+            "redemption_fee_pct": 0.004,
+            "suspended": false
+          },
+          "SYNLED002": {
+            "holding_period_days": 7,
+            "liquidity_note": "Sample T+2 redemption note.",
+            "redemption_fee_pct": 0.003,
+            "suspended": false
+          }
+        }
+      },
+      "report_limitations": [
+        "Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data"
+      ],
+      "report_outline": [
+        {
+          "id": "executive_summary",
+          "status": "OK",
+          "title": "Executive summary"
+        },
+        {
+          "id": "portfolio_snapshot",
+          "status": "OK",
+          "title": "Portfolio snapshot"
+        },
+        {
+          "id": "pnl_and_cost_basis",
+          "status": "OK",
+          "title": "PnL and cost basis"
+        },
+        {
+          "id": "allocation_and_exposure",
+          "status": "OK",
+          "title": "Allocation and exposure"
+        },
+        {
+          "id": "risk_flags",
+          "status": "OK",
+          "title": "Risk flags"
+        },
+        {
+          "id": "performance_and_nav",
+          "status": "OK",
+          "title": "Performance and NAV"
+        },
+        {
+          "id": "benchmark_and_peer",
+          "status": "MISSING",
+          "title": "Benchmark and peer"
+        },
+        {
+          "id": "factor_and_style",
+          "status": "MISSING",
+          "title": "Factor and style"
+        },
+        {
+          "id": "fees_and_redemption",
+          "status": "OK",
+          "title": "Fees and redemption"
+        },
+        {
+          "id": "manager_and_fund_profile",
+          "status": "PARTIAL",
+          "title": "Manager and fund profile"
+        },
+        {
+          "id": "dca_and_trade_budget",
+          "status": "OK",
+          "title": "DCA and trade budget"
+        },
+        {
+          "id": "rebalance_plan",
+          "status": "MISSING",
+          "title": "Rebalance plan"
+        },
+        {
+          "id": "research_query_plan",
+          "status": "MISSING",
+          "title": "Research query plan"
+        },
+        {
+          "id": "data_completeness_and_limitations",
+          "status": "OK",
+          "title": "Data completeness and limitations"
+        },
+        {
+          "id": "evidence_appendix",
+          "status": "OK",
+          "title": "Evidence appendix"
+        }
+      ],
+      "report_quality_gate": {
+        "can_publish_professional_report": true,
+        "grade": "B",
+        "reason": "Data completeness grade B supports a professional report."
+      },
+      "report_sections": [
+        {
+          "bullets": [
+            "Portfolio value 71,350.00 across 2 position(s); cash 7,000.00.",
+            "Data completeness grade B with score 0.767.",
+            "Risk scan surfaced 5 flag(s) from available inputs.",
+            "No formal decision generated; call decision-support for formal action."
+          ],
+          "data_sources": [
+            "portfolio_summary",
+            "data_completeness",
+            "risk_flags"
+          ],
+          "id": "executive_summary",
+          "limitations": [],
+          "status": "OK",
+          "title": "Executive summary"
+        },
+        {
+          "bullets": [
+            "As of 2026-03-31, total value is 71,350.00 with 7,000.00 cash.",
+            "Largest position is SYNLED001 at 66.15% of portfolio value.",
+            "Position detail is available for 2 fund(s)."
+          ],
+          "data_sources": [
+            "portfolio_summary",
+            "position_summary"
+          ],
+          "id": "portfolio_snapshot",
+          "limitations": [],
+          "status": "OK",
+          "title": "Portfolio snapshot"
+        },
+        {
+          "bullets": [
+            "Unrealized PnL is 8,350.00 (13.25%) on total cost 63,000.00.",
+            "Position-level PnL is available for 2 fund(s).",
+            "Transaction-derived cost basis is available for 2 fund(s)."
+          ],
+          "data_sources": [
+            "pnl_summary",
+            "cost_basis_summary"
+          ],
+          "id": "pnl_and_cost_basis",
+          "limitations": [],
+          "status": "OK",
+          "title": "PnL and cost basis"
+        },
+        {
+          "bullets": [
+            "Top fund type exposure is fund_type:equity at 66.15%.",
+            "Top industry exposure is industry:broad_market at 48.23%.",
+            "Top theme exposure is region:CN at 76.69%.",
+            "Single-fund max weight is 66.15%; HHI is 0.552182."
+          ],
+          "data_sources": [
+            "exposure_summary",
+            "concentration"
+          ],
+          "id": "allocation_and_exposure",
+          "limitations": [],
+          "status": "OK",
+          "title": "Allocation and exposure"
+        },
+        {
+          "bullets": [
+            "Risk flags by severity: high=1, medium=4."
+          ],
+          "data_sources": [
+            "risk_flags",
+            "data_completeness"
+          ],
+          "id": "risk_flags",
+          "limitations": [],
+          "status": "OK",
+          "title": "Risk flags"
+        },
+        {
+          "bullets": [
+            "NAV-derived metrics are available for 2 fund(s).",
+            "Highest total return in provided NAV history is SYNLED001 at 18.00%."
+          ],
+          "data_sources": [
+            "fund_analysis_report.fund_metrics"
+          ],
+          "id": "performance_and_nav",
+          "limitations": [],
+          "status": "OK",
+          "title": "Performance and NAV"
+        },
+        {
+          "bullets": [],
+          "data_sources": [
+            "benchmark_summary",
+            "peer_summary"
+          ],
+          "id": "benchmark_and_peer",
+          "limitations": [
+            "Benchmark data is missing; no benchmark comparison is fabricated.",
+            "Peer group data is missing; no peer ranking is fabricated."
+          ],
+          "status": "MISSING",
+          "title": "Benchmark and peer"
+        },
+        {
+          "bullets": [],
+          "data_sources": [
+            "factor_summary"
+          ],
+          "id": "factor_and_style",
+          "limitations": [
+            "Factor exposure data is missing; no style exposure is fabricated."
+          ],
+          "status": "MISSING",
+          "title": "Factor and style"
+        },
+        {
+          "bullets": [
+            "Fee schedule is available for 2 fund(s).",
+            "Redemption rules are available for 2 fund(s)."
+          ],
+          "data_sources": [
+            "fee_summary",
+            "redemption_summary"
+          ],
+          "id": "fees_and_redemption",
+          "limitations": [],
+          "status": "OK",
+          "title": "Fees and redemption"
+        },
+        {
+          "bullets": [
+            "Fund profile data is present, but manager profile details were not provided."
+          ],
+          "data_sources": [
+            "manager_summary",
+            "data_completeness"
+          ],
+          "id": "manager_and_fund_profile",
+          "limitations": [
+            "Manager tenure and manager-change analysis are unavailable."
+          ],
+          "status": "PARTIAL",
+          "title": "Manager and fund profile"
+        },
+        {
+          "bullets": [
+            "Trade budget: max buy 10,000.00, max sell 10,000.00, liquidity reserve 7,135.00.",
+            "Short-term trade budget usage is available.",
+            "DCA review includes 1 suggestion(s)."
+          ],
+          "data_sources": [
+            "trade_budget",
+            "short_term_trade_budget",
+            "dca_plan_review"
+          ],
+          "id": "dca_and_trade_budget",
+          "limitations": [],
+          "status": "OK",
+          "title": "DCA and trade budget"
+        },
+        {
+          "bullets": [],
+          "data_sources": [
+            "suggested_rebalance_plan"
+          ],
+          "id": "rebalance_plan",
+          "limitations": [
+            "Rebalance plan is missing; target weights or constraints may be unavailable."
+          ],
+          "status": "MISSING",
+          "title": "Rebalance plan"
+        },
+        {
+          "bullets": [],
+          "data_sources": [
+            "research_query_plan"
+          ],
+          "id": "research_query_plan",
+          "limitations": [
+            "Research planning was not requested by the host."
+          ],
+          "status": "MISSING",
+          "title": "Research query plan"
+        },
+        {
+          "bullets": [
+            "Completeness grade B with score 0.767.",
+            "Missing data groups: Benchmark History, Peer Group, Factor Exposures, Manager Profile, Fund Flow, Macro Events, User Investment Plan.",
+            "Optional gaps: Benchmark History, Peer Group, Factor Exposures, Manager Profile, Fund Flow, Macro Events, User Investment Plan."
+          ],
+          "data_sources": [
+            "data_completeness",
+            "report_limitations"
+          ],
+          "id": "data_completeness_and_limitations",
+          "limitations": [
+            "Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data"
+          ],
+          "status": "OK",
+          "title": "Data completeness and limitations"
+        },
+        {
+          "bullets": [
+            "FundAnalysisSkill emits HardEvidence separately in SkillOutput.evidence_items.",
+            "This composed report does not create formal decisions or execution ledgers."
+          ],
+          "data_sources": [
+            "SkillOutput.evidence_items"
+          ],
+          "id": "evidence_appendix",
+          "limitations": [],
+          "status": "OK",
+          "title": "Evidence appendix"
+        }
+      ],
+      "risk_flags": [
+        {
+          "details": {
+            "fund_code": "SYNLED001",
+            "limit": 0.55,
+            "value": 0.661528
+          },
+          "message": "single fund weight exceeds risk profile limit",
+          "severity": "high",
+          "type": "overweight_single_fund"
+        },
+        {
+          "details": {
+            "limit": 0.55,
+            "theme": "asset_type:stock",
+            "value": 0.614611
+          },
+          "message": "theme exposure exceeds risk profile limit",
+          "severity": "medium",
+          "type": "overweight_theme"
+        },
+        {
+          "details": {
+            "limit": 0.55,
+            "theme": "fund_type:equity",
+            "value": 0.661528
+          },
+          "message": "theme exposure exceeds risk profile limit",
+          "severity": "medium",
+          "type": "overweight_theme"
+        },
+        {
+          "details": {
+            "limit": 0.55,
+            "theme": "region:CN",
+            "value": 0.766924
+          },
+          "message": "theme exposure exceeds risk profile limit",
+          "severity": "medium",
+          "type": "overweight_theme"
+        },
+        {
+          "details": {
+            "limit": 0.1,
+            "value": 0.098108
+          },
+          "message": "cash reserve is below liquidity reserve target",
+          "severity": "medium",
+          "type": "insufficient_cash_reserve"
+        }
+      ],
+      "short_term_budget": {
+        "exceeded": false,
+        "recent_buys": 0,
+        "recent_sells": 0,
+        "remaining": 5708.0,
+        "short_term_budget": 5708.0,
+        "usage_pct": 0.0,
+        "used": 0
+      },
+      "suggested_watchlist": [
+        {
+          "fund_code": "SYNLED001",
+          "reason": "drawdown or concentration risk requires monitoring"
+        }
+      ],
+      "trade_budget": {
+        "cash_available": 7000.0,
+        "liquidity_reserve": 7135.0,
+        "max_buy_amount": 10000.0,
+        "max_sell_amount": 10000.0,
+        "max_trade_amount": 8562.0,
+        "min_trade_amount": 500.0,
+        "short_term_budget": 5708.0,
+        "total_value": 71350.0
+      },
+      "trading_flags": [],
+      "transaction_summary": {
+        "as_of_date": "2026-03-31",
+        "buy_count": 3,
+        "cashflow_by_fund": {
+          "SYNLED001": -41700.0,
+          "SYNLED002": -20030.0
+        },
+        "net_flow": -61730.0,
+        "position_costs": {
+          "SYNLED001": {
+            "average_cost_per_share": 1.05,
+            "current_nav": 1.18,
+            "current_value": 47200.0,
+            "fund_code": "SYNLED001",
+            "method": "weighted_average",
+            "total_cost": 42000.0,
+            "total_shares": 40000.0,
+            "transaction_count": 3,
+            "unrealized_pnl": 5200.0,
+            "unrealized_pnl_pct": 12.38
+          },
+          "SYNLED002": {
+            "average_cost_per_share": 1.0,
+            "current_nav": 1.15,
+            "current_value": 24150.0,
+            "fund_code": "SYNLED002",
+            "method": "weighted_average",
+            "total_cost": 21000.0,
+            "total_shares": 21000.0,
+            "transaction_count": 3,
+            "unrealized_pnl": 3150.0,
+            "unrealized_pnl_pct": 15.0
+          }
+        },
+        "sell_count": 1,
+        "total_buys": 67000.0,
+        "total_dividends": 300.0,
+        "total_fees": 30.0,
+        "total_sells": 5000.0,
+        "warnings": []
+      },
+      "warnings": [
+        "portfolio was derived from transactions and current_nav; accuracy depends on input completeness"
+      ]
+    },
+    "ledger_cashflow_summary": {
+      "dividend_income": 300.0,
+      "fee_expense": 30.0,
+      "implied_cash": -61730.0,
+      "initial_cash": 0.0,
+      "net_cashflow": -61730.0,
+      "total_inflows": 5300.0,
+      "total_outflows": 67030.0
+    },
+    "ledger_quality_summary": {
+      "invalid_events_count": 0,
+      "is_complete": true,
+      "limitations": [],
+      "unresolved_events_count": 0
+    },
+    "market_scenario_impact": null,
+    "pnl_summary": {
+      "positions": {
+        "SYNLED001": {
+          "current_value": 47200.0,
+          "total_cost": 42000.0,
+          "unrealized_pnl": 5200.0,
+          "unrealized_pnl_pct": 0.12381
+        },
+        "SYNLED002": {
+          "current_value": 24150.0,
+          "total_cost": 21000.0,
+          "unrealized_pnl": 3150.0,
+          "unrealized_pnl_pct": 0.15
+        }
+      },
+      "total_cost": 63000.0,
+      "total_value": 71350.0,
+      "unrealized_pnl": 8350.0,
+      "unrealized_pnl_pct": 0.13254
+    },
+    "portfolio_summary": {
+      "as_of_date": "2026-03-31",
+      "cash_available": 7000.0,
+      "position_count": 2,
+      "position_weights": {
+        "SYNLED001": 0.661528,
+        "SYNLED002": 0.338472
+      },
+      "total_value": 71350.0
+    },
+    "position_summary": {
+      "SYNLED001": {
+        "current_value": 47200.0,
+        "fund_code": "SYNLED001",
+        "fund_name": "",
+        "pending_amount": 0.0,
+        "shares": 40000.0,
+        "tags": [],
+        "target_weight": null,
+        "total_cost": 42000.0
+      },
+      "SYNLED002": {
+        "current_value": 24150.0,
+        "fund_code": "SYNLED002",
+        "fund_name": "",
+        "pending_amount": 0.0,
+        "shares": 21000.0,
+        "tags": [],
+        "target_weight": null,
+        "total_cost": 21000.0
+      }
+    },
+    "redemption_summary": {
+      "funds_with_rules": [
+        "SYNLED001",
+        "SYNLED002"
+      ],
+      "redemption_constraints": {
+        "SYNLED001": {
+          "holding_period_days": 7,
+          "liquidity_note": "Sample T+2 redemption note.",
+          "redemption_fee_pct": 0.004,
+          "suspended": false
+        },
+        "SYNLED002": {
+          "holding_period_days": 7,
+          "liquidity_note": "Sample T+2 redemption note.",
+          "redemption_fee_pct": 0.003,
+          "suspended": false
+        }
+      }
+    },
+    "report_limitations": [
+      "Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data"
+    ],
+    "report_outline": [
+      {
+        "id": "executive_summary",
+        "status": "OK",
+        "title": "Executive summary"
+      },
+      {
+        "id": "portfolio_snapshot",
+        "status": "OK",
+        "title": "Portfolio snapshot"
+      },
+      {
+        "id": "pnl_and_cost_basis",
+        "status": "OK",
+        "title": "PnL and cost basis"
+      },
+      {
+        "id": "allocation_and_exposure",
+        "status": "OK",
+        "title": "Allocation and exposure"
+      },
+      {
+        "id": "risk_flags",
+        "status": "OK",
+        "title": "Risk flags"
+      },
+      {
+        "id": "performance_and_nav",
+        "status": "OK",
+        "title": "Performance and NAV"
+      },
+      {
+        "id": "benchmark_and_peer",
+        "status": "MISSING",
+        "title": "Benchmark and peer"
+      },
+      {
+        "id": "factor_and_style",
+        "status": "MISSING",
+        "title": "Factor and style"
+      },
+      {
+        "id": "fees_and_redemption",
+        "status": "OK",
+        "title": "Fees and redemption"
+      },
+      {
+        "id": "manager_and_fund_profile",
+        "status": "PARTIAL",
+        "title": "Manager and fund profile"
+      },
+      {
+        "id": "dca_and_trade_budget",
+        "status": "OK",
+        "title": "DCA and trade budget"
+      },
+      {
+        "id": "rebalance_plan",
+        "status": "MISSING",
+        "title": "Rebalance plan"
+      },
+      {
+        "id": "research_query_plan",
+        "status": "MISSING",
+        "title": "Research query plan"
+      },
+      {
+        "id": "data_completeness_and_limitations",
+        "status": "OK",
+        "title": "Data completeness and limitations"
+      },
+      {
+        "id": "evidence_appendix",
+        "status": "OK",
+        "title": "Evidence appendix"
+      }
+    ],
+    "report_quality_gate": {
+      "can_publish_professional_report": true,
+      "grade": "B",
+      "reason": "Data completeness grade B supports a professional report."
+    },
+    "report_sections": [
+      {
+        "bullets": [
+          "Portfolio value 71,350.00 across 2 position(s); cash 7,000.00.",
+          "Data completeness grade B with score 0.767.",
+          "Risk scan surfaced 5 flag(s) from available inputs.",
+          "No formal decision generated; call decision-support for formal action."
+        ],
+        "data_sources": [
+          "portfolio_summary",
+          "data_completeness",
+          "risk_flags"
+        ],
+        "id": "executive_summary",
+        "limitations": [],
+        "status": "OK",
+        "title": "Executive summary"
+      },
+      {
+        "bullets": [
+          "As of 2026-03-31, total value is 71,350.00 with 7,000.00 cash.",
+          "Largest position is SYNLED001 at 66.15% of portfolio value.",
+          "Position detail is available for 2 fund(s)."
+        ],
+        "data_sources": [
+          "portfolio_summary",
+          "position_summary"
+        ],
+        "id": "portfolio_snapshot",
+        "limitations": [],
+        "status": "OK",
+        "title": "Portfolio snapshot"
+      },
+      {
+        "bullets": [
+          "Unrealized PnL is 8,350.00 (13.25%) on total cost 63,000.00.",
+          "Position-level PnL is available for 2 fund(s).",
+          "Transaction-derived cost basis is available for 2 fund(s)."
+        ],
+        "data_sources": [
+          "pnl_summary",
+          "cost_basis_summary"
+        ],
+        "id": "pnl_and_cost_basis",
+        "limitations": [],
+        "status": "OK",
+        "title": "PnL and cost basis"
+      },
+      {
+        "bullets": [
+          "Top fund type exposure is fund_type:equity at 66.15%.",
+          "Top industry exposure is industry:broad_market at 48.23%.",
+          "Top theme exposure is region:CN at 76.69%.",
+          "Single-fund max weight is 66.15%; HHI is 0.552182."
+        ],
+        "data_sources": [
+          "exposure_summary",
+          "concentration"
+        ],
+        "id": "allocation_and_exposure",
+        "limitations": [],
+        "status": "OK",
+        "title": "Allocation and exposure"
+      },
+      {
+        "bullets": [
+          "Risk flags by severity: high=1, medium=4."
+        ],
+        "data_sources": [
+          "risk_flags",
+          "data_completeness"
+        ],
+        "id": "risk_flags",
+        "limitations": [],
+        "status": "OK",
+        "title": "Risk flags"
+      },
+      {
+        "bullets": [
+          "NAV-derived metrics are available for 2 fund(s).",
+          "Highest total return in provided NAV history is SYNLED001 at 18.00%."
+        ],
+        "data_sources": [
+          "fund_analysis_report.fund_metrics"
+        ],
+        "id": "performance_and_nav",
+        "limitations": [],
+        "status": "OK",
+        "title": "Performance and NAV"
+      },
+      {
+        "bullets": [],
+        "data_sources": [
+          "benchmark_summary",
+          "peer_summary"
+        ],
+        "id": "benchmark_and_peer",
+        "limitations": [
+          "Benchmark data is missing; no benchmark comparison is fabricated.",
+          "Peer group data is missing; no peer ranking is fabricated."
+        ],
+        "status": "MISSING",
+        "title": "Benchmark and peer"
+      },
+      {
+        "bullets": [],
+        "data_sources": [
+          "factor_summary"
+        ],
+        "id": "factor_and_style",
+        "limitations": [
+          "Factor exposure data is missing; no style exposure is fabricated."
+        ],
+        "status": "MISSING",
+        "title": "Factor and style"
+      },
+      {
+        "bullets": [
+          "Fee schedule is available for 2 fund(s).",
+          "Redemption rules are available for 2 fund(s)."
+        ],
+        "data_sources": [
+          "fee_summary",
+          "redemption_summary"
+        ],
+        "id": "fees_and_redemption",
+        "limitations": [],
+        "status": "OK",
+        "title": "Fees and redemption"
+      },
+      {
+        "bullets": [
+          "Fund profile data is present, but manager profile details were not provided."
+        ],
+        "data_sources": [
+          "manager_summary",
+          "data_completeness"
+        ],
+        "id": "manager_and_fund_profile",
+        "limitations": [
+          "Manager tenure and manager-change analysis are unavailable."
+        ],
+        "status": "PARTIAL",
+        "title": "Manager and fund profile"
+      },
+      {
+        "bullets": [
+          "Trade budget: max buy 10,000.00, max sell 10,000.00, liquidity reserve 7,135.00.",
+          "Short-term trade budget usage is available.",
+          "DCA review includes 1 suggestion(s)."
+        ],
+        "data_sources": [
+          "trade_budget",
+          "short_term_trade_budget",
+          "dca_plan_review"
+        ],
+        "id": "dca_and_trade_budget",
+        "limitations": [],
+        "status": "OK",
+        "title": "DCA and trade budget"
+      },
+      {
+        "bullets": [],
+        "data_sources": [
+          "suggested_rebalance_plan"
+        ],
+        "id": "rebalance_plan",
+        "limitations": [
+          "Rebalance plan is missing; target weights or constraints may be unavailable."
+        ],
+        "status": "MISSING",
+        "title": "Rebalance plan"
+      },
+      {
+        "bullets": [],
+        "data_sources": [
+          "research_query_plan"
+        ],
+        "id": "research_query_plan",
+        "limitations": [
+          "Research planning was not requested by the host."
+        ],
+        "status": "MISSING",
+        "title": "Research query plan"
+      },
+      {
+        "bullets": [
+          "Completeness grade B with score 0.767.",
+          "Missing data groups: Benchmark History, Peer Group, Factor Exposures, Manager Profile, Fund Flow, Macro Events, User Investment Plan.",
+          "Optional gaps: Benchmark History, Peer Group, Factor Exposures, Manager Profile, Fund Flow, Macro Events, User Investment Plan."
+        ],
+        "data_sources": [
+          "data_completeness",
+          "report_limitations"
+        ],
+        "id": "data_completeness_and_limitations",
+        "limitations": [
+          "Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data"
+        ],
+        "status": "OK",
+        "title": "Data completeness and limitations"
+      },
+      {
+        "bullets": [
+          "FundAnalysisSkill emits HardEvidence separately in SkillOutput.evidence_items.",
+          "This composed report does not create formal decisions or execution ledgers."
+        ],
+        "data_sources": [
+          "SkillOutput.evidence_items"
+        ],
+        "id": "evidence_appendix",
+        "limitations": [],
+        "status": "OK",
+        "title": "Evidence appendix"
+      }
+    ],
+    "risk_flags": [
+      {
+        "details": {
+          "fund_code": "SYNLED001",
+          "limit": 0.55,
+          "value": 0.661528
+        },
+        "message": "single fund weight exceeds risk profile limit",
+        "severity": "high",
+        "type": "overweight_single_fund"
+      },
+      {
+        "details": {
+          "limit": 0.55,
+          "theme": "asset_type:stock",
+          "value": 0.614611
+        },
+        "message": "theme exposure exceeds risk profile limit",
+        "severity": "medium",
+        "type": "overweight_theme"
+      },
+      {
+        "details": {
+          "limit": 0.55,
+          "theme": "fund_type:equity",
+          "value": 0.661528
+        },
+        "message": "theme exposure exceeds risk profile limit",
+        "severity": "medium",
+        "type": "overweight_theme"
+      },
+      {
+        "details": {
+          "limit": 0.55,
+          "theme": "region:CN",
+          "value": 0.766924
+        },
+        "message": "theme exposure exceeds risk profile limit",
+        "severity": "medium",
+        "type": "overweight_theme"
+      },
+      {
+        "details": {
+          "limit": 0.1,
+          "value": 0.098108
+        },
+        "message": "cash reserve is below liquidity reserve target",
+        "severity": "medium",
+        "type": "insufficient_cash_reserve"
+      }
+    ],
+    "short_term_trade_budget": {
+      "exceeded": false,
+      "recent_buys": 0,
+      "recent_sells": 0,
+      "remaining": 5708.0,
+      "short_term_budget": 5708.0,
+      "usage_pct": 0.0,
+      "used": 0
+    },
+    "source_of_truth": "derived_from_transactions",
+    "suggested_rebalance_plan": null,
+    "warnings": [
+      "portfolio was derived from transactions and current_nav; accuracy depends on input completeness"
+    ]
+  },
+  "errors": [],
+  "evidence_items": [
+    {
+      "claim": "Portfolio allocation and concentration metrics were computed",
+      "confidence_weight": 1.0,
+      "direction": "negative",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:SYNLED001",
+        "fund:SYNLED002"
+      ],
+      "source_type": "portfolio_allocation_concentration",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "concentration": {
+          "duplicate_tags": [],
+          "hhi": 0.552182,
+          "max_fund_code": "SYNLED001",
+          "position_count": 2,
+          "single_fund_max_weight": 0.661528,
+          "top_n": 3,
+          "top_n_concentration": 1.0
+        },
+        "portfolio_summary": {
+          "as_of_date": "2026-03-31",
+          "cash_available": 7000.0,
+          "position_count": 2,
+          "position_weights": {
+            "SYNLED001": 0.661528,
+            "SYNLED002": 0.338472
+          },
+          "total_value": 71350.0
+        }
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Risk-return metrics were computed for fund SYNLED001",
+      "confidence_weight": 1.0,
+      "direction": "positive",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.fund.metrics"
+      },
+      "related_entities": [
+        "fund:SYNLED001"
+      ],
+      "source_type": "fund_risk_return_metrics",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "annualized_volatility": 0.869595,
+        "max_drawdown": 0.0,
+        "observation_count": 4,
+        "recent_momentum": 0.083604,
+        "return_1m": 0.017241,
+        "return_1y": 0.18,
+        "return_3m": 0.053571,
+        "return_6m": 0.18,
+        "return_count": 3,
+        "risk_adjusted_score": 0.096141,
+        "rolling_drawdown": {
+          "max_drawdown": 0.0,
+          "peak_nav": 1.18,
+          "trough_nav": 1.0
+        },
+        "sharpe": 16.684167,
+        "sortino": 0.0,
+        "total_return": 0.18
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Risk-return metrics were computed for fund SYNLED002",
+      "confidence_weight": 1.0,
+      "direction": "positive",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.fund.metrics"
+      },
+      "related_entities": [
+        "fund:SYNLED002"
+      ],
+      "source_type": "fund_risk_return_metrics",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "annualized_volatility": 0.574549,
+        "max_drawdown": 0.0,
+        "observation_count": 4,
+        "recent_momentum": 0.074529,
+        "return_1m": 0.008772,
+        "return_1y": 0.15,
+        "return_3m": 0.064815,
+        "return_6m": 0.15,
+        "return_count": 3,
+        "risk_adjusted_score": 0.129717,
+        "rolling_drawdown": {
+          "max_drawdown": 0.0,
+          "peak_nav": 1.15,
+          "trough_nav": 1.0
+        },
+        "sharpe": 21.06645,
+        "sortino": 0.0,
+        "total_return": 0.15
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Portfolio risk flag scan found 5 issue(s)",
+      "confidence_weight": 1.0,
+      "direction": "negative",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:SYNLED001",
+        "fund:SYNLED002"
+      ],
+      "source_type": "portfolio_risk_flags",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "risk_flags": [
+          {
+            "details": {
+              "fund_code": "SYNLED001",
+              "limit": 0.55,
+              "value": 0.661528
+            },
+            "message": "single fund weight exceeds risk profile limit",
+            "severity": "high",
+            "type": "overweight_single_fund"
+          },
+          {
+            "details": {
+              "limit": 0.55,
+              "theme": "asset_type:stock",
+              "value": 0.614611
+            },
+            "message": "theme exposure exceeds risk profile limit",
+            "severity": "medium",
+            "type": "overweight_theme"
+          },
+          {
+            "details": {
+              "limit": 0.55,
+              "theme": "fund_type:equity",
+              "value": 0.661528
+            },
+            "message": "theme exposure exceeds risk profile limit",
+            "severity": "medium",
+            "type": "overweight_theme"
+          },
+          {
+            "details": {
+              "limit": 0.55,
+              "theme": "region:CN",
+              "value": 0.766924
+            },
+            "message": "theme exposure exceeds risk profile limit",
+            "severity": "medium",
+            "type": "overweight_theme"
+          },
+          {
+            "details": {
+              "limit": 0.1,
+              "value": 0.098108
+            },
+            "message": "cash reserve is below liquidity reserve target",
+            "severity": "medium",
+            "type": "insufficient_cash_reserve"
+          }
+        ]
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Position cost basis computed from transaction history",
+      "confidence_weight": 1.0,
+      "direction": "neutral",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.transaction"
+      },
+      "related_entities": [
+        "fund:SYNLED001",
+        "fund:SYNLED002"
+      ],
+      "source_type": "position_cost_basis",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "SYNLED001": {
+          "average_cost_per_share": 1.05,
+          "current_nav": 1.18,
+          "current_value": 47200.0,
+          "fund_code": "SYNLED001",
+          "method": "weighted_average",
+          "total_cost": 42000.0,
+          "total_shares": 40000.0,
+          "transaction_count": 3,
+          "unrealized_pnl": 5200.0,
+          "unrealized_pnl_pct": 12.38
+        },
+        "SYNLED002": {
+          "average_cost_per_share": 1.0,
+          "current_nav": 1.15,
+          "current_value": 24150.0,
+          "fund_code": "SYNLED002",
+          "method": "weighted_average",
+          "total_cost": 21000.0,
+          "total_shares": 21000.0,
+          "transaction_count": 3,
+          "unrealized_pnl": 3150.0,
+          "unrealized_pnl_pct": 15.0
+        }
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Short-term trading budget usage computed",
+      "confidence_weight": 1.0,
+      "direction": "neutral",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:SYNLED001",
+        "fund:SYNLED002"
+      ],
+      "source_type": "short_term_budget_usage",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "exceeded": false,
+        "recent_buys": 0,
+        "recent_sells": 0,
+        "remaining": 5708.0,
+        "short_term_budget": 5708.0,
+        "usage_pct": 0.0,
+        "used": 0
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "DCA plan review completed with 1 action(s) suggested",
+      "confidence_weight": 1.0,
+      "direction": "neutral",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:SYNLED001",
+        "fund:SYNLED002"
+      ],
+      "source_type": "dca_plan_review",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "plans": [
+          {
+            "annual_amount": 18000.0,
+            "current_weight": 0.661528,
+            "exceeds_limit": true,
+            "fund_code": "SYNLED001",
+            "monthly_amount": 1500.0,
+            "plan_id": "sample_ledger_monthly",
+            "suggestion": "PAUSE"
+          }
+        ],
+        "suggestions": [
+          {
+            "annual_amount": 18000.0,
+            "current_weight": 0.661528,
+            "exceeds_limit": true,
+            "fund_code": "SYNLED001",
+            "monthly_amount": 1500.0,
+            "plan_id": "sample_ledger_monthly",
+            "suggestion": "PAUSE"
+          }
+        ],
+        "warnings": [
+          "DCA plan sample_ledger_monthly for SYNLED001 exceeds concentration limit"
+        ]
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Portfolio-level PnL summary with top positions computed",
+      "confidence_weight": 1.0,
+      "direction": "positive",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:SYNLED001",
+        "fund:SYNLED002"
+      ],
+      "source_type": "portfolio_pnl_summary",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "top_positions": [
+          {
+            "current_value": 47200.0,
+            "fund_code": "SYNLED001",
+            "total_cost": 42000.0,
+            "unrealized_pnl": 5200.0,
+            "unrealized_pnl_pct": 0.12381
+          },
+          {
+            "current_value": 24150.0,
+            "fund_code": "SYNLED002",
+            "total_cost": 21000.0,
+            "unrealized_pnl": 3150.0,
+            "unrealized_pnl_pct": 0.15
+          }
+        ],
+        "total_cost": 63000.0,
+        "total_value": 71350.0,
+        "unrealized_pnl": 8350.0,
+        "unrealized_pnl_pct": 0.13254
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Portfolio snapshot was deterministically derived from transaction ledger and current NAV",
+      "confidence_weight": 1.0,
+      "direction": "neutral",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.ledger_snapshot"
+      },
+      "related_entities": [
+        "fund:SYNLED001",
+        "fund:SYNLED002"
+      ],
+      "source_type": "derived_portfolio_snapshot",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "as_of_date": "2026-03-31",
+        "cashflow_summary": {
+          "dividend_income": 300.0,
+          "fee_expense": 30.0,
+          "implied_cash": -61730.0,
+          "initial_cash": 0.0,
+          "net_cashflow": -61730.0,
+          "total_inflows": 5300.0,
+          "total_outflows": 67030.0
+        },
+        "invalid_events_count": 0,
+        "pnl_overall": {
+          "current_value": 71350.0,
+          "realized_pnl": 1270.0,
+          "total_cost": 63000.0,
+          "unrealized_pnl": 8350.0
+        },
+        "positions": [
+          {
+            "average_cost_nav": 1.05,
+            "current_nav": 1.18,
+            "current_value": 47200.0,
+            "fund_code": "SYNLED001",
+            "realized_pnl": 300.0,
+            "shares": 40000.0,
+            "total_cost": 42000.0,
+            "unrealized_pnl": 5200.0,
+            "unrealized_pnl_pct": 0.12381,
+            "warnings": []
+          },
+          {
+            "average_cost_nav": 1.0,
+            "current_nav": 1.15,
+            "current_value": 24150.0,
+            "fund_code": "SYNLED002",
+            "realized_pnl": 970.0,
+            "shares": 21000.0,
+            "total_cost": 21000.0,
+            "unrealized_pnl": 3150.0,
+            "unrealized_pnl_pct": 0.15,
+            "warnings": []
+          }
+        ],
+        "settlement": {
+          "confirmed_count": 6,
+          "include_pending": false,
+          "lag_days": 3,
+          "pending_count": 0
+        },
+        "unresolved_events": [],
+        "warnings": []
+      },
+      "version": "evidence-contract.v2"
+    }
+  ],
+  "metadata": {
+    "missing_mcp_capabilities": [],
+    "required_mcp_capabilities": []
+  },
+  "ok": true,
+  "skill_name": "fund_analysis",
+  "status": "PARTIAL",
+  "used_mcp_capabilities": [],
+  "warnings": [
+    "portfolio was derived from transactions and current_nav; accuracy depends on input completeness"
+  ]
+}

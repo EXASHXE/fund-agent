@@ -1,0 +1,1958 @@
+{
+  "artifacts": {
+    "analysis_coverage": {
+      "benchmark": "available",
+      "factor": "available",
+      "fees": "available",
+      "holdings": "available",
+      "ledger": "missing",
+      "peer": "available",
+      "performance": "available",
+      "portfolio": "available",
+      "redemption": "available",
+      "research_plan": "available"
+    },
+    "benchmark_summary": {
+      "benchmark_history": {
+        "chinabond": [
+          {
+            "date": "2024-06-01",
+            "value": 180
+          },
+          {
+            "date": "2024-12-01",
+            "value": 185
+          },
+          {
+            "date": "2025-06-01",
+            "value": 190
+          },
+          {
+            "date": "2025-12-01",
+            "value": 193
+          },
+          {
+            "date": "2026-06-01",
+            "value": 196
+          }
+        ],
+        "csi300": [
+          {
+            "date": "2024-06-01",
+            "value": 3500
+          },
+          {
+            "date": "2024-12-01",
+            "value": 3800
+          },
+          {
+            "date": "2025-06-01",
+            "value": 4000
+          },
+          {
+            "date": "2025-12-01",
+            "value": 4100
+          },
+          {
+            "date": "2026-06-01",
+            "value": 4200
+          }
+        ]
+      },
+      "benchmark_history_keys": [
+        "chinabond",
+        "csi300"
+      ],
+      "benchmarks_available": [],
+      "comparison": [
+        {
+          "benchmark": "chinabond",
+          "benchmark_return": 0.0889,
+          "excess_return": 0.3411,
+          "fund_code": "110011",
+          "fund_return": 0.43,
+          "note": "host-provided data only; not a ranking or attribution analysis"
+        },
+        {
+          "benchmark": "csi300",
+          "benchmark_return": 0.2,
+          "excess_return": 0.23,
+          "fund_code": "110011",
+          "fund_return": 0.43,
+          "note": "host-provided data only; not a ranking or attribution analysis"
+        },
+        {
+          "benchmark": "chinabond",
+          "benchmark_return": 0.0889,
+          "excess_return": 0.002,
+          "fund_code": "220022",
+          "fund_return": 0.0909,
+          "note": "host-provided data only; not a ranking or attribution analysis"
+        },
+        {
+          "benchmark": "csi300",
+          "benchmark_return": 0.2,
+          "excess_return": -0.1091,
+          "fund_code": "220022",
+          "fund_return": 0.0909,
+          "note": "host-provided data only; not a ranking or attribution analysis"
+        },
+        {
+          "benchmark": "chinabond",
+          "benchmark_return": 0.0889,
+          "excess_return": -0.0032,
+          "fund_code": "330033",
+          "fund_return": 0.0857,
+          "note": "host-provided data only; not a ranking or attribution analysis"
+        },
+        {
+          "benchmark": "csi300",
+          "benchmark_return": 0.2,
+          "excess_return": -0.1143,
+          "fund_code": "330033",
+          "fund_return": 0.0857,
+          "note": "host-provided data only; not a ranking or attribution analysis"
+        }
+      ]
+    },
+    "cost_basis_summary": null,
+    "data_completeness": {
+      "available_sections": [
+        "Portfolio Snapshot",
+        "Current Value Or Nav",
+        "Fund Profiles",
+        "Nav History",
+        "Holdings",
+        "Risk Profile",
+        "Constraints",
+        "Benchmark History",
+        "Peer Group",
+        "Factor Exposures",
+        "Manager Profile",
+        "Fee Schedule",
+        "Redemption Rules",
+        "Macro Events",
+        "User Investment Plan"
+      ],
+      "critical_missing": [],
+      "grade": "A",
+      "limitations": [],
+      "missing_sections": [
+        "Fund Flow"
+      ],
+      "optional_missing": [
+        "Fund Flow"
+      ],
+      "score": 0.967
+    },
+    "dca_plan_review": null,
+    "exposure_summary": {
+      "fund_type_exposure": {
+        "fund_type:balanced": 0.155556,
+        "fund_type:bond": 0.4,
+        "fund_type:equity": 0.444444
+      },
+      "industry_exposure": {
+        "industry:auto": 0.013333,
+        "industry:broad_market": 0.023333,
+        "industry:consumer_staples": 0.022222,
+        "industry:corp": 0.02,
+        "industry:govt": 0.055556,
+        "industry:insurance": 0.011111,
+        "industry:internet": 0.013333,
+        "industry:new_energy": 0.017778,
+        "industry:policy_bank": 0.032
+      },
+      "theme_exposure": {
+        "asset_type:bond": 0.092,
+        "asset_type:etf": 0.038889,
+        "asset_type:stock": 0.077778,
+        "industry:auto": 0.013333,
+        "industry:broad_market": 0.023333,
+        "industry:consumer_staples": 0.022222,
+        "industry:corp": 0.02,
+        "industry:govt": 0.055556,
+        "industry:insurance": 0.011111,
+        "industry:internet": 0.013333,
+        "industry:new_energy": 0.017778,
+        "industry:policy_bank": 0.032,
+        "region:CN": 0.195333,
+        "region:HK": 0.013333
+      }
+    },
+    "factor_summary": {
+      "concentration_warnings": [
+        "Fund 110011 has high size exposure (0.60)"
+      ],
+      "factor_exposures": {
+        "momentum": {
+          "110011": 0.45,
+          "220022": 0.0,
+          "330033": 0.25
+        },
+        "quality": {
+          "110011": 0.3,
+          "220022": 0.0,
+          "330033": 0.2
+        },
+        "size": {
+          "110011": 0.6,
+          "220022": 0.0,
+          "330033": 0.3
+        },
+        "value": {
+          "110011": 0.2,
+          "220022": 0.05,
+          "330033": 0.15
+        }
+      },
+      "factors": [
+        "momentum",
+        "quality",
+        "size",
+        "value"
+      ]
+    },
+    "fee_summary": {
+      "fee_schedules": {
+        "110011": {
+          "custody_fee": 0.0025,
+          "management_fee": 0.015,
+          "redemption_fee": 0.005,
+          "sales_fee": 0.0015,
+          "total_expense_ratio": 0.019
+        },
+        "220022": {
+          "custody_fee": 0.002,
+          "management_fee": 0.008,
+          "redemption_fee": 0.001,
+          "sales_fee": 0.0,
+          "total_expense_ratio": 0.01
+        },
+        "330033": {
+          "custody_fee": 0.002,
+          "management_fee": 0.012,
+          "redemption_fee": 0.003,
+          "sales_fee": 0.001,
+          "total_expense_ratio": 0.015
+        }
+      },
+      "funds_with_fees": [
+        "110011",
+        "220022",
+        "330033"
+      ]
+    },
+    "fund_analysis_report": {
+      "analysis_coverage": {
+        "benchmark": "available",
+        "factor": "available",
+        "fees": "available",
+        "holdings": "available",
+        "ledger": "missing",
+        "peer": "available",
+        "performance": "available",
+        "portfolio": "available",
+        "redemption": "available",
+        "research_plan": "available"
+      },
+      "benchmark_summary": {
+        "benchmark_history": {
+          "chinabond": [
+            {
+              "date": "2024-06-01",
+              "value": 180
+            },
+            {
+              "date": "2024-12-01",
+              "value": 185
+            },
+            {
+              "date": "2025-06-01",
+              "value": 190
+            },
+            {
+              "date": "2025-12-01",
+              "value": 193
+            },
+            {
+              "date": "2026-06-01",
+              "value": 196
+            }
+          ],
+          "csi300": [
+            {
+              "date": "2024-06-01",
+              "value": 3500
+            },
+            {
+              "date": "2024-12-01",
+              "value": 3800
+            },
+            {
+              "date": "2025-06-01",
+              "value": 4000
+            },
+            {
+              "date": "2025-12-01",
+              "value": 4100
+            },
+            {
+              "date": "2026-06-01",
+              "value": 4200
+            }
+          ]
+        },
+        "benchmark_history_keys": [
+          "chinabond",
+          "csi300"
+        ],
+        "benchmarks_available": [],
+        "comparison": [
+          {
+            "benchmark": "chinabond",
+            "benchmark_return": 0.0889,
+            "excess_return": 0.3411,
+            "fund_code": "110011",
+            "fund_return": 0.43,
+            "note": "host-provided data only; not a ranking or attribution analysis"
+          },
+          {
+            "benchmark": "csi300",
+            "benchmark_return": 0.2,
+            "excess_return": 0.23,
+            "fund_code": "110011",
+            "fund_return": 0.43,
+            "note": "host-provided data only; not a ranking or attribution analysis"
+          },
+          {
+            "benchmark": "chinabond",
+            "benchmark_return": 0.0889,
+            "excess_return": 0.002,
+            "fund_code": "220022",
+            "fund_return": 0.0909,
+            "note": "host-provided data only; not a ranking or attribution analysis"
+          },
+          {
+            "benchmark": "csi300",
+            "benchmark_return": 0.2,
+            "excess_return": -0.1091,
+            "fund_code": "220022",
+            "fund_return": 0.0909,
+            "note": "host-provided data only; not a ranking or attribution analysis"
+          },
+          {
+            "benchmark": "chinabond",
+            "benchmark_return": 0.0889,
+            "excess_return": -0.0032,
+            "fund_code": "330033",
+            "fund_return": 0.0857,
+            "note": "host-provided data only; not a ranking or attribution analysis"
+          },
+          {
+            "benchmark": "csi300",
+            "benchmark_return": 0.2,
+            "excess_return": -0.1143,
+            "fund_code": "330033",
+            "fund_return": 0.0857,
+            "note": "host-provided data only; not a ranking or attribution analysis"
+          }
+        ]
+      },
+      "concentration": {
+        "duplicate_tags": [],
+        "hhi": 0.381728,
+        "max_fund_code": "110011",
+        "position_count": 3,
+        "single_fund_max_weight": 0.444444,
+        "top_n": 3,
+        "top_n_concentration": 1.0
+      },
+      "cost_basis_summary": null,
+      "data_completeness": {
+        "available_sections": [
+          "Portfolio Snapshot",
+          "Current Value Or Nav",
+          "Fund Profiles",
+          "Nav History",
+          "Holdings",
+          "Risk Profile",
+          "Constraints",
+          "Benchmark History",
+          "Peer Group",
+          "Factor Exposures",
+          "Manager Profile",
+          "Fee Schedule",
+          "Redemption Rules",
+          "Macro Events",
+          "User Investment Plan"
+        ],
+        "critical_missing": [],
+        "grade": "A",
+        "limitations": [],
+        "missing_sections": [
+          "Fund Flow"
+        ],
+        "optional_missing": [
+          "Fund Flow"
+        ],
+        "score": 0.967
+      },
+      "dca_review": null,
+      "exposure_summary": {
+        "fund_type_exposure": {
+          "fund_type:balanced": 0.155556,
+          "fund_type:bond": 0.4,
+          "fund_type:equity": 0.444444
+        },
+        "industry_exposure": {
+          "industry:auto": 0.013333,
+          "industry:broad_market": 0.023333,
+          "industry:consumer_staples": 0.022222,
+          "industry:corp": 0.02,
+          "industry:govt": 0.055556,
+          "industry:insurance": 0.011111,
+          "industry:internet": 0.013333,
+          "industry:new_energy": 0.017778,
+          "industry:policy_bank": 0.032
+        },
+        "theme_exposure": {
+          "asset_type:bond": 0.092,
+          "asset_type:etf": 0.038889,
+          "asset_type:stock": 0.077778,
+          "industry:auto": 0.013333,
+          "industry:broad_market": 0.023333,
+          "industry:consumer_staples": 0.022222,
+          "industry:corp": 0.02,
+          "industry:govt": 0.055556,
+          "industry:insurance": 0.011111,
+          "industry:internet": 0.013333,
+          "industry:new_energy": 0.017778,
+          "industry:policy_bank": 0.032,
+          "region:CN": 0.195333,
+          "region:HK": 0.013333
+        }
+      },
+      "exposures": {
+        "asset_type:bond": 0.092,
+        "asset_type:etf": 0.038889,
+        "asset_type:stock": 0.077778,
+        "fund_type:balanced": 0.155556,
+        "fund_type:bond": 0.4,
+        "fund_type:equity": 0.444444,
+        "industry:auto": 0.013333,
+        "industry:broad_market": 0.023333,
+        "industry:consumer_staples": 0.022222,
+        "industry:corp": 0.02,
+        "industry:govt": 0.055556,
+        "industry:insurance": 0.011111,
+        "industry:internet": 0.013333,
+        "industry:new_energy": 0.017778,
+        "industry:policy_bank": 0.032,
+        "region:CN": 0.195333,
+        "region:HK": 0.013333
+      },
+      "factor_summary": {
+        "concentration_warnings": [
+          "Fund 110011 has high size exposure (0.60)"
+        ],
+        "factor_exposures": {
+          "momentum": {
+            "110011": 0.45,
+            "220022": 0.0,
+            "330033": 0.25
+          },
+          "quality": {
+            "110011": 0.3,
+            "220022": 0.0,
+            "330033": 0.2
+          },
+          "size": {
+            "110011": 0.6,
+            "220022": 0.0,
+            "330033": 0.3
+          },
+          "value": {
+            "110011": 0.2,
+            "220022": 0.05,
+            "330033": 0.15
+          }
+        },
+        "factors": [
+          "momentum",
+          "quality",
+          "size",
+          "value"
+        ]
+      },
+      "fee_summary": {
+        "fee_schedules": {
+          "110011": {
+            "custody_fee": 0.0025,
+            "management_fee": 0.015,
+            "redemption_fee": 0.005,
+            "sales_fee": 0.0015,
+            "total_expense_ratio": 0.019
+          },
+          "220022": {
+            "custody_fee": 0.002,
+            "management_fee": 0.008,
+            "redemption_fee": 0.001,
+            "sales_fee": 0.0,
+            "total_expense_ratio": 0.01
+          },
+          "330033": {
+            "custody_fee": 0.002,
+            "management_fee": 0.012,
+            "redemption_fee": 0.003,
+            "sales_fee": 0.001,
+            "total_expense_ratio": 0.015
+          }
+        },
+        "funds_with_fees": [
+          "110011",
+          "220022",
+          "330033"
+        ]
+      },
+      "fund_metrics": {
+        "110011": {
+          "annualized_volatility": 0.862362,
+          "max_drawdown": 0.0,
+          "observation_count": 5,
+          "recent_momentum": 0.036232,
+          "return_1m": 0.036232,
+          "return_1y": 0.1,
+          "return_3m": 0.036232,
+          "return_6m": 0.036232,
+          "return_count": 4,
+          "risk_adjusted_score": 0.042015,
+          "rolling_drawdown": {
+            "max_drawdown": 0.0,
+            "peak_nav": 1.43,
+            "trough_nav": 1.0
+          },
+          "sharpe": 27.606888,
+          "sortino": 0.0,
+          "total_return": 0.43
+        },
+        "220022": {
+          "annualized_volatility": 0.090102,
+          "max_drawdown": 0.0,
+          "observation_count": 5,
+          "recent_momentum": 0.016949,
+          "return_1m": 0.016949,
+          "return_1y": 0.034483,
+          "return_3m": 0.016949,
+          "return_6m": 0.016949,
+          "return_count": 4,
+          "risk_adjusted_score": 0.188109,
+          "rolling_drawdown": {
+            "max_drawdown": 0.0,
+            "peak_nav": 1.2,
+            "trough_nav": 1.1
+          },
+          "sharpe": 61.318723,
+          "sortino": 0.0,
+          "total_return": 0.090909
+        },
+        "330033": {
+          "annualized_volatility": 0.416024,
+          "max_drawdown": 0.017857,
+          "observation_count": 5,
+          "recent_momentum": 0.036364,
+          "return_1m": 0.036364,
+          "return_1y": 0.017857,
+          "return_3m": 0.036364,
+          "return_6m": 0.036364,
+          "return_count": 4,
+          "risk_adjusted_score": 0.087408,
+          "rolling_drawdown": {
+            "max_drawdown": 0.017857,
+            "peak_nav": 1.14,
+            "trough_nav": 1.1
+          },
+          "sharpe": 12.690226,
+          "sortino": 0.0,
+          "total_return": 0.085714
+        }
+      },
+      "manager_summary": {
+        "funds_with_profiles": [
+          "110011",
+          "220022",
+          "330033"
+        ],
+        "manager_change_risk_funds": [
+          "330033"
+        ],
+        "manager_profiles": {
+          "110011": {
+            "manager_change_risk": "low",
+            "manager_name": "Zhang Wei",
+            "start_date": "2020-01-15",
+            "team_size": 8,
+            "tenure_years": 6
+          },
+          "220022": {
+            "manager_change_risk": "low",
+            "manager_name": "Li Ming",
+            "start_date": "2022-03-01",
+            "team_size": 5,
+            "tenure_years": 4
+          },
+          "330033": {
+            "manager_change_risk": "elevated",
+            "manager_name": "Wang Fang",
+            "start_date": "2024-12-01",
+            "team_size": 6,
+            "tenure_years": 1.5
+          }
+        },
+        "manager_risk_warning": "Fund(s) 330033 have elevated manager-change risk or short manager tenure"
+      },
+      "market_scenario": null,
+      "peer_summary": {
+        "funds_with_peers": [
+          "110011",
+          "220022",
+          "330033"
+        ],
+        "peer_data": {
+          "110011": {
+            "category": "equity_large_cap",
+            "percentile": 15,
+            "rank": 12,
+            "total": 80
+          },
+          "220022": {
+            "category": "bond_aggregate",
+            "percentile": 16,
+            "rank": 8,
+            "total": 50
+          },
+          "330033": {
+            "category": "balanced",
+            "percentile": 44,
+            "rank": 20,
+            "total": 45
+          }
+        },
+        "rankings": [
+          {
+            "category": "equity_large_cap",
+            "fund_code": "110011",
+            "percentile": 15,
+            "rank": 12,
+            "total": 80
+          },
+          {
+            "category": "bond_aggregate",
+            "fund_code": "220022",
+            "percentile": 16,
+            "rank": 8,
+            "total": 50
+          },
+          {
+            "category": "balanced",
+            "fund_code": "330033",
+            "percentile": 44,
+            "rank": 20,
+            "total": 45
+          }
+        ]
+      },
+      "pnl_summary": {
+        "positions": {
+          "110011": {
+            "current_value": 200000.0,
+            "total_cost": 180000.0,
+            "unrealized_pnl": 20000.0,
+            "unrealized_pnl_pct": 0.111111
+          },
+          "220022": {
+            "current_value": 180000.0,
+            "total_cost": 175000.0,
+            "unrealized_pnl": 5000.0,
+            "unrealized_pnl_pct": 0.028571
+          },
+          "330033": {
+            "current_value": 70000.0,
+            "total_cost": 65000.0,
+            "unrealized_pnl": 5000.0,
+            "unrealized_pnl_pct": 0.076923
+          }
+        },
+        "total_cost": 420000.0,
+        "total_value": 450000.0,
+        "unrealized_pnl": 30000.0,
+        "unrealized_pnl_pct": 0.071429
+      },
+      "portfolio_metrics": {
+        "as_of_date": "2026-06-01",
+        "cash_available": 50000.0,
+        "position_count": 3,
+        "position_weights": {
+          "110011": 0.4,
+          "220022": 0.36,
+          "330033": 0.14
+        },
+        "total_value": 500000.0
+      },
+      "reconciliation": null,
+      "redemption_summary": {
+        "funds_with_rules": [
+          "110011",
+          "220022",
+          "330033"
+        ],
+        "redemption_constraints": {
+          "110011": {
+            "holding_period_days": 7,
+            "liquidity_note": "T+2 settlement for redemptions",
+            "redemption_fee_pct": 0.005,
+            "redemption_fee_schedule": "0-7d:1.5%, 7-30d:0.75%, 30-365d:0.5%, >365d:0%",
+            "suspended": false
+          },
+          "220022": {
+            "holding_period_days": 30,
+            "liquidity_note": "T+1 settlement",
+            "redemption_fee_pct": 0.001,
+            "redemption_fee_schedule": "0-30d:0.1%, >30d:0%"
+          },
+          "330033": {
+            "holding_period_days": 7,
+            "liquidity_note": "T+2 settlement",
+            "redemption_fee_pct": 0.003,
+            "redemption_fee_schedule": "0-7d:1.0%, 7-30d:0.5%, >30d:0.3%"
+          }
+        }
+      },
+      "report_limitations": [],
+      "report_outline": [
+        {
+          "id": "executive_summary",
+          "status": "OK",
+          "title": "Executive summary"
+        },
+        {
+          "id": "portfolio_snapshot",
+          "status": "OK",
+          "title": "Portfolio snapshot"
+        },
+        {
+          "id": "pnl_and_cost_basis",
+          "status": "OK",
+          "title": "PnL and cost basis"
+        },
+        {
+          "id": "allocation_and_exposure",
+          "status": "OK",
+          "title": "Allocation and exposure"
+        },
+        {
+          "id": "risk_flags",
+          "status": "OK",
+          "title": "Risk flags"
+        },
+        {
+          "id": "performance_and_nav",
+          "status": "OK",
+          "title": "Performance and NAV"
+        },
+        {
+          "id": "benchmark_and_peer",
+          "status": "OK",
+          "title": "Benchmark and peer"
+        },
+        {
+          "id": "factor_and_style",
+          "status": "OK",
+          "title": "Factor and style"
+        },
+        {
+          "id": "fees_and_redemption",
+          "status": "OK",
+          "title": "Fees and redemption"
+        },
+        {
+          "id": "manager_and_fund_profile",
+          "status": "OK",
+          "title": "Manager and fund profile"
+        },
+        {
+          "id": "dca_and_trade_budget",
+          "status": "PARTIAL",
+          "title": "DCA and trade budget"
+        },
+        {
+          "id": "rebalance_plan",
+          "status": "OK",
+          "title": "Rebalance plan"
+        },
+        {
+          "id": "research_query_plan",
+          "status": "OK",
+          "title": "Research query plan"
+        },
+        {
+          "id": "data_completeness_and_limitations",
+          "status": "OK",
+          "title": "Data completeness and limitations"
+        },
+        {
+          "id": "evidence_appendix",
+          "status": "OK",
+          "title": "Evidence appendix"
+        }
+      ],
+      "report_quality_gate": {
+        "can_publish_professional_report": true,
+        "grade": "A",
+        "reason": "Data completeness grade A supports a professional report."
+      },
+      "report_sections": [
+        {
+          "bullets": [
+            "Portfolio value 500,000.00 across 3 position(s); cash 50,000.00.",
+            "Data completeness grade A with score 0.967.",
+            "Risk scan surfaced no flags from available inputs.",
+            "No formal decision generated; call decision-support for formal action."
+          ],
+          "data_sources": [
+            "portfolio_summary",
+            "data_completeness",
+            "risk_flags"
+          ],
+          "id": "executive_summary",
+          "limitations": [],
+          "status": "OK",
+          "title": "Executive summary"
+        },
+        {
+          "bullets": [
+            "As of 2026-06-01, total value is 500,000.00 with 50,000.00 cash.",
+            "Largest position is 110011 at 40.00% of portfolio value.",
+            "Position detail is available for 3 fund(s)."
+          ],
+          "data_sources": [
+            "portfolio_summary",
+            "position_summary"
+          ],
+          "id": "portfolio_snapshot",
+          "limitations": [],
+          "status": "OK",
+          "title": "Portfolio snapshot"
+        },
+        {
+          "bullets": [
+            "Unrealized PnL is 30,000.00 (7.14%) on total cost 420,000.00.",
+            "Position-level PnL is available for 3 fund(s)."
+          ],
+          "data_sources": [
+            "pnl_summary",
+            "cost_basis_summary"
+          ],
+          "id": "pnl_and_cost_basis",
+          "limitations": [
+            "Transaction-level cost-basis summary is absent; PnL uses provided position cost fields."
+          ],
+          "status": "OK",
+          "title": "PnL and cost basis"
+        },
+        {
+          "bullets": [
+            "Top fund type exposure is fund_type:equity at 44.44%.",
+            "Top industry exposure is industry:govt at 5.56%.",
+            "Top theme exposure is region:CN at 19.53%.",
+            "Single-fund max weight is 44.44%; HHI is 0.381728."
+          ],
+          "data_sources": [
+            "exposure_summary",
+            "concentration"
+          ],
+          "id": "allocation_and_exposure",
+          "limitations": [],
+          "status": "OK",
+          "title": "Allocation and exposure"
+        },
+        {
+          "bullets": [
+            "No risk flags were generated from available inputs."
+          ],
+          "data_sources": [
+            "risk_flags",
+            "data_completeness"
+          ],
+          "id": "risk_flags",
+          "limitations": [],
+          "status": "OK",
+          "title": "Risk flags"
+        },
+        {
+          "bullets": [
+            "NAV-derived metrics are available for 3 fund(s).",
+            "Highest total return in provided NAV history is 110011 at 43.00%."
+          ],
+          "data_sources": [
+            "fund_analysis_report.fund_metrics"
+          ],
+          "id": "performance_and_nav",
+          "limitations": [],
+          "status": "OK",
+          "title": "Performance and NAV"
+        },
+        {
+          "bullets": [
+            "Benchmark gap comparison is available for 6 fund-benchmark pair(s).",
+            "Peer ranking data is available for 3 fund(s)."
+          ],
+          "data_sources": [
+            "benchmark_summary",
+            "peer_summary"
+          ],
+          "id": "benchmark_and_peer",
+          "limitations": [],
+          "status": "OK",
+          "title": "Benchmark and peer"
+        },
+        {
+          "bullets": [
+            "Host-provided factor dimensions: momentum, quality, size, value.",
+            "Fund 110011 has high size exposure (0.60)"
+          ],
+          "data_sources": [
+            "factor_summary"
+          ],
+          "id": "factor_and_style",
+          "limitations": [],
+          "status": "OK",
+          "title": "Factor and style"
+        },
+        {
+          "bullets": [
+            "Fee schedule is available for 3 fund(s).",
+            "Redemption rules are available for 3 fund(s)."
+          ],
+          "data_sources": [
+            "fee_summary",
+            "redemption_summary"
+          ],
+          "id": "fees_and_redemption",
+          "limitations": [],
+          "status": "OK",
+          "title": "Fees and redemption"
+        },
+        {
+          "bullets": [
+            "Manager profile is available for 3 fund(s).",
+            "Fund(s) 330033 have elevated manager-change risk or short manager tenure"
+          ],
+          "data_sources": [
+            "manager_summary",
+            "data_completeness"
+          ],
+          "id": "manager_and_fund_profile",
+          "limitations": [],
+          "status": "OK",
+          "title": "Manager and fund profile"
+        },
+        {
+          "bullets": [
+            "Trade budget: max buy 100,000.00, max sell 100,000.00, liquidity reserve 50,000.00."
+          ],
+          "data_sources": [
+            "trade_budget",
+            "short_term_trade_budget",
+            "dca_plan_review"
+          ],
+          "id": "dca_and_trade_budget",
+          "limitations": [
+            "DCA plan review is absent; host did not provide DCA inputs."
+          ],
+          "status": "PARTIAL",
+          "title": "DCA and trade budget"
+        },
+        {
+          "bullets": [
+            "Rebalance simulation produced 0 trade leg(s) with total trade amount 0.00.",
+            "No single fund > 45%",
+            "Cash reserve >= 10%"
+          ],
+          "data_sources": [
+            "suggested_rebalance_plan"
+          ],
+          "id": "rebalance_plan",
+          "limitations": [],
+          "status": "OK",
+          "title": "Rebalance plan"
+        },
+        {
+          "bullets": [
+            "Research query plan includes 22 news query(ies) and 3 sentiment query(ies)."
+          ],
+          "data_sources": [
+            "research_query_plan"
+          ],
+          "id": "research_query_plan",
+          "limitations": [],
+          "status": "OK",
+          "title": "Research query plan"
+        },
+        {
+          "bullets": [
+            "Completeness grade A with score 0.967.",
+            "Missing data groups: Fund Flow.",
+            "Optional gaps: Fund Flow."
+          ],
+          "data_sources": [
+            "data_completeness",
+            "report_limitations"
+          ],
+          "id": "data_completeness_and_limitations",
+          "limitations": [],
+          "status": "OK",
+          "title": "Data completeness and limitations"
+        },
+        {
+          "bullets": [
+            "FundAnalysisSkill emits HardEvidence separately in SkillOutput.evidence_items.",
+            "This composed report does not create formal decisions or execution ledgers."
+          ],
+          "data_sources": [
+            "SkillOutput.evidence_items"
+          ],
+          "id": "evidence_appendix",
+          "limitations": [],
+          "status": "OK",
+          "title": "Evidence appendix"
+        }
+      ],
+      "research_query_plan": {
+        "entities": [
+          "110011",
+          "220022",
+          "330033",
+          "AAA Corp Bond",
+          "BYD",
+          "CATL",
+          "CSI 300 ETF",
+          "China Govt Bond 2028",
+          "China Govt Bond ETF",
+          "Kweichow Moutai",
+          "Ping An",
+          "Policy Bank Bond 2027",
+          "Tencent"
+        ],
+        "industries": [
+          "industry:auto",
+          "industry:broad_market",
+          "industry:consumer_staples",
+          "industry:corp",
+          "industry:govt",
+          "industry:insurance",
+          "industry:internet",
+          "industry:new_energy",
+          "industry:policy_bank"
+        ],
+        "news_queries": [
+          "基金 110011 Sample Equity Growth Fund 最新动态 业绩 表现",
+          "基金 220022 Sample Bond Income Fund 最新动态 业绩 表现",
+          "基金 330033 Sample Balanced Fund 最新动态 业绩 表现",
+          "CSI 300 ETF 最新消息 财务 业绩",
+          "China Govt Bond 2028 最新消息 财务 业绩",
+          "China Govt Bond ETF 最新消息 财务 业绩",
+          "Policy Bank Bond 2027 最新消息 财务 业绩",
+          "Kweichow Moutai 最新消息 财务 业绩",
+          "AAA Corp Bond 最新消息 财务 业绩",
+          "CATL 最新消息 财务 业绩",
+          "BYD 最新消息 财务 业绩",
+          "Tencent 最新消息 财务 业绩",
+          "Ping An 最新消息 财务 业绩",
+          "industry:auto 行业 最新动态 政策 龙头企业",
+          "industry:broad_market 行业 最新动态 政策 龙头企业",
+          "industry:consumer_staples 行业 最新动态 政策 龙头企业",
+          "industry:corp 行业 最新动态 政策 龙头企业",
+          "industry:govt 行业 最新动态 政策 龙头企业",
+          "industry:insurance 行业 最新动态 政策 龙头企业",
+          "industry:internet 行业 最新动态 政策 龙头企业",
+          "industry:new_energy 行业 最新动态 政策 龙头企业",
+          "industry:policy_bank 行业 最新动态 政策 龙头企业"
+        ],
+        "query_budget_summary": {
+          "dropped_news_queries": 0,
+          "dropped_sentiment_queries": 0,
+          "generated_news_queries": 22,
+          "generated_sentiment_queries": 3,
+          "max_news_queries": 30,
+          "max_sentiment_queries": 15
+        },
+        "required_capabilities": [
+          "financial_news",
+          "social_sentiment",
+          "web_search"
+        ],
+        "sentiment_queries": [
+          "基金 110011 Sample Equity Growth Fund 市场情绪 评价 讨论",
+          "基金 220022 Sample Bond Income Fund 市场情绪 评价 讨论",
+          "基金 330033 Sample Balanced Fund 市场情绪 评价 讨论"
+        ],
+        "themes": [],
+        "warnings": []
+      },
+      "risk_flags": [],
+      "short_term_budget": null,
+      "suggested_watchlist": [],
+      "trade_budget": {
+        "cash_available": 50000.0,
+        "liquidity_reserve": 50000.0,
+        "max_buy_amount": 100000.0,
+        "max_sell_amount": 100000.0,
+        "max_trade_amount": 75000.0,
+        "min_trade_amount": 1000.0,
+        "short_term_budget": 50000.0,
+        "total_value": 500000.0
+      },
+      "trading_flags": [],
+      "transaction_summary": null,
+      "warnings": []
+    },
+    "manager_summary": {
+      "funds_with_profiles": [
+        "110011",
+        "220022",
+        "330033"
+      ],
+      "manager_change_risk_funds": [
+        "330033"
+      ],
+      "manager_profiles": {
+        "110011": {
+          "manager_change_risk": "low",
+          "manager_name": "Zhang Wei",
+          "start_date": "2020-01-15",
+          "team_size": 8,
+          "tenure_years": 6
+        },
+        "220022": {
+          "manager_change_risk": "low",
+          "manager_name": "Li Ming",
+          "start_date": "2022-03-01",
+          "team_size": 5,
+          "tenure_years": 4
+        },
+        "330033": {
+          "manager_change_risk": "elevated",
+          "manager_name": "Wang Fang",
+          "start_date": "2024-12-01",
+          "team_size": 6,
+          "tenure_years": 1.5
+        }
+      },
+      "manager_risk_warning": "Fund(s) 330033 have elevated manager-change risk or short manager tenure"
+    },
+    "market_scenario_impact": null,
+    "peer_summary": {
+      "funds_with_peers": [
+        "110011",
+        "220022",
+        "330033"
+      ],
+      "peer_data": {
+        "110011": {
+          "category": "equity_large_cap",
+          "percentile": 15,
+          "rank": 12,
+          "total": 80
+        },
+        "220022": {
+          "category": "bond_aggregate",
+          "percentile": 16,
+          "rank": 8,
+          "total": 50
+        },
+        "330033": {
+          "category": "balanced",
+          "percentile": 44,
+          "rank": 20,
+          "total": 45
+        }
+      },
+      "rankings": [
+        {
+          "category": "equity_large_cap",
+          "fund_code": "110011",
+          "percentile": 15,
+          "rank": 12,
+          "total": 80
+        },
+        {
+          "category": "bond_aggregate",
+          "fund_code": "220022",
+          "percentile": 16,
+          "rank": 8,
+          "total": 50
+        },
+        {
+          "category": "balanced",
+          "fund_code": "330033",
+          "percentile": 44,
+          "rank": 20,
+          "total": 45
+        }
+      ]
+    },
+    "pnl_summary": {
+      "positions": {
+        "110011": {
+          "current_value": 200000.0,
+          "total_cost": 180000.0,
+          "unrealized_pnl": 20000.0,
+          "unrealized_pnl_pct": 0.111111
+        },
+        "220022": {
+          "current_value": 180000.0,
+          "total_cost": 175000.0,
+          "unrealized_pnl": 5000.0,
+          "unrealized_pnl_pct": 0.028571
+        },
+        "330033": {
+          "current_value": 70000.0,
+          "total_cost": 65000.0,
+          "unrealized_pnl": 5000.0,
+          "unrealized_pnl_pct": 0.076923
+        }
+      },
+      "total_cost": 420000.0,
+      "total_value": 450000.0,
+      "unrealized_pnl": 30000.0,
+      "unrealized_pnl_pct": 0.071429
+    },
+    "portfolio_summary": {
+      "as_of_date": "2026-06-01",
+      "cash_available": 50000.0,
+      "position_count": 3,
+      "position_weights": {
+        "110011": 0.4,
+        "220022": 0.36,
+        "330033": 0.14
+      },
+      "total_value": 500000.0
+    },
+    "position_summary": {
+      "110011": {
+        "current_value": 200000,
+        "fund_code": "110011",
+        "fund_name": "Sample Equity Growth Fund",
+        "pending_amount": 0.0,
+        "shares": 140000,
+        "tags": [
+          "equity",
+          "growth",
+          "active"
+        ],
+        "target_weight": 0.4,
+        "total_cost": 180000
+      },
+      "220022": {
+        "current_value": 180000,
+        "fund_code": "220022",
+        "fund_name": "Sample Bond Income Fund",
+        "pending_amount": 0.0,
+        "shares": 150000,
+        "tags": [
+          "bond",
+          "income",
+          "stable"
+        ],
+        "target_weight": 0.36,
+        "total_cost": 175000
+      },
+      "330033": {
+        "current_value": 70000,
+        "fund_code": "330033",
+        "fund_name": "Sample Balanced Fund",
+        "pending_amount": 0.0,
+        "shares": 60000,
+        "tags": [
+          "balanced",
+          "moderate"
+        ],
+        "target_weight": 0.14,
+        "total_cost": 65000
+      }
+    },
+    "redemption_summary": {
+      "funds_with_rules": [
+        "110011",
+        "220022",
+        "330033"
+      ],
+      "redemption_constraints": {
+        "110011": {
+          "holding_period_days": 7,
+          "liquidity_note": "T+2 settlement for redemptions",
+          "redemption_fee_pct": 0.005,
+          "redemption_fee_schedule": "0-7d:1.5%, 7-30d:0.75%, 30-365d:0.5%, >365d:0%",
+          "suspended": false
+        },
+        "220022": {
+          "holding_period_days": 30,
+          "liquidity_note": "T+1 settlement",
+          "redemption_fee_pct": 0.001,
+          "redemption_fee_schedule": "0-30d:0.1%, >30d:0%"
+        },
+        "330033": {
+          "holding_period_days": 7,
+          "liquidity_note": "T+2 settlement",
+          "redemption_fee_pct": 0.003,
+          "redemption_fee_schedule": "0-7d:1.0%, 7-30d:0.5%, >30d:0.3%"
+        }
+      }
+    },
+    "report_limitations": [],
+    "report_outline": [
+      {
+        "id": "executive_summary",
+        "status": "OK",
+        "title": "Executive summary"
+      },
+      {
+        "id": "portfolio_snapshot",
+        "status": "OK",
+        "title": "Portfolio snapshot"
+      },
+      {
+        "id": "pnl_and_cost_basis",
+        "status": "OK",
+        "title": "PnL and cost basis"
+      },
+      {
+        "id": "allocation_and_exposure",
+        "status": "OK",
+        "title": "Allocation and exposure"
+      },
+      {
+        "id": "risk_flags",
+        "status": "OK",
+        "title": "Risk flags"
+      },
+      {
+        "id": "performance_and_nav",
+        "status": "OK",
+        "title": "Performance and NAV"
+      },
+      {
+        "id": "benchmark_and_peer",
+        "status": "OK",
+        "title": "Benchmark and peer"
+      },
+      {
+        "id": "factor_and_style",
+        "status": "OK",
+        "title": "Factor and style"
+      },
+      {
+        "id": "fees_and_redemption",
+        "status": "OK",
+        "title": "Fees and redemption"
+      },
+      {
+        "id": "manager_and_fund_profile",
+        "status": "OK",
+        "title": "Manager and fund profile"
+      },
+      {
+        "id": "dca_and_trade_budget",
+        "status": "PARTIAL",
+        "title": "DCA and trade budget"
+      },
+      {
+        "id": "rebalance_plan",
+        "status": "OK",
+        "title": "Rebalance plan"
+      },
+      {
+        "id": "research_query_plan",
+        "status": "OK",
+        "title": "Research query plan"
+      },
+      {
+        "id": "data_completeness_and_limitations",
+        "status": "OK",
+        "title": "Data completeness and limitations"
+      },
+      {
+        "id": "evidence_appendix",
+        "status": "OK",
+        "title": "Evidence appendix"
+      }
+    ],
+    "report_quality_gate": {
+      "can_publish_professional_report": true,
+      "grade": "A",
+      "reason": "Data completeness grade A supports a professional report."
+    },
+    "report_sections": [
+      {
+        "bullets": [
+          "Portfolio value 500,000.00 across 3 position(s); cash 50,000.00.",
+          "Data completeness grade A with score 0.967.",
+          "Risk scan surfaced no flags from available inputs.",
+          "No formal decision generated; call decision-support for formal action."
+        ],
+        "data_sources": [
+          "portfolio_summary",
+          "data_completeness",
+          "risk_flags"
+        ],
+        "id": "executive_summary",
+        "limitations": [],
+        "status": "OK",
+        "title": "Executive summary"
+      },
+      {
+        "bullets": [
+          "As of 2026-06-01, total value is 500,000.00 with 50,000.00 cash.",
+          "Largest position is 110011 at 40.00% of portfolio value.",
+          "Position detail is available for 3 fund(s)."
+        ],
+        "data_sources": [
+          "portfolio_summary",
+          "position_summary"
+        ],
+        "id": "portfolio_snapshot",
+        "limitations": [],
+        "status": "OK",
+        "title": "Portfolio snapshot"
+      },
+      {
+        "bullets": [
+          "Unrealized PnL is 30,000.00 (7.14%) on total cost 420,000.00.",
+          "Position-level PnL is available for 3 fund(s)."
+        ],
+        "data_sources": [
+          "pnl_summary",
+          "cost_basis_summary"
+        ],
+        "id": "pnl_and_cost_basis",
+        "limitations": [
+          "Transaction-level cost-basis summary is absent; PnL uses provided position cost fields."
+        ],
+        "status": "OK",
+        "title": "PnL and cost basis"
+      },
+      {
+        "bullets": [
+          "Top fund type exposure is fund_type:equity at 44.44%.",
+          "Top industry exposure is industry:govt at 5.56%.",
+          "Top theme exposure is region:CN at 19.53%.",
+          "Single-fund max weight is 44.44%; HHI is 0.381728."
+        ],
+        "data_sources": [
+          "exposure_summary",
+          "concentration"
+        ],
+        "id": "allocation_and_exposure",
+        "limitations": [],
+        "status": "OK",
+        "title": "Allocation and exposure"
+      },
+      {
+        "bullets": [
+          "No risk flags were generated from available inputs."
+        ],
+        "data_sources": [
+          "risk_flags",
+          "data_completeness"
+        ],
+        "id": "risk_flags",
+        "limitations": [],
+        "status": "OK",
+        "title": "Risk flags"
+      },
+      {
+        "bullets": [
+          "NAV-derived metrics are available for 3 fund(s).",
+          "Highest total return in provided NAV history is 110011 at 43.00%."
+        ],
+        "data_sources": [
+          "fund_analysis_report.fund_metrics"
+        ],
+        "id": "performance_and_nav",
+        "limitations": [],
+        "status": "OK",
+        "title": "Performance and NAV"
+      },
+      {
+        "bullets": [
+          "Benchmark gap comparison is available for 6 fund-benchmark pair(s).",
+          "Peer ranking data is available for 3 fund(s)."
+        ],
+        "data_sources": [
+          "benchmark_summary",
+          "peer_summary"
+        ],
+        "id": "benchmark_and_peer",
+        "limitations": [],
+        "status": "OK",
+        "title": "Benchmark and peer"
+      },
+      {
+        "bullets": [
+          "Host-provided factor dimensions: momentum, quality, size, value.",
+          "Fund 110011 has high size exposure (0.60)"
+        ],
+        "data_sources": [
+          "factor_summary"
+        ],
+        "id": "factor_and_style",
+        "limitations": [],
+        "status": "OK",
+        "title": "Factor and style"
+      },
+      {
+        "bullets": [
+          "Fee schedule is available for 3 fund(s).",
+          "Redemption rules are available for 3 fund(s)."
+        ],
+        "data_sources": [
+          "fee_summary",
+          "redemption_summary"
+        ],
+        "id": "fees_and_redemption",
+        "limitations": [],
+        "status": "OK",
+        "title": "Fees and redemption"
+      },
+      {
+        "bullets": [
+          "Manager profile is available for 3 fund(s).",
+          "Fund(s) 330033 have elevated manager-change risk or short manager tenure"
+        ],
+        "data_sources": [
+          "manager_summary",
+          "data_completeness"
+        ],
+        "id": "manager_and_fund_profile",
+        "limitations": [],
+        "status": "OK",
+        "title": "Manager and fund profile"
+      },
+      {
+        "bullets": [
+          "Trade budget: max buy 100,000.00, max sell 100,000.00, liquidity reserve 50,000.00."
+        ],
+        "data_sources": [
+          "trade_budget",
+          "short_term_trade_budget",
+          "dca_plan_review"
+        ],
+        "id": "dca_and_trade_budget",
+        "limitations": [
+          "DCA plan review is absent; host did not provide DCA inputs."
+        ],
+        "status": "PARTIAL",
+        "title": "DCA and trade budget"
+      },
+      {
+        "bullets": [
+          "Rebalance simulation produced 0 trade leg(s) with total trade amount 0.00.",
+          "No single fund > 45%",
+          "Cash reserve >= 10%"
+        ],
+        "data_sources": [
+          "suggested_rebalance_plan"
+        ],
+        "id": "rebalance_plan",
+        "limitations": [],
+        "status": "OK",
+        "title": "Rebalance plan"
+      },
+      {
+        "bullets": [
+          "Research query plan includes 22 news query(ies) and 3 sentiment query(ies)."
+        ],
+        "data_sources": [
+          "research_query_plan"
+        ],
+        "id": "research_query_plan",
+        "limitations": [],
+        "status": "OK",
+        "title": "Research query plan"
+      },
+      {
+        "bullets": [
+          "Completeness grade A with score 0.967.",
+          "Missing data groups: Fund Flow.",
+          "Optional gaps: Fund Flow."
+        ],
+        "data_sources": [
+          "data_completeness",
+          "report_limitations"
+        ],
+        "id": "data_completeness_and_limitations",
+        "limitations": [],
+        "status": "OK",
+        "title": "Data completeness and limitations"
+      },
+      {
+        "bullets": [
+          "FundAnalysisSkill emits HardEvidence separately in SkillOutput.evidence_items.",
+          "This composed report does not create formal decisions or execution ledgers."
+        ],
+        "data_sources": [
+          "SkillOutput.evidence_items"
+        ],
+        "id": "evidence_appendix",
+        "limitations": [],
+        "status": "OK",
+        "title": "Evidence appendix"
+      }
+    ],
+    "research_query_plan": {
+      "entities": [
+        "110011",
+        "220022",
+        "330033",
+        "AAA Corp Bond",
+        "BYD",
+        "CATL",
+        "CSI 300 ETF",
+        "China Govt Bond 2028",
+        "China Govt Bond ETF",
+        "Kweichow Moutai",
+        "Ping An",
+        "Policy Bank Bond 2027",
+        "Tencent"
+      ],
+      "industries": [
+        "industry:auto",
+        "industry:broad_market",
+        "industry:consumer_staples",
+        "industry:corp",
+        "industry:govt",
+        "industry:insurance",
+        "industry:internet",
+        "industry:new_energy",
+        "industry:policy_bank"
+      ],
+      "news_queries": [
+        "基金 110011 Sample Equity Growth Fund 最新动态 业绩 表现",
+        "基金 220022 Sample Bond Income Fund 最新动态 业绩 表现",
+        "基金 330033 Sample Balanced Fund 最新动态 业绩 表现",
+        "CSI 300 ETF 最新消息 财务 业绩",
+        "China Govt Bond 2028 最新消息 财务 业绩",
+        "China Govt Bond ETF 最新消息 财务 业绩",
+        "Policy Bank Bond 2027 最新消息 财务 业绩",
+        "Kweichow Moutai 最新消息 财务 业绩",
+        "AAA Corp Bond 最新消息 财务 业绩",
+        "CATL 最新消息 财务 业绩",
+        "BYD 最新消息 财务 业绩",
+        "Tencent 最新消息 财务 业绩",
+        "Ping An 最新消息 财务 业绩",
+        "industry:auto 行业 最新动态 政策 龙头企业",
+        "industry:broad_market 行业 最新动态 政策 龙头企业",
+        "industry:consumer_staples 行业 最新动态 政策 龙头企业",
+        "industry:corp 行业 最新动态 政策 龙头企业",
+        "industry:govt 行业 最新动态 政策 龙头企业",
+        "industry:insurance 行业 最新动态 政策 龙头企业",
+        "industry:internet 行业 最新动态 政策 龙头企业",
+        "industry:new_energy 行业 最新动态 政策 龙头企业",
+        "industry:policy_bank 行业 最新动态 政策 龙头企业"
+      ],
+      "query_budget_summary": {
+        "dropped_news_queries": 0,
+        "dropped_sentiment_queries": 0,
+        "generated_news_queries": 22,
+        "generated_sentiment_queries": 3,
+        "max_news_queries": 30,
+        "max_sentiment_queries": 15
+      },
+      "required_capabilities": [
+        "financial_news",
+        "social_sentiment",
+        "web_search"
+      ],
+      "sentiment_queries": [
+        "基金 110011 Sample Equity Growth Fund 市场情绪 评价 讨论",
+        "基金 220022 Sample Bond Income Fund 市场情绪 评价 讨论",
+        "基金 330033 Sample Balanced Fund 市场情绪 评价 讨论"
+      ],
+      "themes": [],
+      "warnings": []
+    },
+    "risk_flags": [],
+    "short_term_trade_budget": null,
+    "suggested_rebalance_plan": {
+      "suggested_trade_plan": [],
+      "total_trade_amount": 0,
+      "warnings": [
+        "No single fund > 45%",
+        "Cash reserve >= 10%"
+      ]
+    },
+    "warnings": []
+  },
+  "errors": [],
+  "evidence_items": [
+    {
+      "claim": "Portfolio allocation and concentration metrics were computed",
+      "confidence_weight": 1.0,
+      "direction": "negative",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:110011",
+        "fund:220022",
+        "fund:330033"
+      ],
+      "source_type": "portfolio_allocation_concentration",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "concentration": {
+          "duplicate_tags": [],
+          "hhi": 0.381728,
+          "max_fund_code": "110011",
+          "position_count": 3,
+          "single_fund_max_weight": 0.444444,
+          "top_n": 3,
+          "top_n_concentration": 1.0
+        },
+        "portfolio_summary": {
+          "as_of_date": "2026-06-01",
+          "cash_available": 50000.0,
+          "position_count": 3,
+          "position_weights": {
+            "110011": 0.4,
+            "220022": 0.36,
+            "330033": 0.14
+          },
+          "total_value": 500000.0
+        }
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Risk-return metrics were computed for fund 110011",
+      "confidence_weight": 1.0,
+      "direction": "positive",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.fund.metrics"
+      },
+      "related_entities": [
+        "fund:110011"
+      ],
+      "source_type": "fund_risk_return_metrics",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "annualized_volatility": 0.862362,
+        "max_drawdown": 0.0,
+        "observation_count": 5,
+        "recent_momentum": 0.036232,
+        "return_1m": 0.036232,
+        "return_1y": 0.1,
+        "return_3m": 0.036232,
+        "return_6m": 0.036232,
+        "return_count": 4,
+        "risk_adjusted_score": 0.042015,
+        "rolling_drawdown": {
+          "max_drawdown": 0.0,
+          "peak_nav": 1.43,
+          "trough_nav": 1.0
+        },
+        "sharpe": 27.606888,
+        "sortino": 0.0,
+        "total_return": 0.43
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Risk-return metrics were computed for fund 220022",
+      "confidence_weight": 1.0,
+      "direction": "positive",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.fund.metrics"
+      },
+      "related_entities": [
+        "fund:220022"
+      ],
+      "source_type": "fund_risk_return_metrics",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "annualized_volatility": 0.090102,
+        "max_drawdown": 0.0,
+        "observation_count": 5,
+        "recent_momentum": 0.016949,
+        "return_1m": 0.016949,
+        "return_1y": 0.034483,
+        "return_3m": 0.016949,
+        "return_6m": 0.016949,
+        "return_count": 4,
+        "risk_adjusted_score": 0.188109,
+        "rolling_drawdown": {
+          "max_drawdown": 0.0,
+          "peak_nav": 1.2,
+          "trough_nav": 1.1
+        },
+        "sharpe": 61.318723,
+        "sortino": 0.0,
+        "total_return": 0.090909
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Risk-return metrics were computed for fund 330033",
+      "confidence_weight": 1.0,
+      "direction": "positive",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.fund.metrics"
+      },
+      "related_entities": [
+        "fund:330033"
+      ],
+      "source_type": "fund_risk_return_metrics",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "annualized_volatility": 0.416024,
+        "max_drawdown": 0.017857,
+        "observation_count": 5,
+        "recent_momentum": 0.036364,
+        "return_1m": 0.036364,
+        "return_1y": 0.017857,
+        "return_3m": 0.036364,
+        "return_6m": 0.036364,
+        "return_count": 4,
+        "risk_adjusted_score": 0.087408,
+        "rolling_drawdown": {
+          "max_drawdown": 0.017857,
+          "peak_nav": 1.14,
+          "trough_nav": 1.1
+        },
+        "sharpe": 12.690226,
+        "sortino": 0.0,
+        "total_return": 0.085714
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Portfolio risk flag scan found 0 issue(s)",
+      "confidence_weight": 1.0,
+      "direction": "neutral",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:110011",
+        "fund:220022",
+        "fund:330033"
+      ],
+      "source_type": "portfolio_risk_flags",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "risk_flags": []
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Portfolio rebalance simulation was generated",
+      "confidence_weight": 1.0,
+      "direction": "neutral",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:110011",
+        "fund:220022",
+        "fund:330033"
+      ],
+      "source_type": "portfolio_rebalance_simulation",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "suggested_trade_plan": [],
+        "total_trade_amount": 0,
+        "warnings": [
+          "No single fund > 45%",
+          "Cash reserve >= 10%"
+        ]
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Portfolio-level PnL summary with top positions computed",
+      "confidence_weight": 1.0,
+      "direction": "positive",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:110011",
+        "fund:220022",
+        "fund:330033"
+      ],
+      "source_type": "portfolio_pnl_summary",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "top_positions": [
+          {
+            "current_value": 200000.0,
+            "fund_code": "110011",
+            "total_cost": 180000.0,
+            "unrealized_pnl": 20000.0,
+            "unrealized_pnl_pct": 0.111111
+          },
+          {
+            "current_value": 180000.0,
+            "fund_code": "220022",
+            "total_cost": 175000.0,
+            "unrealized_pnl": 5000.0,
+            "unrealized_pnl_pct": 0.028571
+          },
+          {
+            "current_value": 70000.0,
+            "fund_code": "330033",
+            "total_cost": 65000.0,
+            "unrealized_pnl": 5000.0,
+            "unrealized_pnl_pct": 0.076923
+          }
+        ],
+        "total_cost": 420000.0,
+        "total_value": 450000.0,
+        "unrealized_pnl": 30000.0,
+        "unrealized_pnl_pct": 0.071429
+      },
+      "version": "evidence-contract.v2"
+    }
+  ],
+  "metadata": {
+    "missing_mcp_capabilities": [],
+    "required_mcp_capabilities": []
+  },
+  "ok": true,
+  "skill_name": "fund_analysis",
+  "status": "OK",
+  "used_mcp_capabilities": [],
+  "warnings": []
+}

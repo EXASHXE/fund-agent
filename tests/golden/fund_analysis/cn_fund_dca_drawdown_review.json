@@ -1,0 +1,2338 @@
+{
+  "artifacts": {
+    "analysis_coverage": {
+      "benchmark": "missing",
+      "factor": "missing",
+      "fees": "available",
+      "holdings": "available",
+      "ledger": "missing",
+      "peer": "missing",
+      "performance": "available",
+      "portfolio": "available",
+      "redemption": "available",
+      "research_plan": "not_requested"
+    },
+    "cost_basis_summary": {
+      "SYNDCA001": {
+        "average_cost_per_share": 1.000135,
+        "current_nav": 0.9,
+        "current_value": 47693.58,
+        "fund_code": "SYNDCA001",
+        "method": "weighted_average",
+        "total_cost": 53000.0,
+        "total_shares": 52992.8699,
+        "transaction_count": 6,
+        "unrealized_pnl": -5306.42,
+        "unrealized_pnl_pct": -10.01
+      },
+      "SYNDCA002": {
+        "average_cost_per_share": 1.033333,
+        "current_nav": 1.0,
+        "current_value": 30000.0,
+        "fund_code": "SYNDCA002",
+        "method": "weighted_average",
+        "total_cost": 31000.0,
+        "total_shares": 30000.0,
+        "transaction_count": 1,
+        "unrealized_pnl": -1000.0,
+        "unrealized_pnl_pct": -3.23
+      },
+      "SYNMM001": {
+        "average_cost_per_share": 1.0,
+        "current_nav": 1.0,
+        "current_value": 13000.0,
+        "fund_code": "SYNMM001",
+        "method": "weighted_average",
+        "total_cost": 13000.0,
+        "total_shares": 13000.0,
+        "transaction_count": 1,
+        "unrealized_pnl": 0.0,
+        "unrealized_pnl_pct": 0.0
+      }
+    },
+    "data_completeness": {
+      "available_sections": [
+        "Portfolio Snapshot",
+        "Current Value Or Nav",
+        "Fund Profiles",
+        "Nav History",
+        "Holdings",
+        "Risk Profile",
+        "Constraints",
+        "Fee Schedule",
+        "Redemption Rules"
+      ],
+      "critical_missing": [],
+      "grade": "B",
+      "limitations": [],
+      "missing_sections": [
+        "Benchmark History",
+        "Peer Group",
+        "Factor Exposures",
+        "Manager Profile",
+        "Fund Flow",
+        "Macro Events",
+        "User Investment Plan"
+      ],
+      "optional_missing": [
+        "Benchmark History",
+        "Peer Group",
+        "Factor Exposures",
+        "Manager Profile",
+        "Fund Flow",
+        "Macro Events",
+        "User Investment Plan"
+      ],
+      "score": 0.767
+    },
+    "dca_plan_review": {
+      "plans": [
+        {
+          "annual_amount": 72000.0,
+          "current_weight": 0.45,
+          "exceeds_limit": true,
+          "fund_code": "SYNDCA001",
+          "monthly_amount": 6000.0,
+          "plan_id": "sample_equity_dca",
+          "suggestion": "PAUSE"
+        }
+      ],
+      "suggestions": [
+        {
+          "annual_amount": 72000.0,
+          "current_weight": 0.45,
+          "exceeds_limit": true,
+          "fund_code": "SYNDCA001",
+          "monthly_amount": 6000.0,
+          "plan_id": "sample_equity_dca",
+          "suggestion": "PAUSE"
+        }
+      ],
+      "warnings": [
+        "DCA plan sample_equity_dca for SYNDCA001 exceeds concentration limit"
+      ]
+    },
+    "exposure_summary": {
+      "fund_type_exposure": {
+        "fund_type:balanced": 0.340909,
+        "fund_type:cash_management": 0.147727,
+        "fund_type:equity": 0.511364
+      },
+      "industry_exposure": {
+        "industry:aggregate_bond": 0.136364,
+        "industry:broad_market": 0.485795,
+        "industry:deposit": 0.088636,
+        "industry:mid_cap": 0.102273,
+        "industry:money_market": 0.036932
+      },
+      "theme_exposure": {
+        "asset_type:bill": 0.036932,
+        "asset_type:bond": 0.136364,
+        "asset_type:cash": 0.088636,
+        "asset_type:stock": 0.588068,
+        "industry:aggregate_bond": 0.136364,
+        "industry:broad_market": 0.485795,
+        "industry:deposit": 0.088636,
+        "industry:mid_cap": 0.102273,
+        "industry:money_market": 0.036932,
+        "region:CN": 0.85
+      }
+    },
+    "fee_summary": {
+      "fee_schedules": {
+        "SYNDCA001": {
+          "custody_fee": 0.002,
+          "management_fee": 0.012,
+          "redemption_fee": 0.005,
+          "sales_fee": 0.001,
+          "total_expense_ratio": 0.015
+        },
+        "SYNDCA002": {
+          "custody_fee": 0.002,
+          "management_fee": 0.01,
+          "redemption_fee": 0.003,
+          "sales_fee": 0.001,
+          "total_expense_ratio": 0.013
+        },
+        "SYNMM001": {
+          "custody_fee": 0.001,
+          "management_fee": 0.003,
+          "redemption_fee": 0.0,
+          "sales_fee": 0.0,
+          "total_expense_ratio": 0.004
+        }
+      },
+      "funds_with_fees": [
+        "SYNDCA001",
+        "SYNDCA002",
+        "SYNMM001"
+      ]
+    },
+    "fund_analysis_report": {
+      "analysis_coverage": {
+        "benchmark": "missing",
+        "factor": "missing",
+        "fees": "available",
+        "holdings": "available",
+        "ledger": "missing",
+        "peer": "missing",
+        "performance": "available",
+        "portfolio": "available",
+        "redemption": "available",
+        "research_plan": "not_requested"
+      },
+      "concentration": {
+        "duplicate_tags": [],
+        "hhi": 0.399535,
+        "max_fund_code": "SYNDCA001",
+        "position_count": 3,
+        "single_fund_max_weight": 0.511364,
+        "top_n": 3,
+        "top_n_concentration": 1.0
+      },
+      "cost_basis_summary": {
+        "SYNDCA001": {
+          "average_cost_per_share": 1.000135,
+          "current_nav": 0.9,
+          "current_value": 47693.58,
+          "fund_code": "SYNDCA001",
+          "method": "weighted_average",
+          "total_cost": 53000.0,
+          "total_shares": 52992.8699,
+          "transaction_count": 6,
+          "unrealized_pnl": -5306.42,
+          "unrealized_pnl_pct": -10.01
+        },
+        "SYNDCA002": {
+          "average_cost_per_share": 1.033333,
+          "current_nav": 1.0,
+          "current_value": 30000.0,
+          "fund_code": "SYNDCA002",
+          "method": "weighted_average",
+          "total_cost": 31000.0,
+          "total_shares": 30000.0,
+          "transaction_count": 1,
+          "unrealized_pnl": -1000.0,
+          "unrealized_pnl_pct": -3.23
+        },
+        "SYNMM001": {
+          "average_cost_per_share": 1.0,
+          "current_nav": 1.0,
+          "current_value": 13000.0,
+          "fund_code": "SYNMM001",
+          "method": "weighted_average",
+          "total_cost": 13000.0,
+          "total_shares": 13000.0,
+          "transaction_count": 1,
+          "unrealized_pnl": 0.0,
+          "unrealized_pnl_pct": 0.0
+        }
+      },
+      "data_completeness": {
+        "available_sections": [
+          "Portfolio Snapshot",
+          "Current Value Or Nav",
+          "Fund Profiles",
+          "Nav History",
+          "Holdings",
+          "Risk Profile",
+          "Constraints",
+          "Fee Schedule",
+          "Redemption Rules"
+        ],
+        "critical_missing": [],
+        "grade": "B",
+        "limitations": [],
+        "missing_sections": [
+          "Benchmark History",
+          "Peer Group",
+          "Factor Exposures",
+          "Manager Profile",
+          "Fund Flow",
+          "Macro Events",
+          "User Investment Plan"
+        ],
+        "optional_missing": [
+          "Benchmark History",
+          "Peer Group",
+          "Factor Exposures",
+          "Manager Profile",
+          "Fund Flow",
+          "Macro Events",
+          "User Investment Plan"
+        ],
+        "score": 0.767
+      },
+      "dca_review": {
+        "plans": [
+          {
+            "annual_amount": 72000.0,
+            "current_weight": 0.45,
+            "exceeds_limit": true,
+            "fund_code": "SYNDCA001",
+            "monthly_amount": 6000.0,
+            "plan_id": "sample_equity_dca",
+            "suggestion": "PAUSE"
+          }
+        ],
+        "suggestions": [
+          {
+            "annual_amount": 72000.0,
+            "current_weight": 0.45,
+            "exceeds_limit": true,
+            "fund_code": "SYNDCA001",
+            "monthly_amount": 6000.0,
+            "plan_id": "sample_equity_dca",
+            "suggestion": "PAUSE"
+          }
+        ],
+        "warnings": [
+          "DCA plan sample_equity_dca for SYNDCA001 exceeds concentration limit"
+        ]
+      },
+      "exposure_summary": {
+        "fund_type_exposure": {
+          "fund_type:balanced": 0.340909,
+          "fund_type:cash_management": 0.147727,
+          "fund_type:equity": 0.511364
+        },
+        "industry_exposure": {
+          "industry:aggregate_bond": 0.136364,
+          "industry:broad_market": 0.485795,
+          "industry:deposit": 0.088636,
+          "industry:mid_cap": 0.102273,
+          "industry:money_market": 0.036932
+        },
+        "theme_exposure": {
+          "asset_type:bill": 0.036932,
+          "asset_type:bond": 0.136364,
+          "asset_type:cash": 0.088636,
+          "asset_type:stock": 0.588068,
+          "industry:aggregate_bond": 0.136364,
+          "industry:broad_market": 0.485795,
+          "industry:deposit": 0.088636,
+          "industry:mid_cap": 0.102273,
+          "industry:money_market": 0.036932,
+          "region:CN": 0.85
+        }
+      },
+      "exposures": {
+        "asset_type:bill": 0.036932,
+        "asset_type:bond": 0.136364,
+        "asset_type:cash": 0.088636,
+        "asset_type:stock": 0.588068,
+        "fund_type:balanced": 0.340909,
+        "fund_type:cash_management": 0.147727,
+        "fund_type:equity": 0.511364,
+        "industry:aggregate_bond": 0.136364,
+        "industry:broad_market": 0.485795,
+        "industry:deposit": 0.088636,
+        "industry:mid_cap": 0.102273,
+        "industry:money_market": 0.036932,
+        "region:CN": 0.85
+      },
+      "fee_summary": {
+        "fee_schedules": {
+          "SYNDCA001": {
+            "custody_fee": 0.002,
+            "management_fee": 0.012,
+            "redemption_fee": 0.005,
+            "sales_fee": 0.001,
+            "total_expense_ratio": 0.015
+          },
+          "SYNDCA002": {
+            "custody_fee": 0.002,
+            "management_fee": 0.01,
+            "redemption_fee": 0.003,
+            "sales_fee": 0.001,
+            "total_expense_ratio": 0.013
+          },
+          "SYNMM001": {
+            "custody_fee": 0.001,
+            "management_fee": 0.003,
+            "redemption_fee": 0.0,
+            "sales_fee": 0.0,
+            "total_expense_ratio": 0.004
+          }
+        },
+        "funds_with_fees": [
+          "SYNDCA001",
+          "SYNDCA002",
+          "SYNMM001"
+        ]
+      },
+      "fund_metrics": {
+        "SYNDCA001": {
+          "annualized_volatility": 0.945756,
+          "max_drawdown": 0.291667,
+          "observation_count": 7,
+          "recent_momentum": -0.075758,
+          "return_1m": 0.022727,
+          "return_1y": -0.25,
+          "return_3m": 0.0,
+          "return_6m": -0.25,
+          "return_count": 6,
+          "risk_adjusted_score": -0.080103,
+          "rolling_drawdown": {
+            "max_drawdown": 0.291667,
+            "peak_nav": 1.2,
+            "trough_nav": 0.85
+          },
+          "sharpe": -12.090243,
+          "sortino": 0.0,
+          "total_return": -0.25
+        },
+        "SYNDCA002": {
+          "annualized_volatility": 0.236412,
+          "max_drawdown": 0.066667,
+          "observation_count": 7,
+          "recent_momentum": -0.010831,
+          "return_1m": 0.005025,
+          "return_1y": -0.047619,
+          "return_3m": 0.010101,
+          "return_6m": -0.047619,
+          "return_count": 6,
+          "risk_adjusted_score": -0.045814,
+          "rolling_drawdown": {
+            "max_drawdown": 0.066667,
+            "peak_nav": 1.05,
+            "trough_nav": 0.98
+          },
+          "sharpe": -8.617806,
+          "sortino": 0.0,
+          "total_return": -0.047619
+        },
+        "SYNMM001": {
+          "annualized_volatility": 0.0,
+          "max_drawdown": 0.0,
+          "observation_count": 7,
+          "recent_momentum": 0.0,
+          "return_1m": 0.0,
+          "return_1y": 0.0,
+          "return_3m": 0.0,
+          "return_6m": 0.0,
+          "return_count": 6,
+          "risk_adjusted_score": 0.0,
+          "rolling_drawdown": {
+            "max_drawdown": 0.0,
+            "peak_nav": 1.0,
+            "trough_nav": 1.0
+          },
+          "sharpe": 0.0,
+          "sortino": 0.0,
+          "total_return": 0.0
+        }
+      },
+      "market_scenario": {
+        "assumptions": {
+          "equity_drawdown_window": "2025-10-31 to 2026-01-31",
+          "recovery_nav_point": "2026-03-31"
+        },
+        "description": "Fake scenario: broad equity NAV declined and partly recovered before as_of_date.",
+        "name": "Synthetic drawdown review window",
+        "risk_level": "medium"
+      },
+      "pnl_summary": {
+        "positions": {
+          "SYNDCA001": {
+            "current_value": 45000.0,
+            "total_cost": 53000.0,
+            "unrealized_pnl": -8000.0,
+            "unrealized_pnl_pct": -0.150943
+          },
+          "SYNDCA002": {
+            "current_value": 30000.0,
+            "total_cost": 31000.0,
+            "unrealized_pnl": -1000.0,
+            "unrealized_pnl_pct": -0.032258
+          },
+          "SYNMM001": {
+            "current_value": 13000.0,
+            "total_cost": 13000.0,
+            "unrealized_pnl": 0.0,
+            "unrealized_pnl_pct": 0.0
+          }
+        },
+        "total_cost": 97000.0,
+        "total_value": 88000.0,
+        "unrealized_pnl": -9000.0,
+        "unrealized_pnl_pct": -0.092784
+      },
+      "portfolio_metrics": {
+        "as_of_date": "2026-03-31",
+        "cash_available": 12000.0,
+        "position_count": 3,
+        "position_weights": {
+          "SYNDCA001": 0.45,
+          "SYNDCA002": 0.3,
+          "SYNMM001": 0.13
+        },
+        "total_value": 100000.0
+      },
+      "reconciliation": {
+        "match_count": 2,
+        "matches": [
+          {
+            "cost_basis_cost": 31000.0,
+            "cost_basis_shares": 30000.0,
+            "fund_code": "SYNDCA002",
+            "portfolio_cost": 31000.0,
+            "portfolio_shares": 30000.0
+          },
+          {
+            "cost_basis_cost": 13000.0,
+            "cost_basis_shares": 13000.0,
+            "fund_code": "SYNMM001",
+            "portfolio_cost": 13000.0,
+            "portfolio_shares": 13000.0
+          }
+        ],
+        "mismatch_count": 1,
+        "mismatches": [
+          {
+            "cost_basis": {
+              "average_cost_per_share": 1.000135,
+              "current_nav": 0.9,
+              "current_value": 47693.58,
+              "fund_code": "SYNDCA001",
+              "method": "weighted_average",
+              "total_cost": 53000.0,
+              "total_shares": 52992.8699,
+              "transaction_count": 6,
+              "unrealized_pnl": -5306.42,
+              "unrealized_pnl_pct": -10.01
+            },
+            "cost_diff": 0.0,
+            "fund_code": "SYNDCA001",
+            "portfolio": {
+              "current_nav": 0.9,
+              "current_value": 45000.0,
+              "fund_code": "SYNDCA001",
+              "fund_name": "Sample Broad Equity DCA Fund",
+              "shares": 50000.0,
+              "tags": [
+                "broad_equity",
+                "dca"
+              ],
+              "target_weight": 0.35,
+              "total_cost": 53000.0
+            },
+            "shares_diff": 2992.8699,
+            "source": "mismatch"
+          }
+        ],
+        "warnings": []
+      },
+      "redemption_summary": {
+        "funds_with_rules": [
+          "SYNDCA001",
+          "SYNDCA002",
+          "SYNMM001"
+        ],
+        "redemption_constraints": {
+          "SYNDCA001": {
+            "holding_period_days": 7,
+            "liquidity_note": "Sample T+2 redemption note.",
+            "redemption_fee_pct": 0.005,
+            "suspended": false
+          },
+          "SYNDCA002": {
+            "holding_period_days": 7,
+            "liquidity_note": "Sample T+2 redemption note.",
+            "redemption_fee_pct": 0.003,
+            "suspended": false
+          },
+          "SYNMM001": {
+            "holding_period_days": 1,
+            "liquidity_note": "Sample cash liquidity note.",
+            "redemption_fee_pct": 0.0,
+            "suspended": false
+          }
+        }
+      },
+      "report_limitations": [
+        "Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data"
+      ],
+      "report_outline": [
+        {
+          "id": "executive_summary",
+          "status": "OK",
+          "title": "Executive summary"
+        },
+        {
+          "id": "portfolio_snapshot",
+          "status": "OK",
+          "title": "Portfolio snapshot"
+        },
+        {
+          "id": "pnl_and_cost_basis",
+          "status": "OK",
+          "title": "PnL and cost basis"
+        },
+        {
+          "id": "allocation_and_exposure",
+          "status": "OK",
+          "title": "Allocation and exposure"
+        },
+        {
+          "id": "risk_flags",
+          "status": "OK",
+          "title": "Risk flags"
+        },
+        {
+          "id": "performance_and_nav",
+          "status": "OK",
+          "title": "Performance and NAV"
+        },
+        {
+          "id": "benchmark_and_peer",
+          "status": "MISSING",
+          "title": "Benchmark and peer"
+        },
+        {
+          "id": "factor_and_style",
+          "status": "MISSING",
+          "title": "Factor and style"
+        },
+        {
+          "id": "fees_and_redemption",
+          "status": "OK",
+          "title": "Fees and redemption"
+        },
+        {
+          "id": "manager_and_fund_profile",
+          "status": "PARTIAL",
+          "title": "Manager and fund profile"
+        },
+        {
+          "id": "dca_and_trade_budget",
+          "status": "OK",
+          "title": "DCA and trade budget"
+        },
+        {
+          "id": "rebalance_plan",
+          "status": "OK",
+          "title": "Rebalance plan"
+        },
+        {
+          "id": "research_query_plan",
+          "status": "MISSING",
+          "title": "Research query plan"
+        },
+        {
+          "id": "data_completeness_and_limitations",
+          "status": "OK",
+          "title": "Data completeness and limitations"
+        },
+        {
+          "id": "evidence_appendix",
+          "status": "OK",
+          "title": "Evidence appendix"
+        }
+      ],
+      "report_quality_gate": {
+        "can_publish_professional_report": true,
+        "grade": "B",
+        "reason": "Data completeness grade B supports a professional report."
+      },
+      "report_sections": [
+        {
+          "bullets": [
+            "Portfolio value 100,000.00 across 3 position(s); cash 12,000.00.",
+            "Data completeness grade B with score 0.767.",
+            "Risk scan surfaced 7 flag(s) from available inputs.",
+            "No formal decision generated; call decision-support for formal action."
+          ],
+          "data_sources": [
+            "portfolio_summary",
+            "data_completeness",
+            "risk_flags"
+          ],
+          "id": "executive_summary",
+          "limitations": [],
+          "status": "OK",
+          "title": "Executive summary"
+        },
+        {
+          "bullets": [
+            "As of 2026-03-31, total value is 100,000.00 with 12,000.00 cash.",
+            "Largest position is SYNDCA001 at 45.00% of portfolio value.",
+            "Position detail is available for 3 fund(s)."
+          ],
+          "data_sources": [
+            "portfolio_summary",
+            "position_summary"
+          ],
+          "id": "portfolio_snapshot",
+          "limitations": [],
+          "status": "OK",
+          "title": "Portfolio snapshot"
+        },
+        {
+          "bullets": [
+            "Unrealized PnL is -9,000.00 (-9.28%) on total cost 97,000.00.",
+            "Position-level PnL is available for 3 fund(s).",
+            "Transaction-derived cost basis is available for 3 fund(s)."
+          ],
+          "data_sources": [
+            "pnl_summary",
+            "cost_basis_summary"
+          ],
+          "id": "pnl_and_cost_basis",
+          "limitations": [],
+          "status": "OK",
+          "title": "PnL and cost basis"
+        },
+        {
+          "bullets": [
+            "Top fund type exposure is fund_type:equity at 51.14%.",
+            "Top industry exposure is industry:broad_market at 48.58%.",
+            "Top theme exposure is region:CN at 85.00%.",
+            "Single-fund max weight is 51.14%; HHI is 0.399535."
+          ],
+          "data_sources": [
+            "exposure_summary",
+            "concentration"
+          ],
+          "id": "allocation_and_exposure",
+          "limitations": [],
+          "status": "OK",
+          "title": "Allocation and exposure"
+        },
+        {
+          "bullets": [
+            "Risk flags by severity: high=1, medium=6."
+          ],
+          "data_sources": [
+            "risk_flags",
+            "data_completeness"
+          ],
+          "id": "risk_flags",
+          "limitations": [],
+          "status": "OK",
+          "title": "Risk flags"
+        },
+        {
+          "bullets": [
+            "NAV-derived metrics are available for 3 fund(s).",
+            "Highest total return in provided NAV history is SYNMM001 at 0.00%."
+          ],
+          "data_sources": [
+            "fund_analysis_report.fund_metrics"
+          ],
+          "id": "performance_and_nav",
+          "limitations": [],
+          "status": "OK",
+          "title": "Performance and NAV"
+        },
+        {
+          "bullets": [],
+          "data_sources": [
+            "benchmark_summary",
+            "peer_summary"
+          ],
+          "id": "benchmark_and_peer",
+          "limitations": [
+            "Benchmark data is missing; no benchmark comparison is fabricated.",
+            "Peer group data is missing; no peer ranking is fabricated."
+          ],
+          "status": "MISSING",
+          "title": "Benchmark and peer"
+        },
+        {
+          "bullets": [],
+          "data_sources": [
+            "factor_summary"
+          ],
+          "id": "factor_and_style",
+          "limitations": [
+            "Factor exposure data is missing; no style exposure is fabricated."
+          ],
+          "status": "MISSING",
+          "title": "Factor and style"
+        },
+        {
+          "bullets": [
+            "Fee schedule is available for 3 fund(s).",
+            "Redemption rules are available for 3 fund(s)."
+          ],
+          "data_sources": [
+            "fee_summary",
+            "redemption_summary"
+          ],
+          "id": "fees_and_redemption",
+          "limitations": [],
+          "status": "OK",
+          "title": "Fees and redemption"
+        },
+        {
+          "bullets": [
+            "Fund profile data is present, but manager profile details were not provided."
+          ],
+          "data_sources": [
+            "manager_summary",
+            "data_completeness"
+          ],
+          "id": "manager_and_fund_profile",
+          "limitations": [
+            "Manager tenure and manager-change analysis are unavailable."
+          ],
+          "status": "PARTIAL",
+          "title": "Manager and fund profile"
+        },
+        {
+          "bullets": [
+            "Trade budget: max buy 6,000.00, max sell 10,000.00, liquidity reserve 12,000.00.",
+            "Short-term trade budget usage is available.",
+            "DCA review includes 1 suggestion(s)."
+          ],
+          "data_sources": [
+            "trade_budget",
+            "short_term_trade_budget",
+            "dca_plan_review"
+          ],
+          "id": "dca_and_trade_budget",
+          "limitations": [],
+          "status": "OK",
+          "title": "DCA and trade budget"
+        },
+        {
+          "bullets": [
+            "Rebalance simulation produced 2 trade leg(s) with total trade amount 16,000.00.",
+            "Sample review checks DCA plan pressure against concentration limits.",
+            "Formal DCA changes require decision_support."
+          ],
+          "data_sources": [
+            "suggested_rebalance_plan"
+          ],
+          "id": "rebalance_plan",
+          "limitations": [],
+          "status": "OK",
+          "title": "Rebalance plan"
+        },
+        {
+          "bullets": [],
+          "data_sources": [
+            "research_query_plan"
+          ],
+          "id": "research_query_plan",
+          "limitations": [
+            "Research planning was not requested by the host."
+          ],
+          "status": "MISSING",
+          "title": "Research query plan"
+        },
+        {
+          "bullets": [
+            "Completeness grade B with score 0.767.",
+            "Missing data groups: Benchmark History, Peer Group, Factor Exposures, Manager Profile, Fund Flow, Macro Events, User Investment Plan.",
+            "Optional gaps: Benchmark History, Peer Group, Factor Exposures, Manager Profile, Fund Flow, Macro Events, User Investment Plan."
+          ],
+          "data_sources": [
+            "data_completeness",
+            "report_limitations"
+          ],
+          "id": "data_completeness_and_limitations",
+          "limitations": [
+            "Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data"
+          ],
+          "status": "OK",
+          "title": "Data completeness and limitations"
+        },
+        {
+          "bullets": [
+            "FundAnalysisSkill emits HardEvidence separately in SkillOutput.evidence_items.",
+            "This composed report does not create formal decisions or execution ledgers."
+          ],
+          "data_sources": [
+            "SkillOutput.evidence_items"
+          ],
+          "id": "evidence_appendix",
+          "limitations": [],
+          "status": "OK",
+          "title": "Evidence appendix"
+        }
+      ],
+      "risk_flags": [
+        {
+          "details": {
+            "fund_code": "SYNDCA001",
+            "limit": 0.4,
+            "value": 0.511364
+          },
+          "message": "single fund weight exceeds risk profile limit",
+          "severity": "high",
+          "type": "overweight_single_fund"
+        },
+        {
+          "details": {
+            "limit": 0.5,
+            "theme": "asset_type:stock",
+            "value": 0.588068
+          },
+          "message": "theme exposure exceeds risk profile limit",
+          "severity": "medium",
+          "type": "overweight_theme"
+        },
+        {
+          "details": {
+            "limit": 0.5,
+            "theme": "fund_type:equity",
+            "value": 0.511364
+          },
+          "message": "theme exposure exceeds risk profile limit",
+          "severity": "medium",
+          "type": "overweight_theme"
+        },
+        {
+          "details": {
+            "limit": 0.5,
+            "theme": "region:CN",
+            "value": 0.85
+          },
+          "message": "theme exposure exceeds risk profile limit",
+          "severity": "medium",
+          "type": "overweight_theme"
+        },
+        {
+          "details": {
+            "affected_entities": [
+              "broad_market"
+            ],
+            "current_value": 0.485795,
+            "limit": 0.45
+          },
+          "message": "industry exposure exceeds risk profile limit",
+          "severity": "medium",
+          "type": "overweight_industry"
+        },
+        {
+          "details": {
+            "fund_code": "SYNDCA001",
+            "limit": 0.25,
+            "value": 0.291667
+          },
+          "message": "fund max drawdown exceeds risk-level threshold",
+          "severity": "medium",
+          "type": "high_drawdown_fund"
+        },
+        {
+          "details": {
+            "scenario": {
+              "assumptions": {
+                "equity_drawdown_window": "2025-10-31 to 2026-01-31",
+                "recovery_nav_point": "2026-03-31"
+              },
+              "description": "Fake scenario: broad equity NAV declined and partly recovered before as_of_date.",
+              "name": "Synthetic drawdown review window",
+              "risk_level": "medium"
+            }
+          },
+          "message": "Host-provided market scenario: Synthetic drawdown review window",
+          "severity": "medium",
+          "type": "market_scenario"
+        }
+      ],
+      "short_term_budget": {
+        "exceeded": false,
+        "recent_buys": 6000.0,
+        "recent_sells": 0,
+        "remaining": 1040.0,
+        "short_term_budget": 7040.0,
+        "usage_pct": 0.852273,
+        "used": 6000.0
+      },
+      "suggested_watchlist": [
+        {
+          "fund_code": "SYNDCA001",
+          "reason": "drawdown or concentration risk requires monitoring"
+        }
+      ],
+      "trade_budget": {
+        "cash_available": 12000.0,
+        "liquidity_reserve": 12000.0,
+        "max_buy_amount": 6000.0,
+        "max_sell_amount": 10000.0,
+        "max_trade_amount": 10000.0,
+        "min_trade_amount": 500.0,
+        "short_term_budget": 8000.0,
+        "total_value": 100000.0
+      },
+      "trading_flags": [],
+      "transaction_summary": {
+        "as_of_date": "2026-03-31",
+        "buy_count": 8,
+        "cashflow_by_fund": {
+          "SYNDCA001": -53000.0,
+          "SYNDCA002": -31000.0,
+          "SYNMM001": -13000.0
+        },
+        "net_flow": -97000.0,
+        "position_costs": {
+          "SYNDCA001": {
+            "average_cost_per_share": 1.000135,
+            "current_nav": 0.9,
+            "current_value": 47693.58,
+            "fund_code": "SYNDCA001",
+            "method": "weighted_average",
+            "total_cost": 53000.0,
+            "total_shares": 52992.8699,
+            "transaction_count": 6,
+            "unrealized_pnl": -5306.42,
+            "unrealized_pnl_pct": -10.01
+          },
+          "SYNDCA002": {
+            "average_cost_per_share": 1.033333,
+            "current_nav": 1.0,
+            "current_value": 30000.0,
+            "fund_code": "SYNDCA002",
+            "method": "weighted_average",
+            "total_cost": 31000.0,
+            "total_shares": 30000.0,
+            "transaction_count": 1,
+            "unrealized_pnl": -1000.0,
+            "unrealized_pnl_pct": -3.23
+          },
+          "SYNMM001": {
+            "average_cost_per_share": 1.0,
+            "current_nav": 1.0,
+            "current_value": 13000.0,
+            "fund_code": "SYNMM001",
+            "method": "weighted_average",
+            "total_cost": 13000.0,
+            "total_shares": 13000.0,
+            "transaction_count": 1,
+            "unrealized_pnl": 0.0,
+            "unrealized_pnl_pct": 0.0
+          }
+        },
+        "sell_count": 0,
+        "total_buys": 97000.0,
+        "total_dividends": 0.0,
+        "total_fees": 0.0,
+        "total_sells": 0.0,
+        "warnings": []
+      },
+      "warnings": [
+        "SYNDCA001: shares mismatch [high] — snapshot=52992.8699/47693.58, portfolio=50000.0000/45000.0, delta=2992.8699/2693.58"
+      ]
+    },
+    "ledger_reconciliation_report": {
+      "comparisons": [
+        {
+          "fund_code": "SYNDCA001",
+          "matched": false,
+          "portfolio_shares": 50000.0,
+          "portfolio_value": 45000.0,
+          "severity": "high",
+          "shares_delta": 2992.8699,
+          "snapshot_shares": 52992.8699,
+          "snapshot_value": 47693.58,
+          "value_delta": 2693.58
+        },
+        {
+          "fund_code": "SYNDCA002",
+          "matched": true,
+          "portfolio_shares": 30000.0,
+          "portfolio_value": 30000.0,
+          "severity": "ok",
+          "shares_delta": 0.0,
+          "snapshot_shares": 30000.0,
+          "snapshot_value": 30000.0,
+          "value_delta": 0.0
+        },
+        {
+          "fund_code": "SYNMM001",
+          "matched": true,
+          "portfolio_shares": 13000.0,
+          "portfolio_value": 13000.0,
+          "severity": "ok",
+          "shares_delta": 0.0,
+          "snapshot_shares": 13000.0,
+          "snapshot_value": 13000.0,
+          "value_delta": 0.0
+        }
+      ],
+      "matched": false,
+      "mismatches": [
+        {
+          "fund_code": "SYNDCA001",
+          "portfolio_shares": 50000.0,
+          "portfolio_value": 45000.0,
+          "reason": "SHARES_MISMATCH",
+          "severity": "high",
+          "shares_delta": 2992.8699,
+          "snapshot_shares": 52992.8699,
+          "snapshot_value": 47693.58,
+          "value_delta": 2693.58
+        }
+      ],
+      "warnings": [
+        "SYNDCA001: shares mismatch [high] — snapshot=52992.8699/47693.58, portfolio=50000.0000/45000.0, delta=2992.8699/2693.58"
+      ]
+    },
+    "market_scenario_impact": {
+      "assumptions": {
+        "equity_drawdown_window": "2025-10-31 to 2026-01-31",
+        "recovery_nav_point": "2026-03-31"
+      },
+      "description": "Fake scenario: broad equity NAV declined and partly recovered before as_of_date.",
+      "name": "Synthetic drawdown review window",
+      "risk_level": "medium"
+    },
+    "pnl_summary": {
+      "positions": {
+        "SYNDCA001": {
+          "current_value": 45000.0,
+          "total_cost": 53000.0,
+          "unrealized_pnl": -8000.0,
+          "unrealized_pnl_pct": -0.150943
+        },
+        "SYNDCA002": {
+          "current_value": 30000.0,
+          "total_cost": 31000.0,
+          "unrealized_pnl": -1000.0,
+          "unrealized_pnl_pct": -0.032258
+        },
+        "SYNMM001": {
+          "current_value": 13000.0,
+          "total_cost": 13000.0,
+          "unrealized_pnl": 0.0,
+          "unrealized_pnl_pct": 0.0
+        }
+      },
+      "total_cost": 97000.0,
+      "total_value": 88000.0,
+      "unrealized_pnl": -9000.0,
+      "unrealized_pnl_pct": -0.092784
+    },
+    "portfolio_summary": {
+      "as_of_date": "2026-03-31",
+      "cash_available": 12000.0,
+      "position_count": 3,
+      "position_weights": {
+        "SYNDCA001": 0.45,
+        "SYNDCA002": 0.3,
+        "SYNMM001": 0.13
+      },
+      "total_value": 100000.0
+    },
+    "position_summary": {
+      "SYNDCA001": {
+        "current_value": 45000.0,
+        "fund_code": "SYNDCA001",
+        "fund_name": "Sample Broad Equity DCA Fund",
+        "pending_amount": 0.0,
+        "shares": 50000.0,
+        "tags": [
+          "broad_equity",
+          "dca"
+        ],
+        "target_weight": 0.35,
+        "total_cost": 53000.0
+      },
+      "SYNDCA002": {
+        "current_value": 30000.0,
+        "fund_code": "SYNDCA002",
+        "fund_name": "Sample Balanced Allocation Fund",
+        "pending_amount": 0.0,
+        "shares": 30000.0,
+        "tags": [
+          "balanced",
+          "moderate"
+        ],
+        "target_weight": 0.3,
+        "total_cost": 31000.0
+      },
+      "SYNMM001": {
+        "current_value": 13000.0,
+        "fund_code": "SYNMM001",
+        "fund_name": "Sample Money Market Sleeve",
+        "pending_amount": 0.0,
+        "shares": 13000.0,
+        "tags": [
+          "cash_management",
+          "reserve"
+        ],
+        "target_weight": 0.2,
+        "total_cost": 13000.0
+      }
+    },
+    "redemption_summary": {
+      "funds_with_rules": [
+        "SYNDCA001",
+        "SYNDCA002",
+        "SYNMM001"
+      ],
+      "redemption_constraints": {
+        "SYNDCA001": {
+          "holding_period_days": 7,
+          "liquidity_note": "Sample T+2 redemption note.",
+          "redemption_fee_pct": 0.005,
+          "suspended": false
+        },
+        "SYNDCA002": {
+          "holding_period_days": 7,
+          "liquidity_note": "Sample T+2 redemption note.",
+          "redemption_fee_pct": 0.003,
+          "suspended": false
+        },
+        "SYNMM001": {
+          "holding_period_days": 1,
+          "liquidity_note": "Sample cash liquidity note.",
+          "redemption_fee_pct": 0.0,
+          "suspended": false
+        }
+      }
+    },
+    "report_limitations": [
+      "Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data"
+    ],
+    "report_outline": [
+      {
+        "id": "executive_summary",
+        "status": "OK",
+        "title": "Executive summary"
+      },
+      {
+        "id": "portfolio_snapshot",
+        "status": "OK",
+        "title": "Portfolio snapshot"
+      },
+      {
+        "id": "pnl_and_cost_basis",
+        "status": "OK",
+        "title": "PnL and cost basis"
+      },
+      {
+        "id": "allocation_and_exposure",
+        "status": "OK",
+        "title": "Allocation and exposure"
+      },
+      {
+        "id": "risk_flags",
+        "status": "OK",
+        "title": "Risk flags"
+      },
+      {
+        "id": "performance_and_nav",
+        "status": "OK",
+        "title": "Performance and NAV"
+      },
+      {
+        "id": "benchmark_and_peer",
+        "status": "MISSING",
+        "title": "Benchmark and peer"
+      },
+      {
+        "id": "factor_and_style",
+        "status": "MISSING",
+        "title": "Factor and style"
+      },
+      {
+        "id": "fees_and_redemption",
+        "status": "OK",
+        "title": "Fees and redemption"
+      },
+      {
+        "id": "manager_and_fund_profile",
+        "status": "PARTIAL",
+        "title": "Manager and fund profile"
+      },
+      {
+        "id": "dca_and_trade_budget",
+        "status": "OK",
+        "title": "DCA and trade budget"
+      },
+      {
+        "id": "rebalance_plan",
+        "status": "OK",
+        "title": "Rebalance plan"
+      },
+      {
+        "id": "research_query_plan",
+        "status": "MISSING",
+        "title": "Research query plan"
+      },
+      {
+        "id": "data_completeness_and_limitations",
+        "status": "OK",
+        "title": "Data completeness and limitations"
+      },
+      {
+        "id": "evidence_appendix",
+        "status": "OK",
+        "title": "Evidence appendix"
+      }
+    ],
+    "report_quality_gate": {
+      "can_publish_professional_report": true,
+      "grade": "B",
+      "reason": "Data completeness grade B supports a professional report."
+    },
+    "report_sections": [
+      {
+        "bullets": [
+          "Portfolio value 100,000.00 across 3 position(s); cash 12,000.00.",
+          "Data completeness grade B with score 0.767.",
+          "Risk scan surfaced 7 flag(s) from available inputs.",
+          "No formal decision generated; call decision-support for formal action."
+        ],
+        "data_sources": [
+          "portfolio_summary",
+          "data_completeness",
+          "risk_flags"
+        ],
+        "id": "executive_summary",
+        "limitations": [],
+        "status": "OK",
+        "title": "Executive summary"
+      },
+      {
+        "bullets": [
+          "As of 2026-03-31, total value is 100,000.00 with 12,000.00 cash.",
+          "Largest position is SYNDCA001 at 45.00% of portfolio value.",
+          "Position detail is available for 3 fund(s)."
+        ],
+        "data_sources": [
+          "portfolio_summary",
+          "position_summary"
+        ],
+        "id": "portfolio_snapshot",
+        "limitations": [],
+        "status": "OK",
+        "title": "Portfolio snapshot"
+      },
+      {
+        "bullets": [
+          "Unrealized PnL is -9,000.00 (-9.28%) on total cost 97,000.00.",
+          "Position-level PnL is available for 3 fund(s).",
+          "Transaction-derived cost basis is available for 3 fund(s)."
+        ],
+        "data_sources": [
+          "pnl_summary",
+          "cost_basis_summary"
+        ],
+        "id": "pnl_and_cost_basis",
+        "limitations": [],
+        "status": "OK",
+        "title": "PnL and cost basis"
+      },
+      {
+        "bullets": [
+          "Top fund type exposure is fund_type:equity at 51.14%.",
+          "Top industry exposure is industry:broad_market at 48.58%.",
+          "Top theme exposure is region:CN at 85.00%.",
+          "Single-fund max weight is 51.14%; HHI is 0.399535."
+        ],
+        "data_sources": [
+          "exposure_summary",
+          "concentration"
+        ],
+        "id": "allocation_and_exposure",
+        "limitations": [],
+        "status": "OK",
+        "title": "Allocation and exposure"
+      },
+      {
+        "bullets": [
+          "Risk flags by severity: high=1, medium=6."
+        ],
+        "data_sources": [
+          "risk_flags",
+          "data_completeness"
+        ],
+        "id": "risk_flags",
+        "limitations": [],
+        "status": "OK",
+        "title": "Risk flags"
+      },
+      {
+        "bullets": [
+          "NAV-derived metrics are available for 3 fund(s).",
+          "Highest total return in provided NAV history is SYNMM001 at 0.00%."
+        ],
+        "data_sources": [
+          "fund_analysis_report.fund_metrics"
+        ],
+        "id": "performance_and_nav",
+        "limitations": [],
+        "status": "OK",
+        "title": "Performance and NAV"
+      },
+      {
+        "bullets": [],
+        "data_sources": [
+          "benchmark_summary",
+          "peer_summary"
+        ],
+        "id": "benchmark_and_peer",
+        "limitations": [
+          "Benchmark data is missing; no benchmark comparison is fabricated.",
+          "Peer group data is missing; no peer ranking is fabricated."
+        ],
+        "status": "MISSING",
+        "title": "Benchmark and peer"
+      },
+      {
+        "bullets": [],
+        "data_sources": [
+          "factor_summary"
+        ],
+        "id": "factor_and_style",
+        "limitations": [
+          "Factor exposure data is missing; no style exposure is fabricated."
+        ],
+        "status": "MISSING",
+        "title": "Factor and style"
+      },
+      {
+        "bullets": [
+          "Fee schedule is available for 3 fund(s).",
+          "Redemption rules are available for 3 fund(s)."
+        ],
+        "data_sources": [
+          "fee_summary",
+          "redemption_summary"
+        ],
+        "id": "fees_and_redemption",
+        "limitations": [],
+        "status": "OK",
+        "title": "Fees and redemption"
+      },
+      {
+        "bullets": [
+          "Fund profile data is present, but manager profile details were not provided."
+        ],
+        "data_sources": [
+          "manager_summary",
+          "data_completeness"
+        ],
+        "id": "manager_and_fund_profile",
+        "limitations": [
+          "Manager tenure and manager-change analysis are unavailable."
+        ],
+        "status": "PARTIAL",
+        "title": "Manager and fund profile"
+      },
+      {
+        "bullets": [
+          "Trade budget: max buy 6,000.00, max sell 10,000.00, liquidity reserve 12,000.00.",
+          "Short-term trade budget usage is available.",
+          "DCA review includes 1 suggestion(s)."
+        ],
+        "data_sources": [
+          "trade_budget",
+          "short_term_trade_budget",
+          "dca_plan_review"
+        ],
+        "id": "dca_and_trade_budget",
+        "limitations": [],
+        "status": "OK",
+        "title": "DCA and trade budget"
+      },
+      {
+        "bullets": [
+          "Rebalance simulation produced 2 trade leg(s) with total trade amount 16,000.00.",
+          "Sample review checks DCA plan pressure against concentration limits.",
+          "Formal DCA changes require decision_support."
+        ],
+        "data_sources": [
+          "suggested_rebalance_plan"
+        ],
+        "id": "rebalance_plan",
+        "limitations": [],
+        "status": "OK",
+        "title": "Rebalance plan"
+      },
+      {
+        "bullets": [],
+        "data_sources": [
+          "research_query_plan"
+        ],
+        "id": "research_query_plan",
+        "limitations": [
+          "Research planning was not requested by the host."
+        ],
+        "status": "MISSING",
+        "title": "Research query plan"
+      },
+      {
+        "bullets": [
+          "Completeness grade B with score 0.767.",
+          "Missing data groups: Benchmark History, Peer Group, Factor Exposures, Manager Profile, Fund Flow, Macro Events, User Investment Plan.",
+          "Optional gaps: Benchmark History, Peer Group, Factor Exposures, Manager Profile, Fund Flow, Macro Events, User Investment Plan."
+        ],
+        "data_sources": [
+          "data_completeness",
+          "report_limitations"
+        ],
+        "id": "data_completeness_and_limitations",
+        "limitations": [
+          "Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data"
+        ],
+        "status": "OK",
+        "title": "Data completeness and limitations"
+      },
+      {
+        "bullets": [
+          "FundAnalysisSkill emits HardEvidence separately in SkillOutput.evidence_items.",
+          "This composed report does not create formal decisions or execution ledgers."
+        ],
+        "data_sources": [
+          "SkillOutput.evidence_items"
+        ],
+        "id": "evidence_appendix",
+        "limitations": [],
+        "status": "OK",
+        "title": "Evidence appendix"
+      }
+    ],
+    "risk_flags": [
+      {
+        "details": {
+          "fund_code": "SYNDCA001",
+          "limit": 0.4,
+          "value": 0.511364
+        },
+        "message": "single fund weight exceeds risk profile limit",
+        "severity": "high",
+        "type": "overweight_single_fund"
+      },
+      {
+        "details": {
+          "limit": 0.5,
+          "theme": "asset_type:stock",
+          "value": 0.588068
+        },
+        "message": "theme exposure exceeds risk profile limit",
+        "severity": "medium",
+        "type": "overweight_theme"
+      },
+      {
+        "details": {
+          "limit": 0.5,
+          "theme": "fund_type:equity",
+          "value": 0.511364
+        },
+        "message": "theme exposure exceeds risk profile limit",
+        "severity": "medium",
+        "type": "overweight_theme"
+      },
+      {
+        "details": {
+          "limit": 0.5,
+          "theme": "region:CN",
+          "value": 0.85
+        },
+        "message": "theme exposure exceeds risk profile limit",
+        "severity": "medium",
+        "type": "overweight_theme"
+      },
+      {
+        "details": {
+          "affected_entities": [
+            "broad_market"
+          ],
+          "current_value": 0.485795,
+          "limit": 0.45
+        },
+        "message": "industry exposure exceeds risk profile limit",
+        "severity": "medium",
+        "type": "overweight_industry"
+      },
+      {
+        "details": {
+          "fund_code": "SYNDCA001",
+          "limit": 0.25,
+          "value": 0.291667
+        },
+        "message": "fund max drawdown exceeds risk-level threshold",
+        "severity": "medium",
+        "type": "high_drawdown_fund"
+      },
+      {
+        "details": {
+          "scenario": {
+            "assumptions": {
+              "equity_drawdown_window": "2025-10-31 to 2026-01-31",
+              "recovery_nav_point": "2026-03-31"
+            },
+            "description": "Fake scenario: broad equity NAV declined and partly recovered before as_of_date.",
+            "name": "Synthetic drawdown review window",
+            "risk_level": "medium"
+          }
+        },
+        "message": "Host-provided market scenario: Synthetic drawdown review window",
+        "severity": "medium",
+        "type": "market_scenario"
+      }
+    ],
+    "short_term_trade_budget": {
+      "exceeded": false,
+      "recent_buys": 6000.0,
+      "recent_sells": 0,
+      "remaining": 1040.0,
+      "short_term_budget": 7040.0,
+      "usage_pct": 0.852273,
+      "used": 6000.0
+    },
+    "suggested_rebalance_plan": {
+      "suggested_trade_plan": [
+        {
+          "action": "SELL",
+          "amount": 10000.0,
+          "cap_reasons": [],
+          "capped": false,
+          "current_cost": 53000.0,
+          "current_value": 45000.0,
+          "current_weight": 0.45,
+          "evidence_refs": [
+            "ev:portfolio_allocation_concentration",
+            "ev:fund_risk_return_metrics",
+            "ev:fund_risk_return_metrics",
+            "ev:fund_risk_return_metrics",
+            "ev:portfolio_risk_flags",
+            "ev:position_cost_basis",
+            "ev:short_term_budget_usage",
+            "ev:dca_plan_review",
+            "ev:market_scenario_impact",
+            "ev:portfolio_pnl_summary"
+          ],
+          "fund_code": "SYNDCA001",
+          "fund_name": "Sample Broad Equity DCA Fund",
+          "rationale": "Within constraint bounds",
+          "requested_amount": 10000.0,
+          "risk_flags_refs": [
+            "overweight_single_fund",
+            "overweight_theme",
+            "overweight_theme",
+            "overweight_theme",
+            "overweight_industry",
+            "high_drawdown_fund",
+            "market_scenario"
+          ],
+          "tags": [
+            "broad_equity",
+            "dca"
+          ],
+          "target_weight": 0.35,
+          "trade_id": "SYNDCA001_SELL_0",
+          "unrealized_pnl": -8000.0
+        },
+        {
+          "action": "BUY",
+          "amount": 6000.0,
+          "cap_reasons": [
+            "capped by max_buy_amount (6000.0)"
+          ],
+          "capped": true,
+          "current_cost": 13000.0,
+          "current_value": 13000.0,
+          "current_weight": 0.13,
+          "evidence_refs": [
+            "ev:portfolio_allocation_concentration",
+            "ev:fund_risk_return_metrics",
+            "ev:fund_risk_return_metrics",
+            "ev:fund_risk_return_metrics",
+            "ev:portfolio_risk_flags",
+            "ev:position_cost_basis",
+            "ev:short_term_budget_usage",
+            "ev:dca_plan_review",
+            "ev:market_scenario_impact",
+            "ev:portfolio_pnl_summary"
+          ],
+          "fund_code": "SYNMM001",
+          "fund_name": "Sample Money Market Sleeve",
+          "rationale": "Capped by constraints: capped by max_buy_amount (6000.0)",
+          "requested_amount": 7000.0,
+          "risk_flags_refs": [
+            "overweight_single_fund",
+            "overweight_theme",
+            "overweight_theme",
+            "overweight_theme",
+            "overweight_industry",
+            "high_drawdown_fund",
+            "market_scenario"
+          ],
+          "tags": [
+            "cash_management",
+            "reserve"
+          ],
+          "target_weight": 0.2,
+          "trade_id": "SYNMM001_BUY_1",
+          "unrealized_pnl": 0.0
+        }
+      ],
+      "total_trade_amount": 16000.0,
+      "warnings": [
+        "Sample review checks DCA plan pressure against concentration limits.",
+        "Formal DCA changes require decision_support."
+      ]
+    },
+    "warnings": [
+      "SYNDCA001: shares mismatch [high] — snapshot=52992.8699/47693.58, portfolio=50000.0000/45000.0, delta=2992.8699/2693.58"
+    ]
+  },
+  "errors": [],
+  "evidence_items": [
+    {
+      "claim": "Portfolio allocation and concentration metrics were computed",
+      "confidence_weight": 1.0,
+      "direction": "negative",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:SYNDCA001",
+        "fund:SYNDCA002",
+        "fund:SYNMM001"
+      ],
+      "source_type": "portfolio_allocation_concentration",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "concentration": {
+          "duplicate_tags": [],
+          "hhi": 0.399535,
+          "max_fund_code": "SYNDCA001",
+          "position_count": 3,
+          "single_fund_max_weight": 0.511364,
+          "top_n": 3,
+          "top_n_concentration": 1.0
+        },
+        "portfolio_summary": {
+          "as_of_date": "2026-03-31",
+          "cash_available": 12000.0,
+          "position_count": 3,
+          "position_weights": {
+            "SYNDCA001": 0.45,
+            "SYNDCA002": 0.3,
+            "SYNMM001": 0.13
+          },
+          "total_value": 100000.0
+        }
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Risk-return metrics were computed for fund SYNDCA001",
+      "confidence_weight": 1.0,
+      "direction": "negative",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.fund.metrics"
+      },
+      "related_entities": [
+        "fund:SYNDCA001"
+      ],
+      "source_type": "fund_risk_return_metrics",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "annualized_volatility": 0.945756,
+        "max_drawdown": 0.291667,
+        "observation_count": 7,
+        "recent_momentum": -0.075758,
+        "return_1m": 0.022727,
+        "return_1y": -0.25,
+        "return_3m": 0.0,
+        "return_6m": -0.25,
+        "return_count": 6,
+        "risk_adjusted_score": -0.080103,
+        "rolling_drawdown": {
+          "max_drawdown": 0.291667,
+          "peak_nav": 1.2,
+          "trough_nav": 0.85
+        },
+        "sharpe": -12.090243,
+        "sortino": 0.0,
+        "total_return": -0.25
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Risk-return metrics were computed for fund SYNDCA002",
+      "confidence_weight": 1.0,
+      "direction": "neutral",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.fund.metrics"
+      },
+      "related_entities": [
+        "fund:SYNDCA002"
+      ],
+      "source_type": "fund_risk_return_metrics",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "annualized_volatility": 0.236412,
+        "max_drawdown": 0.066667,
+        "observation_count": 7,
+        "recent_momentum": -0.010831,
+        "return_1m": 0.005025,
+        "return_1y": -0.047619,
+        "return_3m": 0.010101,
+        "return_6m": -0.047619,
+        "return_count": 6,
+        "risk_adjusted_score": -0.045814,
+        "rolling_drawdown": {
+          "max_drawdown": 0.066667,
+          "peak_nav": 1.05,
+          "trough_nav": 0.98
+        },
+        "sharpe": -8.617806,
+        "sortino": 0.0,
+        "total_return": -0.047619
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Risk-return metrics were computed for fund SYNMM001",
+      "confidence_weight": 1.0,
+      "direction": "neutral",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.fund.metrics"
+      },
+      "related_entities": [
+        "fund:SYNMM001"
+      ],
+      "source_type": "fund_risk_return_metrics",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "annualized_volatility": 0.0,
+        "max_drawdown": 0.0,
+        "observation_count": 7,
+        "recent_momentum": 0.0,
+        "return_1m": 0.0,
+        "return_1y": 0.0,
+        "return_3m": 0.0,
+        "return_6m": 0.0,
+        "return_count": 6,
+        "risk_adjusted_score": 0.0,
+        "rolling_drawdown": {
+          "max_drawdown": 0.0,
+          "peak_nav": 1.0,
+          "trough_nav": 1.0
+        },
+        "sharpe": 0.0,
+        "sortino": 0.0,
+        "total_return": 0.0
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Portfolio risk flag scan found 7 issue(s)",
+      "confidence_weight": 1.0,
+      "direction": "negative",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:SYNDCA001",
+        "fund:SYNDCA002",
+        "fund:SYNMM001"
+      ],
+      "source_type": "portfolio_risk_flags",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "risk_flags": [
+          {
+            "details": {
+              "fund_code": "SYNDCA001",
+              "limit": 0.4,
+              "value": 0.511364
+            },
+            "message": "single fund weight exceeds risk profile limit",
+            "severity": "high",
+            "type": "overweight_single_fund"
+          },
+          {
+            "details": {
+              "limit": 0.5,
+              "theme": "asset_type:stock",
+              "value": 0.588068
+            },
+            "message": "theme exposure exceeds risk profile limit",
+            "severity": "medium",
+            "type": "overweight_theme"
+          },
+          {
+            "details": {
+              "limit": 0.5,
+              "theme": "fund_type:equity",
+              "value": 0.511364
+            },
+            "message": "theme exposure exceeds risk profile limit",
+            "severity": "medium",
+            "type": "overweight_theme"
+          },
+          {
+            "details": {
+              "limit": 0.5,
+              "theme": "region:CN",
+              "value": 0.85
+            },
+            "message": "theme exposure exceeds risk profile limit",
+            "severity": "medium",
+            "type": "overweight_theme"
+          },
+          {
+            "details": {
+              "affected_entities": [
+                "broad_market"
+              ],
+              "current_value": 0.485795,
+              "limit": 0.45
+            },
+            "message": "industry exposure exceeds risk profile limit",
+            "severity": "medium",
+            "type": "overweight_industry"
+          },
+          {
+            "details": {
+              "fund_code": "SYNDCA001",
+              "limit": 0.25,
+              "value": 0.291667
+            },
+            "message": "fund max drawdown exceeds risk-level threshold",
+            "severity": "medium",
+            "type": "high_drawdown_fund"
+          },
+          {
+            "details": {
+              "scenario": {
+                "assumptions": {
+                  "equity_drawdown_window": "2025-10-31 to 2026-01-31",
+                  "recovery_nav_point": "2026-03-31"
+                },
+                "description": "Fake scenario: broad equity NAV declined and partly recovered before as_of_date.",
+                "name": "Synthetic drawdown review window",
+                "risk_level": "medium"
+              }
+            },
+            "message": "Host-provided market scenario: Synthetic drawdown review window",
+            "severity": "medium",
+            "type": "market_scenario"
+          }
+        ]
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Portfolio rebalance simulation was generated",
+      "confidence_weight": 1.0,
+      "direction": "neutral",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:SYNDCA001",
+        "fund:SYNDCA002",
+        "fund:SYNMM001"
+      ],
+      "source_type": "portfolio_rebalance_simulation",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "suggested_trade_plan": [
+          {
+            "action": "SELL",
+            "amount": 10000.0,
+            "cap_reasons": [],
+            "capped": false,
+            "current_cost": 53000.0,
+            "current_value": 45000.0,
+            "current_weight": 0.45,
+            "evidence_refs": [
+              "ev:portfolio_allocation_concentration",
+              "ev:fund_risk_return_metrics",
+              "ev:fund_risk_return_metrics",
+              "ev:fund_risk_return_metrics",
+              "ev:portfolio_risk_flags",
+              "ev:position_cost_basis",
+              "ev:short_term_budget_usage",
+              "ev:dca_plan_review",
+              "ev:market_scenario_impact",
+              "ev:portfolio_pnl_summary"
+            ],
+            "fund_code": "SYNDCA001",
+            "fund_name": "Sample Broad Equity DCA Fund",
+            "rationale": "Within constraint bounds",
+            "requested_amount": 10000.0,
+            "risk_flags_refs": [
+              "overweight_single_fund",
+              "overweight_theme",
+              "overweight_theme",
+              "overweight_theme",
+              "overweight_industry",
+              "high_drawdown_fund",
+              "market_scenario"
+            ],
+            "tags": [
+              "broad_equity",
+              "dca"
+            ],
+            "target_weight": 0.35,
+            "trade_id": "SYNDCA001_SELL_0",
+            "unrealized_pnl": -8000.0
+          },
+          {
+            "action": "BUY",
+            "amount": 6000.0,
+            "cap_reasons": [
+              "capped by max_buy_amount (6000.0)"
+            ],
+            "capped": true,
+            "current_cost": 13000.0,
+            "current_value": 13000.0,
+            "current_weight": 0.13,
+            "evidence_refs": [
+              "ev:portfolio_allocation_concentration",
+              "ev:fund_risk_return_metrics",
+              "ev:fund_risk_return_metrics",
+              "ev:fund_risk_return_metrics",
+              "ev:portfolio_risk_flags",
+              "ev:position_cost_basis",
+              "ev:short_term_budget_usage",
+              "ev:dca_plan_review",
+              "ev:market_scenario_impact",
+              "ev:portfolio_pnl_summary"
+            ],
+            "fund_code": "SYNMM001",
+            "fund_name": "Sample Money Market Sleeve",
+            "rationale": "Capped by constraints: capped by max_buy_amount (6000.0)",
+            "requested_amount": 7000.0,
+            "risk_flags_refs": [
+              "overweight_single_fund",
+              "overweight_theme",
+              "overweight_theme",
+              "overweight_theme",
+              "overweight_industry",
+              "high_drawdown_fund",
+              "market_scenario"
+            ],
+            "tags": [
+              "cash_management",
+              "reserve"
+            ],
+            "target_weight": 0.2,
+            "trade_id": "SYNMM001_BUY_1",
+            "unrealized_pnl": 0.0
+          }
+        ],
+        "total_trade_amount": 16000.0,
+        "warnings": [
+          "Sample review checks DCA plan pressure against concentration limits.",
+          "Formal DCA changes require decision_support."
+        ]
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Position cost basis computed from transaction history",
+      "confidence_weight": 1.0,
+      "direction": "neutral",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.transaction"
+      },
+      "related_entities": [
+        "fund:SYNDCA001",
+        "fund:SYNDCA002",
+        "fund:SYNMM001"
+      ],
+      "source_type": "position_cost_basis",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "SYNDCA001": {
+          "average_cost_per_share": 1.000135,
+          "current_nav": 0.9,
+          "current_value": 47693.58,
+          "fund_code": "SYNDCA001",
+          "method": "weighted_average",
+          "total_cost": 53000.0,
+          "total_shares": 52992.8699,
+          "transaction_count": 6,
+          "unrealized_pnl": -5306.42,
+          "unrealized_pnl_pct": -10.01
+        },
+        "SYNDCA002": {
+          "average_cost_per_share": 1.033333,
+          "current_nav": 1.0,
+          "current_value": 30000.0,
+          "fund_code": "SYNDCA002",
+          "method": "weighted_average",
+          "total_cost": 31000.0,
+          "total_shares": 30000.0,
+          "transaction_count": 1,
+          "unrealized_pnl": -1000.0,
+          "unrealized_pnl_pct": -3.23
+        },
+        "SYNMM001": {
+          "average_cost_per_share": 1.0,
+          "current_nav": 1.0,
+          "current_value": 13000.0,
+          "fund_code": "SYNMM001",
+          "method": "weighted_average",
+          "total_cost": 13000.0,
+          "total_shares": 13000.0,
+          "transaction_count": 1,
+          "unrealized_pnl": 0.0,
+          "unrealized_pnl_pct": 0.0
+        }
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Short-term trading budget usage computed",
+      "confidence_weight": 1.0,
+      "direction": "neutral",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:SYNDCA001",
+        "fund:SYNDCA002",
+        "fund:SYNMM001"
+      ],
+      "source_type": "short_term_budget_usage",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "exceeded": false,
+        "recent_buys": 6000.0,
+        "recent_sells": 0,
+        "remaining": 1040.0,
+        "short_term_budget": 7040.0,
+        "usage_pct": 0.852273,
+        "used": 6000.0
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "DCA plan review completed with 1 action(s) suggested",
+      "confidence_weight": 1.0,
+      "direction": "neutral",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:SYNDCA001",
+        "fund:SYNDCA002",
+        "fund:SYNMM001"
+      ],
+      "source_type": "dca_plan_review",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "plans": [
+          {
+            "annual_amount": 72000.0,
+            "current_weight": 0.45,
+            "exceeds_limit": true,
+            "fund_code": "SYNDCA001",
+            "monthly_amount": 6000.0,
+            "plan_id": "sample_equity_dca",
+            "suggestion": "PAUSE"
+          }
+        ],
+        "suggestions": [
+          {
+            "annual_amount": 72000.0,
+            "current_weight": 0.45,
+            "exceeds_limit": true,
+            "fund_code": "SYNDCA001",
+            "monthly_amount": 6000.0,
+            "plan_id": "sample_equity_dca",
+            "suggestion": "PAUSE"
+          }
+        ],
+        "warnings": [
+          "DCA plan sample_equity_dca for SYNDCA001 exceeds concentration limit"
+        ]
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Market scenario impact assessed: Synthetic drawdown review window",
+      "confidence_weight": 1.0,
+      "direction": "neutral",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "host_provided"
+      },
+      "related_entities": [
+        "fund:SYNDCA001",
+        "fund:SYNDCA002",
+        "fund:SYNMM001"
+      ],
+      "source_type": "market_scenario_impact",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "scenario": {
+          "assumptions": {
+            "equity_drawdown_window": "2025-10-31 to 2026-01-31",
+            "recovery_nav_point": "2026-03-31"
+          },
+          "description": "Fake scenario: broad equity NAV declined and partly recovered before as_of_date.",
+          "name": "Synthetic drawdown review window",
+          "risk_level": "medium"
+        }
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Portfolio-level PnL summary with top positions computed",
+      "confidence_weight": 1.0,
+      "direction": "negative",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.analysis"
+      },
+      "related_entities": [
+        "fund:SYNDCA001",
+        "fund:SYNDCA002",
+        "fund:SYNMM001"
+      ],
+      "source_type": "portfolio_pnl_summary",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "top_positions": [
+          {
+            "current_value": 45000.0,
+            "fund_code": "SYNDCA001",
+            "total_cost": 53000.0,
+            "unrealized_pnl": -8000.0,
+            "unrealized_pnl_pct": -0.150943
+          },
+          {
+            "current_value": 30000.0,
+            "fund_code": "SYNDCA002",
+            "total_cost": 31000.0,
+            "unrealized_pnl": -1000.0,
+            "unrealized_pnl_pct": -0.032258
+          },
+          {
+            "current_value": 13000.0,
+            "fund_code": "SYNMM001",
+            "total_cost": 13000.0,
+            "unrealized_pnl": 0.0,
+            "unrealized_pnl_pct": 0.0
+          }
+        ],
+        "total_cost": 97000.0,
+        "total_value": 88000.0,
+        "unrealized_pnl": -9000.0,
+        "unrealized_pnl_pct": -0.092784
+      },
+      "version": "evidence-contract.v2"
+    },
+    {
+      "claim": "Ledger-portfolio reconciliation found 1 mismatches",
+      "confidence_weight": 1.0,
+      "direction": "negative",
+      "evidence_id": "<normalized-evidence-id>",
+      "evidence_type": "HardEvidence",
+      "provenance": {
+        "skill_name": "fund_analysis",
+        "tool": "src.tools.portfolio.ledger_snapshot"
+      },
+      "related_entities": [
+        "fund:SYNDCA001",
+        "fund:SYNDCA002",
+        "fund:SYNMM001"
+      ],
+      "source_type": "ledger_reconciliation_mismatch",
+      "timestamp": "<normalized-timestamp>",
+      "value": {
+        "comparisons": [
+          {
+            "fund_code": "SYNDCA001",
+            "matched": false,
+            "portfolio_shares": 50000.0,
+            "portfolio_value": 45000.0,
+            "severity": "high",
+            "shares_delta": 2992.8699,
+            "snapshot_shares": 52992.8699,
+            "snapshot_value": 47693.58,
+            "value_delta": 2693.58
+          },
+          {
+            "fund_code": "SYNDCA002",
+            "matched": true,
+            "portfolio_shares": 30000.0,
+            "portfolio_value": 30000.0,
+            "severity": "ok",
+            "shares_delta": 0.0,
+            "snapshot_shares": 30000.0,
+            "snapshot_value": 30000.0,
+            "value_delta": 0.0
+          },
+          {
+            "fund_code": "SYNMM001",
+            "matched": true,
+            "portfolio_shares": 13000.0,
+            "portfolio_value": 13000.0,
+            "severity": "ok",
+            "shares_delta": 0.0,
+            "snapshot_shares": 13000.0,
+            "snapshot_value": 13000.0,
+            "value_delta": 0.0
+          }
+        ],
+        "matched": false,
+        "mismatches": [
+          {
+            "fund_code": "SYNDCA001",
+            "portfolio_shares": 50000.0,
+            "portfolio_value": 45000.0,
+            "reason": "SHARES_MISMATCH",
+            "severity": "high",
+            "shares_delta": 2992.8699,
+            "snapshot_shares": 52992.8699,
+            "snapshot_value": 47693.58,
+            "value_delta": 2693.58
+          }
+        ],
+        "warnings": [
+          "SYNDCA001: shares mismatch [high] — snapshot=52992.8699/47693.58, portfolio=50000.0000/45000.0, delta=2992.8699/2693.58"
+        ]
+      },
+      "version": "evidence-contract.v2"
+    }
+  ],
+  "metadata": {
+    "missing_mcp_capabilities": [],
+    "required_mcp_capabilities": []
+  },
+  "ok": true,
+  "skill_name": "fund_analysis",
+  "status": "PARTIAL",
+  "used_mcp_capabilities": [],
+  "warnings": [
+    "SYNDCA001: shares mismatch [high] — snapshot=52992.8699/47693.58, portfolio=50000.0000/45000.0, delta=2992.8699/2693.58"
+  ]
+}
