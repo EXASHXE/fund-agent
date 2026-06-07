@@ -28,6 +28,10 @@ data fetcher, or replacement for host orchestration.
 8. Optionally compile evidence and call `decision_support` for formal
    `Decision` / `ExecutionLedger` output.
 
+For fake personal fund scenarios that exercise common host-supplied data
+shapes, see
+[`examples/scenarios/README.md`](../../examples/scenarios/README.md).
+
 ## Boundary Rules
 
 - The host owns data fetching, credentials, provider SDKs, MCP providers,
@@ -52,6 +56,7 @@ data fetcher, or replacement for host orchestration.
 
 - [docs/install/manual-host.md](../install/manual-host.md)
 - [docs/install/runtime-bridge-cli.md](../install/runtime-bridge-cli.md)
+- [examples/scenarios/README.md](../../examples/scenarios/README.md)
 - [docs/install/opencode.md](../install/opencode.md)
 - [docs/install/codex.md](../install/codex.md)
 - [docs/contracts/fund-analysis-input-contract.v1.md](../contracts/fund-analysis-input-contract.v1.md)

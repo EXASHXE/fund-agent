@@ -41,6 +41,8 @@ mount them as a plugin. It does not require a resident autonomous runtime.
 
 For host-specific integration recipes, see
 [`docs/host-integrations/README.md`](docs/host-integrations/README.md).
+For fake personal fund bridge fixtures, see
+[`examples/scenarios/README.md`](examples/scenarios/README.md).
 
 The external host decides which skill to call, in what order, with which MCP
 provider implementations, and how to use the returned evidence.

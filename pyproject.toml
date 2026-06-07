@@ -17,6 +17,7 @@ testpaths = [
     "tests/tools",
     "tests/integration",
     "tests/ci",
+    "tests/docs",
     "tests/install",
     "tests/runtime_bridge",
 ]

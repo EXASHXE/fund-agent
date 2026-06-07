@@ -55,6 +55,9 @@ Branch on `validation_result.valid` and `validation_result.severity`.
 Validation is structural and host-assistive; it is not a guarantee of
 investment correctness or data freshness.
 
+For fake/sample scenario inputs that validate through the same bridge path, see
+[`examples/scenarios/README.md`](../../examples/scenarios/README.md).
+
 ## Normal JSON Execution
 
 ```bash

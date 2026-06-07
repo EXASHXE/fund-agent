@@ -1,0 +1,222 @@
+{
+  "payload": {
+    "sample_data_notice": "Fake/sample data only. Synthetic AI and semiconductor fund, NAV, scenario, and holding data; not live market data or real holdings.",
+    "as_of_date": "2026-03-31",
+    "portfolio": {
+      "as_of_date": "2026-03-31",
+      "total_value": 150000.0,
+      "cash_available": 5000.0,
+      "positions": [
+        {
+          "fund_code": "SYNAI001",
+          "fund_name": "Sample AI Semiconductor Active Fund",
+          "current_value": 70000.0,
+          "total_cost": 62000.0,
+          "shares": 50000.0,
+          "current_nav": 1.400,
+          "target_weight": 0.32,
+          "tags": ["ai", "semiconductor", "active_equity"]
+        },
+        {
+          "fund_code": "SYNAI002",
+          "fund_name": "Sample China Chip ETF",
+          "current_value": 45000.0,
+          "total_cost": 47000.0,
+          "shares": 37500.0,
+          "current_nav": 1.200,
+          "target_weight": 0.23,
+          "tags": ["semiconductor", "hardware", "etf"]
+        },
+        {
+          "fund_code": "SYNAI003",
+          "fund_name": "Sample Digital Infrastructure Mix",
+          "current_value": 20000.0,
+          "total_cost": 19000.0,
+          "shares": 18181.8182,
+          "current_nav": 1.100,
+          "target_weight": 0.18,
+          "tags": ["cloud", "infrastructure", "mixed"]
+        },
+        {
+          "fund_code": "SYNBOND01",
+          "fund_name": "Sample Short Duration Bond Fund",
+          "current_value": 10000.0,
+          "total_cost": 10000.0,
+          "shares": 10000.0,
+          "current_nav": 1.000,
+          "target_weight": 0.20,
+          "tags": ["bond", "defensive"]
+        }
+      ]
+    },
+    "target_weights": {
+      "SYNAI001": 0.32,
+      "SYNAI002": 0.23,
+      "SYNAI003": 0.18,
+      "SYNBOND01": 0.20
+    },
+    "transactions": [
+      {"action": "BUY", "fund_code": "SYNAI001", "date": "2025-07-01", "amount": 42000.0, "shares": 35000.0, "nav": 1.200},
+      {"action": "BUY", "fund_code": "SYNAI001", "date": "2026-02-14", "amount": 20000.0, "shares": 15000.0, "nav": 1.333},
+      {"action": "BUY", "fund_code": "SYNAI002", "date": "2025-08-15", "amount": 47000.0, "shares": 37500.0, "nav": 1.253},
+      {"action": "BUY", "fund_code": "SYNAI003", "date": "2025-10-01", "amount": 19000.0, "shares": 18181.8182, "nav": 1.045},
+      {"action": "BUY", "fund_code": "SYNBOND01", "date": "2025-12-01", "amount": 10000.0, "shares": 10000.0, "nav": 1.000}
+    ],
+    "current_nav": {
+      "SYNAI001": 1.400,
+      "SYNAI002": 1.200,
+      "SYNAI003": 1.100,
+      "SYNBOND01": 1.000
+    },
+    "risk_profile": {
+      "risk_level": "moderate",
+      "max_single_fund_weight": 0.40,
+      "max_theme_weight": 0.35,
+      "max_industry_weight": 0.32,
+      "max_trade_pct": 0.10,
+      "liquidity_reserve_pct": 0.10,
+      "short_term_trade_budget_pct": 0.08
+    },
+    "constraints": {
+      "max_buy_amount": 8000.0,
+      "max_sell_amount": 12000.0,
+      "min_trade_amount": 1000.0,
+      "forbidden_actions": [],
+      "max_single_theme_weight": 0.35,
+      "notes": [
+        "Synthetic max_single_theme_weight included as host context.",
+        "FundAnalysisSkill analysis remains artifact/report only."
+      ]
+    },
+    "fund_profiles": {
+      "SYNAI001": {
+        "fund_code": "SYNAI001",
+        "name": "Sample AI Semiconductor Active Fund",
+        "sample_identifier": true,
+        "fund_type": "equity",
+        "region": "CN",
+        "theme": "ai_semiconductor",
+        "manager": "Sample AI Team A",
+        "benchmark": "Synthetic AI Semiconductor Index"
+      },
+      "SYNAI002": {
+        "fund_code": "SYNAI002",
+        "name": "Sample China Chip ETF",
+        "sample_identifier": true,
+        "fund_type": "etf",
+        "region": "CN",
+        "theme": "semiconductor",
+        "manager": "Sample Index Team",
+        "benchmark": "Synthetic China Chip Index"
+      },
+      "SYNAI003": {
+        "fund_code": "SYNAI003",
+        "name": "Sample Digital Infrastructure Mix",
+        "sample_identifier": true,
+        "fund_type": "mixed_equity",
+        "region": "CN",
+        "theme": "digital_infrastructure",
+        "manager": "Sample Digital Team",
+        "benchmark": "Synthetic Digital Infrastructure Blend"
+      },
+      "SYNBOND01": {
+        "fund_code": "SYNBOND01",
+        "name": "Sample Short Duration Bond Fund",
+        "sample_identifier": true,
+        "fund_type": "bond",
+        "region": "CN",
+        "theme": "defensive_income",
+        "manager": "Sample Bond Team",
+        "benchmark": "Synthetic Short Bond Index"
+      }
+    },
+    "holdings": {
+      "SYNAI001": [
+        {"name": "Sample Advanced Chip A", "weight": 0.220, "asset_type": "stock", "industry": "ai_semiconductor", "region": "CN"},
+        {"name": "Sample AI Server B", "weight": 0.180, "asset_type": "stock", "industry": "ai_hardware", "region": "CN"},
+        {"name": "Sample Cloud Platform C", "weight": 0.130, "asset_type": "stock", "industry": "cloud_platform", "region": "CN"}
+      ],
+      "SYNAI002": [
+        {"name": "Sample Advanced Chip A", "weight": 0.150, "asset_type": "stock", "industry": "ai_semiconductor", "region": "CN"},
+        {"name": "Sample Foundry D", "weight": 0.120, "asset_type": "stock", "industry": "semiconductor_equipment", "region": "CN"},
+        {"name": "Sample Memory E", "weight": 0.080, "asset_type": "stock", "industry": "semiconductor", "region": "CN"}
+      ],
+      "SYNAI003": [
+        {"name": "Sample Data Center F", "weight": 0.160, "asset_type": "stock", "industry": "cloud_platform", "region": "CN"},
+        {"name": "Sample Network G", "weight": 0.110, "asset_type": "stock", "industry": "communications_equipment", "region": "CN"}
+      ],
+      "SYNBOND01": [
+        {"name": "Sample Short Policy Bond", "weight": 0.400, "asset_type": "bond", "industry": "policy_bank", "region": "CN"},
+        {"name": "Sample Treasury Bill", "weight": 0.300, "asset_type": "bond", "industry": "government", "region": "CN"}
+      ]
+    },
+    "nav_history": {
+      "SYNAI001": [
+        {"date": "2025-06-30", "nav": 1.000},
+        {"date": "2025-09-30", "nav": 1.220},
+        {"date": "2025-12-31", "nav": 1.500},
+        {"date": "2026-02-28", "nav": 1.330},
+        {"date": "2026-03-31", "nav": 1.400}
+      ],
+      "SYNAI002": [
+        {"date": "2025-06-30", "nav": 1.000},
+        {"date": "2025-09-30", "nav": 1.180},
+        {"date": "2025-12-31", "nav": 1.320},
+        {"date": "2026-02-28", "nav": 1.150},
+        {"date": "2026-03-31", "nav": 1.200}
+      ],
+      "SYNAI003": [
+        {"date": "2025-06-30", "nav": 1.000},
+        {"date": "2025-09-30", "nav": 1.040},
+        {"date": "2025-12-31", "nav": 1.120},
+        {"date": "2026-02-28", "nav": 1.060},
+        {"date": "2026-03-31", "nav": 1.100}
+      ],
+      "SYNBOND01": [
+        {"date": "2025-06-30", "nav": 0.998},
+        {"date": "2025-09-30", "nav": 1.000},
+        {"date": "2025-12-31", "nav": 1.002},
+        {"date": "2026-02-28", "nav": 1.001},
+        {"date": "2026-03-31", "nav": 1.000}
+      ]
+    },
+    "factor_exposures": {
+      "ai_theme": {"SYNAI001": 0.88, "SYNAI002": 0.70, "SYNAI003": 0.42, "SYNBOND01": 0.0},
+      "semiconductor_beta": {"SYNAI001": 0.82, "SYNAI002": 0.90, "SYNAI003": 0.20, "SYNBOND01": 0.0},
+      "duration": {"SYNAI001": 0.0, "SYNAI002": 0.0, "SYNAI003": 0.0, "SYNBOND01": 0.28}
+    },
+    "market_scenario": {
+      "name": "Synthetic AI semiconductor multiple compression",
+      "risk_level": "high",
+      "description": "Fake scenario: AI and semiconductor sentiment cools while defensive bonds are stable.",
+      "assumptions": {
+        "ai_semiconductor_factor_shock": -0.15,
+        "bond_factor_shock": 0.01
+      }
+    },
+    "dca_plans": {
+      "sample_ai_monthly": {
+        "fund_code": "SYNAI001",
+        "monthly_amount": 3000.0,
+        "schedule": "monthly"
+      }
+    },
+    "fee_schedules": {
+      "SYNAI001": {"management_fee": 0.016, "custody_fee": 0.002, "sales_fee": 0.001, "redemption_fee": 0.006, "total_expense_ratio": 0.019},
+      "SYNAI002": {"management_fee": 0.005, "custody_fee": 0.001, "sales_fee": 0.0, "redemption_fee": 0.003, "total_expense_ratio": 0.006},
+      "SYNAI003": {"management_fee": 0.012, "custody_fee": 0.002, "sales_fee": 0.001, "redemption_fee": 0.004, "total_expense_ratio": 0.015},
+      "SYNBOND01": {"management_fee": 0.004, "custody_fee": 0.001, "sales_fee": 0.0, "redemption_fee": 0.001, "total_expense_ratio": 0.005}
+    },
+    "redemption_rules": {
+      "SYNAI001": {"holding_period_days": 7, "redemption_fee_pct": 0.006, "liquidity_note": "Sample T+2 redemption note.", "suspended": false},
+      "SYNAI002": {"holding_period_days": 7, "redemption_fee_pct": 0.003, "liquidity_note": "Sample T+1 redemption note.", "suspended": false},
+      "SYNAI003": {"holding_period_days": 30, "redemption_fee_pct": 0.004, "liquidity_note": "Sample T+2 redemption note.", "suspended": false},
+      "SYNBOND01": {"holding_period_days": 1, "redemption_fee_pct": 0.001, "liquidity_note": "Sample bond liquidity note.", "suspended": false}
+    },
+    "report_options": {
+      "minimal_report_mode": false,
+      "audience": "theme_concentration_review",
+      "currency": "CNY"
+    }
+  }
+}

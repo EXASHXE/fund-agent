@@ -32,7 +32,9 @@ pip install -e .        # editable install into your Python environment
 The bridge then lives at `scripts/run_skill.py` (executable
 wrapper) and `src/skillpack/run_skill.py` (importable module).
 Examples live at `examples/runtime_bridge_*_input.json` and
-`examples/minimal_runtime_bridge_fund_analysis.py`.
+`examples/minimal_runtime_bridge_fund_analysis.py`. Fake personal fund scenario
+fixtures live under
+[`examples/scenarios/`](../../examples/scenarios/README.md).
 
 The bridge requires **no** npm dependency, **no** OpenCode install,
 and **no** provider SDK. A working `python` (3.11+) interpreter is

@@ -1,0 +1,104 @@
+{
+  "payload": {
+    "sample_data_notice": "Fake/sample data only. Synthetic transaction ledger and NAV data; not real personal transaction records or live market data.",
+    "as_of_date": "2026-03-31",
+    "transactions": [
+      {"action": "BUY", "fund_code": "SYNLED001", "date": "2025-09-02", "amount": 30000.0, "shares": 30000.0, "nav": 1.000},
+      {"action": "BUY", "fund_code": "SYNLED002", "date": "2025-10-15", "amount": 25000.0, "shares": 25000.0, "nav": 1.000},
+      {"action": "BUY", "fund_code": "SYNLED001", "date": "2026-01-10", "amount": 12000.0, "shares": 10000.0, "nav": 1.200},
+      {"action": "SELL", "fund_code": "SYNLED002", "date": "2026-02-20", "amount": 5000.0, "shares": 4000.0, "nav": 1.250},
+      {"action": "DIVIDEND", "fund_code": "SYNLED001", "date": "2026-03-10", "amount": 300.0},
+      {"action": "FEE", "fund_code": "SYNLED002", "date": "2026-03-15", "amount": 30.0}
+    ],
+    "current_nav": {
+      "SYNLED001": 1.180,
+      "SYNLED002": 1.150,
+      "_cash_available": 7000.0
+    },
+    "risk_profile": {
+      "risk_level": "moderate",
+      "max_single_fund_weight": 0.55,
+      "max_theme_weight": 0.55,
+      "max_industry_weight": 0.50,
+      "max_trade_pct": 0.12,
+      "liquidity_reserve_pct": 0.10,
+      "short_term_trade_budget_pct": 0.08
+    },
+    "constraints": {
+      "max_buy_amount": 10000.0,
+      "max_sell_amount": 10000.0,
+      "min_trade_amount": 500.0,
+      "forbidden_actions": [],
+      "notes": [
+        "Portfolio snapshot is intentionally derived from the synthetic transaction ledger.",
+        "Host should supply complete ledger and current NAV when using ledger_derived mode."
+      ]
+    },
+    "fund_profiles": {
+      "SYNLED001": {
+        "fund_code": "SYNLED001",
+        "name": "Sample Ledger Equity Fund",
+        "sample_identifier": true,
+        "fund_type": "equity",
+        "region": "CN",
+        "theme": "broad_market",
+        "manager": "Sample Ledger Manager A",
+        "benchmark": "Synthetic Ledger Equity Index"
+      },
+      "SYNLED002": {
+        "fund_code": "SYNLED002",
+        "name": "Sample Ledger Balanced Fund",
+        "sample_identifier": true,
+        "fund_type": "balanced",
+        "region": "CN",
+        "theme": "balanced_allocation",
+        "manager": "Sample Ledger Manager B",
+        "benchmark": "Synthetic Ledger Balanced Blend"
+      }
+    },
+    "holdings": {
+      "SYNLED001": [
+        {"name": "Sample Broad Equity Basket", "weight": 0.55, "asset_type": "stock", "industry": "broad_market", "region": "CN"},
+        {"name": "Sample Dividend Basket", "weight": 0.20, "asset_type": "stock", "industry": "dividend", "region": "CN"}
+      ],
+      "SYNLED002": [
+        {"name": "Sample Balanced Equity Sleeve", "weight": 0.35, "asset_type": "stock", "industry": "broad_market", "region": "CN"},
+        {"name": "Sample Aggregate Bond Sleeve", "weight": 0.45, "asset_type": "bond", "industry": "aggregate_bond", "region": "CN"}
+      ]
+    },
+    "nav_history": {
+      "SYNLED001": [
+        {"date": "2025-09-30", "nav": 1.000},
+        {"date": "2025-12-31", "nav": 1.120},
+        {"date": "2026-02-28", "nav": 1.160},
+        {"date": "2026-03-31", "nav": 1.180}
+      ],
+      "SYNLED002": [
+        {"date": "2025-09-30", "nav": 1.000},
+        {"date": "2025-12-31", "nav": 1.080},
+        {"date": "2026-02-28", "nav": 1.140},
+        {"date": "2026-03-31", "nav": 1.150}
+      ]
+    },
+    "dca_plans": {
+      "sample_ledger_monthly": {
+        "fund_code": "SYNLED001",
+        "monthly_amount": 1500.0,
+        "schedule": "monthly"
+      }
+    },
+    "fee_schedules": {
+      "SYNLED001": {"management_fee": 0.010, "custody_fee": 0.002, "sales_fee": 0.001, "redemption_fee": 0.004, "total_expense_ratio": 0.013},
+      "SYNLED002": {"management_fee": 0.009, "custody_fee": 0.002, "sales_fee": 0.001, "redemption_fee": 0.003, "total_expense_ratio": 0.012}
+    },
+    "redemption_rules": {
+      "SYNLED001": {"holding_period_days": 7, "redemption_fee_pct": 0.004, "liquidity_note": "Sample T+2 redemption note.", "suspended": false},
+      "SYNLED002": {"holding_period_days": 7, "redemption_fee_pct": 0.003, "liquidity_note": "Sample T+2 redemption note.", "suspended": false}
+    },
+    "report_options": {
+      "minimal_report_mode": false,
+      "audience": "ledger_derived_snapshot_review",
+      "currency": "CNY"
+    }
+  }
+}

@@ -1,0 +1,224 @@
+{
+  "payload": {
+    "sample_data_notice": "Fake/sample data only. Synthetic QDII, benchmark, NAV, and holding data; not live S&P 500, Nasdaq, or personal portfolio data.",
+    "as_of_date": "2026-03-31",
+    "portfolio": {
+      "as_of_date": "2026-03-31",
+      "total_value": 180000.0,
+      "cash_available": 10000.0,
+      "positions": [
+        {
+          "fund_code": "SYNQD001",
+          "fund_name": "Sample QDII S&P 500 Index Fund",
+          "current_value": 60000.0,
+          "total_cost": 56000.0,
+          "shares": 50000.0,
+          "current_nav": 1.200,
+          "target_weight": 0.30,
+          "tags": ["qdii", "us_equity", "sp500_style"]
+        },
+        {
+          "fund_code": "SYNQD002",
+          "fund_name": "Sample Nasdaq Growth Index Fund",
+          "current_value": 50000.0,
+          "total_cost": 52000.0,
+          "shares": 41666.6667,
+          "current_nav": 1.200,
+          "target_weight": 0.25,
+          "tags": ["qdii", "us_equity", "nasdaq_style"]
+        },
+        {
+          "fund_code": "SYNQD003",
+          "fund_name": "Sample Global AI Leaders Fund",
+          "current_value": 45000.0,
+          "total_cost": 42000.0,
+          "shares": 36000.0,
+          "current_nav": 1.250,
+          "target_weight": 0.20,
+          "tags": ["qdii", "ai_theme", "global_equity"]
+        },
+        {
+          "fund_code": "SYNQD004",
+          "fund_name": "Sample China Bond Buffer Fund",
+          "current_value": 15000.0,
+          "total_cost": 15000.0,
+          "shares": 15000.0,
+          "current_nav": 1.000,
+          "target_weight": 0.15,
+          "tags": ["cn_bond", "buffer"]
+        }
+      ]
+    },
+    "transactions": [
+      {"action": "BUY", "fund_code": "SYNQD001", "date": "2025-08-01", "amount": 56000.0, "shares": 50000.0, "nav": 1.120},
+      {"action": "BUY", "fund_code": "SYNQD002", "date": "2025-09-15", "amount": 52000.0, "shares": 41666.6667, "nav": 1.248},
+      {"action": "BUY", "fund_code": "SYNQD003", "date": "2025-11-20", "amount": 42000.0, "shares": 36000.0, "nav": 1.167},
+      {"action": "BUY", "fund_code": "SYNQD004", "date": "2025-12-05", "amount": 15000.0, "shares": 15000.0, "nav": 1.000}
+    ],
+    "current_nav": {
+      "SYNQD001": 1.200,
+      "SYNQD002": 1.200,
+      "SYNQD003": 1.250,
+      "SYNQD004": 1.000
+    },
+    "risk_profile": {
+      "risk_level": "moderate",
+      "max_single_fund_weight": 0.38,
+      "max_theme_weight": 0.55,
+      "max_industry_weight": 0.40,
+      "max_trade_pct": 0.10,
+      "liquidity_reserve_pct": 0.08,
+      "short_term_trade_budget_pct": 0.08
+    },
+    "constraints": {
+      "max_buy_amount": 12000.0,
+      "max_sell_amount": 15000.0,
+      "min_trade_amount": 1000.0,
+      "forbidden_actions": [],
+      "region_caps": {"US": 0.60, "CN": 0.40},
+      "theme_caps": {"ai_theme": 0.35, "us_large_cap_growth": 0.50},
+      "notes": [
+        "Sample host-supplied caps are informational unless the runtime consumes them.",
+        "Overlap review uses synthetic holdings only."
+      ]
+    },
+    "fund_profiles": {
+      "SYNQD001": {
+        "fund_code": "SYNQD001",
+        "name": "Sample QDII S&P 500 Index Fund",
+        "sample_identifier": true,
+        "fund_type": "qdii_index",
+        "region": "US",
+        "theme": "us_large_cap",
+        "manager": "Sample QDII Team A",
+        "benchmark": "Synthetic S&P 500 Benchmark"
+      },
+      "SYNQD002": {
+        "fund_code": "SYNQD002",
+        "name": "Sample Nasdaq Growth Index Fund",
+        "sample_identifier": true,
+        "fund_type": "qdii_index",
+        "region": "US",
+        "theme": "us_growth",
+        "manager": "Sample QDII Team B",
+        "benchmark": "Synthetic Nasdaq 100 Benchmark"
+      },
+      "SYNQD003": {
+        "fund_code": "SYNQD003",
+        "name": "Sample Global AI Leaders Fund",
+        "sample_identifier": true,
+        "fund_type": "qdii_active",
+        "region": "Global",
+        "theme": "ai",
+        "manager": "Sample Global Equity Team",
+        "benchmark": "Synthetic Global AI Benchmark"
+      },
+      "SYNQD004": {
+        "fund_code": "SYNQD004",
+        "name": "Sample China Bond Buffer Fund",
+        "sample_identifier": true,
+        "fund_type": "bond",
+        "region": "CN",
+        "theme": "income",
+        "manager": "Sample Bond Team",
+        "benchmark": "Synthetic CN Bond Benchmark"
+      }
+    },
+    "holdings": {
+      "SYNQD001": [
+        {"name": "Sample MegaCap Cloud A", "weight": 0.075, "asset_type": "stock", "industry": "cloud_platform", "region": "US"},
+        {"name": "Sample AI Chip B", "weight": 0.055, "asset_type": "stock", "industry": "ai_semiconductor", "region": "US"},
+        {"name": "Sample Consumer Platform C", "weight": 0.045, "asset_type": "stock", "industry": "internet_platform", "region": "US"}
+      ],
+      "SYNQD002": [
+        {"name": "Sample MegaCap Cloud A", "weight": 0.105, "asset_type": "stock", "industry": "cloud_platform", "region": "US"},
+        {"name": "Sample AI Chip B", "weight": 0.085, "asset_type": "stock", "industry": "ai_semiconductor", "region": "US"},
+        {"name": "Sample Software D", "weight": 0.060, "asset_type": "stock", "industry": "software", "region": "US"}
+      ],
+      "SYNQD003": [
+        {"name": "Sample AI Chip B", "weight": 0.120, "asset_type": "stock", "industry": "ai_semiconductor", "region": "US"},
+        {"name": "Sample AI Cloud E", "weight": 0.090, "asset_type": "stock", "industry": "cloud_platform", "region": "US"},
+        {"name": "Sample Robotics F", "weight": 0.060, "asset_type": "stock", "industry": "automation", "region": "JP"}
+      ],
+      "SYNQD004": [
+        {"name": "Sample Policy Bank 2030", "weight": 0.35, "asset_type": "bond", "industry": "policy_bank", "region": "CN"},
+        {"name": "Sample Treasury 2028", "weight": 0.30, "asset_type": "bond", "industry": "government", "region": "CN"}
+      ]
+    },
+    "nav_history": {
+      "SYNQD001": [
+        {"date": "2025-06-30", "nav": 1.000},
+        {"date": "2025-09-30", "nav": 1.080},
+        {"date": "2025-12-31", "nav": 1.150},
+        {"date": "2026-03-31", "nav": 1.200}
+      ],
+      "SYNQD002": [
+        {"date": "2025-06-30", "nav": 1.000},
+        {"date": "2025-09-30", "nav": 1.120},
+        {"date": "2025-12-31", "nav": 1.260},
+        {"date": "2026-03-31", "nav": 1.200}
+      ],
+      "SYNQD003": [
+        {"date": "2025-06-30", "nav": 1.000},
+        {"date": "2025-09-30", "nav": 1.050},
+        {"date": "2025-12-31", "nav": 1.180},
+        {"date": "2026-03-31", "nav": 1.250}
+      ],
+      "SYNQD004": [
+        {"date": "2025-06-30", "nav": 0.990},
+        {"date": "2025-09-30", "nav": 0.995},
+        {"date": "2025-12-31", "nav": 0.998},
+        {"date": "2026-03-31", "nav": 1.000}
+      ]
+    },
+    "benchmarks": {
+      "SYNQD001": "Synthetic S&P 500 Benchmark",
+      "SYNQD002": "Synthetic Nasdaq 100 Benchmark",
+      "SYNQD003": "Synthetic Global AI Benchmark",
+      "SYNQD004": "Synthetic CN Bond Benchmark"
+    },
+    "benchmark_history": {
+      "synthetic_sp500": [
+        {"date": "2025-06-30", "value": 1000.0},
+        {"date": "2025-09-30", "value": 1080.0},
+        {"date": "2025-12-31", "value": 1140.0},
+        {"date": "2026-03-31", "value": 1180.0}
+      ],
+      "synthetic_nasdaq100": [
+        {"date": "2025-06-30", "value": 1000.0},
+        {"date": "2025-09-30", "value": 1120.0},
+        {"date": "2025-12-31", "value": 1260.0},
+        {"date": "2026-03-31", "value": 1195.0}
+      ]
+    },
+    "factor_exposures": {
+      "growth": {"SYNQD001": 0.55, "SYNQD002": 0.72, "SYNQD003": 0.68, "SYNQD004": 0.05},
+      "usd_equity": {"SYNQD001": 0.90, "SYNQD002": 0.95, "SYNQD003": 0.70, "SYNQD004": 0.0},
+      "ai_theme": {"SYNQD001": 0.25, "SYNQD002": 0.38, "SYNQD003": 0.80, "SYNQD004": 0.0}
+    },
+    "dca_plans": {
+      "sample_global_monthly": {
+        "fund_code": "SYNQD001",
+        "monthly_amount": 1500.0,
+        "schedule": "monthly"
+      }
+    },
+    "fee_schedules": {
+      "SYNQD001": {"management_fee": 0.008, "custody_fee": 0.002, "sales_fee": 0.001, "redemption_fee": 0.005, "total_expense_ratio": 0.011},
+      "SYNQD002": {"management_fee": 0.009, "custody_fee": 0.002, "sales_fee": 0.001, "redemption_fee": 0.005, "total_expense_ratio": 0.012},
+      "SYNQD003": {"management_fee": 0.015, "custody_fee": 0.002, "sales_fee": 0.001, "redemption_fee": 0.006, "total_expense_ratio": 0.018},
+      "SYNQD004": {"management_fee": 0.005, "custody_fee": 0.001, "sales_fee": 0.0, "redemption_fee": 0.001, "total_expense_ratio": 0.006}
+    },
+    "redemption_rules": {
+      "SYNQD001": {"holding_period_days": 7, "redemption_fee_pct": 0.005, "liquidity_note": "Sample QDII T+5 liquidity note.", "suspended": false},
+      "SYNQD002": {"holding_period_days": 7, "redemption_fee_pct": 0.005, "liquidity_note": "Sample QDII T+5 liquidity note.", "suspended": false},
+      "SYNQD003": {"holding_period_days": 30, "redemption_fee_pct": 0.006, "liquidity_note": "Sample active QDII liquidity note.", "suspended": false},
+      "SYNQD004": {"holding_period_days": 1, "redemption_fee_pct": 0.001, "liquidity_note": "Sample bond fund liquidity note.", "suspended": false}
+    },
+    "report_options": {
+      "minimal_report_mode": false,
+      "audience": "personal_overlap_review",
+      "currency": "CNY"
+    }
+  }
+}

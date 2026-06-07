@@ -1,0 +1,232 @@
+{
+  "payload": {
+    "sample_data_notice": "Fake/sample data only. Synthetic identifiers, NAV, holdings, fees, and transactions; not live market data or real personal holdings.",
+    "as_of_date": "2026-03-31",
+    "portfolio": {
+      "as_of_date": "2026-03-31",
+      "total_value": 120000.0,
+      "cash_available": 8000.0,
+      "positions": [
+        {
+          "fund_code": "SYN7D001",
+          "fund_name": "Sample Recent Growth Mix",
+          "current_value": 42000.0,
+          "total_cost": 40000.0,
+          "shares": 39024.3902,
+          "current_nav": 1.076,
+          "target_weight": 0.30,
+          "tags": ["cn_equity", "recent_buy", "redemption_fee_window"]
+        },
+        {
+          "fund_code": "SYN7D002",
+          "fund_name": "Sample Long Hold Income Bond",
+          "current_value": 50000.0,
+          "total_cost": 48000.0,
+          "shares": 46511.6279,
+          "current_nav": 1.075,
+          "target_weight": 0.42,
+          "tags": ["cn_bond", "income", "longer_holding"]
+        },
+        {
+          "fund_code": "SYN7D003",
+          "fund_name": "Sample Cash Plus Fund",
+          "current_value": 20000.0,
+          "total_cost": 20000.0,
+          "shares": 19801.9802,
+          "current_nav": 1.010,
+          "target_weight": 0.18,
+          "tags": ["cash_management", "liquidity"]
+        }
+      ]
+    },
+    "transactions": [
+      {
+        "action": "BUY",
+        "fund_code": "SYN7D001",
+        "date": "2026-03-28",
+        "amount": 20000.0,
+        "shares": 18587.3606,
+        "nav": 1.076,
+        "note": "Sample buy three calendar days before as_of_date."
+      },
+      {
+        "action": "BUY",
+        "fund_code": "SYN7D001",
+        "date": "2026-01-15",
+        "amount": 20000.0,
+        "shares": 20408.1633,
+        "nav": 0.980
+      },
+      {
+        "action": "BUY",
+        "fund_code": "SYN7D002",
+        "date": "2025-11-01",
+        "amount": 48000.0,
+        "shares": 48000.0,
+        "nav": 1.000
+      },
+      {
+        "action": "BUY",
+        "fund_code": "SYN7D003",
+        "date": "2025-12-15",
+        "amount": 20000.0,
+        "shares": 20000.0,
+        "nav": 1.000
+      }
+    ],
+    "current_nav": {
+      "SYN7D001": 1.076,
+      "SYN7D002": 1.075,
+      "SYN7D003": 1.010
+    },
+    "risk_profile": {
+      "risk_level": "moderate",
+      "max_single_fund_weight": 0.45,
+      "max_theme_weight": 0.55,
+      "max_industry_weight": 0.50,
+      "max_trade_pct": 0.12,
+      "liquidity_reserve_pct": 0.08,
+      "short_term_trade_budget_pct": 0.10
+    },
+    "constraints": {
+      "max_buy_amount": 15000.0,
+      "max_sell_amount": 12000.0,
+      "min_trade_amount": 1000.0,
+      "forbidden_actions": [],
+      "notes": [
+        "Sample account prefers preserving at least 8% cash.",
+        "Host supplies redemption fee and holding-period data."
+      ]
+    },
+    "fund_profiles": {
+      "SYN7D001": {
+        "fund_code": "SYN7D001",
+        "name": "Sample Recent Growth Mix",
+        "sample_identifier": true,
+        "fund_type": "mixed_equity",
+        "region": "CN",
+        "theme": "growth",
+        "manager": "Sample Manager A",
+        "benchmark": "Synthetic CN Growth Blend"
+      },
+      "SYN7D002": {
+        "fund_code": "SYN7D002",
+        "name": "Sample Long Hold Income Bond",
+        "sample_identifier": true,
+        "fund_type": "bond",
+        "region": "CN",
+        "theme": "income",
+        "manager": "Sample Manager B",
+        "benchmark": "Synthetic CN Aggregate Bond"
+      },
+      "SYN7D003": {
+        "fund_code": "SYN7D003",
+        "name": "Sample Cash Plus Fund",
+        "sample_identifier": true,
+        "fund_type": "cash_management",
+        "region": "CN",
+        "theme": "liquidity",
+        "manager": "Sample Manager C",
+        "benchmark": "Synthetic Cash Plus"
+      }
+    },
+    "nav_history": {
+      "SYN7D001": [
+        {"date": "2025-10-31", "nav": 0.960},
+        {"date": "2025-12-31", "nav": 0.980},
+        {"date": "2026-01-31", "nav": 1.015},
+        {"date": "2026-02-28", "nav": 1.045},
+        {"date": "2026-03-28", "nav": 1.076},
+        {"date": "2026-03-31", "nav": 1.076}
+      ],
+      "SYN7D002": [
+        {"date": "2025-10-31", "nav": 1.000},
+        {"date": "2025-12-31", "nav": 1.025},
+        {"date": "2026-01-31", "nav": 1.048},
+        {"date": "2026-02-28", "nav": 1.065},
+        {"date": "2026-03-31", "nav": 1.075}
+      ],
+      "SYN7D003": [
+        {"date": "2025-10-31", "nav": 1.000},
+        {"date": "2025-12-31", "nav": 1.003},
+        {"date": "2026-01-31", "nav": 1.006},
+        {"date": "2026-02-28", "nav": 1.008},
+        {"date": "2026-03-31", "nav": 1.010}
+      ]
+    },
+    "holdings": {
+      "SYN7D001": [
+        {"name": "Sample Consumer A", "weight": 0.18, "asset_type": "stock", "industry": "consumer", "region": "CN"},
+        {"name": "Sample Industrial B", "weight": 0.15, "asset_type": "stock", "industry": "industrial", "region": "CN"},
+        {"name": "Sample Healthcare C", "weight": 0.12, "asset_type": "stock", "industry": "healthcare", "region": "CN"}
+      ],
+      "SYN7D002": [
+        {"name": "Sample Policy Bank 2029", "weight": 0.30, "asset_type": "bond", "industry": "policy_bank", "region": "CN"},
+        {"name": "Sample High Grade Credit", "weight": 0.22, "asset_type": "bond", "industry": "credit", "region": "CN"}
+      ],
+      "SYN7D003": [
+        {"name": "Sample Deposit Ladder", "weight": 0.40, "asset_type": "cash", "industry": "deposit", "region": "CN"},
+        {"name": "Sample Short Bill", "weight": 0.35, "asset_type": "bill", "industry": "money_market", "region": "CN"}
+      ]
+    },
+    "dca_plans": {
+      "sample_cash_buffer_plan": {
+        "fund_code": "SYN7D003",
+        "monthly_amount": 1000.0,
+        "schedule": "monthly",
+        "note": "Sample-only cash buffer contribution."
+      }
+    },
+    "fee_schedules": {
+      "SYN7D001": {
+        "management_fee": 0.012,
+        "custody_fee": 0.002,
+        "sales_fee": 0.001,
+        "redemption_fee": 0.015,
+        "total_expense_ratio": 0.015
+      },
+      "SYN7D002": {
+        "management_fee": 0.006,
+        "custody_fee": 0.001,
+        "sales_fee": 0.0,
+        "redemption_fee": 0.001,
+        "total_expense_ratio": 0.007
+      },
+      "SYN7D003": {
+        "management_fee": 0.003,
+        "custody_fee": 0.001,
+        "sales_fee": 0.0,
+        "redemption_fee": 0.0,
+        "total_expense_ratio": 0.004
+      }
+    },
+    "redemption_rules": {
+      "SYN7D001": {
+        "holding_period_days": 7,
+        "redemption_fee_pct": 0.015,
+        "redemption_fee_schedule": "sample schedule: <7d 1.5%, 7-30d 0.75%, >30d 0.25%",
+        "liquidity_note": "Sample T+2 redemption settlement. Recent buy is inside a 7-day sample fee window.",
+        "suspended": false
+      },
+      "SYN7D002": {
+        "holding_period_days": 30,
+        "redemption_fee_pct": 0.001,
+        "redemption_fee_schedule": "sample schedule: <30d 0.1%, >30d 0%",
+        "liquidity_note": "Sample holding is older than 30 days.",
+        "suspended": false
+      },
+      "SYN7D003": {
+        "holding_period_days": 1,
+        "redemption_fee_pct": 0.0,
+        "redemption_fee_schedule": "sample schedule: no redemption fee after confirmation",
+        "liquidity_note": "Sample cash management liquidity sleeve.",
+        "suspended": false
+      }
+    },
+    "report_options": {
+      "minimal_report_mode": false,
+      "audience": "personal_review",
+      "currency": "CNY"
+    }
+  }
+}
