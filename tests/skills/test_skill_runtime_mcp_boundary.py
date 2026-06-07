@@ -77,7 +77,7 @@ def test_fund_analysis_outputs_hard_evidence():
 
 
 def test_fund_analysis_does_not_import_network_or_llm():
-    imports = _imports_from(Path("src/skills_runtime/fund_analysis.py"))
+    imports = _imports_from_path(Path("src/skills_runtime/fund_analysis"))
     forbidden = {"requests", "httpx", "aiohttp", "openai", "anthropic", "langchain"}
 
     assert not (imports & forbidden)
@@ -142,4 +142,13 @@ def _imports_from(path: Path) -> set[str]:
             imports.update(alias.name for alias in node.names)
         elif isinstance(node, ast.ImportFrom) and node.module:
             imports.add(node.module)
+    return imports
+
+
+def _imports_from_path(path: Path) -> set[str]:
+    if path.is_file():
+        return _imports_from(path)
+    imports: set[str] = set()
+    for file_path in path.rglob("*.py"):
+        imports.update(_imports_from(file_path))
     return imports

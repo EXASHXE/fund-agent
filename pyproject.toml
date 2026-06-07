@@ -13,6 +13,7 @@ testpaths = [
     "tests/architecture",
     "tests/contracts",
     "tests/skillpack",
+    "tests/skills_runtime",
     "tests/skills",
     "tests/tools",
     "tests/integration",
