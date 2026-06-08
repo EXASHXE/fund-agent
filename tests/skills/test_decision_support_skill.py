@@ -99,7 +99,8 @@ def test_decision_support_downgrades_when_active_amount_is_unsafe():
 
 
 def test_decision_support_does_not_import_network_or_llm():
-    imports = _imports_from(Path("src/skills_runtime/decision_support.py"))
+    package_path = Path("src/skills_runtime/decision_support")
+    imports = _imports_from_package(package_path)
     forbidden = {
         "requests",
         "httpx",
@@ -161,4 +162,18 @@ def _imports_from(path: Path) -> set[str]:
             imports.update(alias.name for alias in node.names)
         elif isinstance(node, ast.ImportFrom) and node.module:
             imports.add(node.module)
+    return imports
+
+
+def _imports_from_package(package_path: Path) -> set[str]:
+    imports: set[str] = set()
+    for file_path in sorted(package_path.glob("*.py")):
+        if file_path.name.startswith("_"):
+            continue
+        tree = ast.parse(file_path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                imports.update(alias.name for alias in node.names)
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                imports.add(node.module)
     return imports
