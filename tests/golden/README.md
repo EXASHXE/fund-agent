@@ -18,10 +18,16 @@ claims, evidence values, related entities, confidence weights, warnings, errors,
 statuses, report sections, report quality gates, data completeness, analysis
 coverage, limitations, and Markdown headings intact.
 
+Decision_support golden snapshots live under `tests/golden/decision_support/`.
+They freeze externally visible `decision_support` behavior before internal
+refactors. Only `decision_support` may produce formal `Decision` and
+`ExecutionLedger` artifacts.
+
 Regenerate snapshots only after intentional review:
 
 ```bash
 python scripts/update_fund_analysis_golden.py
+python scripts/update_decision_support_golden.py
 ```
 
 Review any snapshot diff for behavior changes, accidental real data, credentials,

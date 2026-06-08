@@ -1,0 +1,94 @@
+{
+  "artifacts": {
+    "audit_trail": [
+      "Evidence items: 2",
+      "Critique status: PASS",
+      "Issues: 0",
+      "Execution amount: execution amount derived from portfolio risk constraints",
+      "Generated at: 2026-01-01T00:00:00"
+    ],
+    "decision": {
+      "action": "BUY",
+      "audit_trail": [
+        "Evidence items: 2",
+        "Critique status: PASS",
+        "Issues: 0",
+        "Execution amount: execution amount derived from portfolio risk constraints",
+        "Generated at: 2026-01-01T00:00:00"
+      ],
+      "created_at": "<normalized-timestamp>",
+      "decision_id": "<normalized-decision-id>",
+      "execution_amount": 10000.0,
+      "invalidating_conditions": [
+        "Evidence contradiction detected",
+        "Risk budget exceeded",
+        "Execution budget or liquidity constraint changes"
+      ],
+      "rationale_anchor": [
+        "ev-hard-positive",
+        "ev-hard-fundamentals"
+      ],
+      "risk_budget": 5000.0,
+      "time_horizon": "1 year",
+      "trigger_conditions": [
+        "Critique status must be PASS for BUY",
+        "Evidence direction consensus confirmed",
+        "execution amount derived from portfolio risk constraints"
+      ],
+      "version": "decision-contract.v2"
+    },
+    "decision_status": "BUY",
+    "execution_ledger": {
+      "decisions": [
+        {
+          "action": "BUY",
+          "audit_trail": [
+            "Evidence items: 2",
+            "Critique status: PASS",
+            "Issues: 0",
+            "Execution amount: execution amount derived from portfolio risk constraints",
+            "Generated at: 2026-01-01T00:00:00"
+          ],
+          "created_at": "<normalized-timestamp>",
+          "decision_id": "<normalized-decision-id>",
+          "evidence_ids": [
+            "ev-hard-positive",
+            "ev-hard-fundamentals"
+          ],
+          "execution_amount": 10000.0,
+          "invalidating_conditions": [
+            "Evidence contradiction detected",
+            "Risk budget exceeded",
+            "Execution budget or liquidity constraint changes"
+          ],
+          "rationale_anchor": [
+            "ev-hard-positive",
+            "ev-hard-fundamentals"
+          ],
+          "risk_budget": 5000.0,
+          "time_horizon": "1 year",
+          "trigger_conditions": [
+            "Critique status must be PASS for BUY",
+            "Evidence direction consensus confirmed",
+            "execution amount derived from portfolio risk constraints"
+          ],
+          "version": "decision-contract.v2"
+        }
+      ],
+      "generated_at": "<normalized-timestamp>",
+      "ledger_id": "<normalized-ledger-id>",
+      "version": "execution-ledger.v1"
+    }
+  },
+  "errors": [],
+  "evidence_items": [],
+  "metadata": {
+    "missing_mcp_capabilities": [],
+    "required_mcp_capabilities": []
+  },
+  "ok": true,
+  "skill_name": "decision_support",
+  "status": "OK",
+  "used_mcp_capabilities": [],
+  "warnings": []
+}

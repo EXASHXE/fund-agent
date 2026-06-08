@@ -62,3 +62,7 @@ shapes, see
 - [docs/contracts/fund-analysis-input-contract.v1.md](../contracts/fund-analysis-input-contract.v1.md)
 - [docs/contracts/fund-analysis-artifacts.v1.md](../contracts/fund-analysis-artifacts.v1.md)
 - [docs/contracts/report-output-contract.v1.md](../contracts/report-output-contract.v1.md)
+- [docs/contracts/decision-support-contract.v1.md](../contracts/decision-support-contract.v1.md)
+- [skillpack/decision-contracts.yaml](../../skillpack/decision-contracts.yaml)
+- [examples/decision_support/README.md](../../examples/decision_support/README.md)
+- [scripts/update_decision_support_golden.py](../../scripts/update_decision_support_golden.py)

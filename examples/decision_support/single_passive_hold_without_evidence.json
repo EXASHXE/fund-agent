@@ -1,0 +1,41 @@
+{
+  "payload": {
+    "requested_action": "HOLD",
+    "deterministic": true,
+    "task_id": "fixture-single-passive-hold",
+    "step_id": "ds-fixture-hold",
+    "portfolio_context": {
+      "total_value": 100000.0,
+      "cash_available": 20000.0
+    },
+    "risk_profile": {
+      "risk_level": "moderate",
+      "max_trade_pct": 0.1
+    },
+    "constraints": {
+      "min_trade_amount": 100.0,
+      "forbidden_actions": []
+    },
+    "risk_budget": {
+      "risk_budget": 3000.0
+    },
+    "time_horizon": "1 year",
+    "objective": "evaluate hold recommendation without evidence",
+    "why_not_buy": "insufficient positive evidence available",
+    "why_not_sell": "no negative signals to act on",
+    "missing_evidence": "no evidence items in evidence graph",
+    "trigger_to_change": "new positive evidence becomes available",
+    "what_invalidates": "any negative evidence contradicts current assessment",
+    "evidence_graph": {
+      "items": {},
+      "edges": [],
+      "stats": {
+        "total": 0,
+        "hard": 0,
+        "soft": 0,
+        "hybrid": 0,
+        "conflicts": 0
+      }
+    }
+  }
+}

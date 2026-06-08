@@ -1,0 +1,86 @@
+{
+  "payload": {
+    "deterministic": true,
+    "task_id": "fixture-trade-plan-forbidden",
+    "step_id": "ds-fixture-trade-plan-forbidden",
+    "time_horizon": "medium_term",
+    "objective": "validate trade plan with forbidden action",
+    "portfolio_context": {
+      "total_value": 100000.0,
+      "cash_available": 20000.0
+    },
+    "risk_profile": {
+      "risk_level": "moderate",
+      "max_trade_pct": 0.2,
+      "liquidity_reserve_pct": 0.05
+    },
+    "constraints": {
+      "min_trade_amount": 100.0,
+      "forbidden_actions": ["SELL"]
+    },
+    "selected_trade_ids": ["trade-sell-forbidden"],
+    "trade_plan": {
+      "suggested_trade_plan": [
+        {
+          "trade_id": "trade-sell-forbidden",
+          "fund_code": "F001",
+          "fund_name": "Fund One (sell forbidden)",
+          "action": "SELL",
+          "amount": 5000.0,
+          "current_value": 30000.0,
+          "rationale": "Fund has underperformed, sell recommended",
+          "evidence_refs": ["ev-f001-negative"],
+          "priority": 1
+        },
+        {
+          "trade_id": "trade-buy-ok",
+          "fund_code": "F002",
+          "fund_name": "Fund Two (allowed buy)",
+          "action": "BUY",
+          "amount": 5000.0,
+          "rationale": "Positive signal for F002",
+          "evidence_refs": ["ev-f002-positive"],
+          "priority": 2
+        }
+      ]
+    },
+    "evidence_graph": {
+      "items": {
+        "ev-f001-negative": {
+          "evidence_id": "ev-f001-negative",
+          "evidence_type": "HardEvidence",
+          "source_type": "quant_tool",
+          "timestamp": "2026-01-01T00:00:00",
+          "related_entities": ["fund:F001"],
+          "claim": "Negative signal detected for F001",
+          "value": {"score": -1.0},
+          "confidence_weight": 1.0,
+          "direction": "negative",
+          "version": "evidence-contract.v2",
+          "provenance": {"tool": "quant_tool"}
+        },
+        "ev-f002-positive": {
+          "evidence_id": "ev-f002-positive",
+          "evidence_type": "HardEvidence",
+          "source_type": "quant_tool",
+          "timestamp": "2026-01-01T00:00:00",
+          "related_entities": ["fund:F002"],
+          "claim": "Positive signal detected for F002",
+          "value": {"score": 1.0},
+          "confidence_weight": 1.0,
+          "direction": "positive",
+          "version": "evidence-contract.v2",
+          "provenance": {"tool": "quant_tool"}
+        }
+      },
+      "edges": [],
+      "stats": {
+        "total": 2,
+        "hard": 2,
+        "soft": 0,
+        "hybrid": 0,
+        "conflicts": 0
+      }
+    }
+  }
+}

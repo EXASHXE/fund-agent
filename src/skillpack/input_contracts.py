@@ -14,6 +14,7 @@ from typing import Any
 import yaml
 
 from src.skillpack.artifact_contracts import get_skill_artifact_contract
+from src.skillpack.decision_contracts import get_decision_contract
 from src.skillpack.input_contract_catalog import get_skill_input_contract
 from src.skillpack.loader import load_skillpack_manifest
 from src.skillpack.manifest import SkillSpec
@@ -150,21 +151,33 @@ def output_schema_for_skill(
             ],
         }
     elif spec.name == "decision_support":
+        decision_contract = get_decision_contract(
+            spec.name,
+            Path(manifest_path).parent / "decision-contracts.yaml",
+        )
+        known_keys: list[dict[str, Any]] = []
+        for artifact in decision_contract.get("artifact_keys") or []:
+            if isinstance(artifact, dict):
+                known_keys.append({
+                    "key": str(artifact.get("key", "")),
+                    "required": bool(artifact.get("required", False)),
+                    "type": str(artifact.get("type", "object")),
+                    "produced_when": str(artifact.get("produced_when", "")),
+                    "description": str(artifact.get("description", "")),
+                })
         schema["artifacts"] = {
-            "known_keys": [
-                {"key": "decision", "required": False},
-                {"key": "decisions", "required": False},
-                {"key": "execution_ledger", "required": False},
-                {"key": "decision_status", "required": False},
-                {"key": "decision_count", "required": False},
-                {"key": "audit_trail", "required": False},
-            ],
+            "known_keys": known_keys,
+            "formal_outputs": list(decision_contract.get("formal_outputs") or []),
             "notes": [
                 "Only decision_support may produce formal Decision and ExecutionLedger outputs.",
+                f"Known artifact keys read from skillpack/decision-contracts.yaml.",
                 "Active actions require evidence anchors; passive actions may explain insufficient evidence or blockage.",
             ],
-            "formal_outputs": ["Decision", "ExecutionLedger"],
         }
+        schema["active_actions"] = list(decision_contract.get("active_actions") or [])
+        schema["passive_actions"] = list(decision_contract.get("passive_actions") or [])
+        schema["input_modes"] = list(decision_contract.get("input_modes") or [])
+        schema["status_values"] = list(decision_contract.get("status_values") or STATUS_VALUES)
         schema["evidence_items"] = {
             "produces": [],
             "notes": [

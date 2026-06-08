@@ -1,0 +1,88 @@
+{
+  "payload": {
+    "deterministic": true,
+    "task_id": "fixture-trade-plan-capped",
+    "step_id": "ds-fixture-trade-plan-capped",
+    "time_horizon": "medium_term",
+    "objective": "validate trade plan with portfolio caps",
+    "portfolio_context": {
+      "total_value": 100000.0,
+      "cash_available": 30000.0
+    },
+    "risk_profile": {
+      "risk_level": "moderate",
+      "max_trade_pct": 0.1,
+      "liquidity_reserve_pct": 0.01
+    },
+    "constraints": {
+      "max_buy_amount": 5000.0,
+      "min_trade_amount": 100.0,
+      "forbidden_actions": []
+    },
+    "selected_trade_ids": ["trade-buy-capped"],
+    "trade_plan": {
+      "suggested_trade_plan": [
+        {
+          "trade_id": "trade-buy-capped",
+          "fund_code": "F001",
+          "fund_name": "Fund One (capped)",
+          "action": "BUY",
+          "amount": 10000.0,
+          "requested_amount": 10000.0,
+          "rationale": "Positive signal, but amount should be capped by cash and max_buy_amount",
+          "market_scenario": "moderate bull market",
+          "evidence_refs": ["ev-f001-positive"],
+          "priority": 1
+        },
+        {
+          "trade_id": "trade-hold-other",
+          "fund_code": "F002",
+          "fund_name": "Fund Two (not selected)",
+          "action": "HOLD",
+          "amount": 0.0,
+          "rationale": "maintain current position",
+          "evidence_refs": [],
+          "priority": 2
+        }
+      ]
+    },
+    "evidence_graph": {
+      "items": {
+        "ev-f001-positive": {
+          "evidence_id": "ev-f001-positive",
+          "evidence_type": "HardEvidence",
+          "source_type": "quant_tool",
+          "timestamp": "2026-01-01T00:00:00",
+          "related_entities": ["fund:F001"],
+          "claim": "Positive signal detected for F001",
+          "value": {"score": 1.0},
+          "confidence_weight": 1.0,
+          "direction": "positive",
+          "version": "evidence-contract.v2",
+          "provenance": {"tool": "quant_tool"}
+        },
+        "ev-market-positive": {
+          "evidence_id": "ev-market-positive",
+          "evidence_type": "HardEvidence",
+          "source_type": "quant_tool",
+          "timestamp": "2026-01-01T00:00:00",
+          "related_entities": ["fund:F001"],
+          "claim": "Market conditions are favorable",
+          "value": {"market_score": 0.8},
+          "confidence_weight": 1.0,
+          "direction": "positive",
+          "version": "evidence-contract.v2",
+          "provenance": {"tool": "quant_tool"}
+        }
+      },
+      "edges": [],
+      "stats": {
+        "total": 2,
+        "hard": 2,
+        "soft": 0,
+        "hybrid": 0,
+        "conflicts": 0
+      }
+    }
+  }
+}

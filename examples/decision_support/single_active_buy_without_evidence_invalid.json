@@ -1,0 +1,37 @@
+{
+  "payload": {
+    "requested_action": "BUY",
+    "target_trade_amount": 10000.0,
+    "time_horizon": "1 year",
+    "deterministic": true,
+    "task_id": "fixture-single-active-buy-no-evidence",
+    "step_id": "ds-fixture-buy-invalid",
+    "portfolio_context": {
+      "total_value": 100000.0,
+      "cash_available": 50000.0
+    },
+    "risk_profile": {
+      "risk_level": "moderate",
+      "max_trade_pct": 0.1
+    },
+    "constraints": {
+      "min_trade_amount": 100.0,
+      "forbidden_actions": []
+    },
+    "risk_budget": {
+      "risk_budget": 5000.0
+    },
+    "objective": "evaluate buy decision for fund without evidence",
+    "evidence_graph": {
+      "items": {},
+      "edges": [],
+      "stats": {
+        "total": 0,
+        "hard": 0,
+        "soft": 0,
+        "hybrid": 0,
+        "conflicts": 0
+      }
+    }
+  }
+}

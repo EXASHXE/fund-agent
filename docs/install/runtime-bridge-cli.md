@@ -645,5 +645,11 @@ python scripts/run_skill.py --skill fund_analysis --input examples/runtime_bridg
 python scripts/run_skill.py --skill fund_analysis --output-schema --pretty
 python scripts/run_skill.py --skill fund_analysis --input examples/runtime_bridge_fund_analysis_input.json --pretty
 python scripts/run_skill.py --skill fund_analysis --input examples/runtime_bridge_personal_report_quality_input.json --emit-report markdown --output /tmp/report.md
-python scripts/run_skill.py --skill decision_support --input examples/runtime_bridge_decision_support_input.json --pretty
+  python scripts/run_skill.py --skill decision_support --input examples/runtime_bridge_decision_support_input.json --pretty
 ```
+
+For more decision_support fixtures and the formal decision contract, see
+[`examples/decision_support/README.md`](../../examples/decision_support/README.md),
+[`docs/contracts/decision-support-contract.v1.md`](../contracts/decision-support-contract.v1.md),
+and
+[`skillpack/decision-contracts.yaml`](../../skillpack/decision-contracts.yaml).

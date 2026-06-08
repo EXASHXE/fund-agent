@@ -1,0 +1,89 @@
+{
+  "artifacts": {
+    "audit_trail": [
+      "Insufficient evidence: no evidence items available",
+      "Missing evidence: no evidence items in evidence graph",
+      "Critique status: EXHAUSTED",
+      "Blocked by critic: EXHAUSTED",
+      "Issues: 1",
+      "Execution amount: passive action does not require execution amount",
+      "Generated at: 2026-01-01T00:00:00"
+    ],
+    "decision": {
+      "action": "WAIT",
+      "audit_trail": [
+        "Insufficient evidence: no evidence items available",
+        "Missing evidence: no evidence items in evidence graph",
+        "Critique status: EXHAUSTED",
+        "Blocked by critic: EXHAUSTED",
+        "Issues: 1",
+        "Execution amount: passive action does not require execution amount",
+        "Generated at: 2026-01-01T00:00:00"
+      ],
+      "created_at": "<normalized-timestamp>",
+      "decision_id": "<normalized-decision-id>",
+      "execution_amount": 0.0,
+      "invalidating_conditions": [
+        "Evidence contradiction detected",
+        "Risk budget exceeded",
+        "What invalidates: any negative evidence contradicts current assessment",
+        "Market regime change"
+      ],
+      "rationale_anchor": [],
+      "risk_budget": 3000.0,
+      "time_horizon": "1 year",
+      "trigger_conditions": [
+        "Insufficient evidence to support an active decision"
+      ],
+      "version": "decision-contract.v2"
+    },
+    "decision_status": "WAIT",
+    "execution_ledger": {
+      "decisions": [
+        {
+          "action": "WAIT",
+          "audit_trail": [
+            "Insufficient evidence: no evidence items available",
+            "Missing evidence: no evidence items in evidence graph",
+            "Critique status: EXHAUSTED",
+            "Blocked by critic: EXHAUSTED",
+            "Issues: 1",
+            "Execution amount: passive action does not require execution amount",
+            "Generated at: 2026-01-01T00:00:00"
+          ],
+          "created_at": "<normalized-timestamp>",
+          "decision_id": "<normalized-decision-id>",
+          "evidence_ids": [],
+          "execution_amount": 0.0,
+          "invalidating_conditions": [
+            "Evidence contradiction detected",
+            "Risk budget exceeded",
+            "What invalidates: any negative evidence contradicts current assessment",
+            "Market regime change"
+          ],
+          "rationale_anchor": [],
+          "risk_budget": 3000.0,
+          "time_horizon": "1 year",
+          "trigger_conditions": [
+            "Insufficient evidence to support an active decision"
+          ],
+          "version": "decision-contract.v2"
+        }
+      ],
+      "generated_at": "<normalized-timestamp>",
+      "ledger_id": "<normalized-ledger-id>",
+      "version": "execution-ledger.v1"
+    }
+  },
+  "errors": [],
+  "evidence_items": [],
+  "metadata": {
+    "missing_mcp_capabilities": [],
+    "required_mcp_capabilities": []
+  },
+  "ok": true,
+  "skill_name": "decision_support",
+  "status": "OK",
+  "used_mcp_capabilities": [],
+  "warnings": []
+}

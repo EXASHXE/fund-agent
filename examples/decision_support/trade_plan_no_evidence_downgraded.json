@@ -1,0 +1,50 @@
+{
+  "payload": {
+    "deterministic": true,
+    "task_id": "fixture-trade-plan-no-evidence",
+    "step_id": "ds-fixture-trade-plan-no-evidence",
+    "time_horizon": "medium_term",
+    "objective": "validate trade plan downgrade when no evidence",
+    "portfolio_context": {
+      "total_value": 100000.0,
+      "cash_available": 20000.0
+    },
+    "risk_profile": {
+      "risk_level": "moderate",
+      "max_trade_pct": 0.2,
+      "liquidity_reserve_pct": 0.05
+    },
+    "constraints": {
+      "min_trade_amount": 100.0,
+      "forbidden_actions": []
+    },
+    "selected_trade_ids": ["trade-buy-no-evidence"],
+    "trade_plan": {
+      "suggested_trade_plan": [
+        {
+          "trade_id": "trade-buy-no-evidence",
+          "fund_code": "F001",
+          "fund_name": "Fund One (no evidence)",
+          "action": "BUY",
+          "amount": 5000.0,
+          "rationale": "Buy signal but no evidence in graph",
+          "market_scenario": "neutral market",
+          "evidence_refs": [],
+          "risk_flags_refs": [],
+          "priority": 1
+        }
+      ]
+    },
+    "evidence_graph": {
+      "items": {},
+      "edges": [],
+      "stats": {
+        "total": 0,
+        "hard": 0,
+        "soft": 0,
+        "hybrid": 0,
+        "conflicts": 0
+      }
+    }
+  }
+}

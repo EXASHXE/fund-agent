@@ -59,6 +59,10 @@ For fake/sample scenario inputs that validate through the same bridge path, see
 [`examples/scenarios/README.md`](../../examples/scenarios/README.md).
 For regression checks around externally visible `fund_analysis` output, see
 [`tests/golden/README.md`](../../tests/golden/README.md).
+For decision_support formal decision contracts and fixtures, see
+[`docs/contracts/decision-support-contract.v1.md`](../../docs/contracts/decision-support-contract.v1.md)
+and
+[`examples/decision_support/README.md`](../../examples/decision_support/README.md).
 
 ## Normal JSON Execution
 

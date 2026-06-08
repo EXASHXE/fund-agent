@@ -10,6 +10,12 @@ For the corresponding host-facing input contract, see
 [`fund-analysis-input-contract.v1.md`](./fund-analysis-input-contract.v1.md)
 and `skillpack/input-contracts.yaml`.
 
+For decision_support formal decision contracts and fixtures, see
+[`decision-support-contract.v1.md`](./decision-support-contract.v1.md),
+[`skillpack/decision-contracts.yaml`](../../skillpack/decision-contracts.yaml),
+and
+[`examples/decision_support/README.md`](../../examples/decision_support/README.md).
+
 This document defines the stable host-facing artifact contract for
 `FundAnalysisSkill`.
 

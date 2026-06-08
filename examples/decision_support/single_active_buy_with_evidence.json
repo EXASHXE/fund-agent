@@ -1,0 +1,66 @@
+{
+  "payload": {
+    "requested_action": "BUY",
+    "target_trade_amount": 10000.0,
+    "time_horizon": "1 year",
+    "deterministic": true,
+    "task_id": "fixture-single-active-buy",
+    "step_id": "ds-fixture-buy",
+    "portfolio_context": {
+      "total_value": 100000.0,
+      "cash_available": 50000.0
+    },
+    "risk_profile": {
+      "risk_level": "moderate",
+      "max_trade_pct": 0.1,
+      "liquidity_reserve_pct": 0.1
+    },
+    "constraints": {
+      "min_trade_amount": 100.0,
+      "forbidden_actions": []
+    },
+    "risk_budget": {
+      "risk_budget": 5000.0
+    },
+    "objective": "evaluate buy decision for fund",
+    "critique_status": "PASS",
+    "evidence_graph": {
+      "items": {
+        "ev-hard-positive": {
+          "evidence_id": "ev-hard-positive",
+          "evidence_type": "HardEvidence",
+          "source_type": "quant_tool",
+          "timestamp": "2026-01-01T00:00:00",
+          "related_entities": ["fund:F001"],
+          "claim": "Positive risk-adjusted return signal detected",
+          "value": {"score": 1.0, "metric": "sortino", "result": 2.5},
+          "confidence_weight": 1.0,
+          "direction": "positive",
+          "version": "evidence-contract.v2",
+          "provenance": {"tool": "quant_tool"}
+        },
+        "ev-hard-fundamentals": {
+          "evidence_id": "ev-hard-fundamentals",
+          "evidence_type": "HardEvidence",
+          "source_type": "kg_query",
+          "timestamp": "2026-01-01T00:00:00",
+          "related_entities": ["fund:F001"],
+          "claim": "Fund fundamentals are strong: low expense ratio, good manager tenure",
+          "value": {"expense_ratio": 0.005, "manager_tenure_years": 5},
+          "confidence_weight": 1.0,
+          "direction": "positive",
+          "version": "evidence-contract.v2",
+          "provenance": {"tool": "kg_query"}
+        }
+      },
+      "edges": [],
+      "stats": {
+        "total": 2,
+        "hard": 2,
+        "soft": 0,
+        "hybrid": 0,
+        "conflicts": 0
+      }
+    }
+  }
+}

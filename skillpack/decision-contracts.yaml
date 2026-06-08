@@ -1,0 +1,97 @@
+schema_version: decision-contracts.v1
+contracts:
+  decision_support:
+    contract_version: decision-support.v1
+    doc: docs/contracts/decision-support-contract.v1.md
+    runtime_id: decision_support
+    doc_slug: decision-support
+    formal_output_owner: true
+    consumes:
+      - EvidenceGraph
+    formal_outputs:
+      - Decision
+      - ExecutionLedger
+    active_actions:
+      - BUY
+      - SELL
+      - INCREASE
+      - REDUCE
+    passive_actions:
+      - WAIT
+      - HOLD
+      - PAUSE_DCA
+    input_modes:
+      - mode: single_decision
+        required:
+          - payload.evidence_graph
+        optional:
+          - payload.requested_action
+          - payload.target_trade_amount
+          - payload.portfolio_context
+          - payload.risk_profile
+          - payload.constraints
+          - payload.risk_budget
+          - payload.time_horizon
+          - payload.critique
+          - payload.deterministic
+        description: "Build one formal Decision from EvidenceGraph and optional action/budget context."
+      - mode: trade_plan_decision
+        required:
+          - payload.evidence_graph
+          - payload.trade_plan.suggested_trade_plan[]
+        optional:
+          - payload.selected_trade_ids
+          - payload.portfolio_context
+          - payload.risk_profile
+          - payload.constraints
+          - payload.time_horizon
+          - payload.deterministic
+        description: "Validate and convert selected suggested trade plan entries into formal Decision / ExecutionLedger artifacts."
+    artifact_keys:
+      - key: decision
+        required: false
+        type: object
+        produced_when: "single_decision path produces one Decision"
+        description: "Formal Decision artifact."
+      - key: decisions
+        required: false
+        type: list
+        produced_when: "trade_plan_decision path produces one or more Decisions"
+        description: "Formal Decision list."
+      - key: execution_ledger
+        required: false
+        type: object
+        produced_when: "one or more formal decisions are produced"
+        description: "ExecutionLedger wrapping formal decisions."
+      - key: decision_status
+        required: false
+        type: string
+        produced_when: "single_decision path"
+        description: "Selected formal action."
+      - key: decision_count
+        required: false
+        type: integer
+        produced_when: "trade_plan_decision path"
+        description: "Number of formal decisions emitted."
+      - key: audit_trail
+        required: false
+        type: list
+        produced_when: "decision artifacts include audit data"
+        description: "Flattened or per-decision audit trail, depending on path."
+      - key: warnings
+        required: false
+        type: list
+        produced_when: "validation/capping/skipping warnings are emitted"
+        description: "Decision support warnings."
+    required_input_fields:
+      - payload.evidence_graph
+    status_values:
+      - OK
+      - PARTIAL
+      - FAILED
+    boundary_rules:
+      - Only decision_support may emit Decision / ExecutionLedger artifacts.
+      - Active actions require evidence anchors.
+      - Passive actions may explain insufficient evidence or constraint blockage.
+      - fund_analysis suggested plans are not formal decisions.
+      - decision_support does not execute trades.
