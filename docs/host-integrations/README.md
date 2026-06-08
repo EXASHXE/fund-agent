@@ -54,6 +54,7 @@ shapes, see
 
 ## Core References
 
+- **[START HERE](../START_HERE.md)** — one-page quickstart
 - [docs/install/manual-host.md](../install/manual-host.md)
 - [docs/install/runtime-bridge-cli.md](../install/runtime-bridge-cli.md)
 - [examples/scenarios/README.md](../../examples/scenarios/README.md)

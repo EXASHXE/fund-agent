@@ -39,8 +39,25 @@ code should extend only:
 - `docs/`
 - `tests/` (plugin gate)
 
-ResearchOS modules under `src/core` and `src/workflows` are deprecated optional
-reference workflows. They are not required for host integration.
+ResearchOS modules under `src/core` and `src/workflows` are deprecated reference
+code available from historical tags and archive docs. They are not required for
+host integration and should not be treated as current plugin runtime surface.
+
+The current plugin core lives only under these directories:
+- `skillpack/`
+- `skills/`
+- `src/skills_runtime/`
+- `src/schemas/`
+- `src/tools/`
+- `src/graph/`
+- `src/skillpack/`
+- `docs/`
+- `tests/`
+
+Do not reintroduce `src/core`, `src/infra`, `src/workflows`, or shim import
+packages (`src/config/`, `src/data/`, `src/db/`, `src/kg/`, `src/vectorstore/`)
+as current plugin runtime surface. Historical ResearchOS code is archived in the
+`v0.1.0-skillpack-alpha` tag.
 
 ## Main Test Gate
 
@@ -94,10 +111,11 @@ adapt it through `src.tools.adapters.mcp.MCPHostAdapter`.
 ## What Is NOT Plugin Core
 
 - Legacy modules — removed after `v0.1.0-skillpack-alpha`, see `docs/archive/`
-- `src/core/research_os.py` — optional reference workflow, not required
-- `src/core/planner.py` — optional reference helper
-- `src/core/skill_registry.py` — optional reference helper
-- `src/workflows/research_os.py` — optional reference wrapper
+- Historical ResearchOS code — available from `v0.1.0-skillpack-alpha` tag; not
+  a current plugin runtime surface
+- `src/core/` — deprecated ResearchOS modules; historical reference only
+- `src/infra/` — infrastructure shims; internal reference only
+- `src/workflows/` — deprecated workflow wrappers; historical reference only
 - Provider-specific SDKs — host concern
 
 ## Dependency Policy

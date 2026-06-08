@@ -21,6 +21,8 @@ Planner loop, and not a production agent server.
 `fund-agent` packages financial research capabilities so an external agent can
 mount them as a plugin. It does not require a resident autonomous runtime.
 
+**[START HERE →](docs/START_HERE.md)** — one-page quickstart for hosts and coding agents.
+
 ## What This Repository Provides
 
 - `skillpack/fund-agent.skillpack.yaml`: primary manifest and host entrypoint
