@@ -36,6 +36,7 @@ def assemble_analysis_report_and_artifacts(
     derived_snapshot: dict[str, Any] | None,
     reconciliation_report: dict[str, Any] | None,
     warnings: list[str],
+    professional_diagnostics: dict[str, Any] | None = None,
 ) -> AssembledArtifactsBundle:
     report = FundAnalysisReport(
         fund_metrics=metrics.fund_metrics,
@@ -140,6 +141,25 @@ def assemble_analysis_report_and_artifacts(
         artifacts["factor_summary"] = optional.factor_summary
     if optional.manager_summary:
         artifacts["manager_summary"] = optional.manager_summary
+
+    # Professional diagnostics
+    if professional_diagnostics:
+        prof_warnings = professional_diagnostics.get("professional_warnings", [])
+        if prof_warnings:
+            warnings.extend(prof_warnings)
+        diagnostic_keys = [
+            "redemption_fee_risk",
+            "overlap_diagnostics",
+            "theme_overweight_diagnostics",
+            "dca_drawdown_diagnostics",
+            "cash_budget_diagnostics",
+        ]
+        for key in diagnostic_keys:
+            if key in professional_diagnostics and professional_diagnostics[key] is not None:
+                artifacts[key] = professional_diagnostics[key]
+                report[key] = professional_diagnostics[key]
+        artifacts["professional_diagnostics"] = professional_diagnostics
+        report["professional_diagnostics"] = professional_diagnostics
 
     data_completeness = attach_report_artifacts(
         payload=bundle.payload,

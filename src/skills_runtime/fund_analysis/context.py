@@ -101,3 +101,11 @@ class AssembledArtifactsBundle:
     report: dict[str, Any]
     artifacts: dict[str, Any]
     data_completeness: dict[str, Any]
+
+
+@dataclass(frozen=True)
+class ProfessionalDiagnosticsBundle:
+    """Professional diagnostic analysis results from local rules."""
+
+    diagnostics: dict[str, Any]
+    professional_warnings: list[str]

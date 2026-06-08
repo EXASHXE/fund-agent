@@ -12,6 +12,16 @@
       "redemption": "available",
       "research_plan": "not_requested"
     },
+    "cash_budget_diagnostics": {
+      "cash_ratio": 0.0981,
+      "errors": [
+        "Cash 7000 is below 10% liquidity reserve (7135). Gap: 135."
+      ],
+      "liquidity_reserve_pct": 0.1,
+      "remaining_budget": 5708.0,
+      "reserve_gap": 135.0,
+      "short_term_budget_status": "ok"
+    },
     "cost_basis_summary": {
       "SYNLED001": {
         "average_cost_per_share": 1.05,
@@ -72,6 +82,24 @@
         "User Investment Plan"
       ],
       "score": 0.767
+    },
+    "dca_drawdown_diagnostics": {
+      "reviewed_funds": [
+        {
+          "cadence": "monthly",
+          "dca_status": "active",
+          "diagnostic": "DCA continuing within normal range",
+          "fund_code": "SYNLED001",
+          "max_drawdown": 0.0,
+          "plan_amount": 1500.0,
+          "recent_return": 0.18
+        }
+      ],
+      "summary": {
+        "funds_with_drawdown": 0,
+        "note": "diagnostic only; formal DCA change requires decision_support",
+        "reviewed_count": 1
+      }
     },
     "dca_plan_review": {
       "plans": [
@@ -207,6 +235,16 @@
         "redemption": "available",
         "research_plan": "not_requested"
       },
+      "cash_budget_diagnostics": {
+        "cash_ratio": 0.0981,
+        "errors": [
+          "Cash 7000 is below 10% liquidity reserve (7135). Gap: 135."
+        ],
+        "liquidity_reserve_pct": 0.1,
+        "remaining_budget": 5708.0,
+        "reserve_gap": 135.0,
+        "short_term_budget_status": "ok"
+      },
       "concentration": {
         "duplicate_tags": [],
         "hhi": 0.552182,
@@ -276,6 +314,24 @@
           "User Investment Plan"
         ],
         "score": 0.767
+      },
+      "dca_drawdown_diagnostics": {
+        "reviewed_funds": [
+          {
+            "cadence": "monthly",
+            "dca_status": "active",
+            "diagnostic": "DCA continuing within normal range",
+            "fund_code": "SYNLED001",
+            "max_drawdown": 0.0,
+            "plan_amount": 1500.0,
+            "recent_return": 0.18
+          }
+        ],
+        "summary": {
+          "funds_with_drawdown": 0,
+          "note": "diagnostic only; formal DCA change requires decision_support",
+          "reviewed_count": 1
+        }
       },
       "dca_review": {
         "plans": [
@@ -398,6 +454,25 @@
         }
       },
       "market_scenario": null,
+      "overlap_diagnostics": {
+        "overlapping_holdings": [],
+        "overlapping_regions": [
+          {
+            "combined_portfolio_weight": 1.0,
+            "funds": [
+              "SYNLED001",
+              "SYNLED002"
+            ],
+            "region": "CN"
+          }
+        ],
+        "overlapping_themes": [],
+        "summary": {
+          "highest_overlap_theme": null,
+          "note": "host-provided holdings and profile data only",
+          "overlap_count": 1
+        }
+      },
       "pnl_summary": {
         "positions": {
           "SYNLED001": {
@@ -427,6 +502,80 @@
           "SYNLED002": 0.338472
         },
         "total_value": 71350.0
+      },
+      "professional_diagnostics": {
+        "cash_budget_diagnostics": {
+          "cash_ratio": 0.0981,
+          "errors": [
+            "Cash 7000 is below 10% liquidity reserve (7135). Gap: 135."
+          ],
+          "liquidity_reserve_pct": 0.1,
+          "remaining_budget": 5708.0,
+          "reserve_gap": 135.0,
+          "short_term_budget_status": "ok"
+        },
+        "dca_drawdown_diagnostics": {
+          "reviewed_funds": [
+            {
+              "cadence": "monthly",
+              "dca_status": "active",
+              "diagnostic": "DCA continuing within normal range",
+              "fund_code": "SYNLED001",
+              "max_drawdown": 0.0,
+              "plan_amount": 1500.0,
+              "recent_return": 0.18
+            }
+          ],
+          "summary": {
+            "funds_with_drawdown": 0,
+            "note": "diagnostic only; formal DCA change requires decision_support",
+            "reviewed_count": 1
+          }
+        },
+        "overlap_diagnostics": {
+          "overlapping_holdings": [],
+          "overlapping_regions": [
+            {
+              "combined_portfolio_weight": 1.0,
+              "funds": [
+                "SYNLED001",
+                "SYNLED002"
+              ],
+              "region": "CN"
+            }
+          ],
+          "overlapping_themes": [],
+          "summary": {
+            "highest_overlap_theme": null,
+            "note": "host-provided holdings and profile data only",
+            "overlap_count": 1
+          }
+        },
+        "professional_warnings": [
+          "Theme 'broad_market' at 66.1% exceeds limit 55.0% by 11.2%",
+          "Cash 7000 is below 10% liquidity reserve (7135). Gap: 135."
+        ],
+        "theme_overweight_diagnostics": {
+          "limits": {
+            "max_theme_weight": 0.55
+          },
+          "overweight_themes": [
+            {
+              "excess": 0.1115,
+              "funds": [
+                "SYNLED001"
+              ],
+              "limit": 0.55,
+              "theme": "broad_market",
+              "weight": 0.6615
+            }
+          ],
+          "summary": {
+            "max_theme": "broad_market",
+            "max_theme_weight": 0.6615,
+            "overweight_count": 1
+          }
+        }
       },
       "reconciliation": {
         "match_count": 2,
@@ -837,6 +986,27 @@
           "reason": "drawdown or concentration risk requires monitoring"
         }
       ],
+      "theme_overweight_diagnostics": {
+        "limits": {
+          "max_theme_weight": 0.55
+        },
+        "overweight_themes": [
+          {
+            "excess": 0.1115,
+            "funds": [
+              "SYNLED001"
+            ],
+            "limit": 0.55,
+            "theme": "broad_market",
+            "weight": 0.6615
+          }
+        ],
+        "summary": {
+          "max_theme": "broad_market",
+          "max_theme_weight": 0.6615,
+          "overweight_count": 1
+        }
+      },
       "trade_budget": {
         "cash_available": 7000.0,
         "liquidity_reserve": 7135.0,
@@ -890,7 +1060,11 @@
         "warnings": []
       },
       "warnings": [
-        "portfolio was derived from transactions and current_nav; accuracy depends on input completeness"
+        "Theme 'broad_market' at 66.1% exceeds limit 55.0% by 11.2%",
+        "Cash 7000 is below 10% liquidity reserve (7135). Gap: 135.",
+        "portfolio was derived from transactions and current_nav; accuracy depends on input completeness",
+        "Theme 'broad_market' at 66.1% exceeds limit 55.0% by 11.2%",
+        "Cash 7000 is below 10% liquidity reserve (7135). Gap: 135."
       ]
     },
     "ledger_cashflow_summary": {
@@ -909,6 +1083,25 @@
       "unresolved_events_count": 0
     },
     "market_scenario_impact": null,
+    "overlap_diagnostics": {
+      "overlapping_holdings": [],
+      "overlapping_regions": [
+        {
+          "combined_portfolio_weight": 1.0,
+          "funds": [
+            "SYNLED001",
+            "SYNLED002"
+          ],
+          "region": "CN"
+        }
+      ],
+      "overlapping_themes": [],
+      "summary": {
+        "highest_overlap_theme": null,
+        "note": "host-provided holdings and profile data only",
+        "overlap_count": 1
+      }
+    },
     "pnl_summary": {
       "positions": {
         "SYNLED001": {
@@ -959,6 +1152,80 @@
         "tags": [],
         "target_weight": null,
         "total_cost": 21000.0
+      }
+    },
+    "professional_diagnostics": {
+      "cash_budget_diagnostics": {
+        "cash_ratio": 0.0981,
+        "errors": [
+          "Cash 7000 is below 10% liquidity reserve (7135). Gap: 135."
+        ],
+        "liquidity_reserve_pct": 0.1,
+        "remaining_budget": 5708.0,
+        "reserve_gap": 135.0,
+        "short_term_budget_status": "ok"
+      },
+      "dca_drawdown_diagnostics": {
+        "reviewed_funds": [
+          {
+            "cadence": "monthly",
+            "dca_status": "active",
+            "diagnostic": "DCA continuing within normal range",
+            "fund_code": "SYNLED001",
+            "max_drawdown": 0.0,
+            "plan_amount": 1500.0,
+            "recent_return": 0.18
+          }
+        ],
+        "summary": {
+          "funds_with_drawdown": 0,
+          "note": "diagnostic only; formal DCA change requires decision_support",
+          "reviewed_count": 1
+        }
+      },
+      "overlap_diagnostics": {
+        "overlapping_holdings": [],
+        "overlapping_regions": [
+          {
+            "combined_portfolio_weight": 1.0,
+            "funds": [
+              "SYNLED001",
+              "SYNLED002"
+            ],
+            "region": "CN"
+          }
+        ],
+        "overlapping_themes": [],
+        "summary": {
+          "highest_overlap_theme": null,
+          "note": "host-provided holdings and profile data only",
+          "overlap_count": 1
+        }
+      },
+      "professional_warnings": [
+        "Theme 'broad_market' at 66.1% exceeds limit 55.0% by 11.2%",
+        "Cash 7000 is below 10% liquidity reserve (7135). Gap: 135."
+      ],
+      "theme_overweight_diagnostics": {
+        "limits": {
+          "max_theme_weight": 0.55
+        },
+        "overweight_themes": [
+          {
+            "excess": 0.1115,
+            "funds": [
+              "SYNLED001"
+            ],
+            "limit": 0.55,
+            "theme": "broad_market",
+            "weight": 0.6615
+          }
+        ],
+        "summary": {
+          "max_theme": "broad_market",
+          "max_theme_weight": 0.6615,
+          "overweight_count": 1
+        }
       }
     },
     "redemption_summary": {
@@ -1344,8 +1611,33 @@
     },
     "source_of_truth": "derived_from_transactions",
     "suggested_rebalance_plan": null,
+    "theme_overweight_diagnostics": {
+      "limits": {
+        "max_theme_weight": 0.55
+      },
+      "overweight_themes": [
+        {
+          "excess": 0.1115,
+          "funds": [
+            "SYNLED001"
+          ],
+          "limit": 0.55,
+          "theme": "broad_market",
+          "weight": 0.6615
+        }
+      ],
+      "summary": {
+        "max_theme": "broad_market",
+        "max_theme_weight": 0.6615,
+        "overweight_count": 1
+      }
+    },
     "warnings": [
-      "portfolio was derived from transactions and current_nav; accuracy depends on input completeness"
+      "Theme 'broad_market' at 66.1% exceeds limit 55.0% by 11.2%",
+      "Cash 7000 is below 10% liquidity reserve (7135). Gap: 135.",
+      "portfolio was derived from transactions and current_nav; accuracy depends on input completeness",
+      "Theme 'broad_market' at 66.1% exceeds limit 55.0% by 11.2%",
+      "Cash 7000 is below 10% liquidity reserve (7135). Gap: 135."
     ]
   },
   "errors": [],
@@ -1771,6 +2063,10 @@
   "status": "PARTIAL",
   "used_mcp_capabilities": [],
   "warnings": [
-    "portfolio was derived from transactions and current_nav; accuracy depends on input completeness"
+    "Theme 'broad_market' at 66.1% exceeds limit 55.0% by 11.2%",
+    "Cash 7000 is below 10% liquidity reserve (7135). Gap: 135.",
+    "portfolio was derived from transactions and current_nav; accuracy depends on input completeness",
+    "Theme 'broad_market' at 66.1% exceeds limit 55.0% by 11.2%",
+    "Cash 7000 is below 10% liquidity reserve (7135). Gap: 135."
   ]
 }

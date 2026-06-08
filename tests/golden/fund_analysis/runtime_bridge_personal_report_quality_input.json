@@ -115,6 +115,14 @@
         }
       ]
     },
+    "cash_budget_diagnostics": {
+      "cash_ratio": 0.1,
+      "errors": [],
+      "liquidity_reserve_pct": 0.1,
+      "remaining_budget": 50000.0,
+      "reserve_gap": null,
+      "short_term_budget_status": "ok"
+    },
     "cost_basis_summary": null,
     "data_completeness": {
       "available_sections": [
@@ -358,6 +366,14 @@
             "note": "host-provided data only; not a ranking or attribution analysis"
           }
         ]
+      },
+      "cash_budget_diagnostics": {
+        "cash_ratio": 0.1,
+        "errors": [],
+        "liquidity_reserve_pct": 0.1,
+        "remaining_budget": 50000.0,
+        "reserve_gap": null,
+        "short_term_budget_status": "ok"
       },
       "concentration": {
         "duplicate_tags": [],
@@ -698,6 +714,17 @@
           "330033": 0.14
         },
         "total_value": 500000.0
+      },
+      "professional_diagnostics": {
+        "cash_budget_diagnostics": {
+          "cash_ratio": 0.1,
+          "errors": [],
+          "liquidity_reserve_pct": 0.1,
+          "remaining_budget": 50000.0,
+          "reserve_gap": null,
+          "short_term_budget_status": "ok"
+        },
+        "professional_warnings": []
       },
       "reconciliation": null,
       "redemption_summary": {
@@ -1281,6 +1308,17 @@
         "target_weight": 0.14,
         "total_cost": 65000
       }
+    },
+    "professional_diagnostics": {
+      "cash_budget_diagnostics": {
+        "cash_ratio": 0.1,
+        "errors": [],
+        "liquidity_reserve_pct": 0.1,
+        "remaining_budget": 50000.0,
+        "reserve_gap": null,
+        "short_term_budget_status": "ok"
+      },
+      "professional_warnings": []
     },
     "redemption_summary": {
       "funds_with_rules": [

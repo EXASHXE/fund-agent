@@ -134,6 +134,16 @@
         }
       ]
     },
+    "cash_budget_diagnostics": {
+      "cash_ratio": 0.0556,
+      "errors": [
+        "Cash 10000 is below 8% liquidity reserve (14400). Gap: 4400."
+      ],
+      "liquidity_reserve_pct": 0.08,
+      "remaining_budget": 14400.0,
+      "reserve_gap": 4400.0,
+      "short_term_budget_status": "ok"
+    },
     "cost_basis_summary": {
       "SYNQD001": {
         "average_cost_per_share": 1.12,
@@ -216,6 +226,24 @@
         "User Investment Plan"
       ],
       "score": 0.833
+    },
+    "dca_drawdown_diagnostics": {
+      "reviewed_funds": [
+        {
+          "cadence": "monthly",
+          "dca_status": "active",
+          "diagnostic": "DCA continuing within normal range",
+          "fund_code": "SYNQD001",
+          "max_drawdown": 0.0,
+          "plan_amount": 1500.0,
+          "recent_return": 0.2
+        }
+      ],
+      "summary": {
+        "funds_with_drawdown": 0,
+        "note": "diagnostic only; formal DCA change requires decision_support",
+        "reviewed_count": 1
+      }
     },
     "dca_plan_review": {
       "plans": [
@@ -483,6 +511,16 @@
           }
         ]
       },
+      "cash_budget_diagnostics": {
+        "cash_ratio": 0.0556,
+        "errors": [
+          "Cash 10000 is below 8% liquidity reserve (14400). Gap: 4400."
+        ],
+        "liquidity_reserve_pct": 0.08,
+        "remaining_budget": 14400.0,
+        "reserve_gap": 4400.0,
+        "short_term_budget_status": "ok"
+      },
       "concentration": {
         "duplicate_tags": [
           "qdii",
@@ -577,6 +615,24 @@
           "User Investment Plan"
         ],
         "score": 0.833
+      },
+      "dca_drawdown_diagnostics": {
+        "reviewed_funds": [
+          {
+            "cadence": "monthly",
+            "dca_status": "active",
+            "diagnostic": "DCA continuing within normal range",
+            "fund_code": "SYNQD001",
+            "max_drawdown": 0.0,
+            "plan_amount": 1500.0,
+            "recent_return": 0.2
+          }
+        ],
+        "summary": {
+          "funds_with_drawdown": 0,
+          "note": "diagnostic only; formal DCA change requires decision_support",
+          "reviewed_count": 1
+        }
       },
       "dca_review": {
         "plans": [
@@ -809,6 +865,43 @@
         }
       },
       "market_scenario": null,
+      "overlap_diagnostics": {
+        "overlapping_holdings": [
+          {
+            "combined_fund_weight": 0.26,
+            "funds": [
+              "SYNQD001",
+              "SYNQD002",
+              "SYNQD003"
+            ],
+            "holding_name": "Sample AI Chip B"
+          },
+          {
+            "combined_fund_weight": 0.18,
+            "funds": [
+              "SYNQD001",
+              "SYNQD002"
+            ],
+            "holding_name": "Sample MegaCap Cloud A"
+          }
+        ],
+        "overlapping_regions": [
+          {
+            "combined_portfolio_weight": 0.6111,
+            "funds": [
+              "SYNQD001",
+              "SYNQD002"
+            ],
+            "region": "US"
+          }
+        ],
+        "overlapping_themes": [],
+        "summary": {
+          "highest_overlap_theme": "Sample AI Chip B",
+          "note": "host-provided holdings and profile data only",
+          "overlap_count": 3
+        }
+      },
       "pnl_summary": {
         "positions": {
           "SYNQD001": {
@@ -852,6 +945,76 @@
           "SYNQD004": 0.083333
         },
         "total_value": 180000.0
+      },
+      "professional_diagnostics": {
+        "cash_budget_diagnostics": {
+          "cash_ratio": 0.0556,
+          "errors": [
+            "Cash 10000 is below 8% liquidity reserve (14400). Gap: 4400."
+          ],
+          "liquidity_reserve_pct": 0.08,
+          "remaining_budget": 14400.0,
+          "reserve_gap": 4400.0,
+          "short_term_budget_status": "ok"
+        },
+        "dca_drawdown_diagnostics": {
+          "reviewed_funds": [
+            {
+              "cadence": "monthly",
+              "dca_status": "active",
+              "diagnostic": "DCA continuing within normal range",
+              "fund_code": "SYNQD001",
+              "max_drawdown": 0.0,
+              "plan_amount": 1500.0,
+              "recent_return": 0.2
+            }
+          ],
+          "summary": {
+            "funds_with_drawdown": 0,
+            "note": "diagnostic only; formal DCA change requires decision_support",
+            "reviewed_count": 1
+          }
+        },
+        "overlap_diagnostics": {
+          "overlapping_holdings": [
+            {
+              "combined_fund_weight": 0.26,
+              "funds": [
+                "SYNQD001",
+                "SYNQD002",
+                "SYNQD003"
+              ],
+              "holding_name": "Sample AI Chip B"
+            },
+            {
+              "combined_fund_weight": 0.18,
+              "funds": [
+                "SYNQD001",
+                "SYNQD002"
+              ],
+              "holding_name": "Sample MegaCap Cloud A"
+            }
+          ],
+          "overlapping_regions": [
+            {
+              "combined_portfolio_weight": 0.6111,
+              "funds": [
+                "SYNQD001",
+                "SYNQD002"
+              ],
+              "region": "US"
+            }
+          ],
+          "overlapping_themes": [],
+          "summary": {
+            "highest_overlap_theme": "Sample AI Chip B",
+            "note": "host-provided holdings and profile data only",
+            "overlap_count": 3
+          }
+        },
+        "professional_warnings": [
+          "Cash 10000 is below 8% liquidity reserve (14400). Gap: 4400."
+        ]
       },
       "reconciliation": {
         "match_count": 4,
@@ -1359,7 +1522,10 @@
         "total_sells": 0.0,
         "warnings": []
       },
-      "warnings": []
+      "warnings": [
+        "Cash 10000 is below 8% liquidity reserve (14400). Gap: 4400.",
+        "Cash 10000 is below 8% liquidity reserve (14400). Gap: 4400."
+      ]
     },
     "ledger_reconciliation_report": {
       "comparisons": [
@@ -1413,6 +1579,43 @@
       "warnings": []
     },
     "market_scenario_impact": null,
+    "overlap_diagnostics": {
+      "overlapping_holdings": [
+        {
+          "combined_fund_weight": 0.26,
+          "funds": [
+            "SYNQD001",
+            "SYNQD002",
+            "SYNQD003"
+          ],
+          "holding_name": "Sample AI Chip B"
+        },
+        {
+          "combined_fund_weight": 0.18,
+          "funds": [
+            "SYNQD001",
+            "SYNQD002"
+          ],
+          "holding_name": "Sample MegaCap Cloud A"
+        }
+      ],
+      "overlapping_regions": [
+        {
+          "combined_portfolio_weight": 0.6111,
+          "funds": [
+            "SYNQD001",
+            "SYNQD002"
+          ],
+          "region": "US"
+        }
+      ],
+      "overlapping_themes": [],
+      "summary": {
+        "highest_overlap_theme": "Sample AI Chip B",
+        "note": "host-provided holdings and profile data only",
+        "overlap_count": 3
+      }
+    },
     "pnl_summary": {
       "positions": {
         "SYNQD001": {
@@ -1513,6 +1716,76 @@
         "target_weight": 0.15,
         "total_cost": 15000.0
       }
+    },
+    "professional_diagnostics": {
+      "cash_budget_diagnostics": {
+        "cash_ratio": 0.0556,
+        "errors": [
+          "Cash 10000 is below 8% liquidity reserve (14400). Gap: 4400."
+        ],
+        "liquidity_reserve_pct": 0.08,
+        "remaining_budget": 14400.0,
+        "reserve_gap": 4400.0,
+        "short_term_budget_status": "ok"
+      },
+      "dca_drawdown_diagnostics": {
+        "reviewed_funds": [
+          {
+            "cadence": "monthly",
+            "dca_status": "active",
+            "diagnostic": "DCA continuing within normal range",
+            "fund_code": "SYNQD001",
+            "max_drawdown": 0.0,
+            "plan_amount": 1500.0,
+            "recent_return": 0.2
+          }
+        ],
+        "summary": {
+          "funds_with_drawdown": 0,
+          "note": "diagnostic only; formal DCA change requires decision_support",
+          "reviewed_count": 1
+        }
+      },
+      "overlap_diagnostics": {
+        "overlapping_holdings": [
+          {
+            "combined_fund_weight": 0.26,
+            "funds": [
+              "SYNQD001",
+              "SYNQD002",
+              "SYNQD003"
+            ],
+            "holding_name": "Sample AI Chip B"
+          },
+          {
+            "combined_fund_weight": 0.18,
+            "funds": [
+              "SYNQD001",
+              "SYNQD002"
+            ],
+            "holding_name": "Sample MegaCap Cloud A"
+          }
+        ],
+        "overlapping_regions": [
+          {
+            "combined_portfolio_weight": 0.6111,
+            "funds": [
+              "SYNQD001",
+              "SYNQD002"
+            ],
+            "region": "US"
+          }
+        ],
+        "overlapping_themes": [],
+        "summary": {
+          "highest_overlap_theme": "Sample AI Chip B",
+          "note": "host-provided holdings and profile data only",
+          "overlap_count": 3
+        }
+      },
+      "professional_warnings": [
+        "Cash 10000 is below 8% liquidity reserve (14400). Gap: 4400."
+      ]
     },
     "redemption_summary": {
       "funds_with_rules": [
@@ -2071,7 +2344,10 @@
         "Overlap review uses synthetic holdings only."
       ]
     },
-    "warnings": []
+    "warnings": [
+      "Cash 10000 is below 8% liquidity reserve (14400). Gap: 4400.",
+      "Cash 10000 is below 8% liquidity reserve (14400). Gap: 4400."
+    ]
   },
   "errors": [],
   "evidence_items": [
@@ -2723,7 +2999,10 @@
   },
   "ok": true,
   "skill_name": "fund_analysis",
-  "status": "OK",
+  "status": "PARTIAL",
   "used_mcp_capabilities": [],
-  "warnings": []
+  "warnings": [
+    "Cash 10000 is below 8% liquidity reserve (14400). Gap: 4400.",
+    "Cash 10000 is below 8% liquidity reserve (14400). Gap: 4400."
+  ]
 }

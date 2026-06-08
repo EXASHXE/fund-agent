@@ -12,6 +12,14 @@
       "redemption": "available",
       "research_plan": "not_requested"
     },
+    "cash_budget_diagnostics": {
+      "cash_ratio": 0.12,
+      "errors": [],
+      "liquidity_reserve_pct": 0.12,
+      "remaining_budget": 2000.0,
+      "reserve_gap": null,
+      "short_term_budget_status": "ok"
+    },
     "cost_basis_summary": {
       "SYNDCA001": {
         "average_cost_per_share": 1.000135,
@@ -84,6 +92,24 @@
         "User Investment Plan"
       ],
       "score": 0.767
+    },
+    "dca_drawdown_diagnostics": {
+      "reviewed_funds": [
+        {
+          "cadence": "monthly",
+          "dca_status": "under_drawdown",
+          "diagnostic": "Fund SYNDCA001 has max drawdown 29.2%. DCA may benefit from buying at lower NAV, but review risk tolerance.",
+          "fund_code": "SYNDCA001",
+          "max_drawdown": 0.291667,
+          "plan_amount": 6000.0,
+          "recent_return": -0.25
+        }
+      ],
+      "summary": {
+        "funds_with_drawdown": 1,
+        "note": "diagnostic only; formal DCA change requires decision_support",
+        "reviewed_count": 1
+      }
     },
     "dca_plan_review": {
       "plans": [
@@ -181,6 +207,14 @@
         "redemption": "available",
         "research_plan": "not_requested"
       },
+      "cash_budget_diagnostics": {
+        "cash_ratio": 0.12,
+        "errors": [],
+        "liquidity_reserve_pct": 0.12,
+        "remaining_budget": 2000.0,
+        "reserve_gap": null,
+        "short_term_budget_status": "ok"
+      },
       "concentration": {
         "duplicate_tags": [],
         "hhi": 0.399535,
@@ -262,6 +296,24 @@
           "User Investment Plan"
         ],
         "score": 0.767
+      },
+      "dca_drawdown_diagnostics": {
+        "reviewed_funds": [
+          {
+            "cadence": "monthly",
+            "dca_status": "under_drawdown",
+            "diagnostic": "Fund SYNDCA001 has max drawdown 29.2%. DCA may benefit from buying at lower NAV, but review risk tolerance.",
+            "fund_code": "SYNDCA001",
+            "max_drawdown": 0.291667,
+            "plan_amount": 6000.0,
+            "recent_return": -0.25
+          }
+        ],
+        "summary": {
+          "funds_with_drawdown": 1,
+          "note": "diagnostic only; formal DCA change requires decision_support",
+          "reviewed_count": 1
+        }
       },
       "dca_review": {
         "plans": [
@@ -432,6 +484,26 @@
         "name": "Synthetic drawdown review window",
         "risk_level": "medium"
       },
+      "overlap_diagnostics": {
+        "overlapping_holdings": [],
+        "overlapping_regions": [
+          {
+            "combined_portfolio_weight": 0.88,
+            "funds": [
+              "SYNDCA001",
+              "SYNDCA002",
+              "SYNMM001"
+            ],
+            "region": "CN"
+          }
+        ],
+        "overlapping_themes": [],
+        "summary": {
+          "highest_overlap_theme": null,
+          "note": "host-provided holdings and profile data only",
+          "overlap_count": 1
+        }
+      },
       "pnl_summary": {
         "positions": {
           "SYNDCA001": {
@@ -468,6 +540,78 @@
           "SYNMM001": 0.13
         },
         "total_value": 100000.0
+      },
+      "professional_diagnostics": {
+        "cash_budget_diagnostics": {
+          "cash_ratio": 0.12,
+          "errors": [],
+          "liquidity_reserve_pct": 0.12,
+          "remaining_budget": 2000.0,
+          "reserve_gap": null,
+          "short_term_budget_status": "ok"
+        },
+        "dca_drawdown_diagnostics": {
+          "reviewed_funds": [
+            {
+              "cadence": "monthly",
+              "dca_status": "under_drawdown",
+              "diagnostic": "Fund SYNDCA001 has max drawdown 29.2%. DCA may benefit from buying at lower NAV, but review risk tolerance.",
+              "fund_code": "SYNDCA001",
+              "max_drawdown": 0.291667,
+              "plan_amount": 6000.0,
+              "recent_return": -0.25
+            }
+          ],
+          "summary": {
+            "funds_with_drawdown": 1,
+            "note": "diagnostic only; formal DCA change requires decision_support",
+            "reviewed_count": 1
+          }
+        },
+        "overlap_diagnostics": {
+          "overlapping_holdings": [],
+          "overlapping_regions": [
+            {
+              "combined_portfolio_weight": 0.88,
+              "funds": [
+                "SYNDCA001",
+                "SYNDCA002",
+                "SYNMM001"
+              ],
+              "region": "CN"
+            }
+          ],
+          "overlapping_themes": [],
+          "summary": {
+            "highest_overlap_theme": null,
+            "note": "host-provided holdings and profile data only",
+            "overlap_count": 1
+          }
+        },
+        "professional_warnings": [
+          "Fund SYNDCA001 has max drawdown 29.2%. DCA may benefit from buying at lower NAV, but review risk tolerance."
+        ],
+        "theme_overweight_diagnostics": {
+          "limits": {
+            "max_theme_weight": 0.5
+          },
+          "overweight_themes": [
+            {
+              "excess": null,
+              "funds": [
+                "SYNDCA001"
+              ],
+              "limit": 0.5,
+              "theme": "broad_market",
+              "weight": 0.45
+            }
+          ],
+          "summary": {
+            "max_theme": "broad_market",
+            "max_theme_weight": 0.45,
+            "overweight_count": 1
+          }
+        }
       },
       "reconciliation": {
         "match_count": 2,
@@ -948,6 +1092,27 @@
           "reason": "drawdown or concentration risk requires monitoring"
         }
       ],
+      "theme_overweight_diagnostics": {
+        "limits": {
+          "max_theme_weight": 0.5
+        },
+        "overweight_themes": [
+          {
+            "excess": null,
+            "funds": [
+              "SYNDCA001"
+            ],
+            "limit": 0.5,
+            "theme": "broad_market",
+            "weight": 0.45
+          }
+        ],
+        "summary": {
+          "max_theme": "broad_market",
+          "max_theme_weight": 0.45,
+          "overweight_count": 1
+        }
+      },
       "trade_budget": {
         "cash_available": 12000.0,
         "liquidity_reserve": 12000.0,
@@ -1014,7 +1179,9 @@
         "warnings": []
       },
       "warnings": [
-        "SYNDCA001: shares mismatch [high] — snapshot=52992.8699/47693.58, portfolio=50000.0000/45000.0, delta=2992.8699/2693.58"
+        "Fund SYNDCA001 has max drawdown 29.2%. DCA may benefit from buying at lower NAV, but review risk tolerance.",
+        "SYNDCA001: shares mismatch [high] — snapshot=52992.8699/47693.58, portfolio=50000.0000/45000.0, delta=2992.8699/2693.58",
+        "Fund SYNDCA001 has max drawdown 29.2%. DCA may benefit from buying at lower NAV, but review risk tolerance."
       ]
     },
     "ledger_reconciliation_report": {
@@ -1079,6 +1246,26 @@
       "description": "Fake scenario: broad equity NAV declined and partly recovered before as_of_date.",
       "name": "Synthetic drawdown review window",
       "risk_level": "medium"
+    },
+    "overlap_diagnostics": {
+      "overlapping_holdings": [],
+      "overlapping_regions": [
+        {
+          "combined_portfolio_weight": 0.88,
+          "funds": [
+            "SYNDCA001",
+            "SYNDCA002",
+            "SYNMM001"
+          ],
+          "region": "CN"
+        }
+      ],
+      "overlapping_themes": [],
+      "summary": {
+        "highest_overlap_theme": null,
+        "note": "host-provided holdings and profile data only",
+        "overlap_count": 1
+      }
     },
     "pnl_summary": {
       "positions": {
@@ -1156,6 +1343,78 @@
         ],
         "target_weight": 0.2,
         "total_cost": 13000.0
+      }
+    },
+    "professional_diagnostics": {
+      "cash_budget_diagnostics": {
+        "cash_ratio": 0.12,
+        "errors": [],
+        "liquidity_reserve_pct": 0.12,
+        "remaining_budget": 2000.0,
+        "reserve_gap": null,
+        "short_term_budget_status": "ok"
+      },
+      "dca_drawdown_diagnostics": {
+        "reviewed_funds": [
+          {
+            "cadence": "monthly",
+            "dca_status": "under_drawdown",
+            "diagnostic": "Fund SYNDCA001 has max drawdown 29.2%. DCA may benefit from buying at lower NAV, but review risk tolerance.",
+            "fund_code": "SYNDCA001",
+            "max_drawdown": 0.291667,
+            "plan_amount": 6000.0,
+            "recent_return": -0.25
+          }
+        ],
+        "summary": {
+          "funds_with_drawdown": 1,
+          "note": "diagnostic only; formal DCA change requires decision_support",
+          "reviewed_count": 1
+        }
+      },
+      "overlap_diagnostics": {
+        "overlapping_holdings": [],
+        "overlapping_regions": [
+          {
+            "combined_portfolio_weight": 0.88,
+            "funds": [
+              "SYNDCA001",
+              "SYNDCA002",
+              "SYNMM001"
+            ],
+            "region": "CN"
+          }
+        ],
+        "overlapping_themes": [],
+        "summary": {
+          "highest_overlap_theme": null,
+          "note": "host-provided holdings and profile data only",
+          "overlap_count": 1
+        }
+      },
+      "professional_warnings": [
+        "Fund SYNDCA001 has max drawdown 29.2%. DCA may benefit from buying at lower NAV, but review risk tolerance."
+      ],
+      "theme_overweight_diagnostics": {
+        "limits": {
+          "max_theme_weight": 0.5
+        },
+        "overweight_themes": [
+          {
+            "excess": null,
+            "funds": [
+              "SYNDCA001"
+            ],
+            "limit": 0.5,
+            "theme": "broad_market",
+            "weight": 0.45
+          }
+        ],
+        "summary": {
+          "max_theme": "broad_market",
+          "max_theme_weight": 0.45,
+          "overweight_count": 1
+        }
       }
     },
     "redemption_summary": {
@@ -1670,8 +1929,31 @@
         "Formal DCA changes require decision_support."
       ]
     },
+    "theme_overweight_diagnostics": {
+      "limits": {
+        "max_theme_weight": 0.5
+      },
+      "overweight_themes": [
+        {
+          "excess": null,
+          "funds": [
+            "SYNDCA001"
+          ],
+          "limit": 0.5,
+          "theme": "broad_market",
+          "weight": 0.45
+        }
+      ],
+      "summary": {
+        "max_theme": "broad_market",
+        "max_theme_weight": 0.45,
+        "overweight_count": 1
+      }
+    },
     "warnings": [
-      "SYNDCA001: shares mismatch [high] — snapshot=52992.8699/47693.58, portfolio=50000.0000/45000.0, delta=2992.8699/2693.58"
+      "Fund SYNDCA001 has max drawdown 29.2%. DCA may benefit from buying at lower NAV, but review risk tolerance.",
+      "SYNDCA001: shares mismatch [high] — snapshot=52992.8699/47693.58, portfolio=50000.0000/45000.0, delta=2992.8699/2693.58",
+      "Fund SYNDCA001 has max drawdown 29.2%. DCA may benefit from buying at lower NAV, but review risk tolerance."
     ]
   },
   "errors": [],
@@ -2333,6 +2615,8 @@
   "status": "PARTIAL",
   "used_mcp_capabilities": [],
   "warnings": [
-    "SYNDCA001: shares mismatch [high] — snapshot=52992.8699/47693.58, portfolio=50000.0000/45000.0, delta=2992.8699/2693.58"
+    "Fund SYNDCA001 has max drawdown 29.2%. DCA may benefit from buying at lower NAV, but review risk tolerance.",
+    "SYNDCA001: shares mismatch [high] — snapshot=52992.8699/47693.58, portfolio=50000.0000/45000.0, delta=2992.8699/2693.58",
+    "Fund SYNDCA001 has max drawdown 29.2%. DCA may benefit from buying at lower NAV, but review risk tolerance."
   ]
 }

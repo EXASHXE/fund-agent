@@ -14,6 +14,9 @@ from src.schemas.skill import SkillInput, SkillOutput
 from .evidence_stage import (
     build_baseline_evidence,
 )
+from .diagnostics_stage import (
+    compute_diagnostics,
+)
 from .input_stage import (
     build_portfolio_input_bundle,
     collect_fund_codes,
@@ -124,6 +127,11 @@ class FundAnalysisSkill:
                 skill_input,
                 warnings,
             )
+            professional_diagnostics = compute_diagnostics(
+                bundle,
+                metrics,
+                warnings,
+            )
             artifacts_bundle = assemble_analysis_report_and_artifacts(
                 bundle=bundle,
                 metrics=metrics,
@@ -132,6 +140,7 @@ class FundAnalysisSkill:
                 derived_snapshot=derived_snapshot,
                 reconciliation_report=reconciliation_report,
                 warnings=warnings,
+                professional_diagnostics=professional_diagnostics,
             )
         except Exception as exc:
             return failed_output(

@@ -22,6 +22,8 @@ REQUIRED_FILES = {
     "report_stage.py",
     "evidence_stage.py",
     "status_stage.py",
+    "diagnostics_stage.py",
+    "professional_rules.py",
 }
 
 STAGE_FILES = {
@@ -34,6 +36,8 @@ STAGE_FILES = {
     "report_stage.py",
     "evidence_stage.py",
     "status_stage.py",
+    "diagnostics_stage.py",
+    "professional_rules.py",
 }
 
 PROVIDER_SDKS = {
@@ -179,3 +183,10 @@ def test_fund_analysis_skill_orchestrator_does_not_import_low_level_tools() -> N
     violations = sorted(imports & SKILL_LOW_LEVEL_TOOL_IMPORTS)
 
     assert not violations
+
+
+def test_diagnostics_modules_do_not_import_decision_support() -> None:
+    for module_name in ("diagnostics_stage.py", "professional_rules.py"):
+        imports = _imports_for(PACKAGE / module_name)
+        assert "src.skills_runtime.decision_support" not in imports
+        assert "decision_support" not in imports

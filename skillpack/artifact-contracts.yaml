@@ -272,3 +272,45 @@ contracts:
         top_level: true
         produced_when: warnings or limitations are detected
         description: Artifact-level warning list mirrored from SkillOutput.warnings when available.
+      - key: redemption_fee_risk
+        category: diagnostics
+        required: false
+        type: object
+        top_level: true
+        produced_when: host supplies transactions, fee_schedules, and redemption_rules with short-holding fee rules
+        description: Deterministic short-holding redemption fee risk diagnostic derived from host data.
+      - key: overlap_diagnostics
+        category: diagnostics
+        required: false
+        type: object
+        top_level: true
+        produced_when: host supplies holdings and fund_profiles for two or more funds
+        description: Detector for overlapping holdings, themes, and regions across multiple funds.
+      - key: theme_overweight_diagnostics
+        category: diagnostics
+        required: false
+        type: object
+        top_level: true
+        produced_when: host supplies fund_profiles.theme tags and risk_profile or constraints theme limits
+        description: Theme concentration diagnostic highlighting themes beyond risk/constraint limits.
+      - key: dca_drawdown_diagnostics
+        category: diagnostics
+        required: false
+        type: object
+        top_level: true
+        produced_when: host supplies dca_plans and nav_history with recent drawdown
+        description: DCA plan review for funds under recent drawdown; diagnostic only, not a formal decision.
+      - key: cash_budget_diagnostics
+        category: diagnostics
+        required: false
+        type: object
+        top_level: true
+        produced_when: host supplies portfolio and risk_profile with liquidity/trade budget constraints
+        description: Cash reserve and short-term budget diagnostic.
+      - key: professional_diagnostics
+        category: diagnostics
+        required: false
+        type: object
+        top_level: true
+        produced_when: any professional diagnostic rule applies from host data
+        description: Aggregated professional diagnostic analysis results from local rules.

@@ -12,6 +12,17 @@
       "redemption": "available",
       "research_plan": "not_requested"
     },
+    "cash_budget_diagnostics": {
+      "cash_ratio": 0.0667,
+      "errors": [
+        "Cash 8000 is below 8% liquidity reserve (9600). Gap: 1600.",
+        "Short-term trade budget exceeded by 8000. Reduce short-term trades or increase budget allocation."
+      ],
+      "liquidity_reserve_pct": 0.08,
+      "remaining_budget": -8000.0,
+      "reserve_gap": 1600.0,
+      "short_term_budget_status": "exceeded"
+    },
     "cost_basis_summary": {
       "SYN7D001": {
         "average_cost_per_share": 1.025759,
@@ -84,6 +95,24 @@
         "User Investment Plan"
       ],
       "score": 0.767
+    },
+    "dca_drawdown_diagnostics": {
+      "reviewed_funds": [
+        {
+          "cadence": "monthly",
+          "dca_status": "active",
+          "diagnostic": "DCA continuing within normal range",
+          "fund_code": "SYN7D003",
+          "max_drawdown": 0.0,
+          "plan_amount": 1000.0,
+          "recent_return": 0.01
+        }
+      ],
+      "summary": {
+        "funds_with_drawdown": 0,
+        "note": "diagnostic only; formal DCA change requires decision_support",
+        "reviewed_count": 1
+      }
     },
     "dca_plan_review": {
       "plans": [
@@ -173,6 +202,17 @@
         "redemption": "available",
         "research_plan": "not_requested"
       },
+      "cash_budget_diagnostics": {
+        "cash_ratio": 0.0667,
+        "errors": [
+          "Cash 8000 is below 8% liquidity reserve (9600). Gap: 1600.",
+          "Short-term trade budget exceeded by 8000. Reduce short-term trades or increase budget allocation."
+        ],
+        "liquidity_reserve_pct": 0.08,
+        "remaining_budget": -8000.0,
+        "reserve_gap": 1600.0,
+        "short_term_budget_status": "exceeded"
+      },
       "concentration": {
         "duplicate_tags": [],
         "hhi": 0.371811,
@@ -254,6 +294,24 @@
           "User Investment Plan"
         ],
         "score": 0.767
+      },
+      "dca_drawdown_diagnostics": {
+        "reviewed_funds": [
+          {
+            "cadence": "monthly",
+            "dca_status": "active",
+            "diagnostic": "DCA continuing within normal range",
+            "fund_code": "SYN7D003",
+            "max_drawdown": 0.0,
+            "plan_amount": 1000.0,
+            "recent_return": 0.01
+          }
+        ],
+        "summary": {
+          "funds_with_drawdown": 0,
+          "note": "diagnostic only; formal DCA change requires decision_support",
+          "reviewed_count": 1
+        }
       },
       "dca_review": {
         "plans": [
@@ -410,6 +468,26 @@
         }
       },
       "market_scenario": null,
+      "overlap_diagnostics": {
+        "overlapping_holdings": [],
+        "overlapping_regions": [
+          {
+            "combined_portfolio_weight": 0.9333,
+            "funds": [
+              "SYN7D001",
+              "SYN7D002",
+              "SYN7D003"
+            ],
+            "region": "CN"
+          }
+        ],
+        "overlapping_themes": [],
+        "summary": {
+          "highest_overlap_theme": null,
+          "note": "host-provided holdings and profile data only",
+          "overlap_count": 1
+        }
+      },
       "pnl_summary": {
         "positions": {
           "SYN7D001": {
@@ -446,6 +524,103 @@
           "SYN7D003": 0.166667
         },
         "total_value": 120000.0
+      },
+      "professional_diagnostics": {
+        "cash_budget_diagnostics": {
+          "cash_ratio": 0.0667,
+          "errors": [
+            "Cash 8000 is below 8% liquidity reserve (9600). Gap: 1600.",
+            "Short-term trade budget exceeded by 8000. Reduce short-term trades or increase budget allocation."
+          ],
+          "liquidity_reserve_pct": 0.08,
+          "remaining_budget": -8000.0,
+          "reserve_gap": 1600.0,
+          "short_term_budget_status": "exceeded"
+        },
+        "dca_drawdown_diagnostics": {
+          "reviewed_funds": [
+            {
+              "cadence": "monthly",
+              "dca_status": "active",
+              "diagnostic": "DCA continuing within normal range",
+              "fund_code": "SYN7D003",
+              "max_drawdown": 0.0,
+              "plan_amount": 1000.0,
+              "recent_return": 0.01
+            }
+          ],
+          "summary": {
+            "funds_with_drawdown": 0,
+            "note": "diagnostic only; formal DCA change requires decision_support",
+            "reviewed_count": 1
+          }
+        },
+        "overlap_diagnostics": {
+          "overlapping_holdings": [],
+          "overlapping_regions": [
+            {
+              "combined_portfolio_weight": 0.9333,
+              "funds": [
+                "SYN7D001",
+                "SYN7D002",
+                "SYN7D003"
+              ],
+              "region": "CN"
+            }
+          ],
+          "overlapping_themes": [],
+          "summary": {
+            "highest_overlap_theme": null,
+            "note": "host-provided holdings and profile data only",
+            "overlap_count": 1
+          }
+        },
+        "professional_warnings": [
+          "Recent buy of 20000 on 2026-03-28 (3d ago) is within 7-day fee window. Redemption may incur ~1.5% fee.",
+          "Cash 8000 is below 8% liquidity reserve (9600). Gap: 1600.",
+          "Short-term trade budget exceeded by 8000. Reduce short-term trades or increase budget allocation."
+        ],
+        "redemption_fee_risk": {
+          "affected_funds": [
+            {
+              "estimated_recent_amount": 20000.0,
+              "fee_pct": 0.015,
+              "fund_code": "SYN7D001",
+              "fund_name": "Sample Recent Growth Mix",
+              "holding_days": 3,
+              "recent_buy_date": "2026-03-28",
+              "threshold_days": 7,
+              "warning": "Recent buy of 20000 on 2026-03-28 (3d ago) is within 7-day fee window. Redemption may incur ~1.5% fee."
+            }
+          ],
+          "as_of_date": "2026-03-31",
+          "summary": {
+            "affected_count": 1,
+            "highest_fee_pct": 0.015,
+            "note": "host-provided rules and transaction data only; no fee data was fetched"
+          }
+        },
+        "theme_overweight_diagnostics": {
+          "limits": {
+            "max_theme_weight": 0.55
+          },
+          "overweight_themes": [
+            {
+              "excess": null,
+              "funds": [
+                "SYN7D002"
+              ],
+              "limit": 0.55,
+              "theme": "income",
+              "weight": 0.4167
+            }
+          ],
+          "summary": {
+            "max_theme": "income",
+            "max_theme_weight": 0.4167,
+            "overweight_count": 1
+          }
+        }
       },
       "reconciliation": {
         "match_count": 0,
@@ -549,6 +724,26 @@
           }
         ],
         "warnings": []
+      },
+      "redemption_fee_risk": {
+        "affected_funds": [
+          {
+            "estimated_recent_amount": 20000.0,
+            "fee_pct": 0.015,
+            "fund_code": "SYN7D001",
+            "fund_name": "Sample Recent Growth Mix",
+            "holding_days": 3,
+            "recent_buy_date": "2026-03-28",
+            "threshold_days": 7,
+            "warning": "Recent buy of 20000 on 2026-03-28 (3d ago) is within 7-day fee window. Redemption may incur ~1.5% fee."
+          }
+        ],
+        "as_of_date": "2026-03-31",
+        "summary": {
+          "affected_count": 1,
+          "highest_fee_pct": 0.015,
+          "note": "host-provided rules and transaction data only; no fee data was fetched"
+        }
       },
       "redemption_summary": {
         "funds_with_rules": [
@@ -911,6 +1106,27 @@
         "used": 20000.0
       },
       "suggested_watchlist": [],
+      "theme_overweight_diagnostics": {
+        "limits": {
+          "max_theme_weight": 0.55
+        },
+        "overweight_themes": [
+          {
+            "excess": null,
+            "funds": [
+              "SYN7D002"
+            ],
+            "limit": 0.55,
+            "theme": "income",
+            "weight": 0.4167
+          }
+        ],
+        "summary": {
+          "max_theme": "income",
+          "max_theme_weight": 0.4167,
+          "overweight_count": 1
+        }
+      },
       "trade_budget": {
         "cash_available": 8000.0,
         "liquidity_reserve": 9600.0,
@@ -977,9 +1193,15 @@
         "warnings": []
       },
       "warnings": [
+        "Recent buy of 20000 on 2026-03-28 (3d ago) is within 7-day fee window. Redemption may incur ~1.5% fee.",
+        "Cash 8000 is below 8% liquidity reserve (9600). Gap: 1600.",
+        "Short-term trade budget exceeded by 8000. Reduce short-term trades or increase budget allocation.",
         "SYN7D001: shares mismatch [high] — snapshot=38995.5239/41959.18, portfolio=39024.3902/42000.0, delta=-28.8663/-40.82",
         "SYN7D002: shares mismatch [high] — snapshot=48000.0000/51600.0, portfolio=46511.6279/50000.0, delta=1488.3721/1600.0",
-        "SYN7D003: shares mismatch [high] — snapshot=20000.0000/20200.0, portfolio=19801.9802/20000.0, delta=198.0198/200.0"
+        "SYN7D003: shares mismatch [high] — snapshot=20000.0000/20200.0, portfolio=19801.9802/20000.0, delta=198.0198/200.0",
+        "Recent buy of 20000 on 2026-03-28 (3d ago) is within 7-day fee window. Redemption may incur ~1.5% fee.",
+        "Cash 8000 is below 8% liquidity reserve (9600). Gap: 1600.",
+        "Short-term trade budget exceeded by 8000. Reduce short-term trades or increase budget allocation."
       ]
     },
     "ledger_reconciliation_report": {
@@ -1061,6 +1283,26 @@
       ]
     },
     "market_scenario_impact": null,
+    "overlap_diagnostics": {
+      "overlapping_holdings": [],
+      "overlapping_regions": [
+        {
+          "combined_portfolio_weight": 0.9333,
+          "funds": [
+            "SYN7D001",
+            "SYN7D002",
+            "SYN7D003"
+          ],
+          "region": "CN"
+        }
+      ],
+      "overlapping_themes": [],
+      "summary": {
+        "highest_overlap_theme": null,
+        "note": "host-provided holdings and profile data only",
+        "overlap_count": 1
+      }
+    },
     "pnl_summary": {
       "positions": {
         "SYN7D001": {
@@ -1139,6 +1381,123 @@
         ],
         "target_weight": 0.18,
         "total_cost": 20000.0
+      }
+    },
+    "professional_diagnostics": {
+      "cash_budget_diagnostics": {
+        "cash_ratio": 0.0667,
+        "errors": [
+          "Cash 8000 is below 8% liquidity reserve (9600). Gap: 1600.",
+          "Short-term trade budget exceeded by 8000. Reduce short-term trades or increase budget allocation."
+        ],
+        "liquidity_reserve_pct": 0.08,
+        "remaining_budget": -8000.0,
+        "reserve_gap": 1600.0,
+        "short_term_budget_status": "exceeded"
+      },
+      "dca_drawdown_diagnostics": {
+        "reviewed_funds": [
+          {
+            "cadence": "monthly",
+            "dca_status": "active",
+            "diagnostic": "DCA continuing within normal range",
+            "fund_code": "SYN7D003",
+            "max_drawdown": 0.0,
+            "plan_amount": 1000.0,
+            "recent_return": 0.01
+          }
+        ],
+        "summary": {
+          "funds_with_drawdown": 0,
+          "note": "diagnostic only; formal DCA change requires decision_support",
+          "reviewed_count": 1
+        }
+      },
+      "overlap_diagnostics": {
+        "overlapping_holdings": [],
+        "overlapping_regions": [
+          {
+            "combined_portfolio_weight": 0.9333,
+            "funds": [
+              "SYN7D001",
+              "SYN7D002",
+              "SYN7D003"
+            ],
+            "region": "CN"
+          }
+        ],
+        "overlapping_themes": [],
+        "summary": {
+          "highest_overlap_theme": null,
+          "note": "host-provided holdings and profile data only",
+          "overlap_count": 1
+        }
+      },
+      "professional_warnings": [
+        "Recent buy of 20000 on 2026-03-28 (3d ago) is within 7-day fee window. Redemption may incur ~1.5% fee.",
+        "Cash 8000 is below 8% liquidity reserve (9600). Gap: 1600.",
+        "Short-term trade budget exceeded by 8000. Reduce short-term trades or increase budget allocation."
+      ],
+      "redemption_fee_risk": {
+        "affected_funds": [
+          {
+            "estimated_recent_amount": 20000.0,
+            "fee_pct": 0.015,
+            "fund_code": "SYN7D001",
+            "fund_name": "Sample Recent Growth Mix",
+            "holding_days": 3,
+            "recent_buy_date": "2026-03-28",
+            "threshold_days": 7,
+            "warning": "Recent buy of 20000 on 2026-03-28 (3d ago) is within 7-day fee window. Redemption may incur ~1.5% fee."
+          }
+        ],
+        "as_of_date": "2026-03-31",
+        "summary": {
+          "affected_count": 1,
+          "highest_fee_pct": 0.015,
+          "note": "host-provided rules and transaction data only; no fee data was fetched"
+        }
+      },
+      "theme_overweight_diagnostics": {
+        "limits": {
+          "max_theme_weight": 0.55
+        },
+        "overweight_themes": [
+          {
+            "excess": null,
+            "funds": [
+              "SYN7D002"
+            ],
+            "limit": 0.55,
+            "theme": "income",
+            "weight": 0.4167
+          }
+        ],
+        "summary": {
+          "max_theme": "income",
+          "max_theme_weight": 0.4167,
+          "overweight_count": 1
+        }
+      }
+    },
+    "redemption_fee_risk": {
+      "affected_funds": [
+        {
+          "estimated_recent_amount": 20000.0,
+          "fee_pct": 0.015,
+          "fund_code": "SYN7D001",
+          "fund_name": "Sample Recent Growth Mix",
+          "holding_days": 3,
+          "recent_buy_date": "2026-03-28",
+          "threshold_days": 7,
+          "warning": "Recent buy of 20000 on 2026-03-28 (3d ago) is within 7-day fee window. Redemption may incur ~1.5% fee."
+        }
+      ],
+      "as_of_date": "2026-03-31",
+      "summary": {
+        "affected_count": 1,
+        "highest_fee_pct": 0.015,
+        "note": "host-provided rules and transaction data only; no fee data was fetched"
       }
     },
     "redemption_summary": {
@@ -1579,10 +1938,37 @@
         "Host supplies redemption fee and holding-period data."
       ]
     },
+    "theme_overweight_diagnostics": {
+      "limits": {
+        "max_theme_weight": 0.55
+      },
+      "overweight_themes": [
+        {
+          "excess": null,
+          "funds": [
+            "SYN7D002"
+          ],
+          "limit": 0.55,
+          "theme": "income",
+          "weight": 0.4167
+        }
+      ],
+      "summary": {
+        "max_theme": "income",
+        "max_theme_weight": 0.4167,
+        "overweight_count": 1
+      }
+    },
     "warnings": [
+      "Recent buy of 20000 on 2026-03-28 (3d ago) is within 7-day fee window. Redemption may incur ~1.5% fee.",
+      "Cash 8000 is below 8% liquidity reserve (9600). Gap: 1600.",
+      "Short-term trade budget exceeded by 8000. Reduce short-term trades or increase budget allocation.",
       "SYN7D001: shares mismatch [high] — snapshot=38995.5239/41959.18, portfolio=39024.3902/42000.0, delta=-28.8663/-40.82",
       "SYN7D002: shares mismatch [high] — snapshot=48000.0000/51600.0, portfolio=46511.6279/50000.0, delta=1488.3721/1600.0",
-      "SYN7D003: shares mismatch [high] — snapshot=20000.0000/20200.0, portfolio=19801.9802/20000.0, delta=198.0198/200.0"
+      "SYN7D003: shares mismatch [high] — snapshot=20000.0000/20200.0, portfolio=19801.9802/20000.0, delta=198.0198/200.0",
+      "Recent buy of 20000 on 2026-03-28 (3d ago) is within 7-day fee window. Redemption may incur ~1.5% fee.",
+      "Cash 8000 is below 8% liquidity reserve (9600). Gap: 1600.",
+      "Short-term trade budget exceeded by 8000. Reduce short-term trades or increase budget allocation."
     ]
   },
   "errors": [],
@@ -2142,8 +2528,14 @@
   "status": "PARTIAL",
   "used_mcp_capabilities": [],
   "warnings": [
+    "Recent buy of 20000 on 2026-03-28 (3d ago) is within 7-day fee window. Redemption may incur ~1.5% fee.",
+    "Cash 8000 is below 8% liquidity reserve (9600). Gap: 1600.",
+    "Short-term trade budget exceeded by 8000. Reduce short-term trades or increase budget allocation.",
     "SYN7D001: shares mismatch [high] — snapshot=38995.5239/41959.18, portfolio=39024.3902/42000.0, delta=-28.8663/-40.82",
     "SYN7D002: shares mismatch [high] — snapshot=48000.0000/51600.0, portfolio=46511.6279/50000.0, delta=1488.3721/1600.0",
-    "SYN7D003: shares mismatch [high] — snapshot=20000.0000/20200.0, portfolio=19801.9802/20000.0, delta=198.0198/200.0"
+    "SYN7D003: shares mismatch [high] — snapshot=20000.0000/20200.0, portfolio=19801.9802/20000.0, delta=198.0198/200.0",
+    "Recent buy of 20000 on 2026-03-28 (3d ago) is within 7-day fee window. Redemption may incur ~1.5% fee.",
+    "Cash 8000 is below 8% liquidity reserve (9600). Gap: 1600.",
+    "Short-term trade budget exceeded by 8000. Reduce short-term trades or increase budget allocation."
   ]
 }

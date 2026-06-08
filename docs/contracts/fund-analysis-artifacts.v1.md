@@ -119,6 +119,12 @@ separate top-level artifacts in the current runtime.
 | `report_outline` | `report_output` | No | list | Yes | Normal structured portfolio/report run. | Ordered outline derived from `report_sections`. |
 | `report_quality_gate` | `report_output` | No | object | Yes | Normal structured portfolio/report run. | Deterministic publishability gate. |
 | `warnings` | `diagnostics` | No | list | Yes | Warnings or limitations are detected. | Artifact-level warning list mirrored from `SkillOutput.warnings` when available. |
+| `redemption_fee_risk` | `diagnostics` | No | object | No | Host supplies transactions, fee_schedules, and redemption_rules with short-holding fee rules. | Deterministic short-holding redemption fee risk diagnostic. |
+| `overlap_diagnostics` | `diagnostics` | No | object | No | Host supplies holdings and fund_profiles for two or more funds. | Overlapping holdings, themes, and regions across funds. |
+| `theme_overweight_diagnostics` | `diagnostics` | No | object | No | Host supplies fund_profiles.theme tags and risk_profile/constraints theme limits. | Theme concentration beyond configured limits. |
+| `dca_drawdown_diagnostics` | `diagnostics` | No | object | No | Host supplies dca_plans and nav_history with recent drawdown. | DCA plan review under drawdown; diagnostic only. |
+| `cash_budget_diagnostics` | `diagnostics` | No | object | No | Host supplies portfolio and risk_profile with liquidity/budget constraints. | Cash reserve and short-term budget diagnostic. |
+| `professional_diagnostics` | `diagnostics` | No | object | No | Any professional diagnostic rule applies from host data. | Aggregated professional diagnostic results from local rules. |
 
 ## Report Output
 

@@ -12,6 +12,16 @@
       "redemption": "available",
       "research_plan": "not_requested"
     },
+    "cash_budget_diagnostics": {
+      "cash_ratio": 0.0333,
+      "errors": [
+        "Cash 5000 is below 10% liquidity reserve (15000). Gap: 10000."
+      ],
+      "liquidity_reserve_pct": 0.1,
+      "remaining_budget": 12000.0,
+      "reserve_gap": 10000.0,
+      "short_term_budget_status": "ok"
+    },
     "cost_basis_summary": {
       "SYNAI001": {
         "average_cost_per_share": 1.24,
@@ -95,6 +105,24 @@
         "User Investment Plan"
       ],
       "score": 0.8
+    },
+    "dca_drawdown_diagnostics": {
+      "reviewed_funds": [
+        {
+          "cadence": "monthly",
+          "dca_status": "under_drawdown",
+          "diagnostic": "Fund SYNAI001 has max drawdown 11.3%. DCA may benefit from buying at lower NAV, but review risk tolerance.",
+          "fund_code": "SYNAI001",
+          "max_drawdown": 0.113333,
+          "plan_amount": 3000.0,
+          "recent_return": 0.4
+        }
+      ],
+      "summary": {
+        "funds_with_drawdown": 1,
+        "note": "diagnostic only; formal DCA change requires decision_support",
+        "reviewed_count": 1
+      }
     },
     "dca_plan_review": {
       "plans": [
@@ -238,6 +266,16 @@
         "redemption": "available",
         "research_plan": "not_requested"
       },
+      "cash_budget_diagnostics": {
+        "cash_ratio": 0.0333,
+        "errors": [
+          "Cash 5000 is below 10% liquidity reserve (15000). Gap: 10000."
+        ],
+        "liquidity_reserve_pct": 0.1,
+        "remaining_budget": 12000.0,
+        "reserve_gap": 10000.0,
+        "short_term_budget_status": "ok"
+      },
       "concentration": {
         "duplicate_tags": [
           "semiconductor"
@@ -332,6 +370,24 @@
           "User Investment Plan"
         ],
         "score": 0.8
+      },
+      "dca_drawdown_diagnostics": {
+        "reviewed_funds": [
+          {
+            "cadence": "monthly",
+            "dca_status": "under_drawdown",
+            "diagnostic": "Fund SYNAI001 has max drawdown 11.3%. DCA may benefit from buying at lower NAV, but review risk tolerance.",
+            "fund_code": "SYNAI001",
+            "max_drawdown": 0.113333,
+            "plan_amount": 3000.0,
+            "recent_return": 0.4
+          }
+        ],
+        "summary": {
+          "funds_with_drawdown": 1,
+          "note": "diagnostic only; formal DCA change requires decision_support",
+          "reviewed_count": 1
+        }
       },
       "dca_review": {
         "plans": [
@@ -570,6 +626,36 @@
         "name": "Synthetic AI semiconductor multiple compression",
         "risk_level": "high"
       },
+      "overlap_diagnostics": {
+        "overlapping_holdings": [
+          {
+            "combined_fund_weight": 0.37,
+            "funds": [
+              "SYNAI001",
+              "SYNAI002"
+            ],
+            "holding_name": "Sample Advanced Chip A"
+          }
+        ],
+        "overlapping_regions": [
+          {
+            "combined_portfolio_weight": 0.9667,
+            "funds": [
+              "SYNAI001",
+              "SYNAI002",
+              "SYNAI003",
+              "SYNBOND01"
+            ],
+            "region": "CN"
+          }
+        ],
+        "overlapping_themes": [],
+        "summary": {
+          "highest_overlap_theme": "Sample Advanced Chip A",
+          "note": "host-provided holdings and profile data only",
+          "overlap_count": 2
+        }
+      },
       "pnl_summary": {
         "positions": {
           "SYNAI001": {
@@ -613,6 +699,101 @@
           "SYNBOND01": 0.066667
         },
         "total_value": 150000.0
+      },
+      "professional_diagnostics": {
+        "cash_budget_diagnostics": {
+          "cash_ratio": 0.0333,
+          "errors": [
+            "Cash 5000 is below 10% liquidity reserve (15000). Gap: 10000."
+          ],
+          "liquidity_reserve_pct": 0.1,
+          "remaining_budget": 12000.0,
+          "reserve_gap": 10000.0,
+          "short_term_budget_status": "ok"
+        },
+        "dca_drawdown_diagnostics": {
+          "reviewed_funds": [
+            {
+              "cadence": "monthly",
+              "dca_status": "under_drawdown",
+              "diagnostic": "Fund SYNAI001 has max drawdown 11.3%. DCA may benefit from buying at lower NAV, but review risk tolerance.",
+              "fund_code": "SYNAI001",
+              "max_drawdown": 0.113333,
+              "plan_amount": 3000.0,
+              "recent_return": 0.4
+            }
+          ],
+          "summary": {
+            "funds_with_drawdown": 1,
+            "note": "diagnostic only; formal DCA change requires decision_support",
+            "reviewed_count": 1
+          }
+        },
+        "overlap_diagnostics": {
+          "overlapping_holdings": [
+            {
+              "combined_fund_weight": 0.37,
+              "funds": [
+                "SYNAI001",
+                "SYNAI002"
+              ],
+              "holding_name": "Sample Advanced Chip A"
+            }
+          ],
+          "overlapping_regions": [
+            {
+              "combined_portfolio_weight": 0.9667,
+              "funds": [
+                "SYNAI001",
+                "SYNAI002",
+                "SYNAI003",
+                "SYNBOND01"
+              ],
+              "region": "CN"
+            }
+          ],
+          "overlapping_themes": [],
+          "summary": {
+            "highest_overlap_theme": "Sample Advanced Chip A",
+            "note": "host-provided holdings and profile data only",
+            "overlap_count": 2
+          }
+        },
+        "professional_warnings": [
+          "Theme 'ai_semiconductor' at 46.7% exceeds limit 35.0% by 11.7%",
+          "Fund SYNAI001 has max drawdown 11.3%. DCA may benefit from buying at lower NAV, but review risk tolerance.",
+          "Cash 5000 is below 10% liquidity reserve (15000). Gap: 10000."
+        ],
+        "theme_overweight_diagnostics": {
+          "limits": {
+            "max_theme_weight": 0.35
+          },
+          "overweight_themes": [
+            {
+              "excess": 0.1167,
+              "funds": [
+                "SYNAI001"
+              ],
+              "limit": 0.35,
+              "theme": "ai_semiconductor",
+              "weight": 0.4667
+            },
+            {
+              "excess": null,
+              "funds": [
+                "SYNAI002"
+              ],
+              "limit": 0.35,
+              "theme": "semiconductor",
+              "weight": 0.3
+            }
+          ],
+          "summary": {
+            "max_theme": "ai_semiconductor",
+            "max_theme_weight": 0.4667,
+            "overweight_count": 2
+          }
+        }
       },
       "reconciliation": {
         "match_count": 4,
@@ -1081,6 +1262,36 @@
           "reason": "drawdown or concentration risk requires monitoring"
         }
       ],
+      "theme_overweight_diagnostics": {
+        "limits": {
+          "max_theme_weight": 0.35
+        },
+        "overweight_themes": [
+          {
+            "excess": 0.1167,
+            "funds": [
+              "SYNAI001"
+            ],
+            "limit": 0.35,
+            "theme": "ai_semiconductor",
+            "weight": 0.4667
+          },
+          {
+            "excess": null,
+            "funds": [
+              "SYNAI002"
+            ],
+            "limit": 0.35,
+            "theme": "semiconductor",
+            "weight": 0.3
+          }
+        ],
+        "summary": {
+          "max_theme": "ai_semiconductor",
+          "max_theme_weight": 0.4667,
+          "overweight_count": 2
+        }
+      },
       "trade_budget": {
         "cash_available": 5000.0,
         "liquidity_reserve": 15000.0,
@@ -1159,7 +1370,14 @@
         "total_sells": 0.0,
         "warnings": []
       },
-      "warnings": []
+      "warnings": [
+        "Theme 'ai_semiconductor' at 46.7% exceeds limit 35.0% by 11.7%",
+        "Fund SYNAI001 has max drawdown 11.3%. DCA may benefit from buying at lower NAV, but review risk tolerance.",
+        "Cash 5000 is below 10% liquidity reserve (15000). Gap: 10000.",
+        "Theme 'ai_semiconductor' at 46.7% exceeds limit 35.0% by 11.7%",
+        "Fund SYNAI001 has max drawdown 11.3%. DCA may benefit from buying at lower NAV, but review risk tolerance.",
+        "Cash 5000 is below 10% liquidity reserve (15000). Gap: 10000."
+      ]
     },
     "ledger_reconciliation_report": {
       "comparisons": [
@@ -1220,6 +1438,36 @@
       "description": "Fake scenario: AI and semiconductor sentiment cools while defensive bonds are stable.",
       "name": "Synthetic AI semiconductor multiple compression",
       "risk_level": "high"
+    },
+    "overlap_diagnostics": {
+      "overlapping_holdings": [
+        {
+          "combined_fund_weight": 0.37,
+          "funds": [
+            "SYNAI001",
+            "SYNAI002"
+          ],
+          "holding_name": "Sample Advanced Chip A"
+        }
+      ],
+      "overlapping_regions": [
+        {
+          "combined_portfolio_weight": 0.9667,
+          "funds": [
+            "SYNAI001",
+            "SYNAI002",
+            "SYNAI003",
+            "SYNBOND01"
+          ],
+          "region": "CN"
+        }
+      ],
+      "overlapping_themes": [],
+      "summary": {
+        "highest_overlap_theme": "Sample Advanced Chip A",
+        "note": "host-provided holdings and profile data only",
+        "overlap_count": 2
+      }
     },
     "pnl_summary": {
       "positions": {
@@ -1320,6 +1568,101 @@
         ],
         "target_weight": 0.2,
         "total_cost": 10000.0
+      }
+    },
+    "professional_diagnostics": {
+      "cash_budget_diagnostics": {
+        "cash_ratio": 0.0333,
+        "errors": [
+          "Cash 5000 is below 10% liquidity reserve (15000). Gap: 10000."
+        ],
+        "liquidity_reserve_pct": 0.1,
+        "remaining_budget": 12000.0,
+        "reserve_gap": 10000.0,
+        "short_term_budget_status": "ok"
+      },
+      "dca_drawdown_diagnostics": {
+        "reviewed_funds": [
+          {
+            "cadence": "monthly",
+            "dca_status": "under_drawdown",
+            "diagnostic": "Fund SYNAI001 has max drawdown 11.3%. DCA may benefit from buying at lower NAV, but review risk tolerance.",
+            "fund_code": "SYNAI001",
+            "max_drawdown": 0.113333,
+            "plan_amount": 3000.0,
+            "recent_return": 0.4
+          }
+        ],
+        "summary": {
+          "funds_with_drawdown": 1,
+          "note": "diagnostic only; formal DCA change requires decision_support",
+          "reviewed_count": 1
+        }
+      },
+      "overlap_diagnostics": {
+        "overlapping_holdings": [
+          {
+            "combined_fund_weight": 0.37,
+            "funds": [
+              "SYNAI001",
+              "SYNAI002"
+            ],
+            "holding_name": "Sample Advanced Chip A"
+          }
+        ],
+        "overlapping_regions": [
+          {
+            "combined_portfolio_weight": 0.9667,
+            "funds": [
+              "SYNAI001",
+              "SYNAI002",
+              "SYNAI003",
+              "SYNBOND01"
+            ],
+            "region": "CN"
+          }
+        ],
+        "overlapping_themes": [],
+        "summary": {
+          "highest_overlap_theme": "Sample Advanced Chip A",
+          "note": "host-provided holdings and profile data only",
+          "overlap_count": 2
+        }
+      },
+      "professional_warnings": [
+        "Theme 'ai_semiconductor' at 46.7% exceeds limit 35.0% by 11.7%",
+        "Fund SYNAI001 has max drawdown 11.3%. DCA may benefit from buying at lower NAV, but review risk tolerance.",
+        "Cash 5000 is below 10% liquidity reserve (15000). Gap: 10000."
+      ],
+      "theme_overweight_diagnostics": {
+        "limits": {
+          "max_theme_weight": 0.35
+        },
+        "overweight_themes": [
+          {
+            "excess": 0.1167,
+            "funds": [
+              "SYNAI001"
+            ],
+            "limit": 0.35,
+            "theme": "ai_semiconductor",
+            "weight": 0.4667
+          },
+          {
+            "excess": null,
+            "funds": [
+              "SYNAI002"
+            ],
+            "limit": 0.35,
+            "theme": "semiconductor",
+            "weight": 0.3
+          }
+        ],
+        "summary": {
+          "max_theme": "ai_semiconductor",
+          "max_theme_weight": 0.4667,
+          "overweight_count": 2
+        }
       }
     },
     "redemption_summary": {
@@ -1933,7 +2276,44 @@
         "FundAnalysisSkill analysis remains artifact/report only."
       ]
     },
-    "warnings": []
+    "theme_overweight_diagnostics": {
+      "limits": {
+        "max_theme_weight": 0.35
+      },
+      "overweight_themes": [
+        {
+          "excess": 0.1167,
+          "funds": [
+            "SYNAI001"
+          ],
+          "limit": 0.35,
+          "theme": "ai_semiconductor",
+          "weight": 0.4667
+        },
+        {
+          "excess": null,
+          "funds": [
+            "SYNAI002"
+          ],
+          "limit": 0.35,
+          "theme": "semiconductor",
+          "weight": 0.3
+        }
+      ],
+      "summary": {
+        "max_theme": "ai_semiconductor",
+        "max_theme_weight": 0.4667,
+        "overweight_count": 2
+      }
+    },
+    "warnings": [
+      "Theme 'ai_semiconductor' at 46.7% exceeds limit 35.0% by 11.7%",
+      "Fund SYNAI001 has max drawdown 11.3%. DCA may benefit from buying at lower NAV, but review risk tolerance.",
+      "Cash 5000 is below 10% liquidity reserve (15000). Gap: 10000.",
+      "Theme 'ai_semiconductor' at 46.7% exceeds limit 35.0% by 11.7%",
+      "Fund SYNAI001 has max drawdown 11.3%. DCA may benefit from buying at lower NAV, but review risk tolerance.",
+      "Cash 5000 is below 10% liquidity reserve (15000). Gap: 10000."
+    ]
   },
   "errors": [],
   "evidence_items": [
@@ -2673,7 +3053,14 @@
   },
   "ok": true,
   "skill_name": "fund_analysis",
-  "status": "OK",
+  "status": "PARTIAL",
   "used_mcp_capabilities": [],
-  "warnings": []
+  "warnings": [
+    "Theme 'ai_semiconductor' at 46.7% exceeds limit 35.0% by 11.7%",
+    "Fund SYNAI001 has max drawdown 11.3%. DCA may benefit from buying at lower NAV, but review risk tolerance.",
+    "Cash 5000 is below 10% liquidity reserve (15000). Gap: 10000.",
+    "Theme 'ai_semiconductor' at 46.7% exceeds limit 35.0% by 11.7%",
+    "Fund SYNAI001 has max drawdown 11.3%. DCA may benefit from buying at lower NAV, but review risk tolerance.",
+    "Cash 5000 is below 10% liquidity reserve (15000). Gap: 10000."
+  ]
 }

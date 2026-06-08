@@ -12,6 +12,14 @@
       "redemption": "missing",
       "research_plan": "not_requested"
     },
+    "cash_budget_diagnostics": {
+      "cash_ratio": 0.1,
+      "errors": [],
+      "liquidity_reserve_pct": 0.1,
+      "remaining_budget": 20000.0,
+      "reserve_gap": null,
+      "short_term_budget_status": "ok"
+    },
     "cost_basis_summary": null,
     "data_completeness": {
       "available_sections": [
@@ -75,6 +83,14 @@
         "portfolio": "available",
         "redemption": "missing",
         "research_plan": "not_requested"
+      },
+      "cash_budget_diagnostics": {
+        "cash_ratio": 0.1,
+        "errors": [],
+        "liquidity_reserve_pct": 0.1,
+        "remaining_budget": 20000.0,
+        "reserve_gap": null,
+        "short_term_budget_status": "ok"
       },
       "concentration": {
         "duplicate_tags": [],
@@ -186,6 +202,17 @@
           "110011": 0.15
         },
         "total_value": 200000.0
+      },
+      "professional_diagnostics": {
+        "cash_budget_diagnostics": {
+          "cash_ratio": 0.1,
+          "errors": [],
+          "liquidity_reserve_pct": 0.1,
+          "remaining_budget": 20000.0,
+          "reserve_gap": null,
+          "short_term_budget_status": "ok"
+        },
+        "professional_warnings": []
       },
       "reconciliation": null,
       "report_limitations": [
@@ -571,6 +598,17 @@
         "target_weight": 0.12,
         "total_cost": 32000
       }
+    },
+    "professional_diagnostics": {
+      "cash_budget_diagnostics": {
+        "cash_ratio": 0.1,
+        "errors": [],
+        "liquidity_reserve_pct": 0.1,
+        "remaining_budget": 20000.0,
+        "reserve_gap": null,
+        "short_term_budget_status": "ok"
+      },
+      "professional_warnings": []
     },
     "report_limitations": [
       "Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data"

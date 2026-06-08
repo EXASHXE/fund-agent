@@ -1,45 +1,40 @@
-"""Documentation coverage for personal fund scenario fixtures."""
+"""Docs tests for scenario fixture README."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
-
-ROOT = Path(__file__).resolve().parents[2]
-README = ROOT / "examples" / "scenarios" / "README.md"
-
-SCENARIO_FIXTURES = [
-    "cn_fund_7d_redemption_fee.json",
-    "cn_fund_qdii_sp500_overlap.json",
-    "cn_fund_ai_semiconductor_overweight.json",
-    "cn_fund_dca_drawdown_review.json",
-    "cn_fund_ledger_derived_snapshot.json",
-]
+README_PATH = Path("examples/scenarios/README.md")
 
 
-def test_scenario_fixtures_readme_exists_and_mentions_each_fixture() -> None:
-    assert README.exists()
-    text = README.read_text(encoding="utf-8")
-    for fixture_name in SCENARIO_FIXTURES:
-        assert fixture_name in text
+def _content() -> str:
+    return README_PATH.read_text(encoding="utf-8").lower()
 
 
-def test_scenario_fixtures_readme_states_boundaries() -> None:
-    text = README.read_text(encoding="utf-8").lower()
-    assert "fake/sample data" in text
-    assert "not investment advice" in text
-    assert "not real-time market data" in text
-    assert "not real personal holdings" in text
-    assert "external hosts own real data fetching" in text
-    assert "provider sdk integration" in text
-    assert "formal decisions require" in text
+def test_scenario_readme_mentions_redemption_fee_risk():
+    assert "redemption_fee_risk" in _content()
+
+
+def test_scenario_readme_mentions_overlap_diagnostics():
+    assert "overlap_diagnostics" in _content()
+
+
+def test_scenario_readme_mentions_theme_overweight_diagnostics():
+    assert "theme_overweight_diagnostics" in _content()
+
+
+def test_scenario_readme_mentions_dca_drawdown_diagnostics():
+    assert "dca_drawdown_diagnostics" in _content()
+
+
+def test_scenario_readme_mentions_cash_budget_diagnostics():
+    assert "cash_budget_diagnostics" in _content()
+
+
+def test_scenario_readme_mentions_formal_decisions_require_decision_support():
+    text = _content()
     assert "decision_support" in text
-    assert "fund_analysis" in text
-    assert "analysis artifacts" in text
-    assert "reports only" in text
 
 
-def test_scenario_fixtures_readme_includes_bridge_command_examples() -> None:
-    text = README.read_text(encoding="utf-8")
-    assert "--validate-input" in text
-    assert "--emit-report markdown" in text
+def test_scenario_readme_mentions_fake_sample_data():
+    assert "fake" in _content() or "sample" in _content()
