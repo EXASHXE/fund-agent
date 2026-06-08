@@ -53,6 +53,10 @@ Limitations:
 Limitations:
 - DCA plan review is absent; host did not provide DCA inputs.
 
+## Professional diagnostics [OK]
+- Cash ratio is 10.0%.
+- Short-term trade budget status: ok.
+
 ## Rebalance plan [OK]
 - Rebalance simulation produced 0 trade leg(s) with total trade amount 0.00.
 - No single fund > 45%

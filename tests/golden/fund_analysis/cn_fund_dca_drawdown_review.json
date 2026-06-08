@@ -754,6 +754,11 @@
           "title": "DCA and trade budget"
         },
         {
+          "id": "professional_diagnostics",
+          "status": "PARTIAL",
+          "title": "Professional diagnostics"
+        },
+        {
           "id": "rebalance_plan",
           "status": "OK",
           "title": "Rebalance plan"
@@ -939,6 +944,28 @@
           "limitations": [],
           "status": "OK",
           "title": "DCA and trade budget"
+        },
+        {
+          "bullets": [
+            "Overlap scan found 1 overlapping holding/theme/region item(s). ",
+            "Theme overweight scan found 1 theme(s) near or above host-supplied limit. Max: broad_market at 45.0%.",
+            "DCA drawdown scan reviewed 1 plan(s); 1 fund(s) are under drawdown. Formal DCA changes require decision_support.",
+            "Cash ratio is 12.0%.",
+            "Short-term trade budget status: ok.",
+            "Fund SYNDCA001 has max drawdown 29.2%. DCA may benefit from buying at lower NAV, but review risk tolerance."
+          ],
+          "data_sources": [
+            "professional_diagnostics",
+            "redemption_fee_risk",
+            "overlap_diagnostics",
+            "theme_overweight_diagnostics",
+            "dca_drawdown_diagnostics",
+            "cash_budget_diagnostics"
+          ],
+          "id": "professional_diagnostics",
+          "limitations": [],
+          "status": "PARTIAL",
+          "title": "Professional diagnostics"
         },
         {
           "bullets": [
@@ -1179,7 +1206,6 @@
         "warnings": []
       },
       "warnings": [
-        "Fund SYNDCA001 has max drawdown 29.2%. DCA may benefit from buying at lower NAV, but review risk tolerance.",
         "SYNDCA001: shares mismatch [high] — snapshot=52992.8699/47693.58, portfolio=50000.0000/45000.0, delta=2992.8699/2693.58",
         "Fund SYNDCA001 has max drawdown 29.2%. DCA may benefit from buying at lower NAV, but review risk tolerance."
       ]
@@ -1504,6 +1530,11 @@
         "title": "DCA and trade budget"
       },
       {
+        "id": "professional_diagnostics",
+        "status": "PARTIAL",
+        "title": "Professional diagnostics"
+      },
+      {
         "id": "rebalance_plan",
         "status": "OK",
         "title": "Rebalance plan"
@@ -1689,6 +1720,28 @@
         "limitations": [],
         "status": "OK",
         "title": "DCA and trade budget"
+      },
+      {
+        "bullets": [
+          "Overlap scan found 1 overlapping holding/theme/region item(s). ",
+          "Theme overweight scan found 1 theme(s) near or above host-supplied limit. Max: broad_market at 45.0%.",
+          "DCA drawdown scan reviewed 1 plan(s); 1 fund(s) are under drawdown. Formal DCA changes require decision_support.",
+          "Cash ratio is 12.0%.",
+          "Short-term trade budget status: ok.",
+          "Fund SYNDCA001 has max drawdown 29.2%. DCA may benefit from buying at lower NAV, but review risk tolerance."
+        ],
+        "data_sources": [
+          "professional_diagnostics",
+          "redemption_fee_risk",
+          "overlap_diagnostics",
+          "theme_overweight_diagnostics",
+          "dca_drawdown_diagnostics",
+          "cash_budget_diagnostics"
+        ],
+        "id": "professional_diagnostics",
+        "limitations": [],
+        "status": "PARTIAL",
+        "title": "Professional diagnostics"
       },
       {
         "bullets": [
@@ -1951,7 +2004,6 @@
       }
     },
     "warnings": [
-      "Fund SYNDCA001 has max drawdown 29.2%. DCA may benefit from buying at lower NAV, but review risk tolerance.",
       "SYNDCA001: shares mismatch [high] — snapshot=52992.8699/47693.58, portfolio=50000.0000/45000.0, delta=2992.8699/2693.58",
       "Fund SYNDCA001 has max drawdown 29.2%. DCA may benefit from buying at lower NAV, but review risk tolerance."
     ]
@@ -2615,7 +2667,6 @@
   "status": "PARTIAL",
   "used_mcp_capabilities": [],
   "warnings": [
-    "Fund SYNDCA001 has max drawdown 29.2%. DCA may benefit from buying at lower NAV, but review risk tolerance.",
     "SYNDCA001: shares mismatch [high] — snapshot=52992.8699/47693.58, portfolio=50000.0000/45000.0, delta=2992.8699/2693.58",
     "Fund SYNDCA001 has max drawdown 29.2%. DCA may benefit from buying at lower NAV, but review risk tolerance."
   ]

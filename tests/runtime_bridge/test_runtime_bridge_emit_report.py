@@ -177,3 +177,22 @@ def test_emit_report_missing_report_sections_returns_json_error(
     assert out["error"]["details"]["available_artifact_keys"] == [
         "portfolio_summary",
     ]
+
+
+def test_emit_report_markdown_includes_professional_diagnostics_heading() -> None:
+    fixture = ROOT / "examples" / "scenarios" / "cn_fund_7d_redemption_fee.json"
+    proc = _run([
+        "--skill",
+        "fund_analysis",
+        "--input",
+        str(fixture),
+        "--emit-report",
+        "markdown",
+    ])
+    assert proc.returncode == 0, proc.stderr
+    assert proc.stdout.startswith("# Personal fund report\n")
+    assert "## Professional diagnostics" in proc.stdout
+    # No formal decision headings
+    assert "## Decision" not in proc.stdout
+    assert "## Execution ledger" not in proc.stdout
+    _assert_not_json(proc.stdout)

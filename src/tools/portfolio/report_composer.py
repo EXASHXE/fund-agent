@@ -22,6 +22,7 @@ SECTION_ORDER: tuple[tuple[str, str], ...] = (
     ("fees_and_redemption", "Fees and redemption"),
     ("manager_and_fund_profile", "Manager and fund profile"),
     ("dca_and_trade_budget", "DCA and trade budget"),
+    ("professional_diagnostics", "Professional diagnostics"),
     ("rebalance_plan", "Rebalance plan"),
     ("research_query_plan", "Research query plan"),
     ("data_completeness_and_limitations", "Data completeness and limitations"),
@@ -69,6 +70,7 @@ def compose_personal_fund_report(
         _build_fees_and_redemption(context),
         _build_manager_and_fund_profile(context),
         _build_dca_and_trade_budget(context),
+        _build_professional_diagnostics(context),
         _build_rebalance_plan(context),
         _build_research_query_plan(context),
         _build_data_completeness_and_limitations(context),
@@ -434,6 +436,106 @@ def _build_dca_and_trade_budget(context: dict[str, Any]) -> dict[str, Any]:
 
     status = "OK" if trade_budget and dca_review else "PARTIAL" if trade_budget or short_term_budget else "MISSING"
     return _section("dca_and_trade_budget", status, bullets, ["trade_budget", "short_term_trade_budget", "dca_plan_review"], limitations)
+
+
+def _build_professional_diagnostics(context: dict[str, Any]) -> dict[str, Any]:
+    artifacts = context["artifacts"]
+    prof_diag = _as_dict(artifacts.get("professional_diagnostics"))
+    bullets: list[str] = []
+    limitations: list[str] = []
+
+    if not prof_diag:
+        limitations.append(
+            "Professional diagnostics require host-supplied transactions, holdings, "
+            "fund profiles, redemption rules, risk constraints, DCA plans, or budget data."
+        )
+        return _section(
+            "professional_diagnostics", "MISSING", bullets,
+            ["professional_diagnostics"], limitations,
+        )
+
+    redemption = _as_dict(prof_diag.get("redemption_fee_risk"))
+    if redemption:
+        affected = _as_list(redemption.get("affected_funds"))
+        if affected:
+            highest = redemption.get("summary", {}).get("highest_fee_pct")
+            fee_str = f"highest host-supplied fee is {highest * 100:.1f}%" if highest is not None else ""
+            bullets.append(
+                f"Short-holding redemption fee scan found {len(affected)} "
+                f"affected fund/transaction item(s); {fee_str}."
+            )
+            # List first 3 affected funds
+            for item in affected[:3]:
+                bullets.append(
+                    f"Fund {item.get('fund_code', '')} ({item.get('fund_name', '')}): "
+                    f"recent buy {item.get('estimated_recent_amount', 0):.0f} "
+                    f"within {item.get('threshold_days', '')}-day fee window."
+                )
+
+    overlap = _as_dict(prof_diag.get("overlap_diagnostics"))
+    if overlap:
+        holdings_overlap = _as_list(overlap.get("overlapping_holdings"))
+        themes_overlap = _as_list(overlap.get("overlapping_themes"))
+        regions_overlap = _as_list(overlap.get("overlapping_regions"))
+        total = len(holdings_overlap) + len(themes_overlap) + len(regions_overlap)
+        if total > 0:
+            top = overlap.get("summary", {}).get("highest_overlap_theme", "")
+            top_str = f"Highest: {top}." if top else ""
+            bullets.append(f"Overlap scan found {total} overlapping holding/theme/region item(s). {top_str}")
+
+    theme_over = _as_dict(prof_diag.get("theme_overweight_diagnostics"))
+    if theme_over:
+        over_list = _as_list(theme_over.get("overweight_themes"))
+        if over_list:
+            summary = theme_over.get("summary", {})
+            bullets.append(
+                f"Theme overweight scan found {len(over_list)} theme(s) near or above "
+                f"host-supplied limit. Max: {summary.get('max_theme', '')} "
+                f"at {summary.get('max_theme_weight', 0) * 100:.1f}%."
+            )
+
+    dca = _as_dict(prof_diag.get("dca_drawdown_diagnostics"))
+    if dca:
+        reviewed = _as_list(dca.get("reviewed_funds"))
+        summary = dca.get("summary", {})
+        bullets.append(
+            f"DCA drawdown scan reviewed {summary.get('reviewed_count', 0)} plan(s); "
+            f"{summary.get('funds_with_drawdown', 0)} fund(s) are under drawdown. "
+            f"Formal DCA changes require decision_support."
+        )
+
+    cash = _as_dict(prof_diag.get("cash_budget_diagnostics"))
+    if cash:
+        bullets.append(f"Cash ratio is {cash.get('cash_ratio', 0) * 100:.1f}%.")
+        gap = cash.get("reserve_gap")
+        if gap is not None:
+            bullets.append(f"Liquidity reserve gap: {gap:,.0f}.")
+        status = cash.get("short_term_budget_status", "ok")
+        bullets.append(f"Short-term trade budget status: {status}.")
+
+    prof_warnings = _string_list(prof_diag.get("professional_warnings"))
+    if prof_warnings:
+        # Show up to 5 unique warnings
+        unique_warns = []
+        for w in prof_warnings:
+            if w not in unique_warns:
+                unique_warns.append(w)
+        for w in unique_warns[:5]:
+            bullets.append(w)
+
+    status = "PARTIAL" if prof_warnings else "OK"
+    return _section(
+        "professional_diagnostics", status, bullets,
+        [
+            "professional_diagnostics",
+            "redemption_fee_risk",
+            "overlap_diagnostics",
+            "theme_overweight_diagnostics",
+            "dca_drawdown_diagnostics",
+            "cash_budget_diagnostics",
+        ],
+        limitations,
+    )
 
 
 def _build_rebalance_plan(context: dict[str, Any]) -> dict[str, Any]:

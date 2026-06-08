@@ -587,6 +587,5 @@ def run_professional_diagnostics(
             professional_warnings.append(err)
 
     diagnostics["professional_warnings"] = professional_warnings
-    warnings.extend(professional_warnings)
 
     return diagnostics

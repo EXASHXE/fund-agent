@@ -58,6 +58,17 @@ Limitations:
 - Short-term trade budget usage is available.
 - DCA review includes 1 suggestion(s).
 
+## Professional diagnostics [PARTIAL]
+- Overlap scan found 2 overlapping holding/theme/region item(s). Highest: Sample Advanced Chip A.
+- Theme overweight scan found 2 theme(s) near or above host-supplied limit. Max: ai_semiconductor at 46.7%.
+- DCA drawdown scan reviewed 1 plan(s); 1 fund(s) are under drawdown. Formal DCA changes require decision_support.
+- Cash ratio is 3.3%.
+- Liquidity reserve gap: 10,000.
+- Short-term trade budget status: ok.
+- Theme 'ai_semiconductor' at 46.7% exceeds limit 35.0% by 11.7%
+- Fund SYNAI001 has max drawdown 11.3%. DCA may benefit from buying at lower NAV, but review risk tolerance.
+- Cash 5000 is below 10% liquidity reserve (15000). Gap: 10000.
+
 ## Rebalance plan [OK]
 - Rebalance simulation produced 4 trade leg(s) with total trade amount 32,500.00.
 - Synthetic max_single_theme_weight included as host context.

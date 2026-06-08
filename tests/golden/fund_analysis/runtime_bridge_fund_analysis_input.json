@@ -275,6 +275,11 @@
           "title": "DCA and trade budget"
         },
         {
+          "id": "professional_diagnostics",
+          "status": "OK",
+          "title": "Professional diagnostics"
+        },
+        {
           "id": "rebalance_plan",
           "status": "OK",
           "title": "Rebalance plan"
@@ -461,6 +466,24 @@
           ],
           "status": "PARTIAL",
           "title": "DCA and trade budget"
+        },
+        {
+          "bullets": [
+            "Cash ratio is 10.0%.",
+            "Short-term trade budget status: ok."
+          ],
+          "data_sources": [
+            "professional_diagnostics",
+            "redemption_fee_risk",
+            "overlap_diagnostics",
+            "theme_overweight_diagnostics",
+            "dca_drawdown_diagnostics",
+            "cash_budget_diagnostics"
+          ],
+          "id": "professional_diagnostics",
+          "limitations": [],
+          "status": "OK",
+          "title": "Professional diagnostics"
         },
         {
           "bullets": [
@@ -670,6 +693,11 @@
         "title": "DCA and trade budget"
       },
       {
+        "id": "professional_diagnostics",
+        "status": "OK",
+        "title": "Professional diagnostics"
+      },
+      {
         "id": "rebalance_plan",
         "status": "OK",
         "title": "Rebalance plan"
@@ -856,6 +884,24 @@
         ],
         "status": "PARTIAL",
         "title": "DCA and trade budget"
+      },
+      {
+        "bullets": [
+          "Cash ratio is 10.0%.",
+          "Short-term trade budget status: ok."
+        ],
+        "data_sources": [
+          "professional_diagnostics",
+          "redemption_fee_risk",
+          "overlap_diagnostics",
+          "theme_overweight_diagnostics",
+          "dca_drawdown_diagnostics",
+          "cash_budget_diagnostics"
+        ],
+        "id": "professional_diagnostics",
+        "limitations": [],
+        "status": "OK",
+        "title": "Professional diagnostics"
       },
       {
         "bullets": [

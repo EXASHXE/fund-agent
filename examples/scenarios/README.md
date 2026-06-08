@@ -206,6 +206,11 @@ recommendations.
 - **professional_diagnostics** — Aggregates all diagnostic results into a
   single summary artifact.
 
+These diagnostics are surfaced in the deterministic report under the
+`## Professional diagnostics` report section. They use host-supplied data
+only and do not produce formal `Decision` / `ExecutionLedger` artifacts.
+Formal actions require `decision_support`.
+
 All diagnostics use host-supplied data only. They do not fetch live data, do
 not call provider SDKs, and do not produce formal `Decision` / `ExecutionLedger`
 artifacts. Formal actions require `decision_support`.

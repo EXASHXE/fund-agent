@@ -60,6 +60,14 @@ Limitations:
 - Short-term trade budget usage is available.
 - DCA review includes 1 suggestion(s).
 
+## Professional diagnostics [PARTIAL]
+- Overlap scan found 3 overlapping holding/theme/region item(s). Highest: Sample AI Chip B.
+- DCA drawdown scan reviewed 1 plan(s); 0 fund(s) are under drawdown. Formal DCA changes require decision_support.
+- Cash ratio is 5.6%.
+- Liquidity reserve gap: 4,400.
+- Short-term trade budget status: ok.
+- Cash 10000 is below 8% liquidity reserve (14400). Gap: 4400.
+
 ## Rebalance plan [OK]
 - Rebalance simulation produced 4 trade leg(s) with total trade amount 30,000.00.
 - Sample host-supplied caps are informational unless the runtime consumes them.

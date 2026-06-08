@@ -30,10 +30,11 @@ Sections are ordered. The canonical order is defined by `SECTION_ORDER`:
 9. `fees_and_redemption` — Fees and redemption
 10. `manager_and_fund_profile` — Manager and fund profile
 11. `dca_and_trade_budget` — DCA and trade budget
-12. `rebalance_plan` — Rebalance plan
-13. `research_query_plan` — Research query plan
-14. `data_completeness_and_limitations` — Data completeness and limitations
-15. `evidence_appendix` — Evidence appendix
+12. `professional_diagnostics` — Professional diagnostics
+13. `rebalance_plan` — Rebalance plan
+14. `research_query_plan` — Research query plan
+15. `data_completeness_and_limitations` — Data completeness and limitations
+16. `evidence_appendix` — Evidence appendix
 
 The ordering is stable. No section may be omitted; MISSING sections are
 represented with `status: "MISSING"` and an empty `bullets` list.
@@ -68,6 +69,12 @@ Every section dict MUST include:
 - Benchmark comparisons, peer rankings, factor decompositions, fee analyses,
   and manager assessments are only present when the host provides the
   corresponding data payload.
+
+  The `professional_diagnostics` section summarizes host-data-only diagnostic
+  artifacts (redemption_fee_risk, overlap_diagnostics,
+  theme_overweight_diagnostics, dca_drawdown_diagnostics, cash_budget_diagnostics)
+  produced by local deterministic rules. It is not a formal decision section.
+  Formal Decision / ExecutionLedger artifacts remain `decision_support`-only.
 
 ---
 

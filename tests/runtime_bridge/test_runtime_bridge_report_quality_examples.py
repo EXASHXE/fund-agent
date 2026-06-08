@@ -23,6 +23,7 @@ REQUIRED_REPORT_SECTION_IDS = [
     "fees_and_redemption",
     "manager_and_fund_profile",
     "dca_and_trade_budget",
+    "professional_diagnostics",
     "rebalance_plan",
     "research_query_plan",
     "data_completeness_and_limitations",

@@ -58,6 +58,19 @@ Limitations:
 - Short-term trade budget usage is available.
 - DCA review includes 0 suggestion(s).
 
+## Professional diagnostics [PARTIAL]
+- Short-holding redemption fee scan found 1 affected fund/transaction item(s); highest host-supplied fee is 1.5%.
+- Fund SYN7D001 (Sample Recent Growth Mix): recent buy 20000 within 7-day fee window.
+- Overlap scan found 1 overlapping holding/theme/region item(s). 
+- Theme overweight scan found 1 theme(s) near or above host-supplied limit. Max: income at 41.7%.
+- DCA drawdown scan reviewed 1 plan(s); 0 fund(s) are under drawdown. Formal DCA changes require decision_support.
+- Cash ratio is 6.7%.
+- Liquidity reserve gap: 1,600.
+- Short-term trade budget status: exceeded.
+- Recent buy of 20000 on 2026-03-28 (3d ago) is within 7-day fee window. Redemption may incur ~1.5% fee.
+- Cash 8000 is below 8% liquidity reserve (9600). Gap: 1600.
+- Short-term trade budget exceeded by 8000. Reduce short-term trades or increase budget allocation.
+
 ## Rebalance plan [OK]
 - Rebalance simulation produced 2 trade leg(s) with total trade amount 7,600.00.
 - Sample account prefers preserving at least 8% cash.

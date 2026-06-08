@@ -57,6 +57,16 @@ Limitations:
 - Short-term trade budget usage is available.
 - DCA review includes 1 suggestion(s).
 
+## Professional diagnostics [PARTIAL]
+- Overlap scan found 1 overlapping holding/theme/region item(s). 
+- Theme overweight scan found 1 theme(s) near or above host-supplied limit. Max: broad_market at 66.1%.
+- DCA drawdown scan reviewed 1 plan(s); 0 fund(s) are under drawdown. Formal DCA changes require decision_support.
+- Cash ratio is 9.8%.
+- Liquidity reserve gap: 135.
+- Short-term trade budget status: ok.
+- Theme 'broad_market' at 66.1% exceeds limit 55.0% by 11.2%
+- Cash 7000 is below 10% liquidity reserve (7135). Gap: 135.
+
 ## Rebalance plan [MISSING]
 - No section content available from provided artifacts.
 

@@ -144,3 +144,27 @@ def test_fund_analysis_no_formal_decisions_in_diagnostics():
     assert "decision" not in artifacts
     assert "decisions" not in artifacts
     assert "execution_ledger" not in artifacts
+
+
+def test_professional_warnings_not_duplicated():
+    """Professional warnings must appear only once in output.warnings and artifacts.warnings."""
+    payload = _load_scenario("cn_fund_qdii_sp500_overlap.json")["payload"]
+    si = SkillInput(
+        task_id="test-dedup", step_id="fa-dedup",
+        skill_name="fund_analysis", payload=payload,
+    )
+    output = FundAnalysisSkill().run(si)
+
+    output_warnings = output.warnings or []
+    artifact_warnings = output.artifacts.get("warnings") or []
+
+    # Check no exact duplicates in output warnings
+    assert len(output_warnings) == len(set(output_warnings)), (
+        f"Duplicate strings in output.warnings: {output_warnings}"
+    )
+
+    # Check no exact duplicates in artifact warnings
+    artifact_strs = [str(w) for w in artifact_warnings if w is not None]
+    assert len(artifact_strs) == len(set(artifact_strs)), (
+        f"Duplicate strings in artifacts.warnings: {artifact_strs}"
+    )

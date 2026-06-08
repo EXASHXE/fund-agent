@@ -679,6 +679,11 @@
           "title": "DCA and trade budget"
         },
         {
+          "id": "professional_diagnostics",
+          "status": "PARTIAL",
+          "title": "Professional diagnostics"
+        },
+        {
           "id": "rebalance_plan",
           "status": "MISSING",
           "title": "Rebalance plan"
@@ -864,6 +869,30 @@
           "limitations": [],
           "status": "OK",
           "title": "DCA and trade budget"
+        },
+        {
+          "bullets": [
+            "Overlap scan found 1 overlapping holding/theme/region item(s). ",
+            "Theme overweight scan found 1 theme(s) near or above host-supplied limit. Max: broad_market at 66.1%.",
+            "DCA drawdown scan reviewed 1 plan(s); 0 fund(s) are under drawdown. Formal DCA changes require decision_support.",
+            "Cash ratio is 9.8%.",
+            "Liquidity reserve gap: 135.",
+            "Short-term trade budget status: ok.",
+            "Theme 'broad_market' at 66.1% exceeds limit 55.0% by 11.2%",
+            "Cash 7000 is below 10% liquidity reserve (7135). Gap: 135."
+          ],
+          "data_sources": [
+            "professional_diagnostics",
+            "redemption_fee_risk",
+            "overlap_diagnostics",
+            "theme_overweight_diagnostics",
+            "dca_drawdown_diagnostics",
+            "cash_budget_diagnostics"
+          ],
+          "id": "professional_diagnostics",
+          "limitations": [],
+          "status": "PARTIAL",
+          "title": "Professional diagnostics"
         },
         {
           "bullets": [],
@@ -1060,8 +1089,6 @@
         "warnings": []
       },
       "warnings": [
-        "Theme 'broad_market' at 66.1% exceeds limit 55.0% by 11.2%",
-        "Cash 7000 is below 10% liquidity reserve (7135). Gap: 135.",
         "portfolio was derived from transactions and current_nav; accuracy depends on input completeness",
         "Theme 'broad_market' at 66.1% exceeds limit 55.0% by 11.2%",
         "Cash 7000 is below 10% liquidity reserve (7135). Gap: 135."
@@ -1308,6 +1335,11 @@
         "title": "DCA and trade budget"
       },
       {
+        "id": "professional_diagnostics",
+        "status": "PARTIAL",
+        "title": "Professional diagnostics"
+      },
+      {
         "id": "rebalance_plan",
         "status": "MISSING",
         "title": "Rebalance plan"
@@ -1495,6 +1527,30 @@
         "title": "DCA and trade budget"
       },
       {
+        "bullets": [
+          "Overlap scan found 1 overlapping holding/theme/region item(s). ",
+          "Theme overweight scan found 1 theme(s) near or above host-supplied limit. Max: broad_market at 66.1%.",
+          "DCA drawdown scan reviewed 1 plan(s); 0 fund(s) are under drawdown. Formal DCA changes require decision_support.",
+          "Cash ratio is 9.8%.",
+          "Liquidity reserve gap: 135.",
+          "Short-term trade budget status: ok.",
+          "Theme 'broad_market' at 66.1% exceeds limit 55.0% by 11.2%",
+          "Cash 7000 is below 10% liquidity reserve (7135). Gap: 135."
+        ],
+        "data_sources": [
+          "professional_diagnostics",
+          "redemption_fee_risk",
+          "overlap_diagnostics",
+          "theme_overweight_diagnostics",
+          "dca_drawdown_diagnostics",
+          "cash_budget_diagnostics"
+        ],
+        "id": "professional_diagnostics",
+        "limitations": [],
+        "status": "PARTIAL",
+        "title": "Professional diagnostics"
+      },
+      {
         "bullets": [],
         "data_sources": [
           "suggested_rebalance_plan"
@@ -1633,8 +1689,6 @@
       }
     },
     "warnings": [
-      "Theme 'broad_market' at 66.1% exceeds limit 55.0% by 11.2%",
-      "Cash 7000 is below 10% liquidity reserve (7135). Gap: 135.",
       "portfolio was derived from transactions and current_nav; accuracy depends on input completeness",
       "Theme 'broad_market' at 66.1% exceeds limit 55.0% by 11.2%",
       "Cash 7000 is below 10% liquidity reserve (7135). Gap: 135."
@@ -2063,8 +2117,6 @@
   "status": "PARTIAL",
   "used_mcp_capabilities": [],
   "warnings": [
-    "Theme 'broad_market' at 66.1% exceeds limit 55.0% by 11.2%",
-    "Cash 7000 is below 10% liquidity reserve (7135). Gap: 135.",
     "portfolio was derived from transactions and current_nav; accuracy depends on input completeness",
     "Theme 'broad_market' at 66.1% exceeds limit 55.0% by 11.2%",
     "Cash 7000 is below 10% liquidity reserve (7135). Gap: 135."

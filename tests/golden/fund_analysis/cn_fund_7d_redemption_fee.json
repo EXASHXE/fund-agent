@@ -841,6 +841,11 @@
           "title": "DCA and trade budget"
         },
         {
+          "id": "professional_diagnostics",
+          "status": "PARTIAL",
+          "title": "Professional diagnostics"
+        },
+        {
           "id": "rebalance_plan",
           "status": "OK",
           "title": "Rebalance plan"
@@ -1030,6 +1035,33 @@
         },
         {
           "bullets": [
+            "Short-holding redemption fee scan found 1 affected fund/transaction item(s); highest host-supplied fee is 1.5%.",
+            "Fund SYN7D001 (Sample Recent Growth Mix): recent buy 20000 within 7-day fee window.",
+            "Overlap scan found 1 overlapping holding/theme/region item(s). ",
+            "Theme overweight scan found 1 theme(s) near or above host-supplied limit. Max: income at 41.7%.",
+            "DCA drawdown scan reviewed 1 plan(s); 0 fund(s) are under drawdown. Formal DCA changes require decision_support.",
+            "Cash ratio is 6.7%.",
+            "Liquidity reserve gap: 1,600.",
+            "Short-term trade budget status: exceeded.",
+            "Recent buy of 20000 on 2026-03-28 (3d ago) is within 7-day fee window. Redemption may incur ~1.5% fee.",
+            "Cash 8000 is below 8% liquidity reserve (9600). Gap: 1600.",
+            "Short-term trade budget exceeded by 8000. Reduce short-term trades or increase budget allocation."
+          ],
+          "data_sources": [
+            "professional_diagnostics",
+            "redemption_fee_risk",
+            "overlap_diagnostics",
+            "theme_overweight_diagnostics",
+            "dca_drawdown_diagnostics",
+            "cash_budget_diagnostics"
+          ],
+          "id": "professional_diagnostics",
+          "limitations": [],
+          "status": "PARTIAL",
+          "title": "Professional diagnostics"
+        },
+        {
+          "bullets": [
             "Rebalance simulation produced 2 trade leg(s) with total trade amount 7,600.00.",
             "Sample account prefers preserving at least 8% cash.",
             "Host supplies redemption fee and holding-period data."
@@ -1193,9 +1225,6 @@
         "warnings": []
       },
       "warnings": [
-        "Recent buy of 20000 on 2026-03-28 (3d ago) is within 7-day fee window. Redemption may incur ~1.5% fee.",
-        "Cash 8000 is below 8% liquidity reserve (9600). Gap: 1600.",
-        "Short-term trade budget exceeded by 8000. Reduce short-term trades or increase budget allocation.",
         "SYN7D001: shares mismatch [high] — snapshot=38995.5239/41959.18, portfolio=39024.3902/42000.0, delta=-28.8663/-40.82",
         "SYN7D002: shares mismatch [high] — snapshot=48000.0000/51600.0, portfolio=46511.6279/50000.0, delta=1488.3721/1600.0",
         "SYN7D003: shares mismatch [high] — snapshot=20000.0000/20200.0, portfolio=19801.9802/20000.0, delta=198.0198/200.0",
@@ -1596,6 +1625,11 @@
         "title": "DCA and trade budget"
       },
       {
+        "id": "professional_diagnostics",
+        "status": "PARTIAL",
+        "title": "Professional diagnostics"
+      },
+      {
         "id": "rebalance_plan",
         "status": "OK",
         "title": "Rebalance plan"
@@ -1785,6 +1819,33 @@
       },
       {
         "bullets": [
+          "Short-holding redemption fee scan found 1 affected fund/transaction item(s); highest host-supplied fee is 1.5%.",
+          "Fund SYN7D001 (Sample Recent Growth Mix): recent buy 20000 within 7-day fee window.",
+          "Overlap scan found 1 overlapping holding/theme/region item(s). ",
+          "Theme overweight scan found 1 theme(s) near or above host-supplied limit. Max: income at 41.7%.",
+          "DCA drawdown scan reviewed 1 plan(s); 0 fund(s) are under drawdown. Formal DCA changes require decision_support.",
+          "Cash ratio is 6.7%.",
+          "Liquidity reserve gap: 1,600.",
+          "Short-term trade budget status: exceeded.",
+          "Recent buy of 20000 on 2026-03-28 (3d ago) is within 7-day fee window. Redemption may incur ~1.5% fee.",
+          "Cash 8000 is below 8% liquidity reserve (9600). Gap: 1600.",
+          "Short-term trade budget exceeded by 8000. Reduce short-term trades or increase budget allocation."
+        ],
+        "data_sources": [
+          "professional_diagnostics",
+          "redemption_fee_risk",
+          "overlap_diagnostics",
+          "theme_overweight_diagnostics",
+          "dca_drawdown_diagnostics",
+          "cash_budget_diagnostics"
+        ],
+        "id": "professional_diagnostics",
+        "limitations": [],
+        "status": "PARTIAL",
+        "title": "Professional diagnostics"
+      },
+      {
+        "bullets": [
           "Rebalance simulation produced 2 trade leg(s) with total trade amount 7,600.00.",
           "Sample account prefers preserving at least 8% cash.",
           "Host supplies redemption fee and holding-period data."
@@ -1960,9 +2021,6 @@
       }
     },
     "warnings": [
-      "Recent buy of 20000 on 2026-03-28 (3d ago) is within 7-day fee window. Redemption may incur ~1.5% fee.",
-      "Cash 8000 is below 8% liquidity reserve (9600). Gap: 1600.",
-      "Short-term trade budget exceeded by 8000. Reduce short-term trades or increase budget allocation.",
       "SYN7D001: shares mismatch [high] — snapshot=38995.5239/41959.18, portfolio=39024.3902/42000.0, delta=-28.8663/-40.82",
       "SYN7D002: shares mismatch [high] — snapshot=48000.0000/51600.0, portfolio=46511.6279/50000.0, delta=1488.3721/1600.0",
       "SYN7D003: shares mismatch [high] — snapshot=20000.0000/20200.0, portfolio=19801.9802/20000.0, delta=198.0198/200.0",
@@ -2528,9 +2586,6 @@
   "status": "PARTIAL",
   "used_mcp_capabilities": [],
   "warnings": [
-    "Recent buy of 20000 on 2026-03-28 (3d ago) is within 7-day fee window. Redemption may incur ~1.5% fee.",
-    "Cash 8000 is below 8% liquidity reserve (9600). Gap: 1600.",
-    "Short-term trade budget exceeded by 8000. Reduce short-term trades or increase budget allocation.",
     "SYN7D001: shares mismatch [high] — snapshot=38995.5239/41959.18, portfolio=39024.3902/42000.0, delta=-28.8663/-40.82",
     "SYN7D002: shares mismatch [high] — snapshot=48000.0000/51600.0, portfolio=46511.6279/50000.0, delta=1488.3721/1600.0",
     "SYN7D003: shares mismatch [high] — snapshot=20000.0000/20200.0, portfolio=19801.9802/20000.0, delta=198.0198/200.0",

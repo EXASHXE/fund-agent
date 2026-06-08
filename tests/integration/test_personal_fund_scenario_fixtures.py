@@ -189,3 +189,50 @@ def test_ledger_derived_scenario_detects_mode_and_surfaces_current_artifacts() -
         "ledger_derived run succeeded but emitted no current ledger-derived "
         "artifacts; update this test if that becomes the documented behavior"
     )
+
+
+# ── Scenario-specific diagnostic assertions ────────────────────────────────
+
+def test_cn_fund_7d_redemption_fee_emits_redemption_fee_risk():
+    path = SCENARIO_DIR / "cn_fund_7d_redemption_fee.json"
+    proc = _run(["--skill", "fund_analysis", "--input", str(path), "--pretty"])
+    artifacts = _load_json_output(proc)["artifacts"]
+    assert "redemption_fee_risk" in artifacts
+    assert "professional_diagnostics" in artifacts
+    assert not (FORMAL_DECISION_ARTIFACTS & set(artifacts))
+
+
+def test_cn_fund_qdii_sp500_overlap_emits_overlap_diagnostics():
+    path = SCENARIO_DIR / "cn_fund_qdii_sp500_overlap.json"
+    proc = _run(["--skill", "fund_analysis", "--input", str(path), "--pretty"])
+    artifacts = _load_json_output(proc)["artifacts"]
+    assert "overlap_diagnostics" in artifacts
+    assert "professional_diagnostics" in artifacts
+    assert not (FORMAL_DECISION_ARTIFACTS & set(artifacts))
+
+
+def test_cn_fund_ai_semiconductor_overweight_emits_theme_overweight():
+    path = SCENARIO_DIR / "cn_fund_ai_semiconductor_overweight.json"
+    proc = _run(["--skill", "fund_analysis", "--input", str(path), "--pretty"])
+    artifacts = _load_json_output(proc)["artifacts"]
+    assert "theme_overweight_diagnostics" in artifacts
+    assert "professional_diagnostics" in artifacts
+    assert not (FORMAL_DECISION_ARTIFACTS & set(artifacts))
+
+
+def test_cn_fund_dca_drawdown_review_emits_dca_diagnostics():
+    path = SCENARIO_DIR / "cn_fund_dca_drawdown_review.json"
+    proc = _run(["--skill", "fund_analysis", "--input", str(path), "--pretty"])
+    artifacts = _load_json_output(proc)["artifacts"]
+    assert "dca_drawdown_diagnostics" in artifacts
+    assert "professional_diagnostics" in artifacts
+    assert not (FORMAL_DECISION_ARTIFACTS & set(artifacts))
+
+
+def test_cn_fund_ledger_derived_snapshot_emits_cash_budget_diagnostics():
+    path = SCENARIO_DIR / "cn_fund_ledger_derived_snapshot.json"
+    proc = _run(["--skill", "fund_analysis", "--input", str(path), "--pretty"])
+    artifacts = _load_json_output(proc)["artifacts"]
+    assert "cash_budget_diagnostics" in artifacts
+    assert "professional_diagnostics" in artifacts
+    assert not (FORMAL_DECISION_ARTIFACTS & set(artifacts))

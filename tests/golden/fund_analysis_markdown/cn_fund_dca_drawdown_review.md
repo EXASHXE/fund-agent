@@ -57,6 +57,14 @@ Limitations:
 - Short-term trade budget usage is available.
 - DCA review includes 1 suggestion(s).
 
+## Professional diagnostics [PARTIAL]
+- Overlap scan found 1 overlapping holding/theme/region item(s). 
+- Theme overweight scan found 1 theme(s) near or above host-supplied limit. Max: broad_market at 45.0%.
+- DCA drawdown scan reviewed 1 plan(s); 1 fund(s) are under drawdown. Formal DCA changes require decision_support.
+- Cash ratio is 12.0%.
+- Short-term trade budget status: ok.
+- Fund SYNDCA001 has max drawdown 29.2%. DCA may benefit from buying at lower NAV, but review risk tolerance.
+
 ## Rebalance plan [OK]
 - Rebalance simulation produced 2 trade leg(s) with total trade amount 16,000.00.
 - Sample review checks DCA plan pressure against concentration limits.
