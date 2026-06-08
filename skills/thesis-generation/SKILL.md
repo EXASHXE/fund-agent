@@ -80,7 +80,19 @@ Expected inputs include:
 
 ## Outputs
 
-- `artifacts.thesis_draft`
+- `artifacts.thesis_draft` — deterministic thesis draft with:
+  - `thesis_statement` — summary thesis statement
+  - `supporting_evidence` — evidence classified as supporting
+  - `counter_evidence` — evidence classified as counter
+  - `neutral_evidence` — evidence classified as neutral
+  - `missing_evidence` — identified evidence gaps
+  - `confidence_assessment` — `{level, score, reason}` (LOW/MEDIUM/HIGH)
+  - `watch_conditions` — conditions to monitor
+  - `invalidating_conditions` — conditions that would invalidate
+  - `next_research_questions` — suggested next research
+  - `source_summary` — source type counts
+  - `limitations` — known limitations
+  - `decision_boundary_note` — always present; marks draft-only status
 - `warnings`
 - `errors`
 

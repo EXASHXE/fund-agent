@@ -1,0 +1,54 @@
+{
+  "artifacts": {
+    "thesis_draft": {
+      "confidence_assessment": {
+        "level": "LOW",
+        "reason": "No evidence items, fund analysis report, or artifacts provided.",
+        "score": 0.1
+      },
+      "counter_evidence": [],
+      "decision_boundary_note": "Draft only; formal Decision / ExecutionLedger requires decision_support.",
+      "invalidating_conditions": [
+        "Evidence quality degrades below minimum threshold"
+      ],
+      "limitations": [
+        "No structured evidence items were provided",
+        "1 evidence area(s) have gaps",
+        "No fund analysis report was provided for context",
+        "Thesis is a draft artifact; formal decisions require decision_support",
+        "No evidence context, fund analysis report, or artifacts were provided; thesis is based on minimal input."
+      ],
+      "missing_evidence": [
+        {
+          "area": "general",
+          "description": "No evidence items were provided",
+          "priority": "high"
+        }
+      ],
+      "neutral_evidence": [],
+      "next_research_questions": [
+        "What evidence exists for general?"
+      ],
+      "related_entities": [
+        "fund:110022"
+      ],
+      "source_summary": {},
+      "supporting_evidence": [],
+      "task_id": "<normalized-task-id>",
+      "thesis_statement": "Insufficient evidence to form a strong thesis on 'Is fund 110022 suitable for a conservative investor?'. Further research is recommended before any investment action.",
+      "topic": "Is fund 110022 suitable for a conservative investor?",
+      "watch_conditions": [
+        "Supporting evidence remains absent or insufficient"
+      ]
+    }
+  },
+  "errors": [],
+  "evidence_items": [],
+  "ok": true,
+  "skill_name": "thesis_generation",
+  "status": "PARTIAL",
+  "used_mcp_capabilities": [],
+  "warnings": [
+    "Thesis has 1 missing evidence area(s); confidence may be overstated."
+  ]
+}

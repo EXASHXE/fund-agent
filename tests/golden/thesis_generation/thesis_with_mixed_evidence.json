@@ -1,0 +1,86 @@
+{
+  "artifacts": {
+    "thesis_draft": {
+      "confidence_assessment": {
+        "level": "MEDIUM",
+        "reason": "2 supporting evidence item(s); 1 counter evidence item(s)",
+        "score": 0.5
+      },
+      "counter_evidence": [
+        {
+          "claim": "Rising interest rates may compress technology valuations",
+          "confidence_weight": 0.5,
+          "direction": "negative",
+          "related_entities": [
+            "fund:110011"
+          ],
+          "source_type": "macro_analysis"
+        }
+      ],
+      "decision_boundary_note": "Draft only; formal Decision / ExecutionLedger requires decision_support.",
+      "invalidating_conditions": [
+        "Evidence quality degrades below minimum threshold"
+      ],
+      "limitations": [
+        "No fund analysis report was provided for context",
+        "Thesis is a draft artifact; formal decisions require decision_support"
+      ],
+      "missing_evidence": [],
+      "neutral_evidence": [
+        {
+          "claim": "Fund 110011 has 35% technology sector exposure",
+          "confidence_weight": 1.0,
+          "direction": "neutral",
+          "related_entities": [
+            "fund:110011"
+          ],
+          "source_type": "fund_analysis"
+        }
+      ],
+      "next_research_questions": [
+        "What additional data would strengthen the thesis on 'Is the technology sector overweight justified for fund 110011?'?"
+      ],
+      "related_entities": [
+        "fund:110011"
+      ],
+      "source_summary": {
+        "financial_news": 2,
+        "fund_analysis": 1,
+        "macro_analysis": 1
+      },
+      "supporting_evidence": [
+        {
+          "claim": "Technology sector earnings growth exceeds market average",
+          "confidence_weight": 0.6,
+          "direction": "positive",
+          "related_entities": [
+            "fund:110011"
+          ],
+          "source_type": "financial_news"
+        },
+        {
+          "claim": "AI semiconductor demand continues to grow",
+          "confidence_weight": 0.7,
+          "direction": "positive",
+          "related_entities": [
+            "fund:110011"
+          ],
+          "source_type": "financial_news"
+        }
+      ],
+      "task_id": "<normalized-task-id>",
+      "thesis_statement": "Moderate evidence supports a cautiously favorable view on 'Is the technology sector overweight justified for fund 110011?', but counter evidence and gaps warrant further investigation.",
+      "topic": "Is the technology sector overweight justified for fund 110011?",
+      "watch_conditions": [
+        "Counter evidence intensifies or new contradicting signals emerge"
+      ]
+    }
+  },
+  "errors": [],
+  "evidence_items": [],
+  "ok": true,
+  "skill_name": "thesis_generation",
+  "status": "OK",
+  "used_mcp_capabilities": [],
+  "warnings": []
+}

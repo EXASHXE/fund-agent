@@ -108,6 +108,25 @@ adapt it through `src.tools.adapters.mcp.MCPHostAdapter`.
    `anthropic`, `langchain`, `tavily`, `finnhub`, `exa`, `firecrawl`, `reddit`
    unless the code lives within the MCP adapter boundary (`src/tools/adapters/`).
 
+## Tools Registry Consistency
+
+- `skillpack/tools.yaml` is the canonical tool registry.
+- `skillpack/fund-agent.skillpack.yaml` tools section lists host-callable import paths.
+- Drift between tools.yaml and the manifest is documented in `docs/tools-inventory.md`.
+- Registry consistency tests live in `tests/skillpack/test_tools_registry_consistency.py`.
+- Public registered tools are declared in tools.yaml and/or manifest.
+- Internal deterministic helpers are used by runtime skills but not declared publicly.
+- Provider SDKs and network calls belong to the external host / MCP provider boundary.
+
+## Shared Runtime Base
+
+- `src/skills_runtime/base.py` provides `BaseSkillRuntime` with shared helpers
+  for error creation, FAILED output, entity extraction, and status helpers.
+- `src/skills_runtime/mcp_adapter_skill.py` provides `MCPAdapterSkill(BaseSkillRuntime)`
+  for MCP-backed skills like `news_research` and `sentiment_analysis`.
+- These base classes standardize capability selection, MCP calling, evidence
+  construction, and failure handling without importing provider SDKs.
+
 ## What Is NOT Plugin Core
 
 - Legacy modules — removed after `v0.1.0-skillpack-alpha`, see `docs/archive/`

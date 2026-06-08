@@ -1,0 +1,52 @@
+{
+  "artifacts": {
+    "thesis_draft": {
+      "confidence_assessment": {
+        "level": "MEDIUM",
+        "reason": "1 missing evidence area(s); fund analysis report available; artifacts available",
+        "score": 0.65
+      },
+      "counter_evidence": [],
+      "decision_boundary_note": "Draft only; formal Decision / ExecutionLedger requires decision_support.",
+      "invalidating_conditions": [
+        "Evidence quality degrades below minimum threshold"
+      ],
+      "limitations": [
+        "No structured evidence items were provided",
+        "1 evidence area(s) have gaps",
+        "Thesis is a draft artifact; formal decisions require decision_support"
+      ],
+      "missing_evidence": [
+        {
+          "area": "general",
+          "description": "No evidence items were provided",
+          "priority": "high"
+        }
+      ],
+      "neutral_evidence": [],
+      "next_research_questions": [
+        "What evidence exists for general?"
+      ],
+      "related_entities": [
+        "fund:110011"
+      ],
+      "source_summary": {},
+      "supporting_evidence": [],
+      "task_id": "<normalized-task-id>",
+      "thesis_statement": "Evidence on 'Should the portfolio increase allocation to fund 110011?' is mixed; no clear directional thesis emerges. Additional research is needed.",
+      "topic": "Should the portfolio increase allocation to fund 110011?",
+      "watch_conditions": [
+        "Supporting evidence remains absent or insufficient"
+      ]
+    }
+  },
+  "errors": [],
+  "evidence_items": [],
+  "ok": true,
+  "skill_name": "thesis_generation",
+  "status": "OK",
+  "used_mcp_capabilities": [],
+  "warnings": [
+    "Thesis has 1 missing evidence area(s); confidence may be overstated."
+  ]
+}

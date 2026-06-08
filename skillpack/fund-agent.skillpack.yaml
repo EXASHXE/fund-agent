@@ -124,6 +124,7 @@ contracts:
   - docs/contracts/fund-analysis-input-contract.v1.md
   - docs/contracts/report-output-contract.v1.md
   - docs/contracts/fund-analysis-artifacts.v1.md
+  - docs/contracts/thesis-generation-contract.v1.md
 
 mcp_capabilities:
   - name: web_search

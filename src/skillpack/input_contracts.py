@@ -186,16 +186,42 @@ def output_schema_for_skill(
         }
     elif spec.name == "thesis_generation":
         schema["artifacts"] = {
-            "known_keys": [{"key": "thesis_draft", "required": True}],
+            "known_keys": [
+                {
+                    "key": "thesis_draft",
+                    "required": True,
+                    "fields": [
+                        "task_id",
+                        "topic",
+                        "related_entities",
+                        "thesis_statement",
+                        "supporting_evidence",
+                        "counter_evidence",
+                        "neutral_evidence",
+                        "missing_evidence",
+                        "confidence_assessment",
+                        "watch_conditions",
+                        "invalidating_conditions",
+                        "next_research_questions",
+                        "source_summary",
+                        "limitations",
+                        "decision_boundary_note",
+                    ],
+                },
+            ],
             "notes": [
                 "Produces ThesisDraft only; formal decision generation is forbidden.",
+                "ThesisDraft.confidence_assessment has level (LOW/MEDIUM/HIGH), score, and reason.",
+                "ThesisDraft.decision_boundary_note is always present and references decision_support.",
             ],
             "forbidden": ["formal_decision_generation"],
+            "forbidden_artifacts": ["decision", "decisions", "execution_ledger", "execution_ledgers"],
         }
         schema["evidence_items"] = {
             "produces": [],
             "notes": ["Thesis drafts are artifacts, not formal decisions."],
         }
+        schema["status_values"] = STATUS_VALUES
     return {
         "skill_name": spec.name,
         "doc_slug": doc_slug,
@@ -405,13 +431,27 @@ def _thesis_generation_input_contract(spec: SkillSpec) -> dict[str, Any]:
                 "description": "Produces a ThesisDraft artifact from host context.",
             }
         ],
-        "recommended": ["objective", "evidence_context", "research_context"],
-        "optional": ["constraints", "audience", "draft_options"],
+        "recommended": [
+            "thesis_question or topic",
+            "evidence_items or evidence_graph",
+            "evidence_context",
+            "fund_analysis_report",
+            "related_entities",
+        ],
+        "optional": [
+            "artifacts",
+            "research_focus",
+            "constraints",
+            "risk_profile",
+            "audience",
+            "draft_options",
+        ],
         "required_mcp_capabilities": [],
         "host_owned_data_capabilities": [],
         "degradation_policy": [
             "Thesis generation produces ThesisDraft only.",
             "Formal decision generation is forbidden and belongs to decision_support.",
+            "If evidence is missing, produces a valid draft with LOW confidence and missing_evidence / limitations.",
         ],
     }
 

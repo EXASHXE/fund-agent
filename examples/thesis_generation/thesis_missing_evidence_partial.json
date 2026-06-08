@@ -1,0 +1,14 @@
+{
+  "task_id": "thesis-partial-001",
+  "step_id": "thesis-partial-step-1",
+  "skill_name": "thesis_generation",
+  "payload": {
+    "thesis_question": "Is fund 110022 suitable for a conservative investor?",
+    "related_entities": ["fund:110022"]
+  },
+  "kg_context": {
+    "fund_codes": ["110022"]
+  },
+  "evidence_context": [],
+  "required_mcp_capabilities": []
+}

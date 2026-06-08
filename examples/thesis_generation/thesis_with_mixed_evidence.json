@@ -1,0 +1,50 @@
+{
+  "task_id": "thesis-mixed-001",
+  "step_id": "thesis-mixed-step-1",
+  "skill_name": "thesis_generation",
+  "payload": {
+    "thesis_question": "Is the technology sector overweight justified for fund 110011?",
+    "related_entities": ["fund:110011"],
+    "evidence_items": [
+      {
+        "claim": "Fund 110011 has 35% technology sector exposure",
+        "source_type": "fund_analysis",
+        "direction": "neutral",
+        "confidence_weight": 1.0,
+        "related_entities": ["fund:110011"]
+      },
+      {
+        "claim": "Technology sector earnings growth exceeds market average",
+        "source_type": "financial_news",
+        "direction": "positive",
+        "confidence_weight": 0.6,
+        "related_entities": ["fund:110011"]
+      },
+      {
+        "claim": "Rising interest rates may compress technology valuations",
+        "source_type": "macro_analysis",
+        "direction": "negative",
+        "confidence_weight": 0.5,
+        "related_entities": ["fund:110011"]
+      },
+      {
+        "claim": "AI semiconductor demand continues to grow",
+        "source_type": "financial_news",
+        "direction": "positive",
+        "confidence_weight": 0.7,
+        "related_entities": ["fund:110011"]
+      }
+    ],
+    "constraints": {
+      "max_sector_exposure": 0.30
+    },
+    "risk_profile": {
+      "risk_tolerance": "moderate"
+    }
+  },
+  "kg_context": {
+    "fund_codes": ["110011"]
+  },
+  "evidence_context": [],
+  "required_mcp_capabilities": []
+}

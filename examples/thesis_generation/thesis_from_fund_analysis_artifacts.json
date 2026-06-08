@@ -1,0 +1,33 @@
+{
+  "task_id": "thesis-from-report-001",
+  "step_id": "thesis-from-report-step-1",
+  "skill_name": "thesis_generation",
+  "payload": {
+    "topic": "Should the portfolio increase allocation to fund 110011?",
+    "related_entities": ["fund:110011"],
+    "fund_analysis_report": {
+      "fund_code": "110011",
+      "fund_name": "Example Equity Fund",
+      "summary": "Fund shows strong 1-year return with moderate volatility",
+      "risk_flags": [],
+      "data_completeness": "A"
+    },
+    "artifacts": {
+      "report_sections": {
+        "fund_metrics": {
+          "return_1y": 0.20,
+          "volatility_1y": 0.15,
+          "sharpe": 1.33
+        }
+      }
+    },
+    "risk_profile": {
+      "risk_tolerance": "moderate"
+    }
+  },
+  "kg_context": {
+    "fund_codes": ["110011"]
+  },
+  "evidence_context": [],
+  "required_mcp_capabilities": []
+}

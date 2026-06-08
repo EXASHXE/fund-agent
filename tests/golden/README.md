@@ -23,11 +23,17 @@ They freeze externally visible `decision_support` behavior before internal
 refactors. Only `decision_support` may produce formal `Decision` and
 `ExecutionLedger` artifacts.
 
+Thesis_generation golden snapshots live under `tests/golden/thesis_generation/`.
+They freeze externally visible `thesis_generation` behavior. Thesis_generation
+produces `ThesisDraft` artifacts only; it must not produce formal `Decision` or
+`ExecutionLedger` artifacts.
+
 Regenerate snapshots only after intentional review:
 
 ```bash
 python scripts/update_fund_analysis_golden.py
 python scripts/update_decision_support_golden.py
+python scripts/update_thesis_generation_golden.py
 ```
 
 Review any snapshot diff for behavior changes, accidental real data, credentials,
