@@ -71,12 +71,9 @@ def _load_skillpack_manifest() -> dict:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @pytest.mark.parametrize("dirpath,label", [
-    ("src/core", "src/core"),
     ("src/schemas", "src/schemas"),
     ("src/tools", "src/tools"),
     ("src/graph", "src/graph"),
-    ("src/workflows", "src/workflows"),
-    ("src/infra", "src/infra"),
     ("src/skills_runtime", "src/skills_runtime"),
     ("src/skillpack", "src/skillpack"),
 ])
@@ -116,12 +113,9 @@ OLD_SRC_DIRS = [
 ]
 
 NEW_CODE_DIRS = [
-    "src/core",
     "src/graph",
     "src/schemas",
     "src/tools",
-    "src/workflows",
-    "src/infra",
     "src/skills_runtime",
     "src/skillpack",
 ]
@@ -155,28 +149,24 @@ def test_new_system_does_not_import_deprecated_shims():
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# Boundary: Plugin runtime code must not import shimmed infra old paths directly
+# Boundary: Plugin runtime code must not import deprecated paths
 # ═══════════════════════════════════════════════════════════════════════════════
 
-@pytest.mark.parametrize("dirpath", ["src/core", "src/tools", "src/graph", "src/schemas", "src/workflows"])
-def test_no_direct_config_import(dirpath):
-    _assert_no_imports_matching(dirpath, ["src.config."], f"{dirpath} must not import src.config (use src.infra.config)")
+DEPRECATED_PATHS = (
+    "src.config.",
+    "src.data.",
+    "src.db.",
+    "src.kg.",
+    "src.vectorstore.",
+    "src.core.",
+    "src.infra.",
+    "src.workflows.",
+)
 
-@pytest.mark.parametrize("dirpath", ["src/core", "src/tools", "src/graph", "src/schemas", "src/workflows"])
-def test_no_direct_data_import(dirpath):
-    _assert_no_imports_matching(dirpath, ["src.data."], f"{dirpath} must not import src.data (use src.infra.data)")
-
-@pytest.mark.parametrize("dirpath", ["src/core", "src/tools", "src/graph", "src/schemas", "src/workflows"])
-def test_no_direct_db_import(dirpath):
-    _assert_no_imports_matching(dirpath, ["src.db."], f"{dirpath} must not import src.db (use src.infra.persistence)")
-
-@pytest.mark.parametrize("dirpath", ["src/core", "src/tools", "src/graph", "src/schemas", "src/workflows"])
-def test_no_direct_vectorstore_import(dirpath):
-    _assert_no_imports_matching(dirpath, ["src.vectorstore."], f"{dirpath} must not import src.vectorstore (use src.infra.vectorstore)")
-
-@pytest.mark.parametrize("dirpath", ["src/core", "src/tools", "src/graph", "src/schemas", "src/workflows"])
-def test_no_direct_kg_import(dirpath):
-    _assert_no_imports_matching(dirpath, ["src.kg."], f"{dirpath} must not import src.kg (use src.graph)")
+@pytest.mark.parametrize("dirpath", ["src/tools", "src/graph", "src/schemas"])
+def test_no_deprecated_path_imports(dirpath):
+    _assert_no_imports_matching(dirpath, list(DEPRECATED_PATHS),
+                                f"{dirpath} must not import deprecated paths")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -297,20 +287,9 @@ def test_mcp_adapter_has_no_network_dependency():
     )
 
 
-def test_core_has_no_provider_sdk_dependency():
-    """Core orchestration must not import concrete MCP provider SDKs."""
-    provider_sdks = ["tavily", "exa", "firecrawl", "finnhub", "reddit"]
-    _assert_no_imports_matching(
-        "src/core",
-        provider_sdks,
-        "src/core must not import provider SDKs",
-    )
-
-
 def test_evidence_tools_have_no_network_or_llm_dependency():
-    """Evidence/quant/ledger tools stay pure and do not import infra/network/LLM."""
+    """Evidence/quant/ledger tools stay pure and do not import network/LLM."""
     forbidden = [
-        "src.infra",
         "requests",
         "httpx",
         "aiohttp",
@@ -329,7 +308,7 @@ def test_evidence_tools_have_no_network_or_llm_dependency():
         _assert_no_imports_matching(
             dirpath,
             forbidden,
-            f"{dirpath} must not import infra, network, or LLM modules",
+            f"{dirpath} must not import network or LLM modules",
         )
 
 
@@ -338,14 +317,6 @@ def test_src_tools_do_not_import_legacy():
         "src/tools",
         ["legacy."],
         "src/tools must not import legacy",
-    )
-
-
-def test_workflows_research_os_has_no_provider_or_legacy_dependency():
-    _assert_no_imports_matching(
-        "src/workflows",
-        ["legacy.", "tavily", "exa", "firecrawl", "finnhub", "reddit"],
-        "src/workflows must not import legacy or provider SDKs",
     )
 
 
@@ -502,22 +473,19 @@ def test_agent_host_quickstart_does_not_require_research_os():
     assert not [phrase for phrase in forbidden if phrase in content]
 
 
-def test_research_os_reference_modules_are_labeled_deprecated_optional():
-    required_phrases = [
-        "Deprecated / optional reference only.",
-        "Not required for host integration.",
-        "External agents should use skillpack manifest and skills_runtime directly.",
-    ]
-    for relpath in (
+def test_deprecated_research_os_modules_removed():
+    """Deprecated research_os reference modules (src/core, src/workflows) removed."""
+    import os as _os
+    for path_str in (
         "src/core/research_os.py",
-        "src/workflows/research_os.py",
         "src/core/planner.py",
         "src/core/skill_registry.py",
         "src/core/critic.py",
+        "src/workflows/research_os.py",
     ):
-        content = _read(relpath)
-        for phrase in required_phrases:
-            assert phrase in content, f"{relpath} missing {phrase}"
+        assert not _os.path.exists(
+            _os.path.join(PROJECT_ROOT, path_str)
+        ), f"Deprecated module still exists: {path_str}"
 
 
 def test_decision_support_is_only_formal_decision_skill():
@@ -576,11 +544,9 @@ def test_manifest_skill_docs_have_runtime_contract_fields_and_workflow_sections(
 # ═══════════════════════════════════════════════════════════════════════════════
 
 ALLOWLIST = frozenset({
-    "core", "schemas", "graph", "tools", "infra", "workflows",
+    "schemas", "graph", "tools",
     "skills_runtime", "skillpack",
-    "__init__.py", "cli.py",
-    # DEPRECATED compatibility shims — marked for removal
-    "config", "data", "db", "kg", "vectorstore",
+    "__init__.py",
 })
 
 
@@ -597,46 +563,17 @@ def test_src_top_level_allowlist():
 # Boundary: src/kg/ must be only a deprecated shim
 # ═══════════════════════════════════════════════════════════════════════════════
 
-KG_IMPLEMENTATION_FILES = {"graph.py", "schema.py", "diff.py", "enrichment.py", "industry_map.py"}
-
-
-def test_src_kg_is_only_deprecated_shim():
-    """src/kg/ must not contain implementation files — only __init__.py shim."""
-    _assert_deprecated_shim_only("kg")
-
-
-@pytest.mark.parametrize("shim_dir", ["config", "data", "db", "vectorstore"])
-def test_deprecated_compat_shims_are_init_only(shim_dir):
-    """Deprecated compat shim dirs must not retain implementation files."""
-    _assert_deprecated_shim_only(shim_dir)
-
-
-def test_src_config_is_only_deprecated_shim():
-    _assert_deprecated_shim_only("config")
-
-
-def test_src_data_is_only_deprecated_shim():
-    _assert_deprecated_shim_only("data")
-
-
-def test_src_db_is_only_deprecated_shim():
-    _assert_deprecated_shim_only("db")
-
-
-def test_src_vectorstore_is_only_deprecated_shim():
-    _assert_deprecated_shim_only("vectorstore")
-
-
-def _assert_deprecated_shim_only(shim_dir: str):
-    shim_path = os.path.join(PROJECT_ROOT, "src", shim_dir)
-    if not os.path.isdir(shim_path):
-        pytest.skip(f"src/{shim_dir} directory not found")
-    entries = set(os.listdir(shim_path))
-    entries.discard("__pycache__")
-    assert entries == {"__init__.py"}, (
-        f"src/{shim_dir}/ must be only a deprecated __init__.py shim, "
-        f"found: {sorted(entries)}"
-    )
+def test_deprecated_src_paths_removed():
+    """Verify deprecated src/ top-level paths have been removed."""
+    import os as _os
+    src_dir = _os.path.join(PROJECT_ROOT, "src")
+    removed = {"core", "infra", "workflows", "config", "data", "db", "kg", "vectorstore"}
+    for entry in removed:
+        assert not _os.path.exists(_os.path.join(src_dir, entry)), (
+            f"Deprecated src/{entry}/ still exists"
+        )
+    cli_path = _os.path.join(src_dir, "cli.py")
+    assert not _os.path.exists(cli_path), "Deprecated src/cli.py still exists"
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

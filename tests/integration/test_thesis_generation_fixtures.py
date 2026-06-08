@@ -19,17 +19,26 @@ THESIS_FIXTURES = [
     "examples/thesis_generation/thesis_with_mixed_evidence.json",
     "examples/thesis_generation/thesis_from_fund_analysis_artifacts.json",
     "examples/thesis_generation/thesis_missing_evidence_partial.json",
+    "examples/thesis_generation/evidence_graph_balanced_thesis.json",
+    "examples/thesis_generation/sparse_context_low_confidence.json",
+    "examples/thesis_generation/fund_analysis_report_thesis.json",
 ]
 
 REQUIRED_THESIS_DRAFT_FIELDS = [
+    "task_id",
+    "topic",
+    "related_entities",
     "thesis_statement",
     "supporting_evidence",
     "counter_evidence",
+    "neutral_evidence",
     "missing_evidence",
     "confidence_assessment",
     "watch_conditions",
     "invalidating_conditions",
     "next_research_questions",
+    "source_summary",
+    "limitations",
     "decision_boundary_note",
 ]
 
@@ -121,3 +130,27 @@ def test_decision_boundary_note_present():
     envelope = json.loads(proc.stdout)
     draft = envelope["artifacts"]["thesis_draft"]
     assert "decision_support" in draft["decision_boundary_note"]
+
+
+@pytest.mark.parametrize("fixture_path", THESIS_FIXTURES)
+def test_hyphenated_slug_works(fixture_path: str):
+    proc = _run_bridge(["--skill", "thesis-generation", "--input", fixture_path, "--pretty"])
+    assert proc.returncode == 0, f"Hyphenated slug failed for {fixture_path}: {proc.stderr}"
+    envelope = json.loads(proc.stdout)
+    assert envelope.get("ok") is True
+    assert envelope.get("skill_name") == "thesis_generation"
+
+
+@pytest.mark.parametrize("fixture_path", THESIS_FIXTURES)
+def test_fixture_has_payload_envelope(fixture_path: str):
+    data = json.loads((ROOT / fixture_path).read_text(encoding="utf-8"))
+    assert "payload" in data, f"{fixture_path} missing payload envelope"
+
+
+@pytest.mark.parametrize("fixture_path", THESIS_FIXTURES)
+def test_no_formal_buy_sell_hold_in_thesis_draft(fixture_path: str):
+    proc = _run_bridge(["--skill", "thesis_generation", "--input", fixture_path, "--pretty"])
+    envelope = json.loads(proc.stdout)
+    draft = envelope.get("artifacts", {}).get("thesis_draft", {})
+    assert "action" not in draft
+    assert "recommendation" not in draft

@@ -9,8 +9,8 @@ required entrypoint for the fund-agent skill pack. External agents should use
 
 `ResearchTask -> Planner -> KG -> SkillInput -> SkillRegistry -> SkillOutput -> EvidenceGraph -> Critic -> DecisionEngine -> Ledger`
 
-1. `ResearchTask` enters through `src.core.research_os.run_research_task` or
-   the thin `src.workflows.research_os` wrapper.
+1. `ResearchTask` enters through the host-supplied orchestration layer
+   (see `v0.1.0-skillpack-alpha` tag for the historical `research_os` wrapper).
 2. `Planner` builds ordered skill steps from task and KnowledgeGraph context.
 3. KG queries run before planning context is used. Query failures fall back to
    empty context and must be recorded as warnings.

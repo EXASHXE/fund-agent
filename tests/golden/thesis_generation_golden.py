@@ -63,6 +63,18 @@ THESIS_GENERATION_GOLDEN_FIXTURES: tuple[GoldenFixture, ...] = (
         "examples/thesis_generation/thesis_missing_evidence_partial.json",
         "thesis_missing_evidence_partial.json",
     ),
+    GoldenFixture(
+        "examples/thesis_generation/evidence_graph_balanced_thesis.json",
+        "evidence_graph_balanced_thesis.json",
+    ),
+    GoldenFixture(
+        "examples/thesis_generation/sparse_context_low_confidence.json",
+        "sparse_context_low_confidence.json",
+    ),
+    GoldenFixture(
+        "examples/thesis_generation/fund_analysis_report_thesis.json",
+        "fund_analysis_report_thesis.json",
+    ),
 )
 
 

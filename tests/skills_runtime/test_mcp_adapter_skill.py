@@ -94,15 +94,70 @@ class TestItemsFromResponse:
         )
         assert len(result) == 1
 
+    def test_custom_keys_news_sentiments_signals(self):
+        skill = MCPAdapterSkill()
+        for key in ("articles", "news", "sentiments", "signals"):
+            result = skill.items_from_response({key: [{"a": 1}]}, item_keys=(key,))
+            assert len(result) == 1, f"key={key}"
+
+    def test_single_object_returns_wrapped_list(self):
+        skill = MCPAdapterSkill()
+        data = {"title": "single item", "content": "test"}
+        result = skill.items_from_response(data)
+        assert result == [data]
+
     def test_non_dict_returns_empty(self):
         skill = MCPAdapterSkill()
         result = skill.items_from_response("not a dict")
         assert result == []
 
+    def test_list_value_preserves_only_dicts(self):
+        skill = MCPAdapterSkill()
+        result = skill.items_from_response({"items": [{"a": 1}, "string", 42, {"b": 2}]})
+        assert result == [{"a": 1}, {"b": 2}]
+
     def test_empty_dict_returns_empty(self):
         skill = MCPAdapterSkill()
         result = skill.items_from_response({})
         assert result == []
+
+    def test_prefers_items_over_results(self):
+        skill = MCPAdapterSkill()
+        result = skill.items_from_response({"items": [{"a": 1}], "results": [{"b": 2}]})
+        assert len(result) == 1
+        assert result[0]["a"] == 1
+
+
+class TestBuildSoftEvidenceItems:
+    def test_builds_evidence_from_valid_items(self):
+        adapter = InMemoryMCPHostAdapter(
+            capabilities=[MCPCapability(name="web_search", input_schema={}, output_schema={})],
+            handlers={"web_search": lambda p: {"items": []}},
+        )
+        skill = MCPAdapterSkill(mcp_adapter=adapter)
+        si = _skill_input()
+        items = [{"claim": "test claim", "source_type": "web"}]
+        evidence_list, errors = skill.build_soft_evidence_items(items, "web_search", ["fund:001"], si)
+        assert len(evidence_list) == 1
+        assert evidence_list[0].claim == "test claim"
+        assert errors == []
+
+    def test_captures_evidence_build_failed_for_malformed(self):
+        skill = MCPAdapterSkill()
+        si = _skill_input()
+        items = [{"source_type": "", "timestamp": "", "related_entities": []}]
+        evidence_list, errors = skill.build_soft_evidence_items(
+            items, "web_search", [], si,
+        )
+        assert any(e.get("code") == "EVIDENCE_BUILD_FAILED" for e in errors)
+        assert len(evidence_list) == 0
+
+    def test_empty_items_returns_empty(self):
+        skill = MCPAdapterSkill()
+        si = _skill_input()
+        evidence_list, errors = skill.build_soft_evidence_items([], "web_search", ["fund:001"], si)
+        assert evidence_list == []
+        assert errors == []
 
 
 class TestFailedMissingCapability:

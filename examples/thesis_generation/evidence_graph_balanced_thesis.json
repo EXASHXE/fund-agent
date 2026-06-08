@@ -1,0 +1,59 @@
+{
+  "task_id": "thesis-balanced-001",
+  "step_id": "thesis-balanced-step-1",
+  "skill_name": "thesis_generation",
+  "payload": {
+    "thesis_question": "Is fund 001234 well-positioned for the next quarter?",
+    "related_entities": ["fund:001234"],
+    "evidence_graph": {
+      "items": {
+        "ev-1": {
+          "claim": "Fund 001234 has a strong track record of alpha generation",
+          "source_type": "fund_analysis",
+          "direction": "positive",
+          "confidence_weight": 1.0,
+          "related_entities": ["fund:001234"]
+        },
+        "ev-2": {
+          "claim": "Fund manager consistently outperforms benchmark",
+          "source_type": "manager_analysis",
+          "direction": "positive",
+          "confidence_weight": 0.8,
+          "related_entities": ["fund:001234"]
+        },
+        "ev-3": {
+          "claim": "Sector concentration risk in technology exceeds 40%",
+          "source_type": "risk_analysis",
+          "direction": "negative",
+          "confidence_weight": 0.9,
+          "related_entities": ["fund:001234"]
+        },
+        "ev-4": {
+          "claim": "Expense ratio is competitive at 0.75%",
+          "source_type": "fee_analysis",
+          "direction": "neutral",
+          "confidence_weight": 1.0,
+          "related_entities": ["fund:001234"]
+        },
+        "ev-5": {
+          "claim": "Historical drawdown in 2022 shows resilience",
+          "source_type": "historical_analysis",
+          "direction": "positive",
+          "confidence_weight": 0.7,
+          "related_entities": ["fund:001234"]
+        }
+      }
+    },
+    "constraints": {
+      "max_sector_exposure": 0.35
+    },
+    "risk_profile": {
+      "risk_tolerance": "moderate"
+    }
+  },
+  "kg_context": {
+    "fund_codes": ["001234"]
+  },
+  "evidence_context": ["Macro outlook is cautiously optimistic"],
+  "required_mcp_capabilities": []
+}

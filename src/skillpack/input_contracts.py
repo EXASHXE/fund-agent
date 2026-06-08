@@ -18,6 +18,7 @@ from src.skillpack.decision_contracts import get_decision_contract
 from src.skillpack.input_contract_catalog import get_skill_input_contract
 from src.skillpack.loader import load_skillpack_manifest
 from src.skillpack.manifest import SkillSpec
+from src.skillpack.thesis_contracts import get_thesis_contract
 
 DEFAULT_MANIFEST_PATH = "skillpack/fund-agent.skillpack.yaml"
 
@@ -185,30 +186,19 @@ def output_schema_for_skill(
             ],
         }
     elif spec.name == "thesis_generation":
+        thesis_path = str(Path(manifest_path).parent / "thesis-contracts.yaml")
+        contract = get_thesis_contract(spec.name, thesis_path)
+        thesis_fields = list(contract.get("thesis_draft_fields") or [])
+        formal_forbidden = list(contract.get("formal_outputs_forbidden") or [])
         schema["artifacts"] = {
             "known_keys": [
                 {
                     "key": "thesis_draft",
                     "required": True,
-                    "fields": [
-                        "task_id",
-                        "topic",
-                        "related_entities",
-                        "thesis_statement",
-                        "supporting_evidence",
-                        "counter_evidence",
-                        "neutral_evidence",
-                        "missing_evidence",
-                        "confidence_assessment",
-                        "watch_conditions",
-                        "invalidating_conditions",
-                        "next_research_questions",
-                        "source_summary",
-                        "limitations",
-                        "decision_boundary_note",
-                    ],
+                    "fields": thesis_fields,
                 },
             ],
+            "formal_outputs_forbidden": formal_forbidden,
             "notes": [
                 "Produces ThesisDraft only; formal decision generation is forbidden.",
                 "ThesisDraft.confidence_assessment has level (LOW/MEDIUM/HIGH), score, and reason.",
@@ -221,7 +211,8 @@ def output_schema_for_skill(
             "produces": [],
             "notes": ["Thesis drafts are artifacts, not formal decisions."],
         }
-        schema["status_values"] = STATUS_VALUES
+        schema["thesis_draft_fields"] = thesis_fields
+        schema["status_values"] = list(contract.get("status_values") or STATUS_VALUES)
     return {
         "skill_name": spec.name,
         "doc_slug": doc_slug,

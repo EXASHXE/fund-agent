@@ -1,0 +1,62 @@
+{
+  "task_id": "thesis-report-001",
+  "step_id": "thesis-report-step-1",
+  "skill_name": "thesis_generation",
+  "payload": {
+    "thesis_question": "Should the investor increase allocation to fund 005678 based on the fund analysis report?",
+    "related_entities": ["fund:005678"],
+    "evidence_graph": {
+      "items": {
+        "ev-a": {
+          "claim": "Fund 005678's 3-year Sharpe ratio is 1.2",
+          "source_type": "fund_analysis",
+          "direction": "positive",
+          "confidence_weight": 1.0,
+          "related_entities": ["fund:005678"]
+        },
+        "ev-b": {
+          "claim": "Fund's expense ratio is above category average",
+          "source_type": "fee_analysis",
+          "direction": "negative",
+          "confidence_weight": 1.0,
+          "related_entities": ["fund:005678"]
+        },
+        "ev-c": {
+          "claim": "Quarterly inflows suggest investor confidence",
+          "source_type": "flow_analysis",
+          "direction": "positive",
+          "confidence_weight": 0.6,
+          "related_entities": ["fund:005678"]
+        }
+      }
+    },
+    "fund_analysis_report": {
+      "fund_code": "005678",
+      "fund_name": "Example Growth Fund",
+      "overall_assessment": "Strong performance with moderate fees",
+      "key_metrics": {
+        "sharpe_ratio": 1.2,
+        "max_drawdown": -18.5,
+        "annual_return_3yr": 12.3
+      }
+    },
+    "artifacts": {
+      "portfolio_fit": "Complementary to existing value allocation"
+    },
+    "constraints": {
+      "max_allocation_increase": 0.10
+    },
+    "risk_profile": {
+      "risk_tolerance": "moderate"
+    },
+    "research_focus": "Growth vs value balance in current portfolio"
+  },
+  "kg_context": {
+    "fund_codes": ["005678"]
+  },
+  "evidence_context": [
+    "Portfolio currently has underweight growth exposure",
+    "Market conditions favor growth over value in near term"
+  ],
+  "required_mcp_capabilities": []
+}

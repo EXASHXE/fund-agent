@@ -1,0 +1,60 @@
+schema_version: thesis-contracts.v1
+contracts:
+  thesis_generation:
+    contract_version: thesis-generation.v1
+    doc: docs/contracts/thesis-generation-contract.v1.md
+    runtime_id: thesis_generation
+    doc_slug: thesis-generation
+    artifact_only: true
+    consumes:
+      - EvidenceGraph
+      - EvidenceItem
+      - fund_analysis_report
+      - artifacts
+      - evidence_context
+    formal_outputs_forbidden:
+      - Decision
+      - ExecutionLedger
+    input_fields:
+      - payload.evidence_graph
+      - payload.evidence_items
+      - payload.fund_analysis_report
+      - payload.artifacts
+      - payload.thesis_question
+      - payload.topic
+      - payload.related_entities
+      - payload.research_focus
+      - payload.constraints
+      - payload.risk_profile
+      - skill_input.evidence_context
+      - skill_input.kg_context.fund_codes
+    artifact_keys:
+      - key: thesis_draft
+        required: true
+        type: object
+        description: Deterministic artifact-only thesis draft.
+    thesis_draft_fields:
+      - task_id
+      - topic
+      - related_entities
+      - thesis_statement
+      - supporting_evidence
+      - counter_evidence
+      - neutral_evidence
+      - missing_evidence
+      - confidence_assessment
+      - watch_conditions
+      - invalidating_conditions
+      - next_research_questions
+      - source_summary
+      - limitations
+      - decision_boundary_note
+    status_values:
+      - OK
+      - PARTIAL
+      - FAILED
+    boundary_rules:
+      - thesis_generation must not produce formal Decision / ExecutionLedger.
+      - thesis_generation must not output formal BUY / SELL / HOLD action directives.
+      - thesis_generation must not call LLMs, providers, or network.
+      - Formal decisions require decision_support.

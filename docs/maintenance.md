@@ -11,9 +11,16 @@ Plugin core is the host-facing contract surface:
 - `src/schemas/` typed skill, evidence, graph, decision, and ledger contracts.
 - `src/tools/` pure tools, evidence compilation, and MCP adapter boundary.
 - `src/graph/` KnowledgeGraph helpers.
+- `src/skillpack/` manifest loading, input contracts, validation.
+- `docs/` contracts, install guides, architecture docs.
+- `tests/` plugin gate.
 
 Core code must not import `legacy`, provider SDKs, network clients, or LLM SDKs.
 External hosts own orchestration, credentials, network access, and retries.
+
+The runtime bridge CLI entrypoint is `scripts/run_skill.py` (backed by
+`src/skillpack/run_skill.py`). There is no `src/cli.py` — hosts use the
+runtime bridge JSON-in / JSON-out process boundary.
 
 ## Legacy Archive
 
@@ -39,9 +46,18 @@ code should extend only:
 - `docs/`
 - `tests/` (plugin gate)
 
-ResearchOS modules under `src/core` and `src/workflows` are deprecated reference
-code available from historical tags and archive docs. They are not required for
-host integration and should not be treated as current plugin runtime surface.
+The following deprecated surfaces have been removed and must never be
+reintroduced:
+
+- ResearchOS modules (historical; see `v0.1.0-skillpack-alpha` tag)
+- Infrastructure shims (historical; see tag)
+- Workflow wrappers (historical; see tag)
+- Compatibility shim packages
+- The deprecated CLI entrypoint (`scripts/run_skill.py` is the supported
+  entrypoint)
+
+Historical ResearchOS code belongs to historical tags (`v0.1.0-skillpack-alpha`)
+or `docs/archive/`, not current `src/`.
 
 The current plugin core lives only under these directories:
 - `skillpack/`
@@ -53,11 +69,6 @@ The current plugin core lives only under these directories:
 - `src/skillpack/`
 - `docs/`
 - `tests/`
-
-Do not reintroduce `src/core`, `src/infra`, `src/workflows`, or shim import
-packages (`src/config/`, `src/data/`, `src/db/`, `src/kg/`, `src/vectorstore/`)
-as current plugin runtime surface. Historical ResearchOS code is archived in the
-`v0.1.0-skillpack-alpha` tag.
 
 ## Main Test Gate
 
@@ -133,10 +144,12 @@ adapt it through `src.tools.adapters.mcp.MCPHostAdapter`.
 - Legacy modules — removed after `v0.1.0-skillpack-alpha`, see `docs/archive/`
 - Historical ResearchOS code — available from `v0.1.0-skillpack-alpha` tag; not
   a current plugin runtime surface
-- `src/core/` — deprecated ResearchOS modules; historical reference only
-- `src/infra/` — infrastructure shims; internal reference only
-- `src/workflows/` — deprecated workflow wrappers; historical reference only
+- ResearchOS modules — removed
+- Infrastructure shims — removed
+- Workflow wrappers — removed
+- Compatibility shim packages — removed
 - Provider-specific SDKs — host concern
+- Deprecated CLI stub — removed (use `scripts/run_skill.py`)
 
 ## Dependency Policy
 

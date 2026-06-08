@@ -1,0 +1,24 @@
+{
+  "task_id": "thesis-sparse-001",
+  "step_id": "thesis-sparse-step-1",
+  "skill_name": "thesis_generation",
+  "payload": {
+    "topic": "Emerging market bond exposure",
+    "related_entities": ["fund:EMBOND"],
+    "evidence_items": [
+      {
+        "claim": "Emerging market bonds have higher yield spreads",
+        "source_type": "market_data",
+        "direction": "neutral",
+        "confidence_weight": 0.5,
+        "related_entities": ["fund:EMBOND"]
+      }
+    ],
+    "risk_profile": {
+      "risk_tolerance": "conservative"
+    }
+  },
+  "kg_context": {},
+  "evidence_context": [],
+  "required_mcp_capabilities": []
+}

@@ -1,0 +1,91 @@
+{
+  "artifacts": {
+    "thesis_draft": {
+      "confidence_assessment": {
+        "level": "MEDIUM",
+        "reason": "2 supporting evidence item(s); 1 counter evidence item(s); fund analysis report available; artifacts available",
+        "score": 0.55
+      },
+      "counter_evidence": [
+        {
+          "claim": "Fund's expense ratio is above category average",
+          "confidence_weight": 1.0,
+          "direction": "negative",
+          "related_entities": [
+            "fund:005678"
+          ],
+          "source_type": "fee_analysis"
+        }
+      ],
+      "decision_boundary_note": "Draft only; formal Decision / ExecutionLedger requires decision_support.",
+      "invalidating_conditions": [
+        "Evidence quality degrades below minimum threshold"
+      ],
+      "limitations": [
+        "Thesis is a draft artifact; formal decisions require decision_support"
+      ],
+      "missing_evidence": [],
+      "neutral_evidence": [
+        {
+          "claim": "Portfolio currently has underweight growth exposure",
+          "confidence_weight": null,
+          "direction": "neutral",
+          "related_entities": [],
+          "source_type": "evidence_context"
+        },
+        {
+          "claim": "Market conditions favor growth over value in near term",
+          "confidence_weight": null,
+          "direction": "neutral",
+          "related_entities": [],
+          "source_type": "evidence_context"
+        }
+      ],
+      "next_research_questions": [
+        "Deepen research on: Growth vs value balance in current portfolio"
+      ],
+      "related_entities": [
+        "fund:005678"
+      ],
+      "source_summary": {
+        "evidence_context": 2,
+        "fee_analysis": 1,
+        "flow_analysis": 1,
+        "fund_analysis": 1
+      },
+      "supporting_evidence": [
+        {
+          "claim": "Fund 005678's 3-year Sharpe ratio is 1.2",
+          "confidence_weight": 1.0,
+          "direction": "positive",
+          "related_entities": [
+            "fund:005678"
+          ],
+          "source_type": "fund_analysis"
+        },
+        {
+          "claim": "Quarterly inflows suggest investor confidence",
+          "confidence_weight": 0.6,
+          "direction": "positive",
+          "related_entities": [
+            "fund:005678"
+          ],
+          "source_type": "flow_analysis"
+        }
+      ],
+      "task_id": "<normalized-task-id>",
+      "thesis_statement": "Moderate evidence supports a cautiously favorable view on 'Should the investor increase allocation to fund 005678 based on the fund analysis report?', but counter evidence and gaps warrant further investigation.",
+      "topic": "Should the investor increase allocation to fund 005678 based on the fund analysis report?",
+      "watch_conditions": [
+        "Counter evidence intensifies or new contradicting signals emerge"
+      ]
+    }
+  },
+  "errors": [],
+  "evidence_items": [],
+  "ok": true,
+  "skill_name": "thesis_generation",
+  "status": "OK",
+  "used_mcp_capabilities": [],
+  "warnings": []
+}

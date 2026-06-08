@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import pandas as pd
 
-from src.infra.config.defaults import QUANT_CONFIG
+_DEFAULT_SORTINO_MAR = 0.025
 
 
 # ====================================================================
@@ -32,7 +32,7 @@ def sortino_ratio(daily_returns: list | None, mar_annual: float | None = None) -
         return 0.0
 
     if mar_annual is None:
-        mar_annual = QUANT_CONFIG.get("SORTINO_MAR", 0.025)
+        mar_annual = _DEFAULT_SORTINO_MAR
 
     returns = np.array(daily_returns, dtype=float)
     mar_daily = (1 + mar_annual) ** (1 / 252) - 1
