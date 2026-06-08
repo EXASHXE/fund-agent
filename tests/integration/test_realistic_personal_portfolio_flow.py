@@ -13,7 +13,7 @@ from src.tools.evidence.validators import compile_evidence_graph
 
 
 def _load_json(name: str) -> dict:
-    return json.loads(Path(f"examples/{name}").read_text())
+    return json.loads(Path(f"examples/{name}").read_text(encoding="utf-8"))
 
 
 def test_full_portfolio_flow_from_json():
@@ -87,7 +87,7 @@ def test_flow_is_json_serializable():
 
 def test_flow_does_not_import_research_os_or_legacy():
     example_file = Path("examples/minimal_host_portfolio_review.py")
-    tree = ast.parse(example_file.read_text())
+    tree = ast.parse(example_file.read_text(encoding="utf-8"))
     imports = set()
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):

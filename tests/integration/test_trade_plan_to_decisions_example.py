@@ -17,6 +17,7 @@ def test_trade_plan_demo_runs_and_outputs_json():
         [sys.executable, "examples/minimal_host_trade_plan_to_decisions.py"],
         capture_output=True,
         text=True,
+        encoding="utf-8",
         env={**__import__("os").environ, "PYTHONPATH": "."},
         cwd=PROJECT_ROOT,
     )
@@ -34,6 +35,7 @@ def test_trade_plan_demo_produces_decisions():
         [sys.executable, "examples/minimal_host_trade_plan_to_decisions.py"],
         capture_output=True,
         text=True,
+        encoding="utf-8",
         env={**__import__("os").environ, "PYTHONPATH": "."},
         cwd=PROJECT_ROOT,
     )
@@ -52,6 +54,7 @@ def test_trade_plan_demo_produces_execution_ledger():
         [sys.executable, "examples/minimal_host_trade_plan_to_decisions.py"],
         capture_output=True,
         text=True,
+        encoding="utf-8",
         env={**__import__("os").environ, "PYTHONPATH": "."},
         cwd=PROJECT_ROOT,
     )
@@ -65,7 +68,7 @@ def test_trade_plan_demo_produces_execution_ledger():
 
 def test_trade_plan_demo_has_no_research_os_or_legacy_import():
     demo_path = PROJECT_ROOT / "examples" / "minimal_host_trade_plan_to_decisions.py"
-    tree = ast.parse(demo_path.read_text())
+    tree = ast.parse(demo_path.read_text(encoding="utf-8"))
     imports = set()
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
@@ -82,7 +85,7 @@ def test_trade_plan_demo_has_no_research_os_or_legacy_import():
 
 def test_only_decision_support_produces_decision():
     demo_path = PROJECT_ROOT / "examples" / "minimal_host_trade_plan_to_decisions.py"
-    tree = ast.parse(demo_path.read_text())
+    tree = ast.parse(demo_path.read_text(encoding="utf-8"))
 
     from_nodes = [
         node for node in ast.walk(tree)

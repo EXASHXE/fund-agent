@@ -67,7 +67,7 @@ def test_host_agent_can_compile_evidence_and_call_decision_support():
 
 
 def test_host_integration_doc_exists_and_describes_external_agent_flow():
-    content = Path("docs/host-integration.md").read_text()
+    content = Path("docs/host-integration.md").read_text(encoding="utf-8")
 
     for phrase in (
         "external agent host",

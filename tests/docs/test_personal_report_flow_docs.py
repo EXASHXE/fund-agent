@@ -39,7 +39,7 @@ class TestPersonalReportDocs:
         )
 
     def test_docs_do_not_claim_opencode_plugin_runs_python(self):
-        content = Path(PROJECT_ROOT, "docs/host-compatibility.md").read_text()
+        content = Path(PROJECT_ROOT, "docs/host-compatibility.md").read_text(encoding="utf-8")
         assert "not run the Python runtime" in content.replace("*", "")
 
     def test_docs_do_not_claim_fund_agent_fetches_data(self):
@@ -49,7 +49,7 @@ class TestPersonalReportDocs:
             assert "host-owned" in content or "host" in content.lower()
 
     def test_docs_do_not_treat_rebalance_plan_as_executable(self):
-        content = Path(PROJECT_ROOT, "docs/workflows/personal-fund-report.md").read_text()
+        content = Path(PROJECT_ROOT, "docs/workflows/personal-fund-report.md").read_text(encoding="utf-8")
         assert "suggested" in content.lower() and "rebalance" in content.lower()
         # Should assert it's a suggestion, not a formal instruction
         assert "not a decision" in content.lower() or "not executable" in content.lower() or \

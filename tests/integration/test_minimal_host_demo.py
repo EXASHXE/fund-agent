@@ -14,6 +14,7 @@ def test_minimal_host_demo_runs():
         [sys.executable, "examples/minimal_host_news_to_decision.py"],
         capture_output=True,
         text=True,
+        encoding="utf-8",
         env={**__import__("os").environ, "PYTHONPATH": "."},
         cwd=Path(__file__).parent.parent.parent,
     )
@@ -30,6 +31,7 @@ def test_minimal_host_portfolio_review_demo_runs():
         [sys.executable, "examples/minimal_host_portfolio_review.py"],
         capture_output=True,
         text=True,
+        encoding="utf-8",
         env={**__import__("os").environ, "PYTHONPATH": "."},
         cwd=Path(__file__).parent.parent.parent,
     )
@@ -43,7 +45,7 @@ def test_minimal_host_portfolio_review_demo_runs():
 
 def test_minimal_host_demo_does_not_import_research_os():
     demo_path = Path(__file__).parent.parent.parent / "examples" / "minimal_host_news_to_decision.py"
-    content = demo_path.read_text()
+    content = demo_path.read_text(encoding="utf-8")
 
     assert "src.core.research_os" not in content, "Demo imports ResearchOS"
     assert "import legacy" not in content, "Demo imports legacy"
@@ -56,7 +58,7 @@ def test_minimal_host_portfolio_review_does_not_import_research_os():
         / "examples"
         / "minimal_host_portfolio_review.py"
     )
-    content = demo_path.read_text()
+    content = demo_path.read_text(encoding="utf-8")
 
     assert "src.core.research_os" not in content, "Demo imports ResearchOS"
     assert "import legacy" not in content, "Demo imports legacy"
@@ -68,6 +70,7 @@ def test_minimal_host_demo_outputs_json_decision():
         [sys.executable, "examples/minimal_host_news_to_decision.py"],
         capture_output=True,
         text=True,
+        encoding="utf-8",
         env={**__import__("os").environ, "PYTHONPATH": "."},
         cwd=Path(__file__).parent.parent.parent,
     )

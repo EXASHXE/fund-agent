@@ -28,7 +28,7 @@ def _get_imports_from_dir(dirpath: str) -> set[str]:
                 continue
             filepath = os.path.join(root, f)
             try:
-                with open(filepath) as fh:
+                with open(filepath, encoding="utf-8") as fh:
                     tree = ast.parse(fh.read(), filename=f)
                 for node in ast.walk(tree):
                     if isinstance(node, ast.Import):
@@ -151,7 +151,7 @@ def test_no_pure_tool_uses_system_time():
     violations: list[str] = []
     for filepath in source_files:
         rel = os.path.relpath(filepath, PROJECT_ROOT)
-        if rel.startswith(("src/tools/evidence/", "src/tools/adapters/", "src/tools/math/")):
+        if Path(rel).as_posix().startswith(("src/tools/evidence/", "src/tools/adapters/", "src/tools/math/")):
             continue
         content = Path(filepath).read_text(encoding="utf-8")
         for pattern in _SYSTEM_TIME_PATTERNS:

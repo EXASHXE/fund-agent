@@ -21,7 +21,7 @@ def _run_bridge(skill: str, input_file: str) -> dict:
     env["PYTHONPATH"] = str(PROJECT_ROOT)
     result = subprocess.run(
         [sys.executable, RUN_SKILL, "--skill", skill, "--input", path, "--pretty"],
-        capture_output=True, text=True, env=env, timeout=30,
+        capture_output=True, text=True, encoding="utf-8", env=env, timeout=30,
     )
     return json.loads(result.stdout)
 

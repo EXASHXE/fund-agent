@@ -135,7 +135,7 @@ def _sentiment_item() -> dict:
 
 
 def _imports_from(path: Path) -> set[str]:
-    tree = ast.parse(path.read_text())
+    tree = ast.parse(path.read_text(encoding="utf-8"))
     imports = set()
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):

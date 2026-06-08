@@ -49,13 +49,13 @@ def test_pure_tools_declare_llm_false():
 
 
 def test_tool_catalog_does_not_reference_legacy():
-    serialized = CATALOG.read_text()
+    serialized = CATALOG.read_text(encoding="utf-8")
 
     assert "legacy" not in serialized
 
 
 def test_tool_catalog_does_not_reference_provider_sdks():
-    serialized = CATALOG.read_text()
+    serialized = CATALOG.read_text(encoding="utf-8")
 
     for sdk in ("tavily", "exa", "firecrawl", "finnhub", "reddit"):
         assert sdk not in serialized, f"tool catalog references provider SDK: {sdk}"
@@ -80,7 +80,7 @@ def test_decision_support_not_in_tool_catalog():
 
 
 def _tools() -> list[dict]:
-    data = yaml.safe_load(CATALOG.read_text())
+    data = yaml.safe_load(CATALOG.read_text(encoding="utf-8"))
     return data["tools"]
 
 

@@ -64,7 +64,7 @@ def test_fund_metric_tools_have_no_network_or_io_imports():
 
 
 def _imports_from(path: Path) -> set[str]:
-    tree = ast.parse(path.read_text())
+    tree = ast.parse(path.read_text(encoding="utf-8"))
     imports = set()
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):

@@ -12,7 +12,7 @@ from src.tools.evidence.validators import compile_evidence_graph
 
 
 def _load_json(name: str) -> dict:
-    return json.loads(Path(f"examples/{name}").read_text())
+    return json.loads(Path(f"examples/{name}").read_text(encoding="utf-8"))
 
 
 def _compile_evidence_from_payload(payload: dict):

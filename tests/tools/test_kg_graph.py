@@ -328,7 +328,7 @@ class TestKnowledgeGraphBuilder:
     def test_load_invalid_file(self, tmp_path):
         """Loading a non-pickle file raises an error."""
         invalid_path = os.path.join(str(tmp_path), "not_a_pickle.txt")
-        with open(invalid_path, "w") as f:
+        with open(invalid_path, "w", encoding="utf-8") as f:
             f.write("this is definitely not a pickle file")
 
         with pytest.raises((pickle.UnpicklingError, TypeError, EOFError)):

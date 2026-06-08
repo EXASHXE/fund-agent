@@ -12,7 +12,7 @@ SKILLS_DIR = ROOT / "skills"
 
 
 def _manifest_skill_ids() -> list[str]:
-    manifest = yaml.safe_load((ROOT / "skillpack" / "fund-agent.skillpack.yaml").read_text())
+    manifest = yaml.safe_load((ROOT / "skillpack" / "fund-agent.skillpack.yaml").read_text(encoding="utf-8"))
     return [skill["name"] for skill in manifest["skills"]]
 
 
@@ -27,7 +27,7 @@ def test_hyphenated_docs_exist_for_every_manifest_skill():
 
 
 def test_every_runtime_skill_id_is_documented_in_skills_readme():
-    readme = (SKILLS_DIR / "README.md").read_text()
+    readme = (SKILLS_DIR / "README.md").read_text(encoding="utf-8")
     for skill_id in _manifest_skill_ids():
         assert f"`{skill_id}`" in readme
         assert f"`{_slug(skill_id)}`" in readme
@@ -41,7 +41,7 @@ def test_underscore_docs_are_absent_or_marked_compatibility_only():
         assert not (underscore_dir / "SKILL.md").exists()
         readme = underscore_dir / "README.md"
         assert readme.exists(), f"{underscore_dir} needs a compatibility README"
-        text = " ".join(readme.read_text().lower().split())
+        text = " ".join(readme.read_text(encoding="utf-8").lower().split())
         assert "compatibility-only" in text
         assert "not a canonical markdown skill doc" in text
         assert "not be presented as a second runtime skill" in text
@@ -55,7 +55,7 @@ def test_fund_analyst_is_legacy_reference_only():
     assert archive_path.exists(), (
         "docs/archive/fund-analyst/SKILL.md must exist for legacy reference"
     )
-    text = archive_path.read_text().lower()
+    text = archive_path.read_text(encoding="utf-8").lower()
     assert "legacy" in text
     assert "not a runtime" in text or "not installed" in text or "archived" in text
 
@@ -89,7 +89,7 @@ def test_skills_readme_documents_superpowers_compatible_surface():
     """skills/README.md must explain the Superpowers-compatible skill
     surface: primary skill, supporting skills, and that underscore
     directories are not part of the surface."""
-    top_level = (SKILLS_DIR / "README.md").read_text()
+    top_level = (SKILLS_DIR / "README.md").read_text(encoding="utf-8")
     assert "primary" in top_level.lower()
     assert "supporting" in top_level.lower()
     # The skill README must NOT present underscore directories as
@@ -110,5 +110,5 @@ def test_external_host_docs_do_not_call_skills_by_folder_name():
     ]
     folder_skill_name = re.compile(r"skill_name[\"']?\s*[:=]\s*[\"'][a-z]+-[a-z-]+[\"']")
     for path in docs:
-        text = path.read_text()
+        text = path.read_text(encoding="utf-8")
         assert not folder_skill_name.search(text), f"{path} calls a skill by folder slug"

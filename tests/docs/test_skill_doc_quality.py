@@ -41,7 +41,7 @@ CANONICAL_DOCS = [
 
 
 def _manifest_skill_ids() -> list[str]:
-    manifest = yaml.safe_load((ROOT / "skillpack" / "fund-agent.skillpack.yaml").read_text())
+    manifest = yaml.safe_load((ROOT / "skillpack" / "fund-agent.skillpack.yaml").read_text(encoding="utf-8"))
     return [skill["name"] for skill in manifest["skills"]]
 
 
@@ -58,7 +58,7 @@ def test_no_broken_skill_placeholders_in_canonical_docs():
     for path in CANONICAL_DOCS:
         if not path.exists():
             continue
-        text = path.read_text()
+        text = path.read_text(encoding="utf-8")
         for pat in patterns:
             assert not pat.search(text), f"{path} contains broken placeholder: {pat.pattern}"
 
@@ -74,7 +74,7 @@ def test_no_stray_todo_fixme_tbd_in_canonical_skill_docs():
     for path in docs:
         if not path.exists():
             continue
-        text = path.read_text()
+        text = path.read_text(encoding="utf-8")
         # Allow TODO/FIXME in code blocks (rare here), but flag in prose.
         # Strip fenced code blocks before checking prose.
         stripped = re.sub(r"```.*?```", "", text, flags=re.DOTALL)
@@ -86,7 +86,7 @@ def test_canonical_skill_md_files_are_not_compressed():
     for skill_id in _manifest_skill_ids():
         path = SKILLS_DIR / _slug(skill_id) / "SKILL.md"
         assert path.exists(), f"missing SKILL.md for {skill_id}"
-        lines = path.read_text().splitlines()
+        lines = path.read_text(encoding="utf-8").splitlines()
         assert len(lines) >= 50, (
             f"{path} has only {len(lines)} lines — looks compressed"
         )
@@ -104,7 +104,7 @@ def test_canonical_docs_do_not_claim_fund_agent_fetches_data():
     for path in CANONICAL_DOCS:
         if not path.exists():
             continue
-        text = path.read_text().lower()
+        text = path.read_text(encoding="utf-8").lower()
         for phrase in forbidden_phrases:
             assert phrase not in text, (
                 f"{path} implies fund-agent owns data fetching: '{phrase}'"
@@ -114,7 +114,7 @@ def test_canonical_docs_do_not_claim_fund_agent_fetches_data():
 def test_personal_fund_report_workflow_has_all_required_sections():
     """personal-fund-report.md must contain all 15 required sections."""
     assert WORKFLOW_DOC.exists()
-    text = WORKFLOW_DOC.read_text()
+    text = WORKFLOW_DOC.read_text(encoding="utf-8")
     required_sections = [
         "1. User request",
         "2. Objective interpretation",
@@ -138,7 +138,7 @@ def test_personal_fund_report_workflow_has_all_required_sections():
 
 def test_personal_fund_report_workflow_states_host_owns_data():
     """personal-fund-report.md must state the host owns data fetching."""
-    text = WORKFLOW_DOC.read_text().lower()
+    text = WORKFLOW_DOC.read_text(encoding="utf-8").lower()
     # Allow flexible wording like "the host owns data fetching",
     # even if split across line wraps.
     normalized = re.sub(r"\s+", " ", text)

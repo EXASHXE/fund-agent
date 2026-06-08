@@ -10,7 +10,7 @@ from src.skills_runtime.fund_analysis import FundAnalysisSkill
 
 
 def _load_json(name: str) -> dict:
-    return json.loads(Path(f"examples/{name}").read_text())
+    return json.loads(Path(f"examples/{name}").read_text(encoding="utf-8"))
 
 
 def test_realistic_portfolio_produces_artifacts():

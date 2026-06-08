@@ -30,13 +30,13 @@ def _get_imports_from_dir(dirpath: str) -> set[str]:
             filepath = os.path.join(root, f)
             if os.path.getsize(filepath) < 100:
                 try:
-                    with open(filepath) as fh:
+                    with open(filepath, encoding="utf-8") as fh:
                         if '# DEPRECATED' in fh.read():
                             continue
                 except Exception:
                     pass
             try:
-                with open(filepath) as fh:
+                with open(filepath, encoding="utf-8") as fh:
                     tree = ast.parse(fh.read(), filename=f)
                 for node in ast.walk(tree):
                     if isinstance(node, ast.Import):
@@ -58,7 +58,7 @@ def _assert_no_imports_matching(dirpath: str, patterns: list[str], label: str):
 
 
 def _read(relpath: str) -> str:
-    with open(os.path.join(PROJECT_ROOT, relpath)) as f:
+    with open(os.path.join(PROJECT_ROOT, relpath), encoding="utf-8") as f:
         return f.read()
 
 
@@ -94,7 +94,7 @@ def test_optional_reference_workflows_do_not_import_legacy():
     fp = os.path.join(PROJECT_ROOT, "src", "workflows", "research_os.py")
     if not os.path.exists(fp):
         pytest.skip("research_os.py not found")
-    with open(fp) as f:
+    with open(fp, encoding="utf-8") as f:
         tree = ast.parse(f.read(), filename=fp)
     imports = set()
     for node in ast.walk(tree):
@@ -375,7 +375,7 @@ def test_skillpack_manifest_does_not_require_research_os_entrypoint():
     """The manifest must not require internal ResearchOS as host entrypoint."""
     manifest_path = os.path.join(PROJECT_ROOT, "skillpack", "fund-agent.skillpack.yaml")
     assert os.path.exists(manifest_path)
-    with open(manifest_path) as f:
+    with open(manifest_path, encoding="utf-8") as f:
         data = yaml.safe_load(f)
 
     required = data.get("host_integration", {}).get("required_entrypoint", "")
@@ -411,7 +411,7 @@ def test_skillpack_examples_do_not_reference_research_os_required_path():
 
 def test_readme_positions_skillpack_as_primary_product():
     readme_path = os.path.join(PROJECT_ROOT, "README.md")
-    with open(readme_path) as f:
+    with open(readme_path, encoding="utf-8") as f:
         content = f.read()
 
     assert "Host-Agnostic AI Financial Research Skill Pack" in content
@@ -448,7 +448,7 @@ def test_readme_does_not_require_research_os_for_new_integrations():
 def test_host_integration_doc_exists_and_contains_flow():
     doc_path = os.path.join(PROJECT_ROOT, "docs", "host-integration.md")
     assert os.path.exists(doc_path)
-    with open(doc_path) as f:
+    with open(doc_path, encoding="utf-8") as f:
         content = f.read()
 
     for phrase in (
@@ -648,7 +648,7 @@ def test_readme_does_not_describe_old_src_layout():
     readme_path = os.path.join(PROJECT_ROOT, "README.md")
     if not os.path.exists(readme_path):
         pytest.skip("README.md not found")
-    with open(readme_path) as f:
+    with open(readme_path, encoding="utf-8") as f:
         content = f.read()
     # Old paths that should NOT appear as new architecture descriptions
     old_path_patterns = [

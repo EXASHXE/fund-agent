@@ -215,13 +215,13 @@ class TestContractDocument:
 
     def test_contract_doc_mentions_section_ids(self):
         from pathlib import Path
-        content = Path("docs/contracts/report-output-contract.v1.md").read_text()
+        content = Path("docs/contracts/report-output-contract.v1.md").read_text(encoding="utf-8")
         for sid in EXPECTED_SECTION_IDS:
             assert sid in content, f"contract doc missing section id: {sid}"
 
     def test_contract_doc_defines_status_enum(self):
         from pathlib import Path
-        content = Path("docs/contracts/report-output-contract.v1.md").read_text()
+        content = Path("docs/contracts/report-output-contract.v1.md").read_text(encoding="utf-8")
         assert "OK" in content
         assert "PARTIAL" in content
         assert "MISSING" in content

@@ -12,7 +12,7 @@ EXAMPLE_DIR = Path("skillpack/examples")
 
 def test_all_skillpack_examples_are_valid_json():
     for path in EXAMPLE_DIR.glob("*.json"):
-        json.loads(path.read_text())
+        json.loads(path.read_text(encoding="utf-8"))
 
 
 def test_all_skill_input_examples_have_required_fields():
@@ -77,7 +77,7 @@ def test_decision_support_output_contains_decision_and_ledger():
 
 
 def test_examples_do_not_reference_research_os_as_required_path():
-    serialized = "\n".join(path.read_text() for path in EXAMPLE_DIR.glob("*.json"))
+    serialized = "\n".join(path.read_text(encoding="utf-8") for path in EXAMPLE_DIR.glob("*.json"))
 
     assert "src.core.research_os" not in serialized
     assert "src/workflows/research_os.py" not in serialized
@@ -85,4 +85,4 @@ def test_examples_do_not_reference_research_os_as_required_path():
 
 
 def _load(filename: str) -> dict:
-    return json.loads((EXAMPLE_DIR / filename).read_text())
+    return json.loads((EXAMPLE_DIR / filename).read_text(encoding="utf-8"))

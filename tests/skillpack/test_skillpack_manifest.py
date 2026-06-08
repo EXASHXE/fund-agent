@@ -56,7 +56,7 @@ def test_skillpack_manifest_does_not_require_research_os_entrypoint():
     data = _manifest()
     serialized = yaml.safe_dump(data)
 
-    assert data["host_integration"]["required_entrypoint"] == str(MANIFEST_PATH)
+    assert data["host_integration"]["required_entrypoint"] == MANIFEST_PATH.as_posix()
     assert "src.core.research_os" not in serialized
     assert "src/workflows/research_os.py" not in serialized
 
@@ -135,4 +135,4 @@ def test_mcp_capabilities_declared_in_capabilities_yaml():
 
 
 def _manifest() -> dict:
-    return yaml.safe_load(MANIFEST_PATH.read_text())
+    return yaml.safe_load(MANIFEST_PATH.read_text(encoding="utf-8"))

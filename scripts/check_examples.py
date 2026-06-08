@@ -182,6 +182,7 @@ def _check_demo_scripts(errors: list[str]) -> int:
                 [sys.executable, str(full_path)],
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
                 env=env,
                 cwd=str(PROJECT_ROOT),
                 timeout=60,

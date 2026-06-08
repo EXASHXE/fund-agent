@@ -20,7 +20,7 @@ def _run(args: list[str]) -> dict:
     env["PYTHONPATH"] = str(PROJECT_ROOT)
     result = subprocess.run(
         [sys.executable, RUN_SKILL] + args,
-        capture_output=True, text=True, env=env, timeout=30,
+        capture_output=True, text=True, encoding="utf-8", env=env, timeout=30,
     )
     return json.loads(result.stdout)
 
@@ -74,7 +74,7 @@ class TestListCapabilities:
         env["PYTHONPATH"] = str(PROJECT_ROOT)
         result = subprocess.run(
             [sys.executable, RUN_SKILL, "--list-capabilities"],
-            capture_output=True, text=True, env=env, timeout=30,
+            capture_output=True, text=True, encoding="utf-8", env=env, timeout=30,
         )
         # stdout should be valid JSON
         json.loads(result.stdout)
@@ -113,7 +113,7 @@ class TestDescribeCapability:
         env["PYTHONPATH"] = str(PROJECT_ROOT)
         result = subprocess.run(
             [sys.executable, RUN_SKILL, "--describe-capability", "fund_nav_history"],
-            capture_output=True, text=True, env=env, timeout=30,
+            capture_output=True, text=True, encoding="utf-8", env=env, timeout=30,
         )
         json.loads(result.stdout)
 

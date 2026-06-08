@@ -20,7 +20,7 @@ def load_skillpack_manifest(
 ) -> SkillPackManifest:
     """Load a skill pack manifest from YAML."""
     manifest_path = Path(path)
-    data = yaml.safe_load(manifest_path.read_text()) or {}
+    data = yaml.safe_load(manifest_path.read_text(encoding="utf-8")) or {}
     manifest = SkillPackManifest.from_dict(data)
     if validate:
         validate_manifest(manifest)

@@ -72,6 +72,7 @@ def _has_node() -> bool:
                 check=True,
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
                 timeout=10,
             )
             return True
@@ -134,6 +135,7 @@ def _eval_plugin_function(function_name: str, args: dict) -> dict:
         suffix=".plugin.test.mjs",
         dir=str(PLUGIN_FILE.parent),
         delete=False,
+        encoding="utf-8",
     ) as f:
         f.write(stripped)
         staged_path = Path(f.name)

@@ -19,7 +19,7 @@ def test_no_date_today_in_pure_tools():
         Path("src/tools/portfolio/transaction.py"),
     ]
     for path in tool_files:
-        source = path.read_text()
+        source = path.read_text(encoding="utf-8")
         tree = ast.parse(source)
         for node in ast.walk(tree):
             if isinstance(node, ast.Call):

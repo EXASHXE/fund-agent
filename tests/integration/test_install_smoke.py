@@ -35,7 +35,7 @@ def test_all_skill_runtimes_resolve():
 def test_minimal_host_demo_subprocess_outputs_json():
     result = subprocess.run(
         [sys.executable, "examples/minimal_host_news_to_decision.py"],
-        capture_output=True, text=True, cwd=str(PROJECT_ROOT),
+        capture_output=True, text=True, encoding="utf-8", cwd=str(PROJECT_ROOT),
     )
     assert result.returncode == 0, f"Demo failed: {result.stderr}"
     data = json.loads(result.stdout)

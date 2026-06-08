@@ -55,7 +55,7 @@ class TestPersonalReportQualityExample:
 
     def test_example_file_exists_and_valid_json(self):
         assert self.example_path.exists()
-        data = json.loads(self.example_path.read_text())
+        data = json.loads(self.example_path.read_text(encoding="utf-8"))
         assert data["skill_name"] == "fund_analysis"
 
     def test_fund_analysis_runs_with_report_quality_input(self):

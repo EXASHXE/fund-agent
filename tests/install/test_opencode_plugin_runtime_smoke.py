@@ -66,6 +66,7 @@ def _has_node() -> bool:
                 check=True,
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
                 timeout=10,
             )
             return True
@@ -141,6 +142,7 @@ def _stage_test_harness() -> Path:
         suffix=".plugin.test.mjs",
         dir=str(PLUGIN_FILE.parent),
         delete=False,
+        encoding="utf-8",
     )
     staged.write(stripped)
     staged.close()

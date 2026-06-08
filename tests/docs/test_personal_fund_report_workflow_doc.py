@@ -10,7 +10,7 @@ DOC = ROOT / "docs" / "workflows" / "personal-fund-report.md"
 
 def test_personal_fund_report_workflow_doc_exists_and_names_core_flow():
     assert DOC.exists()
-    text = DOC.read_text()
+    text = DOC.read_text(encoding="utf-8")
     required = [
         "分析下我的基金给出报告",
         "FundAnalysisSkill",
