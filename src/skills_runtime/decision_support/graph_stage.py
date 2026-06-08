@@ -100,8 +100,8 @@ def _resolve_trade_evidence_anchors(
     For active actions (BUY/SELL/INCREASE/REDUCE), anchors must come from
     trade-specific evidence_refs or risk_flags_refs that exist in the
     evidence graph. If neither provides valid anchors, the trade is
-    downgraded to HOLD and the anchor list is left empty (caller should
-    downgrade).
+    downgraded to HOLD and the anchor list is left empty with structured
+    downgrade justification.
 
     For passive actions, any available evidence is accepted.
     """

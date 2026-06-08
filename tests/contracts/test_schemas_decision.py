@@ -226,6 +226,9 @@ class TestDecisionSerialization:
         assert d["time_horizon"] == "1M"
         assert d["risk_budget"] == 0.05
         assert d["audit_trail"] == ["ev-001", "ev-002", "ev-003"]
+        assert d["decision_reason_codes"] == []
+        assert d["evidence_state"] == "ANCHORED"
+        assert d["blocked_by"] == []
         assert d["version"] == "decision-contract.v2"
         assert isinstance(d["created_at"], str)
 
@@ -237,8 +240,8 @@ class TestDecisionSerialization:
             "decision_id", "action", "execution_amount",
             "rationale_anchor", "trigger_conditions",
             "invalidating_conditions", "time_horizon",
-            "risk_budget", "audit_trail", "version",
-            "created_at",
+            "risk_budget", "audit_trail", "decision_reason_codes",
+            "evidence_state", "blocked_by", "version", "created_at",
         }
         assert set(d.keys()) == expected_keys
 

@@ -44,7 +44,7 @@ This document lists contracts that are frozen at `rc-stable` for
 
 - **Location:** `src/schemas/decision.py`
 - **Stability:** rc-stable
-- **Allowed changes:** add optional audit trail entries
+- **Allowed changes:** add optional audit trail entries, add optional structured justification fields with defaults
 - **Breaking:** changing action enum values, removing `rationale_anchor`
 
 ### 7. ExecutionLedger

@@ -64,6 +64,37 @@ def test_formal_outputs_include_decision_and_execution_ledger():
     assert "ExecutionLedger" in _contract()["formal_outputs"]
 
 
+def test_decision_fields_include_structured_justification():
+    fields = _contract()["decision_fields"]
+    assert "decision_reason_codes" in fields
+    assert "evidence_state" in fields
+    assert "blocked_by" in fields
+
+
+def test_reason_codes_include_structured_passive_reasons():
+    reason_codes = set(_contract()["reason_codes"])
+    assert {
+        "EVIDENCE_AVAILABLE",
+        "INSUFFICIENT_EVIDENCE",
+        "CRITIC_BLOCKED",
+        "CONSTRAINT_BLOCKED",
+        "BUDGET_BLOCKED",
+        "DOWNGRADED_ACTIVE_TO_HOLD",
+        "PASSIVE_ACTION",
+    } <= reason_codes
+
+
+def test_evidence_states_include_structured_blockage_states():
+    assert set(_contract()["evidence_states"]) == {
+        "ANCHORED",
+        "INSUFFICIENT_EVIDENCE",
+        "CRITIC_BLOCKED",
+        "CONSTRAINT_BLOCKED",
+        "BUDGET_BLOCKED",
+        "DOWNGRADED",
+    }
+
+
 def test_active_actions():
     assert set(_contract()["active_actions"]) == {"BUY", "SELL", "INCREASE", "REDUCE"}
 
@@ -93,6 +124,13 @@ def test_boundary_rules_mention_only_decision_support():
     rules_text = " ".join(_contract()["boundary_rules"])
     assert "only decision_support may emit" in rules_text.lower() or \
            "only decision_support may emit decision" in rules_text.lower()
+
+
+def test_boundary_rules_require_structured_passive_justification():
+    rules_text = " ".join(_contract()["boundary_rules"]).lower()
+    assert "passive empty-anchor decisions" in rules_text
+    assert "structured justification" in rules_text
+    assert "legacy text-only" in rules_text
 
 
 def test_loader_load_decision_contracts():

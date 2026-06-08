@@ -21,12 +21,17 @@ coverage, limitations, and Markdown headings intact.
 Decision_support golden snapshots live under `tests/golden/decision_support/`.
 They freeze externally visible `decision_support` behavior before internal
 refactors. Only `decision_support` may produce formal `Decision` and
-`ExecutionLedger` artifacts.
+`ExecutionLedger` artifacts. These snapshots include structured decision
+justification fields (`decision_reason_codes`, `evidence_state`, and
+`blocked_by`) for formal decision auditability.
 
 Thesis_generation golden snapshots live under `tests/golden/thesis_generation/`.
 They freeze externally visible `thesis_generation` behavior. Thesis_generation
 produces `ThesisDraft` artifacts only; it must not produce formal `Decision` or
 `ExecutionLedger` artifacts.
+
+Fund_analysis snapshots remain formal-decision-free. Thesis_generation
+snapshots remain artifact-only.
 
 Regenerate snapshots only after intentional review:
 

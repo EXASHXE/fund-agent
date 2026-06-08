@@ -60,6 +60,13 @@ def validate_and_filter_trades(
             trade["missing_evidence"] = "No evidence items in evidence graph"
             trade["trigger_to_change"] = "New evidence becomes available"
             trade["what_invalidates"] = "Any new evidence contradicts current assessment"
+            trade["decision_reason_codes"] = [
+                "INSUFFICIENT_EVIDENCE",
+                "DOWNGRADED_ACTIVE_TO_HOLD",
+                "PASSIVE_ACTION",
+            ]
+            trade["evidence_state"] = "INSUFFICIENT_EVIDENCE"
+            trade["blocked_by"] = ["evidence"]
             action = "HOLD"
 
         if action in ACTIVE_ACTIONS:
@@ -98,6 +105,57 @@ def select_top_trades(
         key=lambda t: t.get("priority", t.get("rank", 999))
     )
     return validated_trades[:1]
+
+
+def _dedupe_reason_codes(*groups: Any) -> list[str]:
+    reason_codes: list[str] = []
+    seen: set[str] = set()
+    for group in groups:
+        if isinstance(group, str):
+            values = [group]
+        else:
+            values = list(group or [])
+        for value in values:
+            code = str(value)
+            if code and code not in seen:
+                reason_codes.append(code)
+                seen.add(code)
+    return reason_codes
+
+
+def _list_strings(value: Any) -> list[str]:
+    if isinstance(value, str):
+        return [value]
+    return [str(item) for item in list(value or []) if str(item)]
+
+
+def _trade_decision_justification(
+    *,
+    trade: dict[str, Any],
+    action: str,
+    anchors: list[str],
+) -> tuple[list[str], str, list[str]]:
+    reason_codes: list[str] = []
+    blocked_by: list[str] = []
+
+    if anchors:
+        reason_codes.append("EVIDENCE_AVAILABLE")
+        evidence_state = "ANCHORED"
+    else:
+        reason_codes.append("INSUFFICIENT_EVIDENCE")
+        evidence_state = "INSUFFICIENT_EVIDENCE"
+        blocked_by.append("evidence")
+
+    if action in PASSIVE_ACTIONS:
+        reason_codes.append("PASSIVE_ACTION")
+
+    evidence_state = str(trade.get("evidence_state") or evidence_state)
+    blocked_by = _list_strings(trade.get("blocked_by")) or blocked_by
+    reason_codes = _dedupe_reason_codes(
+        reason_codes,
+        trade.get("decision_reason_codes"),
+    )
+    return reason_codes, evidence_state, blocked_by
 
 
 def _decision_from_trade(
@@ -151,6 +209,13 @@ def _decision_from_trade(
             time_horizon=trade.get("time_horizon", payload.get("time_horizon", "medium_term")),
             risk_budget=0.01,
             audit_trail=audit_trail,
+            decision_reason_codes=[
+                "INSUFFICIENT_EVIDENCE",
+                "DOWNGRADED_ACTIVE_TO_HOLD",
+                "PASSIVE_ACTION",
+            ],
+            evidence_state="DOWNGRADED",
+            blocked_by=["evidence"],
             created_at=created_at,
         )
 
@@ -249,6 +314,11 @@ def _decision_from_trade(
         if deterministic and deterministic_ts
         else datetime.now()
     )
+    decision_reason_codes, evidence_state, blocked_by = _trade_decision_justification(
+        trade=trade,
+        action=action,
+        anchors=anchors,
+    )
 
     return Decision(
         decision_id=decision_id,
@@ -260,5 +330,8 @@ def _decision_from_trade(
         time_horizon=time_horizon,
         risk_budget=risk_budget,
         audit_trail=audit_trail,
+        decision_reason_codes=decision_reason_codes,
+        evidence_state=evidence_state,
+        blocked_by=blocked_by,
         created_at=created_at,
     )

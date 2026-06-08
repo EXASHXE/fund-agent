@@ -100,6 +100,41 @@ def _build_invalidating_conditions(
     return conditions
 
 
+def _build_decision_justification(
+    *,
+    action: str,
+    anchors: list[str],
+    critique_status: str,
+    insufficient_evidence: bool,
+    downgraded_reason: str,
+) -> tuple[list[str], str, list[str]]:
+    reason_codes: list[str] = []
+    blocked_by: list[str] = []
+
+    if anchors:
+        reason_codes.append("EVIDENCE_AVAILABLE")
+
+    if insufficient_evidence:
+        evidence_state = "INSUFFICIENT_EVIDENCE"
+        reason_codes.append("INSUFFICIENT_EVIDENCE")
+        blocked_by.append("evidence")
+    elif downgraded_reason:
+        evidence_state = "BUDGET_BLOCKED"
+        reason_codes.extend(["BUDGET_BLOCKED", "DOWNGRADED_ACTIVE_TO_HOLD"])
+        blocked_by.append("budget")
+    elif critique_status != "PASS":
+        evidence_state = "CRITIC_BLOCKED"
+        reason_codes.append("CRITIC_BLOCKED")
+        blocked_by.append("critic")
+    else:
+        evidence_state = "ANCHORED"
+
+    if action in PASSIVE_ACTIONS:
+        reason_codes.append("PASSIVE_ACTION")
+
+    return reason_codes, evidence_state, blocked_by
+
+
 def _build_decision(
     *,
     payload: dict[str, Any],
@@ -161,6 +196,13 @@ def _build_decision(
         missing_evidence=missing_evidence,
         deterministic_ts=deterministic_ts,
     )
+    decision_reason_codes, evidence_state, blocked_by = _build_decision_justification(
+        action=action,
+        anchors=anchors,
+        critique_status=critique_status,
+        insufficient_evidence=insufficient_evidence,
+        downgraded_reason=downgraded_reason,
+    )
 
     return Decision(
         decision_id=decision_id,
@@ -172,5 +214,8 @@ def _build_decision(
         time_horizon=task.time_horizon,
         risk_budget=risk_budget,
         audit_trail=audit_trail,
+        decision_reason_codes=decision_reason_codes,
+        evidence_state=evidence_state,
+        blocked_by=blocked_by,
         created_at=created_at,
     )

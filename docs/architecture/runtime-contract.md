@@ -82,12 +82,14 @@ only when independent sources corroborate the same entity and direction.
 Active decisions must anchor to real `EvidenceGraph` evidence IDs. Fake anchors
 such as `no_evidence_available`, `fake_anchor`, or `placeholder` are invalid.
 
-Passive decisions may use an empty `rationale_anchor` only when the audit trail
-or trigger conditions explain insufficient evidence, critic blockage, or
-exhaustion.
+Passive decisions may use an empty `rationale_anchor` only when structured
+`decision_reason_codes` or `evidence_state` explain insufficient evidence,
+critic blockage, constraint blockage, budget blockage, or active-to-hold
+downgrade. Legacy text-only explanations are compatibility-only and are not
+sufficient for new runtime outputs.
 
 `ExecutionLedger.to_dict()` includes `ledger_id`, decision IDs, `evidence_ids`,
-`audit_trail`, and `created_at`.
+`audit_trail`, structured justification fields, and `created_at`.
 
 ## MCP Host Adapter Boundary
 

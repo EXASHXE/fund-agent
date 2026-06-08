@@ -20,8 +20,17 @@
           "Insufficient evidence: no evidence items in graph",
           "Generated at: 2026-01-01T00:00:00"
         ],
+        "blocked_by": [
+          "evidence"
+        ],
         "created_at": "<normalized-timestamp>",
         "decision_id": "<normalized-decision-id>",
+        "decision_reason_codes": [
+          "INSUFFICIENT_EVIDENCE",
+          "PASSIVE_ACTION",
+          "DOWNGRADED_ACTIVE_TO_HOLD"
+        ],
+        "evidence_state": "INSUFFICIENT_EVIDENCE",
         "execution_amount": 5000.0,
         "invalidating_conditions": [
           "Evidence contradiction detected",
@@ -54,9 +63,18 @@
             "Insufficient evidence: no evidence items in graph",
             "Generated at: 2026-01-01T00:00:00"
           ],
+          "blocked_by": [
+            "evidence"
+          ],
           "created_at": "<normalized-timestamp>",
           "decision_id": "<normalized-decision-id>",
+          "decision_reason_codes": [
+            "INSUFFICIENT_EVIDENCE",
+            "PASSIVE_ACTION",
+            "DOWNGRADED_ACTIVE_TO_HOLD"
+          ],
           "evidence_ids": [],
+          "evidence_state": "INSUFFICIENT_EVIDENCE",
           "execution_amount": 5000.0,
           "invalidating_conditions": [
             "Evidence contradiction detected",

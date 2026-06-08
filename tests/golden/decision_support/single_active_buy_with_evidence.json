@@ -16,8 +16,13 @@
         "Execution amount: execution amount derived from portfolio risk constraints",
         "Generated at: 2026-01-01T00:00:00"
       ],
+      "blocked_by": [],
       "created_at": "<normalized-timestamp>",
       "decision_id": "<normalized-decision-id>",
+      "decision_reason_codes": [
+        "EVIDENCE_AVAILABLE"
+      ],
+      "evidence_state": "ANCHORED",
       "execution_amount": 10000.0,
       "invalidating_conditions": [
         "Evidence contradiction detected",
@@ -49,12 +54,17 @@
             "Execution amount: execution amount derived from portfolio risk constraints",
             "Generated at: 2026-01-01T00:00:00"
           ],
+          "blocked_by": [],
           "created_at": "<normalized-timestamp>",
           "decision_id": "<normalized-decision-id>",
+          "decision_reason_codes": [
+            "EVIDENCE_AVAILABLE"
+          ],
           "evidence_ids": [
             "ev-hard-positive",
             "ev-hard-fundamentals"
           ],
+          "evidence_state": "ANCHORED",
           "execution_amount": 10000.0,
           "invalidating_conditions": [
             "Evidence contradiction detected",

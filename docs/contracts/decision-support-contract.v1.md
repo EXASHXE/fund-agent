@@ -98,6 +98,30 @@ Validate and convert selected suggested trade plan entries into formal
   missing, what trigger would change the recommendation, and what invalidates
   the current stance.
 
+## Structured Decision Justification
+
+Formal `Decision` artifacts include structured justification metadata:
+
+- `decision_reason_codes` — machine-readable reason codes. Current codes are
+  `EVIDENCE_AVAILABLE`, `INSUFFICIENT_EVIDENCE`, `CRITIC_BLOCKED`,
+  `CONSTRAINT_BLOCKED`, `BUDGET_BLOCKED`, `DOWNGRADED_ACTIVE_TO_HOLD`, and
+  `PASSIVE_ACTION`.
+- `evidence_state` — one of `ANCHORED`, `INSUFFICIENT_EVIDENCE`,
+  `CRITIC_BLOCKED`, `CONSTRAINT_BLOCKED`, `BUDGET_BLOCKED`, or `DOWNGRADED`.
+- `blocked_by` — structured blocking causes such as `evidence`, `critic`,
+  `constraint`, or `budget`.
+
+Passive `WAIT` / `HOLD` / `PAUSE_DCA` decisions with an empty
+`rationale_anchor` are valid only when `evidence_state` or
+`decision_reason_codes` structurally explains insufficient evidence, critic
+blockage, constraint blockage, budget blockage, or active-to-hold downgrade.
+Legacy text-only explanation may be accepted for backward compatibility, but
+new runtime outputs must populate the structured fields.
+
+Active `BUY` / `SELL` / `INCREASE` / `REDUCE` decisions still require
+`execution_amount > 0` and at least one real `rationale_anchor`. Structured
+reason fields never replace real evidence anchors for active decisions.
+
 ## Output Artifacts
 
 The runtime may emit these artifact keys depending on the input mode:

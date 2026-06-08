@@ -26,6 +26,30 @@ FIXTURES = [
     ("trade_plan_forbidden_action_skipped.json", "PARTIAL", True),
     ("trade_plan_no_evidence_downgraded.json", "OK", True),
 ]
+ACTIVE_ACTIONS = {"BUY", "SELL", "INCREASE", "REDUCE"}
+PASSIVE_ACTIONS = {"WAIT", "HOLD", "PAUSE_DCA"}
+EMPTY_ANCHOR_STATES = {
+    "INSUFFICIENT_EVIDENCE",
+    "CRITIC_BLOCKED",
+    "CONSTRAINT_BLOCKED",
+    "BUDGET_BLOCKED",
+    "DOWNGRADED",
+}
+EMPTY_ANCHOR_REASON_CODES = {
+    "INSUFFICIENT_EVIDENCE",
+    "CRITIC_BLOCKED",
+    "CONSTRAINT_BLOCKED",
+    "BUDGET_BLOCKED",
+    "DOWNGRADED_ACTIVE_TO_HOLD",
+}
+FAKE_ANCHORS = {
+    "no_evidence_available",
+    "fake_anchor",
+    "fake-anchor",
+    "placeholder",
+    "missing_evidence",
+    "missing-evidence",
+}
 
 
 def _run(fixture_name: str) -> subprocess.CompletedProcess:
@@ -50,6 +74,18 @@ def _run(fixture_name: str) -> subprocess.CompletedProcess:
 def _parse(proc: subprocess.CompletedProcess) -> dict:
     assert proc.stdout.strip(), f"stdout empty for rc={proc.returncode} stderr={proc.stderr!r}"
     return json.loads(proc.stdout)
+
+
+def _formal_decisions(envelope: dict) -> list[dict]:
+    artifacts = envelope.get("artifacts") or {}
+    decisions: list[dict] = []
+    single = artifacts.get("decision")
+    if isinstance(single, dict) and single.get("decision_id"):
+        decisions.append(single)
+    for item in artifacts.get("decisions") or []:
+        if isinstance(item, dict) and item.get("decision_id"):
+            decisions.append(item)
+    return decisions
 
 
 @pytest.mark.parametrize("fixture_name,expected_status,_", FIXTURES)
@@ -95,6 +131,37 @@ def test_fixture_runs_through_bridge(fixture_name, expected_status, expects_arti
         )
     else:
         assert envelope.get("status") in {"OK", "PARTIAL"}
+
+
+@pytest.mark.parametrize("fixture_name,expected_status,_", FIXTURES)
+def test_formal_decisions_have_structured_justification(fixture_name, expected_status, _):
+    proc = _run(fixture_name)
+    envelope = _parse(proc)
+
+    if expected_status == "FAILED":
+        assert _formal_decisions(envelope) == []
+        return
+
+    for decision in _formal_decisions(envelope):
+        assert "decision_reason_codes" in decision
+        assert "evidence_state" in decision
+        assert "blocked_by" in decision
+
+        action = decision.get("action")
+        anchors = [
+            str(anchor).strip().lower()
+            for anchor in decision.get("rationale_anchor") or []
+        ]
+        assert not (set(anchors) & FAKE_ANCHORS)
+
+        if action in ACTIVE_ACTIONS:
+            assert anchors
+        if action in PASSIVE_ACTIONS and not anchors:
+            reason_codes = set(decision.get("decision_reason_codes") or [])
+            assert (
+                decision.get("evidence_state") in EMPTY_ANCHOR_STATES
+                or reason_codes & EMPTY_ANCHOR_REASON_CODES
+            )
 
 
 def test_active_buy_with_evidence_produces_decision():

@@ -6,8 +6,8 @@ to evidence. ExecutionLedger collects multiple decisions for audit trails.
 Constraints:
 - BUY/SELL/INCREASE/REDUCE MUST have execution_amount > 0
 - BUY/SELL/INCREASE/REDUCE MUST reference at least one real evidence_id
-- WAIT/HOLD/PAUSE_DCA may use an empty rationale_anchor when insufficient
-  evidence or critic blockage is explicitly explained
+- WAIT/HOLD/PAUSE_DCA may use an empty rationale_anchor only when
+  structured justification fields explain insufficient evidence or blockage
 - trigger_conditions and invalidating_conditions are required
 - risk_budget MUST be > 0
 - audit_trail references evidence_ids for full traceability
@@ -22,10 +22,50 @@ from typing import Literal
 import uuid
 
 ActionType = Literal["BUY", "SELL", "HOLD", "PAUSE_DCA", "REDUCE", "INCREASE", "WAIT"]
+EvidenceState = Literal[
+    "ANCHORED",
+    "INSUFFICIENT_EVIDENCE",
+    "CRITIC_BLOCKED",
+    "CONSTRAINT_BLOCKED",
+    "BUDGET_BLOCKED",
+    "DOWNGRADED",
+]
+
+DECISION_REASON_CODES: tuple[str, ...] = (
+    "EVIDENCE_AVAILABLE",
+    "INSUFFICIENT_EVIDENCE",
+    "CRITIC_BLOCKED",
+    "CONSTRAINT_BLOCKED",
+    "BUDGET_BLOCKED",
+    "DOWNGRADED_ACTIVE_TO_HOLD",
+    "PASSIVE_ACTION",
+)
+EVIDENCE_STATES: tuple[str, ...] = (
+    "ANCHORED",
+    "INSUFFICIENT_EVIDENCE",
+    "CRITIC_BLOCKED",
+    "CONSTRAINT_BLOCKED",
+    "BUDGET_BLOCKED",
+    "DOWNGRADED",
+)
 
 _ACTIONS_NEED_AMOUNT: frozenset[str] = frozenset({"BUY", "SELL", "INCREASE", "REDUCE"})
 _ACTIONS_NEED_ANCHOR: frozenset[str] = frozenset({"BUY", "SELL", "INCREASE", "REDUCE"})
 _PASSIVE_EMPTY_ANCHOR_ALLOWED: frozenset[str] = frozenset({"WAIT", "HOLD", "PAUSE_DCA"})
+_PASSIVE_EMPTY_ANCHOR_EVIDENCE_STATES: frozenset[str] = frozenset({
+    "INSUFFICIENT_EVIDENCE",
+    "CRITIC_BLOCKED",
+    "CONSTRAINT_BLOCKED",
+    "BUDGET_BLOCKED",
+    "DOWNGRADED",
+})
+_PASSIVE_EMPTY_ANCHOR_REASON_CODES: frozenset[str] = frozenset({
+    "INSUFFICIENT_EVIDENCE",
+    "CRITIC_BLOCKED",
+    "CONSTRAINT_BLOCKED",
+    "BUDGET_BLOCKED",
+    "DOWNGRADED_ACTIVE_TO_HOLD",
+})
 _FAKE_ANCHORS: frozenset[str] = frozenset({
     "no_evidence_available",
     "fake_anchor",
@@ -46,8 +86,8 @@ class Decision:
         execution_amount: Amount for execution (required for BUY/SELL/INCREASE/REDUCE).
         rationale_anchor: Evidence IDs that directly support this decision.
             Active actions must contain at least one real evidence_id.
-            WAIT/HOLD/PAUSE_DCA may leave this empty when insufficient evidence
-            or critic blockage is explicitly noted.
+            WAIT/HOLD/PAUSE_DCA may leave this empty only when structured
+            justification fields explain insufficient evidence or blockage.
         trigger_conditions: Conditions that triggered this decision.
             Must not be empty.
         invalidating_conditions: Conditions that would invalidate this decision.
@@ -55,6 +95,10 @@ class Decision:
         time_horizon: Expected time horizon for this decision.
         risk_budget: Risk budget allocated for this decision. Must be > 0.
         audit_trail: Chain of evidence_ids leading to this decision.
+        decision_reason_codes: Machine-readable justification codes.
+        evidence_state: Structured summary of evidence availability/blockage.
+        blocked_by: Structured blocking causes such as evidence, critic,
+            constraint, or budget.
         version: Schema version string. Defaults to "decision-contract.v2".
         created_at: When this decision was created.
     """
@@ -68,6 +112,9 @@ class Decision:
     time_horizon: str
     risk_budget: float
     audit_trail: list[str] = field(default_factory=list)
+    decision_reason_codes: list[str] = field(default_factory=list)
+    evidence_state: EvidenceState = "ANCHORED"
+    blocked_by: list[str] = field(default_factory=list)
     version: str = "decision-contract.v2"
     created_at: datetime = field(default_factory=datetime.now)
 
@@ -88,7 +135,13 @@ class Decision:
         if not self.invalidating_conditions:
             raise ValueError("Decision must specify invalidating_conditions")
 
-        if any(anchor in _FAKE_ANCHORS for anchor in self.rationale_anchor):
+        if self.evidence_state not in EVIDENCE_STATES:
+            raise ValueError(
+                f"evidence_state must be one of {', '.join(EVIDENCE_STATES)}, "
+                f"got {self.evidence_state!r}"
+            )
+
+        if any(str(anchor).strip().lower() in _FAKE_ANCHORS for anchor in self.rationale_anchor):
             raise ValueError(
                 "rationale_anchor must reference real evidence_id values, "
                 "not fake placeholders"
@@ -103,11 +156,12 @@ class Decision:
         if (
             not self.rationale_anchor
             and self.action in _PASSIVE_EMPTY_ANCHOR_ALLOWED
-            and not self._explains_insufficient_evidence()
+            and not self._has_empty_anchor_justification()
         ):
             raise ValueError(
-                "WAIT/HOLD/PAUSE_DCA with empty rationale_anchor must explain "
-                "insufficient evidence or critic blockage"
+                "WAIT/HOLD/PAUSE_DCA with empty rationale_anchor must carry "
+                "structured decision_reason_codes or evidence_state explaining "
+                "insufficient evidence or blockage"
             )
 
         if not self.rationale_anchor and self.action not in _PASSIVE_EMPTY_ANCHOR_ALLOWED:
@@ -121,7 +175,20 @@ class Decision:
                 f"risk_budget must be > 0, got {self.risk_budget}"
             )
 
-    def _explains_insufficient_evidence(self) -> bool:
+    def _has_empty_anchor_justification(self) -> bool:
+        if self.evidence_state in _PASSIVE_EMPTY_ANCHOR_EVIDENCE_STATES:
+            return True
+
+        reason_codes = {str(code) for code in self.decision_reason_codes}
+        if reason_codes & _PASSIVE_EMPTY_ANCHOR_REASON_CODES:
+            return True
+
+        return self._legacy_explains_insufficient_evidence()
+
+    def _legacy_explains_insufficient_evidence(self) -> bool:
+        # Backward compatibility for older fixtures/hosts that explained
+        # passive empty-anchor decisions only in free text. New runtime outputs
+        # must populate structured justification fields instead.
         text = " ".join(
             list(self.trigger_conditions)
             + list(self.invalidating_conditions)

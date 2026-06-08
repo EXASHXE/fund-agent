@@ -95,6 +95,13 @@ def test_skillpack_sidecar_files_exist():
         assert path.exists()
 
 
+def test_manifest_references_decision_support_contract_doc():
+    contracts = set(_manifest()["contracts"])
+
+    assert "docs/contracts/decision-contract.v2.md" in contracts
+    assert "docs/contracts/decision-support-contract.v1.md" in contracts
+
+
 def test_skillpack_manifest_is_json_serializable():
     data = _manifest()
     json.dumps(data)

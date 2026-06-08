@@ -64,6 +64,14 @@ def test_known_keys_match_decision_contracts_yaml():
     assert schema_keys == contract_keys
 
 
+def test_known_artifact_entries_match_decision_contracts_yaml():
+    proc = _run(["--skill", "decision_support", "--output-schema", "--pretty"])
+    assert proc.returncode == 0, proc.stderr
+    schema = _json(proc)["output_schema"]
+    contract = _decision_contract()
+    assert schema["artifacts"]["known_keys"] == contract["artifact_keys"]
+
+
 def test_formal_outputs_include_decision_and_execution_ledger():
     proc = _run(["--skill", "decision_support", "--output-schema", "--pretty"])
     assert proc.returncode == 0, proc.stderr
@@ -78,6 +86,30 @@ def test_active_actions_match_yaml():
     schema = _json(proc)["output_schema"]
     contract = _decision_contract()
     assert set(schema["active_actions"]) == set(contract["active_actions"])
+
+
+def test_decision_fields_match_yaml():
+    proc = _run(["--skill", "decision_support", "--output-schema", "--pretty"])
+    assert proc.returncode == 0, proc.stderr
+    schema = _json(proc)["output_schema"]
+    contract = _decision_contract()
+    assert schema["decision_fields"] == contract["decision_fields"]
+
+
+def test_reason_codes_match_yaml():
+    proc = _run(["--skill", "decision_support", "--output-schema", "--pretty"])
+    assert proc.returncode == 0, proc.stderr
+    schema = _json(proc)["output_schema"]
+    contract = _decision_contract()
+    assert schema["reason_codes"] == contract["reason_codes"]
+
+
+def test_evidence_states_match_yaml():
+    proc = _run(["--skill", "decision_support", "--output-schema", "--pretty"])
+    assert proc.returncode == 0, proc.stderr
+    schema = _json(proc)["output_schema"]
+    contract = _decision_contract()
+    assert schema["evidence_states"] == contract["evidence_states"]
 
 
 def test_passive_actions_match_yaml():

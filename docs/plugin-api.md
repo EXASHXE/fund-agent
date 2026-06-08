@@ -396,7 +396,9 @@ for err in output.errors:
 - **Active decisions** (`BUY`, `SELL`, `INCREASE`, `REDUCE`) MUST anchor to
   real `EvidenceGraph` evidence IDs via `rationale_anchor`.
 - **Passive decisions** (`WAIT`, `HOLD`, `PAUSE_DCA`) may have empty anchors
-  only when insufficient evidence or review blockage is explicitly recorded.
+  only when structured `decision_reason_codes` or `evidence_state` record
+  insufficient evidence, review blockage, constraint blockage, budget blockage,
+  or active-to-hold downgrade.
 - **`thesis_generation`** produces only `ThesisDraft` artifacts; it is
   forbidden from producing formal `Decision` objects.
 

@@ -11,6 +11,36 @@ contracts:
     formal_outputs:
       - Decision
       - ExecutionLedger
+    decision_fields:
+      - decision_id
+      - action
+      - execution_amount
+      - rationale_anchor
+      - trigger_conditions
+      - invalidating_conditions
+      - time_horizon
+      - risk_budget
+      - audit_trail
+      - decision_reason_codes
+      - evidence_state
+      - blocked_by
+      - version
+      - created_at
+    reason_codes:
+      - EVIDENCE_AVAILABLE
+      - INSUFFICIENT_EVIDENCE
+      - CRITIC_BLOCKED
+      - CONSTRAINT_BLOCKED
+      - BUDGET_BLOCKED
+      - DOWNGRADED_ACTIVE_TO_HOLD
+      - PASSIVE_ACTION
+    evidence_states:
+      - ANCHORED
+      - INSUFFICIENT_EVIDENCE
+      - CRITIC_BLOCKED
+      - CONSTRAINT_BLOCKED
+      - BUDGET_BLOCKED
+      - DOWNGRADED
     active_actions:
       - BUY
       - SELL
@@ -93,5 +123,7 @@ contracts:
       - Only decision_support may emit Decision / ExecutionLedger artifacts.
       - Active actions require evidence anchors.
       - Passive actions may explain insufficient evidence or constraint blockage.
+      - Passive empty-anchor decisions must carry structured justification fields.
+      - Legacy text-only explanation is not sufficient for new runtime outputs.
       - fund_analysis suggested plans are not formal decisions.
       - decision_support does not execute trades.

@@ -9,12 +9,15 @@
 | `decision_id` | `str` | Yes | Unique identifier |
 | `action` | `ActionType` | Yes | `BUY`, `SELL`, `HOLD`, `PAUSE_DCA`, `REDUCE`, `INCREASE`, or `WAIT` |
 | `execution_amount` | `float` | Yes | Must be > 0 for BUY/SELL/INCREASE/REDUCE |
-| `rationale_anchor` | `list[str]` | Yes | Evidence IDs — must have at least 1 |
+| `rationale_anchor` | `list[str]` | Yes | Evidence IDs; active actions must have at least 1 real evidence ID |
 | `trigger_conditions` | `list[str]` | Yes | Conditions that trigger this decision |
 | `invalidating_conditions` | `list[str]` | Yes | Conditions that invalidate this decision |
 | `time_horizon` | `str` | Yes | Expected time horizon |
 | `risk_budget` | `float` | Yes | Must be > 0 |
 | `audit_trail` | `list[str]` | No | Evidence ID chain for traceability |
+| `decision_reason_codes` | `list[str]` | No | Machine-readable justification codes |
+| `evidence_state` | `str` | No | Structured evidence/blockage state |
+| `blocked_by` | `list[str]` | No | Structured blocking causes |
 | `version` | `str` | Yes | `"decision-contract.v2"` |
 | `created_at` | `datetime` | Yes | When generated |
 
@@ -38,15 +41,43 @@ All fields are validated at construction time via `__post_init__`. A Decision is
 |-----------|-------|
 | Missing `trigger_conditions` | `ValueError("Decision must specify trigger_conditions")` |
 | Missing `invalidating_conditions` | `ValueError("Decision must specify invalidating_conditions")` |
-| Empty `rationale_anchor` | `ValueError("Decision must reference at least one evidence_id in rationale_anchor")` |
+| Empty `rationale_anchor` for active action | `ValueError("Active decision must reference at least one evidence_id in rationale_anchor")` |
+| Empty `rationale_anchor` for passive action without structured justification | `ValueError("WAIT/HOLD/PAUSE_DCA with empty rationale_anchor must carry structured decision_reason_codes or evidence_state...")` |
 | `execution_amount <= 0` for BUY/SELL/INCREASE/REDUCE | `ValueError("Action '{action}' requires execution_amount > 0, got {amount}")` |
 | `risk_budget <= 0` | `ValueError("risk_budget must be > 0, got {amount}")` |
 
 ## Evidence Anchoring Rules
 
-1. Every decision must reference `rationale_anchor` from `EvidenceGraph` evidence IDs.
+1. Active decisions must reference `rationale_anchor` from `EvidenceGraph` evidence IDs.
 2. No evidence → no active action (only WAIT/HOLD/PAUSE_DCA allowed without evidence).
 3. CritiqueResult must be PASS for BUY/SELL/INCREASE/REDUCE.
+4. Passive decisions with an empty `rationale_anchor` must carry structured
+   `decision_reason_codes` or `evidence_state` explaining insufficient
+   evidence, critic blockage, constraint blockage, budget blockage, or
+   active-to-hold downgrade.
+5. Structured reason fields do not replace real evidence anchors for active
+   decisions.
+
+## Structured Justification Fields
+
+Allowed `decision_reason_codes`:
+
+- `EVIDENCE_AVAILABLE`
+- `INSUFFICIENT_EVIDENCE`
+- `CRITIC_BLOCKED`
+- `CONSTRAINT_BLOCKED`
+- `BUDGET_BLOCKED`
+- `DOWNGRADED_ACTIVE_TO_HOLD`
+- `PASSIVE_ACTION`
+
+Allowed `evidence_state` values:
+
+- `ANCHORED`
+- `INSUFFICIENT_EVIDENCE`
+- `CRITIC_BLOCKED`
+- `CONSTRAINT_BLOCKED`
+- `BUDGET_BLOCKED`
+- `DOWNGRADED`
 
 ## Risk Budget Rules
 

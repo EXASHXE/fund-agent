@@ -148,7 +148,7 @@ the no-fabrication policy and limitations display.
 - The `rebalance_plan` section may describe a suggested plan but it is
   labeled as a suggestion, not an executable order.
 - Formal `BUY`/`SELL`/`INCREASE`/`REDUCE`/`HOLD` actions REQUIRE
-  `DecisionSupportSkill`.
+  `DecisionSupportSkill` and its structured decision justification contract.
 - `FundAnalysisSkill` output includes `report_sections` but never `decision`
   or `execution_ledger`.
 

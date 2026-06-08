@@ -54,6 +54,23 @@ def test_every_artifact_key_appears_in_markdown():
         assert key in _content()
 
 
+def test_every_reason_code_appears_in_markdown():
+    for code in contract().get("reason_codes") or []:
+        assert code.lower() in _content()
+
+
+def test_every_evidence_state_appears_in_markdown():
+    for state in contract().get("evidence_states") or []:
+        assert state.lower() in _content()
+
+
+def test_structured_justification_fields_appear_in_markdown():
+    text = _content()
+    assert "decision_reason_codes" in text
+    assert "evidence_state" in text
+    assert "blocked_by" in text
+
+
 def test_markdown_references_decision_contracts_yaml():
     assert "skillpack/decision-contracts.yaml" in _content()
 

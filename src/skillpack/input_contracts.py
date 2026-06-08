@@ -177,6 +177,9 @@ def output_schema_for_skill(
         }
         schema["active_actions"] = list(decision_contract.get("active_actions") or [])
         schema["passive_actions"] = list(decision_contract.get("passive_actions") or [])
+        schema["decision_fields"] = list(decision_contract.get("decision_fields") or [])
+        schema["reason_codes"] = list(decision_contract.get("reason_codes") or [])
+        schema["evidence_states"] = list(decision_contract.get("evidence_states") or [])
         schema["input_modes"] = list(decision_contract.get("input_modes") or [])
         schema["status_values"] = list(decision_contract.get("status_values") or STATUS_VALUES)
         schema["evidence_items"] = {
