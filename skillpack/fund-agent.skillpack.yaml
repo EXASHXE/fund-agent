@@ -78,6 +78,11 @@ tools:
   - src.tools.fund.metrics:calculate_fund_metrics
   - src.tools.fund.metrics:calculate_period_return
   - src.tools.fund.metrics:calculate_rolling_drawdown
+  - src.tools.quant.metrics:calculate_sharpe
+  - src.tools.quant.metrics:calculate_sortino
+  - src.tools.quant.metrics:calculate_max_drawdown
+  - src.tools.quant.metrics:calculate_volatility
+  - src.tools.quant.metrics:calculate_hhi
   - src.tools.portfolio.analysis:calculate_position_weights
   - src.tools.portfolio.analysis:calculate_theme_exposure
   - src.tools.portfolio.analysis:calculate_concentration_metrics
@@ -96,6 +101,8 @@ tools:
   - src.tools.portfolio.ledger_snapshot:reconcile_snapshot_with_portfolio
   - src.tools.portfolio.ledger_snapshot:calculate_realized_unrealized_pnl
   - src.tools.portfolio.ledger_snapshot:apply_settlement_rules
+  - src.tools.ledger.settlement:simulate_position_ledger
+  - src.tools.ledger.dca:simulate_dca_plan
   - src.tools.research.query_plan:build_research_query_plan
   - src.tools.adapters.mcp:MCPHostAdapter
 

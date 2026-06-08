@@ -43,6 +43,7 @@ class BaseSkillRuntime:
         code: str,
         message: str,
         details: dict[str, Any] | None = None,
+        recoverable: bool = True,
     ) -> SkillOutput:
         return SkillOutput(
             step_id=skill_input.step_id,
@@ -53,6 +54,7 @@ class BaseSkillRuntime:
                     code=code,
                     message=message,
                     details=details or {"skill_name": skill_input.skill_name},
+                    recoverable=recoverable,
                 ).to_dict()
             ],
             status="FAILED",

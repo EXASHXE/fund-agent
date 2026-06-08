@@ -144,6 +144,30 @@ tools:
       - FundRiskReturnMetrics
     notes: Computes total return, volatility, drawdown, Sharpe, and Sortino from local NAV history.
 
+  - id: calculate_period_return
+    import_path: src.tools.fund.metrics:calculate_period_return
+    category: fund
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: list[src.schemas.fund:NavPoint]
+    output_schema: list[float]
+    produces:
+      - PeriodReturns
+    notes: Calculates individual period returns from normalized NAV history.
+
+  - id: calculate_rolling_drawdown
+    import_path: src.tools.fund.metrics:calculate_rolling_drawdown
+    category: fund
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: list[src.schemas.fund:NavPoint]
+    output_schema: list[float]
+    produces:
+      - RollingDrawdown
+    notes: Calculates rolling drawdown series from normalized NAV history.
+
   - id: calculate_position_weights
     import_path: src.tools.portfolio.analysis:calculate_position_weights
     category: portfolio
@@ -203,6 +227,174 @@ tools:
     produces:
       - SuggestedRebalancePlan
     notes: Simulates a plain suggested trade plan without producing Decision objects.
+
+  - id: calculate_position_pnl
+    import_path: src.tools.portfolio.analysis:calculate_position_pnl
+    category: portfolio
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: dict
+    output_schema: dict
+    produces:
+      - PositionPnL
+    notes: Calculates position-level profit and loss from host-provided data.
+
+  - id: calculate_portfolio_pnl
+    import_path: src.tools.portfolio.analysis:calculate_portfolio_pnl
+    category: portfolio
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: dict
+    output_schema: dict
+    produces:
+      - PortfolioPnL
+    notes: Calculates aggregate portfolio profit and loss.
+
+  - id: calculate_trade_budget
+    import_path: src.tools.portfolio.analysis:calculate_trade_budget
+    category: portfolio
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: dict
+    output_schema: dict
+    produces:
+      - TradeBudget
+    notes: Calculates available trade budget from portfolio constraints.
+
+  - id: review_dca_plan
+    import_path: src.tools.portfolio.analysis:review_dca_plan
+    category: portfolio
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: dict
+    output_schema: dict
+    produces:
+      - DCAPlanReview
+    notes: Reviews a dollar-cost averaging plan against portfolio constraints.
+
+  - id: rank_trade_plan
+    import_path: src.tools.portfolio.analysis:rank_trade_plan
+    category: portfolio
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: dict
+    output_schema: dict
+    produces:
+      - TradePlanRanking
+    notes: Ranks trade plan options by risk-return criteria.
+
+  - id: normalize_fund_transactions
+    import_path: src.tools.portfolio.transaction:normalize_fund_transactions
+    category: transaction
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: list[dict]
+    output_schema: list[src.schemas.transaction:FundTransaction]
+    produces:
+      - NormalizedTransactions
+    notes: Normalizes host-provided transaction records without fetching data.
+
+  - id: calculate_position_cost_basis
+    import_path: src.tools.portfolio.transaction:calculate_position_cost_basis
+    category: transaction
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: list[dict]
+    output_schema: list[src.schemas.transaction:PositionCostBasis]
+    produces:
+      - PositionCostBasis
+    notes: Calculates cost basis for each position from normalized transactions.
+
+  - id: summarize_transaction_ledger
+    import_path: src.tools.portfolio.transaction:summarize_transaction_ledger
+    category: transaction
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: list[dict]
+    output_schema: src.schemas.transaction:TransactionLedgerSummary
+    produces:
+      - TransactionLedgerSummary
+    notes: Summarizes a transaction ledger with totals and breakdowns.
+
+  - id: normalize_transaction_events
+    import_path: src.tools.portfolio.ledger_snapshot:normalize_transaction_events
+    category: ledger_snapshot
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: list[dict]
+    output_schema: list[dict]
+    produces:
+      - NormalizedTransactionEvents
+    notes: Normalizes transaction events for ledger snapshot construction.
+
+  - id: build_position_snapshot_from_transactions
+    import_path: src.tools.portfolio.ledger_snapshot:build_position_snapshot_from_transactions
+    category: ledger_snapshot
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: dict
+    output_schema: dict
+    produces:
+      - PositionSnapshot
+    notes: Builds a position snapshot from normalized transaction events.
+
+  - id: reconcile_snapshot_with_portfolio
+    import_path: src.tools.portfolio.ledger_snapshot:reconcile_snapshot_with_portfolio
+    category: ledger_snapshot
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: dict
+    output_schema: dict
+    produces:
+      - ReconciliationReport
+    notes: Reconciles a derived snapshot with host-provided portfolio data.
+
+  - id: calculate_realized_unrealized_pnl
+    import_path: src.tools.portfolio.ledger_snapshot:calculate_realized_unrealized_pnl
+    category: ledger_snapshot
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: dict
+    output_schema: dict
+    produces:
+      - RealizedUnrealizedPnL
+    notes: Calculates realized and unrealized PnL from ledger snapshot data.
+
+  - id: apply_settlement_rules
+    import_path: src.tools.portfolio.ledger_snapshot:apply_settlement_rules
+    category: ledger_snapshot
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: dict
+    output_schema: dict
+    produces:
+      - SettlementResult
+    notes: Applies settlement rules to transaction events in the ledger.
+
+  - id: build_research_query_plan
+    import_path: src.tools.research.query_plan:build_research_query_plan
+    category: research
+    pure_function: true
+    network: false
+    llm: false
+    input_schema: dict
+    output_schema: dict
+    produces:
+      - ResearchQueryPlan
+    notes: Builds a structured research query plan from analysis context.
 
   - id: simulate_position_ledger
     import_path: src.tools.ledger.settlement:simulate_position_ledger

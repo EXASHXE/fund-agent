@@ -42,6 +42,70 @@ class SkillError:
         }
 
 
+def normalize_skill_error(
+    error: SkillError | dict[str, Any] | str,
+    *,
+    default_code: str = "RUNTIME_ERROR",
+) -> dict[str, Any]:
+    if isinstance(error, SkillError):
+        return error.to_dict()
+    if isinstance(error, dict):
+        code = error.get("code", default_code)
+        message = error.get("message")
+        if message is None:
+            try:
+                message = str(error)
+            except Exception:
+                message = "unknown error"
+        details = error.get("details")
+        if not isinstance(details, dict):
+            details = {"raw_details": details} if details is not None else {}
+        recoverable = error.get("recoverable")
+        if not isinstance(recoverable, bool):
+            recoverable = True
+        return {
+            "code": code,
+            "message": message,
+            "details": details,
+            "recoverable": recoverable,
+        }
+    if isinstance(error, str):
+        return {
+            "code": default_code,
+            "message": error,
+            "details": {},
+            "recoverable": True,
+        }
+    return {
+        "code": default_code,
+        "message": str(error),
+        "details": {"raw_type": type(error).__name__},
+        "recoverable": True,
+    }
+
+
+def normalize_skill_errors(
+    errors: list[SkillError | dict[str, Any] | str] | None,
+) -> list[dict[str, Any]]:
+    if not errors:
+        return []
+    return [normalize_skill_error(e) for e in errors]
+
+
+def make_skill_error_dict(
+    code: str,
+    message: str,
+    details: dict[str, Any] | None = None,
+    recoverable: bool = True,
+) -> dict[str, Any]:
+    return {
+        "code": code,
+        "message": message,
+        "details": details or {},
+        "recoverable": recoverable,
+    }
+
+
 @dataclass
 class SkillInput:
     """Structured input passed from an external host to a skill."""
@@ -87,10 +151,7 @@ class SkillOutput:
             ],
             "artifacts": self.artifacts,
             "warnings": self.warnings,
-            "errors": [
-                error.to_dict() if hasattr(error, "to_dict") else error
-                for error in self.errors
-            ],
+            "errors": [normalize_skill_error(error) for error in self.errors],
             "used_mcp_capabilities": self.used_mcp_capabilities,
             "status": self.status,
         }

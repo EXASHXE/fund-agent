@@ -775,7 +775,7 @@ def _base_output_schema(spec: SkillSpec) -> dict[str, Any]:
             "evidence_items": "list of evidence item dicts",
             "artifacts": "JSON object of skill-specific outputs",
             "warnings": "list[string]",
-            "errors": "list of SkillError-shaped dicts",
+            "errors": "list of SkillError-shaped dicts (code, message, details, recoverable)",
             "used_mcp_capabilities": "list[string]",
             "status": "OK | PARTIAL | FAILED",
         },

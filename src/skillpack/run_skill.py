@@ -37,7 +37,7 @@ from src.skillpack.input_contracts import (
     validate_skill_input,
 )
 from src.skillpack.loader import load_skillpack_manifest, resolve_runtime
-from src.schemas.skill import SkillInput, SkillOutput
+from src.schemas.skill import SkillInput, SkillOutput, normalize_skill_error
 from src.tools.adapters.mcp import (
     InMemoryMCPHostAdapter,
     MCPCapability,
@@ -285,10 +285,7 @@ def _envelope_from_output(
             for item in output.evidence_items
         ],
         "warnings": list(output.warnings or []),
-        "errors": [
-            err.to_dict() if hasattr(err, "to_dict") else err
-            for err in output.errors
-        ],
+        "errors": [normalize_skill_error(err) for err in output.errors],
         "used_mcp_capabilities": list(output.used_mcp_capabilities or []),
         "metadata": dict(metadata or {}),
     }

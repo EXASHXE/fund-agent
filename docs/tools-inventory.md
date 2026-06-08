@@ -10,6 +10,21 @@ Provider SDKs and network calls belong to the **external host / MCP provider**.
 `fund-agent` does not fetch provider data itself. The only boundary for
 host-provided data is `src/tools/adapters/mcp.py:MCPHostAdapter`.
 
+## Registry Consistency Policy
+
+- `skillpack/tools.yaml` is the canonical tool registry.
+- `skillpack/fund-agent.skillpack.yaml` tools section lists host-callable import paths.
+- Every public registered tool must appear in **both** tools.yaml and the manifest.
+- Internal deterministic helpers may live under `src/tools/` but must not appear in the manifest.
+- Registry consistency is enforced by `tests/skillpack/test_tools_registry_consistency.py`.
+- Provider SDKs and network calls belong to the external host / MCP provider boundary.
+
+## Current Drift Status: no unclassified drift.
+
+All tools declared in the manifest have corresponding tools.yaml entries.
+All public tools.yaml entries (except `MCPHostAdapter` which is an adapter contract)
+appear in the manifest.
+
 ## Directory Classification
 
 ### `src/tools/adapters/` — MCP adapter boundary
@@ -32,32 +47,20 @@ host-provided data is `src/tools/adapters/mcp.py:MCPHostAdapter`.
 
 | File | Classification | Registered in tools.yaml | Notes |
 |---|---|---|---|
-| `metrics.py` | public registered tool | Yes (`normalize_nav_history`, `calculate_returns_from_nav`, `calculate_fund_metrics`) | Pure fund NAV/metrics computation |
+| `metrics.py` | public registered tool | Yes (`normalize_nav_history`, `calculate_returns_from_nav`, `calculate_fund_metrics`, `calculate_period_return`, `calculate_rolling_drawdown`) | Pure fund NAV/metrics computation |
 | `__init__.py` | internal | No | Package init |
-
-Also referenced in manifest but not in tools.yaml:
-- `calculate_period_return` — listed in manifest tools, implemented in `metrics.py`
-- `calculate_rolling_drawdown` — listed in manifest tools, implemented in `metrics.py`
-
-Classification: **public registered tool** (manifest-declared, needs tools.yaml entry).
 
 ### `src/tools/portfolio/` — Portfolio analysis tools
 
 | File | Classification | Registered in tools.yaml | Notes |
 |---|---|---|---|
-| `analysis.py` | public registered tool | Yes (partial) | Some functions in tools.yaml, others in manifest only |
+| `analysis.py` | public registered tool | Yes (`calculate_position_weights`, `calculate_theme_exposure`, `calculate_concentration_metrics`, `detect_portfolio_risk_flags`, `simulate_rebalance`, `calculate_position_pnl`, `calculate_portfolio_pnl`, `calculate_trade_budget`, `review_dca_plan`, `rank_trade_plan`) | Portfolio analysis and simulation |
+| `transaction.py` | public registered tool | Yes (`normalize_fund_transactions`, `calculate_position_cost_basis`, `summarize_transaction_ledger`) | Transaction normalization and cost basis |
+| `ledger_snapshot.py` | public registered tool | Yes (`normalize_transaction_events`, `build_position_snapshot_from_transactions`, `reconcile_snapshot_with_portfolio`, `calculate_realized_unrealized_pnl`, `apply_settlement_rules`) | Ledger snapshot construction and reconciliation |
 | `builder.py` | internal deterministic helper | No | Portfolio construction helper |
 | `report_composer.py` | internal deterministic helper | No | Deterministic report section assembly |
 | `report_quality.py` | internal deterministic helper | No | Report quality gate |
-| `transaction.py` | public registered tool | In manifest only | Transaction normalization/cost basis/summary |
-| `ledger_snapshot.py` | public registered tool | In manifest only | Ledger snapshot construction and reconciliation |
 | `__init__.py` | internal | No | Package init |
-
-Functions in `analysis.py` declared in manifest but not tools.yaml:
-- `calculate_position_pnl`, `calculate_portfolio_pnl`, `calculate_trade_budget`
-- `review_dca_plan`, `rank_trade_plan`
-
-Classification: **public registered tool** (manifest-declared, needs tools.yaml entry).
 
 ### `src/tools/quant/` — Quantitative metric tools
 
@@ -65,9 +68,6 @@ Classification: **public registered tool** (manifest-declared, needs tools.yaml 
 |---|---|---|---|
 | `metrics.py` | public registered tool | Yes (`calculate_sharpe`, `calculate_sortino`, `calculate_max_drawdown`, `calculate_volatility`, `calculate_hhi`) | Pure quantitative computations |
 | `__init__.py` | internal | No | Package init |
-
-Quant tools are in tools.yaml but NOT in the manifest tools list.
-Classification: **public registered tool** (tools.yaml-declared).
 
 ### `src/tools/ledger/` — Ledger simulation tools
 
@@ -77,14 +77,11 @@ Classification: **public registered tool** (tools.yaml-declared).
 | `dca.py` | public registered tool | Yes (`simulate_dca_plan`) | Pure DCA simulation |
 | `__init__.py` | internal | No | Package init |
 
-Ledger tools are in tools.yaml but NOT in the manifest tools list.
-Classification: **public registered tool** (tools.yaml-declared).
-
 ### `src/tools/research/` — Research planning tools
 
 | File | Classification | Registered in tools.yaml | Notes |
 |---|---|---|---|
-| `query_plan.py` | public registered tool | In manifest only | Research query plan builder |
+| `query_plan.py` | public registered tool | Yes (`build_research_query_plan`) | Research query plan builder |
 | `__init__.py` | internal | No | Package init |
 
 ### `src/tools/calendar/` — Calendar/date helpers
@@ -135,56 +132,12 @@ Classification: **public registered tool** (tools.yaml-declared).
 |---|---|---|---|
 | `registry.py` | internal runtime infrastructure | No | Generic ToolRegistry class; not auto-populated from tools.yaml |
 
-## Drift Summary
-
-### Manifest tools not in tools.yaml (16 entries)
-
-These are declared in `skillpack/fund-agent.skillpack.yaml` tools section but
-have no corresponding entry in `skillpack/tools.yaml`:
-
-1. `src.tools.fund.metrics:calculate_period_return`
-2. `src.tools.fund.metrics:calculate_rolling_drawdown`
-3. `src.tools.portfolio.analysis:calculate_position_pnl`
-4. `src.tools.portfolio.analysis:calculate_portfolio_pnl`
-5. `src.tools.portfolio.analysis:calculate_trade_budget`
-6. `src.tools.portfolio.analysis:review_dca_plan`
-7. `src.tools.portfolio.analysis:rank_trade_plan`
-8. `src.tools.portfolio.transaction:normalize_fund_transactions`
-9. `src.tools.portfolio.transaction:calculate_position_cost_basis`
-10. `src.tools.portfolio.transaction:summarize_transaction_ledger`
-11. `src.tools.portfolio.ledger_snapshot:normalize_transaction_events`
-12. `src.tools.portfolio.ledger_snapshot:build_position_snapshot_from_transactions`
-13. `src.tools.portfolio.ledger_snapshot:reconcile_snapshot_with_portfolio`
-14. `src.tools.portfolio.ledger_snapshot:calculate_realized_unrealized_pnl`
-15. `src.tools.portfolio.ledger_snapshot:apply_settlement_rules`
-16. `src.tools.research.query_plan:build_research_query_plan`
-
-These are **public registered tools** that need tools.yaml entries for
-consistency.
-
-### tools.yaml entries not in manifest (7 entries)
-
-These are declared in `skillpack/tools.yaml` but not in the manifest tools list:
-
-1. `calculate_sharpe`
-2. `calculate_sortino`
-3. `calculate_max_drawdown`
-4. `calculate_volatility`
-5. `calculate_hhi`
-6. `simulate_position_ledger`
-7. `simulate_dca_plan`
-
-These are **public registered tools** that may need manifest inclusion if
-intended as host-callable skillpack tools, or classification as
-internal/experimental if not.
-
 ## Classification Legend
 
 | Classification | Meaning |
 |---|---|
-| public registered tool | Declared in tools.yaml and/or manifest; host-callable |
+| public registered tool | Declared in tools.yaml and manifest; host-callable |
 | internal deterministic helper | Used by runtime skills; not declared in public registry |
 | MCP adapter boundary | Host capability boundary; no provider SDK imports |
 | evidence construction helper | Builds HardEvidence/SoftEvidence from local or MCP data |
-| test-only helper | Used only in test code |
-| archive/delete candidate | Appears stale or unused (requires proof before deletion) |
+| internal runtime infrastructure | Runtime support code; not a host-callable tool |

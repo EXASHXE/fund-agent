@@ -112,11 +112,12 @@ adapt it through `src.tools.adapters.mcp.MCPHostAdapter`.
 
 - `skillpack/tools.yaml` is the canonical tool registry.
 - `skillpack/fund-agent.skillpack.yaml` tools section lists host-callable import paths.
-- Drift between tools.yaml and the manifest is documented in `docs/tools-inventory.md`.
-- Registry consistency tests live in `tests/skillpack/test_tools_registry_consistency.py`.
-- Public registered tools are declared in tools.yaml and/or manifest.
-- Internal deterministic helpers are used by runtime skills but not declared publicly.
+- Every public host-callable tool must appear in **both** `tools.yaml` and the manifest.
+- Internal deterministic helpers may live under `src/tools/` but must be documented in `docs/tools-inventory.md`.
+- Registry consistency is enforced by `tests/skillpack/test_tools_registry_consistency.py`.
 - Provider SDKs and network calls belong to the external host / MCP provider boundary.
+- `SkillOutput.errors` are canonical `SkillError`-shaped dictionaries with `code`, `message`, `details`, and `recoverable` fields.
+- Hosts should branch on `error.code` and `status` rather than string-matching messages.
 
 ## Shared Runtime Base
 

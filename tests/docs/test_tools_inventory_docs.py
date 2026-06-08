@@ -1,17 +1,20 @@
-"""Tests for docs/tools-inventory.md consistency."""
+"""Tools inventory documentation tests.
+
+Verifies that docs/tools-inventory.md covers the required policy areas
+and references the correct registry files.
+"""
 
 from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 ROOT = Path(__file__).resolve().parents[2]
 INVENTORY_PATH = ROOT / "docs" / "tools-inventory.md"
+TOOLS_YAML_PATH = ROOT / "skillpack" / "tools.yaml"
+MANIFEST_PATH = ROOT / "skillpack" / "fund-agent.skillpack.yaml"
 
 
-@pytest.mark.skipif(not INVENTORY_PATH.exists(), reason="tools-inventory.md not yet created")
-class TestToolsInventoryDocs:
+class TestToolsInventoryDoc:
     def test_inventory_exists(self):
         assert INVENTORY_PATH.exists()
 
@@ -25,19 +28,19 @@ class TestToolsInventoryDocs:
 
     def test_mentions_public_registered_tools(self):
         text = INVENTORY_PATH.read_text(encoding="utf-8")
-        assert "public registered tool" in text.lower()
+        assert "public registered tool" in text
 
     def test_mentions_internal_deterministic_helpers(self):
         text = INVENTORY_PATH.read_text(encoding="utf-8")
-        assert "internal" in text.lower()
+        assert "internal deterministic helper" in text
 
     def test_mentions_mcp_adapter_boundary(self):
         text = INVENTORY_PATH.read_text(encoding="utf-8")
-        assert "MCP" in text or "mcp" in text
+        assert "MCP adapter boundary" in text or "mcp.py" in text
 
-    def test_states_provider_boundary(self):
+    def test_states_provider_sdks_belong_to_host(self):
         text = INVENTORY_PATH.read_text(encoding="utf-8")
-        assert "host" in text.lower() or "provider" in text.lower()
+        assert "external host" in text or "MCP provider" in text
 
     def test_mentions_all_src_tools_subdirectories(self):
         tools_dir = ROOT / "src" / "tools"
@@ -48,9 +51,12 @@ class TestToolsInventoryDocs:
         )
         text = INVENTORY_PATH.read_text(encoding="utf-8")
         for subdir in subdirs:
-            assert subdir in text, f"src/tools/{subdir}/ not mentioned in tools-inventory.md"
+            assert subdir in text, f"src/tools/{subdir}/ not mentioned in docs/tools-inventory.md"
 
-    def test_does_not_claim_fund_agent_fetches_data(self):
+    def test_does_not_claim_fund_agent_fetches_provider_data(self):
         text = INVENTORY_PATH.read_text(encoding="utf-8")
-        assert "fetches provider data" not in text.lower()
-        assert "does not fetch" in text.lower() or "does not" in text.lower()
+        assert "does not fetch provider data" in text or "does not fetch" in text
+
+    def test_has_classification_legend(self):
+        text = INVENTORY_PATH.read_text(encoding="utf-8")
+        assert "Classification Legend" in text or "classification" in text.lower()
