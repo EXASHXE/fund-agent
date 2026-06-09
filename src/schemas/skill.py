@@ -114,6 +114,9 @@ def make_skill_error_dict(
     }
 
 
+SkillErrorInput = SkillError | dict[str, Any] | str | Exception
+
+
 @dataclass
 class SkillInput:
     """Structured input passed from an external host to a skill."""
@@ -140,7 +143,7 @@ class SkillOutput:
     evidence_items: list[EvidenceItem] = field(default_factory=list)
     artifacts: dict[str, Any] = field(default_factory=dict)
     warnings: list[str] = field(default_factory=list)
-    errors: list[SkillError | dict[str, Any]] = field(default_factory=list)
+    errors: list[SkillErrorInput] = field(default_factory=list)
     used_mcp_capabilities: list[str] = field(default_factory=list)
     status: SkillStatus = "OK"
 
