@@ -6,6 +6,41 @@ local subprocess. The host keeps orchestration and data fetching outside
 Host owns data fetching, provider SDKs, credentials, MCP providers, retries,
 memory, planning, and final UX.
 
+## Host Acceptance Doctor
+
+Before integrating, verify your checkout/editable install is usable:
+
+```bash
+fund-agent-doctor --pretty
+# Or: python scripts/fund_agent_doctor.py --pretty
+# Or: python -m src.skillpack.doctor --pretty
+```
+
+The doctor is deterministic, local-only, and requires no network calls,
+provider SDKs, or API keys. It checks manifest loading, runtime skill
+resolution, skill docs, contract YAMLs, example fixtures, and optionally
+subprocess-smokes the runtime bridge. Exit code 0 means `ok=true`,
+nonzero means `ok=false`. Use `--no-smoke` to skip subprocess smoke tests.
+
+## Minimal Subprocess Host Reference Runner
+
+`examples/host_subprocess_runner.py` is a minimal reference that shows
+how an external host can call the runtime bridge as a subprocess:
+
+```bash
+python examples/host_subprocess_runner.py
+```
+
+The host runner:
+- Uses subprocess only (no direct Python runtime imports)
+- Uses fake/sample fixtures
+- Does not import `src.skills_runtime` or runtime skill classes
+- Does not import provider SDKs or network clients
+- Does not claim broker/order execution
+
+Host owns real data fetching and provider SDKs. The OpenCode plugin
+remains metadata + doc-reader only.
+
 ## Prerequisites
 
 - Source checkout of this repository.

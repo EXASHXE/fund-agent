@@ -80,6 +80,10 @@ pip install -r requirements-optional.txt
 ## Verify
 
 ```bash
+# Run the host acceptance doctor (deterministic, local-only, no API keys)
+fund-agent-doctor --pretty
+# Or: python scripts/fund_agent_doctor.py --pretty
+
 # Run the canonical plugin gate
 bash scripts/check_plugin_gate.sh
 
@@ -91,10 +95,16 @@ python examples/minimal_host_portfolio_review.py
 
 # Run the trade-plan-to-decisions demo
 python examples/minimal_host_trade_plan_to_decisions.py
+
+# Run the minimal subprocess host reference runner
+python examples/host_subprocess_runner.py
 ```
 
 Each demo prints a JSON document to stdout. If they all print valid
-JSON and exit 0, the install is good.
+JSON and exit 0, the install is good. The doctor command additionally
+verifies manifest, contracts, runtime resolution, and optionally
+subprocess-smokes the runtime bridge. It requires no network calls,
+provider SDKs, or API keys.
 
 ## What the host loads
 

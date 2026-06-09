@@ -83,6 +83,41 @@ The module can also be invoked directly:
 python -m src.skillpack.run_skill --list-skills --pretty
 ```
 
+## Host acceptance doctor
+
+Before integrating, verify your checkout/editable install is usable:
+
+```bash
+# Via console script (after pip install -e .)
+fund-agent-doctor --pretty
+
+# Or via the source-checkout wrapper
+python scripts/fund_agent_doctor.py --pretty
+
+# Or via module invocation
+python -m src.skillpack.doctor --pretty
+```
+
+The doctor is deterministic, local-only, and requires no network calls,
+provider SDKs, or API keys. It checks:
+
+- Manifest resolves and loads
+- Manifest lists exactly the five expected runtime skills
+- Each manifest runtime path resolves
+- Skill docs exist for every manifest skill
+- Required skillpack YAMLs exist (capabilities, tools, input/artifact/decision/thesis contracts)
+- Required contract docs exist
+- Example fixture directories exist
+- Runtime bridge metadata commands work (when `--no-smoke` is not passed)
+- Runtime bridge fixture runs succeed (when `--no-smoke` is not passed)
+
+Doctor output is a JSON envelope with `ok`, `status` (`OK`/`PARTIAL`/`FAILED`),
+`checks`, `warnings`, `errors`, and `metadata`. Exit code 0 means `ok=true`,
+nonzero means `ok=false`. Use `--no-smoke` to skip subprocess smoke tests.
+
+For the minimal subprocess host reference runner, see
+[`examples/host_subprocess_runner.py`](../../examples/host_subprocess_runner.py).
+
 ## What it is and is not
 
 The runtime bridge:

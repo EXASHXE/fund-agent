@@ -18,6 +18,41 @@ can call through a local runtime bridge CLI or direct Python import.
   and suggested plans. Formal `Decision` / `ExecutionLedger` requires
   `decision_support`.
 
+## Verify readiness (host acceptance doctor)
+
+Before integrating, run the host acceptance doctor to verify your
+checkout/editable install is usable:
+
+```bash
+# Via console script (after pip install -e .)
+fund-agent-doctor --pretty
+
+# Or via the source-checkout wrapper
+python scripts/fund_agent_doctor.py --pretty
+
+# Or via module invocation
+python -m src.skillpack.doctor --pretty
+```
+
+The doctor is deterministic, local-only, and requires no network calls,
+provider SDKs, or API keys. It checks manifest loading, runtime skill
+resolution, skill docs, contract YAMLs, example fixtures, and optionally
+subprocess-smokes the runtime bridge. See
+[`docs/install/runtime-bridge-cli.md`](install/runtime-bridge-cli.md) for
+the full doctor output contract.
+
+## Minimal subprocess host reference
+
+`examples/host_subprocess_runner.py` is a minimal reference that shows
+how an external host can call the runtime bridge as a subprocess. The
+host runner uses subprocess only, does not import runtime skill classes,
+and uses fake/sample fixtures. Host owns real data fetching and provider
+SDKs. No broker/order execution.
+
+```bash
+python examples/host_subprocess_runner.py
+```
+
 ## Fastest local run
 
 ```bash

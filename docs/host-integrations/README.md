@@ -12,6 +12,26 @@ MCP providers, memory, retries, and final UX.
 `fund-agent` is not an autonomous planner, daemon, server, provider SDK bundle,
 data fetcher, or replacement for host orchestration.
 
+## Host Acceptance
+
+Before integrating, verify your checkout/editable install is usable:
+
+```bash
+fund-agent-doctor --pretty
+# Or: python scripts/fund_agent_doctor.py --pretty
+```
+
+The doctor is deterministic, local-only, and requires no network calls,
+provider SDKs, or API keys. See
+[`docs/install/runtime-bridge-cli.md`](../install/runtime-bridge-cli.md)
+for the full doctor output contract.
+
+For the minimal subprocess host reference runner, see
+[`examples/host_subprocess_runner.py`](../../examples/host_subprocess_runner.py).
+The host runner uses subprocess only, does not import runtime skill classes,
+and uses fake/sample fixtures. Host owns real data fetching and provider SDKs.
+No broker/order execution.
+
 ## Canonical Flow
 
 1. Discover skills from [`skillpack/fund-agent.skillpack.yaml`](../../skillpack/fund-agent.skillpack.yaml).
