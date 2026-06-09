@@ -37,8 +37,8 @@ fixtures live under
 [`examples/scenarios/`](../../examples/scenarios/README.md).
 
 The bridge requires **no** npm dependency, **no** OpenCode install,
-and **no** provider SDK. A working `python` (3.11+) interpreter is
-the only prerequisite.
+and **no** provider SDK. A working Python 3.11+ interpreter is the
+only prerequisite.
 
 ### Off-repo current working directory
 

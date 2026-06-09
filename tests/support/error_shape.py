@@ -41,6 +41,22 @@ def assert_canonical_error(error: object) -> None:
     )
 
 
+def assert_bridge_error_shape(error: dict[str, Any]) -> None:
+    """Assert that a runtime bridge top-level error is canonical."""
+    assert_canonical_error(error)
+
+
+def assert_skill_error_shape(error: dict[str, Any]) -> None:
+    """Assert that a SkillOutput error is canonical."""
+    assert_canonical_error(error)
+
+
+def assert_skill_errors_canonical(errors: list[dict[str, Any]]) -> None:
+    """Assert that all SkillOutput errors are canonical."""
+    for error in errors:
+        assert_skill_error_shape(error)
+
+
 def assert_envelope_errors_are_canonical(envelope: dict[str, Any]) -> None:
     """Assert that all errors in an envelope's errors[] list are canonical shape."""
     errors = envelope.get("errors")

@@ -131,6 +131,7 @@ canonical invocation.
 - [Thesis generation contract](contracts/thesis-generation-contract.v1.md) — `ThesisDraft` artifact semantics
 - [Skill output contract](contracts/skill-output-contract.v1.md) — `SkillOutput` shape, error objects, status values
 - [Report output contract](contracts/report-output-contract.v1.md) — deterministic report section shape
+- [SkillOutput contract](contracts/skill-output-contract.v1.md) — canonical runtime output and error shape
 - [Tools inventory](tools-inventory.md) — public vs internal tool classification
 - [Fake scenario fixtures](../examples/scenarios/README.md) — sample data exercising fund_analysis diagnostics
 - [Decision support fixtures](../examples/decision_support/README.md) — sample data exercising decision_support

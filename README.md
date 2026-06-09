@@ -67,8 +67,8 @@ provider implementations, and how to use the returned evidence.
 - fixed LangGraph-style orchestration
 
 Reference workflow examples may exist under `examples/reference_workflows/`, but
-they are optional examples only. Host integrations do not need to import or call
-`src.core.research_os`.
+they are optional examples only and are not host integration entrypoints.
+Host integrations do not need to import or call historical autonomous runtime modules.
 
 ## Skill Pack Manifest
 
@@ -237,9 +237,6 @@ src/
   schemas/                  # typed contracts
   tools/                    # pure tools and MCP adapter boundary
   graph/                    # KnowledgeGraph implementation
-  infra/                    # config/data/persistence/vectorstore implementation
-  core/                     # optional reference helpers, not host entrypoint
-  workflows/                # optional reference wrappers, not host entrypoint
 legacy/README.md            # pointer to v0.1.0-skillpack-alpha legacy archive
 examples/reference_workflows/
 docs/
@@ -247,10 +244,10 @@ docs/
 
 ## Reference Workflows
 
-`src.core.research_os` and `src.workflows.research_os` are deprecated
-reference-only modules retained for compatibility and examples. They are not
-required by the skill pack manifest, not required by host integration, and not
-the recommended product entrypoint.
+Historical autonomous runtime surfaces were removed from the current source
+tree. Reference workflow examples under `examples/reference_workflows/` are
+optional examples only; the manifest and runtime bridge remain the host-facing
+entrypoints.
 
 ## Archive Note
 
@@ -290,9 +287,11 @@ liquidity facts. Formal actions still require `DecisionSupportSkill`.
 
 `fund-agent` is host-agnostic. The first native install target is
 **OpenCode**; the canonical install for any Python host is the manual
-flow.
+flow. Source-checkout runtime execution requires Python 3.11+.
+The source-checkout runtime bridge path is:
+`python scripts/run_skill.py --list-skills --pretty`.
 
-- OpenCode (project-local plugin, metadata + docs only):
+- OpenCode (project-local plugin, metadata + doc-reader only):
   [`.opencode/INSTALL.md`](.opencode/INSTALL.md) /
   [`docs/install/opencode.md`](docs/install/opencode.md)
 - Manual / Python host: [`docs/install/manual-host.md`](docs/install/manual-host.md)

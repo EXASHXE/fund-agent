@@ -11,6 +11,7 @@ explicit semantics.
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -18,19 +19,39 @@ from io import StringIO
 from pathlib import Path
 from typing import Any
 
-from src.skillpack.run_skill import run_bridge
+from src.skillpack.run_skill import run_bridge as run_bridge_inprocess
+
+ROOT = Path(__file__).resolve().parents[2]
+BRIDGE_SCRIPT = ROOT / "scripts" / "run_skill.py"
 
 
 def project_root() -> Path:
     """Return the repository root directory."""
-    return Path(__file__).resolve().parents[2]
+    return ROOT
+
+
+def bridge_env() -> dict[str, str]:
+    """Return an environment suitable for source-checkout bridge execution."""
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(ROOT)
+    return env
+
+
+def run_bridge(args: list[str], *, timeout: int = 60) -> subprocess.CompletedProcess:
+    """Run the runtime bridge CLI as a text subprocess."""
+    return subprocess.run(
+        [sys.executable, str(BRIDGE_SCRIPT), *args],
+        cwd=str(ROOT),
+        env=bridge_env(),
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+    )
 
 
 def run_bridge_subprocess(args: list[str], *, timeout: int = 60) -> subprocess.CompletedProcess:
     """Run the runtime bridge CLI as a subprocess."""
-    root = project_root()
-    cmd = [sys.executable, str(root / "scripts" / "run_skill.py")] + args
-    return subprocess.run(cmd, capture_output=True, timeout=timeout, cwd=str(root))
+    return run_bridge(args, timeout=timeout)
 
 
 def stdout_text(result: subprocess.CompletedProcess) -> str:
@@ -43,13 +64,42 @@ def parse_stdout_json(result: subprocess.CompletedProcess) -> dict:
     return json.loads(stdout_text(result))
 
 
-def write_temp_json(data: dict) -> Path:
-    """Write data to a temporary JSON file and return the path."""
+def parse_json_stdout(proc: subprocess.CompletedProcess) -> dict[str, Any]:
+    """Parse stdout JSON, preserving stderr in assertion messages."""
+    assert proc.stdout.strip(), (
+        f"stdout must contain JSON, rc={proc.returncode}, stderr={proc.stderr!r}"
+    )
+    return json.loads(proc.stdout)
+
+
+def run_bridge_json(args: list[str], *, timeout: int = 60) -> dict[str, Any]:
+    """Run the runtime bridge CLI and parse stdout JSON."""
+    return parse_json_stdout(run_bridge(args, timeout=timeout))
+
+
+def write_temp_json(
+    tmp_path_or_payload: Path | Any,
+    payload: Any | None = None,
+    name: str = "input.json",
+) -> Path:
+    """Write JSON either under pytest tmp_path or to a named temporary file."""
+    if isinstance(tmp_path_or_payload, Path):
+        path = tmp_path_or_payload / name
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        return path
+
     f = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8")
-    json.dump(data, f)
+    json.dump(tmp_path_or_payload, f)
     f.flush()
     f.close()
     return Path(f.name)
+
+
+def write_temp_text(tmp_path: Path, text: str, name: str = "input.json") -> Path:
+    """Write raw text under pytest tmp_path."""
+    path = tmp_path / name
+    path.write_text(text, encoding="utf-8")
+    return path
 
 
 def run_bridge_inprocess_json(
@@ -73,7 +123,7 @@ def run_bridge_inprocess_json(
     old_stdout = sys.stdout
     sys.stdout = StringIO()
     try:
-        run_bridge(skill_name=skill, input_path=path, input_text=input_text, emit_report=emit_report)
+        run_bridge_inprocess(skill_name=skill, input_path=path, input_text=input_text, emit_report=emit_report)
         output = sys.stdout.getvalue()
     finally:
         sys.stdout = old_stdout

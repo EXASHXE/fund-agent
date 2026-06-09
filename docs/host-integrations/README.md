@@ -8,6 +8,7 @@ personal fund analysis skill pack. It provides deterministic Python runtime
 skills that can be called by direct import or through the runtime bridge CLI.
 External hosts own planning, orchestration, data fetching, provider credentials,
 MCP providers, memory, retries, and final UX.
+Runtime bridge and direct Python execution require Python 3.11+.
 
 `fund-agent` is not an autonomous planner, daemon, server, provider SDK bundle,
 data fetcher, or replacement for host orchestration.

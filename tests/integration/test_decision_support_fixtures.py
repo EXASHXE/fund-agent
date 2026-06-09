@@ -7,24 +7,19 @@ boundaries, not exact investment conclusions.
 from __future__ import annotations
 
 import json
-import os
-import subprocess
-import sys
 from pathlib import Path
 
 import pytest
 
+from tests.support.bridge_runner import parse_json_stdout, run_bridge
 from tests.support.formal_boundary import (
-    ACTIVE_ACTIONS,
-    EMPTY_ANCHOR_REASON_CODES,
-    EMPTY_ANCHOR_STATES,
-    FAKE_ANCHORS,
-    PASSIVE_ACTIONS,
+    assert_active_decisions_have_anchors,
+    assert_no_fake_rationale_anchors,
+    assert_passive_empty_anchor_has_structured_justification,
     extract_formal_decisions,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
-SCRIPT = ROOT / "scripts" / "run_skill.py"
 FIXTURE_DIR = ROOT / "examples" / "decision_support"
 
 FIXTURES = [
@@ -37,32 +32,19 @@ FIXTURES = [
 ]
 
 
-def _run(fixture_name: str) -> subprocess.CompletedProcess:
-    env = os.environ.copy()
-    env["PYTHONPATH"] = str(ROOT)
+def _run(fixture_name: str):
     input_path = FIXTURE_DIR / fixture_name
-    return subprocess.run(
-        [
-            sys.executable, str(SCRIPT),
-            "--skill", "decision_support",
-            "--input", str(input_path),
-            "--pretty",
-        ],
-        cwd=str(ROOT),
-        env=env,
-        capture_output=True,
-        text=True,
-        timeout=60,
-    )
+    return run_bridge([
+        "--skill",
+        "decision_support",
+        "--input",
+        str(input_path),
+        "--pretty",
+    ])
 
 
-def _parse(proc: subprocess.CompletedProcess) -> dict:
-    assert proc.stdout.strip(), f"stdout empty for rc={proc.returncode} stderr={proc.stderr!r}"
-    return json.loads(proc.stdout)
-
-
-def _formal_decisions(envelope: dict) -> list[dict]:
-    return extract_formal_decisions(envelope.get("artifacts") or {})
+def _parse(proc) -> dict:
+    return parse_json_stdout(proc)
 
 
 @pytest.mark.parametrize("fixture_name,expected_status,_", FIXTURES)
@@ -116,29 +98,17 @@ def test_formal_decisions_have_structured_justification(fixture_name, expected_s
     envelope = _parse(proc)
 
     if expected_status == "FAILED":
-        assert _formal_decisions(envelope) == []
+        assert extract_formal_decisions(envelope) == []
         return
 
-    for decision in _formal_decisions(envelope):
+    decisions = extract_formal_decisions(envelope)
+    assert_no_fake_rationale_anchors(decisions)
+    assert_active_decisions_have_anchors(decisions)
+    assert_passive_empty_anchor_has_structured_justification(decisions)
+    for decision in decisions:
         assert "decision_reason_codes" in decision
         assert "evidence_state" in decision
         assert "blocked_by" in decision
-
-        action = decision.get("action")
-        anchors = [
-            str(anchor).strip().lower()
-            for anchor in decision.get("rationale_anchor") or []
-        ]
-        assert not (set(anchors) & FAKE_ANCHORS)
-
-        if action in ACTIVE_ACTIONS:
-            assert anchors
-        if action in PASSIVE_ACTIONS and not anchors:
-            reason_codes = set(decision.get("decision_reason_codes") or [])
-            assert (
-                decision.get("evidence_state") in EMPTY_ANCHOR_STATES
-                or reason_codes & EMPTY_ANCHOR_REASON_CODES
-            )
 
 
 def test_active_buy_with_evidence_produces_decision():

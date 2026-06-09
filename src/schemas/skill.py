@@ -42,8 +42,11 @@ class SkillError:
         }
 
 
+SkillErrorInput = SkillError | dict[str, Any] | str | Exception
+
+
 def normalize_skill_error(
-    error: SkillError | dict[str, Any] | str | Exception,
+    error: SkillErrorInput,
     *,
     default_code: str = "RUNTIME_ERROR",
     recoverable: bool = True,
@@ -93,7 +96,7 @@ def normalize_skill_error(
 
 
 def normalize_skill_errors(
-    errors: list[SkillError | dict[str, Any] | str | Exception] | None,
+    errors: list[SkillErrorInput] | None,
 ) -> list[dict[str, Any]]:
     if not errors:
         return []
@@ -112,9 +115,6 @@ def make_skill_error_dict(
         "details": details or {},
         "recoverable": recoverable,
     }
-
-
-SkillErrorInput = SkillError | dict[str, Any] | str | Exception
 
 
 @dataclass

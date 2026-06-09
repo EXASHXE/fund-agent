@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
 
 from src.schemas.skill import SkillInput
 from src.skills_runtime.decision_support import DecisionSupportSkill
-from tests.support.formal_boundary import ACTIVE_ACTIONS, FAKE_ANCHORS, extract_formal_decisions
+from tests.support.formal_boundary import (
+    assert_active_decisions_have_anchors,
+    assert_no_fake_rationale_anchors,
+    extract_formal_decisions,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -29,10 +32,6 @@ def _run_fixture(name: str):
     return DecisionSupportSkill().run(_input_from_fixture(name))
 
 
-def _formal_decisions(artifacts: dict[str, Any]) -> list[dict[str, Any]]:
-    return extract_formal_decisions(artifacts)
-
-
 def test_single_active_buy_with_evidence_has_anchored_structured_fields() -> None:
     output = _run_fixture("single_active_buy_with_evidence.json")
 
@@ -49,7 +48,7 @@ def test_single_active_buy_without_evidence_remains_contract_violation() -> None
 
     assert output.status == "FAILED"
     assert output.errors[0]["code"] == "CONTRACT_VIOLATION"
-    assert _formal_decisions(output.artifacts) == []
+    assert extract_formal_decisions(output.artifacts) == []
 
 
 def test_single_passive_without_evidence_has_structured_passive_reason() -> None:
@@ -85,7 +84,7 @@ def test_forbidden_action_fixture_emits_no_forbidden_formal_decision() -> None:
     output = _run_fixture("trade_plan_forbidden_action_skipped.json")
 
     assert output.status == "PARTIAL"
-    assert _formal_decisions(output.artifacts) == []
+    assert extract_formal_decisions(output.artifacts) == []
     warnings = output.warnings or output.artifacts.get("warnings") or []
     assert any("Forbidden action SELL" in warning for warning in warnings)
 
@@ -101,8 +100,6 @@ def test_formal_decisions_do_not_contain_fake_rationale_anchors() -> None:
     for name in fixture_names:
         output = _run_fixture(name)
         assert output.status == "OK"
-        for decision in _formal_decisions(output.artifacts):
-            anchors = {str(anchor).strip().lower() for anchor in decision["rationale_anchor"]}
-            assert not (anchors & FAKE_ANCHORS)
-            if decision["action"] in ACTIVE_ACTIONS:
-                assert anchors
+        decisions = extract_formal_decisions(output.artifacts)
+        assert_no_fake_rationale_anchors(decisions)
+        assert_active_decisions_have_anchors(decisions)
