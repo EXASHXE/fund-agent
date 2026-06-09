@@ -70,11 +70,15 @@ canonical invocation.
 - `fund-agent-run-skill ...` (console script, available after `pip install -e .`)
 - `python -m src.skillpack.run_skill ...` (module invocation)
 - Host invokes a local subprocess; host owns data fetching/MCP/provider SDKs
+- Manifest and contract YAMLs resolve through a centralized resource resolver
+  that falls back from cwd to the package/repo root, so the bridge works from
+  a non-repo current working directory
 
 **Mode B — Python editable install:**
 - `pip install -e .`
-- Runtime bridge still reads source checkout skillpack/docs/contracts
-- Wheel-only install is not yet tested; source checkout is required
+- Runtime bridge reads source checkout skillpack/docs/contracts via the
+  centralized resource resolver
+- Install from a wheel is not yet tested; source checkout is required
 
 **Mode C — OpenCode plugin:**
 - Metadata + doc-reader only

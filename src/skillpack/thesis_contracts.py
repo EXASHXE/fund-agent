@@ -17,13 +17,17 @@ from typing import Any
 
 import yaml
 
+from src.skillpack.resources import resolve_resource_path
+
 
 def _resolve_path(path: str | Path) -> Path:
     p = Path(path)
-    if not p.is_absolute():
-        root = Path(__file__).resolve().parents[2]
-        p = root / p
-    return p
+    if p.is_absolute() and p.exists():
+        return p
+    resolved = resolve_resource_path(p)
+    if resolved.exists():
+        return resolved
+    return resolved
 
 
 def load_thesis_contracts(path: str | Path = "skillpack/thesis-contracts.yaml") -> dict[str, Any]:

@@ -227,7 +227,21 @@ want a process boundary between their code and the runtime skills
 without writing Python import boilerplate. The bridge is
 host-agnostic, JSON-in / JSON-out, and does not fetch data, import
 provider SDKs, or run an agent loop. It is **independent** of the
-OpenCode plugin (the plugin still does not call Python).
+OpenCode plugin (the plugin is metadata + doc-reader only and does
+not call Python).
+
+The bridge can be invoked in three ways:
+
+- `python scripts/run_skill.py ...` (canonical source-checkout invocation)
+- `fund-agent-run-skill ...` (console script after `pip install -e .`)
+- `python -m src.skillpack.run_skill ...` (module invocation)
+
+The bridge resolves manifest and contract YAMLs through a
+centralized resource resolver (`src/skillpack/resources`) that
+falls back from the current working directory to the package/repo
+root. This means the bridge works from a non-repo current working
+directory as long as the source tree is importable. Input fixture
+paths should be absolute when running from outside the repo.
 
 For host-specific runtime bridge recipes, see
 [`docs/host-integrations/README.md`](../host-integrations/README.md).

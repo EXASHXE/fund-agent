@@ -9,9 +9,10 @@ from typing import Any
 import yaml
 
 from src.skillpack.manifest import SkillPackManifest
+from src.skillpack.resources import resolve_manifest_path
 from src.skillpack.validator import validate_manifest
 
-DEFAULT_MANIFEST_PATH = Path("skillpack/fund-agent.skillpack.yaml")
+DEFAULT_MANIFEST_PATH = "skillpack/fund-agent.skillpack.yaml"
 
 
 def load_skillpack_manifest(
@@ -19,7 +20,7 @@ def load_skillpack_manifest(
     validate: bool = True,
 ) -> SkillPackManifest:
     """Load a skill pack manifest from YAML."""
-    manifest_path = Path(path)
+    manifest_path = resolve_manifest_path(path)
     data = yaml.safe_load(manifest_path.read_text(encoding="utf-8")) or {}
     manifest = SkillPackManifest.from_dict(data)
     if validate:

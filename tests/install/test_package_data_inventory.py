@@ -149,6 +149,9 @@ class TestRuntimeBridgeSourceCheckout:
     def test_run_skill_module_exists(self):
         assert (ROOT / "src" / "skillpack" / "run_skill.py").exists()
 
+    def test_resources_module_exists(self):
+        assert (ROOT / "src" / "skillpack" / "resources.py").exists()
+
     def test_manifest_path_constant_matches_repo(self):
         from src.skillpack.run_skill import DEFAULT_MANIFEST_PATH
         expected = "skillpack/fund-agent.skillpack.yaml"
@@ -158,3 +161,20 @@ class TestRuntimeBridgeSourceCheckout:
         assert (ROOT / expected).exists(), (
             f"DEFAULT_MANIFEST_PATH points to {expected} but file does not exist"
         )
+
+    def test_resource_resolver_finds_manifest(self):
+        from src.skillpack.resources import resolve_manifest_path
+        path = resolve_manifest_path()
+        assert path.exists(), f"resolve_manifest_path() returned non-existent path: {path}"
+
+    def test_resource_resolver_finds_skillpack_yamls(self):
+        from src.skillpack.resources import resolve_skillpack_file
+        for filename in [
+            "capabilities.yaml",
+            "artifact-contracts.yaml",
+            "input-contracts.yaml",
+            "decision-contracts.yaml",
+            "thesis-contracts.yaml",
+        ]:
+            path = resolve_skillpack_file(filename)
+            assert path.exists(), f"resolve_skillpack_file({filename!r}) returned non-existent path: {path}"

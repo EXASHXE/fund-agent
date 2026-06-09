@@ -40,6 +40,27 @@ The bridge requires **no** npm dependency, **no** OpenCode install,
 and **no** provider SDK. A working `python` (3.11+) interpreter is
 the only prerequisite.
 
+### Off-repo current working directory
+
+The runtime bridge resolves manifest and contract YAMLs through a
+centralized resource resolver (`src/skillpack/resources`). When the
+current working directory is outside the repo root, the resolver
+falls back to the package/repo root derived from the installed
+module location. This means:
+
+- `python scripts/run_skill.py --list-skills` works from any
+  directory (the script adds the repo root to `sys.path`).
+- `python -m src.skillpack.run_skill --list-skills` works from any
+  directory when `PYTHONPATH` includes the repo root.
+- `fund-agent-run-skill --list-skills` works from any directory
+  after `pip install -e .`.
+- Input fixture paths should be **absolute** when running from
+  outside the repo. Relative `examples/...` paths resolve from the
+  current working directory, not the repo root.
+
+Do not claim install from a wheel is supported unless tested. Source checkout and
+editable install are the supported modes.
+
 ### Console script (optional convenience)
 
 After `pip install -e .`, a console script is installed:

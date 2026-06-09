@@ -6,6 +6,7 @@ import importlib
 from pathlib import Path
 
 from src.skillpack.manifest import SkillPackManifest
+from src.skillpack.resources import resolve_resource_path
 
 REQUIRED_TOP_LEVEL = {
     "name",
@@ -75,7 +76,7 @@ def validate_manifest(manifest: SkillPackManifest) -> list[str]:
             )
 
     for contract in manifest.contracts:
-        if isinstance(contract, str) and contract.endswith(".md") and not Path(contract).exists():
+        if isinstance(contract, str) and contract.endswith(".md") and not resolve_resource_path(contract).exists():
             errors.append(f"Contract document not found: {contract}")
 
     if errors:

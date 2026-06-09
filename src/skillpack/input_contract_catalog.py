@@ -13,6 +13,8 @@ from typing import Any
 
 import yaml
 
+from src.skillpack.resources import resolve_resource_path
+
 DEFAULT_INPUT_CONTRACTS_PATH = "skillpack/input-contracts.yaml"
 
 
@@ -103,14 +105,12 @@ def _field_keys(fields: list[Any]) -> list[str]:
 
 def _resolve_path(path: str | Path) -> Path:
     candidate = Path(path)
-    if candidate.exists():
+    if candidate.is_absolute() and candidate.exists():
         return candidate
-    if not candidate.is_absolute():
-        repo_root = Path(__file__).resolve().parents[2]
-        repo_candidate = repo_root / candidate
-        if repo_candidate.exists():
-            return repo_candidate
-    return candidate
+    resolved = resolve_resource_path(candidate)
+    if resolved.exists():
+        return resolved
+    return resolved
 
 
 def _skill_id_candidates(skill_id: str) -> set[str]:

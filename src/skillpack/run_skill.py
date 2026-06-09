@@ -37,6 +37,7 @@ from src.skillpack.input_contracts import (
     validate_skill_input,
 )
 from src.skillpack.loader import load_skillpack_manifest, resolve_runtime
+from src.skillpack.resources import resolve_manifest_path, resolve_resource_path
 from src.schemas.skill import SkillInput, SkillOutput, normalize_skill_error
 from src.tools.adapters.mcp import (
     InMemoryMCPHostAdapter,
@@ -342,7 +343,7 @@ def _load_capabilities(manifest_path: str) -> list[dict[str, Any]]:
     missing_behavior.
     """
     import yaml
-    cap_path = Path(manifest_path).parent / "capabilities.yaml"
+    cap_path = resolve_resource_path(Path(manifest_path).parent / "capabilities.yaml")
     if not cap_path.exists():
         return []
     raw = yaml.safe_load(cap_path.read_text(encoding="utf-8"))

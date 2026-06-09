@@ -18,6 +18,7 @@ from src.skillpack.decision_contracts import get_decision_contract
 from src.skillpack.input_contract_catalog import get_skill_input_contract
 from src.skillpack.loader import load_skillpack_manifest
 from src.skillpack.manifest import SkillSpec
+from src.skillpack.resources import resolve_resource_path
 from src.skillpack.thesis_contracts import get_thesis_contract
 
 DEFAULT_MANIFEST_PATH = "skillpack/fund-agent.skillpack.yaml"
@@ -237,7 +238,7 @@ def _resolve_skill_spec(
 
 
 def _load_capabilities(manifest_path: str) -> dict[str, Any]:
-    cap_path = Path(manifest_path).parent / "capabilities.yaml"
+    cap_path = resolve_resource_path(Path(manifest_path).parent / "capabilities.yaml")
     if not cap_path.exists():
         return {
             "mcp_capabilities": {},
