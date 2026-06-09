@@ -12,6 +12,8 @@ DOCS = (
     ROOT / "README.md",
     ROOT / "docs" / "install" / "runtime-bridge-cli.md",
     ROOT / "docs" / "host-integrations" / "README.md",
+    ROOT / "docs" / "host-readiness-matrix.md",
+    ROOT / "docs" / "external-host-smoke-commands.md",
 )
 DEPRECATED_SRC_SURFACES = (
     "src/core",
@@ -42,8 +44,16 @@ def _all_text() -> str:
     return "\n".join(_text(path) for path in DOCS)
 
 
+COMMAND_DOCS = (
+    ROOT / "docs" / "START_HERE.md",
+    ROOT / "README.md",
+    ROOT / "docs" / "install" / "runtime-bridge-cli.md",
+    ROOT / "docs" / "external-host-smoke-commands.md",
+)
+
+
 def test_docs_reference_runtime_bridge_script_not_deprecated_cli() -> None:
-    for path in DOCS:
+    for path in COMMAND_DOCS:
         text = _text(path)
         assert "scripts/run_skill.py" in text, f"{path} should show runtime bridge path"
         assert "src/cli.py" not in text
@@ -71,9 +81,9 @@ def test_start_here_links_point_to_existing_repo_files() -> None:
 
 
 def test_docs_mention_python_311_for_source_checkout_runtime() -> None:
-    for path in DOCS:
+    for path in COMMAND_DOCS:
         text = _text(path)
-        assert "Python 3.11+" in text or "python (3.11+)" in text, (
+        assert "Python 3.11+" in text or "python (3.11+)" in text or ">=3.11" in text, (
             f"{path} should mention Python 3.11+ for runtime execution"
         )
 

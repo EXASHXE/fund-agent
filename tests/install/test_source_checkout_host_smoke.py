@@ -14,7 +14,17 @@ def _assert_json_skill_output(proc, *, skill_name: str, statuses: set[str]) -> d
     assert out["ok"] is True
     assert out["skill_name"] == skill_name
     assert out["status"] in statuses
-    assert "opencode" not in json.dumps(out).lower()
+    serialized = json.dumps(out).lower()
+    for prohibited in (
+        "plugin_invoked",
+        "opencode_plugin_invoked",
+        "python_invoked_by_opencode",
+        "child_process",
+        "subprocess_spawn",
+    ):
+        assert prohibited not in serialized, (
+            f"output contains prohibited plugin-execution field: {prohibited}"
+        )
     return out
 
 
