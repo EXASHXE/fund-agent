@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.schemas.skill import SkillError, SkillInput, SkillOutput
+from src.schemas.skill import SkillError, SkillInput, SkillOutput, normalize_skill_error, normalize_skill_errors
 
 
 class BaseSkillRuntime:
@@ -114,6 +114,21 @@ class BaseSkillRuntime:
                 for code in fund_codes
             ]
         return ["research_task"]
+
+    @staticmethod
+    def normalize_error(
+        error: SkillError | dict[str, Any] | str | Exception,
+        *,
+        code: str = "RUNTIME_ERROR",
+        recoverable: bool = True,
+    ) -> dict[str, Any]:
+        return normalize_skill_error(error, default_code=code, recoverable=recoverable)
+
+    @staticmethod
+    def normalize_errors(
+        errors: list[Any] | None,
+    ) -> list[dict[str, Any]]:
+        return normalize_skill_errors(errors)
 
     @staticmethod
     def _unique_strings(items: list[str]) -> list[str]:

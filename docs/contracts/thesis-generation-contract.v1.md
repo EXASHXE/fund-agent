@@ -72,6 +72,12 @@ fetch data, call LLMs, or produce formal decisions.
 - `thesis_generation` must **not** call LLMs, provider SDKs, or network.
 - Formal decisions require `decision_support`.
 
+## Cross-References
+
+- [Skill output contract v1](./skill-output-contract.v1.md) — error objects, status values
+- [Decision support contract v1](./decision-support-contract.v1.md) — formal Decision boundary
+- [Fund analysis artifacts v1](./fund-analysis-artifacts.v1.md) — fund_analysis artifact keys
+
 ## Evidence Classification
 
 Evidence items are classified by `direction` and `category` fields:

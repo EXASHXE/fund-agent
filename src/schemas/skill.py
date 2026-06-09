@@ -43,9 +43,10 @@ class SkillError:
 
 
 def normalize_skill_error(
-    error: SkillError | dict[str, Any] | str,
+    error: SkillError | dict[str, Any] | str | Exception,
     *,
     default_code: str = "RUNTIME_ERROR",
+    recoverable: bool = True,
 ) -> dict[str, Any]:
     if isinstance(error, SkillError):
         return error.to_dict()
@@ -60,32 +61,39 @@ def normalize_skill_error(
         details = error.get("details")
         if not isinstance(details, dict):
             details = {"raw_details": details} if details is not None else {}
-        recoverable = error.get("recoverable")
-        if not isinstance(recoverable, bool):
-            recoverable = True
+        err_recoverable = error.get("recoverable")
+        if not isinstance(err_recoverable, bool):
+            err_recoverable = recoverable
         return {
             "code": code,
             "message": message,
             "details": details,
-            "recoverable": recoverable,
+            "recoverable": err_recoverable,
         }
     if isinstance(error, str):
         return {
             "code": default_code,
             "message": error,
             "details": {},
-            "recoverable": True,
+            "recoverable": recoverable,
+        }
+    if isinstance(error, Exception):
+        return {
+            "code": default_code,
+            "message": str(error),
+            "details": {"exception_type": type(error).__name__},
+            "recoverable": recoverable,
         }
     return {
         "code": default_code,
         "message": str(error),
         "details": {"raw_type": type(error).__name__},
-        "recoverable": True,
+        "recoverable": recoverable,
     }
 
 
 def normalize_skill_errors(
-    errors: list[SkillError | dict[str, Any] | str] | None,
+    errors: list[SkillError | dict[str, Any] | str | Exception] | None,
 ) -> list[dict[str, Any]]:
     if not errors:
         return []

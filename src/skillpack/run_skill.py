@@ -47,6 +47,20 @@ from src.tools.portfolio.report_composer import render_report_markdown
 
 DEFAULT_MANIFEST_PATH = "skillpack/fund-agent.skillpack.yaml"
 
+
+def _bridge_error(
+    code: str,
+    message: str,
+    details: dict[str, Any] | None = None,
+    recoverable: bool = False,
+) -> dict[str, Any]:
+    return {
+        "code": code,
+        "message": message,
+        "details": details or {},
+        "recoverable": recoverable,
+    }
+
 # Bridge-level error codes (distinct from SkillError.code values).
 BRIDGE_ERROR_CODES = frozenset({
     "INVALID_INPUT",
@@ -102,11 +116,11 @@ def _emit_envelope(
         fallback_used = True
         fallback = {
             "ok": False,
-            "error": {
-                "code": "JSON_SERIALIZATION_FAILED",
-                "message": f"bridge output is not JSON-serializable: {exc}",
-                "details": {"exception_type": type(exc).__name__},
-            },
+            "error": _bridge_error(
+                "JSON_SERIALIZATION_FAILED",
+                f"bridge output is not JSON-serializable: {exc}",
+                {"exception_type": type(exc).__name__},
+            ),
         }
         text = json.dumps(fallback)
     if output_path is not None:
@@ -397,13 +411,11 @@ def _describe_capability_envelope(
     if not matches:
         return {
             "ok": False,
-            "error": {
-                "code": "UNKNOWN_CAPABILITY",
-                "message": f"unknown capability: {capability_name!r}",
-                "details": {
-                    "valid_capabilities": sorted(c["name"] for c in capabilities),
-                },
-            },
+            "error": _bridge_error(
+                "UNKNOWN_CAPABILITY",
+                f"unknown capability: {capability_name!r}",
+                {"valid_capabilities": sorted(c["name"] for c in capabilities)},
+            ),
             "metadata": {"command": "describe-capability", "manifest_path": manifest_path},
         }
     return {
@@ -489,11 +501,11 @@ def run_bridge(
             return _emit_envelope(
                 {
                     "ok": False,
-                    "error": {
-                        "code": "RUNTIME_LOAD_FAILED",
-                        "message": f"failed to load manifest: {exc}",
-                        "details": {"exception_type": type(exc).__name__},
-                    },
+                    "error": _bridge_error(
+                        "RUNTIME_LOAD_FAILED",
+                        f"failed to load manifest: {exc}",
+                        {"exception_type": type(exc).__name__},
+                    ),
                 },
                 pretty=pretty,
                 output_path=output_path,
@@ -507,11 +519,11 @@ def run_bridge(
             return _emit_envelope(
                 {
                     "ok": False,
-                    "error": {
-                        "code": "RUNTIME_LOAD_FAILED",
-                        "message": f"failed to load capabilities: {exc}",
-                        "details": {"exception_type": type(exc).__name__},
-                    },
+                    "error": _bridge_error(
+                        "RUNTIME_LOAD_FAILED",
+                        f"failed to load capabilities: {exc}",
+                        {"exception_type": type(exc).__name__},
+                    ),
                 },
                 pretty=pretty,
                 output_path=output_path,
@@ -525,11 +537,11 @@ def run_bridge(
             return _emit_envelope(
                 {
                     "ok": False,
-                    "error": {
-                        "code": "RUNTIME_LOAD_FAILED",
-                        "message": f"failed to describe capability: {exc}",
-                        "details": {"exception_type": type(exc).__name__},
-                    },
+                    "error": _bridge_error(
+                        "RUNTIME_LOAD_FAILED",
+                        f"failed to describe capability: {exc}",
+                        {"exception_type": type(exc).__name__},
+                    ),
                 },
                 pretty=pretty,
                 output_path=output_path,
@@ -543,14 +555,13 @@ def run_bridge(
         return _emit_envelope(
             {
                 "ok": False,
-                "error": {
-                    "code": "INVALID_INPUT",
-                    "message": (
+                "error": _bridge_error(
+                    "INVALID_INPUT",
+                    (
                         "choose only one of --explain-input, "
                         "--validate-input, or --output-schema"
                     ),
-                    "details": {},
-                },
+                ),
             },
             pretty=pretty,
             output_path=output_path,
@@ -560,14 +571,13 @@ def run_bridge(
         return _emit_envelope(
             {
                 "ok": False,
-                "error": {
-                    "code": "INVALID_INPUT",
-                    "message": (
+                "error": _bridge_error(
+                    "INVALID_INPUT",
+                    (
                         "--skill is required unless --list-skills, "
                         "--list-capabilities, or --describe-capability is passed"
                     ),
-                    "details": {},
-                },
+                ),
             },
             pretty=pretty,
             output_path=output_path,
@@ -581,13 +591,11 @@ def run_bridge(
         return _emit_envelope(
             {
                 "ok": False,
-                "error": {
-                    "code": "UNKNOWN_SKILL",
-                    "message": f"unknown skill: {skill_name!r}",
-                    "details": {
-                        "valid_runtime_ids": sorted(SLUG_TO_RUNTIME_ID.values()),
-                    },
-                },
+                "error": _bridge_error(
+                    "UNKNOWN_SKILL",
+                    f"unknown skill: {skill_name!r}",
+                    {"valid_runtime_ids": sorted(SLUG_TO_RUNTIME_ID.values())},
+                ),
             },
             pretty=pretty,
             output_path=output_path,
@@ -596,11 +604,11 @@ def run_bridge(
         return _emit_envelope(
             {
                 "ok": False,
-                "error": {
-                    "code": "RUNTIME_LOAD_FAILED",
-                    "message": f"failed to resolve skill: {exc}",
-                    "details": {"exception_type": type(exc).__name__},
-                },
+                "error": _bridge_error(
+                    "RUNTIME_LOAD_FAILED",
+                    f"failed to resolve skill: {exc}",
+                    {"exception_type": type(exc).__name__},
+                ),
             },
             pretty=pretty,
             output_path=output_path,
@@ -614,11 +622,11 @@ def run_bridge(
                 {
                     "ok": False,
                     "skill_name": runtime_id,
-                    "error": {
-                        "code": "RUNTIME_LOAD_FAILED",
-                        "message": f"failed to explain input contract: {exc}",
-                        "details": {"exception_type": type(exc).__name__},
-                    },
+                    "error": _bridge_error(
+                        "RUNTIME_LOAD_FAILED",
+                        f"failed to explain input contract: {exc}",
+                        {"exception_type": type(exc).__name__},
+                    ),
                 },
                 pretty=pretty,
                 output_path=output_path,
@@ -644,11 +652,11 @@ def run_bridge(
                 {
                     "ok": False,
                     "skill_name": runtime_id,
-                    "error": {
-                        "code": "RUNTIME_LOAD_FAILED",
-                        "message": f"failed to build output schema summary: {exc}",
-                        "details": {"exception_type": type(exc).__name__},
-                    },
+                    "error": _bridge_error(
+                        "RUNTIME_LOAD_FAILED",
+                        f"failed to build output schema summary: {exc}",
+                        {"exception_type": type(exc).__name__},
+                    ),
                 },
                 pretty=pretty,
                 output_path=output_path,
@@ -671,11 +679,10 @@ def run_bridge(
             {
                 "ok": False,
                 "skill_name": runtime_id,
-                "error": {
-                    "code": "INVALID_INPUT",
-                    "message": "--validate-input requires --input <path> or --input -",
-                    "details": {},
-                },
+                "error": _bridge_error(
+                    "INVALID_INPUT",
+                    "--validate-input requires --input <path> or --input -",
+                ),
             },
             pretty=pretty,
             output_path=output_path,
@@ -687,11 +694,7 @@ def run_bridge(
         return _emit_envelope(
             {
                 "ok": False,
-                "error": {
-                    "code": "INVALID_INPUT",
-                    "message": str(exc),
-                    "details": {},
-                },
+                "error": _bridge_error("INVALID_INPUT", str(exc)),
             },
             pretty=pretty,
             output_path=output_path,
@@ -705,11 +708,11 @@ def run_bridge(
                 {
                     "ok": False,
                     "skill_name": runtime_id,
-                    "error": {
-                        "code": "RUNTIME_LOAD_FAILED",
-                        "message": f"failed to validate input contract: {exc}",
-                        "details": {"exception_type": type(exc).__name__},
-                    },
+                    "error": _bridge_error(
+                        "RUNTIME_LOAD_FAILED",
+                        f"failed to validate input contract: {exc}",
+                        {"exception_type": type(exc).__name__},
+                    ),
                 },
                 pretty=pretty,
                 output_path=output_path,
@@ -732,13 +735,11 @@ def run_bridge(
             {
                 "ok": False,
                 "skill_name": runtime_id,
-                "error": {
-                    "code": "INVALID_INPUT",
-                    "message": (
-                        "--emit-report currently supports only 'markdown'"
-                    ),
-                    "details": {"emit_report": emit_report},
-                },
+                "error": _bridge_error(
+                    "INVALID_INPUT",
+                    "--emit-report currently supports only 'markdown'",
+                    {"emit_report": emit_report},
+                ),
             },
             pretty=pretty,
             output_path=output_path,
@@ -749,16 +750,14 @@ def run_bridge(
             {
                 "ok": False,
                 "skill_name": runtime_id,
-                "error": {
-                    "code": "UNSUPPORTED_EMIT_REPORT",
-                    "message": (
-                        "--emit-report markdown is supported only for fund_analysis"
-                    ),
-                    "details": {
+                "error": _bridge_error(
+                    "UNSUPPORTED_EMIT_REPORT",
+                    "--emit-report markdown is supported only for fund_analysis",
+                    {
                         "supported_skill": "fund_analysis",
                         "requested_skill": runtime_id,
                     },
-                },
+                ),
             },
             pretty=pretty,
             output_path=output_path,
@@ -770,11 +769,7 @@ def run_bridge(
         return _emit_envelope(
             {
                 "ok": False,
-                "error": {
-                    "code": "INVALID_INPUT",
-                    "message": str(exc),
-                    "details": {},
-                },
+                "error": _bridge_error("INVALID_INPUT", str(exc)),
             },
             pretty=pretty,
             output_path=output_path,
@@ -795,14 +790,14 @@ def run_bridge(
         return _emit_envelope(
             {
                 "ok": False,
-                "error": {
-                    "code": "RUNTIME_LOAD_FAILED",
-                    "message": f"failed to import runtime class: {exc}",
-                    "details": {
+                "error": _bridge_error(
+                    "RUNTIME_LOAD_FAILED",
+                    f"failed to import runtime class: {exc}",
+                    {
                         "runtime": runtime_path,
                         "exception_type": type(exc).__name__,
                     },
-                },
+                ),
             },
             pretty=pretty,
             output_path=output_path,
@@ -820,11 +815,11 @@ def run_bridge(
             return _emit_envelope(
                 {
                     "ok": False,
-                    "error": {
-                        "code": "RUNTIME_LOAD_FAILED",
-                        "message": f"failed to instantiate skill: {exc}",
-                        "details": {"exception_type": type(exc).__name__},
-                    },
+                    "error": _bridge_error(
+                        "RUNTIME_LOAD_FAILED",
+                        f"failed to instantiate skill: {exc}",
+                        {"exception_type": type(exc).__name__},
+                    ),
                 },
                 pretty=pretty,
                 output_path=output_path,
@@ -833,11 +828,11 @@ def run_bridge(
         return _emit_envelope(
             {
                 "ok": False,
-                "error": {
-                    "code": "RUNTIME_LOAD_FAILED",
-                    "message": f"failed to instantiate skill: {exc}",
-                    "details": {"exception_type": type(exc).__name__},
-                },
+                "error": _bridge_error(
+                    "RUNTIME_LOAD_FAILED",
+                    f"failed to instantiate skill: {exc}",
+                    {"exception_type": type(exc).__name__},
+                ),
             },
             pretty=pretty,
             output_path=output_path,
@@ -850,11 +845,11 @@ def run_bridge(
             {
                 "ok": False,
                 "skill_name": runtime_id,
-                "error": {
-                    "code": "SKILL_RUN_FAILED",
-                    "message": f"skill raised: {exc}",
-                    "details": {"exception_type": type(exc).__name__},
-                },
+                "error": _bridge_error(
+                    "SKILL_RUN_FAILED",
+                    f"skill raised: {exc}",
+                    {"exception_type": type(exc).__name__},
+                ),
             },
             pretty=pretty,
             output_path=output_path,
@@ -873,14 +868,14 @@ def run_bridge(
     # remain in the envelope for transparency.
     if missing_mcp:
         envelope["ok"] = False
-        envelope["error"] = {
-            "code": "MISSING_MCP_CAPABILITY",
-            "message": (
+        envelope["error"] = _bridge_error(
+            "MISSING_MCP_CAPABILITY",
+            (
                 "skill requires MCP capabilities that the bridge could not provide; "
                 "host-owned MCP adapter is required"
             ),
-            "details": {"missing_mcp_capabilities": list(missing_mcp)},
-        }
+            {"missing_mcp_capabilities": list(missing_mcp)},
+        )
     if emit_report == "markdown":
         if envelope.get("ok") is not True or output.status == "FAILED":
             return _emit_envelope(envelope, pretty=pretty, output_path=output_path)
@@ -891,16 +886,16 @@ def run_bridge(
                 {
                     "ok": False,
                     "skill_name": runtime_id,
-                    "error": {
-                        "code": "MISSING_REPORT_SECTIONS",
-                        "message": (
+                    "error": _bridge_error(
+                        "MISSING_REPORT_SECTIONS",
+                        (
                             "fund_analysis did not produce artifacts.report_sections; "
                             "cannot emit Markdown report"
                         ),
-                        "details": {
+                        {
                             "available_artifact_keys": sorted(artifacts.keys()),
                         },
-                    },
+                    ),
                     "metadata": dict(metadata),
                 },
                 pretty=pretty,

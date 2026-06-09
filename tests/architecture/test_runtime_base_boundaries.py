@@ -88,3 +88,20 @@ def test_mcp_adapter_skill_only_calls_host_injected_mcp_adapter():
     text = filepath.read_text(encoding="utf-8")
     assert "self.mcp_adapter" in text
     assert "mcp_adapter.call" in text or "self.call_mcp" in text
+
+
+def test_base_runtime_exposes_normalize_error():
+    """BaseSkillRuntime must expose normalize_error and normalize_errors helpers."""
+    filepath = SRC / "skills_runtime" / "base.py"
+    text = filepath.read_text(encoding="utf-8")
+    assert "normalize_error" in text
+    assert "normalize_errors" in text
+
+
+def test_runtime_skills_no_plain_string_errors():
+    """Runtime skills must not append plain string errors to SkillOutput.errors."""
+    runtime_dir = SRC / "skills_runtime"
+    for py_file in runtime_dir.rglob("*.py"):
+        text = py_file.read_text(encoding="utf-8")
+        assert 'errors=["' not in text, f"{py_file.name} uses plain string in errors list"
+        assert "errors=[str(" not in text, f"{py_file.name} uses str() in errors list"

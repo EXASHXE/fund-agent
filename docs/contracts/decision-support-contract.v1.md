@@ -179,6 +179,7 @@ The runtime may emit these artifact keys depending on the input mode:
 
 ## Cross-References
 
+- [`skill-output-contract.v1.md`](./skill-output-contract.v1.md)
 - [`fund-analysis-artifacts.v1.md`](./fund-analysis-artifacts.v1.md)
 - [`fund-analysis-input-contract.v1.md`](./fund-analysis-input-contract.v1.md)
 - [`report-output-contract.v1.md`](./report-output-contract.v1.md)

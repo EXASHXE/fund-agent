@@ -59,6 +59,7 @@ python scripts/run_skill.py --skill decision_support \
 - [Fund analysis artifact contract](contracts/fund-analysis-artifacts.v1.md) — what `fund_analysis` emits
 - [Decision support contract](contracts/decision-support-contract.v1.md) — formal `Decision` / `ExecutionLedger` semantics
 - [Thesis generation contract](contracts/thesis-generation-contract.v1.md) — `ThesisDraft` artifact semantics
+- [Skill output contract](contracts/skill-output-contract.v1.md) — `SkillOutput` shape, error objects, status values
 - [Report output contract](contracts/report-output-contract.v1.md) — deterministic report section shape
 - [Tools inventory](tools-inventory.md) — public vs internal tool classification
 - [Fake scenario fixtures](../examples/scenarios/README.md) — sample data exercising fund_analysis diagnostics

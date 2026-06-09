@@ -38,8 +38,12 @@ def _run_json(*, skill: str | None = None, input_text: str | None = None) -> dic
 def _assert_bridge_error(error: dict) -> None:
     assert "code" in error, f"bridge error missing 'code': {error}"
     assert "message" in error, f"bridge error missing 'message': {error}"
+    assert "details" in error, f"bridge error missing 'details': {error}"
+    assert "recoverable" in error, f"bridge error missing 'recoverable': {error}"
     assert isinstance(error["code"], str) and len(error["code"]) > 0
     assert isinstance(error["message"], str) and len(error["message"]) > 0
+    assert isinstance(error["details"], dict)
+    assert isinstance(error["recoverable"], bool)
 
 
 class TestBridgeErrorShapes:

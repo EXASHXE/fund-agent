@@ -653,3 +653,6 @@ For more decision_support fixtures and the formal decision contract, see
 [`docs/contracts/decision-support-contract.v1.md`](../contracts/decision-support-contract.v1.md),
 and
 [`skillpack/decision-contracts.yaml`](../../skillpack/decision-contracts.yaml).
+
+For the skill output contract (error objects, status values), see
+[`docs/contracts/skill-output-contract.v1.md`](../contracts/skill-output-contract.v1.md).
