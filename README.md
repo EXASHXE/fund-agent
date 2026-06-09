@@ -304,6 +304,24 @@ flow.
   plugin tool wrapper — still future):
   [`docs/design/runtime-bridge.md`](docs/design/runtime-bridge.md)
 
+### Supported execution modes
+
+**Mode A — source checkout runtime bridge:**
+- `python scripts/run_skill.py ...` (canonical)
+- `fund-agent-run-skill ...` (console script, available after `pip install -e .`)
+- `python -m src.skillpack.run_skill ...` (module invocation)
+- Host invokes a local subprocess; host owns data fetching/MCP/provider SDKs
+
+**Mode B — Python editable install:**
+- `pip install -e .`
+- Runtime bridge still reads source checkout skillpack/docs/contracts
+- Wheel-only install is not yet tested; source checkout is required
+
+**Mode C — OpenCode plugin:**
+- Metadata + doc-reader only
+- Does not invoke Python, does not run fund_analysis, does not include provider SDKs
+- The runtime bridge is a separate, independent surface
+
 The OpenCode plugin exposes a `fund_agent_skills` tool, a
 `fund_agent_skill_doc` tool, and a `fund_agent_runtime_hint` tool. It
 does not run an autonomous loop, does not fetch data, and does not

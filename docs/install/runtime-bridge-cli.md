@@ -40,6 +40,28 @@ The bridge requires **no** npm dependency, **no** OpenCode install,
 and **no** provider SDK. A working `python` (3.11+) interpreter is
 the only prerequisite.
 
+### Console script (optional convenience)
+
+After `pip install -e .`, a console script is installed:
+
+```bash
+fund-agent-run-skill --list-skills --pretty
+fund-agent-run-skill --skill fund_analysis --explain-input --pretty
+```
+
+The console script calls the same runtime bridge code as
+`python scripts/run_skill.py`. It is an optional convenience for
+hosts that prefer a PATH-available entrypoint. The source-checkout
+invocation (`python scripts/run_skill.py`) remains the canonical
+path and is the recommended invocation for hosts that want an
+explicit, auditable command.
+
+The module can also be invoked directly:
+
+```bash
+python -m src.skillpack.run_skill --list-skills --pretty
+```
+
 ## What it is and is not
 
 The runtime bridge:

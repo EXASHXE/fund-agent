@@ -45,6 +45,8 @@ You will **not** get:
 - An installed console entry point. Source checkouts include the
   optional `scripts/run_skill.py` runtime bridge; the host still
   decides whether to import Python directly or spawn a process.
+  After `pip install -e .`, the `fund-agent-run-skill` console
+  script is also available as an optional convenience.
 
 ## Prerequisites
 
