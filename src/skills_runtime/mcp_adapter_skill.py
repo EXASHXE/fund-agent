@@ -172,6 +172,56 @@ class MCPAdapterSkill(BaseSkillRuntime):
             status="FAILED",
         )
 
+    def run_mcp_evidence_skill(
+        self,
+        skill_input: SkillInput,
+        *,
+        missing_capability_message: str,
+        preferred: tuple[str, ...] | None = None,
+        item_keys: tuple[str, ...] | None = None,
+    ) -> SkillOutput:
+        capability = self.select_capability(
+            skill_input.required_mcp_capabilities,
+            preferred=preferred or self.preferred_capabilities,
+        )
+        if capability is None:
+            return self.failed_missing_capability(
+                skill_input,
+                missing_capability_message,
+            )
+
+        response = self.call_mcp(capability, skill_input.payload)
+        if not response.get("ok"):
+            return self.failed_mcp_call(skill_input, capability, response)
+
+        entities = self.normalize_entities_from_input(skill_input)
+        items = self.items_from_response(
+            response.get("data", {}),
+            item_keys=item_keys or self.response_item_keys,
+        )
+
+        evidence_items, errors = self.build_soft_evidence_items(
+            items, capability, entities, skill_input,
+        )
+
+        response_data = response.get("data", {})
+        status = self._status_from_evidence(evidence_items, errors)
+
+        if status == "FAILED":
+            return self.empty_result_output(
+                skill_input, capability, response_data, errors,
+            )
+
+        return SkillOutput(
+            step_id=skill_input.step_id,
+            skill_name=skill_input.skill_name,
+            evidence_items=evidence_items,
+            artifacts={"mcp_response": response_data},
+            errors=errors,
+            used_mcp_capabilities=[capability],
+            status=status,
+        )
+
     @staticmethod
     def _status_from_evidence(
         evidence_items: list[EvidenceItem],

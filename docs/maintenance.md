@@ -134,10 +134,28 @@ adapt it through `src.tools.adapters.mcp.MCPHostAdapter`.
 
 - `src/skills_runtime/base.py` provides `BaseSkillRuntime` with shared helpers
   for error creation, FAILED output, entity extraction, and status helpers.
+  `make_skill_error` delegates to the canonical `make_skill_error_dict` helper.
 - `src/skills_runtime/mcp_adapter_skill.py` provides `MCPAdapterSkill(BaseSkillRuntime)`
   for MCP-backed skills like `news_research` and `sentiment_analysis`.
+  The `run_mcp_evidence_skill` template method encapsulates the common
+  select-capability / call-MCP / build-evidence / emit-output control flow;
+  subclasses override `_build_single_evidence` for skill-specific evidence
+  construction.
 - These base classes standardize capability selection, MCP calling, evidence
   construction, and failure handling without importing provider SDKs.
+
+## Test Support Helpers
+
+- `tests/support/error_shape.py` provides canonical host-visible error
+  assertions shared across runtime_bridge, integration, and golden tests.
+- `tests/support/bridge_runner.py` provides runtime bridge test invocation
+  helpers for both subprocess and in-process execution.
+- `tests/support/formal_boundary.py` provides formal-decision boundary
+  constants and assertions shared across integration, skills_runtime, and
+  golden tests.
+- Support helpers must not import provider SDKs or perform network calls.
+- Support helpers should not mask behavior changes; tests should still assert
+  explicit semantics.
 
 ## What Is NOT Plugin Core
 

@@ -14,6 +14,15 @@ from pathlib import Path
 
 import pytest
 
+from tests.support.formal_boundary import (
+    ACTIVE_ACTIONS,
+    EMPTY_ANCHOR_REASON_CODES,
+    EMPTY_ANCHOR_STATES,
+    FAKE_ANCHORS,
+    PASSIVE_ACTIONS,
+    extract_formal_decisions,
+)
+
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "run_skill.py"
 FIXTURE_DIR = ROOT / "examples" / "decision_support"
@@ -26,30 +35,6 @@ FIXTURES = [
     ("trade_plan_forbidden_action_skipped.json", "PARTIAL", True),
     ("trade_plan_no_evidence_downgraded.json", "OK", True),
 ]
-ACTIVE_ACTIONS = {"BUY", "SELL", "INCREASE", "REDUCE"}
-PASSIVE_ACTIONS = {"WAIT", "HOLD", "PAUSE_DCA"}
-EMPTY_ANCHOR_STATES = {
-    "INSUFFICIENT_EVIDENCE",
-    "CRITIC_BLOCKED",
-    "CONSTRAINT_BLOCKED",
-    "BUDGET_BLOCKED",
-    "DOWNGRADED",
-}
-EMPTY_ANCHOR_REASON_CODES = {
-    "INSUFFICIENT_EVIDENCE",
-    "CRITIC_BLOCKED",
-    "CONSTRAINT_BLOCKED",
-    "BUDGET_BLOCKED",
-    "DOWNGRADED_ACTIVE_TO_HOLD",
-}
-FAKE_ANCHORS = {
-    "no_evidence_available",
-    "fake_anchor",
-    "fake-anchor",
-    "placeholder",
-    "missing_evidence",
-    "missing-evidence",
-}
 
 
 def _run(fixture_name: str) -> subprocess.CompletedProcess:
@@ -77,15 +62,7 @@ def _parse(proc: subprocess.CompletedProcess) -> dict:
 
 
 def _formal_decisions(envelope: dict) -> list[dict]:
-    artifacts = envelope.get("artifacts") or {}
-    decisions: list[dict] = []
-    single = artifacts.get("decision")
-    if isinstance(single, dict) and single.get("decision_id"):
-        decisions.append(single)
-    for item in artifacts.get("decisions") or []:
-        if isinstance(item, dict) and item.get("decision_id"):
-            decisions.append(item)
-    return decisions
+    return extract_formal_decisions(envelope.get("artifacts") or {})
 
 
 @pytest.mark.parametrize("fixture_name,expected_status,_", FIXTURES)

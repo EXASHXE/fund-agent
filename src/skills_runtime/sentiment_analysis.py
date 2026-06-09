@@ -9,6 +9,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
+from src.schemas.evidence import EvidenceItem
 from src.schemas.skill import SkillError, SkillInput, SkillOutput
 from src.skills_runtime.mcp_adapter_skill import MCPAdapterSkill
 from src.tools.evidence.builders import build_soft_evidence_from_sentiment
@@ -25,83 +26,28 @@ class SentimentAnalysisSkill(MCPAdapterSkill):
         super().__init__(mcp_adapter=mcp_adapter)
 
     def run(self, skill_input: SkillInput) -> SkillOutput:
-        capability = self.select_capability(
-            skill_input.required_mcp_capabilities,
-            preferred=self.preferred_capabilities,
-        )
-        if capability is None:
-            return self.failed_missing_capability(
-                skill_input,
-                "SentimentResearch requires social_sentiment",
-            )
-
-        response = self.call_mcp(capability, skill_input.payload)
-        if not response.get("ok"):
-            return self.failed_mcp_call(skill_input, capability, response)
-
-        entities = self.normalize_entities_from_input(skill_input)
-        items = self.items_from_response(
-            response.get("data", {}),
-            item_keys=self.response_item_keys,
+        return self.run_mcp_evidence_skill(
+            skill_input,
+            missing_capability_message="SentimentResearch requires social_sentiment",
         )
 
-        evidence_items, errors = self._build_sentiment_evidence_items(
-            items, capability, entities, skill_input,
-        )
-
-        response_data = response.get("data", {})
-        status = self._status_from_evidence(evidence_items, errors)
-
-        if status == "FAILED":
-            return self.empty_result_output(
-                skill_input, capability, response_data, errors,
-            )
-
-        return SkillOutput(
-            step_id=skill_input.step_id,
-            skill_name=skill_input.skill_name,
-            evidence_items=evidence_items,
-            artifacts={"mcp_response": response_data},
-            errors=errors,
-            used_mcp_capabilities=[capability],
-            status=status,
-        )
-
-    def _build_sentiment_evidence_items(
+    def _build_single_evidence(
         self,
-        items: list[dict],
+        item: dict,
         capability: str,
         entities: list[str],
         skill_input: SkillInput,
-    ) -> tuple[list, list[dict[str, Any]]]:
-        evidence_items = []
-        errors = []
-        for item in items:
-            try:
-                score = float(item.get("sentiment_score", item.get("score", 0.0)))
-                evidence_items.append(
-                    build_soft_evidence_from_sentiment(
-                        source_type=item.get("source_type") or capability,
-                        timestamp=item.get("timestamp") or datetime.now(),
-                        related_entities=item.get("related_entities") or entities,
-                        sentiment_score=score,
-                        claim=item.get("claim") or "Sentiment signal detected",
-                        direction=item.get("direction"),
-                        provenance={
-                            "mcp_capability": capability,
-                            "skill_name": skill_input.skill_name,
-                        },
-                    )
-                )
-            except Exception as exc:
-                errors.append(
-                    SkillError(
-                        code="EVIDENCE_BUILD_FAILED",
-                        message=str(exc),
-                        details={
-                            "error_type": type(exc).__name__,
-                            "skill_name": skill_input.skill_name,
-                        },
-                    ).to_dict()
-                )
-        return evidence_items, errors
+    ) -> EvidenceItem:
+        score = float(item.get("sentiment_score", item.get("score", 0.0)))
+        return build_soft_evidence_from_sentiment(
+            source_type=item.get("source_type") or capability,
+            timestamp=item.get("timestamp") or datetime.now(),
+            related_entities=item.get("related_entities") or entities,
+            sentiment_score=score,
+            claim=item.get("claim") or "Sentiment signal detected",
+            direction=item.get("direction"),
+            provenance={
+                "mcp_capability": capability,
+                "skill_name": skill_input.skill_name,
+            },
+        )

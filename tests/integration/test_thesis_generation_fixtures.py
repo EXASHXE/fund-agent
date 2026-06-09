@@ -10,10 +10,10 @@ from pathlib import Path
 
 import pytest
 
+from tests.support.formal_boundary import FORMAL_DECISION_ARTIFACT_KEYS
+
 ROOT = Path(__file__).resolve().parents[2]
 BRIDGE_SCRIPT = ROOT / "scripts" / "run_skill.py"
-
-FORMAL_DECISION_ARTIFACTS = {"decision", "decisions", "execution_ledger", "execution_ledgers"}
 
 THESIS_FIXTURES = [
     "examples/thesis_generation/thesis_with_mixed_evidence.json",
@@ -101,7 +101,7 @@ def test_no_formal_decision_artifacts(fixture_path: str):
     proc = _run_bridge(["--skill", "thesis_generation", "--input", fixture_path, "--pretty"])
     envelope = json.loads(proc.stdout)
     artifacts = envelope.get("artifacts", {})
-    for key in FORMAL_DECISION_ARTIFACTS:
+    for key in FORMAL_DECISION_ARTIFACT_KEYS:
         assert key not in artifacts, f"Forbidden artifact '{key}' found for {fixture_path}"
 
 

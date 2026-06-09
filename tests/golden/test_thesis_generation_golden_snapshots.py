@@ -32,9 +32,12 @@ def test_thesis_generation_golden_snapshot(fixture):
     )
 
 
+from tests.support.formal_boundary import FORMAL_DECISION_ARTIFACT_KEYS
+
+
 @pytest.mark.parametrize("fixture", THESIS_GENERATION_GOLDEN_FIXTURES, ids=lambda f: f.snapshot_name)
 def test_thesis_generation_no_formal_decision_artifacts(fixture):
     output = run_thesis_generation_json(fixture)
     artifacts = output.get("artifacts", {})
-    for key in ("decision", "decisions", "execution_ledger", "execution_ledgers"):
+    for key in FORMAL_DECISION_ARTIFACT_KEYS:
         assert key not in artifacts, f"Forbidden artifact '{key}' in thesis_generation output"

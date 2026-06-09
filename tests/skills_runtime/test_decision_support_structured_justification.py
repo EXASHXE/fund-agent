@@ -8,19 +8,11 @@ from typing import Any
 
 from src.schemas.skill import SkillInput
 from src.skills_runtime.decision_support import DecisionSupportSkill
+from tests.support.formal_boundary import ACTIVE_ACTIONS, FAKE_ANCHORS, extract_formal_decisions
 
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE_DIR = ROOT / "examples" / "decision_support"
-ACTIVE_ACTIONS = {"BUY", "SELL", "INCREASE", "REDUCE"}
-FAKE_ANCHORS = {
-    "no_evidence_available",
-    "fake_anchor",
-    "fake-anchor",
-    "placeholder",
-    "missing_evidence",
-    "missing-evidence",
-}
 
 
 def _input_from_fixture(name: str) -> SkillInput:
@@ -38,14 +30,7 @@ def _run_fixture(name: str):
 
 
 def _formal_decisions(artifacts: dict[str, Any]) -> list[dict[str, Any]]:
-    decisions: list[dict[str, Any]] = []
-    single = artifacts.get("decision")
-    if isinstance(single, dict) and single.get("decision_id"):
-        decisions.append(single)
-    for item in artifacts.get("decisions") or []:
-        if isinstance(item, dict) and item.get("decision_id"):
-            decisions.append(item)
-    return decisions
+    return extract_formal_decisions(artifacts)
 
 
 def test_single_active_buy_with_evidence_has_anchored_structured_fields() -> None:

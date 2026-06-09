@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.schemas.skill import SkillError, SkillInput, SkillOutput, normalize_skill_error, normalize_skill_errors
+from src.schemas.skill import SkillError, SkillInput, SkillOutput, make_skill_error_dict, normalize_skill_error, normalize_skill_errors
 
 
 class BaseSkillRuntime:
@@ -30,12 +30,7 @@ class BaseSkillRuntime:
         details: dict[str, Any] | None = None,
         recoverable: bool = True,
     ) -> dict[str, Any]:
-        return SkillError(
-            code=code,
-            message=message,
-            details=details or {},
-            recoverable=recoverable,
-        ).to_dict()
+        return make_skill_error_dict(code, message, details, recoverable)
 
     @staticmethod
     def failed_output(

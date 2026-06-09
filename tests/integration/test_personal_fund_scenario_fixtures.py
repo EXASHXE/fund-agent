@@ -10,6 +10,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.support.formal_boundary import FORMAL_DECISION_ARTIFACT_KEYS
+
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "run_skill.py"
@@ -22,13 +24,6 @@ SCENARIO_FIXTURES = [
     "cn_fund_dca_drawdown_review.json",
     "cn_fund_ledger_derived_snapshot.json",
 ]
-
-FORMAL_DECISION_ARTIFACTS = {
-    "decision",
-    "decisions",
-    "execution_ledger",
-    "execution_ledgers",
-}
 
 LEDGER_DERIVED_ARTIFACTS = {
     "derived_portfolio_snapshot",
@@ -108,7 +103,7 @@ def test_scenario_fixture_runs_without_formal_decision_artifacts(
 
     artifacts = out["artifacts"]
     assert isinstance(artifacts, dict)
-    assert not (FORMAL_DECISION_ARTIFACTS & set(artifacts))
+    assert not (FORMAL_DECISION_ARTIFACT_KEYS & set(artifacts))
 
     report_sections = artifacts.get("report_sections")
     if report_sections is not None:
@@ -199,7 +194,7 @@ def test_cn_fund_7d_redemption_fee_emits_redemption_fee_risk():
     artifacts = _load_json_output(proc)["artifacts"]
     assert "redemption_fee_risk" in artifacts
     assert "professional_diagnostics" in artifacts
-    assert not (FORMAL_DECISION_ARTIFACTS & set(artifacts))
+    assert not (FORMAL_DECISION_ARTIFACT_KEYS & set(artifacts))
 
 
 def test_cn_fund_qdii_sp500_overlap_emits_overlap_diagnostics():
@@ -208,7 +203,7 @@ def test_cn_fund_qdii_sp500_overlap_emits_overlap_diagnostics():
     artifacts = _load_json_output(proc)["artifacts"]
     assert "overlap_diagnostics" in artifacts
     assert "professional_diagnostics" in artifacts
-    assert not (FORMAL_DECISION_ARTIFACTS & set(artifacts))
+    assert not (FORMAL_DECISION_ARTIFACT_KEYS & set(artifacts))
 
 
 def test_cn_fund_ai_semiconductor_overweight_emits_theme_overweight():
@@ -217,7 +212,7 @@ def test_cn_fund_ai_semiconductor_overweight_emits_theme_overweight():
     artifacts = _load_json_output(proc)["artifacts"]
     assert "theme_overweight_diagnostics" in artifacts
     assert "professional_diagnostics" in artifacts
-    assert not (FORMAL_DECISION_ARTIFACTS & set(artifacts))
+    assert not (FORMAL_DECISION_ARTIFACT_KEYS & set(artifacts))
 
 
 def test_cn_fund_dca_drawdown_review_emits_dca_diagnostics():
@@ -226,7 +221,7 @@ def test_cn_fund_dca_drawdown_review_emits_dca_diagnostics():
     artifacts = _load_json_output(proc)["artifacts"]
     assert "dca_drawdown_diagnostics" in artifacts
     assert "professional_diagnostics" in artifacts
-    assert not (FORMAL_DECISION_ARTIFACTS & set(artifacts))
+    assert not (FORMAL_DECISION_ARTIFACT_KEYS & set(artifacts))
 
 
 def test_cn_fund_ledger_derived_snapshot_emits_cash_budget_diagnostics():
@@ -235,4 +230,4 @@ def test_cn_fund_ledger_derived_snapshot_emits_cash_budget_diagnostics():
     artifacts = _load_json_output(proc)["artifacts"]
     assert "cash_budget_diagnostics" in artifacts
     assert "professional_diagnostics" in artifacts
-    assert not (FORMAL_DECISION_ARTIFACTS & set(artifacts))
+    assert not (FORMAL_DECISION_ARTIFACT_KEYS & set(artifacts))
