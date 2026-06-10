@@ -29,7 +29,9 @@ from .reason_codes import (
     EVIDENCE_WEAK,
     FEE_LOCKUP,
     INSUFFICIENT_EVIDENCE,
+    LOSS_CONTROL,
     PASSIVE_ACTION,
+    PROFIT_PROTECTION,
     REDEMPTION_FEE_RISK,
     RIGHT_SIDE_UNCONFIRMED,
     RISK_PROFILE_MISSING,
@@ -187,6 +189,8 @@ def _apply_artifact_blockers(
         )
 
     _apply_redemption_fee(result, _artifact(payload, "redemption_fee_risk"), action)
+    _apply_position_contribution(result, _artifact(payload, "position_contribution"), action)
+    _apply_profit_protection(result, _artifact(payload, "profit_protection_diagnostics"), action)
     _apply_right_side(result, _artifact(payload, "right_side_confirmation_diagnostics"), action)
     _apply_event_hype(result, _artifact(payload, "event_hype_failure_diagnostics"), action)
     _apply_cash_deployment(result, _artifact(payload, "cash_deployment_diagnostics"), action)
@@ -270,6 +274,57 @@ def _apply_right_side(
                 evidence_state="INSUFFICIENT_EVIDENCE",
             )
             return
+
+
+def _apply_position_contribution(
+    result: GatekeeperResult,
+    contribution: dict[str, Any],
+    action: str,
+) -> None:
+    if action not in BUY_SIDE_ACTIONS:
+        return
+    summary = _dict(contribution.get("summary"))
+    low_contribution = _strings(summary.get("high_weight_low_contribution_positions"))
+    if not low_contribution:
+        return
+    _add_blocker(
+        result,
+        codes=[LOSS_CONTROL, CONSTRAINT_BLOCKED],
+        blocked_by="position_contribution_watchlist",
+        trigger="Resolve high-weight low-contribution positions before add/buy",
+        invalidating="High-weight low-contribution watchlist remains active",
+        evidence_state="CONSTRAINT_BLOCKED",
+    )
+
+
+def _apply_profit_protection(
+    result: GatekeeperResult,
+    diagnostics: dict[str, Any],
+    action: str,
+) -> None:
+    items = _list_dicts(diagnostics.get("items"))
+    if not items:
+        return
+
+    has_profit_review = any(
+        str(item.get("profit_level", "")) in {"high", "very_high"}
+        or str(item.get("suggested_analysis_action", "")) in {"trim_review", "watch"}
+        for item in items
+    )
+    if not has_profit_review:
+        return
+
+    result.reason_codes.append(PROFIT_PROTECTION)
+    result.audit_trail.append("Gatekeeper reviewed profit protection diagnostics")
+    if action in BUY_SIDE_ACTIONS:
+        _add_blocker(
+            result,
+            codes=[PROFIT_PROTECTION, CONSTRAINT_BLOCKED],
+            blocked_by="profit_protection_review",
+            trigger="Resolve profit-protection watch/trim review before add/buy",
+            invalidating="Profit-protection review remains active",
+            evidence_state="CONSTRAINT_BLOCKED",
+        )
 
 
 def _apply_event_hype(

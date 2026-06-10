@@ -152,6 +152,36 @@ def test_cash_deployment_not_ready_blocks_add_buy() -> None:
     assert "cash_deployment_not_ready" in decision["blocked_by"]
 
 
+def test_position_and_profit_artifacts_are_consumed_by_gatekeeper() -> None:
+    payload = _base_payload(
+        "BUY",
+        position_contribution={
+            "summary": {
+                "high_weight_low_contribution_positions": ["F001"],
+            },
+            "positions": [{"fund_code": "F001"}],
+        },
+        profit_protection_diagnostics={
+            "items": [
+                {
+                    "fund_code": "F001",
+                    "profit_level": "high",
+                    "suggested_analysis_action": "trim_review",
+                }
+            ],
+            "summary": {},
+        },
+    )
+
+    decision = _decision(payload)
+
+    assert decision["action"] in {"HOLD", "WAIT"}
+    assert "LOSS_CONTROL" in decision["decision_reason_codes"]
+    assert "PROFIT_PROTECTION" in decision["decision_reason_codes"]
+    assert "position_contribution_watchlist" in decision["blocked_by"]
+    assert "profit_protection_review" in decision["blocked_by"]
+
+
 def test_passive_watch_alias_remains_passive_with_structured_reason() -> None:
     payload = _base_payload("WATCH")
 
