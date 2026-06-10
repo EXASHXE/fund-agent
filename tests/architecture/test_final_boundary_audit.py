@@ -39,6 +39,15 @@ def test_no_provider_sdks_in_tools(plugin_imports):
     assert not violations, f"tools imports provider SDKs: {violations}"
 
 
+def test_no_provider_sdks_in_runtime_source(plugin_imports):
+    violations: dict[str, set[str]] = {}
+    for dirname in PLUGIN_CORE_DIRS:
+        found = set(plugin_imports[dirname] & PROVIDER_SDKS)
+        if found:
+            violations[dirname] = found
+    assert not violations, f"runtime source imports provider SDKs: {violations}"
+
+
 def test_no_network_clients_in_skills_runtime(plugin_imports):
     violations = plugin_imports["skills_runtime"] & NETWORK_CLIENTS
     assert not violations, f"skills_runtime imports network clients: {violations}"
@@ -47,6 +56,15 @@ def test_no_network_clients_in_skills_runtime(plugin_imports):
 def test_no_network_clients_in_skillpack(plugin_imports):
     violations = plugin_imports["skillpack"] & NETWORK_CLIENTS
     assert not violations, f"skillpack imports network clients: {violations}"
+
+
+def test_no_network_clients_in_runtime_source(plugin_imports):
+    violations: dict[str, set[str]] = {}
+    for dirname in PLUGIN_CORE_DIRS:
+        found = set(plugin_imports[dirname] & NETWORK_CLIENTS)
+        if found:
+            violations[dirname] = found
+    assert not violations, f"runtime source imports network clients: {violations}"
 
 
 def test_no_broker_keywords_in_runtime_source(runtime_source_texts):
@@ -86,12 +104,37 @@ def test_decision_support_allowed_to_import_decision():
     )
 
 
+def test_decision_support_is_only_runtime_skill_importing_decision():
+    runtime_dir = SRC / "skills_runtime"
+    violations: dict[str, set[str]] = {}
+    for path in sorted(runtime_dir.iterdir()):
+        if path.name in {"__pycache__", "decision_support"}:
+            continue
+        if path.is_dir():
+            imports = imports_from_dir(path)
+        elif path.suffix == ".py":
+            imports = imports_from_file(path)
+        else:
+            continue
+        decision_imports = {
+            item for item in imports
+            if item == "src.schemas.decision" or item.startswith("src.schemas.decision.")
+        }
+        if decision_imports:
+            violations[path.name] = decision_imports
+    assert not violations, (
+        "decision_support is the only runtime skill allowed to import "
+        f"Decision schema, found: {violations}"
+    )
+
+
 def test_deprecated_src_surfaces_remain_absent():
     for relpath in DEPRECATED_SRC_MODULES:
         parts = relpath.split(".")
         parts[0] = "src"
         abs_path = ROOT.joinpath(*parts)
         assert not abs_path.exists(), f"Deprecated surface still present: {relpath}"
+    assert not (ROOT / "src" / "cli.py").exists(), "Deprecated surface still present: src/cli.py"
 
 
 def test_no_deprecated_surface_imports_in_plugin_core(plugin_imports):
@@ -102,3 +145,15 @@ def test_no_deprecated_surface_imports_in_plugin_core(plugin_imports):
             assert not violations, (
                 f"src/{dirname} imports deprecated {deprecated}: {violations}"
             )
+
+
+def test_legacy_fund_analyst_surface_is_not_discoverable():
+    assert not (ROOT / "skills" / "fund-analyst").exists(), (
+        "skills/fund-analyst must not exist as an installable skill"
+    )
+    manifest = (ROOT / "skillpack" / "fund-agent.skillpack.yaml").read_text(
+        encoding="utf-8"
+    ).lower()
+    assert "fund-analyst" not in manifest, (
+        "skillpack manifest must not reference legacy fund-analyst slug"
+    )

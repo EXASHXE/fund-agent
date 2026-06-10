@@ -4,8 +4,34 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
-from tests.support.bridge_runner import parse_stdout_json, run_bridge_subprocess, write_temp_json
+from tests.support.bridge_runner import (
+    BRIDGE_SCRIPT,
+    parse_stdout_json,
+    run_bridge_subprocess,
+    write_temp_json,
+)
+
+
+def _all_mapping_keys(value: Any) -> set[str]:
+    keys: set[str] = set()
+    if isinstance(value, dict):
+        for key, item in value.items():
+            keys.add(str(key).lower())
+            keys.update(_all_mapping_keys(item))
+    elif isinstance(value, list):
+        for item in value:
+            keys.update(_all_mapping_keys(item))
+    return keys
+
+
+def _assert_source_checkout_bridge_invocation(proc) -> None:
+    args = list(getattr(proc, "args", []) or [])
+    assert len(args) >= 2, f"subprocess args missing bridge script: {args!r}"
+    assert Path(args[1]).resolve() == BRIDGE_SCRIPT.resolve(), (
+        f"runtime bridge should be invoked via source checkout script, got {args!r}"
+    )
 
 
 def _assert_json_skill_output(proc, *, skill_name: str, statuses: set[str]) -> dict:
@@ -14,15 +40,19 @@ def _assert_json_skill_output(proc, *, skill_name: str, statuses: set[str]) -> d
     assert out["ok"] is True
     assert out["skill_name"] == skill_name
     assert out["status"] in statuses
-    serialized = json.dumps(out).lower()
+    _assert_source_checkout_bridge_invocation(proc)
+    output_keys = _all_mapping_keys(out)
     for prohibited in (
         "plugin_invoked",
         "opencode_plugin_invoked",
         "python_invoked_by_opencode",
         "child_process",
+        "child_process_invoked",
+        "spawn",
         "subprocess_spawn",
+        "exec",
     ):
-        assert prohibited not in serialized, (
+        assert prohibited not in output_keys, (
             f"output contains prohibited plugin-execution field: {prohibited}"
         )
     return out
@@ -32,6 +62,7 @@ def test_source_checkout_lists_skills() -> None:
     proc = run_bridge_subprocess(["--list-skills", "--pretty"])
 
     assert proc.returncode == 0, proc.stderr
+    _assert_source_checkout_bridge_invocation(proc)
     out = parse_stdout_json(proc)
     assert out["ok"] is True
     runtime_ids = {item["runtime_id"] for item in out["skills"]}
@@ -48,6 +79,7 @@ def test_source_checkout_explains_fund_analysis_input() -> None:
     proc = run_bridge_subprocess(["--skill", "fund_analysis", "--explain-input", "--pretty"])
 
     assert proc.returncode == 0, proc.stderr
+    _assert_source_checkout_bridge_invocation(proc)
     out = parse_stdout_json(proc)
     assert out["ok"] is True
     assert out["skill_name"] == "fund_analysis"
@@ -65,6 +97,7 @@ def test_source_checkout_validates_fake_fund_analysis_scenario() -> None:
     ])
 
     assert proc.returncode == 0, proc.stderr
+    _assert_source_checkout_bridge_invocation(proc)
     out = parse_stdout_json(proc)
     assert out["ok"] is True
     assert out["validation_result"]["valid"] is True
@@ -81,6 +114,7 @@ def test_source_checkout_emits_markdown_report_from_fake_scenario() -> None:
     ])
 
     assert proc.returncode == 0, proc.stderr
+    _assert_source_checkout_bridge_invocation(proc)
     assert proc.stdout.startswith("# Personal fund report")
     assert "## Professional diagnostics" in proc.stdout
     assert "## Decision" not in proc.stdout
