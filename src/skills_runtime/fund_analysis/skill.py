@@ -19,6 +19,10 @@ from .diagnostics_stage import (
     compute_diagnostics,
 )
 from .profit_protection_rules import compute_profit_protection_diagnostics
+from .benchmark_rules import compute_benchmark_divergence_diagnostics
+from .right_side_rules import compute_right_side_confirmation_diagnostics
+from .event_rules import compute_event_hype_failure_diagnostics
+from .cash_deployment_rules import compute_cash_deployment_diagnostics
 from .input_stage import (
     build_portfolio_input_bundle,
     collect_fund_codes,
@@ -141,6 +145,18 @@ class FundAnalysisSkill:
             profit_protection = compute_profit_protection_diagnostics(
                 bundle, metrics,
             )
+            benchmark_divergence = compute_benchmark_divergence_diagnostics(
+                bundle, metrics,
+            )
+            right_side_confirmation = compute_right_side_confirmation_diagnostics(
+                bundle, metrics,
+            )
+            event_hype_failure = compute_event_hype_failure_diagnostics(
+                bundle, metrics,
+            )
+            cash_deployment = compute_cash_deployment_diagnostics(
+                bundle, metrics,
+            )
             plan_result = build_analysis_plan(
                 bundle=bundle,
                 metrics=metrics,
@@ -148,6 +164,10 @@ class FundAnalysisSkill:
                 diagnostics=professional_diagnostics,
                 warnings=warnings,
                 user_goal=payload.get("user_goal") or payload.get("user_question"),
+                benchmark_divergence=benchmark_divergence,
+                right_side_confirmation=right_side_confirmation,
+                event_hype_failure=event_hype_failure,
+                cash_deployment=cash_deployment,
             )
             artifacts_bundle = assemble_analysis_report_and_artifacts(
                 bundle=bundle,
@@ -161,6 +181,10 @@ class FundAnalysisSkill:
                 plan_result=plan_result,
                 position_contribution=position_contribution,
                 profit_protection=profit_protection,
+                benchmark_divergence=benchmark_divergence,
+                right_side_confirmation=right_side_confirmation,
+                event_hype_failure=event_hype_failure,
+                cash_deployment=cash_deployment,
             )
         except Exception as exc:
             return failed_output(

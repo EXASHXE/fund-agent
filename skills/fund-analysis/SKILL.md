@@ -306,6 +306,70 @@ Analysis-only artifact for high-profit positions. **Not a formal decision.**
 Legacy `affected_funds` and `summary` fields remain for backward
 compatibility.
 
+### benchmark_divergence_diagnostics
+
+Deterministic benchmark divergence analysis. Compares fund NAV return
+against benchmark return when host provides both series. Analysis-only;
+not a formal decision.
+
+- `items`: list of `{fund_code, fund_name, benchmark_id, fund_return_pct,
+  benchmark_return_pct, excess_return_pct, divergence_level,
+  divergence_direction, evidence_state, missing_reason, lookback_days}`
+- `divergence_level`: `none | mild | moderate | severe | unknown`
+- `divergence_direction`: `outperforming | underperforming | in_line | unknown`
+- `evidence_state`: `sufficient | missing | weak`
+- When benchmark history is missing, `evidence_state` is `missing` and
+  `analysis_plan.next_data_to_fetch` includes benchmark data
+
+### right_side_confirmation_diagnostics
+
+Deterministic right-side confirmation assessment. For drawdown positions,
+evaluates whether a rebound/confirmation exists based on NAV, benchmark,
+news, and sentiment evidence. Evidence readiness diagnostic only; not a
+trading signal.
+
+- `items`: list of `{fund_code, fund_name, recent_drawdown_pct,
+  recent_rebound_pct, nav_confirmation, benchmark_confirmation,
+  news_confirmation, sentiment_confirmation, right_side_confirmed,
+  evidence_state, missing_reason, recommended_next_data}`
+- `right_side_confirmed` is true only when nav is confirmed, benchmark is
+  not negative, and news/sentiment are not negative
+- When `right_side_confirmed` is false for action-oriented user goals,
+  `right_side_unconfirmed` appears in `analysis_plan.blockers` or
+  `analysis_plan.warnings`
+
+### event_hype_failure_diagnostics
+
+Deterministic event hype failure detection. Detects scenarios where an
+expected positive catalyst/event failed to produce the expected price
+reaction. Analysis-only; `suggested_analysis_action` is always
+`watch | reduce_hype_weight | data_needed`.
+
+- `items`: list of `{event_name, fund_code, fund_name,
+  expected_positive_catalyst, post_event_return_pct,
+  benchmark_post_event_return_pct, news_reaction, price_reaction,
+  hype_failed, risk_level, evidence_state, missing_reason,
+  suggested_analysis_action}`
+- `hype_failed` is true when expected positive catalyst exists but price
+  reaction is weak/negative and news does not offset
+- High-risk hype failures add `event_hype_failed` to
+  `analysis_plan.blockers` or `analysis_plan.warnings`
+
+### cash_deployment_diagnostics
+
+Deterministic cash deployment readiness assessment. Evaluates cash-like
+allocation, buffer status, and risk budget. Does not recommend specific
+buys; only provides readiness and missing data.
+
+- `summary`: `{cash_like_value, cash_like_weight,
+  estimated_deployable_cash, cash_buffer_status, deployment_readiness,
+  risk_budget_status, notes}`
+- `items`: list of `{bucket, value, weight, liquidity_hint}` per position
+- `cash_buffer_status`: `low | adequate | high | unknown`
+- `deployment_readiness`: `ready | partial | not_ready | unknown`
+- When `deployment_readiness` is `not_ready`, `cash_deployment_not_ready`
+  appears in `analysis_plan.warnings` or `analysis_plan.blockers`
+
 ### How to use analysis_plan
 
 1. Call `fund_analysis` first with whatever data you have.
@@ -362,6 +426,17 @@ data is missing, mark it as a gap and let the host fetch it.
 - `redemption_fee_risk` — now includes `fee_items` with blocker/warning
   classification, `has_blocker`, and `has_warning` fields. Blockers prevent
   `decision_support` readiness
+- `benchmark_divergence_diagnostics` — benchmark divergence analysis comparing
+  fund return against benchmark return. Analysis-only; not a formal decision
+- `right_side_confirmation_diagnostics` — right-side confirmation assessment
+  for drawdown positions. Evidence readiness diagnostic only; not a trading
+  signal
+- `event_hype_failure_diagnostics` — event hype failure detection for expected
+  positive catalysts with weak/negative post-event reaction. Analysis-only;
+  not a formal decision
+- `cash_deployment_diagnostics` — cash deployment readiness assessment
+  including cash-like allocation, buffer status, and risk budget. Analysis-only;
+  does not recommend specific buys
 - `warnings`
 
 Artifact availability depends on host-provided data.

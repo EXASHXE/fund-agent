@@ -45,7 +45,10 @@
       "next_data_to_fetch": [
         "recent fund news",
         "sentiment snapshot",
-        "transaction history"
+        "transaction history",
+        "recent benchmark movement",
+        "benchmark price history",
+        "recent news evidence"
       ],
       "recommended_mcp_capabilities": [
         "market_news_search",
@@ -57,9 +60,69 @@
       ],
       "user_goal": "",
       "warnings": [
+        "right_side_unconfirmed",
         "sentiment_missing",
         "transaction_history_incomplete"
       ]
+    },
+    "benchmark_divergence_diagnostics": {
+      "items": [
+        {
+          "benchmark_id": "CSI 300 Index",
+          "benchmark_return_pct": null,
+          "divergence_direction": "unknown",
+          "divergence_level": "unknown",
+          "evidence_state": "missing",
+          "excess_return_pct": null,
+          "fund_code": "110011",
+          "fund_name": "Sample Equity Growth Fund",
+          "fund_return_pct": null,
+          "lookback_days": 0,
+          "missing_reason": [
+            "missing_benchmark_history"
+          ]
+        },
+        {
+          "benchmark_id": "ChinaBond Composite Index",
+          "benchmark_return_pct": null,
+          "divergence_direction": "unknown",
+          "divergence_level": "unknown",
+          "evidence_state": "missing",
+          "excess_return_pct": null,
+          "fund_code": "220022",
+          "fund_name": "Sample Bond Income Fund",
+          "fund_return_pct": null,
+          "lookback_days": 0,
+          "missing_reason": [
+            "missing_benchmark_history"
+          ]
+        },
+        {
+          "benchmark_id": "CSI 300 (50%) + ChinaBond (50%)",
+          "benchmark_return_pct": null,
+          "divergence_direction": "unknown",
+          "divergence_level": "unknown",
+          "evidence_state": "missing",
+          "excess_return_pct": null,
+          "fund_code": "330033",
+          "fund_name": "Sample Balanced Fund",
+          "fund_return_pct": null,
+          "lookback_days": 0,
+          "missing_reason": [
+            "missing_benchmark_history"
+          ]
+        }
+      ],
+      "summary": {
+        "has_benchmark_divergence": false,
+        "has_severe_underperformance": false,
+        "notes": [
+          "missing benchmark history for 110011",
+          "missing benchmark history for 220022",
+          "missing benchmark history for 330033"
+        ],
+        "severe_underperformers": []
+      }
     },
     "benchmark_summary": {
       "benchmark_history": {
@@ -172,6 +235,38 @@
       "reserve_gap": null,
       "short_term_budget_status": "ok"
     },
+    "cash_deployment_diagnostics": {
+      "items": [
+        {
+          "bucket": "equity",
+          "liquidity_hint": "medium",
+          "value": 200000.0,
+          "weight": 0.4
+        },
+        {
+          "bucket": "bond",
+          "liquidity_hint": "medium",
+          "value": 180000.0,
+          "weight": 0.36
+        },
+        {
+          "bucket": "unknown",
+          "liquidity_hint": "unknown",
+          "value": 70000.0,
+          "weight": 0.14
+        }
+      ],
+      "recommended_next_data": [],
+      "summary": {
+        "cash_buffer_status": "adequate",
+        "cash_like_value": 50000.0,
+        "cash_like_weight": 0.1,
+        "deployment_readiness": "ready",
+        "estimated_deployable_cash": 0.0,
+        "notes": [],
+        "risk_budget_status": "available"
+      }
+    },
     "cost_basis_summary": null,
     "data_completeness": {
       "available_sections": [
@@ -203,6 +298,16 @@
       "score": 0.967
     },
     "dca_plan_review": null,
+    "event_hype_failure_diagnostics": {
+      "items": [],
+      "summary": {
+        "has_event_hype_failure": false,
+        "high_risk_events": [],
+        "notes": [
+          "no event metadata provided by host"
+        ]
+      }
+    },
     "evidence_gap_diagnostics": {
       "details": [
         {
@@ -376,7 +481,10 @@
         "next_data_to_fetch": [
           "recent fund news",
           "sentiment snapshot",
-          "transaction history"
+          "transaction history",
+          "recent benchmark movement",
+          "benchmark price history",
+          "recent news evidence"
         ],
         "recommended_mcp_capabilities": [
           "market_news_search",
@@ -388,9 +496,69 @@
         ],
         "user_goal": "",
         "warnings": [
+          "right_side_unconfirmed",
           "sentiment_missing",
           "transaction_history_incomplete"
         ]
+      },
+      "benchmark_divergence_diagnostics": {
+        "items": [
+          {
+            "benchmark_id": "CSI 300 Index",
+            "benchmark_return_pct": null,
+            "divergence_direction": "unknown",
+            "divergence_level": "unknown",
+            "evidence_state": "missing",
+            "excess_return_pct": null,
+            "fund_code": "110011",
+            "fund_name": "Sample Equity Growth Fund",
+            "fund_return_pct": null,
+            "lookback_days": 0,
+            "missing_reason": [
+              "missing_benchmark_history"
+            ]
+          },
+          {
+            "benchmark_id": "ChinaBond Composite Index",
+            "benchmark_return_pct": null,
+            "divergence_direction": "unknown",
+            "divergence_level": "unknown",
+            "evidence_state": "missing",
+            "excess_return_pct": null,
+            "fund_code": "220022",
+            "fund_name": "Sample Bond Income Fund",
+            "fund_return_pct": null,
+            "lookback_days": 0,
+            "missing_reason": [
+              "missing_benchmark_history"
+            ]
+          },
+          {
+            "benchmark_id": "CSI 300 (50%) + ChinaBond (50%)",
+            "benchmark_return_pct": null,
+            "divergence_direction": "unknown",
+            "divergence_level": "unknown",
+            "evidence_state": "missing",
+            "excess_return_pct": null,
+            "fund_code": "330033",
+            "fund_name": "Sample Balanced Fund",
+            "fund_return_pct": null,
+            "lookback_days": 0,
+            "missing_reason": [
+              "missing_benchmark_history"
+            ]
+          }
+        ],
+        "summary": {
+          "has_benchmark_divergence": false,
+          "has_severe_underperformance": false,
+          "notes": [
+            "missing benchmark history for 110011",
+            "missing benchmark history for 220022",
+            "missing benchmark history for 330033"
+          ],
+          "severe_underperformers": []
+        }
       },
       "benchmark_summary": {
         "benchmark_history": {
@@ -503,6 +671,38 @@
         "reserve_gap": null,
         "short_term_budget_status": "ok"
       },
+      "cash_deployment_diagnostics": {
+        "items": [
+          {
+            "bucket": "equity",
+            "liquidity_hint": "medium",
+            "value": 200000.0,
+            "weight": 0.4
+          },
+          {
+            "bucket": "bond",
+            "liquidity_hint": "medium",
+            "value": 180000.0,
+            "weight": 0.36
+          },
+          {
+            "bucket": "unknown",
+            "liquidity_hint": "unknown",
+            "value": 70000.0,
+            "weight": 0.14
+          }
+        ],
+        "recommended_next_data": [],
+        "summary": {
+          "cash_buffer_status": "adequate",
+          "cash_like_value": 50000.0,
+          "cash_like_weight": 0.1,
+          "deployment_readiness": "ready",
+          "estimated_deployable_cash": 0.0,
+          "notes": [],
+          "risk_budget_status": "available"
+        }
+      },
       "concentration": {
         "duplicate_tags": [],
         "hhi": 0.381728,
@@ -543,6 +743,16 @@
         "score": 0.967
       },
       "dca_review": null,
+      "event_hype_failure_diagnostics": {
+        "items": [],
+        "summary": {
+          "has_event_hype_failure": false,
+          "high_risk_events": [],
+          "notes": [
+            "no event metadata provided by host"
+          ]
+        }
+      },
       "evidence_gap_diagnostics": {
         "details": [
           {
@@ -881,6 +1091,7 @@
             "fund_code": "110011",
             "fund_name": "Sample Equity Growth Fund",
             "invested_amount": 180000.0,
+            "pnl_contribution_basis": "absolute_pnl",
             "pnl_contribution_pct": 0.666667,
             "pnl_pct": 0.111111,
             "portfolio_weight": 0.4,
@@ -893,6 +1104,7 @@
             "fund_code": "220022",
             "fund_name": "Sample Bond Income Fund",
             "invested_amount": 175000.0,
+            "pnl_contribution_basis": "absolute_pnl",
             "pnl_contribution_pct": 0.166667,
             "pnl_pct": 0.028571,
             "portfolio_weight": 0.36,
@@ -905,6 +1117,7 @@
             "fund_code": "330033",
             "fund_name": "Sample Balanced Fund",
             "invested_amount": 65000.0,
+            "pnl_contribution_basis": "absolute_pnl",
             "pnl_contribution_pct": 0.166667,
             "pnl_pct": 0.076923,
             "portfolio_weight": 0.14,
@@ -943,6 +1156,7 @@
             "invested_amount": 180000.0,
             "pnl_pct": 0.111111,
             "principal_recovered": "unknown",
+            "principal_recovery_status": "unknown",
             "profit_level": "moderate",
             "suggested_analysis_action": "watch",
             "trim_pressure": "medium",
@@ -958,6 +1172,7 @@
             "invested_amount": 175000.0,
             "pnl_pct": 0.028571,
             "principal_recovered": "unknown",
+            "principal_recovery_status": "unknown",
             "profit_level": "low",
             "suggested_analysis_action": "watch",
             "trim_pressure": "low",
@@ -973,6 +1188,7 @@
             "invested_amount": 65000.0,
             "pnl_pct": 0.076923,
             "principal_recovered": "unknown",
+            "principal_recovery_status": "unknown",
             "profit_level": "moderate",
             "suggested_analysis_action": "watch",
             "trim_pressure": "low",
@@ -1412,6 +1628,82 @@
         "themes": [],
         "warnings": []
       },
+      "right_side_confirmation_diagnostics": {
+        "items": [
+          {
+            "benchmark_confirmation": "missing",
+            "evidence_state": "missing",
+            "fund_code": "110011",
+            "fund_name": "Sample Equity Growth Fund",
+            "missing_reason": [
+              "missing_benchmark_history",
+              "missing_news_evidence",
+              "missing_sentiment_evidence"
+            ],
+            "nav_confirmation": "confirmed",
+            "news_confirmation": "missing",
+            "recent_drawdown_pct": null,
+            "recent_rebound_pct": 0.43,
+            "recommended_next_data": [
+              "benchmark price history",
+              "recent news evidence",
+              "sentiment snapshot"
+            ],
+            "right_side_confirmed": false,
+            "sentiment_confirmation": "missing"
+          },
+          {
+            "benchmark_confirmation": "missing",
+            "evidence_state": "missing",
+            "fund_code": "220022",
+            "fund_name": "Sample Bond Income Fund",
+            "missing_reason": [
+              "missing_benchmark_history",
+              "missing_news_evidence",
+              "missing_sentiment_evidence"
+            ],
+            "nav_confirmation": "confirmed",
+            "news_confirmation": "missing",
+            "recent_drawdown_pct": null,
+            "recent_rebound_pct": 0.090909,
+            "recommended_next_data": [
+              "benchmark price history",
+              "recent news evidence",
+              "sentiment snapshot"
+            ],
+            "right_side_confirmed": false,
+            "sentiment_confirmation": "missing"
+          },
+          {
+            "benchmark_confirmation": "missing",
+            "evidence_state": "missing",
+            "fund_code": "330033",
+            "fund_name": "Sample Balanced Fund",
+            "missing_reason": [
+              "missing_benchmark_history",
+              "missing_news_evidence",
+              "missing_sentiment_evidence"
+            ],
+            "nav_confirmation": "confirmed",
+            "news_confirmation": "missing",
+            "recent_drawdown_pct": -0.017857,
+            "recent_rebound_pct": 0.085714,
+            "recommended_next_data": [
+              "benchmark price history",
+              "recent news evidence",
+              "sentiment snapshot"
+            ],
+            "right_side_confirmed": false,
+            "sentiment_confirmation": "missing"
+          }
+        ],
+        "summary": {
+          "has_confirmed_right_side": false,
+          "has_unconfirmed_rebound": true,
+          "needs_more_evidence": true,
+          "notes": []
+        }
+      },
       "risk_flags": [],
       "short_term_budget": null,
       "suggested_watchlist": [],
@@ -1559,6 +1851,7 @@
           "fund_code": "110011",
           "fund_name": "Sample Equity Growth Fund",
           "invested_amount": 180000.0,
+          "pnl_contribution_basis": "absolute_pnl",
           "pnl_contribution_pct": 0.666667,
           "pnl_pct": 0.111111,
           "portfolio_weight": 0.4,
@@ -1571,6 +1864,7 @@
           "fund_code": "220022",
           "fund_name": "Sample Bond Income Fund",
           "invested_amount": 175000.0,
+          "pnl_contribution_basis": "absolute_pnl",
           "pnl_contribution_pct": 0.166667,
           "pnl_pct": 0.028571,
           "portfolio_weight": 0.36,
@@ -1583,6 +1877,7 @@
           "fund_code": "330033",
           "fund_name": "Sample Balanced Fund",
           "invested_amount": 65000.0,
+          "pnl_contribution_basis": "absolute_pnl",
           "pnl_contribution_pct": 0.166667,
           "pnl_pct": 0.076923,
           "portfolio_weight": 0.14,
@@ -1664,6 +1959,7 @@
           "invested_amount": 180000.0,
           "pnl_pct": 0.111111,
           "principal_recovered": "unknown",
+          "principal_recovery_status": "unknown",
           "profit_level": "moderate",
           "suggested_analysis_action": "watch",
           "trim_pressure": "medium",
@@ -1679,6 +1975,7 @@
           "invested_amount": 175000.0,
           "pnl_pct": 0.028571,
           "principal_recovered": "unknown",
+          "principal_recovery_status": "unknown",
           "profit_level": "low",
           "suggested_analysis_action": "watch",
           "trim_pressure": "low",
@@ -1694,6 +1991,7 @@
           "invested_amount": 65000.0,
           "pnl_pct": 0.076923,
           "principal_recovered": "unknown",
+          "principal_recovery_status": "unknown",
           "profit_level": "moderate",
           "suggested_analysis_action": "watch",
           "trim_pressure": "low",
@@ -2131,6 +2429,82 @@
       ],
       "themes": [],
       "warnings": []
+    },
+    "right_side_confirmation_diagnostics": {
+      "items": [
+        {
+          "benchmark_confirmation": "missing",
+          "evidence_state": "missing",
+          "fund_code": "110011",
+          "fund_name": "Sample Equity Growth Fund",
+          "missing_reason": [
+            "missing_benchmark_history",
+            "missing_news_evidence",
+            "missing_sentiment_evidence"
+          ],
+          "nav_confirmation": "confirmed",
+          "news_confirmation": "missing",
+          "recent_drawdown_pct": null,
+          "recent_rebound_pct": 0.43,
+          "recommended_next_data": [
+            "benchmark price history",
+            "recent news evidence",
+            "sentiment snapshot"
+          ],
+          "right_side_confirmed": false,
+          "sentiment_confirmation": "missing"
+        },
+        {
+          "benchmark_confirmation": "missing",
+          "evidence_state": "missing",
+          "fund_code": "220022",
+          "fund_name": "Sample Bond Income Fund",
+          "missing_reason": [
+            "missing_benchmark_history",
+            "missing_news_evidence",
+            "missing_sentiment_evidence"
+          ],
+          "nav_confirmation": "confirmed",
+          "news_confirmation": "missing",
+          "recent_drawdown_pct": null,
+          "recent_rebound_pct": 0.090909,
+          "recommended_next_data": [
+            "benchmark price history",
+            "recent news evidence",
+            "sentiment snapshot"
+          ],
+          "right_side_confirmed": false,
+          "sentiment_confirmation": "missing"
+        },
+        {
+          "benchmark_confirmation": "missing",
+          "evidence_state": "missing",
+          "fund_code": "330033",
+          "fund_name": "Sample Balanced Fund",
+          "missing_reason": [
+            "missing_benchmark_history",
+            "missing_news_evidence",
+            "missing_sentiment_evidence"
+          ],
+          "nav_confirmation": "confirmed",
+          "news_confirmation": "missing",
+          "recent_drawdown_pct": -0.017857,
+          "recent_rebound_pct": 0.085714,
+          "recommended_next_data": [
+            "benchmark price history",
+            "recent news evidence",
+            "sentiment snapshot"
+          ],
+          "right_side_confirmed": false,
+          "sentiment_confirmation": "missing"
+        }
+      ],
+      "summary": {
+        "has_confirmed_right_side": false,
+        "has_unconfirmed_rebound": true,
+        "needs_more_evidence": true,
+        "notes": []
+      }
     },
     "risk_flags": [],
     "short_term_trade_budget": null,

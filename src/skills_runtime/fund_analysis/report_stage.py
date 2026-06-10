@@ -40,6 +40,10 @@ def assemble_analysis_report_and_artifacts(
     plan_result: dict[str, Any] | None = None,
     position_contribution: dict[str, Any] | None = None,
     profit_protection: dict[str, Any] | None = None,
+    benchmark_divergence: dict[str, Any] | None = None,
+    right_side_confirmation: dict[str, Any] | None = None,
+    event_hype_failure: dict[str, Any] | None = None,
+    cash_deployment: dict[str, Any] | None = None,
 ) -> AssembledArtifactsBundle:
     report = FundAnalysisReport(
         fund_metrics=metrics.fund_metrics,
@@ -184,6 +188,20 @@ def assemble_analysis_report_and_artifacts(
     if profit_protection:
         artifacts["profit_protection_diagnostics"] = profit_protection
         report["profit_protection_diagnostics"] = profit_protection
+
+    # Phase 3 diagnostics
+    if benchmark_divergence:
+        artifacts["benchmark_divergence_diagnostics"] = benchmark_divergence
+        report["benchmark_divergence_diagnostics"] = benchmark_divergence
+    if right_side_confirmation:
+        artifacts["right_side_confirmation_diagnostics"] = right_side_confirmation
+        report["right_side_confirmation_diagnostics"] = right_side_confirmation
+    if event_hype_failure:
+        artifacts["event_hype_failure_diagnostics"] = event_hype_failure
+        report["event_hype_failure_diagnostics"] = event_hype_failure
+    if cash_deployment:
+        artifacts["cash_deployment_diagnostics"] = cash_deployment
+        report["cash_deployment_diagnostics"] = cash_deployment
 
     data_completeness = attach_report_artifacts(
         payload=bundle.payload,

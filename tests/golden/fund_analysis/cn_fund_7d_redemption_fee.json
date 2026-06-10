@@ -41,7 +41,9 @@
       "next_data_to_fetch": [
         "recent benchmark movement",
         "recent fund news",
-        "sentiment snapshot"
+        "sentiment snapshot",
+        "benchmark price history",
+        "recent news evidence"
       ],
       "recommended_mcp_capabilities": [
         "benchmark_price_history",
@@ -56,9 +58,69 @@
       "warnings": [
         "benchmark_data_missing",
         "redemption_fee_warning",
+        "right_side_unconfirmed",
         "sentiment_missing",
         "theme_overweight_warning"
       ]
+    },
+    "benchmark_divergence_diagnostics": {
+      "items": [
+        {
+          "benchmark_id": "Synthetic CN Growth Blend",
+          "benchmark_return_pct": null,
+          "divergence_direction": "unknown",
+          "divergence_level": "unknown",
+          "evidence_state": "missing",
+          "excess_return_pct": null,
+          "fund_code": "SYN7D001",
+          "fund_name": "Sample Recent Growth Mix",
+          "fund_return_pct": null,
+          "lookback_days": 0,
+          "missing_reason": [
+            "missing_benchmark_history"
+          ]
+        },
+        {
+          "benchmark_id": "Synthetic CN Aggregate Bond",
+          "benchmark_return_pct": null,
+          "divergence_direction": "unknown",
+          "divergence_level": "unknown",
+          "evidence_state": "missing",
+          "excess_return_pct": null,
+          "fund_code": "SYN7D002",
+          "fund_name": "Sample Long Hold Income Bond",
+          "fund_return_pct": null,
+          "lookback_days": 0,
+          "missing_reason": [
+            "missing_benchmark_history"
+          ]
+        },
+        {
+          "benchmark_id": "Synthetic Cash Plus",
+          "benchmark_return_pct": null,
+          "divergence_direction": "unknown",
+          "divergence_level": "unknown",
+          "evidence_state": "missing",
+          "excess_return_pct": null,
+          "fund_code": "SYN7D003",
+          "fund_name": "Sample Cash Plus Fund",
+          "fund_return_pct": null,
+          "lookback_days": 0,
+          "missing_reason": [
+            "missing_benchmark_history"
+          ]
+        }
+      ],
+      "summary": {
+        "has_benchmark_divergence": false,
+        "has_severe_underperformance": false,
+        "notes": [
+          "missing benchmark history for SYN7D001",
+          "missing benchmark history for SYN7D002",
+          "missing benchmark history for SYN7D003"
+        ],
+        "severe_underperformers": []
+      }
     },
     "cash_budget_diagnostics": {
       "cash_ratio": 0.0667,
@@ -70,6 +132,38 @@
       "remaining_budget": -8000.0,
       "reserve_gap": 1600.0,
       "short_term_budget_status": "exceeded"
+    },
+    "cash_deployment_diagnostics": {
+      "items": [
+        {
+          "bucket": "unknown",
+          "liquidity_hint": "unknown",
+          "value": 42000.0,
+          "weight": 0.35
+        },
+        {
+          "bucket": "bond",
+          "liquidity_hint": "medium",
+          "value": 50000.0,
+          "weight": 0.416667
+        },
+        {
+          "bucket": "unknown",
+          "liquidity_hint": "unknown",
+          "value": 20000.0,
+          "weight": 0.166667
+        }
+      ],
+      "recommended_next_data": [],
+      "summary": {
+        "cash_buffer_status": "adequate",
+        "cash_like_value": 8000.0,
+        "cash_like_weight": 0.066667,
+        "deployment_readiness": "ready",
+        "estimated_deployable_cash": 0.0,
+        "notes": [],
+        "risk_budget_status": "available"
+      }
     },
     "cost_basis_summary": {
       "SYN7D001": {
@@ -176,6 +270,16 @@
       ],
       "suggestions": [],
       "warnings": []
+    },
+    "event_hype_failure_diagnostics": {
+      "items": [],
+      "summary": {
+        "has_event_hype_failure": false,
+        "high_risk_events": [],
+        "notes": [
+          "no event metadata provided by host"
+        ]
+      }
     },
     "evidence_gap_diagnostics": {
       "details": [
@@ -309,7 +413,9 @@
         "next_data_to_fetch": [
           "recent benchmark movement",
           "recent fund news",
-          "sentiment snapshot"
+          "sentiment snapshot",
+          "benchmark price history",
+          "recent news evidence"
         ],
         "recommended_mcp_capabilities": [
           "benchmark_price_history",
@@ -324,9 +430,69 @@
         "warnings": [
           "benchmark_data_missing",
           "redemption_fee_warning",
+          "right_side_unconfirmed",
           "sentiment_missing",
           "theme_overweight_warning"
         ]
+      },
+      "benchmark_divergence_diagnostics": {
+        "items": [
+          {
+            "benchmark_id": "Synthetic CN Growth Blend",
+            "benchmark_return_pct": null,
+            "divergence_direction": "unknown",
+            "divergence_level": "unknown",
+            "evidence_state": "missing",
+            "excess_return_pct": null,
+            "fund_code": "SYN7D001",
+            "fund_name": "Sample Recent Growth Mix",
+            "fund_return_pct": null,
+            "lookback_days": 0,
+            "missing_reason": [
+              "missing_benchmark_history"
+            ]
+          },
+          {
+            "benchmark_id": "Synthetic CN Aggregate Bond",
+            "benchmark_return_pct": null,
+            "divergence_direction": "unknown",
+            "divergence_level": "unknown",
+            "evidence_state": "missing",
+            "excess_return_pct": null,
+            "fund_code": "SYN7D002",
+            "fund_name": "Sample Long Hold Income Bond",
+            "fund_return_pct": null,
+            "lookback_days": 0,
+            "missing_reason": [
+              "missing_benchmark_history"
+            ]
+          },
+          {
+            "benchmark_id": "Synthetic Cash Plus",
+            "benchmark_return_pct": null,
+            "divergence_direction": "unknown",
+            "divergence_level": "unknown",
+            "evidence_state": "missing",
+            "excess_return_pct": null,
+            "fund_code": "SYN7D003",
+            "fund_name": "Sample Cash Plus Fund",
+            "fund_return_pct": null,
+            "lookback_days": 0,
+            "missing_reason": [
+              "missing_benchmark_history"
+            ]
+          }
+        ],
+        "summary": {
+          "has_benchmark_divergence": false,
+          "has_severe_underperformance": false,
+          "notes": [
+            "missing benchmark history for SYN7D001",
+            "missing benchmark history for SYN7D002",
+            "missing benchmark history for SYN7D003"
+          ],
+          "severe_underperformers": []
+        }
       },
       "cash_budget_diagnostics": {
         "cash_ratio": 0.0667,
@@ -338,6 +504,38 @@
         "remaining_budget": -8000.0,
         "reserve_gap": 1600.0,
         "short_term_budget_status": "exceeded"
+      },
+      "cash_deployment_diagnostics": {
+        "items": [
+          {
+            "bucket": "unknown",
+            "liquidity_hint": "unknown",
+            "value": 42000.0,
+            "weight": 0.35
+          },
+          {
+            "bucket": "bond",
+            "liquidity_hint": "medium",
+            "value": 50000.0,
+            "weight": 0.416667
+          },
+          {
+            "bucket": "unknown",
+            "liquidity_hint": "unknown",
+            "value": 20000.0,
+            "weight": 0.166667
+          }
+        ],
+        "recommended_next_data": [],
+        "summary": {
+          "cash_buffer_status": "adequate",
+          "cash_like_value": 8000.0,
+          "cash_like_weight": 0.066667,
+          "deployment_readiness": "ready",
+          "estimated_deployable_cash": 0.0,
+          "notes": [],
+          "risk_budget_status": "available"
+        }
       },
       "concentration": {
         "duplicate_tags": [],
@@ -453,6 +651,16 @@
         ],
         "suggestions": [],
         "warnings": []
+      },
+      "event_hype_failure_diagnostics": {
+        "items": [],
+        "summary": {
+          "has_event_hype_failure": false,
+          "high_risk_events": [],
+          "notes": [
+            "no event metadata provided by host"
+          ]
+        }
       },
       "evidence_gap_diagnostics": {
         "details": [
@@ -689,6 +897,7 @@
             "fund_code": "SYN7D001",
             "fund_name": "Sample Recent Growth Mix",
             "invested_amount": 40000.0,
+            "pnl_contribution_basis": "absolute_pnl",
             "pnl_contribution_pct": 0.5,
             "pnl_pct": 0.05,
             "portfolio_weight": 0.35,
@@ -701,6 +910,7 @@
             "fund_code": "SYN7D002",
             "fund_name": "Sample Long Hold Income Bond",
             "invested_amount": 48000.0,
+            "pnl_contribution_basis": "absolute_pnl",
             "pnl_contribution_pct": 0.5,
             "pnl_pct": 0.041667,
             "portfolio_weight": 0.416667,
@@ -713,6 +923,7 @@
             "fund_code": "SYN7D003",
             "fund_name": "Sample Cash Plus Fund",
             "invested_amount": 20000.0,
+            "pnl_contribution_basis": "absolute_pnl",
             "pnl_contribution_pct": 0.0,
             "pnl_pct": 0.0,
             "portfolio_weight": 0.166667,
@@ -853,6 +1064,7 @@
             "invested_amount": 40000.0,
             "pnl_pct": 0.05,
             "principal_recovered": "false",
+            "principal_recovery_status": "not_recovered",
             "profit_level": "moderate",
             "suggested_analysis_action": "watch",
             "trim_pressure": "medium",
@@ -868,6 +1080,7 @@
             "invested_amount": 48000.0,
             "pnl_pct": 0.041667,
             "principal_recovered": "false",
+            "principal_recovery_status": "not_recovered",
             "profit_level": "low",
             "suggested_analysis_action": "watch",
             "trim_pressure": "low",
@@ -883,6 +1096,7 @@
             "invested_amount": 20000.0,
             "pnl_pct": 0.0,
             "principal_recovered": "false",
+            "principal_recovery_status": "not_recovered",
             "profit_level": "low",
             "suggested_analysis_action": "watch",
             "trim_pressure": "low",
@@ -1407,6 +1621,82 @@
           "title": "Evidence appendix"
         }
       ],
+      "right_side_confirmation_diagnostics": {
+        "items": [
+          {
+            "benchmark_confirmation": "missing",
+            "evidence_state": "missing",
+            "fund_code": "SYN7D001",
+            "fund_name": "Sample Recent Growth Mix",
+            "missing_reason": [
+              "missing_benchmark_history",
+              "missing_news_evidence",
+              "missing_sentiment_evidence"
+            ],
+            "nav_confirmation": "confirmed",
+            "news_confirmation": "missing",
+            "recent_drawdown_pct": null,
+            "recent_rebound_pct": 0.120833,
+            "recommended_next_data": [
+              "benchmark price history",
+              "recent news evidence",
+              "sentiment snapshot"
+            ],
+            "right_side_confirmed": false,
+            "sentiment_confirmation": "missing"
+          },
+          {
+            "benchmark_confirmation": "missing",
+            "evidence_state": "missing",
+            "fund_code": "SYN7D002",
+            "fund_name": "Sample Long Hold Income Bond",
+            "missing_reason": [
+              "missing_benchmark_history",
+              "missing_news_evidence",
+              "missing_sentiment_evidence"
+            ],
+            "nav_confirmation": "confirmed",
+            "news_confirmation": "missing",
+            "recent_drawdown_pct": null,
+            "recent_rebound_pct": 0.075,
+            "recommended_next_data": [
+              "benchmark price history",
+              "recent news evidence",
+              "sentiment snapshot"
+            ],
+            "right_side_confirmed": false,
+            "sentiment_confirmation": "missing"
+          },
+          {
+            "benchmark_confirmation": "missing",
+            "evidence_state": "missing",
+            "fund_code": "SYN7D003",
+            "fund_name": "Sample Cash Plus Fund",
+            "missing_reason": [
+              "missing_benchmark_history",
+              "missing_news_evidence",
+              "missing_sentiment_evidence"
+            ],
+            "nav_confirmation": "mixed",
+            "news_confirmation": "missing",
+            "recent_drawdown_pct": null,
+            "recent_rebound_pct": 0.01,
+            "recommended_next_data": [
+              "benchmark price history",
+              "recent news evidence",
+              "sentiment snapshot"
+            ],
+            "right_side_confirmed": false,
+            "sentiment_confirmation": "missing"
+          }
+        ],
+        "summary": {
+          "has_confirmed_right_side": false,
+          "has_unconfirmed_rebound": true,
+          "needs_more_evidence": true,
+          "notes": []
+        }
+      },
       "risk_flags": [
         {
           "details": {
@@ -1667,6 +1957,7 @@
           "fund_code": "SYN7D001",
           "fund_name": "Sample Recent Growth Mix",
           "invested_amount": 40000.0,
+          "pnl_contribution_basis": "absolute_pnl",
           "pnl_contribution_pct": 0.5,
           "pnl_pct": 0.05,
           "portfolio_weight": 0.35,
@@ -1679,6 +1970,7 @@
           "fund_code": "SYN7D002",
           "fund_name": "Sample Long Hold Income Bond",
           "invested_amount": 48000.0,
+          "pnl_contribution_basis": "absolute_pnl",
           "pnl_contribution_pct": 0.5,
           "pnl_pct": 0.041667,
           "portfolio_weight": 0.416667,
@@ -1691,6 +1983,7 @@
           "fund_code": "SYN7D003",
           "fund_name": "Sample Cash Plus Fund",
           "invested_amount": 20000.0,
+          "pnl_contribution_basis": "absolute_pnl",
           "pnl_contribution_pct": 0.0,
           "pnl_pct": 0.0,
           "portfolio_weight": 0.166667,
@@ -1874,6 +2167,7 @@
           "invested_amount": 40000.0,
           "pnl_pct": 0.05,
           "principal_recovered": "false",
+          "principal_recovery_status": "not_recovered",
           "profit_level": "moderate",
           "suggested_analysis_action": "watch",
           "trim_pressure": "medium",
@@ -1889,6 +2183,7 @@
           "invested_amount": 48000.0,
           "pnl_pct": 0.041667,
           "principal_recovered": "false",
+          "principal_recovery_status": "not_recovered",
           "profit_level": "low",
           "suggested_analysis_action": "watch",
           "trim_pressure": "low",
@@ -1904,6 +2199,7 @@
           "invested_amount": 20000.0,
           "pnl_pct": 0.0,
           "principal_recovered": "false",
+          "principal_recovery_status": "not_recovered",
           "profit_level": "low",
           "suggested_analysis_action": "watch",
           "trim_pressure": "low",
@@ -2325,6 +2621,82 @@
         "title": "Evidence appendix"
       }
     ],
+    "right_side_confirmation_diagnostics": {
+      "items": [
+        {
+          "benchmark_confirmation": "missing",
+          "evidence_state": "missing",
+          "fund_code": "SYN7D001",
+          "fund_name": "Sample Recent Growth Mix",
+          "missing_reason": [
+            "missing_benchmark_history",
+            "missing_news_evidence",
+            "missing_sentiment_evidence"
+          ],
+          "nav_confirmation": "confirmed",
+          "news_confirmation": "missing",
+          "recent_drawdown_pct": null,
+          "recent_rebound_pct": 0.120833,
+          "recommended_next_data": [
+            "benchmark price history",
+            "recent news evidence",
+            "sentiment snapshot"
+          ],
+          "right_side_confirmed": false,
+          "sentiment_confirmation": "missing"
+        },
+        {
+          "benchmark_confirmation": "missing",
+          "evidence_state": "missing",
+          "fund_code": "SYN7D002",
+          "fund_name": "Sample Long Hold Income Bond",
+          "missing_reason": [
+            "missing_benchmark_history",
+            "missing_news_evidence",
+            "missing_sentiment_evidence"
+          ],
+          "nav_confirmation": "confirmed",
+          "news_confirmation": "missing",
+          "recent_drawdown_pct": null,
+          "recent_rebound_pct": 0.075,
+          "recommended_next_data": [
+            "benchmark price history",
+            "recent news evidence",
+            "sentiment snapshot"
+          ],
+          "right_side_confirmed": false,
+          "sentiment_confirmation": "missing"
+        },
+        {
+          "benchmark_confirmation": "missing",
+          "evidence_state": "missing",
+          "fund_code": "SYN7D003",
+          "fund_name": "Sample Cash Plus Fund",
+          "missing_reason": [
+            "missing_benchmark_history",
+            "missing_news_evidence",
+            "missing_sentiment_evidence"
+          ],
+          "nav_confirmation": "mixed",
+          "news_confirmation": "missing",
+          "recent_drawdown_pct": null,
+          "recent_rebound_pct": 0.01,
+          "recommended_next_data": [
+            "benchmark price history",
+            "recent news evidence",
+            "sentiment snapshot"
+          ],
+          "right_side_confirmed": false,
+          "sentiment_confirmation": "missing"
+        }
+      ],
+      "summary": {
+        "has_confirmed_right_side": false,
+        "has_unconfirmed_rebound": true,
+        "needs_more_evidence": true,
+        "notes": []
+      }
+    },
     "risk_flags": [
       {
         "details": {

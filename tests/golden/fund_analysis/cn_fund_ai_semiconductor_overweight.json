@@ -27,6 +27,7 @@
         "user_constraints"
       ],
       "blockers": [
+        "cash_deployment_not_ready",
         "missing_recent_news"
       ],
       "decision_support_ready": false,
@@ -42,7 +43,10 @@
       "next_data_to_fetch": [
         "recent benchmark movement",
         "recent fund news",
-        "sentiment snapshot"
+        "sentiment snapshot",
+        "benchmark price history",
+        "recent news evidence",
+        "target asset evidence"
       ],
       "recommended_mcp_capabilities": [
         "benchmark_price_history",
@@ -56,9 +60,86 @@
       "user_goal": "",
       "warnings": [
         "benchmark_data_missing",
+        "cash_deployment_not_ready",
+        "right_side_unconfirmed",
         "sentiment_missing",
         "theme_overweight_warning"
       ]
+    },
+    "benchmark_divergence_diagnostics": {
+      "items": [
+        {
+          "benchmark_id": "Synthetic AI Semiconductor Index",
+          "benchmark_return_pct": null,
+          "divergence_direction": "unknown",
+          "divergence_level": "unknown",
+          "evidence_state": "missing",
+          "excess_return_pct": null,
+          "fund_code": "SYNAI001",
+          "fund_name": "Sample AI Semiconductor Active Fund",
+          "fund_return_pct": null,
+          "lookback_days": 0,
+          "missing_reason": [
+            "missing_benchmark_history"
+          ]
+        },
+        {
+          "benchmark_id": "Synthetic China Chip Index",
+          "benchmark_return_pct": null,
+          "divergence_direction": "unknown",
+          "divergence_level": "unknown",
+          "evidence_state": "missing",
+          "excess_return_pct": null,
+          "fund_code": "SYNAI002",
+          "fund_name": "Sample China Chip ETF",
+          "fund_return_pct": null,
+          "lookback_days": 0,
+          "missing_reason": [
+            "missing_benchmark_history"
+          ]
+        },
+        {
+          "benchmark_id": "Synthetic Digital Infrastructure Blend",
+          "benchmark_return_pct": null,
+          "divergence_direction": "unknown",
+          "divergence_level": "unknown",
+          "evidence_state": "missing",
+          "excess_return_pct": null,
+          "fund_code": "SYNAI003",
+          "fund_name": "Sample Digital Infrastructure Mix",
+          "fund_return_pct": null,
+          "lookback_days": 0,
+          "missing_reason": [
+            "missing_benchmark_history"
+          ]
+        },
+        {
+          "benchmark_id": "Synthetic Short Bond Index",
+          "benchmark_return_pct": null,
+          "divergence_direction": "unknown",
+          "divergence_level": "unknown",
+          "evidence_state": "missing",
+          "excess_return_pct": null,
+          "fund_code": "SYNBOND01",
+          "fund_name": "Sample Short Duration Bond Fund",
+          "fund_return_pct": null,
+          "lookback_days": 0,
+          "missing_reason": [
+            "missing_benchmark_history"
+          ]
+        }
+      ],
+      "summary": {
+        "has_benchmark_divergence": false,
+        "has_severe_underperformance": false,
+        "notes": [
+          "missing benchmark history for SYNAI001",
+          "missing benchmark history for SYNAI002",
+          "missing benchmark history for SYNAI003",
+          "missing benchmark history for SYNBOND01"
+        ],
+        "severe_underperformers": []
+      }
     },
     "cash_budget_diagnostics": {
       "cash_ratio": 0.0333,
@@ -69,6 +150,48 @@
       "remaining_budget": 12000.0,
       "reserve_gap": 10000.0,
       "short_term_budget_status": "ok"
+    },
+    "cash_deployment_diagnostics": {
+      "items": [
+        {
+          "bucket": "equity",
+          "liquidity_hint": "medium",
+          "value": 70000.0,
+          "weight": 0.466667
+        },
+        {
+          "bucket": "unknown",
+          "liquidity_hint": "unknown",
+          "value": 45000.0,
+          "weight": 0.3
+        },
+        {
+          "bucket": "unknown",
+          "liquidity_hint": "unknown",
+          "value": 20000.0,
+          "weight": 0.133333
+        },
+        {
+          "bucket": "bond",
+          "liquidity_hint": "medium",
+          "value": 10000.0,
+          "weight": 0.066667
+        }
+      ],
+      "recommended_next_data": [
+        "target asset evidence"
+      ],
+      "summary": {
+        "cash_buffer_status": "low",
+        "cash_like_value": 5000.0,
+        "cash_like_weight": 0.033333,
+        "deployment_readiness": "not_ready",
+        "estimated_deployable_cash": 0.0,
+        "notes": [
+          "cash buffer is low; deployment not appropriate"
+        ],
+        "risk_budget_status": "available"
+      }
     },
     "cost_basis_summary": {
       "SYNAI001": {
@@ -198,6 +321,16 @@
       "warnings": [
         "DCA plan sample_ai_monthly for SYNAI001 exceeds concentration limit"
       ]
+    },
+    "event_hype_failure_diagnostics": {
+      "items": [],
+      "summary": {
+        "has_event_hype_failure": false,
+        "high_risk_events": [],
+        "notes": [
+          "no event metadata provided by host"
+        ]
+      }
     },
     "evidence_gap_diagnostics": {
       "details": [
@@ -359,6 +492,7 @@
           "user_constraints"
         ],
         "blockers": [
+          "cash_deployment_not_ready",
           "missing_recent_news"
         ],
         "decision_support_ready": false,
@@ -374,7 +508,10 @@
         "next_data_to_fetch": [
           "recent benchmark movement",
           "recent fund news",
-          "sentiment snapshot"
+          "sentiment snapshot",
+          "benchmark price history",
+          "recent news evidence",
+          "target asset evidence"
         ],
         "recommended_mcp_capabilities": [
           "benchmark_price_history",
@@ -388,9 +525,86 @@
         "user_goal": "",
         "warnings": [
           "benchmark_data_missing",
+          "cash_deployment_not_ready",
+          "right_side_unconfirmed",
           "sentiment_missing",
           "theme_overweight_warning"
         ]
+      },
+      "benchmark_divergence_diagnostics": {
+        "items": [
+          {
+            "benchmark_id": "Synthetic AI Semiconductor Index",
+            "benchmark_return_pct": null,
+            "divergence_direction": "unknown",
+            "divergence_level": "unknown",
+            "evidence_state": "missing",
+            "excess_return_pct": null,
+            "fund_code": "SYNAI001",
+            "fund_name": "Sample AI Semiconductor Active Fund",
+            "fund_return_pct": null,
+            "lookback_days": 0,
+            "missing_reason": [
+              "missing_benchmark_history"
+            ]
+          },
+          {
+            "benchmark_id": "Synthetic China Chip Index",
+            "benchmark_return_pct": null,
+            "divergence_direction": "unknown",
+            "divergence_level": "unknown",
+            "evidence_state": "missing",
+            "excess_return_pct": null,
+            "fund_code": "SYNAI002",
+            "fund_name": "Sample China Chip ETF",
+            "fund_return_pct": null,
+            "lookback_days": 0,
+            "missing_reason": [
+              "missing_benchmark_history"
+            ]
+          },
+          {
+            "benchmark_id": "Synthetic Digital Infrastructure Blend",
+            "benchmark_return_pct": null,
+            "divergence_direction": "unknown",
+            "divergence_level": "unknown",
+            "evidence_state": "missing",
+            "excess_return_pct": null,
+            "fund_code": "SYNAI003",
+            "fund_name": "Sample Digital Infrastructure Mix",
+            "fund_return_pct": null,
+            "lookback_days": 0,
+            "missing_reason": [
+              "missing_benchmark_history"
+            ]
+          },
+          {
+            "benchmark_id": "Synthetic Short Bond Index",
+            "benchmark_return_pct": null,
+            "divergence_direction": "unknown",
+            "divergence_level": "unknown",
+            "evidence_state": "missing",
+            "excess_return_pct": null,
+            "fund_code": "SYNBOND01",
+            "fund_name": "Sample Short Duration Bond Fund",
+            "fund_return_pct": null,
+            "lookback_days": 0,
+            "missing_reason": [
+              "missing_benchmark_history"
+            ]
+          }
+        ],
+        "summary": {
+          "has_benchmark_divergence": false,
+          "has_severe_underperformance": false,
+          "notes": [
+            "missing benchmark history for SYNAI001",
+            "missing benchmark history for SYNAI002",
+            "missing benchmark history for SYNAI003",
+            "missing benchmark history for SYNBOND01"
+          ],
+          "severe_underperformers": []
+        }
       },
       "cash_budget_diagnostics": {
         "cash_ratio": 0.0333,
@@ -401,6 +615,48 @@
         "remaining_budget": 12000.0,
         "reserve_gap": 10000.0,
         "short_term_budget_status": "ok"
+      },
+      "cash_deployment_diagnostics": {
+        "items": [
+          {
+            "bucket": "equity",
+            "liquidity_hint": "medium",
+            "value": 70000.0,
+            "weight": 0.466667
+          },
+          {
+            "bucket": "unknown",
+            "liquidity_hint": "unknown",
+            "value": 45000.0,
+            "weight": 0.3
+          },
+          {
+            "bucket": "unknown",
+            "liquidity_hint": "unknown",
+            "value": 20000.0,
+            "weight": 0.133333
+          },
+          {
+            "bucket": "bond",
+            "liquidity_hint": "medium",
+            "value": 10000.0,
+            "weight": 0.066667
+          }
+        ],
+        "recommended_next_data": [
+          "target asset evidence"
+        ],
+        "summary": {
+          "cash_buffer_status": "low",
+          "cash_like_value": 5000.0,
+          "cash_like_weight": 0.033333,
+          "deployment_readiness": "not_ready",
+          "estimated_deployable_cash": 0.0,
+          "notes": [
+            "cash buffer is low; deployment not appropriate"
+          ],
+          "risk_budget_status": "available"
+        }
       },
       "concentration": {
         "duplicate_tags": [
@@ -541,6 +797,16 @@
         "warnings": [
           "DCA plan sample_ai_monthly for SYNAI001 exceeds concentration limit"
         ]
+      },
+      "event_hype_failure_diagnostics": {
+        "items": [],
+        "summary": {
+          "has_event_hype_failure": false,
+          "high_risk_events": [],
+          "notes": [
+            "no event metadata provided by host"
+          ]
+        }
       },
       "evidence_gap_diagnostics": {
         "details": [
@@ -864,7 +1130,8 @@
             "fund_code": "SYNAI001",
             "fund_name": "Sample AI Semiconductor Active Fund",
             "invested_amount": 62000.0,
-            "pnl_contribution_pct": 1.142857,
+            "pnl_contribution_basis": "absolute_pnl",
+            "pnl_contribution_pct": 0.727273,
             "pnl_pct": 0.129032,
             "portfolio_weight": 0.466667,
             "position_id": "SYNAI001",
@@ -876,7 +1143,8 @@
             "fund_code": "SYNAI002",
             "fund_name": "Sample China Chip ETF",
             "invested_amount": 47000.0,
-            "pnl_contribution_pct": -0.285714,
+            "pnl_contribution_basis": "absolute_pnl",
+            "pnl_contribution_pct": -0.181818,
             "pnl_pct": -0.042553,
             "portfolio_weight": 0.3,
             "position_id": "SYNAI002",
@@ -888,7 +1156,8 @@
             "fund_code": "SYNAI003",
             "fund_name": "Sample Digital Infrastructure Mix",
             "invested_amount": 19000.0,
-            "pnl_contribution_pct": 0.142857,
+            "pnl_contribution_basis": "absolute_pnl",
+            "pnl_contribution_pct": 0.090909,
             "pnl_pct": 0.052632,
             "portfolio_weight": 0.133333,
             "position_id": "SYNAI003",
@@ -900,6 +1169,7 @@
             "fund_code": "SYNBOND01",
             "fund_name": "Sample Short Duration Bond Fund",
             "invested_amount": 10000.0,
+            "pnl_contribution_basis": "absolute_pnl",
             "pnl_contribution_pct": 0.0,
             "pnl_pct": 0.0,
             "portfolio_weight": 0.066667,
@@ -1024,6 +1294,7 @@
             "invested_amount": 62000.0,
             "pnl_pct": 0.129032,
             "principal_recovered": "false",
+            "principal_recovery_status": "not_recovered",
             "profit_level": "moderate",
             "suggested_analysis_action": "watch",
             "trim_pressure": "medium",
@@ -1039,6 +1310,7 @@
             "invested_amount": 47000.0,
             "pnl_pct": -0.042553,
             "principal_recovered": "false",
+            "principal_recovery_status": "not_recovered",
             "profit_level": "none",
             "suggested_analysis_action": "watch",
             "trim_pressure": "low",
@@ -1054,6 +1326,7 @@
             "invested_amount": 19000.0,
             "pnl_pct": 0.052632,
             "principal_recovered": "false",
+            "principal_recovery_status": "not_recovered",
             "profit_level": "moderate",
             "suggested_analysis_action": "watch",
             "trim_pressure": "low",
@@ -1069,6 +1342,7 @@
             "invested_amount": 10000.0,
             "pnl_pct": 0.0,
             "principal_recovered": "false",
+            "principal_recovery_status": "not_recovered",
             "profit_level": "low",
             "suggested_analysis_action": "watch",
             "trim_pressure": "low",
@@ -1489,6 +1763,104 @@
           "title": "Evidence appendix"
         }
       ],
+      "right_side_confirmation_diagnostics": {
+        "items": [
+          {
+            "benchmark_confirmation": "missing",
+            "evidence_state": "missing",
+            "fund_code": "SYNAI001",
+            "fund_name": "Sample AI Semiconductor Active Fund",
+            "missing_reason": [
+              "missing_benchmark_history",
+              "missing_news_evidence",
+              "missing_sentiment_evidence"
+            ],
+            "nav_confirmation": "confirmed",
+            "news_confirmation": "missing",
+            "recent_drawdown_pct": -0.113333,
+            "recent_rebound_pct": 0.4,
+            "recommended_next_data": [
+              "benchmark price history",
+              "recent news evidence",
+              "sentiment snapshot"
+            ],
+            "right_side_confirmed": false,
+            "sentiment_confirmation": "missing"
+          },
+          {
+            "benchmark_confirmation": "missing",
+            "evidence_state": "missing",
+            "fund_code": "SYNAI002",
+            "fund_name": "Sample China Chip ETF",
+            "missing_reason": [
+              "missing_benchmark_history",
+              "missing_news_evidence",
+              "missing_sentiment_evidence"
+            ],
+            "nav_confirmation": "confirmed",
+            "news_confirmation": "missing",
+            "recent_drawdown_pct": -0.128788,
+            "recent_rebound_pct": 0.2,
+            "recommended_next_data": [
+              "benchmark price history",
+              "recent news evidence",
+              "sentiment snapshot"
+            ],
+            "right_side_confirmed": false,
+            "sentiment_confirmation": "missing"
+          },
+          {
+            "benchmark_confirmation": "missing",
+            "evidence_state": "missing",
+            "fund_code": "SYNAI003",
+            "fund_name": "Sample Digital Infrastructure Mix",
+            "missing_reason": [
+              "missing_benchmark_history",
+              "missing_news_evidence",
+              "missing_sentiment_evidence"
+            ],
+            "nav_confirmation": "confirmed",
+            "news_confirmation": "missing",
+            "recent_drawdown_pct": -0.053571,
+            "recent_rebound_pct": 0.1,
+            "recommended_next_data": [
+              "benchmark price history",
+              "recent news evidence",
+              "sentiment snapshot"
+            ],
+            "right_side_confirmed": false,
+            "sentiment_confirmation": "missing"
+          },
+          {
+            "benchmark_confirmation": "missing",
+            "evidence_state": "missing",
+            "fund_code": "SYNBOND01",
+            "fund_name": "Sample Short Duration Bond Fund",
+            "missing_reason": [
+              "missing_benchmark_history",
+              "missing_news_evidence",
+              "missing_sentiment_evidence"
+            ],
+            "nav_confirmation": "negative",
+            "news_confirmation": "missing",
+            "recent_drawdown_pct": -0.001996,
+            "recent_rebound_pct": 0.002004,
+            "recommended_next_data": [
+              "benchmark price history",
+              "recent news evidence",
+              "sentiment snapshot"
+            ],
+            "right_side_confirmed": false,
+            "sentiment_confirmation": "missing"
+          }
+        ],
+        "summary": {
+          "has_confirmed_right_side": false,
+          "has_unconfirmed_rebound": true,
+          "needs_more_evidence": true,
+          "notes": []
+        }
+      },
       "risk_flags": [
         {
           "details": {
@@ -1835,7 +2207,8 @@
           "fund_code": "SYNAI001",
           "fund_name": "Sample AI Semiconductor Active Fund",
           "invested_amount": 62000.0,
-          "pnl_contribution_pct": 1.142857,
+          "pnl_contribution_basis": "absolute_pnl",
+          "pnl_contribution_pct": 0.727273,
           "pnl_pct": 0.129032,
           "portfolio_weight": 0.466667,
           "position_id": "SYNAI001",
@@ -1847,7 +2220,8 @@
           "fund_code": "SYNAI002",
           "fund_name": "Sample China Chip ETF",
           "invested_amount": 47000.0,
-          "pnl_contribution_pct": -0.285714,
+          "pnl_contribution_basis": "absolute_pnl",
+          "pnl_contribution_pct": -0.181818,
           "pnl_pct": -0.042553,
           "portfolio_weight": 0.3,
           "position_id": "SYNAI002",
@@ -1859,7 +2233,8 @@
           "fund_code": "SYNAI003",
           "fund_name": "Sample Digital Infrastructure Mix",
           "invested_amount": 19000.0,
-          "pnl_contribution_pct": 0.142857,
+          "pnl_contribution_basis": "absolute_pnl",
+          "pnl_contribution_pct": 0.090909,
           "pnl_pct": 0.052632,
           "portfolio_weight": 0.133333,
           "position_id": "SYNAI003",
@@ -1871,6 +2246,7 @@
           "fund_code": "SYNBOND01",
           "fund_name": "Sample Short Duration Bond Fund",
           "invested_amount": 10000.0,
+          "pnl_contribution_basis": "absolute_pnl",
           "pnl_contribution_pct": 0.0,
           "pnl_pct": 0.0,
           "portfolio_weight": 0.066667,
@@ -2052,6 +2428,7 @@
           "invested_amount": 62000.0,
           "pnl_pct": 0.129032,
           "principal_recovered": "false",
+          "principal_recovery_status": "not_recovered",
           "profit_level": "moderate",
           "suggested_analysis_action": "watch",
           "trim_pressure": "medium",
@@ -2067,6 +2444,7 @@
           "invested_amount": 47000.0,
           "pnl_pct": -0.042553,
           "principal_recovered": "false",
+          "principal_recovery_status": "not_recovered",
           "profit_level": "none",
           "suggested_analysis_action": "watch",
           "trim_pressure": "low",
@@ -2082,6 +2460,7 @@
           "invested_amount": 19000.0,
           "pnl_pct": 0.052632,
           "principal_recovered": "false",
+          "principal_recovery_status": "not_recovered",
           "profit_level": "moderate",
           "suggested_analysis_action": "watch",
           "trim_pressure": "low",
@@ -2097,6 +2476,7 @@
           "invested_amount": 10000.0,
           "pnl_pct": 0.0,
           "principal_recovered": "false",
+          "principal_recovery_status": "not_recovered",
           "profit_level": "low",
           "suggested_analysis_action": "watch",
           "trim_pressure": "low",
@@ -2481,6 +2861,104 @@
         "title": "Evidence appendix"
       }
     ],
+    "right_side_confirmation_diagnostics": {
+      "items": [
+        {
+          "benchmark_confirmation": "missing",
+          "evidence_state": "missing",
+          "fund_code": "SYNAI001",
+          "fund_name": "Sample AI Semiconductor Active Fund",
+          "missing_reason": [
+            "missing_benchmark_history",
+            "missing_news_evidence",
+            "missing_sentiment_evidence"
+          ],
+          "nav_confirmation": "confirmed",
+          "news_confirmation": "missing",
+          "recent_drawdown_pct": -0.113333,
+          "recent_rebound_pct": 0.4,
+          "recommended_next_data": [
+            "benchmark price history",
+            "recent news evidence",
+            "sentiment snapshot"
+          ],
+          "right_side_confirmed": false,
+          "sentiment_confirmation": "missing"
+        },
+        {
+          "benchmark_confirmation": "missing",
+          "evidence_state": "missing",
+          "fund_code": "SYNAI002",
+          "fund_name": "Sample China Chip ETF",
+          "missing_reason": [
+            "missing_benchmark_history",
+            "missing_news_evidence",
+            "missing_sentiment_evidence"
+          ],
+          "nav_confirmation": "confirmed",
+          "news_confirmation": "missing",
+          "recent_drawdown_pct": -0.128788,
+          "recent_rebound_pct": 0.2,
+          "recommended_next_data": [
+            "benchmark price history",
+            "recent news evidence",
+            "sentiment snapshot"
+          ],
+          "right_side_confirmed": false,
+          "sentiment_confirmation": "missing"
+        },
+        {
+          "benchmark_confirmation": "missing",
+          "evidence_state": "missing",
+          "fund_code": "SYNAI003",
+          "fund_name": "Sample Digital Infrastructure Mix",
+          "missing_reason": [
+            "missing_benchmark_history",
+            "missing_news_evidence",
+            "missing_sentiment_evidence"
+          ],
+          "nav_confirmation": "confirmed",
+          "news_confirmation": "missing",
+          "recent_drawdown_pct": -0.053571,
+          "recent_rebound_pct": 0.1,
+          "recommended_next_data": [
+            "benchmark price history",
+            "recent news evidence",
+            "sentiment snapshot"
+          ],
+          "right_side_confirmed": false,
+          "sentiment_confirmation": "missing"
+        },
+        {
+          "benchmark_confirmation": "missing",
+          "evidence_state": "missing",
+          "fund_code": "SYNBOND01",
+          "fund_name": "Sample Short Duration Bond Fund",
+          "missing_reason": [
+            "missing_benchmark_history",
+            "missing_news_evidence",
+            "missing_sentiment_evidence"
+          ],
+          "nav_confirmation": "negative",
+          "news_confirmation": "missing",
+          "recent_drawdown_pct": -0.001996,
+          "recent_rebound_pct": 0.002004,
+          "recommended_next_data": [
+            "benchmark price history",
+            "recent news evidence",
+            "sentiment snapshot"
+          ],
+          "right_side_confirmed": false,
+          "sentiment_confirmation": "missing"
+        }
+      ],
+      "summary": {
+        "has_confirmed_right_side": false,
+        "has_unconfirmed_rebound": true,
+        "needs_more_evidence": true,
+        "notes": []
+      }
+    },
     "risk_flags": [
       {
         "details": {

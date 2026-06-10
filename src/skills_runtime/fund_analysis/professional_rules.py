@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 from .context import CoreMetricsBundle, PortfolioInputBundle
+from .safe_parsing import _safe_float, _safe_int
 
 
 def _dt(date_str: str) -> str:
@@ -50,9 +51,15 @@ def _classify_fee_items(
 
         level = "warning"
         reason = ""
-        fee_pct_val = float(fee_pct) if fee_pct is not None else 0.0
-        holding_days_val = int(holding_days) if holding_days is not None else 0
-        threshold_days_val = int(threshold_days) if threshold_days is not None else 7
+        fee_pct_val = _safe_float(fee_pct, 0.0)
+        holding_days_val = _safe_int(holding_days, 0)
+        threshold_days_val = _safe_int(threshold_days, 7)
+        if fee_pct_val is None:
+            fee_pct_val = 0.0
+        if holding_days_val is None:
+            holding_days_val = 0
+        if threshold_days_val is None:
+            threshold_days_val = 7
 
         # blocker: short holding + high fee (>=1%) + loss or unknown PnL
         if holding_days_val < threshold_days_val and fee_pct_val >= 0.01 and (absolute_pnl is None or absolute_pnl < 0):
@@ -130,16 +137,16 @@ def compute_redemption_fee_risk(
             continue
 
         threshold_days = rules.get("holding_period_days") or rules.get("min_holding_days") or rules.get("short_holding_days")
-        try:
-            threshold_days = int(threshold_days) if threshold_days is not None else 7
-        except (TypeError, ValueError):
+        threshold_days = _safe_int(threshold_days, 7)
+        if threshold_days is None:
             threshold_days = 7
 
         short_fee_pct = rules.get("redemption_fee_pct") or rules.get("short_redemption_fee_pct")
         if short_fee_pct is None:
             short_fee_pct = rules.get("fee_pct")
 
-        if short_fee_pct is not None and float(short_fee_pct) <= 0:
+        short_fee_pct_val = _safe_float(short_fee_pct)
+        if short_fee_pct_val is not None and short_fee_pct_val <= 0:
             continue
 
         fund_txns = [
@@ -181,13 +188,13 @@ def compute_redemption_fee_risk(
                 "recent_buy_date": buy["date"],
                 "holding_days": buy["holding_days"],
                 "threshold_days": threshold_days,
-                "fee_pct": float(short_fee_pct) if short_fee_pct is not None else None,
+                "fee_pct": short_fee_pct_val,
                 "estimated_recent_amount": buy["amount"],
                 "warning": (
                     f"Recent buy of {buy['amount']:.0f} on {buy['date']} "
                     f"({buy['holding_days']}d ago) is within {threshold_days}-day "
-                    f"fee window. Redemption may incur ~{float(short_fee_pct) * 100:.1f}% fee."
-                ) if short_fee_pct is not None else (
+                    f"fee window. Redemption may incur ~{short_fee_pct_val * 100:.1f}% fee."
+                ) if short_fee_pct_val is not None else (
                     f"Recent buy of {buy['amount']:.0f} on {buy['date']} "
                     f"({buy['holding_days']}d ago) is within {threshold_days}-day "
                     f"holding period. Check redemption fee rules."

@@ -18,8 +18,19 @@ def compute_position_contribution(
 ) -> dict[str, Any]:
     total_value = float(bundle.portfolio.get("total_value", 0) or 0)
     positions_data: list[dict[str, Any]] = []
-    total_absolute_pnl = 0.0
+    total_abs_pnl = 0.0
     has_any_cost = False
+
+    for pos in bundle.positions:
+        if not isinstance(pos, dict) or not pos.get("fund_code"):
+            continue
+        invested_amount_raw = pos.get("total_cost") or pos.get("invested_amount")
+        if invested_amount_raw is not None:
+            try:
+                _ = float(invested_amount_raw)
+                has_any_cost = True
+            except (TypeError, ValueError):
+                pass
 
     for pos in bundle.positions:
         if not isinstance(pos, dict) or not pos.get("fund_code"):
@@ -31,7 +42,6 @@ def compute_position_contribution(
         if invested_amount_raw is not None:
             try:
                 invested_amount = float(invested_amount_raw)
-                has_any_cost = True
             except (TypeError, ValueError):
                 invested_amount = None
 
@@ -43,7 +53,8 @@ def compute_position_contribution(
             if invested_amount > 0:
                 pnl_pct = round(absolute_pnl / invested_amount, 6)
 
-        total_absolute_pnl += absolute_pnl if absolute_pnl is not None else 0.0
+        if absolute_pnl is not None:
+            total_abs_pnl += abs(absolute_pnl)
 
         risk_contribution_hint = _classify_risk_contribution(
             portfolio_weight, absolute_pnl, invested_amount is not None,
@@ -59,14 +70,15 @@ def compute_position_contribution(
             "pnl_pct": pnl_pct,
             "portfolio_weight": portfolio_weight,
             "pnl_contribution_pct": None,
+            "pnl_contribution_basis": "absolute_pnl",
             "risk_contribution_hint": risk_contribution_hint,
         })
 
-    if total_absolute_pnl != 0:
+    if total_abs_pnl > 0:
         for entry in positions_data:
             if entry["absolute_pnl"] is not None:
                 entry["pnl_contribution_pct"] = round(
-                    entry["absolute_pnl"] / total_absolute_pnl, 6,
+                    entry["absolute_pnl"] / total_abs_pnl, 6,
                 )
 
     summary = _build_summary(positions_data, has_any_cost)

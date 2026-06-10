@@ -93,3 +93,63 @@ to produce `analysis_plan` and `evidence_gap_diagnostics` artifacts.
 In Phase 1, this is intentionally conservative. Many realistic scenarios
 will return `false` because `missing_recent_news` is always true until
 the host injects news evidence.
+
+## Phase 3: Evidence-aware diagnostics
+
+Phase 3 adds four deterministic diagnostic artifacts that consume
+host-provided evidence without fetching data:
+
+### benchmark_divergence_diagnostics
+
+Compares fund NAV return against benchmark return when host provides
+both `nav_history` and `benchmark_history`. Produces `divergence_level`
+(`none | mild | moderate | severe | unknown`) and `divergence_direction`
+(`outperforming | underperforming | in_line | unknown`). When benchmark
+data is missing, `evidence_state` is `missing` and `analysis_plan` adds
+benchmark data to `next_data_to_fetch`.
+
+### right_side_confirmation_diagnostics
+
+Assesses whether a rebound/confirmation exists for drawdown positions.
+Uses NAV, benchmark, news, and sentiment evidence. `right_side_confirmed`
+is true only when nav rebound is confirmed, benchmark is not negative,
+and news/sentiment are not negative. When unconfirmed for action-oriented
+user goals, `right_side_unconfirmed` appears in `analysis_plan.blockers`.
+
+### event_hype_failure_diagnostics
+
+Detects scenarios where an expected positive catalyst/event failed to
+produce the expected price reaction. Uses host-provided `events` or
+`catalyst_events` metadata plus NAV and news data. `suggested_analysis_action`
+is always analysis-only (`watch | reduce_hype_weight | data_needed`).
+High-risk hype failures add `event_hype_failed` to `analysis_plan.warnings`
+or `analysis_plan.blockers`.
+
+### cash_deployment_diagnostics
+
+Evaluates cash-like allocation, buffer status, and deployment readiness.
+Does not recommend specific buys. When `deployment_readiness` is
+`not_ready`, `cash_deployment_not_ready` appears in `analysis_plan.warnings`
+or `analysis_plan.blockers`.
+
+### Pipeline stages (updated)
+
+```
+input_stage
+  → ledger_stage
+  → metrics_stage
+  → optional_data_stage
+  → diagnostics_stage
+  → position_contribution
+  → profit_protection_diagnostics
+  → benchmark_divergence_diagnostics
+  → right_side_confirmation_diagnostics
+  → event_hype_failure_diagnostics
+  → cash_deployment_diagnostics
+  → planning_stage       ← consumes Phase 3 diagnostics
+  → report_stage
+  → status_stage
+```
+
+All Phase 3 diagnostics are deterministic, local-only, and do not fetch
+live data. Missing evidence is surfaced as gaps, not hallucinated.

@@ -41,7 +41,9 @@
       "next_data_to_fetch": [
         "recent benchmark movement",
         "recent fund news",
-        "sentiment snapshot"
+        "sentiment snapshot",
+        "benchmark price history",
+        "recent news evidence"
       ],
       "recommended_mcp_capabilities": [
         "benchmark_price_history",
@@ -55,9 +57,53 @@
       "user_goal": "",
       "warnings": [
         "benchmark_data_missing",
+        "right_side_unconfirmed",
         "sentiment_missing",
         "theme_overweight_warning"
       ]
+    },
+    "benchmark_divergence_diagnostics": {
+      "items": [
+        {
+          "benchmark_id": "Synthetic Ledger Equity Index",
+          "benchmark_return_pct": null,
+          "divergence_direction": "unknown",
+          "divergence_level": "unknown",
+          "evidence_state": "missing",
+          "excess_return_pct": null,
+          "fund_code": "SYNLED001",
+          "fund_name": "",
+          "fund_return_pct": null,
+          "lookback_days": 0,
+          "missing_reason": [
+            "missing_benchmark_history"
+          ]
+        },
+        {
+          "benchmark_id": "Synthetic Ledger Balanced Blend",
+          "benchmark_return_pct": null,
+          "divergence_direction": "unknown",
+          "divergence_level": "unknown",
+          "evidence_state": "missing",
+          "excess_return_pct": null,
+          "fund_code": "SYNLED002",
+          "fund_name": "",
+          "fund_return_pct": null,
+          "lookback_days": 0,
+          "missing_reason": [
+            "missing_benchmark_history"
+          ]
+        }
+      ],
+      "summary": {
+        "has_benchmark_divergence": false,
+        "has_severe_underperformance": false,
+        "notes": [
+          "missing benchmark history for SYNLED001",
+          "missing benchmark history for SYNLED002"
+        ],
+        "severe_underperformers": []
+      }
     },
     "cash_budget_diagnostics": {
       "cash_ratio": 0.0981,
@@ -68,6 +114,32 @@
       "remaining_budget": 5708.0,
       "reserve_gap": 135.0,
       "short_term_budget_status": "ok"
+    },
+    "cash_deployment_diagnostics": {
+      "items": [
+        {
+          "bucket": "equity",
+          "liquidity_hint": "medium",
+          "value": 47200.0,
+          "weight": 0.661528
+        },
+        {
+          "bucket": "unknown",
+          "liquidity_hint": "unknown",
+          "value": 24150.0,
+          "weight": 0.338472
+        }
+      ],
+      "recommended_next_data": [],
+      "summary": {
+        "cash_buffer_status": "adequate",
+        "cash_like_value": 7000.0,
+        "cash_like_weight": 0.098108,
+        "deployment_readiness": "ready",
+        "estimated_deployable_cash": 0.0,
+        "notes": [],
+        "risk_budget_status": "available"
+      }
     },
     "cost_basis_summary": {
       "SYNLED001": {
@@ -228,6 +300,16 @@
       "unresolved_events": [],
       "warnings": []
     },
+    "event_hype_failure_diagnostics": {
+      "items": [],
+      "summary": {
+        "has_event_hype_failure": false,
+        "high_risk_events": [],
+        "notes": [
+          "no event metadata provided by host"
+        ]
+      }
+    },
     "evidence_gap_diagnostics": {
       "details": [
         {
@@ -341,7 +423,9 @@
         "next_data_to_fetch": [
           "recent benchmark movement",
           "recent fund news",
-          "sentiment snapshot"
+          "sentiment snapshot",
+          "benchmark price history",
+          "recent news evidence"
         ],
         "recommended_mcp_capabilities": [
           "benchmark_price_history",
@@ -355,9 +439,53 @@
         "user_goal": "",
         "warnings": [
           "benchmark_data_missing",
+          "right_side_unconfirmed",
           "sentiment_missing",
           "theme_overweight_warning"
         ]
+      },
+      "benchmark_divergence_diagnostics": {
+        "items": [
+          {
+            "benchmark_id": "Synthetic Ledger Equity Index",
+            "benchmark_return_pct": null,
+            "divergence_direction": "unknown",
+            "divergence_level": "unknown",
+            "evidence_state": "missing",
+            "excess_return_pct": null,
+            "fund_code": "SYNLED001",
+            "fund_name": "",
+            "fund_return_pct": null,
+            "lookback_days": 0,
+            "missing_reason": [
+              "missing_benchmark_history"
+            ]
+          },
+          {
+            "benchmark_id": "Synthetic Ledger Balanced Blend",
+            "benchmark_return_pct": null,
+            "divergence_direction": "unknown",
+            "divergence_level": "unknown",
+            "evidence_state": "missing",
+            "excess_return_pct": null,
+            "fund_code": "SYNLED002",
+            "fund_name": "",
+            "fund_return_pct": null,
+            "lookback_days": 0,
+            "missing_reason": [
+              "missing_benchmark_history"
+            ]
+          }
+        ],
+        "summary": {
+          "has_benchmark_divergence": false,
+          "has_severe_underperformance": false,
+          "notes": [
+            "missing benchmark history for SYNLED001",
+            "missing benchmark history for SYNLED002"
+          ],
+          "severe_underperformers": []
+        }
       },
       "cash_budget_diagnostics": {
         "cash_ratio": 0.0981,
@@ -368,6 +496,32 @@
         "remaining_budget": 5708.0,
         "reserve_gap": 135.0,
         "short_term_budget_status": "ok"
+      },
+      "cash_deployment_diagnostics": {
+        "items": [
+          {
+            "bucket": "equity",
+            "liquidity_hint": "medium",
+            "value": 47200.0,
+            "weight": 0.661528
+          },
+          {
+            "bucket": "unknown",
+            "liquidity_hint": "unknown",
+            "value": 24150.0,
+            "weight": 0.338472
+          }
+        ],
+        "recommended_next_data": [],
+        "summary": {
+          "cash_buffer_status": "adequate",
+          "cash_like_value": 7000.0,
+          "cash_like_weight": 0.098108,
+          "deployment_readiness": "ready",
+          "estimated_deployable_cash": 0.0,
+          "notes": [],
+          "risk_budget_status": "available"
+        }
       },
       "concentration": {
         "duplicate_tags": [],
@@ -483,6 +637,16 @@
         "warnings": [
           "DCA plan sample_ledger_monthly for SYNLED001 exceeds concentration limit"
         ]
+      },
+      "event_hype_failure_diagnostics": {
+        "items": [],
+        "summary": {
+          "has_event_hype_failure": false,
+          "high_risk_events": [],
+          "notes": [
+            "no event metadata provided by host"
+          ]
+        }
       },
       "evidence_gap_diagnostics": {
         "details": [
@@ -665,6 +829,7 @@
             "fund_code": "SYNLED001",
             "fund_name": "",
             "invested_amount": 42000.0,
+            "pnl_contribution_basis": "absolute_pnl",
             "pnl_contribution_pct": 0.622754,
             "pnl_pct": 0.12381,
             "portfolio_weight": 0.661528,
@@ -677,6 +842,7 @@
             "fund_code": "SYNLED002",
             "fund_name": "",
             "invested_amount": 21000.0,
+            "pnl_contribution_basis": "absolute_pnl",
             "pnl_contribution_pct": 0.377246,
             "pnl_pct": 0.15,
             "portfolio_weight": 0.338472,
@@ -778,6 +944,7 @@
             "invested_amount": 42000.0,
             "pnl_pct": 0.12381,
             "principal_recovered": "false",
+            "principal_recovery_status": "not_recovered",
             "profit_level": "moderate",
             "suggested_analysis_action": "watch",
             "trim_pressure": "medium",
@@ -793,6 +960,7 @@
             "invested_amount": 21000.0,
             "pnl_pct": 0.15,
             "principal_recovered": "partial",
+            "principal_recovery_status": "partial",
             "profit_level": "high",
             "suggested_analysis_action": "trim_review",
             "trim_pressure": "high",
@@ -1178,6 +1346,60 @@
           "title": "Evidence appendix"
         }
       ],
+      "right_side_confirmation_diagnostics": {
+        "items": [
+          {
+            "benchmark_confirmation": "missing",
+            "evidence_state": "missing",
+            "fund_code": "SYNLED001",
+            "fund_name": "",
+            "missing_reason": [
+              "missing_benchmark_history",
+              "missing_news_evidence",
+              "missing_sentiment_evidence"
+            ],
+            "nav_confirmation": "confirmed",
+            "news_confirmation": "missing",
+            "recent_drawdown_pct": null,
+            "recent_rebound_pct": 0.18,
+            "recommended_next_data": [
+              "benchmark price history",
+              "recent news evidence",
+              "sentiment snapshot"
+            ],
+            "right_side_confirmed": false,
+            "sentiment_confirmation": "missing"
+          },
+          {
+            "benchmark_confirmation": "missing",
+            "evidence_state": "missing",
+            "fund_code": "SYNLED002",
+            "fund_name": "",
+            "missing_reason": [
+              "missing_benchmark_history",
+              "missing_news_evidence",
+              "missing_sentiment_evidence"
+            ],
+            "nav_confirmation": "confirmed",
+            "news_confirmation": "missing",
+            "recent_drawdown_pct": null,
+            "recent_rebound_pct": 0.15,
+            "recommended_next_data": [
+              "benchmark price history",
+              "recent news evidence",
+              "sentiment snapshot"
+            ],
+            "right_side_confirmed": false,
+            "sentiment_confirmation": "missing"
+          }
+        ],
+        "summary": {
+          "has_confirmed_right_side": false,
+          "has_unconfirmed_rebound": true,
+          "needs_more_evidence": true,
+          "notes": []
+        }
+      },
       "risk_flags": [
         {
           "details": {
@@ -1396,6 +1618,7 @@
           "fund_code": "SYNLED001",
           "fund_name": "",
           "invested_amount": 42000.0,
+          "pnl_contribution_basis": "absolute_pnl",
           "pnl_contribution_pct": 0.622754,
           "pnl_pct": 0.12381,
           "portfolio_weight": 0.661528,
@@ -1408,6 +1631,7 @@
           "fund_code": "SYNLED002",
           "fund_name": "",
           "invested_amount": 21000.0,
+          "pnl_contribution_basis": "absolute_pnl",
           "pnl_contribution_pct": 0.377246,
           "pnl_pct": 0.15,
           "portfolio_weight": 0.338472,
@@ -1531,6 +1755,7 @@
           "invested_amount": 42000.0,
           "pnl_pct": 0.12381,
           "principal_recovered": "false",
+          "principal_recovery_status": "not_recovered",
           "profit_level": "moderate",
           "suggested_analysis_action": "watch",
           "trim_pressure": "medium",
@@ -1546,6 +1771,7 @@
           "invested_amount": 21000.0,
           "pnl_pct": 0.15,
           "principal_recovered": "partial",
+          "principal_recovery_status": "partial",
           "profit_level": "high",
           "suggested_analysis_action": "trim_review",
           "trim_pressure": "high",
@@ -1909,6 +2135,60 @@
         "title": "Evidence appendix"
       }
     ],
+    "right_side_confirmation_diagnostics": {
+      "items": [
+        {
+          "benchmark_confirmation": "missing",
+          "evidence_state": "missing",
+          "fund_code": "SYNLED001",
+          "fund_name": "",
+          "missing_reason": [
+            "missing_benchmark_history",
+            "missing_news_evidence",
+            "missing_sentiment_evidence"
+          ],
+          "nav_confirmation": "confirmed",
+          "news_confirmation": "missing",
+          "recent_drawdown_pct": null,
+          "recent_rebound_pct": 0.18,
+          "recommended_next_data": [
+            "benchmark price history",
+            "recent news evidence",
+            "sentiment snapshot"
+          ],
+          "right_side_confirmed": false,
+          "sentiment_confirmation": "missing"
+        },
+        {
+          "benchmark_confirmation": "missing",
+          "evidence_state": "missing",
+          "fund_code": "SYNLED002",
+          "fund_name": "",
+          "missing_reason": [
+            "missing_benchmark_history",
+            "missing_news_evidence",
+            "missing_sentiment_evidence"
+          ],
+          "nav_confirmation": "confirmed",
+          "news_confirmation": "missing",
+          "recent_drawdown_pct": null,
+          "recent_rebound_pct": 0.15,
+          "recommended_next_data": [
+            "benchmark price history",
+            "recent news evidence",
+            "sentiment snapshot"
+          ],
+          "right_side_confirmed": false,
+          "sentiment_confirmation": "missing"
+        }
+      ],
+      "summary": {
+        "has_confirmed_right_side": false,
+        "has_unconfirmed_rebound": true,
+        "needs_more_evidence": true,
+        "notes": []
+      }
+    },
     "risk_flags": [
       {
         "details": {

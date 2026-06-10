@@ -41,7 +41,9 @@
       "next_data_to_fetch": [
         "recent benchmark movement",
         "recent fund news",
-        "sentiment snapshot"
+        "sentiment snapshot",
+        "benchmark price history",
+        "recent news evidence"
       ],
       "recommended_mcp_capabilities": [
         "benchmark_price_history",
@@ -55,9 +57,69 @@
       "user_goal": "",
       "warnings": [
         "benchmark_data_missing",
+        "right_side_unconfirmed",
         "sentiment_missing",
         "theme_overweight_warning"
       ]
+    },
+    "benchmark_divergence_diagnostics": {
+      "items": [
+        {
+          "benchmark_id": "Synthetic Broad Equity Index",
+          "benchmark_return_pct": null,
+          "divergence_direction": "unknown",
+          "divergence_level": "unknown",
+          "evidence_state": "missing",
+          "excess_return_pct": null,
+          "fund_code": "SYNDCA001",
+          "fund_name": "Sample Broad Equity DCA Fund",
+          "fund_return_pct": null,
+          "lookback_days": 0,
+          "missing_reason": [
+            "missing_benchmark_history"
+          ]
+        },
+        {
+          "benchmark_id": "Synthetic Balanced Blend",
+          "benchmark_return_pct": null,
+          "divergence_direction": "unknown",
+          "divergence_level": "unknown",
+          "evidence_state": "missing",
+          "excess_return_pct": null,
+          "fund_code": "SYNDCA002",
+          "fund_name": "Sample Balanced Allocation Fund",
+          "fund_return_pct": null,
+          "lookback_days": 0,
+          "missing_reason": [
+            "missing_benchmark_history"
+          ]
+        },
+        {
+          "benchmark_id": "Synthetic Cash Benchmark",
+          "benchmark_return_pct": null,
+          "divergence_direction": "unknown",
+          "divergence_level": "unknown",
+          "evidence_state": "missing",
+          "excess_return_pct": null,
+          "fund_code": "SYNMM001",
+          "fund_name": "Sample Money Market Sleeve",
+          "fund_return_pct": null,
+          "lookback_days": 0,
+          "missing_reason": [
+            "missing_benchmark_history"
+          ]
+        }
+      ],
+      "summary": {
+        "has_benchmark_divergence": false,
+        "has_severe_underperformance": false,
+        "notes": [
+          "missing benchmark history for SYNDCA001",
+          "missing benchmark history for SYNDCA002",
+          "missing benchmark history for SYNMM001"
+        ],
+        "severe_underperformers": []
+      }
     },
     "cash_budget_diagnostics": {
       "cash_ratio": 0.12,
@@ -66,6 +128,38 @@
       "remaining_budget": 2000.0,
       "reserve_gap": null,
       "short_term_budget_status": "ok"
+    },
+    "cash_deployment_diagnostics": {
+      "items": [
+        {
+          "bucket": "equity",
+          "liquidity_hint": "medium",
+          "value": 45000.0,
+          "weight": 0.45
+        },
+        {
+          "bucket": "unknown",
+          "liquidity_hint": "unknown",
+          "value": 30000.0,
+          "weight": 0.3
+        },
+        {
+          "bucket": "unknown",
+          "liquidity_hint": "unknown",
+          "value": 13000.0,
+          "weight": 0.13
+        }
+      ],
+      "recommended_next_data": [],
+      "summary": {
+        "cash_buffer_status": "adequate",
+        "cash_like_value": 12000.0,
+        "cash_like_weight": 0.12,
+        "deployment_readiness": "ready",
+        "estimated_deployable_cash": 0.0,
+        "notes": [],
+        "risk_budget_status": "available"
+      }
     },
     "cost_basis_summary": {
       "SYNDCA001": {
@@ -184,6 +278,16 @@
       "warnings": [
         "DCA plan sample_equity_dca for SYNDCA001 exceeds concentration limit"
       ]
+    },
+    "event_hype_failure_diagnostics": {
+      "items": [],
+      "summary": {
+        "has_event_hype_failure": false,
+        "high_risk_events": [],
+        "notes": [
+          "no event metadata provided by host"
+        ]
+      }
     },
     "evidence_gap_diagnostics": {
       "details": [
@@ -313,7 +417,9 @@
         "next_data_to_fetch": [
           "recent benchmark movement",
           "recent fund news",
-          "sentiment snapshot"
+          "sentiment snapshot",
+          "benchmark price history",
+          "recent news evidence"
         ],
         "recommended_mcp_capabilities": [
           "benchmark_price_history",
@@ -327,9 +433,69 @@
         "user_goal": "",
         "warnings": [
           "benchmark_data_missing",
+          "right_side_unconfirmed",
           "sentiment_missing",
           "theme_overweight_warning"
         ]
+      },
+      "benchmark_divergence_diagnostics": {
+        "items": [
+          {
+            "benchmark_id": "Synthetic Broad Equity Index",
+            "benchmark_return_pct": null,
+            "divergence_direction": "unknown",
+            "divergence_level": "unknown",
+            "evidence_state": "missing",
+            "excess_return_pct": null,
+            "fund_code": "SYNDCA001",
+            "fund_name": "Sample Broad Equity DCA Fund",
+            "fund_return_pct": null,
+            "lookback_days": 0,
+            "missing_reason": [
+              "missing_benchmark_history"
+            ]
+          },
+          {
+            "benchmark_id": "Synthetic Balanced Blend",
+            "benchmark_return_pct": null,
+            "divergence_direction": "unknown",
+            "divergence_level": "unknown",
+            "evidence_state": "missing",
+            "excess_return_pct": null,
+            "fund_code": "SYNDCA002",
+            "fund_name": "Sample Balanced Allocation Fund",
+            "fund_return_pct": null,
+            "lookback_days": 0,
+            "missing_reason": [
+              "missing_benchmark_history"
+            ]
+          },
+          {
+            "benchmark_id": "Synthetic Cash Benchmark",
+            "benchmark_return_pct": null,
+            "divergence_direction": "unknown",
+            "divergence_level": "unknown",
+            "evidence_state": "missing",
+            "excess_return_pct": null,
+            "fund_code": "SYNMM001",
+            "fund_name": "Sample Money Market Sleeve",
+            "fund_return_pct": null,
+            "lookback_days": 0,
+            "missing_reason": [
+              "missing_benchmark_history"
+            ]
+          }
+        ],
+        "summary": {
+          "has_benchmark_divergence": false,
+          "has_severe_underperformance": false,
+          "notes": [
+            "missing benchmark history for SYNDCA001",
+            "missing benchmark history for SYNDCA002",
+            "missing benchmark history for SYNMM001"
+          ],
+          "severe_underperformers": []
+        }
       },
       "cash_budget_diagnostics": {
         "cash_ratio": 0.12,
@@ -338,6 +504,38 @@
         "remaining_budget": 2000.0,
         "reserve_gap": null,
         "short_term_budget_status": "ok"
+      },
+      "cash_deployment_diagnostics": {
+        "items": [
+          {
+            "bucket": "equity",
+            "liquidity_hint": "medium",
+            "value": 45000.0,
+            "weight": 0.45
+          },
+          {
+            "bucket": "unknown",
+            "liquidity_hint": "unknown",
+            "value": 30000.0,
+            "weight": 0.3
+          },
+          {
+            "bucket": "unknown",
+            "liquidity_hint": "unknown",
+            "value": 13000.0,
+            "weight": 0.13
+          }
+        ],
+        "recommended_next_data": [],
+        "summary": {
+          "cash_buffer_status": "adequate",
+          "cash_like_value": 12000.0,
+          "cash_like_weight": 0.12,
+          "deployment_readiness": "ready",
+          "estimated_deployable_cash": 0.0,
+          "notes": [],
+          "risk_budget_status": "available"
+        }
       },
       "concentration": {
         "duplicate_tags": [],
@@ -465,6 +663,16 @@
         "warnings": [
           "DCA plan sample_equity_dca for SYNDCA001 exceeds concentration limit"
         ]
+      },
+      "event_hype_failure_diagnostics": {
+        "items": [],
+        "summary": {
+          "has_event_hype_failure": false,
+          "high_risk_events": [],
+          "notes": [
+            "no event metadata provided by host"
+          ]
+        }
       },
       "evidence_gap_diagnostics": {
         "details": [
@@ -703,7 +911,8 @@
             "fund_code": "SYNDCA001",
             "fund_name": "Sample Broad Equity DCA Fund",
             "invested_amount": 53000.0,
-            "pnl_contribution_pct": 0.888889,
+            "pnl_contribution_basis": "absolute_pnl",
+            "pnl_contribution_pct": -0.888889,
             "pnl_pct": -0.150943,
             "portfolio_weight": 0.45,
             "position_id": "SYNDCA001",
@@ -715,7 +924,8 @@
             "fund_code": "SYNDCA002",
             "fund_name": "Sample Balanced Allocation Fund",
             "invested_amount": 31000.0,
-            "pnl_contribution_pct": 0.111111,
+            "pnl_contribution_basis": "absolute_pnl",
+            "pnl_contribution_pct": -0.111111,
             "pnl_pct": -0.032258,
             "portfolio_weight": 0.3,
             "position_id": "SYNDCA002",
@@ -727,7 +937,8 @@
             "fund_code": "SYNMM001",
             "fund_name": "Sample Money Market Sleeve",
             "invested_amount": 13000.0,
-            "pnl_contribution_pct": -0.0,
+            "pnl_contribution_basis": "absolute_pnl",
+            "pnl_contribution_pct": 0.0,
             "pnl_pct": 0.0,
             "portfolio_weight": 0.13,
             "position_id": "SYNMM001",
@@ -735,7 +946,10 @@
           }
         ],
         "summary": {
-          "high_weight_low_contribution_positions": [],
+          "high_weight_low_contribution_positions": [
+            "SYNDCA001",
+            "SYNDCA002"
+          ],
           "largest_loss_contributor": "SYNDCA001",
           "largest_profit_contributor": "",
           "largest_value_position": "SYNDCA001",
@@ -826,6 +1040,7 @@
             "invested_amount": 53000.0,
             "pnl_pct": -0.150943,
             "principal_recovered": "false",
+            "principal_recovery_status": "not_recovered",
             "profit_level": "none",
             "suggested_analysis_action": "watch",
             "trim_pressure": "low",
@@ -841,6 +1056,7 @@
             "invested_amount": 31000.0,
             "pnl_pct": -0.032258,
             "principal_recovered": "false",
+            "principal_recovery_status": "not_recovered",
             "profit_level": "none",
             "suggested_analysis_action": "watch",
             "trim_pressure": "low",
@@ -856,6 +1072,7 @@
             "invested_amount": 13000.0,
             "pnl_pct": 0.0,
             "principal_recovered": "false",
+            "principal_recovery_status": "not_recovered",
             "profit_level": "low",
             "suggested_analysis_action": "watch",
             "trim_pressure": "low",
@@ -1280,6 +1497,82 @@
           "title": "Evidence appendix"
         }
       ],
+      "right_side_confirmation_diagnostics": {
+        "items": [
+          {
+            "benchmark_confirmation": "missing",
+            "evidence_state": "missing",
+            "fund_code": "SYNDCA001",
+            "fund_name": "Sample Broad Equity DCA Fund",
+            "missing_reason": [
+              "missing_benchmark_history",
+              "missing_news_evidence",
+              "missing_sentiment_evidence"
+            ],
+            "nav_confirmation": "confirmed",
+            "news_confirmation": "missing",
+            "recent_drawdown_pct": -0.291667,
+            "recent_rebound_pct": 0.058824,
+            "recommended_next_data": [
+              "benchmark price history",
+              "recent news evidence",
+              "sentiment snapshot"
+            ],
+            "right_side_confirmed": false,
+            "sentiment_confirmation": "missing"
+          },
+          {
+            "benchmark_confirmation": "missing",
+            "evidence_state": "missing",
+            "fund_code": "SYNDCA002",
+            "fund_name": "Sample Balanced Allocation Fund",
+            "missing_reason": [
+              "missing_benchmark_history",
+              "missing_news_evidence",
+              "missing_sentiment_evidence"
+            ],
+            "nav_confirmation": "confirmed",
+            "news_confirmation": "missing",
+            "recent_drawdown_pct": -0.066667,
+            "recent_rebound_pct": 0.020408,
+            "recommended_next_data": [
+              "benchmark price history",
+              "recent news evidence",
+              "sentiment snapshot"
+            ],
+            "right_side_confirmed": false,
+            "sentiment_confirmation": "missing"
+          },
+          {
+            "benchmark_confirmation": "missing",
+            "evidence_state": "missing",
+            "fund_code": "SYNMM001",
+            "fund_name": "Sample Money Market Sleeve",
+            "missing_reason": [
+              "missing_benchmark_history",
+              "missing_news_evidence",
+              "missing_sentiment_evidence"
+            ],
+            "nav_confirmation": "mixed",
+            "news_confirmation": "missing",
+            "recent_drawdown_pct": null,
+            "recent_rebound_pct": null,
+            "recommended_next_data": [
+              "benchmark price history",
+              "recent news evidence",
+              "sentiment snapshot"
+            ],
+            "right_side_confirmed": false,
+            "sentiment_confirmation": "missing"
+          }
+        ],
+        "summary": {
+          "has_confirmed_right_side": false,
+          "has_unconfirmed_rebound": true,
+          "needs_more_evidence": true,
+          "notes": []
+        }
+      },
       "risk_flags": [
         {
           "details": {
@@ -1594,7 +1887,8 @@
           "fund_code": "SYNDCA001",
           "fund_name": "Sample Broad Equity DCA Fund",
           "invested_amount": 53000.0,
-          "pnl_contribution_pct": 0.888889,
+          "pnl_contribution_basis": "absolute_pnl",
+          "pnl_contribution_pct": -0.888889,
           "pnl_pct": -0.150943,
           "portfolio_weight": 0.45,
           "position_id": "SYNDCA001",
@@ -1606,7 +1900,8 @@
           "fund_code": "SYNDCA002",
           "fund_name": "Sample Balanced Allocation Fund",
           "invested_amount": 31000.0,
-          "pnl_contribution_pct": 0.111111,
+          "pnl_contribution_basis": "absolute_pnl",
+          "pnl_contribution_pct": -0.111111,
           "pnl_pct": -0.032258,
           "portfolio_weight": 0.3,
           "position_id": "SYNDCA002",
@@ -1618,7 +1913,8 @@
           "fund_code": "SYNMM001",
           "fund_name": "Sample Money Market Sleeve",
           "invested_amount": 13000.0,
-          "pnl_contribution_pct": -0.0,
+          "pnl_contribution_basis": "absolute_pnl",
+          "pnl_contribution_pct": 0.0,
           "pnl_pct": 0.0,
           "portfolio_weight": 0.13,
           "position_id": "SYNMM001",
@@ -1626,7 +1922,10 @@
         }
       ],
       "summary": {
-        "high_weight_low_contribution_positions": [],
+        "high_weight_low_contribution_positions": [
+          "SYNDCA001",
+          "SYNDCA002"
+        ],
         "largest_loss_contributor": "SYNDCA001",
         "largest_profit_contributor": "",
         "largest_value_position": "SYNDCA001",
@@ -1758,6 +2057,7 @@
           "invested_amount": 53000.0,
           "pnl_pct": -0.150943,
           "principal_recovered": "false",
+          "principal_recovery_status": "not_recovered",
           "profit_level": "none",
           "suggested_analysis_action": "watch",
           "trim_pressure": "low",
@@ -1773,6 +2073,7 @@
           "invested_amount": 31000.0,
           "pnl_pct": -0.032258,
           "principal_recovered": "false",
+          "principal_recovery_status": "not_recovered",
           "profit_level": "none",
           "suggested_analysis_action": "watch",
           "trim_pressure": "low",
@@ -1788,6 +2089,7 @@
           "invested_amount": 13000.0,
           "pnl_pct": 0.0,
           "principal_recovered": "false",
+          "principal_recovery_status": "not_recovered",
           "profit_level": "low",
           "suggested_analysis_action": "watch",
           "trim_pressure": "low",
@@ -2158,6 +2460,82 @@
         "title": "Evidence appendix"
       }
     ],
+    "right_side_confirmation_diagnostics": {
+      "items": [
+        {
+          "benchmark_confirmation": "missing",
+          "evidence_state": "missing",
+          "fund_code": "SYNDCA001",
+          "fund_name": "Sample Broad Equity DCA Fund",
+          "missing_reason": [
+            "missing_benchmark_history",
+            "missing_news_evidence",
+            "missing_sentiment_evidence"
+          ],
+          "nav_confirmation": "confirmed",
+          "news_confirmation": "missing",
+          "recent_drawdown_pct": -0.291667,
+          "recent_rebound_pct": 0.058824,
+          "recommended_next_data": [
+            "benchmark price history",
+            "recent news evidence",
+            "sentiment snapshot"
+          ],
+          "right_side_confirmed": false,
+          "sentiment_confirmation": "missing"
+        },
+        {
+          "benchmark_confirmation": "missing",
+          "evidence_state": "missing",
+          "fund_code": "SYNDCA002",
+          "fund_name": "Sample Balanced Allocation Fund",
+          "missing_reason": [
+            "missing_benchmark_history",
+            "missing_news_evidence",
+            "missing_sentiment_evidence"
+          ],
+          "nav_confirmation": "confirmed",
+          "news_confirmation": "missing",
+          "recent_drawdown_pct": -0.066667,
+          "recent_rebound_pct": 0.020408,
+          "recommended_next_data": [
+            "benchmark price history",
+            "recent news evidence",
+            "sentiment snapshot"
+          ],
+          "right_side_confirmed": false,
+          "sentiment_confirmation": "missing"
+        },
+        {
+          "benchmark_confirmation": "missing",
+          "evidence_state": "missing",
+          "fund_code": "SYNMM001",
+          "fund_name": "Sample Money Market Sleeve",
+          "missing_reason": [
+            "missing_benchmark_history",
+            "missing_news_evidence",
+            "missing_sentiment_evidence"
+          ],
+          "nav_confirmation": "mixed",
+          "news_confirmation": "missing",
+          "recent_drawdown_pct": null,
+          "recent_rebound_pct": null,
+          "recommended_next_data": [
+            "benchmark price history",
+            "recent news evidence",
+            "sentiment snapshot"
+          ],
+          "right_side_confirmed": false,
+          "sentiment_confirmation": "missing"
+        }
+      ],
+      "summary": {
+        "has_confirmed_right_side": false,
+        "has_unconfirmed_rebound": true,
+        "needs_more_evidence": true,
+        "notes": []
+      }
+    },
     "risk_flags": [
       {
         "details": {

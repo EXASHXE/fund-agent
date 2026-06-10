@@ -132,6 +132,10 @@ separate top-level artifacts in the current runtime.
 | `evidence_gap_diagnostics` | `diagnostics` | No | object | Yes | Normal structured `fund_analysis` portfolio/report run. | Structured booleans for missing inputs with severity-coded details and recommended next data. |
 | `position_contribution` | `ledger_and_pnl` | No | object | Yes | Portfolio positions with current_value are available. | Per-position PnL contribution analysis including portfolio weight, absolute/percentage PnL, and contribution to total portfolio PnL. |
 | `profit_protection_diagnostics` | `diagnostics` | No | object | Yes | Portfolio positions with cost basis or transaction history are available. | Profit protection analysis for high-profit positions; analysis-only, not a formal decision. |
+| `benchmark_divergence_diagnostics` | `diagnostics` | No | object | Yes | Host supplies nav_history and benchmark_history for at least one position. | Benchmark divergence analysis comparing fund return against benchmark return; analysis-only. |
+| `right_side_confirmation_diagnostics` | `diagnostics` | No | object | Yes | Portfolio positions are available. | Right-side confirmation assessment for drawdown positions; evidence readiness diagnostic only. |
+| `event_hype_failure_diagnostics` | `diagnostics` | No | object | Yes | Host supplies events or catalyst_events metadata. | Event hype failure detection for expected positive catalysts with weak/negative post-event reaction; analysis-only. |
+| `cash_deployment_diagnostics` | `diagnostics` | No | object | Yes | Portfolio positions are available. | Cash deployment readiness assessment including cash-like allocation, buffer status, and risk budget; analysis-only. |
 
 ## Report Output
 

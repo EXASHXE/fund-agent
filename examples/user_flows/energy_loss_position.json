@@ -94,8 +94,19 @@
   "redemption_rules": {
     "021620": {"holding_period_days": 7, "redemption_fee_pct": 0.005}
   },
-  "benchmarks": {},
-  "benchmark_history": {},
+  "benchmarks": {
+    "021620": "标普石油天然气指数"
+  },
+  "benchmark_history": {
+    "021620": [
+      {"date": "2025-01-15", "nav": 4200.0},
+      {"date": "2025-06-01", "nav": 4600.0},
+      {"date": "2025-10-01", "nav": 4300.0},
+      {"date": "2025-12-31", "nav": 4100.0},
+      {"date": "2026-03-01", "nav": 3900.0},
+      {"date": "2026-06-01", "nav": 3600.0}
+    ]
+  },
   "news_evidence": [],
   "sentiment_evidence": [],
   "constraints": {

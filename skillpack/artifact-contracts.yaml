@@ -342,3 +342,31 @@ contracts:
         top_level: true
         produced_when: portfolio positions with cost basis or transaction history are available
         description: Profit protection analysis for high-profit positions including profit level, principal recovery, free-carry estimate, and trim/hold pressure. Analysis-only; not a formal decision.
+      - key: benchmark_divergence_diagnostics
+        category: diagnostics
+        required: false
+        type: object
+        top_level: true
+        produced_when: host supplies nav_history and benchmark_history for at least one position
+        description: Benchmark divergence analysis comparing fund return against benchmark return. Analysis-only; not a formal decision.
+      - key: right_side_confirmation_diagnostics
+        category: diagnostics
+        required: false
+        type: object
+        top_level: true
+        produced_when: portfolio positions are available
+        description: Right-side confirmation assessment for drawdown positions. Evidence readiness diagnostic only; not a trading signal.
+      - key: event_hype_failure_diagnostics
+        category: diagnostics
+        required: false
+        type: object
+        top_level: true
+        produced_when: host supplies events or catalyst_events metadata
+        description: Event hype failure detection for expected positive catalysts with weak/negative post-event reaction. Analysis-only; not a formal decision.
+      - key: cash_deployment_diagnostics
+        category: diagnostics
+        required: false
+        type: object
+        top_level: true
+        produced_when: portfolio positions are available
+        description: Cash deployment readiness assessment including cash-like allocation, buffer status, and risk budget. Analysis-only; does not recommend specific buys.

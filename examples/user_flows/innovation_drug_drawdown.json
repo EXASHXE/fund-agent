@@ -106,10 +106,33 @@
     "012421": {"holding_period_days": 7, "redemption_fee_pct": 0.005},
     "021620": {"holding_period_days": 7, "redemption_fee_pct": 0.005}
   },
-  "benchmarks": {},
-  "benchmark_history": {},
-  "news_evidence": [],
-  "sentiment_evidence": [],
+  "benchmarks": {
+    "012421": "中证医药"
+  },
+  "benchmark_history": {
+    "012421": [
+      {"date": "2025-02-01", "nav": 8500.0},
+      {"date": "2025-08-15", "nav": 9200.0},
+      {"date": "2025-12-31", "nav": 8800.0},
+      {"date": "2026-03-01", "nav": 8100.0},
+      {"date": "2026-06-01", "nav": 8600.0}
+    ]
+  },
+  "events": [
+    {
+      "event_name": "ASCO",
+      "fund_code": "012421",
+      "event_date": "2026-05-30",
+      "expected_positive_catalyst": "ASCO创新药数据读出",
+      "expected_direction": "positive"
+    }
+  ],
+  "news_evidence": [
+    {"fund_code": "012421", "headline": "ASCO数据不及预期", "date": "2026-06-01", "sentiment": "negative"}
+  ],
+  "sentiment_evidence": [
+    {"fund_code": "012421", "sentiment": "bearish", "score": -0.5}
+  ],
   "constraints": {
     "risk_level": "moderate",
     "max_single_fund_weight": 0.25,

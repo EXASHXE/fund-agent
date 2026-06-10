@@ -41,7 +41,10 @@
       ],
       "next_data_to_fetch": [
         "recent fund news",
-        "sentiment snapshot"
+        "sentiment snapshot",
+        "recent benchmark movement",
+        "benchmark price history",
+        "recent news evidence"
       ],
       "recommended_mcp_capabilities": [
         "market_news_search",
@@ -53,8 +56,84 @@
       ],
       "user_goal": "",
       "warnings": [
+        "right_side_unconfirmed",
         "sentiment_missing"
       ]
+    },
+    "benchmark_divergence_diagnostics": {
+      "items": [
+        {
+          "benchmark_id": "Synthetic S&P 500 Benchmark",
+          "benchmark_return_pct": null,
+          "divergence_direction": "unknown",
+          "divergence_level": "unknown",
+          "evidence_state": "missing",
+          "excess_return_pct": null,
+          "fund_code": "SYNQD001",
+          "fund_name": "Sample QDII S&P 500 Index Fund",
+          "fund_return_pct": null,
+          "lookback_days": 0,
+          "missing_reason": [
+            "missing_benchmark_history"
+          ]
+        },
+        {
+          "benchmark_id": "Synthetic Nasdaq 100 Benchmark",
+          "benchmark_return_pct": null,
+          "divergence_direction": "unknown",
+          "divergence_level": "unknown",
+          "evidence_state": "missing",
+          "excess_return_pct": null,
+          "fund_code": "SYNQD002",
+          "fund_name": "Sample Nasdaq Growth Index Fund",
+          "fund_return_pct": null,
+          "lookback_days": 0,
+          "missing_reason": [
+            "missing_benchmark_history"
+          ]
+        },
+        {
+          "benchmark_id": "Synthetic Global AI Benchmark",
+          "benchmark_return_pct": null,
+          "divergence_direction": "unknown",
+          "divergence_level": "unknown",
+          "evidence_state": "missing",
+          "excess_return_pct": null,
+          "fund_code": "SYNQD003",
+          "fund_name": "Sample Global AI Leaders Fund",
+          "fund_return_pct": null,
+          "lookback_days": 0,
+          "missing_reason": [
+            "missing_benchmark_history"
+          ]
+        },
+        {
+          "benchmark_id": "Synthetic CN Bond Benchmark",
+          "benchmark_return_pct": null,
+          "divergence_direction": "unknown",
+          "divergence_level": "unknown",
+          "evidence_state": "missing",
+          "excess_return_pct": null,
+          "fund_code": "SYNQD004",
+          "fund_name": "Sample China Bond Buffer Fund",
+          "fund_return_pct": null,
+          "lookback_days": 0,
+          "missing_reason": [
+            "missing_benchmark_history"
+          ]
+        }
+      ],
+      "summary": {
+        "has_benchmark_divergence": false,
+        "has_severe_underperformance": false,
+        "notes": [
+          "missing benchmark history for SYNQD001",
+          "missing benchmark history for SYNQD002",
+          "missing benchmark history for SYNQD003",
+          "missing benchmark history for SYNQD004"
+        ],
+        "severe_underperformers": []
+      }
     },
     "benchmark_summary": {
       "benchmark_history": {
@@ -188,6 +267,44 @@
       "reserve_gap": 4400.0,
       "short_term_budget_status": "ok"
     },
+    "cash_deployment_diagnostics": {
+      "items": [
+        {
+          "bucket": "unknown",
+          "liquidity_hint": "unknown",
+          "value": 60000.0,
+          "weight": 0.333333
+        },
+        {
+          "bucket": "unknown",
+          "liquidity_hint": "unknown",
+          "value": 50000.0,
+          "weight": 0.277778
+        },
+        {
+          "bucket": "unknown",
+          "liquidity_hint": "unknown",
+          "value": 45000.0,
+          "weight": 0.25
+        },
+        {
+          "bucket": "bond",
+          "liquidity_hint": "medium",
+          "value": 15000.0,
+          "weight": 0.083333
+        }
+      ],
+      "recommended_next_data": [],
+      "summary": {
+        "cash_buffer_status": "adequate",
+        "cash_like_value": 10000.0,
+        "cash_like_weight": 0.055556,
+        "deployment_readiness": "ready",
+        "estimated_deployable_cash": 0.0,
+        "notes": [],
+        "risk_budget_status": "available"
+      }
+    },
     "cost_basis_summary": {
       "SYNQD001": {
         "average_cost_per_share": 1.12,
@@ -315,6 +432,16 @@
       "warnings": [
         "DCA plan sample_global_monthly for SYNQD001 exceeds concentration limit"
       ]
+    },
+    "event_hype_failure_diagnostics": {
+      "items": [],
+      "summary": {
+        "has_event_hype_failure": false,
+        "high_risk_events": [],
+        "notes": [
+          "no event metadata provided by host"
+        ]
+      }
     },
     "evidence_gap_diagnostics": {
       "details": [
@@ -487,7 +614,10 @@
         ],
         "next_data_to_fetch": [
           "recent fund news",
-          "sentiment snapshot"
+          "sentiment snapshot",
+          "recent benchmark movement",
+          "benchmark price history",
+          "recent news evidence"
         ],
         "recommended_mcp_capabilities": [
           "market_news_search",
@@ -499,8 +629,84 @@
         ],
         "user_goal": "",
         "warnings": [
+          "right_side_unconfirmed",
           "sentiment_missing"
         ]
+      },
+      "benchmark_divergence_diagnostics": {
+        "items": [
+          {
+            "benchmark_id": "Synthetic S&P 500 Benchmark",
+            "benchmark_return_pct": null,
+            "divergence_direction": "unknown",
+            "divergence_level": "unknown",
+            "evidence_state": "missing",
+            "excess_return_pct": null,
+            "fund_code": "SYNQD001",
+            "fund_name": "Sample QDII S&P 500 Index Fund",
+            "fund_return_pct": null,
+            "lookback_days": 0,
+            "missing_reason": [
+              "missing_benchmark_history"
+            ]
+          },
+          {
+            "benchmark_id": "Synthetic Nasdaq 100 Benchmark",
+            "benchmark_return_pct": null,
+            "divergence_direction": "unknown",
+            "divergence_level": "unknown",
+            "evidence_state": "missing",
+            "excess_return_pct": null,
+            "fund_code": "SYNQD002",
+            "fund_name": "Sample Nasdaq Growth Index Fund",
+            "fund_return_pct": null,
+            "lookback_days": 0,
+            "missing_reason": [
+              "missing_benchmark_history"
+            ]
+          },
+          {
+            "benchmark_id": "Synthetic Global AI Benchmark",
+            "benchmark_return_pct": null,
+            "divergence_direction": "unknown",
+            "divergence_level": "unknown",
+            "evidence_state": "missing",
+            "excess_return_pct": null,
+            "fund_code": "SYNQD003",
+            "fund_name": "Sample Global AI Leaders Fund",
+            "fund_return_pct": null,
+            "lookback_days": 0,
+            "missing_reason": [
+              "missing_benchmark_history"
+            ]
+          },
+          {
+            "benchmark_id": "Synthetic CN Bond Benchmark",
+            "benchmark_return_pct": null,
+            "divergence_direction": "unknown",
+            "divergence_level": "unknown",
+            "evidence_state": "missing",
+            "excess_return_pct": null,
+            "fund_code": "SYNQD004",
+            "fund_name": "Sample China Bond Buffer Fund",
+            "fund_return_pct": null,
+            "lookback_days": 0,
+            "missing_reason": [
+              "missing_benchmark_history"
+            ]
+          }
+        ],
+        "summary": {
+          "has_benchmark_divergence": false,
+          "has_severe_underperformance": false,
+          "notes": [
+            "missing benchmark history for SYNQD001",
+            "missing benchmark history for SYNQD002",
+            "missing benchmark history for SYNQD003",
+            "missing benchmark history for SYNQD004"
+          ],
+          "severe_underperformers": []
+        }
       },
       "benchmark_summary": {
         "benchmark_history": {
@@ -633,6 +839,44 @@
         "remaining_budget": 14400.0,
         "reserve_gap": 4400.0,
         "short_term_budget_status": "ok"
+      },
+      "cash_deployment_diagnostics": {
+        "items": [
+          {
+            "bucket": "unknown",
+            "liquidity_hint": "unknown",
+            "value": 60000.0,
+            "weight": 0.333333
+          },
+          {
+            "bucket": "unknown",
+            "liquidity_hint": "unknown",
+            "value": 50000.0,
+            "weight": 0.277778
+          },
+          {
+            "bucket": "unknown",
+            "liquidity_hint": "unknown",
+            "value": 45000.0,
+            "weight": 0.25
+          },
+          {
+            "bucket": "bond",
+            "liquidity_hint": "medium",
+            "value": 15000.0,
+            "weight": 0.083333
+          }
+        ],
+        "recommended_next_data": [],
+        "summary": {
+          "cash_buffer_status": "adequate",
+          "cash_like_value": 10000.0,
+          "cash_like_weight": 0.055556,
+          "deployment_readiness": "ready",
+          "estimated_deployable_cash": 0.0,
+          "notes": [],
+          "risk_budget_status": "available"
+        }
       },
       "concentration": {
         "duplicate_tags": [
@@ -773,6 +1017,16 @@
         "warnings": [
           "DCA plan sample_global_monthly for SYNQD001 exceeds concentration limit"
         ]
+      },
+      "event_hype_failure_diagnostics": {
+        "items": [],
+        "summary": {
+          "has_event_hype_failure": false,
+          "high_risk_events": [],
+          "notes": [
+            "no event metadata provided by host"
+          ]
+        }
       },
       "evidence_gap_diagnostics": {
         "details": [
@@ -1092,7 +1346,8 @@
             "fund_code": "SYNQD001",
             "fund_name": "Sample QDII S&P 500 Index Fund",
             "invested_amount": 56000.0,
-            "pnl_contribution_pct": 0.8,
+            "pnl_contribution_basis": "absolute_pnl",
+            "pnl_contribution_pct": 0.444444,
             "pnl_pct": 0.071429,
             "portfolio_weight": 0.333333,
             "position_id": "SYNQD001",
@@ -1104,7 +1359,8 @@
             "fund_code": "SYNQD002",
             "fund_name": "Sample Nasdaq Growth Index Fund",
             "invested_amount": 52000.0,
-            "pnl_contribution_pct": -0.4,
+            "pnl_contribution_basis": "absolute_pnl",
+            "pnl_contribution_pct": -0.222222,
             "pnl_pct": -0.038462,
             "portfolio_weight": 0.277778,
             "position_id": "SYNQD002",
@@ -1116,7 +1372,8 @@
             "fund_code": "SYNQD003",
             "fund_name": "Sample Global AI Leaders Fund",
             "invested_amount": 42000.0,
-            "pnl_contribution_pct": 0.6,
+            "pnl_contribution_basis": "absolute_pnl",
+            "pnl_contribution_pct": 0.333333,
             "pnl_pct": 0.071429,
             "portfolio_weight": 0.25,
             "position_id": "SYNQD003",
@@ -1128,6 +1385,7 @@
             "fund_code": "SYNQD004",
             "fund_name": "Sample China Bond Buffer Fund",
             "invested_amount": 15000.0,
+            "pnl_contribution_basis": "absolute_pnl",
             "pnl_contribution_pct": 0.0,
             "pnl_pct": 0.0,
             "portfolio_weight": 0.083333,
@@ -1227,6 +1485,7 @@
             "invested_amount": 56000.0,
             "pnl_pct": 0.071429,
             "principal_recovered": "false",
+            "principal_recovery_status": "not_recovered",
             "profit_level": "moderate",
             "suggested_analysis_action": "watch",
             "trim_pressure": "medium",
@@ -1242,6 +1501,7 @@
             "invested_amount": 52000.0,
             "pnl_pct": -0.038462,
             "principal_recovered": "false",
+            "principal_recovery_status": "not_recovered",
             "profit_level": "none",
             "suggested_analysis_action": "watch",
             "trim_pressure": "low",
@@ -1257,6 +1517,7 @@
             "invested_amount": 42000.0,
             "pnl_pct": 0.071429,
             "principal_recovered": "false",
+            "principal_recovery_status": "not_recovered",
             "profit_level": "moderate",
             "suggested_analysis_action": "watch",
             "trim_pressure": "medium",
@@ -1272,6 +1533,7 @@
             "invested_amount": 15000.0,
             "pnl_pct": 0.0,
             "principal_recovered": "false",
+            "principal_recovery_status": "not_recovered",
             "profit_level": "low",
             "suggested_analysis_action": "watch",
             "trim_pressure": "low",
@@ -1693,6 +1955,104 @@
           "title": "Evidence appendix"
         }
       ],
+      "right_side_confirmation_diagnostics": {
+        "items": [
+          {
+            "benchmark_confirmation": "missing",
+            "evidence_state": "missing",
+            "fund_code": "SYNQD001",
+            "fund_name": "Sample QDII S&P 500 Index Fund",
+            "missing_reason": [
+              "missing_benchmark_history",
+              "missing_news_evidence",
+              "missing_sentiment_evidence"
+            ],
+            "nav_confirmation": "confirmed",
+            "news_confirmation": "missing",
+            "recent_drawdown_pct": null,
+            "recent_rebound_pct": 0.2,
+            "recommended_next_data": [
+              "benchmark price history",
+              "recent news evidence",
+              "sentiment snapshot"
+            ],
+            "right_side_confirmed": false,
+            "sentiment_confirmation": "missing"
+          },
+          {
+            "benchmark_confirmation": "missing",
+            "evidence_state": "missing",
+            "fund_code": "SYNQD002",
+            "fund_name": "Sample Nasdaq Growth Index Fund",
+            "missing_reason": [
+              "missing_benchmark_history",
+              "missing_news_evidence",
+              "missing_sentiment_evidence"
+            ],
+            "nav_confirmation": "confirmed",
+            "news_confirmation": "missing",
+            "recent_drawdown_pct": -0.047619,
+            "recent_rebound_pct": 0.2,
+            "recommended_next_data": [
+              "benchmark price history",
+              "recent news evidence",
+              "sentiment snapshot"
+            ],
+            "right_side_confirmed": false,
+            "sentiment_confirmation": "missing"
+          },
+          {
+            "benchmark_confirmation": "missing",
+            "evidence_state": "missing",
+            "fund_code": "SYNQD003",
+            "fund_name": "Sample Global AI Leaders Fund",
+            "missing_reason": [
+              "missing_benchmark_history",
+              "missing_news_evidence",
+              "missing_sentiment_evidence"
+            ],
+            "nav_confirmation": "confirmed",
+            "news_confirmation": "missing",
+            "recent_drawdown_pct": null,
+            "recent_rebound_pct": 0.25,
+            "recommended_next_data": [
+              "benchmark price history",
+              "recent news evidence",
+              "sentiment snapshot"
+            ],
+            "right_side_confirmed": false,
+            "sentiment_confirmation": "missing"
+          },
+          {
+            "benchmark_confirmation": "missing",
+            "evidence_state": "missing",
+            "fund_code": "SYNQD004",
+            "fund_name": "Sample China Bond Buffer Fund",
+            "missing_reason": [
+              "missing_benchmark_history",
+              "missing_news_evidence",
+              "missing_sentiment_evidence"
+            ],
+            "nav_confirmation": "mixed",
+            "news_confirmation": "missing",
+            "recent_drawdown_pct": null,
+            "recent_rebound_pct": 0.010101,
+            "recommended_next_data": [
+              "benchmark price history",
+              "recent news evidence",
+              "sentiment snapshot"
+            ],
+            "right_side_confirmed": false,
+            "sentiment_confirmation": "missing"
+          }
+        ],
+        "summary": {
+          "has_confirmed_right_side": false,
+          "has_unconfirmed_rebound": true,
+          "needs_more_evidence": true,
+          "notes": []
+        }
+      },
       "risk_flags": [
         {
           "details": {
@@ -1963,7 +2323,8 @@
           "fund_code": "SYNQD001",
           "fund_name": "Sample QDII S&P 500 Index Fund",
           "invested_amount": 56000.0,
-          "pnl_contribution_pct": 0.8,
+          "pnl_contribution_basis": "absolute_pnl",
+          "pnl_contribution_pct": 0.444444,
           "pnl_pct": 0.071429,
           "portfolio_weight": 0.333333,
           "position_id": "SYNQD001",
@@ -1975,7 +2336,8 @@
           "fund_code": "SYNQD002",
           "fund_name": "Sample Nasdaq Growth Index Fund",
           "invested_amount": 52000.0,
-          "pnl_contribution_pct": -0.4,
+          "pnl_contribution_basis": "absolute_pnl",
+          "pnl_contribution_pct": -0.222222,
           "pnl_pct": -0.038462,
           "portfolio_weight": 0.277778,
           "position_id": "SYNQD002",
@@ -1987,7 +2349,8 @@
           "fund_code": "SYNQD003",
           "fund_name": "Sample Global AI Leaders Fund",
           "invested_amount": 42000.0,
-          "pnl_contribution_pct": 0.6,
+          "pnl_contribution_basis": "absolute_pnl",
+          "pnl_contribution_pct": 0.333333,
           "pnl_pct": 0.071429,
           "portfolio_weight": 0.25,
           "position_id": "SYNQD003",
@@ -1999,6 +2362,7 @@
           "fund_code": "SYNQD004",
           "fund_name": "Sample China Bond Buffer Fund",
           "invested_amount": 15000.0,
+          "pnl_contribution_basis": "absolute_pnl",
           "pnl_contribution_pct": 0.0,
           "pnl_pct": 0.0,
           "portfolio_weight": 0.083333,
@@ -2155,6 +2519,7 @@
           "invested_amount": 56000.0,
           "pnl_pct": 0.071429,
           "principal_recovered": "false",
+          "principal_recovery_status": "not_recovered",
           "profit_level": "moderate",
           "suggested_analysis_action": "watch",
           "trim_pressure": "medium",
@@ -2170,6 +2535,7 @@
           "invested_amount": 52000.0,
           "pnl_pct": -0.038462,
           "principal_recovered": "false",
+          "principal_recovery_status": "not_recovered",
           "profit_level": "none",
           "suggested_analysis_action": "watch",
           "trim_pressure": "low",
@@ -2185,6 +2551,7 @@
           "invested_amount": 42000.0,
           "pnl_pct": 0.071429,
           "principal_recovered": "false",
+          "principal_recovery_status": "not_recovered",
           "profit_level": "moderate",
           "suggested_analysis_action": "watch",
           "trim_pressure": "medium",
@@ -2200,6 +2567,7 @@
           "invested_amount": 15000.0,
           "pnl_pct": 0.0,
           "principal_recovered": "false",
+          "principal_recovery_status": "not_recovered",
           "profit_level": "low",
           "suggested_analysis_action": "watch",
           "trim_pressure": "low",
@@ -2585,6 +2953,104 @@
         "title": "Evidence appendix"
       }
     ],
+    "right_side_confirmation_diagnostics": {
+      "items": [
+        {
+          "benchmark_confirmation": "missing",
+          "evidence_state": "missing",
+          "fund_code": "SYNQD001",
+          "fund_name": "Sample QDII S&P 500 Index Fund",
+          "missing_reason": [
+            "missing_benchmark_history",
+            "missing_news_evidence",
+            "missing_sentiment_evidence"
+          ],
+          "nav_confirmation": "confirmed",
+          "news_confirmation": "missing",
+          "recent_drawdown_pct": null,
+          "recent_rebound_pct": 0.2,
+          "recommended_next_data": [
+            "benchmark price history",
+            "recent news evidence",
+            "sentiment snapshot"
+          ],
+          "right_side_confirmed": false,
+          "sentiment_confirmation": "missing"
+        },
+        {
+          "benchmark_confirmation": "missing",
+          "evidence_state": "missing",
+          "fund_code": "SYNQD002",
+          "fund_name": "Sample Nasdaq Growth Index Fund",
+          "missing_reason": [
+            "missing_benchmark_history",
+            "missing_news_evidence",
+            "missing_sentiment_evidence"
+          ],
+          "nav_confirmation": "confirmed",
+          "news_confirmation": "missing",
+          "recent_drawdown_pct": -0.047619,
+          "recent_rebound_pct": 0.2,
+          "recommended_next_data": [
+            "benchmark price history",
+            "recent news evidence",
+            "sentiment snapshot"
+          ],
+          "right_side_confirmed": false,
+          "sentiment_confirmation": "missing"
+        },
+        {
+          "benchmark_confirmation": "missing",
+          "evidence_state": "missing",
+          "fund_code": "SYNQD003",
+          "fund_name": "Sample Global AI Leaders Fund",
+          "missing_reason": [
+            "missing_benchmark_history",
+            "missing_news_evidence",
+            "missing_sentiment_evidence"
+          ],
+          "nav_confirmation": "confirmed",
+          "news_confirmation": "missing",
+          "recent_drawdown_pct": null,
+          "recent_rebound_pct": 0.25,
+          "recommended_next_data": [
+            "benchmark price history",
+            "recent news evidence",
+            "sentiment snapshot"
+          ],
+          "right_side_confirmed": false,
+          "sentiment_confirmation": "missing"
+        },
+        {
+          "benchmark_confirmation": "missing",
+          "evidence_state": "missing",
+          "fund_code": "SYNQD004",
+          "fund_name": "Sample China Bond Buffer Fund",
+          "missing_reason": [
+            "missing_benchmark_history",
+            "missing_news_evidence",
+            "missing_sentiment_evidence"
+          ],
+          "nav_confirmation": "mixed",
+          "news_confirmation": "missing",
+          "recent_drawdown_pct": null,
+          "recent_rebound_pct": 0.010101,
+          "recommended_next_data": [
+            "benchmark price history",
+            "recent news evidence",
+            "sentiment snapshot"
+          ],
+          "right_side_confirmed": false,
+          "sentiment_confirmation": "missing"
+        }
+      ],
+      "summary": {
+        "has_confirmed_right_side": false,
+        "has_unconfirmed_rebound": true,
+        "needs_more_evidence": true,
+        "notes": []
+      }
+    },
     "risk_flags": [
       {
         "details": {

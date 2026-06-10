@@ -26,6 +26,10 @@ def build_analysis_plan(
     diagnostics: Mapping[str, Any] | None = None,
     warnings: Sequence[str] | None = None,
     user_goal: str | None = None,
+    benchmark_divergence: dict[str, Any] | None = None,
+    right_side_confirmation: dict[str, Any] | None = None,
+    event_hype_failure: dict[str, Any] | None = None,
+    cash_deployment: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     if diagnostics is None:
         diagnostics = {}
@@ -38,16 +42,24 @@ def build_analysis_plan(
         if is_missing and key != "details"
     ]
     blockers = _infer_blockers(evidence_gap, diagnostics)
+    plan_warnings = _infer_warnings(evidence_gap, diagnostics, warnings)
+    _apply_phase3_blockers_and_warnings(
+        evidence_gap, benchmark_divergence, right_side_confirmation,
+        event_hype_failure, cash_deployment, blockers, plan_warnings,
+        user_goal,
+    )
     decision_support_ready = _compute_decision_support_ready(
         bundle, metrics, evidence_gap, diagnostics, blockers,
     )
-    plan_warnings = _infer_warnings(evidence_gap, diagnostics, warnings)
     recommended_skills = _infer_recommended_skills(
         evidence_gap, user_goal, decision_support_ready,
     )
     recommended_mcp = _infer_recommended_mcp_capabilities(evidence_gap)
     evidence_requirements = _infer_evidence_requirements(evidence_gap)
-    next_data_to_fetch = _infer_next_data_to_fetch(evidence_gap)
+    next_data_to_fetch = _infer_next_data_to_fetch(
+        evidence_gap, benchmark_divergence, right_side_confirmation,
+        event_hype_failure, cash_deployment,
+    )
 
     return {
         "analysis_plan": {
@@ -363,6 +375,10 @@ def _infer_evidence_requirements(
 
 def _infer_next_data_to_fetch(
     evidence_gap: dict[str, Any],
+    benchmark_divergence: dict[str, Any] | None = None,
+    right_side_confirmation: dict[str, Any] | None = None,
+    event_hype_failure: dict[str, Any] | None = None,
+    cash_deployment: dict[str, Any] | None = None,
 ) -> list[str]:
     items: list[str] = []
     if evidence_gap.get("missing_fee_schedule"):
@@ -383,6 +399,39 @@ def _infer_next_data_to_fetch(
         items.append("fund profile metadata")
     if evidence_gap.get("missing_transaction_history"):
         items.append("transaction history")
+
+    if isinstance(benchmark_divergence, dict):
+        for item in benchmark_divergence.get("items", []):
+            if isinstance(item, dict) and item.get("evidence_state") == "missing":
+                if "missing_benchmark_history" in item.get("missing_reason", []):
+                    if "recent benchmark movement" not in items:
+                        items.append("recent benchmark movement")
+                if "missing_nav_history" in item.get("missing_reason", []):
+                    if "fund NAV history" not in items:
+                        items.append("fund NAV history")
+
+    if isinstance(right_side_confirmation, dict):
+        for item in right_side_confirmation.get("items", []):
+            if isinstance(item, dict):
+                for nd in item.get("recommended_next_data", []):
+                    if nd not in items:
+                        items.append(nd)
+
+    if isinstance(event_hype_failure, dict):
+        for item in event_hype_failure.get("items", []):
+            if isinstance(item, dict) and item.get("evidence_state") in ("missing", "weak"):
+                if "missing_nav_history" in item.get("missing_reason", []):
+                    if "fund NAV history" not in items:
+                        items.append("fund NAV history")
+                if "missing_news_evidence" in item.get("missing_reason", []):
+                    if "recent fund news" not in items:
+                        items.append("recent fund news")
+
+    if isinstance(cash_deployment, dict):
+        for nd in cash_deployment.get("recommended_next_data", []):
+            if nd not in items:
+                items.append(nd)
+
     return items
 
 
@@ -402,3 +451,68 @@ def _compute_decision_support_ready(
     if bool(blockers):
         return False
     return True
+
+
+def _apply_phase3_blockers_and_warnings(
+    evidence_gap: dict[str, Any],
+    benchmark_divergence: dict[str, Any] | None,
+    right_side_confirmation: dict[str, Any] | None,
+    event_hype_failure: dict[str, Any] | None,
+    cash_deployment: dict[str, Any] | None,
+    blockers: list[str],
+    plan_warnings: list[str],
+    user_goal: str | None,
+) -> None:
+    if isinstance(benchmark_divergence, dict):
+        summary = benchmark_divergence.get("summary", {})
+        if summary.get("has_severe_underperformance"):
+            plan_warnings.append("benchmark_severe_underperformance")
+        if evidence_gap.get("missing_benchmark_data"):
+            for item in benchmark_divergence.get("items", []):
+                if isinstance(item, dict) and item.get("evidence_state") == "missing":
+                    if "missing_benchmark_history" in item.get("missing_reason", []):
+                        if "benchmark_data_missing" not in plan_warnings:
+                            plan_warnings.append("benchmark_data_missing")
+
+    if isinstance(right_side_confirmation, dict):
+        summary = right_side_confirmation.get("summary", {})
+        if summary.get("needs_more_evidence"):
+            goal = (user_goal or "").lower()
+            action_keywords = (
+                "买", "卖", "加仓", "减仓", "止损", "止盈", "操作",
+                "buy", "sell", "action", "trim", "add", "reduce",
+                "趋势", "时机", "timing", "trend", "右侧", "反弹",
+            )
+            is_action_oriented = any(kw in goal for kw in action_keywords)
+            if is_action_oriented:
+                for item in right_side_confirmation.get("items", []):
+                    if isinstance(item, dict) and not item.get("right_side_confirmed", True):
+                        if "right_side_unconfirmed" not in blockers:
+                            blockers.append("right_side_unconfirmed")
+                        break
+                if "right_side_unconfirmed" not in plan_warnings:
+                    plan_warnings.append("right_side_unconfirmed")
+            else:
+                if "right_side_unconfirmed" not in plan_warnings:
+                    plan_warnings.append("right_side_unconfirmed")
+
+    if isinstance(event_hype_failure, dict):
+        summary = event_hype_failure.get("summary", {})
+        if summary.get("has_event_hype_failure"):
+            high_risk = summary.get("high_risk_events", [])
+            if high_risk:
+                if "event_hype_failed" not in blockers:
+                    blockers.append("event_hype_failed")
+            else:
+                if "event_hype_failed" not in plan_warnings:
+                    plan_warnings.append("event_hype_failed")
+
+    if isinstance(cash_deployment, dict):
+        summary = cash_deployment.get("summary", {})
+        readiness = summary.get("deployment_readiness", "unknown")
+        if readiness in ("not_ready", "unknown"):
+            if "cash_deployment_not_ready" not in plan_warnings:
+                plan_warnings.append("cash_deployment_not_ready")
+        if readiness == "not_ready":
+            if "cash_deployment_not_ready" not in blockers:
+                blockers.append("cash_deployment_not_ready")

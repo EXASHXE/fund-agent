@@ -52,17 +52,17 @@ def compute_profit_protection_diagnostics(
         profit_level = _classify_profit_level(pnl_pct)
         portfolio_weight = round(current_value / total_value, 6) if total_value > 0 else 0.0
 
-        principal_recovered, free_carry = _assess_principal_recovery(
+        principal_recovered, principal_recovery_status, free_carry = _assess_principal_recovery(
             fund_code, bundle.transactions, invested_amount, current_value,
         )
         trim_pressure = _classify_trim_pressure(profit_level, portfolio_weight)
-        hold_pressure = _classify_hold_pressure(profit_level, principal_recovered)
+        hold_pressure = _classify_hold_pressure(profit_level, principal_recovery_status)
         watch_condition = _build_watch_condition(profit_level, trim_pressure, free_carry)
-        action = _suggest_action(profit_level, trim_pressure, principal_recovered, free_carry)
+        action = _suggest_action(profit_level, trim_pressure, principal_recovery_status, free_carry)
 
         if profit_level in ("high", "very_high"):
             has_high_profit = True
-        if principal_recovered in ("likely", "partial"):
+        if principal_recovery_status in ("recovered", "partial"):
             has_principal_recovery = True
         if pnl_pct is not None and pnl_pct > highest_profit_pct:
             highest_profit_pct = pnl_pct
@@ -77,6 +77,7 @@ def compute_profit_protection_diagnostics(
             "pnl_pct": pnl_pct,
             "profit_level": profit_level,
             "principal_recovered": principal_recovered,
+            "principal_recovery_status": principal_recovery_status,
             "free_carry_estimate": free_carry,
             "trim_pressure": trim_pressure,
             "hold_pressure": hold_pressure,
@@ -86,7 +87,7 @@ def compute_profit_protection_diagnostics(
 
     if not items:
         notes.append("no positions available for profit protection analysis")
-    if not any(isinstance(bundle.transactions, list) and bundle.transactions for _ in [1]):
+    if not isinstance(bundle.transactions, list) or not bundle.transactions:
         notes.append("transaction history missing; principal_recovered and free_carry may be unknown")
 
     return {
@@ -119,9 +120,9 @@ def _assess_principal_recovery(
     transactions: Any,
     invested_amount: float | None,
     current_value: float,
-) -> tuple[str, str]:
+) -> tuple[str, str, str]:
     if not isinstance(transactions, list) or not transactions:
-        return "unknown", "unknown"
+        return "unknown", "unknown", "unknown"
 
     total_buy = 0.0
     total_sell = 0.0
@@ -140,15 +141,15 @@ def _assess_principal_recovery(
             total_sell += amount
 
     if total_buy <= 0:
-        return "unknown", "unknown"
+        return "unknown", "unknown", "unknown"
 
     if total_sell >= total_buy and current_value > 0:
-        return "likely", "likely"
+        return "likely", "recovered", "likely"
     if total_sell > 0 and total_sell < total_buy and current_value > 0:
-        return "partial", "partial"
+        return "partial", "partial", "partial"
     if total_sell <= 0:
-        return "false", "none"
-    return "unknown", "unknown"
+        return "false", "not_recovered", "none"
+    return "unknown", "unknown", "unknown"
 
 
 def _classify_trim_pressure(
@@ -168,9 +169,9 @@ def _classify_trim_pressure(
 
 def _classify_hold_pressure(
     profit_level: str,
-    principal_recovered: str,
+    principal_recovery_status: str,
 ) -> str:
-    if profit_level in ("high", "very_high") and principal_recovered == "likely":
+    if profit_level in ("high", "very_high") and principal_recovery_status == "recovered":
         return "low"
     if profit_level in ("high", "very_high"):
         return "medium"
@@ -200,14 +201,14 @@ def _build_watch_condition(
 def _suggest_action(
     profit_level: str,
     trim_pressure: str,
-    principal_recovered: str,
+    principal_recovery_status: str,
     free_carry: str,
 ) -> str:
     if profit_level == "unknown":
         return "data_needed"
     if trim_pressure == "high":
         return "trim_review"
-    if profit_level in ("high", "very_high") and principal_recovered == "likely":
+    if profit_level in ("high", "very_high") and principal_recovery_status == "recovered":
         return "hold_bias"
     if profit_level in ("high", "very_high"):
         return "watch"

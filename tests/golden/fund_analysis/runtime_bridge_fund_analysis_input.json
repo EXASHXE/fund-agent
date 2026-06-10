@@ -44,7 +44,9 @@
         "recent benchmark movement",
         "recent fund news",
         "sentiment snapshot",
-        "transaction history"
+        "transaction history",
+        "benchmark price history",
+        "recent news evidence"
       ],
       "recommended_mcp_capabilities": [
         "benchmark_price_history",
@@ -59,9 +61,37 @@
       "user_goal": "",
       "warnings": [
         "benchmark_data_missing",
+        "right_side_unconfirmed",
         "sentiment_missing",
         "transaction_history_incomplete"
       ]
+    },
+    "benchmark_divergence_diagnostics": {
+      "items": [
+        {
+          "benchmark_id": "Benchmark",
+          "benchmark_return_pct": null,
+          "divergence_direction": "unknown",
+          "divergence_level": "unknown",
+          "evidence_state": "missing",
+          "excess_return_pct": null,
+          "fund_code": "110011",
+          "fund_name": "Example Fund",
+          "fund_return_pct": null,
+          "lookback_days": 0,
+          "missing_reason": [
+            "missing_benchmark_history"
+          ]
+        }
+      ],
+      "summary": {
+        "has_benchmark_divergence": false,
+        "has_severe_underperformance": false,
+        "notes": [
+          "missing benchmark history for 110011"
+        ],
+        "severe_underperformers": []
+      }
     },
     "cash_budget_diagnostics": {
       "cash_ratio": 0.1,
@@ -70,6 +100,26 @@
       "remaining_budget": 20000.0,
       "reserve_gap": null,
       "short_term_budget_status": "ok"
+    },
+    "cash_deployment_diagnostics": {
+      "items": [
+        {
+          "bucket": "equity",
+          "liquidity_hint": "medium",
+          "value": 30000.0,
+          "weight": 0.15
+        }
+      ],
+      "recommended_next_data": [],
+      "summary": {
+        "cash_buffer_status": "adequate",
+        "cash_like_value": 20000.0,
+        "cash_like_weight": 0.1,
+        "deployment_readiness": "ready",
+        "estimated_deployable_cash": 0.0,
+        "notes": [],
+        "risk_budget_status": "available"
+      }
     },
     "cost_basis_summary": null,
     "data_completeness": {
@@ -110,6 +160,16 @@
       "score": 0.7
     },
     "dca_plan_review": null,
+    "event_hype_failure_diagnostics": {
+      "items": [],
+      "summary": {
+        "has_event_hype_failure": false,
+        "high_risk_events": [],
+        "notes": [
+          "no event metadata provided by host"
+        ]
+      }
+    },
     "evidence_gap_diagnostics": {
       "details": [
         {
@@ -207,7 +267,9 @@
           "recent benchmark movement",
           "recent fund news",
           "sentiment snapshot",
-          "transaction history"
+          "transaction history",
+          "benchmark price history",
+          "recent news evidence"
         ],
         "recommended_mcp_capabilities": [
           "benchmark_price_history",
@@ -222,9 +284,37 @@
         "user_goal": "",
         "warnings": [
           "benchmark_data_missing",
+          "right_side_unconfirmed",
           "sentiment_missing",
           "transaction_history_incomplete"
         ]
+      },
+      "benchmark_divergence_diagnostics": {
+        "items": [
+          {
+            "benchmark_id": "Benchmark",
+            "benchmark_return_pct": null,
+            "divergence_direction": "unknown",
+            "divergence_level": "unknown",
+            "evidence_state": "missing",
+            "excess_return_pct": null,
+            "fund_code": "110011",
+            "fund_name": "Example Fund",
+            "fund_return_pct": null,
+            "lookback_days": 0,
+            "missing_reason": [
+              "missing_benchmark_history"
+            ]
+          }
+        ],
+        "summary": {
+          "has_benchmark_divergence": false,
+          "has_severe_underperformance": false,
+          "notes": [
+            "missing benchmark history for 110011"
+          ],
+          "severe_underperformers": []
+        }
       },
       "cash_budget_diagnostics": {
         "cash_ratio": 0.1,
@@ -233,6 +323,26 @@
         "remaining_budget": 20000.0,
         "reserve_gap": null,
         "short_term_budget_status": "ok"
+      },
+      "cash_deployment_diagnostics": {
+        "items": [
+          {
+            "bucket": "equity",
+            "liquidity_hint": "medium",
+            "value": 30000.0,
+            "weight": 0.15
+          }
+        ],
+        "recommended_next_data": [],
+        "summary": {
+          "cash_buffer_status": "adequate",
+          "cash_like_value": 20000.0,
+          "cash_like_weight": 0.1,
+          "deployment_readiness": "ready",
+          "estimated_deployable_cash": 0.0,
+          "notes": [],
+          "risk_budget_status": "available"
+        }
       },
       "concentration": {
         "duplicate_tags": [],
@@ -282,6 +392,16 @@
         "score": 0.7
       },
       "dca_review": null,
+      "event_hype_failure_diagnostics": {
+        "items": [],
+        "summary": {
+          "has_event_hype_failure": false,
+          "high_risk_events": [],
+          "notes": [
+            "no event metadata provided by host"
+          ]
+        }
+      },
       "evidence_gap_diagnostics": {
         "details": [
           {
@@ -393,7 +513,8 @@
             "fund_code": "110011",
             "fund_name": "Example Fund",
             "invested_amount": 32000.0,
-            "pnl_contribution_pct": 1.0,
+            "pnl_contribution_basis": "absolute_pnl",
+            "pnl_contribution_pct": -1.0,
             "pnl_pct": -0.0625,
             "portfolio_weight": 0.15,
             "position_id": "110011",
@@ -431,6 +552,7 @@
             "invested_amount": 32000.0,
             "pnl_pct": -0.0625,
             "principal_recovered": "unknown",
+            "principal_recovery_status": "unknown",
             "profit_level": "none",
             "suggested_analysis_action": "watch",
             "trim_pressure": "low",
@@ -772,6 +894,38 @@
           "title": "Evidence appendix"
         }
       ],
+      "right_side_confirmation_diagnostics": {
+        "items": [
+          {
+            "benchmark_confirmation": "missing",
+            "evidence_state": "missing",
+            "fund_code": "110011",
+            "fund_name": "Example Fund",
+            "missing_reason": [
+              "missing_benchmark_history",
+              "missing_news_evidence",
+              "missing_sentiment_evidence"
+            ],
+            "nav_confirmation": "confirmed",
+            "news_confirmation": "missing",
+            "recent_drawdown_pct": null,
+            "recent_rebound_pct": 0.2,
+            "recommended_next_data": [
+              "benchmark price history",
+              "recent news evidence",
+              "sentiment snapshot"
+            ],
+            "right_side_confirmed": false,
+            "sentiment_confirmation": "missing"
+          }
+        ],
+        "summary": {
+          "has_confirmed_right_side": false,
+          "has_unconfirmed_rebound": true,
+          "needs_more_evidence": true,
+          "notes": []
+        }
+      },
       "risk_flags": [
         {
           "details": {
@@ -847,7 +1001,8 @@
           "fund_code": "110011",
           "fund_name": "Example Fund",
           "invested_amount": 32000.0,
-          "pnl_contribution_pct": 1.0,
+          "pnl_contribution_basis": "absolute_pnl",
+          "pnl_contribution_pct": -1.0,
           "pnl_pct": -0.0625,
           "portfolio_weight": 0.15,
           "position_id": "110011",
@@ -900,6 +1055,7 @@
           "invested_amount": 32000.0,
           "pnl_pct": -0.0625,
           "principal_recovered": "unknown",
+          "principal_recovery_status": "unknown",
           "profit_level": "none",
           "suggested_analysis_action": "watch",
           "trim_pressure": "low",
@@ -1240,6 +1396,38 @@
         "title": "Evidence appendix"
       }
     ],
+    "right_side_confirmation_diagnostics": {
+      "items": [
+        {
+          "benchmark_confirmation": "missing",
+          "evidence_state": "missing",
+          "fund_code": "110011",
+          "fund_name": "Example Fund",
+          "missing_reason": [
+            "missing_benchmark_history",
+            "missing_news_evidence",
+            "missing_sentiment_evidence"
+          ],
+          "nav_confirmation": "confirmed",
+          "news_confirmation": "missing",
+          "recent_drawdown_pct": null,
+          "recent_rebound_pct": 0.2,
+          "recommended_next_data": [
+            "benchmark price history",
+            "recent news evidence",
+            "sentiment snapshot"
+          ],
+          "right_side_confirmed": false,
+          "sentiment_confirmation": "missing"
+        }
+      ],
+      "summary": {
+        "has_confirmed_right_side": false,
+        "has_unconfirmed_rebound": true,
+        "needs_more_evidence": true,
+        "notes": []
+      }
+    },
     "risk_flags": [
       {
         "details": {

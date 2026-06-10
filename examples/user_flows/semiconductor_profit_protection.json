@@ -96,8 +96,18 @@
   "redemption_rules": {
     "008253": {"holding_period_days": 7, "redemption_fee_pct": 0.005, "short_redemption_fee_pct": 0.015}
   },
-  "benchmarks": {},
-  "benchmark_history": {},
+  "benchmarks": {
+    "008253": "中证半导体指数"
+  },
+  "benchmark_history": {
+    "008253": [
+      {"date": "2025-03-15", "nav": 5200.0},
+      {"date": "2025-06-10", "nav": 5800.0},
+      {"date": "2025-12-31", "nav": 6500.0},
+      {"date": "2026-03-20", "nav": 6100.0},
+      {"date": "2026-06-01", "nav": 6400.0}
+    ]
+  },
   "news_evidence": [],
   "sentiment_evidence": [],
   "constraints": {
