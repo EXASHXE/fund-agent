@@ -21,11 +21,18 @@ Runtime bridge test invocation helpers for subprocess and in-process
 execution. Used by runtime_bridge and integration tests.
 
 - `project_root()` — repository root directory
-- `run_bridge_subprocess(args)` — subprocess CLI invocation
+- `bridge_env()` — environment for source-checkout bridge execution
+- `run_bridge_subprocess(args)` — subprocess CLI invocation (canonical)
+- `run_bridge_json(args)` — subprocess CLI invocation with parsed JSON output
 - `stdout_text(result)` — extract stdout text
-- `parse_stdout_json(result)` — parse stdout as JSON
+- `parse_stdout_json(result)` — parse stdout as JSON with assertion
 - `write_temp_json(data)` — write temporary JSON input file
+- `write_temp_text(tmp_path, text)` — write raw text under pytest tmp_path
 - `run_bridge_inprocess_json(...)` — in-process bridge execution
+
+Compatibility aliases:
+- `run_bridge` → `run_bridge_subprocess`
+- `parse_json_stdout` → `parse_stdout_json`
 
 ## formal_boundary.py
 

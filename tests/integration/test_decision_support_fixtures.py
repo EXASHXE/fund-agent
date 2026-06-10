@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.support.bridge_runner import parse_json_stdout, run_bridge
+from tests.support.bridge_runner import parse_stdout_json, run_bridge_subprocess
 from tests.support.formal_boundary import (
     assert_active_decisions_have_anchors,
     assert_no_fake_rationale_anchors,
@@ -34,7 +34,7 @@ FIXTURES = [
 
 def _run(fixture_name: str):
     input_path = FIXTURE_DIR / fixture_name
-    return run_bridge([
+    return run_bridge_subprocess([
         "--skill",
         "decision_support",
         "--input",
@@ -44,7 +44,7 @@ def _run(fixture_name: str):
 
 
 def _parse(proc) -> dict:
-    return parse_json_stdout(proc)
+    return parse_stdout_json(proc)
 
 
 @pytest.mark.parametrize("fixture_name,expected_status,_", FIXTURES)

@@ -3,35 +3,16 @@
 from __future__ import annotations
 
 import json
-import os
-import subprocess
-import sys
 from pathlib import Path
 
+import pytest
 import yaml
+
+from tests.support.bridge_runner import run_bridge_inprocess_metadata, run_bridge_subprocess
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SCRIPT = ROOT / "scripts" / "run_skill.py"
 THESIS_CONTRACTS_PATH = ROOT / "skillpack" / "thesis-contracts.yaml"
-
-
-def _run(args: list[str]) -> subprocess.CompletedProcess:
-    env = os.environ.copy()
-    env["PYTHONPATH"] = str(ROOT)
-    return subprocess.run(
-        [sys.executable, str(SCRIPT), *args],
-        cwd=str(ROOT),
-        env=env,
-        capture_output=True,
-        text=True,
-        timeout=60,
-    )
-
-
-def _json(proc: subprocess.CompletedProcess) -> dict:
-    assert proc.stdout.strip(), f"stdout must contain JSON, stderr={proc.stderr!r}"
-    return json.loads(proc.stdout)
 
 
 def _contract() -> dict:
@@ -40,9 +21,7 @@ def _contract() -> dict:
 
 
 def test_thesis_generation_output_schema_matches_contract_yaml() -> None:
-    proc = _run(["--skill", "thesis_generation", "--output-schema", "--pretty"])
-    assert proc.returncode == 0, proc.stderr
-    envelope = _json(proc)
+    envelope = run_bridge_inprocess_metadata(skill="thesis_generation", output_schema=True, pretty=True)
     assert envelope["ok"] is True
 
     schema = envelope["output_schema"]
@@ -70,9 +49,10 @@ def test_thesis_generation_output_schema_matches_contract_yaml() -> None:
     assert {"Decision", "ExecutionLedger"} <= set(artifacts["formal_outputs_forbidden"])
 
 
+@pytest.mark.subprocess
 def test_thesis_generation_hyphenated_slug_output_schema_works() -> None:
-    proc = _run(["--skill", "thesis-generation", "--output-schema", "--pretty"])
+    proc = run_bridge_subprocess(["--skill", "thesis-generation", "--output-schema", "--pretty"])
     assert proc.returncode == 0, proc.stderr
-    envelope = _json(proc)
+    envelope = json.loads(proc.stdout)
     assert envelope["ok"] is True
     assert envelope["skill_name"] == "thesis_generation"

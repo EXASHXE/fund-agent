@@ -1,23 +1,19 @@
 """Shared helpers for fund_analysis golden regression snapshots.
 
-These helpers are test/tooling only. They call the existing runtime bridge CLI
-as a subprocess and normalize the bridge envelope without importing runtime
+These helpers are test/tooling only. They call the existing runtime bridge
+in-process and normalize the bridge envelope without importing runtime
 skill classes or provider SDKs.
 """
 
 from __future__ import annotations
 
 import json
-import os
-import subprocess
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[2]
-BRIDGE_SCRIPT = ROOT / "scripts" / "run_skill.py"
 GOLDEN_ROOT = ROOT / "tests" / "golden"
 JSON_SNAPSHOT_DIR = GOLDEN_ROOT / "fund_analysis"
 MARKDOWN_SNAPSHOT_DIR = GOLDEN_ROOT / "fund_analysis_markdown"
@@ -115,38 +111,20 @@ VOLATILE_VALUE_KEYS = {
 
 
 def run_fund_analysis_json(fixture: GoldenFixture) -> dict[str, Any]:
-    """Run a fixture through the runtime bridge and return parsed JSON."""
-    proc = _run_bridge([
-        "--skill",
-        "fund_analysis",
-        "--input",
-        fixture.input_path,
-        "--pretty",
-    ])
-    if proc.returncode != 0:
-        raise RuntimeError(
-            f"runtime bridge JSON run failed for {fixture.input_path}: "
-            f"stdout={proc.stdout!r} stderr={proc.stderr!r}"
-        )
-    return json.loads(proc.stdout)
+    """Run a fixture through the runtime bridge in-process and return parsed JSON."""
+    from tests.support.bridge_runner import run_bridge_inprocess_json
+
+    input_text = fixture.absolute_input_path.read_text(encoding="utf-8")
+    return run_bridge_inprocess_json(skill="fund_analysis", input_text=input_text, pretty=True)
 
 
 def run_fund_analysis_markdown(fixture: GoldenFixture) -> str:
-    """Run a fixture through the explicit Markdown report bridge mode."""
-    proc = _run_bridge([
-        "--skill",
-        "fund_analysis",
-        "--input",
-        fixture.input_path,
-        "--emit-report",
-        "markdown",
-    ])
-    if proc.returncode != 0:
-        raise RuntimeError(
-            f"runtime bridge Markdown run failed for {fixture.input_path}: "
-            f"stdout={proc.stdout!r} stderr={proc.stderr!r}"
-        )
-    return normalize_markdown(proc.stdout)
+    """Run a fixture through the explicit Markdown report bridge mode in-process."""
+    from tests.support.bridge_runner import run_bridge_inprocess_text
+
+    input_text = fixture.absolute_input_path.read_text(encoding="utf-8")
+    raw = run_bridge_inprocess_text(skill="fund_analysis", input_text=input_text, emit_report="markdown")
+    return normalize_markdown(raw)
 
 
 def normalize_bridge_json(envelope: dict[str, Any]) -> dict[str, Any]:
@@ -183,20 +161,6 @@ def normalize_markdown(text: str) -> str:
     """Normalize Markdown line endings and trailing newline only."""
     normalized = text.replace("\r\n", "\n").replace("\r", "\n")
     return normalized.rstrip("\n") + "\n"
-
-
-def _run_bridge(args: list[str]) -> subprocess.CompletedProcess:
-    env = os.environ.copy()
-    env["PYTHONPATH"] = str(ROOT)
-    return subprocess.run(
-        [sys.executable, str(BRIDGE_SCRIPT), *args],
-        cwd=str(ROOT),
-        env=env,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        timeout=60,
-    )
 
 
 def _normalize_value(value: Any) -> Any:

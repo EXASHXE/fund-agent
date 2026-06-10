@@ -33,6 +33,13 @@ markers = [
     "contract: schema and runtime contract tests",
     "architecture: boundary and dependency tests",
     "deprecated: optional historical or reference workflow tests",
+    "slow: slow end-to-end or broad smoke tests",
+    "subprocess: tests that spawn Python/Node/npm subprocesses",
+    "install: packaging/install smoke tests",
+    "golden: golden snapshot comparison or snapshot scanning tests",
+    "smoke: broad external-host smoke tests",
+    "filesystem: tests that scan many files",
+    "windows_slow: tests known to be slower on Windows",
 ]
 
 [tool.setuptools.packages.find]

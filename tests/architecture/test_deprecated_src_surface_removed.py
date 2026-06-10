@@ -2,44 +2,21 @@
 
 from __future__ import annotations
 
-import ast
-import os
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-SRC = ROOT / "src"
+import pytest
 
-DEPRECATED_SRC_PATHS = {
-    "src/core": "Deprecated ResearchOS modules removed in v0.4.9-dev hardening.",
-    "src/infra": "Deprecated infrastructure shims removed in v0.4.9-dev hardening.",
-    "src/workflows": "Deprecated workflow wrappers removed in v0.4.9-dev hardening.",
-    "src/config": "Deprecated shim (re-exported src.infra.config) removed.",
-    "src/data": "Deprecated shim (re-exported src.infra.data) removed.",
-    "src/db": "Deprecated shim (re-exported src.infra.persistence) removed.",
-    "src/kg": "Deprecated shim (re-exported src.graph) removed.",
-    "src/vectorstore": "Deprecated shim (re-exported src.infra.vectorstore) removed.",
-}
+from .conftest import (
+    DEPRECATED_SRC_PATHS,
+    PLUGIN_CORE_DIRS,
+    DEPRECATED_SRC_MODULES,
+    ROOT,
+    SRC,
+    imports_from_dir,
+)
+
 
 ALLOWED_RETAINED_PATHS: dict[str, str] = {}
-
-
-def _imports_from_dir(dirpath: Path) -> set[str]:
-    imports: set[str] = set()
-    if not dirpath.is_dir():
-        return imports
-    for path in sorted(dirpath.rglob("*.py")):
-        if "__pycache__" in str(path):
-            continue
-        try:
-            tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-        except SyntaxError:
-            continue
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Import):
-                imports.update(alias.name for alias in node.names)
-            elif isinstance(node, ast.ImportFrom) and node.module:
-                imports.add(node.module)
-    return imports
 
 
 def _assert_path_removed(relpath: str, reason: str):
@@ -88,18 +65,13 @@ def test_src_cli_removed():
     assert not cli_path.is_file(), "src/cli.py still exists"
 
 
-def test_plugin_core_does_not_import_deprecated_paths():
+def test_plugin_core_does_not_import_deprecated_paths(plugin_imports):
     """No plugin runtime code may import any deprecated src surface."""
-    deprecated_module_prefixes = (
-        "src.core", "src.infra", "src.workflows",
-        "src.config", "src.data", "src.db",
-        "src.kg", "src.vectorstore",
-    )
-    for subdir in ("skills_runtime", "skillpack", "tools", "schemas", "graph"):
-        imports = _imports_from_dir(SRC / subdir)
+    for subdir in PLUGIN_CORE_DIRS:
+        imports = plugin_imports[subdir]
         violations = [
             i for i in imports
-            if any(i.startswith(prefix) for prefix in deprecated_module_prefixes)
+            if any(i.startswith(prefix) for prefix in DEPRECATED_SRC_MODULES)
         ]
         assert not violations, f"src/{subdir} imports deprecated path: {violations}"
 

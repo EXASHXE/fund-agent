@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.support.bridge_runner import parse_json_stdout, run_bridge
+from tests.support.bridge_runner import parse_stdout_json, run_bridge_subprocess
 from tests.support.formal_boundary import assert_no_formal_decision_artifacts
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -30,11 +30,11 @@ LEDGER_DERIVED_ARTIFACTS = {
 
 
 def _run(args: list[str]):
-    return run_bridge(args)
+    return run_bridge_subprocess(args)
 
 
 def _load_json_output(proc) -> dict:
-    return parse_json_stdout(proc)
+    return parse_stdout_json(proc)
 
 
 @pytest.mark.parametrize("fixture_name", SCENARIO_FIXTURES)

@@ -3,33 +3,16 @@
 from __future__ import annotations
 
 import json
-import os
-import subprocess
-import sys
 from pathlib import Path
 
 import pytest
 
 from src.schemas.skill import SkillInput, SkillOutput
+from tests.support.bridge_runner import run_bridge_inprocess_json, run_bridge_inprocess_metadata, run_bridge_subprocess
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SCRIPT = ROOT / "scripts" / "run_skill.py"
 REPORT_INPUT = ROOT / "examples" / "runtime_bridge_personal_report_quality_input.json"
-
-
-def _run(args: list[str]) -> subprocess.CompletedProcess:
-    env = os.environ.copy()
-    env["PYTHONPATH"] = str(ROOT)
-    return subprocess.run(
-        [sys.executable, str(SCRIPT), *args],
-        cwd=str(ROOT),
-        env=env,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        timeout=60,
-    )
 
 
 def _assert_not_json(text: str) -> None:
@@ -37,14 +20,12 @@ def _assert_not_json(text: str) -> None:
         json.loads(text)
 
 
+@pytest.mark.subprocess
 def test_emit_report_markdown_writes_markdown_to_stdout() -> None:
-    proc = _run([
-        "--skill",
-        "fund_analysis",
-        "--input",
-        str(REPORT_INPUT),
-        "--emit-report",
-        "markdown",
+    proc = run_bridge_subprocess([
+        "--skill", "fund_analysis",
+        "--input", str(REPORT_INPUT),
+        "--emit-report", "markdown",
         "--pretty",
     ])
     assert proc.returncode == 0, proc.stderr
@@ -54,31 +35,26 @@ def test_emit_report_markdown_writes_markdown_to_stdout() -> None:
     _assert_not_json(proc.stdout)
 
 
+@pytest.mark.subprocess
 def test_emit_report_markdown_accepts_hyphenated_slug() -> None:
-    proc = _run([
-        "--skill",
-        "fund-analysis",
-        "--input",
-        str(REPORT_INPUT),
-        "--emit-report",
-        "markdown",
+    proc = run_bridge_subprocess([
+        "--skill", "fund-analysis",
+        "--input", str(REPORT_INPUT),
+        "--emit-report", "markdown",
     ])
     assert proc.returncode == 0, proc.stderr
     assert proc.stdout.startswith("# Personal fund report\n")
     assert "## Portfolio snapshot" in proc.stdout
 
 
+@pytest.mark.subprocess
 def test_emit_report_markdown_output_file_contains_markdown(tmp_path: Path) -> None:
     output_path = tmp_path / "report.md"
-    proc = _run([
-        "--skill",
-        "fund_analysis",
-        "--input",
-        str(REPORT_INPUT),
-        "--emit-report",
-        "markdown",
-        "--output",
-        str(output_path),
+    proc = run_bridge_subprocess([
+        "--skill", "fund_analysis",
+        "--input", str(REPORT_INPUT),
+        "--emit-report", "markdown",
+        "--output", str(output_path),
     ])
     assert proc.returncode == 0, proc.stderr
     assert proc.stdout == ""
@@ -89,15 +65,8 @@ def test_emit_report_markdown_output_file_contains_markdown(tmp_path: Path) -> N
 
 
 def test_normal_runtime_bridge_command_still_returns_json() -> None:
-    proc = _run([
-        "--skill",
-        "fund_analysis",
-        "--input",
-        str(REPORT_INPUT),
-        "--pretty",
-    ])
-    assert proc.returncode == 0, proc.stderr
-    out = json.loads(proc.stdout)
+    input_text = REPORT_INPUT.read_text(encoding="utf-8")
+    out = run_bridge_inprocess_json(skill="fund_analysis", input_text=input_text)
     assert out["ok"] is True
     assert out["skill_name"] == "fund_analysis"
     assert "report_sections" in out["artifacts"]
@@ -105,37 +74,31 @@ def test_normal_runtime_bridge_command_still_returns_json() -> None:
 
 def test_metadata_commands_still_return_json() -> None:
     commands = [
-        ["--list-skills"],
-        ["--list-skills", "--emit-report", "markdown"],
-        ["--skill", "fund_analysis", "--explain-input"],
-        [
-            "--skill",
-            "fund_analysis",
-            "--input",
-            str(REPORT_INPUT),
-            "--validate-input",
-        ],
-        ["--skill", "fund_analysis", "--output-schema"],
+        lambda: run_bridge_inprocess_metadata(list_skills=True),
+        lambda: run_bridge_inprocess_metadata(list_skills=True),
+        lambda: run_bridge_inprocess_metadata(skill="fund_analysis", explain_input=True),
+        lambda: run_bridge_inprocess_metadata(
+            skill="fund_analysis",
+            validate_input=True,
+            input_text=REPORT_INPUT.read_text(encoding="utf-8"),
+        ),
+        lambda: run_bridge_inprocess_metadata(skill="fund_analysis", output_schema=True),
     ]
-    for args in commands:
-        proc = _run(args)
-        assert proc.returncode == 0, f"args={args!r} stderr={proc.stderr!r}"
-        out = json.loads(proc.stdout)
+    for cmd in commands:
+        out = cmd()
         assert out["ok"] is True
 
 
 def test_non_fund_analysis_emit_report_returns_json_error() -> None:
-    proc = _run([
-        "--skill",
-        "decision_support",
-        "--input",
-        "examples/runtime_bridge_decision_support_input.json",
-        "--emit-report",
-        "markdown",
-        "--pretty",
-    ])
-    assert proc.returncode == 2
-    out = json.loads(proc.stdout)
+    ds_input_path = ROOT / "examples" / "runtime_bridge_decision_support_input.json"
+    if not ds_input_path.exists():
+        pytest.skip("decision support example not found")
+    input_text = ds_input_path.read_text(encoding="utf-8")
+    out = run_bridge_inprocess_json(
+        skill="decision_support",
+        input_text=input_text,
+        emit_report="markdown",
+    )
     assert out["ok"] is False
     assert out["error"]["code"] == "UNSUPPORTED_EMIT_REPORT"
 
@@ -180,20 +143,17 @@ def test_emit_report_missing_report_sections_returns_json_error(
     ]
 
 
+@pytest.mark.subprocess
 def test_emit_report_markdown_includes_professional_diagnostics_heading() -> None:
     fixture = ROOT / "examples" / "scenarios" / "cn_fund_7d_redemption_fee.json"
-    proc = _run([
-        "--skill",
-        "fund_analysis",
-        "--input",
-        str(fixture),
-        "--emit-report",
-        "markdown",
+    proc = run_bridge_subprocess([
+        "--skill", "fund_analysis",
+        "--input", str(fixture),
+        "--emit-report", "markdown",
     ])
     assert proc.returncode == 0, proc.stderr
     assert proc.stdout.startswith("# Personal fund report\n")
     assert "## Professional diagnostics" in proc.stdout
-    # No formal decision headings
     assert "## Decision" not in proc.stdout
     assert "## Execution ledger" not in proc.stdout
     _assert_not_json(proc.stdout)

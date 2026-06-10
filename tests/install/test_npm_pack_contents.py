@@ -141,9 +141,31 @@ def _packed_files(pack_payload: dict) -> list[str]:
     return paths
 
 
-@pytest.mark.skipif(not _has_npm(), reason="npm not available on test host")
-def test_npm_pack_dry_run_emits_valid_payload():
-    pack = _run_npm_pack_dry_run()
+@pytest.fixture(scope="session")
+def npm_pack_payload():
+    """Run npm pack --dry-run --json once per session."""
+    if not _has_npm():
+        return None
+    try:
+        return _run_npm_pack_dry_run()
+    except (FileNotFoundError, OSError, subprocess.SubprocessError):
+        return None
+
+
+@pytest.fixture(scope="session")
+def npm_packed_paths(npm_pack_payload):
+    """Return the set of packed file paths once per session."""
+    if npm_pack_payload is None:
+        return None
+    return set(_packed_files(npm_pack_payload))
+
+
+@pytest.mark.install
+@pytest.mark.subprocess
+def test_npm_pack_dry_run_emits_valid_payload(npm_pack_payload):
+    if npm_pack_payload is None:
+        pytest.skip("npm not available on test host")
+    pack = npm_pack_payload
     assert isinstance(pack, dict), f"pack payload must be a dict, got {type(pack)}"
     # The pack payload should describe the package name and version.
     # Different npm versions surface this under different keys; the
@@ -165,24 +187,27 @@ def test_npm_pack_dry_run_emits_valid_payload():
         )
 
 
-@pytest.mark.skipif(not _has_npm(), reason="npm not available on test host")
-def test_npm_pack_contains_required_install_paths():
-    pack = _run_npm_pack_dry_run()
-    paths = set(_packed_files(pack))
-    missing = [p for p in REQUIRED_PACKAGE_PATHS if p not in paths]
+@pytest.mark.install
+@pytest.mark.subprocess
+def test_npm_pack_contains_required_install_paths(npm_packed_paths):
+    if npm_packed_paths is None:
+        pytest.skip("npm not available on test host")
+    missing = [p for p in REQUIRED_PACKAGE_PATHS if p not in npm_packed_paths]
     assert not missing, (
         f"npm pack must include required install paths; missing: {missing}\n"
-        f"present paths: {sorted(paths)[:50]}..."
+        f"present paths: {sorted(npm_packed_paths)[:50]}..."
     )
 
 
-@pytest.mark.skipif(not _has_npm(), reason="npm not available on test host")
-def test_npm_pack_does_not_contain_forbidden_paths():
+@pytest.mark.install
+@pytest.mark.subprocess
+def test_npm_pack_does_not_contain_forbidden_paths(npm_packed_paths):
     """The npm package is Mode A only and must not ship legacy code,
     tests, build artifacts, archive material, or the Mode B helper
     script. This is the v0.4.6 install-packaging-smoke guard."""
-    pack = _run_npm_pack_dry_run()
-    paths = _packed_files(pack)
+    if npm_packed_paths is None:
+        pytest.skip("npm not available on test host")
+    paths = list(npm_packed_paths)
     violations: list[str] = []
     for packed in paths:
         packed_norm = packed.replace("\\", "/").lstrip("./")
@@ -199,12 +224,14 @@ def test_npm_pack_does_not_contain_forbidden_paths():
     )
 
 
-@pytest.mark.skipif(not _has_npm(), reason="npm not available on test host")
-def test_npm_pack_does_not_include_underscore_runtime_skill_dirs():
+@pytest.mark.install
+@pytest.mark.subprocess
+def test_npm_pack_does_not_include_underscore_runtime_skill_dirs(npm_packed_paths):
     """The npm package ships the canonical hyphenated skill docs only.
     It must NOT ship any ``skills/<underscore>`` runtime dir."""
-    pack = _run_npm_pack_dry_run()
-    paths = _packed_files(pack)
+    if npm_packed_paths is None:
+        pytest.skip("npm not available on test host")
+    paths = list(npm_packed_paths)
     bad: list[str] = []
     for p in paths:
         if not p.startswith("skills/"):
@@ -225,12 +252,14 @@ def test_npm_pack_does_not_include_underscore_runtime_skill_dirs():
     )
 
 
-@pytest.mark.skipif(not _has_npm(), reason="npm not available on test host")
-def test_npm_pack_does_not_include_fund_analyst_archive():
+@pytest.mark.install
+@pytest.mark.subprocess
+def test_npm_pack_does_not_include_fund_analyst_archive(npm_packed_paths):
     """The npm package must never ship the archived ``fund-analyst``
     persona material."""
-    pack = _run_npm_pack_dry_run()
-    paths = _packed_files(pack)
+    if npm_packed_paths is None:
+        pytest.skip("npm not available on test host")
+    paths = list(npm_packed_paths)
     bad = [p for p in paths if "fund-analyst" in p or "fund_analyst" in p]
     assert not bad, (
         f"npm pack must not include archived fund-analyst material; "
@@ -238,12 +267,14 @@ def test_npm_pack_does_not_include_fund_analyst_archive():
     )
 
 
-@pytest.mark.skipif(not _has_npm(), reason="npm not available on test host")
-def test_npm_pack_contains_at_least_one_skill_doc_per_canonical_skill():
+@pytest.mark.install
+@pytest.mark.subprocess
+def test_npm_pack_contains_at_least_one_skill_doc_per_canonical_skill(npm_packed_paths):
     """Each of the five canonical hyphenated skills must contribute
     at least one file (the SKILL.md) to the npm package."""
-    pack = _run_npm_pack_dry_run()
-    paths = _packed_files(pack)
+    if npm_packed_paths is None:
+        pytest.skip("npm not available on test host")
+    paths = list(npm_packed_paths)
     for slug in [
         "fund-analysis",
         "decision-support",

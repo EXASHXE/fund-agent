@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import json
-import subprocess
-import sys
 from pathlib import Path
 
 import pytest
+
+from tests.support.bridge_runner import run_bridge_inprocess_json
+
 
 EXAMPLES_DIR = Path(__file__).resolve().parent.parent.parent / "examples"
 
@@ -31,21 +32,9 @@ REQUIRED_REPORT_SECTION_IDS = [
 ]
 
 
-def _run_skill(skill: str, example_path: Path) -> dict:
-    result = subprocess.run(
-        [
-            sys.executable,
-            str(Path(__file__).resolve().parent.parent.parent / "scripts" / "run_skill.py"),
-            "--skill", skill,
-            "--input", str(example_path),
-        ],
-        capture_output=True,
-        text=True,
-        env={"PYTHONPATH": str(Path(__file__).resolve().parent.parent.parent), **__import__("os").environ},
-        timeout=30,
-    )
-    assert result.returncode == 0, f"CLI failed: {result.stderr}"
-    output = json.loads(result.stdout)
+def _run_skill_inprocess(skill: str, example_path: Path) -> dict:
+    input_text = example_path.read_text(encoding="utf-8")
+    output = run_bridge_inprocess_json(skill=skill, input_text=input_text)
     assert output.get("ok") is True
     return output
 
@@ -59,7 +48,7 @@ class TestPersonalReportQualityExample:
         assert data["skill_name"] == "fund_analysis"
 
     def test_fund_analysis_runs_with_report_quality_input(self):
-        output = _run_skill("fund_analysis", self.example_path)
+        output = _run_skill_inprocess("fund_analysis", self.example_path)
         assert output["status"] in ("OK", "PARTIAL")
         artifacts = output["artifacts"]
         assert "data_completeness" in artifacts
@@ -78,22 +67,19 @@ class TestPersonalReportQualityExample:
         assert "execution_ledger" not in artifacts
 
     def test_ledger_quality_summary_present_when_derived(self):
-        """Ledger snapshot example includes ledger_quality_summary."""
         ledger_path = EXAMPLES_DIR / "runtime_bridge_ledger_snapshot_input.json"
         if not ledger_path.exists():
             pytest.skip("ledger snapshot example not found")
-        output = _run_skill("fund_analysis", ledger_path)
+        output = _run_skill_inprocess("fund_analysis", ledger_path)
         artifacts = output["artifacts"]
-        # Derived from transactions should have ledger_quality_summary
         if artifacts.get("source_of_truth") == "derived_from_transactions":
             assert "ledger_quality_summary" in artifacts
 
     def test_research_query_plan_example_includes_completeness(self):
-        """Research query plan example includes data_completeness."""
         query_path = EXAMPLES_DIR / "runtime_bridge_research_query_plan_input.json"
         if not query_path.exists():
             pytest.skip("research query plan example not found")
-        output = _run_skill("fund_analysis", query_path)
+        output = _run_skill_inprocess("fund_analysis", query_path)
         artifacts = output["artifacts"]
         assert "data_completeness" in artifacts
         assert "analysis_coverage" in artifacts
@@ -103,7 +89,6 @@ class TestPersonalReportQualityExample:
         assert "data_completeness" in report
 
     def test_no_network_access_in_report_quality(self):
-        """Verify the report quality helpers do not reach any network."""
         import importlib
 
         for module_name in (
@@ -112,7 +97,6 @@ class TestPersonalReportQualityExample:
         ):
             mod = importlib.import_module(module_name)
             source = __import__("inspect").getsource(mod)
-            # No urllib, requests, httpx, socket, aiohttp
             for banned in ("import urllib", "import requests", "import httpx",
                            "import socket", "import aiohttp", "import ssl",
                            "from urllib", "from requests", "from httpx"):

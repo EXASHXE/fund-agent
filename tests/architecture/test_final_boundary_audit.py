@@ -6,106 +6,54 @@ execution machinery, or deprecated surfaces exist in runtime plugin core.
 
 from __future__ import annotations
 
-import ast
-import os
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-SRC = ROOT / "src"
+import pytest
+
+from .conftest import (
+    BROKER_KEYWORDS,
+    DEPRECATED_SRC_MODULES,
+    DEPRECATED_SRC_PATHS,
+    NETWORK_CLIENTS,
+    PLUGIN_CORE_DIRS,
+    PROVIDER_SDKS,
+    ROOT,
+    SRC,
+    imports_from_dir,
+    imports_from_file,
+)
 
 
-_PROVIDER_SDKS = {
-    "tavily", "exa", "firecrawl", "finnhub", "reddit",
-    "akshare", "openai", "anthropic", "langchain",
-}
-
-_NETWORK_CLIENTS = {
-    "requests", "httpx", "aiohttp", "urllib3", "socket",
-}
-
-_BROKER_KEYWORDS = {
-    "place_order", "submit_order", "broker_client", "brokerage",
-    "trade_execution_api",
-}
-
-_DEPRECATED_SRC_MODULES = {
-    "src.core", "src.infra", "src.workflows",
-    "src.config", "src.data", "src.db",
-    "src.kg", "src.vectorstore",
-}
-
-
-def _imports_from_file(path: Path) -> set[str]:
-    imports: set[str] = set()
-    if not path.is_file():
-        return imports
-    try:
-        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-    except SyntaxError:
-        return imports
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            imports.update(alias.name for alias in node.names)
-        elif isinstance(node, ast.ImportFrom) and node.module:
-            imports.add(node.module)
-    return imports
-
-
-def _imports_from_dir(dirpath: Path) -> set[str]:
-    imports: set[str] = set()
-    if not dirpath.is_dir():
-        return imports
-    for py_file in sorted(dirpath.rglob("*.py")):
-        if "__pycache__" in str(py_file):
-            continue
-        imports.update(_imports_from_file(py_file))
-    return imports
-
-
-def test_no_provider_sdks_in_skills_runtime():
-    imports = _imports_from_dir(SRC / "skills_runtime")
-    violations = imports & _PROVIDER_SDKS
+def test_no_provider_sdks_in_skills_runtime(plugin_imports):
+    violations = plugin_imports["skills_runtime"] & PROVIDER_SDKS
     assert not violations, f"skills_runtime imports provider SDKs: {violations}"
 
 
-def test_no_provider_sdks_in_skillpack():
-    imports = _imports_from_dir(SRC / "skillpack")
-    violations = imports & _PROVIDER_SDKS
+def test_no_provider_sdks_in_skillpack(plugin_imports):
+    violations = plugin_imports["skillpack"] & PROVIDER_SDKS
     assert not violations, f"skillpack imports provider SDKs: {violations}"
 
 
-def test_no_provider_sdks_in_tools():
-    imports = _imports_from_dir(SRC / "tools")
-    violations = imports & _PROVIDER_SDKS
+def test_no_provider_sdks_in_tools(plugin_imports):
+    violations = plugin_imports["tools"] & PROVIDER_SDKS
     assert not violations, f"tools imports provider SDKs: {violations}"
 
 
-def test_no_network_clients_in_skills_runtime():
-    imports = _imports_from_dir(SRC / "skills_runtime")
-    violations = imports & _NETWORK_CLIENTS
+def test_no_network_clients_in_skills_runtime(plugin_imports):
+    violations = plugin_imports["skills_runtime"] & NETWORK_CLIENTS
     assert not violations, f"skills_runtime imports network clients: {violations}"
 
 
-def test_no_network_clients_in_skillpack():
-    imports = _imports_from_dir(SRC / "skillpack")
-    violations = imports & _NETWORK_CLIENTS
+def test_no_network_clients_in_skillpack(plugin_imports):
+    violations = plugin_imports["skillpack"] & NETWORK_CLIENTS
     assert not violations, f"skillpack imports network clients: {violations}"
 
 
-def test_no_broker_keywords_in_runtime_source():
-    runtime_dirs = ("skills_runtime", "skillpack", "tools")
-    for dirname in runtime_dirs:
-        dirpath = SRC / dirname
-        if not dirpath.is_dir():
-            continue
-        for py_file in dirpath.rglob("*.py"):
-            if "__pycache__" in str(py_file):
-                continue
-            text = py_file.read_text(encoding="utf-8").lower()
-            for kw in _BROKER_KEYWORDS:
-                assert kw not in text, (
-                    f"{py_file.relative_to(ROOT)} contains broker keyword: {kw}"
-                )
+def test_no_broker_keywords_in_runtime_source(runtime_source_texts):
+    for relpath, text in runtime_source_texts.items():
+        lower = text.lower()
+        for kw in BROKER_KEYWORDS:
+            assert kw not in lower, f"{relpath} contains broker keyword: {kw}"
 
 
 def test_opencode_plugin_does_not_invoke_python_or_child_process():
@@ -115,15 +63,15 @@ def test_opencode_plugin_does_not_invoke_python_or_child_process():
         assert kw not in js, f"opencode.plugin.js contains execution keyword: {kw}"
 
 
-def test_fund_analysis_does_not_import_decision():
-    imports = _imports_from_dir(SRC / "skills_runtime" / "fund_analysis")
-    assert "src.schemas.decision" not in imports, (
+def test_fund_analysis_does_not_import_decision(plugin_imports):
+    fa_imports = imports_from_dir(SRC / "skills_runtime" / "fund_analysis")
+    assert "src.schemas.decision" not in fa_imports, (
         "fund_analysis must not import Decision schema"
     )
 
 
 def test_thesis_generation_does_not_import_decision():
-    imports = _imports_from_file(
+    imports = imports_from_file(
         SRC / "skills_runtime" / "thesis_generation.py"
     )
     assert "src.schemas.decision" not in imports, (
@@ -132,25 +80,24 @@ def test_thesis_generation_does_not_import_decision():
 
 
 def test_decision_support_allowed_to_import_decision():
-    imports = _imports_from_dir(SRC / "skills_runtime" / "decision_support")
+    imports = imports_from_dir(SRC / "skills_runtime" / "decision_support")
     assert "src.schemas.decision" in imports, (
         "decision_support should import Decision schema"
     )
 
 
 def test_deprecated_src_surfaces_remain_absent():
-    for relpath in _DEPRECATED_SRC_MODULES:
+    for relpath in DEPRECATED_SRC_MODULES:
         parts = relpath.split(".")
         parts[0] = "src"
         abs_path = ROOT.joinpath(*parts)
         assert not abs_path.exists(), f"Deprecated surface still present: {relpath}"
 
 
-def test_no_deprecated_surface_imports_in_plugin_core():
-    core_dirs = ("skills_runtime", "skillpack", "tools", "schemas", "graph")
-    for dirname in core_dirs:
-        imports = _imports_from_dir(SRC / dirname)
-        for deprecated in _DEPRECATED_SRC_MODULES:
+def test_no_deprecated_surface_imports_in_plugin_core(plugin_imports):
+    for dirname in PLUGIN_CORE_DIRS:
+        imports = plugin_imports[dirname]
+        for deprecated in DEPRECATED_SRC_MODULES:
             violations = [i for i in imports if i.startswith(deprecated)]
             assert not violations, (
                 f"src/{dirname} imports deprecated {deprecated}: {violations}"

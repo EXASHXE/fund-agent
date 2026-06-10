@@ -3,37 +3,16 @@
 from __future__ import annotations
 
 import json
-import os
-import subprocess
-import sys
 from pathlib import Path
 
 import yaml
 
 from src.skillpack import input_contracts
+from tests.support.bridge_runner import run_bridge_inprocess_metadata
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SCRIPT = ROOT / "scripts" / "run_skill.py"
 ARTIFACT_CONTRACT_PATH = ROOT / "skillpack" / "artifact-contracts.yaml"
-
-
-def _run(args: list[str]) -> subprocess.CompletedProcess:
-    env = os.environ.copy()
-    env["PYTHONPATH"] = str(ROOT)
-    return subprocess.run(
-        [sys.executable, str(SCRIPT), *args],
-        cwd=str(ROOT),
-        env=env,
-        capture_output=True,
-        text=True,
-        timeout=60,
-    )
-
-
-def _json(proc: subprocess.CompletedProcess) -> dict:
-    assert proc.stdout.strip(), f"stdout must contain JSON, stderr={proc.stderr!r}"
-    return json.loads(proc.stdout)
 
 
 def _artifact_keys(schema: dict) -> set[str]:
@@ -49,10 +28,12 @@ def _fund_artifact_contract() -> dict:
     return data["contracts"]["fund_analysis"]
 
 
+def _output_schema(skill: str) -> dict:
+    return run_bridge_inprocess_metadata(skill=skill, output_schema=True, pretty=True)
+
+
 def test_fund_analysis_output_schema_lists_public_shape() -> None:
-    proc = _run(["--skill", "fund_analysis", "--output-schema", "--pretty"])
-    assert proc.returncode == 0, proc.stderr
-    out = _json(proc)
+    out = _output_schema("fund_analysis")
     assert out["ok"] is True
     assert out["skill_name"] == "fund_analysis"
     schema = out["output_schema"]
@@ -133,9 +114,7 @@ def test_fund_analysis_output_schema_is_contract_loader_driven(monkeypatch) -> N
 
 
 def test_decision_support_output_schema_mentions_formal_outputs() -> None:
-    proc = _run(["--skill", "decision_support", "--output-schema", "--pretty"])
-    assert proc.returncode == 0, proc.stderr
-    schema = _json(proc)["output_schema"]
+    schema = _output_schema("decision_support")["output_schema"]
     artifact_keys = _artifact_keys(schema)
     assert "decision" in artifact_keys
     assert "execution_ledger" in artifact_keys
@@ -146,9 +125,7 @@ def test_decision_support_output_schema_mentions_formal_outputs() -> None:
 
 
 def test_thesis_generation_output_schema_forbids_formal_decisions() -> None:
-    proc = _run(["--skill", "thesis_generation", "--output-schema", "--pretty"])
-    assert proc.returncode == 0, proc.stderr
-    schema = _json(proc)["output_schema"]
+    schema = _output_schema("thesis_generation")["output_schema"]
     artifact_keys = _artifact_keys(schema)
     assert artifact_keys == {"thesis_draft"}
     assert schema["artifacts"]["forbidden"] == ["formal_decision_generation"]
@@ -158,8 +135,6 @@ def test_thesis_generation_output_schema_forbids_formal_decisions() -> None:
 
 
 def test_news_research_output_schema_mentions_soft_evidence() -> None:
-    proc = _run(["--skill", "news_research", "--output-schema", "--pretty"])
-    assert proc.returncode == 0, proc.stderr
-    schema = _json(proc)["output_schema"]
+    schema = _output_schema("news_research")["output_schema"]
     assert schema["evidence_items"]["produces"] == ["SoftEvidence"]
     assert "mcp_response" in _artifact_keys(schema)

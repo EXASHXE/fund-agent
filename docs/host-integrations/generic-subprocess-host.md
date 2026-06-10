@@ -41,6 +41,21 @@ The host runner:
 Host owns real data fetching and provider SDKs. The OpenCode plugin
 remains metadata + doc-reader only.
 
+## Fresh Host Smoke
+
+Run the deterministic host smoke script to verify every skill can be
+discovered, inspected, and run with fake/sample data:
+
+```bash
+python scripts/smoke_host_install.py
+```
+
+The script runs: list-skills, explain-input, output-schema, validate,
+fund_analysis JSON, fund_analysis Markdown emit, decision_support,
+thesis_generation, news_research with canned MCP, sentiment_analysis
+with canned MCP. All data is fake. No network calls, no provider SDKs,
+no broker/order execution. Exit 0 on success.
+
 ## Prerequisites
 
 - Source checkout of this repository.
@@ -204,3 +219,51 @@ subprocess.run(
 For formal actions, compile `evidence_items` and invoke `decision_support`.
 Formal decisions require `decision_support`.
 `fund_analysis` itself does not produce formal `Decision` or `ExecutionLedger`.
+
+## Canonical Runtime Bridge Examples
+
+```bash
+# Discover skills
+python scripts/run_skill.py --list-skills --pretty
+
+# Inspect input contract
+python scripts/run_skill.py --skill fund_analysis --explain-input --pretty
+
+# Inspect output schema
+python scripts/run_skill.py --skill fund_analysis --output-schema --pretty
+
+# Validate input
+python scripts/run_skill.py --skill fund_analysis \
+  --input examples/scenarios/cn_fund_7d_redemption_fee.json \
+  --validate-input --pretty
+
+# Run fund_analysis JSON
+python scripts/run_skill.py --skill fund_analysis \
+  --input examples/scenarios/cn_fund_7d_redemption_fee.json --pretty
+
+# Run fund_analysis Markdown emit
+python scripts/run_skill.py --skill fund_analysis \
+  --input examples/scenarios/cn_fund_7d_redemption_fee.json \
+  --emit-report markdown
+
+# Run decision_support
+python scripts/run_skill.py --skill decision_support \
+  --input examples/decision_support/single_active_buy_with_evidence.json --pretty
+
+# Run thesis_generation
+python scripts/run_skill.py --skill thesis_generation \
+  --input examples/thesis_generation/evidence_graph_balanced_thesis.json --pretty
+```
+
+## Boundary Clarifications
+
+- **OpenCode plugin** is metadata + doc-reader only; it does not invoke Python.
+- **Runtime bridge** requires source checkout / Python runtime; it is not
+  invoked by the OpenCode plugin.
+- **Host owns** real data fetching and MCP providers.
+- Canned MCP responses in smoke tests are only for deterministic testing.
+- **fund_analysis** and **thesis_generation** do not emit formal
+  `Decision` / `ExecutionLedger`.
+- **decision_support** emits formal decisions but does not execute trades
+  or connect to brokerage systems.
+- **No broker/order execution** — this skill pack is analysis-only.

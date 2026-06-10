@@ -41,6 +41,21 @@ subprocess-smokes the runtime bridge. See
 [`docs/install/runtime-bridge-cli.md`](install/runtime-bridge-cli.md) for
 the full doctor output contract.
 
+## Fresh host smoke
+
+After checkout, run the deterministic host smoke script to verify every
+skill can be discovered, inspected, and run with fake/sample data:
+
+```bash
+python scripts/smoke_host_install.py
+```
+
+The script runs: list-skills, explain-input, output-schema, validate,
+fund_analysis JSON, fund_analysis Markdown emit, decision_support,
+thesis_generation, news_research with canned MCP, sentiment_analysis
+with canned MCP. All data is fake. No network calls, no provider SDKs,
+no broker/order execution. Exit 0 on success.
+
 ## Minimal subprocess host reference
 
 `examples/host_subprocess_runner.py` is a minimal reference that shows

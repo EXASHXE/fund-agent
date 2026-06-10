@@ -5,12 +5,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from tests.support.bridge_runner import parse_json_stdout, run_bridge, write_temp_json
+from tests.support.bridge_runner import parse_stdout_json, run_bridge_subprocess, write_temp_json
 
 
 def _assert_json_skill_output(proc, *, skill_name: str, statuses: set[str]) -> dict:
     assert proc.returncode == 0, proc.stderr
-    out = parse_json_stdout(proc)
+    out = parse_stdout_json(proc)
     assert out["ok"] is True
     assert out["skill_name"] == skill_name
     assert out["status"] in statuses
@@ -29,10 +29,10 @@ def _assert_json_skill_output(proc, *, skill_name: str, statuses: set[str]) -> d
 
 
 def test_source_checkout_lists_skills() -> None:
-    proc = run_bridge(["--list-skills", "--pretty"])
+    proc = run_bridge_subprocess(["--list-skills", "--pretty"])
 
     assert proc.returncode == 0, proc.stderr
-    out = parse_json_stdout(proc)
+    out = parse_stdout_json(proc)
     assert out["ok"] is True
     runtime_ids = {item["runtime_id"] for item in out["skills"]}
     assert {
@@ -45,17 +45,17 @@ def test_source_checkout_lists_skills() -> None:
 
 
 def test_source_checkout_explains_fund_analysis_input() -> None:
-    proc = run_bridge(["--skill", "fund_analysis", "--explain-input", "--pretty"])
+    proc = run_bridge_subprocess(["--skill", "fund_analysis", "--explain-input", "--pretty"])
 
     assert proc.returncode == 0, proc.stderr
-    out = parse_json_stdout(proc)
+    out = parse_stdout_json(proc)
     assert out["ok"] is True
     assert out["skill_name"] == "fund_analysis"
     assert "input_contract" in out
 
 
 def test_source_checkout_validates_fake_fund_analysis_scenario() -> None:
-    proc = run_bridge([
+    proc = run_bridge_subprocess([
         "--skill",
         "fund_analysis",
         "--input",
@@ -65,13 +65,13 @@ def test_source_checkout_validates_fake_fund_analysis_scenario() -> None:
     ])
 
     assert proc.returncode == 0, proc.stderr
-    out = parse_json_stdout(proc)
+    out = parse_stdout_json(proc)
     assert out["ok"] is True
     assert out["validation_result"]["valid"] is True
 
 
 def test_source_checkout_emits_markdown_report_from_fake_scenario() -> None:
-    proc = run_bridge([
+    proc = run_bridge_subprocess([
         "--skill",
         "fund_analysis",
         "--input",
@@ -93,7 +93,7 @@ def test_source_checkout_emits_markdown_report_from_fake_scenario() -> None:
 
 
 def test_source_checkout_runs_decision_support_fixture() -> None:
-    proc = run_bridge([
+    proc = run_bridge_subprocess([
         "--skill",
         "decision_support",
         "--input",
@@ -107,7 +107,7 @@ def test_source_checkout_runs_decision_support_fixture() -> None:
 
 
 def test_source_checkout_runs_thesis_generation_fixture() -> None:
-    proc = run_bridge([
+    proc = run_bridge_subprocess([
         "--skill",
         "thesis_generation",
         "--input",
@@ -149,7 +149,7 @@ def test_source_checkout_runs_news_research_with_host_canned_mcp(tmp_path: Path)
         "news.json",
     )
 
-    proc = run_bridge([
+    proc = run_bridge_subprocess([
         "--skill",
         "news_research",
         "--input",
@@ -186,7 +186,7 @@ def test_source_checkout_runs_sentiment_analysis_with_host_canned_mcp(tmp_path: 
         "sentiment.json",
     )
 
-    proc = run_bridge([
+    proc = run_bridge_subprocess([
         "--skill",
         "sentiment_analysis",
         "--input",

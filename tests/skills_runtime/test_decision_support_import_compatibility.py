@@ -2,27 +2,14 @@
 
 from __future__ import annotations
 
-import json
-import os
-import subprocess
-import sys
 from pathlib import Path
 
+import pytest
+
+from tests.support.bridge_runner import run_bridge_inprocess_json, run_bridge_subprocess
+
+
 ROOT = Path(__file__).resolve().parents[2]
-SCRIPT = ROOT / "scripts" / "run_skill.py"
-
-
-def _run(args: list[str]) -> subprocess.CompletedProcess:
-    env = os.environ.copy()
-    env["PYTHONPATH"] = str(ROOT)
-    return subprocess.run(
-        [sys.executable, str(SCRIPT), *args],
-        cwd=str(ROOT),
-        env=env,
-        capture_output=True,
-        text=True,
-        timeout=60,
-    )
 
 
 def test_import_decision_support_as_package():
@@ -49,15 +36,16 @@ def test_manifest_runtime_path_resolves():
 
 def test_runtime_bridge_runs_with_underscore_slug():
     fixture = ROOT / "examples" / "decision_support" / "single_active_buy_with_evidence.json"
-    proc = _run(["--skill", "decision_support", "--input", str(fixture), "--pretty"])
-    assert proc.returncode == 0, f"stderr={proc.stderr!r}"
-    envelope = json.loads(proc.stdout)
+    input_text = fixture.read_text(encoding="utf-8")
+    envelope = run_bridge_inprocess_json(skill="decision_support", input_text=input_text)
     assert envelope.get("skill_name") == "decision_support"
 
 
+@pytest.mark.subprocess
 def test_runtime_bridge_runs_with_hyphen_slug():
+    import json
     fixture = ROOT / "examples" / "decision_support" / "single_active_buy_with_evidence.json"
-    proc = _run(["--skill", "decision-support", "--input", str(fixture), "--pretty"])
+    proc = run_bridge_subprocess(["--skill", "decision-support", "--input", str(fixture), "--pretty"])
     assert proc.returncode == 0, f"stderr={proc.stderr!r}"
     envelope = json.loads(proc.stdout)
     assert envelope.get("skill_name") == "decision_support"

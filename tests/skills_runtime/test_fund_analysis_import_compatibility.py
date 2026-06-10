@@ -3,16 +3,14 @@
 from __future__ import annotations
 
 import importlib
-import json
-import os
-import subprocess
-import sys
 from pathlib import Path
 
 import pytest
 
+from tests.support.bridge_runner import run_bridge_inprocess_json, run_bridge_subprocess
+
+
 ROOT = Path(__file__).resolve().parents[2]
-SCRIPT = ROOT / "scripts" / "run_skill.py"
 INPUT = ROOT / "examples" / "runtime_bridge_fund_analysis_input.json"
 
 
@@ -24,36 +22,25 @@ def test_fund_analysis_package_exposes_instantiable_skill() -> None:
     assert skill.__class__.__name__ == "FundAnalysisSkill"
 
 
-def _run_bridge(skill_name: str) -> dict:
-    env = os.environ.copy()
-    env["PYTHONPATH"] = str(ROOT)
-    proc = subprocess.run(
-        [
-            sys.executable,
-            str(SCRIPT),
-            "--skill",
-            skill_name,
-            "--input",
-            str(INPUT),
-            "--pretty",
-        ],
-        cwd=str(ROOT),
-        env=env,
-        capture_output=True,
-        text=True,
-        timeout=60,
-    )
-    assert proc.returncode == 0, proc.stderr
-    assert proc.stdout.strip()
-    return json.loads(proc.stdout)
-
-
-@pytest.mark.parametrize("skill_name", ["fund_analysis", "fund-analysis"])
-def test_runtime_bridge_still_runs_fund_analysis_aliases(skill_name: str) -> None:
-    output = _run_bridge(skill_name)
-
+def test_runtime_bridge_still_runs_fund_analysis_aliases() -> None:
+    input_text = INPUT.read_text(encoding="utf-8")
+    output = run_bridge_inprocess_json(skill="fund_analysis", input_text=input_text)
     assert output["ok"] is True
     assert output["skill_name"] == "fund_analysis"
     assert output["metadata"]["runtime_path"] == (
         "src.skills_runtime.fund_analysis:FundAnalysisSkill"
     )
+
+
+@pytest.mark.subprocess
+def test_runtime_bridge_still_runs_fund_analysis_hyphen_slug() -> None:
+    import json
+    proc = run_bridge_subprocess([
+        "--skill", "fund-analysis",
+        "--input", str(INPUT),
+        "--pretty",
+    ])
+    assert proc.returncode == 0, proc.stderr
+    output = json.loads(proc.stdout)
+    assert output["ok"] is True
+    assert output["skill_name"] == "fund_analysis"

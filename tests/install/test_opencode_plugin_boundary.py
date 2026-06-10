@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 
@@ -34,6 +35,23 @@ def _non_comment_js(text: str) -> str:
         line for line in text.splitlines()
         if not line.lstrip().startswith("//")
     )
+
+
+def test_opencode_plugin_file_exists() -> None:
+    assert PLUGIN.exists(), "opencode.plugin.js must exist"
+
+
+def test_opencode_plugin_js_syntax_check(node_check_opencode_plugin) -> None:
+    if node_check_opencode_plugin is None:
+        import pytest
+        pytest.skip("node not available on test host")
+    assert node_check_opencode_plugin, "node --check opencode.plugin.js failed"
+
+
+def test_package_json_points_to_plugin() -> None:
+    pkg = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
+    assert pkg.get("main") == "opencode.plugin.js"
+    assert pkg.get("fundAgent", {}).get("opencodePlugin") == "opencode.plugin.js"
 
 
 def test_opencode_plugin_does_not_invoke_python_runtime_bridge() -> None:
@@ -79,3 +97,25 @@ def test_opencode_docs_explain_plugin_cannot_execute_python_runtime() -> None:
     assert "cannot provide deterministic python runtime execution" in combined
     assert "source checkout" in combined or "source-checkout" in combined
     assert "scripts/run_skill.py" in combined
+
+
+def test_opencode_plugin_does_not_spawn_subprocesses() -> None:
+    code = _non_comment_js(_text(PLUGIN)).lower()
+    assert "subprocess" not in code
+    assert "spawn(" not in code
+    assert "exec(" not in code
+    assert "child_process" not in code
+    assert "shell(" not in code
+
+
+def test_runtime_bridge_requires_source_checkout_not_plugin() -> None:
+    pkg = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
+    rb = pkg.get("fundAgent", {}).get("runtimeBridge", {})
+    assert rb.get("distribution") == "source-checkout-only"
+
+
+def test_opencode_plugin_is_metadata_and_doc_reader_only() -> None:
+    text = _text(PLUGIN).lower()
+    assert "metadata + doc" in text or "metadata and doc" in text
+    assert "does not" in text
+    assert "host-driven" in text or "host owned" in text or "host owns" in text

@@ -79,19 +79,9 @@ THESIS_GENERATION_GOLDEN_FIXTURES: tuple[GoldenFixture, ...] = (
 
 
 def run_thesis_generation_json(fixture: GoldenFixture) -> dict[str, Any]:
-    proc = _run_bridge([
-        "--skill",
-        "thesis_generation",
-        "--input",
-        fixture.input_path,
-        "--pretty",
-    ])
-    if proc.returncode != 0:
-        raise RuntimeError(
-            f"runtime bridge JSON run failed for {fixture.input_path}: "
-            f"stdout={proc.stdout!r} stderr={proc.stderr!r}"
-        )
-    return json.loads(proc.stdout)
+    from tests.support.bridge_runner import run_bridge_inprocess_json
+    input_text = fixture.absolute_input_path.read_text(encoding="utf-8")
+    return run_bridge_inprocess_json(skill="thesis_generation", input_text=input_text)
 
 
 def normalize_bridge_json(envelope: dict[str, Any]) -> dict[str, Any]:

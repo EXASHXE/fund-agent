@@ -37,12 +37,15 @@ def test_error_shape_exports():
 
 def test_bridge_runner_exports():
     from tests.support.bridge_runner import (
+        bridge_env,
         parse_stdout_json,
         project_root,
         run_bridge_inprocess_json,
+        run_bridge_json,
         run_bridge_subprocess,
         stdout_text,
         write_temp_json,
+        write_temp_text,
     )
 
 

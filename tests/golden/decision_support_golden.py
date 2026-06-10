@@ -1,22 +1,18 @@
 """Shared helpers for decision_support golden regression snapshots.
 
-These helpers are test/tooling only. They call the existing runtime bridge CLI
-as a subprocess and normalize the bridge envelope without importing runtime
+These helpers are test/tooling only. They call the existing runtime bridge
+in-process and normalize the bridge envelope without importing runtime
 skill classes or provider SDKs.
 """
 
 from __future__ import annotations
 
 import json
-import os
-import subprocess
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
-BRIDGE_SCRIPT = ROOT / "scripts" / "run_skill.py"
 GOLDEN_ROOT = ROOT / "tests" / "golden"
 JSON_SNAPSHOT_DIR = GOLDEN_ROOT / "decision_support"
 
@@ -85,20 +81,11 @@ DECISION_SUPPORT_GOLDEN_FIXTURES: tuple[GoldenFixture, ...] = (
 
 
 def run_decision_support_json(fixture: GoldenFixture) -> dict[str, Any]:
-    """Run a fixture through the runtime bridge and return parsed JSON."""
-    proc = _run_bridge([
-        "--skill",
-        "decision_support",
-        "--input",
-        fixture.input_path,
-        "--pretty",
-    ])
-    if proc.returncode != 0:
-        raise RuntimeError(
-            f"runtime bridge JSON run failed for {fixture.input_path}: "
-            f"stdout={proc.stdout!r} stderr={proc.stderr!r}"
-        )
-    return json.loads(proc.stdout)
+    """Run a fixture through the runtime bridge in-process and return parsed JSON."""
+    from tests.support.bridge_runner import run_bridge_inprocess_json
+
+    input_text = fixture.absolute_input_path.read_text(encoding="utf-8")
+    return run_bridge_inprocess_json(skill="decision_support", input_text=input_text, pretty=True)
 
 
 def normalize_bridge_json(envelope: dict[str, Any]) -> dict[str, Any]:
@@ -129,20 +116,6 @@ def normalize_bridge_json(envelope: dict[str, Any]) -> dict[str, Any]:
 def serialize_snapshot(data: dict[str, Any]) -> str:
     """Serialize a normalized JSON snapshot deterministically."""
     return json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
-
-
-def _run_bridge(args: list[str]) -> subprocess.CompletedProcess:
-    env = os.environ.copy()
-    env["PYTHONPATH"] = str(ROOT)
-    return subprocess.run(
-        [sys.executable, str(BRIDGE_SCRIPT), *args],
-        cwd=str(ROOT),
-        env=env,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        timeout=60,
-    )
 
 
 def _normalize_value(value: Any) -> Any:

@@ -37,7 +37,7 @@ def bridge_env() -> dict[str, str]:
     return env
 
 
-def run_bridge(args: list[str], *, timeout: int = 60) -> subprocess.CompletedProcess:
+def run_bridge_subprocess(args: list[str], *, timeout: int = 60, input: str | None = None) -> subprocess.CompletedProcess:
     """Run the runtime bridge CLI as a text subprocess."""
     return subprocess.run(
         [sys.executable, str(BRIDGE_SCRIPT), *args],
@@ -45,13 +45,14 @@ def run_bridge(args: list[str], *, timeout: int = 60) -> subprocess.CompletedPro
         env=bridge_env(),
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
+        input=input,
         timeout=timeout,
     )
 
 
-def run_bridge_subprocess(args: list[str], *, timeout: int = 60) -> subprocess.CompletedProcess:
-    """Run the runtime bridge CLI as a subprocess."""
-    return run_bridge(args, timeout=timeout)
+run_bridge = run_bridge_subprocess
 
 
 def stdout_text(result: subprocess.CompletedProcess) -> str:
@@ -61,15 +62,16 @@ def stdout_text(result: subprocess.CompletedProcess) -> str:
 
 def parse_stdout_json(result: subprocess.CompletedProcess) -> dict:
     """Parse stdout JSON from a subprocess result."""
-    return json.loads(stdout_text(result))
+    text = stdout_text(result)
+    assert text.strip(), (
+        f"stdout must contain JSON, rc={result.returncode}, stderr={result.stderr!r}"
+    )
+    return json.loads(text)
 
 
 def parse_json_stdout(proc: subprocess.CompletedProcess) -> dict[str, Any]:
-    """Parse stdout JSON, preserving stderr in assertion messages."""
-    assert proc.stdout.strip(), (
-        f"stdout must contain JSON, rc={proc.returncode}, stderr={proc.stderr!r}"
-    )
-    return json.loads(proc.stdout)
+    """Compatibility alias for parse_stdout_json."""
+    return parse_stdout_json(proc)
 
 
 def run_bridge_json(args: list[str], *, timeout: int = 60) -> dict[str, Any]:
@@ -124,6 +126,84 @@ def run_bridge_inprocess_json(
     sys.stdout = StringIO()
     try:
         run_bridge_inprocess(skill_name=skill, input_path=path, input_text=input_text, emit_report=emit_report)
+        output = sys.stdout.getvalue()
+    finally:
+        sys.stdout = old_stdout
+
+    return json.loads(output.strip())
+
+
+def run_bridge_inprocess_text(
+    *,
+    skill: str,
+    input_data: dict | None = None,
+    input_text: str | None = None,
+    emit_report: str | None = None,
+) -> str:
+    """Run the runtime bridge in-process and return raw stdout text."""
+    if input_text is None and input_data is not None:
+        input_text = json.dumps(input_data)
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as f:
+        if input_text:
+            f.write(input_text)
+        f.flush()
+        path = f.name
+
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    try:
+        run_bridge_inprocess(skill_name=skill, input_path=path, input_text=input_text, emit_report=emit_report)
+        output = sys.stdout.getvalue()
+    finally:
+        sys.stdout = old_stdout
+
+    return output
+
+
+def run_bridge_inprocess_metadata(
+    *,
+    list_skills: bool = False,
+    list_capabilities: bool = False,
+    describe_capability: str | None = None,
+    skill: str | None = None,
+    explain_input: bool = False,
+    validate_input: bool = False,
+    output_schema: bool = False,
+    input_data: dict | None = None,
+    input_text: str | None = None,
+    pretty: bool = False,
+) -> dict[str, Any]:
+    """Run a metadata bridge command in-process and return parsed JSON output.
+
+    Supports --list-skills, --list-capabilities, --describe-capability,
+    --explain-input, --validate-input, and --output-schema.
+    """
+    if input_text is None and input_data is not None:
+        input_text = json.dumps(input_data)
+
+    input_path: str | None = None
+    if input_text is not None:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as f:
+            f.write(input_text)
+            f.flush()
+            input_path = f.name
+
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    try:
+        run_bridge_inprocess(
+            skill_name=skill,
+            input_path=input_path,
+            input_text=input_text,
+            pretty=pretty,
+            list_skills=list_skills,
+            list_capabilities=list_capabilities,
+            describe_capability=describe_capability,
+            explain_input=explain_input,
+            validate_input=validate_input,
+            output_schema=output_schema,
+        )
         output = sys.stdout.getvalue()
     finally:
         sys.stdout = old_stdout

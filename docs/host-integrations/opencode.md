@@ -54,3 +54,10 @@ plugin itself must not invoke Python.
 - `fund-agent` must not fetch NAV, holdings, benchmark, peer, news, or
   sentiment data by itself.
 - Formal decisions require `decision_support`.
+- **fund_analysis** and **thesis_generation** do not emit formal
+  `Decision` / `ExecutionLedger`.
+- **decision_support** emits formal decisions but does not execute trades
+  or connect to brokerage systems.
+- **No broker/order execution** — this skill pack is analysis-only.
+- Canned MCP responses in smoke tests are only for deterministic testing.
+- Runtime bridge requires source checkout / Python runtime, not plugin execution.

@@ -33,6 +33,18 @@ The host runner uses subprocess only, does not import runtime skill classes,
 and uses fake/sample fixtures. Host owns real data fetching and provider SDKs.
 No broker/order execution.
 
+## Fresh Host Smoke
+
+Run the deterministic host smoke script to verify every skill can be
+discovered, inspected, and run with fake/sample data:
+
+```bash
+python scripts/smoke_host_install.py
+```
+
+All data is fake. No network calls, no provider SDKs, no broker/order
+execution. Exit 0 on success.
+
 ## Canonical Flow
 
 1. Discover skills from [`skillpack/fund-agent.skillpack.yaml`](../../skillpack/fund-agent.skillpack.yaml).

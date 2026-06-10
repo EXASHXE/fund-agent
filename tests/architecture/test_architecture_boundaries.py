@@ -10,56 +10,38 @@ The architecture enforces strict boundaries:
 
 import ast
 import os
+
 import pytest
 import yaml
 
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from .conftest import (
+    DEPRECATED_SRC_MODULES,
+    DEPRECATED_SRC_PATHS,
+    NETWORK_CLIENTS,
+    PLUGIN_CORE_DIRS,
+    PROVIDER_SDKS,
+    ROOT,
+    SRC,
+    cached_dir_imports,
+    cached_file_read,
+    imports_from_dir,
+)
+
+PROJECT_ROOT = str(ROOT)
 
 
 def _get_imports_from_dir(dirpath: str) -> set[str]:
-    """Extract all imports from Python files in a directory."""
-    imports = set()
-    full_path = os.path.join(PROJECT_ROOT, dirpath)
-    if not os.path.isdir(full_path):
-        return imports
-    for root, dirs, files in os.walk(full_path):
-        dirs[:] = [d for d in dirs if not d.startswith('_') and d != '__pycache__']
-        for f in files:
-            if not f.endswith('.py'):
-                continue
-            filepath = os.path.join(root, f)
-            if os.path.getsize(filepath) < 100:
-                try:
-                    with open(filepath, encoding="utf-8") as fh:
-                        if '# DEPRECATED' in fh.read():
-                            continue
-                except Exception:
-                    pass
-            try:
-                with open(filepath, encoding="utf-8") as fh:
-                    tree = ast.parse(fh.read(), filename=f)
-                for node in ast.walk(tree):
-                    if isinstance(node, ast.Import):
-                        for alias in node.names:
-                            imports.add(alias.name)
-                    elif isinstance(node, ast.ImportFrom):
-                        if node.module:
-                            imports.add(node.module)
-            except SyntaxError:
-                pass
-    return imports
+    return set(cached_dir_imports(dirpath))
 
 
 def _assert_no_imports_matching(dirpath: str, patterns: list[str], label: str):
-    """Assert that no file in dirpath imports modules matching any pattern."""
     imports = _get_imports_from_dir(dirpath)
     violations = [i for i in imports if any(p in i for p in patterns)]
     assert not violations, f"{label}: {violations}"
 
 
 def _read(relpath: str) -> str:
-    with open(os.path.join(PROJECT_ROOT, relpath), encoding="utf-8") as f:
-        return f.read()
+    return cached_file_read(relpath)
 
 
 def _load_skillpack_manifest() -> dict:
@@ -120,16 +102,13 @@ NEW_CODE_DIRS = [
     "src/skillpack",
 ]
 
-def test_new_code_no_old_imports():
+def test_new_code_no_old_imports(all_plugin_imports):
     """Plugin runtime code must not import old src/ directories."""
-    all_imports = set()
-    for d in NEW_CODE_DIRS:
-        all_imports.update(_get_imports_from_dir(d))
-    violations = [i for i in all_imports if any(i.startswith(p) for p in OLD_SRC_DIRS)]
+    violations = [i for i in all_plugin_imports if any(i.startswith(p) for p in OLD_SRC_DIRS)]
     assert not violations, f"New code imports old src/ dirs: {violations}"
 
 
-def test_new_system_does_not_import_deprecated_shims():
+def test_new_system_does_not_import_deprecated_shims(all_plugin_imports):
     """Plugin runtime code must not import deprecated infra shim paths."""
     deprecated_shims = (
         "src.config.",
@@ -137,12 +116,9 @@ def test_new_system_does_not_import_deprecated_shims():
         "src.db.",
         "src.vectorstore.",
     )
-    all_imports = set()
-    for d in NEW_CODE_DIRS:
-        all_imports.update(_get_imports_from_dir(d))
     violations = [
         item
-        for item in all_imports
+        for item in all_plugin_imports
         if any(item.startswith(prefix) for prefix in deprecated_shims)
     ]
     assert not violations, f"New code imports deprecated shims: {violations}"
@@ -344,10 +320,7 @@ def test_skillpack_loader_has_no_network_or_provider_dependency():
 
 def test_skillpack_manifest_does_not_require_research_os_entrypoint():
     """The manifest must not require internal ResearchOS as host entrypoint."""
-    manifest_path = os.path.join(PROJECT_ROOT, "skillpack", "fund-agent.skillpack.yaml")
-    assert os.path.exists(manifest_path)
-    with open(manifest_path, encoding="utf-8") as f:
-        data = yaml.safe_load(f)
+    data = _load_skillpack_manifest()
 
     required = data.get("host_integration", {}).get("required_entrypoint", "")
     assert required == "skillpack/fund-agent.skillpack.yaml"
@@ -381,9 +354,7 @@ def test_skillpack_examples_do_not_reference_research_os_required_path():
 
 
 def test_readme_positions_skillpack_as_primary_product():
-    readme_path = os.path.join(PROJECT_ROOT, "README.md")
-    with open(readme_path, encoding="utf-8") as f:
-        content = f.read()
+    content = _read("README.md")
 
     assert "Host-Agnostic AI Financial Research Skill Pack" in content
     assert "Host-Agnostic AI Financial Research Skill Pack / Agent Plugin" in content
@@ -417,10 +388,7 @@ def test_readme_does_not_require_research_os_for_new_integrations():
 
 
 def test_host_integration_doc_exists_and_contains_flow():
-    doc_path = os.path.join(PROJECT_ROOT, "docs", "host-integration.md")
-    assert os.path.exists(doc_path)
-    with open(doc_path, encoding="utf-8") as f:
-        content = f.read()
+    content = _read("docs/host-integration.md")
 
     for phrase in (
         "external agent host",
@@ -550,12 +518,9 @@ ALLOWLIST = frozenset({
 })
 
 
-def test_src_top_level_allowlist():
+def test_src_top_level_allowlist(src_top_level_entries):
     """src/ top-level must only contain allowlisted entries."""
-    src_dir = os.path.join(PROJECT_ROOT, "src")
-    entries = set(os.listdir(src_dir))
-    entries.discard("__pycache__")
-    violations = entries - ALLOWLIST
+    violations = src_top_level_entries - ALLOWLIST - {"__pycache__"}
     assert not violations, f"src/ has non-allowlisted entries: {violations}"
 
 
@@ -582,12 +547,7 @@ def test_deprecated_src_paths_removed():
 
 def test_readme_does_not_describe_old_src_layout():
     """README must not describe old src/ directories as new system architecture."""
-    readme_path = os.path.join(PROJECT_ROOT, "README.md")
-    if not os.path.exists(readme_path):
-        pytest.skip("README.md not found")
-    with open(readme_path, encoding="utf-8") as f:
-        content = f.read()
-    # Old paths that should NOT appear as new architecture descriptions
+    content = _read("README.md")
     old_path_patterns = [
         "src/agents/",
         "src/analysis/",
@@ -669,8 +629,7 @@ def test_main_plugin_paths_do_not_import_legacy(dirpath, label):
 
 def test_deprecated_not_in_default_pytest_testpaths():
     """pyproject.toml testpaths must not include tests/deprecated."""
-    pyproject_path = os.path.join(PROJECT_ROOT, "pyproject.toml")
-    content = _read(pyproject_path)
+    content = _read("pyproject.toml")
 
     assert "tests/deprecated" not in content.split("[tool.pytest.ini_options]")[1].split("[")[0], (
         "tests/deprecated must not be in pyproject.toml testpaths"
@@ -722,7 +681,6 @@ def test_legacy_readme_matches_existing_dirs():
         "`legacy/forecast/`",
         "`legacy/ui/`",
     ]
-    # Find the Remaining Components section (before Deleted Directories)
     remaining_section = content.split("Deleted Directories")[0]
     violations = [ref for ref in deleted_refs if ref in remaining_section]
     assert not violations, f"legacy/README.md lists deleted dirs in remaining section: {violations}"
@@ -867,7 +825,6 @@ def test_minimal_host_demo_exists():
 
 
 def test_minimal_host_demo_does_not_import_research_os_or_legacy():
-    demo_path = os.path.join(PROJECT_ROOT, "examples", "minimal_host_news_to_decision.py")
     content = _read("examples/minimal_host_news_to_decision.py")
 
     assert "src.core.research_os" not in content
