@@ -78,6 +78,20 @@ def test_missing_evidence_blocks_active_buy() -> None:
     assert decision["rationale_anchor"] == []
 
 
+def test_stale_evidence_blocks_active_buy_when_as_of_metadata_is_present() -> None:
+    payload = _base_payload(
+        "BUY",
+        as_of_date="2026-12-31",
+        max_evidence_age_days=30,
+    )
+
+    decision = _decision(payload)
+
+    assert decision["action"] in {"WAIT", "HOLD"}
+    assert "EVIDENCE_STALE" in decision["decision_reason_codes"]
+    assert "evidence_freshness" in decision["blocked_by"]
+
+
 def test_redemption_fee_blocker_downgrades_sell_reduce_trim() -> None:
     for requested_action in ("SELL", "REDUCE", "TRIM"):
         payload = _base_payload(

@@ -7,6 +7,7 @@ It does not import fund_analysis runtime types, fetch data, or execute actions.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Any
 
 from src.schemas.evidence_graph import EvidenceGraph
@@ -25,6 +26,7 @@ from .reason_codes import (
     EVIDENCE_AVAILABLE,
     EVIDENCE_CONTRADICTORY,
     EVIDENCE_MISSING,
+    EVIDENCE_STALE,
     EVIDENCE_SUFFICIENT,
     EVIDENCE_WEAK,
     FEE_LOCKUP,
@@ -66,7 +68,7 @@ def evaluate_gatekeeper(
     """Evaluate evidence/artifact blockers before a formal action is emitted."""
 
     result = GatekeeperResult(action=action)
-    _apply_evidence_state(result, graph, action)
+    _apply_evidence_state(result, graph, action, payload)
     _apply_artifact_blockers(result, payload, action)
 
     if action in PASSIVE_ACTIONS:
@@ -101,6 +103,7 @@ def _apply_evidence_state(
     result: GatekeeperResult,
     graph: EvidenceGraph,
     action: str,
+    payload: dict[str, Any],
 ) -> None:
     if not graph.items:
         result.evidence_state = "INSUFFICIENT_EVIDENCE"
@@ -119,6 +122,15 @@ def _apply_evidence_state(
         result.trigger_conditions.append("Resolve contradictory evidence before active action")
         result.invalidating_conditions.append("Contradictory evidence remains unresolved")
         result.audit_trail.append(f"Gatekeeper detected contradictory evidence pairs: {len(conflicts)}")
+        return
+
+    if _evidence_is_stale(graph, payload):
+        result.evidence_state = "INSUFFICIENT_EVIDENCE"
+        result.reason_codes.extend([EVIDENCE_STALE, INSUFFICIENT_EVIDENCE])
+        result.blocked_by.append("evidence_freshness")
+        result.trigger_conditions.append("Fresh evidence is required before active action")
+        result.invalidating_conditions.append("Evidence remains stale")
+        result.audit_trail.append("Gatekeeper detected stale evidence")
         return
 
     weights = [
@@ -195,6 +207,40 @@ def _apply_artifact_blockers(
     _apply_event_hype(result, _artifact(payload, "event_hype_failure_diagnostics"), action)
     _apply_cash_deployment(result, _artifact(payload, "cash_deployment_diagnostics"), action)
     _apply_benchmark(result, _artifact(payload, "benchmark_divergence_diagnostics"), action)
+
+
+def _evidence_is_stale(graph: EvidenceGraph, payload: dict[str, Any]) -> bool:
+    as_of_raw = (
+        payload.get("evidence_as_of_date")
+        or payload.get("decision_as_of_date")
+        or payload.get("as_of_date")
+    )
+    if not as_of_raw:
+        return False
+    try:
+        as_of = datetime.fromisoformat(str(as_of_raw).replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    try:
+        max_age_days = int(payload.get("max_evidence_age_days", 180))
+    except (TypeError, ValueError):
+        max_age_days = 180
+    if max_age_days <= 0:
+        return False
+
+    timestamps: list[datetime] = []
+    for item in graph.items.values():
+        ts = getattr(item, "timestamp", None)
+        if isinstance(ts, datetime):
+            timestamps.append(ts)
+    if not timestamps:
+        return False
+    newest = max(timestamps)
+    if newest.tzinfo is not None and as_of.tzinfo is None:
+        newest = newest.replace(tzinfo=None)
+    if newest.tzinfo is None and as_of.tzinfo is not None:
+        as_of = as_of.replace(tzinfo=None)
+    return (as_of - newest).days > max_age_days
 
 
 def _apply_named_blocker(result: GatekeeperResult, blocker: str, action: str) -> None:
