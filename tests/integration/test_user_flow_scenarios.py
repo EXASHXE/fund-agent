@@ -154,3 +154,46 @@ def test_fixture_with_sentiment_evidence_marks_sentiment_present() -> None:
     assert gap.get("missing_sentiment") is False, (
         "missing_sentiment should be False when sentiment_evidence is provided"
     )
+
+
+def test_fixture_produces_position_contribution() -> None:
+    for filename in FIXTURE_FILES:
+        artifacts = _run_fixture(filename)
+        assert "position_contribution" in artifacts, f"{filename}: missing position_contribution"
+        pc = artifacts["position_contribution"]
+        assert isinstance(pc["positions"], list)
+        assert len(pc["positions"]) > 0
+        assert "summary" in pc
+
+
+def test_fixture_produces_profit_protection_diagnostics() -> None:
+    for filename in FIXTURE_FILES:
+        artifacts = _run_fixture(filename)
+        assert "profit_protection_diagnostics" in artifacts, f"{filename}: missing profit_protection_diagnostics"
+        pp = artifacts["profit_protection_diagnostics"]
+        assert isinstance(pp["items"], list)
+        assert "summary" in pp
+
+
+def test_semiconductor_triggers_high_profit_protection() -> None:
+    artifacts = _run_fixture("semiconductor_profit_protection.json")
+    pp = artifacts.get("profit_protection_diagnostics", {})
+    items = pp.get("items", [])
+    high_profit = [i for i in items if i.get("profit_level") in ("high", "very_high")]
+    assert len(high_profit) > 0, "semiconductor fixture should have high/very_high profit positions"
+
+
+def test_mixed_portfolio_has_position_contribution_summary() -> None:
+    artifacts = _run_fixture("mixed_portfolio_rebalance.json")
+    pc = artifacts.get("position_contribution", {})
+    summary = pc.get("summary", {})
+    assert summary.get("largest_value_position", "") != "", "should identify largest value position"
+
+
+def test_no_user_flow_produces_formal_decision_from_phase2() -> None:
+    for filename in FIXTURE_FILES:
+        artifacts = _run_fixture(filename)
+        for key in ("position_contribution", "profit_protection_diagnostics"):
+            artifact = artifacts.get(key, {})
+            overlap = FORMAL_DECISION_ARTIFACTS & set(artifact.keys()) if isinstance(artifact, dict) else set()
+            assert not overlap, f"{filename} {key}: must not contain formal decision keys"

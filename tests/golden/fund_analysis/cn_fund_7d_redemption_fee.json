@@ -26,8 +26,7 @@
         "user_constraints"
       ],
       "blockers": [
-        "missing_recent_news",
-        "redemption_fee_blocker"
+        "missing_recent_news"
       ],
       "decision_support_ready": false,
       "evidence_requirements": [
@@ -56,6 +55,7 @@
       "user_goal": "",
       "warnings": [
         "benchmark_data_missing",
+        "redemption_fee_warning",
         "sentiment_missing",
         "theme_overweight_warning"
       ]
@@ -294,8 +294,7 @@
           "user_constraints"
         ],
         "blockers": [
-          "missing_recent_news",
-          "redemption_fee_blocker"
+          "missing_recent_news"
         ],
         "decision_support_ready": false,
         "evidence_requirements": [
@@ -324,6 +323,7 @@
         "user_goal": "",
         "warnings": [
           "benchmark_data_missing",
+          "redemption_fee_warning",
           "sentiment_missing",
           "theme_overweight_warning"
         ]
@@ -681,6 +681,53 @@
         },
         "total_value": 120000.0
       },
+      "position_contribution": {
+        "positions": [
+          {
+            "absolute_pnl": 2000.0,
+            "current_value": 42000.0,
+            "fund_code": "SYN7D001",
+            "fund_name": "Sample Recent Growth Mix",
+            "invested_amount": 40000.0,
+            "pnl_contribution_pct": 0.5,
+            "pnl_pct": 0.05,
+            "portfolio_weight": 0.35,
+            "position_id": "SYN7D001",
+            "risk_contribution_hint": "high_weight"
+          },
+          {
+            "absolute_pnl": 2000.0,
+            "current_value": 50000.0,
+            "fund_code": "SYN7D002",
+            "fund_name": "Sample Long Hold Income Bond",
+            "invested_amount": 48000.0,
+            "pnl_contribution_pct": 0.5,
+            "pnl_pct": 0.041667,
+            "portfolio_weight": 0.416667,
+            "position_id": "SYN7D002",
+            "risk_contribution_hint": "high_weight"
+          },
+          {
+            "absolute_pnl": 0.0,
+            "current_value": 20000.0,
+            "fund_code": "SYN7D003",
+            "fund_name": "Sample Cash Plus Fund",
+            "invested_amount": 20000.0,
+            "pnl_contribution_pct": 0.0,
+            "pnl_pct": 0.0,
+            "portfolio_weight": 0.166667,
+            "position_id": "SYN7D003",
+            "risk_contribution_hint": "normal"
+          }
+        ],
+        "summary": {
+          "high_weight_low_contribution_positions": [],
+          "largest_loss_contributor": "",
+          "largest_profit_contributor": "SYN7D001",
+          "largest_value_position": "SYN7D002",
+          "small_weight_high_volatility_hint_positions": []
+        }
+      },
       "professional_diagnostics": {
         "cash_budget_diagnostics": {
           "cash_ratio": 0.0667,
@@ -750,6 +797,22 @@
             }
           ],
           "as_of_date": "2026-03-31",
+          "fee_items": [
+            {
+              "absolute_pnl": 2000.0,
+              "current_value": 42000.0,
+              "fee_pct": 0.015,
+              "fund_code": "SYN7D001",
+              "fund_name": "Sample Recent Growth Mix",
+              "holding_days": 3,
+              "level": "warning",
+              "pnl_pct": 0.05,
+              "reason": "Short holding (3d < 7d), fee 1.5%, but position profitable",
+              "threshold_days": 7
+            }
+          ],
+          "has_blocker": false,
+          "has_warning": true,
           "summary": {
             "affected_count": 1,
             "highest_fee_pct": 0.015,
@@ -776,6 +839,61 @@
             "max_theme_weight": 0.4167,
             "overweight_count": 1
           }
+        }
+      },
+      "profit_protection_diagnostics": {
+        "items": [
+          {
+            "absolute_pnl": 2000.0,
+            "current_value": 42000.0,
+            "free_carry_estimate": "none",
+            "fund_code": "SYN7D001",
+            "fund_name": "Sample Recent Growth Mix",
+            "hold_pressure": "medium",
+            "invested_amount": 40000.0,
+            "pnl_pct": 0.05,
+            "principal_recovered": "false",
+            "profit_level": "moderate",
+            "suggested_analysis_action": "watch",
+            "trim_pressure": "medium",
+            "watch_condition": "moderate_profit_watch"
+          },
+          {
+            "absolute_pnl": 2000.0,
+            "current_value": 50000.0,
+            "free_carry_estimate": "none",
+            "fund_code": "SYN7D002",
+            "fund_name": "Sample Long Hold Income Bond",
+            "hold_pressure": "low",
+            "invested_amount": 48000.0,
+            "pnl_pct": 0.041667,
+            "principal_recovered": "false",
+            "profit_level": "low",
+            "suggested_analysis_action": "watch",
+            "trim_pressure": "low",
+            "watch_condition": "normal"
+          },
+          {
+            "absolute_pnl": 0.0,
+            "current_value": 20000.0,
+            "free_carry_estimate": "none",
+            "fund_code": "SYN7D003",
+            "fund_name": "Sample Cash Plus Fund",
+            "hold_pressure": "low",
+            "invested_amount": 20000.0,
+            "pnl_pct": 0.0,
+            "principal_recovered": "false",
+            "profit_level": "low",
+            "suggested_analysis_action": "watch",
+            "trim_pressure": "low",
+            "watch_condition": "normal"
+          }
+        ],
+        "summary": {
+          "has_high_profit_positions": false,
+          "has_principal_recovery_candidates": false,
+          "highest_profit_fund_code": "SYN7D001",
+          "notes": []
         }
       },
       "reconciliation": {
@@ -895,6 +1013,22 @@
           }
         ],
         "as_of_date": "2026-03-31",
+        "fee_items": [
+          {
+            "absolute_pnl": 2000.0,
+            "current_value": 42000.0,
+            "fee_pct": 0.015,
+            "fund_code": "SYN7D001",
+            "fund_name": "Sample Recent Growth Mix",
+            "holding_days": 3,
+            "level": "warning",
+            "pnl_pct": 0.05,
+            "reason": "Short holding (3d < 7d), fee 1.5%, but position profitable",
+            "threshold_days": 7
+          }
+        ],
+        "has_blocker": false,
+        "has_warning": true,
         "summary": {
           "affected_count": 1,
           "highest_fee_pct": 0.015,
@@ -1525,6 +1659,53 @@
       },
       "total_value": 120000.0
     },
+    "position_contribution": {
+      "positions": [
+        {
+          "absolute_pnl": 2000.0,
+          "current_value": 42000.0,
+          "fund_code": "SYN7D001",
+          "fund_name": "Sample Recent Growth Mix",
+          "invested_amount": 40000.0,
+          "pnl_contribution_pct": 0.5,
+          "pnl_pct": 0.05,
+          "portfolio_weight": 0.35,
+          "position_id": "SYN7D001",
+          "risk_contribution_hint": "high_weight"
+        },
+        {
+          "absolute_pnl": 2000.0,
+          "current_value": 50000.0,
+          "fund_code": "SYN7D002",
+          "fund_name": "Sample Long Hold Income Bond",
+          "invested_amount": 48000.0,
+          "pnl_contribution_pct": 0.5,
+          "pnl_pct": 0.041667,
+          "portfolio_weight": 0.416667,
+          "position_id": "SYN7D002",
+          "risk_contribution_hint": "high_weight"
+        },
+        {
+          "absolute_pnl": 0.0,
+          "current_value": 20000.0,
+          "fund_code": "SYN7D003",
+          "fund_name": "Sample Cash Plus Fund",
+          "invested_amount": 20000.0,
+          "pnl_contribution_pct": 0.0,
+          "pnl_pct": 0.0,
+          "portfolio_weight": 0.166667,
+          "position_id": "SYN7D003",
+          "risk_contribution_hint": "normal"
+        }
+      ],
+      "summary": {
+        "high_weight_low_contribution_positions": [],
+        "largest_loss_contributor": "",
+        "largest_profit_contributor": "SYN7D001",
+        "largest_value_position": "SYN7D002",
+        "small_weight_high_volatility_hint_positions": []
+      }
+    },
     "position_summary": {
       "SYN7D001": {
         "current_value": 42000.0,
@@ -1637,6 +1818,22 @@
           }
         ],
         "as_of_date": "2026-03-31",
+        "fee_items": [
+          {
+            "absolute_pnl": 2000.0,
+            "current_value": 42000.0,
+            "fee_pct": 0.015,
+            "fund_code": "SYN7D001",
+            "fund_name": "Sample Recent Growth Mix",
+            "holding_days": 3,
+            "level": "warning",
+            "pnl_pct": 0.05,
+            "reason": "Short holding (3d < 7d), fee 1.5%, but position profitable",
+            "threshold_days": 7
+          }
+        ],
+        "has_blocker": false,
+        "has_warning": true,
         "summary": {
           "affected_count": 1,
           "highest_fee_pct": 0.015,
@@ -1665,6 +1862,61 @@
         }
       }
     },
+    "profit_protection_diagnostics": {
+      "items": [
+        {
+          "absolute_pnl": 2000.0,
+          "current_value": 42000.0,
+          "free_carry_estimate": "none",
+          "fund_code": "SYN7D001",
+          "fund_name": "Sample Recent Growth Mix",
+          "hold_pressure": "medium",
+          "invested_amount": 40000.0,
+          "pnl_pct": 0.05,
+          "principal_recovered": "false",
+          "profit_level": "moderate",
+          "suggested_analysis_action": "watch",
+          "trim_pressure": "medium",
+          "watch_condition": "moderate_profit_watch"
+        },
+        {
+          "absolute_pnl": 2000.0,
+          "current_value": 50000.0,
+          "free_carry_estimate": "none",
+          "fund_code": "SYN7D002",
+          "fund_name": "Sample Long Hold Income Bond",
+          "hold_pressure": "low",
+          "invested_amount": 48000.0,
+          "pnl_pct": 0.041667,
+          "principal_recovered": "false",
+          "profit_level": "low",
+          "suggested_analysis_action": "watch",
+          "trim_pressure": "low",
+          "watch_condition": "normal"
+        },
+        {
+          "absolute_pnl": 0.0,
+          "current_value": 20000.0,
+          "free_carry_estimate": "none",
+          "fund_code": "SYN7D003",
+          "fund_name": "Sample Cash Plus Fund",
+          "hold_pressure": "low",
+          "invested_amount": 20000.0,
+          "pnl_pct": 0.0,
+          "principal_recovered": "false",
+          "profit_level": "low",
+          "suggested_analysis_action": "watch",
+          "trim_pressure": "low",
+          "watch_condition": "normal"
+        }
+      ],
+      "summary": {
+        "has_high_profit_positions": false,
+        "has_principal_recovery_candidates": false,
+        "highest_profit_fund_code": "SYN7D001",
+        "notes": []
+      }
+    },
     "redemption_fee_risk": {
       "affected_funds": [
         {
@@ -1679,6 +1931,22 @@
         }
       ],
       "as_of_date": "2026-03-31",
+      "fee_items": [
+        {
+          "absolute_pnl": 2000.0,
+          "current_value": 42000.0,
+          "fee_pct": 0.015,
+          "fund_code": "SYN7D001",
+          "fund_name": "Sample Recent Growth Mix",
+          "holding_days": 3,
+          "level": "warning",
+          "pnl_pct": 0.05,
+          "reason": "Short holding (3d < 7d), fee 1.5%, but position profitable",
+          "threshold_days": 7
+        }
+      ],
+      "has_blocker": false,
+      "has_warning": true,
       "summary": {
         "affected_count": 1,
         "highest_fee_pct": 0.015,

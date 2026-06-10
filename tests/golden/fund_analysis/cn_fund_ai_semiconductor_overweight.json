@@ -856,6 +856,67 @@
         },
         "total_value": 150000.0
       },
+      "position_contribution": {
+        "positions": [
+          {
+            "absolute_pnl": 8000.0,
+            "current_value": 70000.0,
+            "fund_code": "SYNAI001",
+            "fund_name": "Sample AI Semiconductor Active Fund",
+            "invested_amount": 62000.0,
+            "pnl_contribution_pct": 1.142857,
+            "pnl_pct": 0.129032,
+            "portfolio_weight": 0.466667,
+            "position_id": "SYNAI001",
+            "risk_contribution_hint": "high_weight"
+          },
+          {
+            "absolute_pnl": -2000.0,
+            "current_value": 45000.0,
+            "fund_code": "SYNAI002",
+            "fund_name": "Sample China Chip ETF",
+            "invested_amount": 47000.0,
+            "pnl_contribution_pct": -0.285714,
+            "pnl_pct": -0.042553,
+            "portfolio_weight": 0.3,
+            "position_id": "SYNAI002",
+            "risk_contribution_hint": "high_weight"
+          },
+          {
+            "absolute_pnl": 1000.0,
+            "current_value": 20000.0,
+            "fund_code": "SYNAI003",
+            "fund_name": "Sample Digital Infrastructure Mix",
+            "invested_amount": 19000.0,
+            "pnl_contribution_pct": 0.142857,
+            "pnl_pct": 0.052632,
+            "portfolio_weight": 0.133333,
+            "position_id": "SYNAI003",
+            "risk_contribution_hint": "normal"
+          },
+          {
+            "absolute_pnl": 0.0,
+            "current_value": 10000.0,
+            "fund_code": "SYNBOND01",
+            "fund_name": "Sample Short Duration Bond Fund",
+            "invested_amount": 10000.0,
+            "pnl_contribution_pct": 0.0,
+            "pnl_pct": 0.0,
+            "portfolio_weight": 0.066667,
+            "position_id": "SYNBOND01",
+            "risk_contribution_hint": "normal"
+          }
+        ],
+        "summary": {
+          "high_weight_low_contribution_positions": [
+            "SYNAI002"
+          ],
+          "largest_loss_contributor": "SYNAI002",
+          "largest_profit_contributor": "SYNAI001",
+          "largest_value_position": "SYNAI001",
+          "small_weight_high_volatility_hint_positions": []
+        }
+      },
       "professional_diagnostics": {
         "cash_budget_diagnostics": {
           "cash_ratio": 0.0333,
@@ -949,6 +1010,76 @@
             "max_theme_weight": 0.4667,
             "overweight_count": 2
           }
+        }
+      },
+      "profit_protection_diagnostics": {
+        "items": [
+          {
+            "absolute_pnl": 8000.0,
+            "current_value": 70000.0,
+            "free_carry_estimate": "none",
+            "fund_code": "SYNAI001",
+            "fund_name": "Sample AI Semiconductor Active Fund",
+            "hold_pressure": "medium",
+            "invested_amount": 62000.0,
+            "pnl_pct": 0.129032,
+            "principal_recovered": "false",
+            "profit_level": "moderate",
+            "suggested_analysis_action": "watch",
+            "trim_pressure": "medium",
+            "watch_condition": "moderate_profit_watch"
+          },
+          {
+            "absolute_pnl": -2000.0,
+            "current_value": 45000.0,
+            "free_carry_estimate": "none",
+            "fund_code": "SYNAI002",
+            "fund_name": "Sample China Chip ETF",
+            "hold_pressure": "low",
+            "invested_amount": 47000.0,
+            "pnl_pct": -0.042553,
+            "principal_recovered": "false",
+            "profit_level": "none",
+            "suggested_analysis_action": "watch",
+            "trim_pressure": "low",
+            "watch_condition": "normal"
+          },
+          {
+            "absolute_pnl": 1000.0,
+            "current_value": 20000.0,
+            "free_carry_estimate": "none",
+            "fund_code": "SYNAI003",
+            "fund_name": "Sample Digital Infrastructure Mix",
+            "hold_pressure": "medium",
+            "invested_amount": 19000.0,
+            "pnl_pct": 0.052632,
+            "principal_recovered": "false",
+            "profit_level": "moderate",
+            "suggested_analysis_action": "watch",
+            "trim_pressure": "low",
+            "watch_condition": "moderate_profit_watch"
+          },
+          {
+            "absolute_pnl": 0.0,
+            "current_value": 10000.0,
+            "free_carry_estimate": "none",
+            "fund_code": "SYNBOND01",
+            "fund_name": "Sample Short Duration Bond Fund",
+            "hold_pressure": "low",
+            "invested_amount": 10000.0,
+            "pnl_pct": 0.0,
+            "principal_recovered": "false",
+            "profit_level": "low",
+            "suggested_analysis_action": "watch",
+            "trim_pressure": "low",
+            "watch_condition": "normal"
+          }
+        ],
+        "summary": {
+          "has_high_profit_positions": false,
+          "has_principal_recovery_candidates": false,
+          "highest_profit_fund_code": "SYNAI001",
+          "notes": []
         }
       },
       "reconciliation": {
@@ -1696,6 +1827,67 @@
       },
       "total_value": 150000.0
     },
+    "position_contribution": {
+      "positions": [
+        {
+          "absolute_pnl": 8000.0,
+          "current_value": 70000.0,
+          "fund_code": "SYNAI001",
+          "fund_name": "Sample AI Semiconductor Active Fund",
+          "invested_amount": 62000.0,
+          "pnl_contribution_pct": 1.142857,
+          "pnl_pct": 0.129032,
+          "portfolio_weight": 0.466667,
+          "position_id": "SYNAI001",
+          "risk_contribution_hint": "high_weight"
+        },
+        {
+          "absolute_pnl": -2000.0,
+          "current_value": 45000.0,
+          "fund_code": "SYNAI002",
+          "fund_name": "Sample China Chip ETF",
+          "invested_amount": 47000.0,
+          "pnl_contribution_pct": -0.285714,
+          "pnl_pct": -0.042553,
+          "portfolio_weight": 0.3,
+          "position_id": "SYNAI002",
+          "risk_contribution_hint": "high_weight"
+        },
+        {
+          "absolute_pnl": 1000.0,
+          "current_value": 20000.0,
+          "fund_code": "SYNAI003",
+          "fund_name": "Sample Digital Infrastructure Mix",
+          "invested_amount": 19000.0,
+          "pnl_contribution_pct": 0.142857,
+          "pnl_pct": 0.052632,
+          "portfolio_weight": 0.133333,
+          "position_id": "SYNAI003",
+          "risk_contribution_hint": "normal"
+        },
+        {
+          "absolute_pnl": 0.0,
+          "current_value": 10000.0,
+          "fund_code": "SYNBOND01",
+          "fund_name": "Sample Short Duration Bond Fund",
+          "invested_amount": 10000.0,
+          "pnl_contribution_pct": 0.0,
+          "pnl_pct": 0.0,
+          "portfolio_weight": 0.066667,
+          "position_id": "SYNBOND01",
+          "risk_contribution_hint": "normal"
+        }
+      ],
+      "summary": {
+        "high_weight_low_contribution_positions": [
+          "SYNAI002"
+        ],
+        "largest_loss_contributor": "SYNAI002",
+        "largest_profit_contributor": "SYNAI001",
+        "largest_value_position": "SYNAI001",
+        "small_weight_high_volatility_hint_positions": []
+      }
+    },
     "position_summary": {
       "SYNAI001": {
         "current_value": 70000.0,
@@ -1846,6 +2038,76 @@
           "max_theme_weight": 0.4667,
           "overweight_count": 2
         }
+      }
+    },
+    "profit_protection_diagnostics": {
+      "items": [
+        {
+          "absolute_pnl": 8000.0,
+          "current_value": 70000.0,
+          "free_carry_estimate": "none",
+          "fund_code": "SYNAI001",
+          "fund_name": "Sample AI Semiconductor Active Fund",
+          "hold_pressure": "medium",
+          "invested_amount": 62000.0,
+          "pnl_pct": 0.129032,
+          "principal_recovered": "false",
+          "profit_level": "moderate",
+          "suggested_analysis_action": "watch",
+          "trim_pressure": "medium",
+          "watch_condition": "moderate_profit_watch"
+        },
+        {
+          "absolute_pnl": -2000.0,
+          "current_value": 45000.0,
+          "free_carry_estimate": "none",
+          "fund_code": "SYNAI002",
+          "fund_name": "Sample China Chip ETF",
+          "hold_pressure": "low",
+          "invested_amount": 47000.0,
+          "pnl_pct": -0.042553,
+          "principal_recovered": "false",
+          "profit_level": "none",
+          "suggested_analysis_action": "watch",
+          "trim_pressure": "low",
+          "watch_condition": "normal"
+        },
+        {
+          "absolute_pnl": 1000.0,
+          "current_value": 20000.0,
+          "free_carry_estimate": "none",
+          "fund_code": "SYNAI003",
+          "fund_name": "Sample Digital Infrastructure Mix",
+          "hold_pressure": "medium",
+          "invested_amount": 19000.0,
+          "pnl_pct": 0.052632,
+          "principal_recovered": "false",
+          "profit_level": "moderate",
+          "suggested_analysis_action": "watch",
+          "trim_pressure": "low",
+          "watch_condition": "moderate_profit_watch"
+        },
+        {
+          "absolute_pnl": 0.0,
+          "current_value": 10000.0,
+          "free_carry_estimate": "none",
+          "fund_code": "SYNBOND01",
+          "fund_name": "Sample Short Duration Bond Fund",
+          "hold_pressure": "low",
+          "invested_amount": 10000.0,
+          "pnl_pct": 0.0,
+          "principal_recovered": "false",
+          "profit_level": "low",
+          "suggested_analysis_action": "watch",
+          "trim_pressure": "low",
+          "watch_condition": "normal"
+        }
+      ],
+      "summary": {
+        "has_high_profit_positions": false,
+        "has_principal_recovery_candidates": false,
+        "highest_profit_fund_code": "SYNAI001",
+        "notes": []
       }
     },
     "redemption_summary": {

@@ -24,6 +24,68 @@ def _list(v: Any) -> list[Any]:
     return v if isinstance(v, list) else []
 
 
+def _classify_fee_items(
+    affected_funds: list[dict[str, Any]],
+    positions_index: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    fee_items: list[dict[str, Any]] = []
+    for af in affected_funds:
+        fund_code = af.get("fund_code", "")
+        fee_pct = af.get("fee_pct")
+        holding_days = af.get("holding_days")
+        threshold_days = af.get("threshold_days")
+        pos = positions_index.get(fund_code, {})
+        current_value = float(pos.get("current_value", 0) or 0)
+        invested_raw = pos.get("total_cost") or pos.get("invested_amount")
+        absolute_pnl: float | None = None
+        pnl_pct: float | None = None
+        if invested_raw is not None:
+            try:
+                invested = float(invested_raw)
+                absolute_pnl = round(current_value - invested, 2)
+                if invested > 0:
+                    pnl_pct = round(absolute_pnl / invested, 6)
+            except (TypeError, ValueError):
+                pass
+
+        level = "warning"
+        reason = ""
+        fee_pct_val = float(fee_pct) if fee_pct is not None else 0.0
+        holding_days_val = int(holding_days) if holding_days is not None else 0
+        threshold_days_val = int(threshold_days) if threshold_days is not None else 7
+
+        # blocker: short holding + high fee (>=1%) + loss or unknown PnL
+        if holding_days_val < threshold_days_val and fee_pct_val >= 0.01 and (absolute_pnl is None or absolute_pnl < 0):
+            level = "blocker"
+            reason = f"Short holding ({holding_days_val}d < {threshold_days_val}d), high fee ({fee_pct_val:.1%}), position at loss or PnL unknown"
+        elif holding_days_val < threshold_days_val and fee_pct_val >= 0.01:
+            level = "warning"
+            reason = f"Short holding ({holding_days_val}d < {threshold_days_val}d), fee {fee_pct_val:.1%}, but position profitable"
+        elif holding_days_val < threshold_days_val and fee_pct_val > 0:
+            level = "warning"
+            reason = f"Short holding ({holding_days_val}d < {threshold_days_val}d) with small fee {fee_pct_val:.1%}"
+        elif fee_pct_val >= 0.01:
+            level = "warning"
+            reason = f"High redemption fee {fee_pct_val:.1%}"
+        else:
+            level = "warning"
+            reason = "Fee schedule present but details incomplete"
+
+        fee_items.append({
+            "fund_code": fund_code,
+            "fund_name": str(pos.get("fund_name", pos.get("name", fund_code))),
+            "level": level,
+            "reason": reason,
+            "fee_pct": fee_pct_val,
+            "holding_days": holding_days_val,
+            "threshold_days": threshold_days_val,
+            "current_value": current_value,
+            "absolute_pnl": absolute_pnl,
+            "pnl_pct": pnl_pct,
+        })
+    return fee_items
+
+
 # ── 1. Short-holding redemption fee risk ────────────────────────────────────
 
 def compute_redemption_fee_risk(
@@ -139,9 +201,17 @@ def compute_redemption_fee_risk(
         (f["fee_pct"] for f in affected_funds if f["fee_pct"] is not None),
         default=None,
     )
+
+    fee_items = _classify_fee_items(affected_funds, positions_index)
+    has_blocker = any(fi["level"] == "blocker" for fi in fee_items)
+    has_warning = any(fi["level"] == "warning" for fi in fee_items)
+
     return {
         "as_of_date": as_of_date,
         "affected_funds": affected_funds,
+        "fee_items": fee_items,
+        "has_blocker": has_blocker,
+        "has_warning": has_warning,
         "summary": {
             "affected_count": len(affected_funds),
             "highest_fee_pct": highest_fee,

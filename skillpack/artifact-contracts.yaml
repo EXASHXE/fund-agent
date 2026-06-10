@@ -328,3 +328,17 @@ contracts:
         top_level: true
         produced_when: normal structured fund_analysis portfolio/report run
         description: Structured booleans for missing inputs with severity-coded details and recommended next data.
+      - key: position_contribution
+        category: ledger_and_pnl
+        required: false
+        type: object
+        top_level: true
+        produced_when: portfolio positions with current_value are available
+        description: Per-position PnL contribution analysis including portfolio weight, absolute/percentage PnL, and contribution to total portfolio PnL.
+      - key: profit_protection_diagnostics
+        category: diagnostics
+        required: false
+        type: object
+        top_level: true
+        produced_when: portfolio positions with cost basis or transaction history are available
+        description: Profit protection analysis for high-profit positions including profit level, principal recovery, free-carry estimate, and trim/hold pressure. Analysis-only; not a formal decision.

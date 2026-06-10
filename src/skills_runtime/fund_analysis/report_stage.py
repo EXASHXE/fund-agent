@@ -38,6 +38,8 @@ def assemble_analysis_report_and_artifacts(
     warnings: list[str],
     professional_diagnostics: dict[str, Any] | None = None,
     plan_result: dict[str, Any] | None = None,
+    position_contribution: dict[str, Any] | None = None,
+    profit_protection: dict[str, Any] | None = None,
 ) -> AssembledArtifactsBundle:
     report = FundAnalysisReport(
         fund_metrics=metrics.fund_metrics,
@@ -172,6 +174,16 @@ def assemble_analysis_report_and_artifacts(
         if evidence_gap is not None:
             artifacts["evidence_gap_diagnostics"] = evidence_gap
             report["evidence_gap_diagnostics"] = evidence_gap
+
+    # Position contribution
+    if position_contribution:
+        artifacts["position_contribution"] = position_contribution
+        report["position_contribution"] = position_contribution
+
+    # Profit protection diagnostics
+    if profit_protection:
+        artifacts["profit_protection_diagnostics"] = profit_protection
+        report["profit_protection_diagnostics"] = profit_protection
 
     data_completeness = attach_report_artifacts(
         payload=bundle.payload,

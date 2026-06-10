@@ -695,6 +695,53 @@
         },
         "total_value": 100000.0
       },
+      "position_contribution": {
+        "positions": [
+          {
+            "absolute_pnl": -8000.0,
+            "current_value": 45000.0,
+            "fund_code": "SYNDCA001",
+            "fund_name": "Sample Broad Equity DCA Fund",
+            "invested_amount": 53000.0,
+            "pnl_contribution_pct": 0.888889,
+            "pnl_pct": -0.150943,
+            "portfolio_weight": 0.45,
+            "position_id": "SYNDCA001",
+            "risk_contribution_hint": "high_weight"
+          },
+          {
+            "absolute_pnl": -1000.0,
+            "current_value": 30000.0,
+            "fund_code": "SYNDCA002",
+            "fund_name": "Sample Balanced Allocation Fund",
+            "invested_amount": 31000.0,
+            "pnl_contribution_pct": 0.111111,
+            "pnl_pct": -0.032258,
+            "portfolio_weight": 0.3,
+            "position_id": "SYNDCA002",
+            "risk_contribution_hint": "high_weight"
+          },
+          {
+            "absolute_pnl": 0.0,
+            "current_value": 13000.0,
+            "fund_code": "SYNMM001",
+            "fund_name": "Sample Money Market Sleeve",
+            "invested_amount": 13000.0,
+            "pnl_contribution_pct": -0.0,
+            "pnl_pct": 0.0,
+            "portfolio_weight": 0.13,
+            "position_id": "SYNMM001",
+            "risk_contribution_hint": "normal"
+          }
+        ],
+        "summary": {
+          "high_weight_low_contribution_positions": [],
+          "largest_loss_contributor": "SYNDCA001",
+          "largest_profit_contributor": "",
+          "largest_value_position": "SYNDCA001",
+          "small_weight_high_volatility_hint_positions": []
+        }
+      },
       "professional_diagnostics": {
         "cash_budget_diagnostics": {
           "cash_ratio": 0.12,
@@ -765,6 +812,61 @@
             "max_theme_weight": 0.45,
             "overweight_count": 1
           }
+        }
+      },
+      "profit_protection_diagnostics": {
+        "items": [
+          {
+            "absolute_pnl": -8000.0,
+            "current_value": 45000.0,
+            "free_carry_estimate": "none",
+            "fund_code": "SYNDCA001",
+            "fund_name": "Sample Broad Equity DCA Fund",
+            "hold_pressure": "low",
+            "invested_amount": 53000.0,
+            "pnl_pct": -0.150943,
+            "principal_recovered": "false",
+            "profit_level": "none",
+            "suggested_analysis_action": "watch",
+            "trim_pressure": "low",
+            "watch_condition": "normal"
+          },
+          {
+            "absolute_pnl": -1000.0,
+            "current_value": 30000.0,
+            "free_carry_estimate": "none",
+            "fund_code": "SYNDCA002",
+            "fund_name": "Sample Balanced Allocation Fund",
+            "hold_pressure": "low",
+            "invested_amount": 31000.0,
+            "pnl_pct": -0.032258,
+            "principal_recovered": "false",
+            "profit_level": "none",
+            "suggested_analysis_action": "watch",
+            "trim_pressure": "low",
+            "watch_condition": "normal"
+          },
+          {
+            "absolute_pnl": 0.0,
+            "current_value": 13000.0,
+            "free_carry_estimate": "none",
+            "fund_code": "SYNMM001",
+            "fund_name": "Sample Money Market Sleeve",
+            "hold_pressure": "low",
+            "invested_amount": 13000.0,
+            "pnl_pct": 0.0,
+            "principal_recovered": "false",
+            "profit_level": "low",
+            "suggested_analysis_action": "watch",
+            "trim_pressure": "low",
+            "watch_condition": "normal"
+          }
+        ],
+        "summary": {
+          "has_high_profit_positions": false,
+          "has_principal_recovery_candidates": false,
+          "highest_profit_fund_code": "",
+          "notes": []
         }
       },
       "reconciliation": {
@@ -1484,6 +1586,53 @@
       },
       "total_value": 100000.0
     },
+    "position_contribution": {
+      "positions": [
+        {
+          "absolute_pnl": -8000.0,
+          "current_value": 45000.0,
+          "fund_code": "SYNDCA001",
+          "fund_name": "Sample Broad Equity DCA Fund",
+          "invested_amount": 53000.0,
+          "pnl_contribution_pct": 0.888889,
+          "pnl_pct": -0.150943,
+          "portfolio_weight": 0.45,
+          "position_id": "SYNDCA001",
+          "risk_contribution_hint": "high_weight"
+        },
+        {
+          "absolute_pnl": -1000.0,
+          "current_value": 30000.0,
+          "fund_code": "SYNDCA002",
+          "fund_name": "Sample Balanced Allocation Fund",
+          "invested_amount": 31000.0,
+          "pnl_contribution_pct": 0.111111,
+          "pnl_pct": -0.032258,
+          "portfolio_weight": 0.3,
+          "position_id": "SYNDCA002",
+          "risk_contribution_hint": "high_weight"
+        },
+        {
+          "absolute_pnl": 0.0,
+          "current_value": 13000.0,
+          "fund_code": "SYNMM001",
+          "fund_name": "Sample Money Market Sleeve",
+          "invested_amount": 13000.0,
+          "pnl_contribution_pct": -0.0,
+          "pnl_pct": 0.0,
+          "portfolio_weight": 0.13,
+          "position_id": "SYNMM001",
+          "risk_contribution_hint": "normal"
+        }
+      ],
+      "summary": {
+        "high_weight_low_contribution_positions": [],
+        "largest_loss_contributor": "SYNDCA001",
+        "largest_profit_contributor": "",
+        "largest_value_position": "SYNDCA001",
+        "small_weight_high_volatility_hint_positions": []
+      }
+    },
     "position_summary": {
       "SYNDCA001": {
         "current_value": 45000.0,
@@ -1595,6 +1744,61 @@
           "max_theme_weight": 0.45,
           "overweight_count": 1
         }
+      }
+    },
+    "profit_protection_diagnostics": {
+      "items": [
+        {
+          "absolute_pnl": -8000.0,
+          "current_value": 45000.0,
+          "free_carry_estimate": "none",
+          "fund_code": "SYNDCA001",
+          "fund_name": "Sample Broad Equity DCA Fund",
+          "hold_pressure": "low",
+          "invested_amount": 53000.0,
+          "pnl_pct": -0.150943,
+          "principal_recovered": "false",
+          "profit_level": "none",
+          "suggested_analysis_action": "watch",
+          "trim_pressure": "low",
+          "watch_condition": "normal"
+        },
+        {
+          "absolute_pnl": -1000.0,
+          "current_value": 30000.0,
+          "free_carry_estimate": "none",
+          "fund_code": "SYNDCA002",
+          "fund_name": "Sample Balanced Allocation Fund",
+          "hold_pressure": "low",
+          "invested_amount": 31000.0,
+          "pnl_pct": -0.032258,
+          "principal_recovered": "false",
+          "profit_level": "none",
+          "suggested_analysis_action": "watch",
+          "trim_pressure": "low",
+          "watch_condition": "normal"
+        },
+        {
+          "absolute_pnl": 0.0,
+          "current_value": 13000.0,
+          "free_carry_estimate": "none",
+          "fund_code": "SYNMM001",
+          "fund_name": "Sample Money Market Sleeve",
+          "hold_pressure": "low",
+          "invested_amount": 13000.0,
+          "pnl_pct": 0.0,
+          "principal_recovered": "false",
+          "profit_level": "low",
+          "suggested_analysis_action": "watch",
+          "trim_pressure": "low",
+          "watch_condition": "normal"
+        }
+      ],
+      "summary": {
+        "has_high_profit_positions": false,
+        "has_principal_recovery_candidates": false,
+        "highest_profit_fund_code": "",
+        "notes": []
       }
     },
     "redemption_summary": {

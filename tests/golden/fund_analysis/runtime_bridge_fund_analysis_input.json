@@ -385,6 +385,29 @@
         },
         "total_value": 200000.0
       },
+      "position_contribution": {
+        "positions": [
+          {
+            "absolute_pnl": -2000.0,
+            "current_value": 30000.0,
+            "fund_code": "110011",
+            "fund_name": "Example Fund",
+            "invested_amount": 32000.0,
+            "pnl_contribution_pct": 1.0,
+            "pnl_pct": -0.0625,
+            "portfolio_weight": 0.15,
+            "position_id": "110011",
+            "risk_contribution_hint": "normal"
+          }
+        ],
+        "summary": {
+          "high_weight_low_contribution_positions": [],
+          "largest_loss_contributor": "110011",
+          "largest_profit_contributor": "",
+          "largest_value_position": "110011",
+          "small_weight_high_volatility_hint_positions": []
+        }
+      },
       "professional_diagnostics": {
         "cash_budget_diagnostics": {
           "cash_ratio": 0.1,
@@ -395,6 +418,33 @@
           "short_term_budget_status": "ok"
         },
         "professional_warnings": []
+      },
+      "profit_protection_diagnostics": {
+        "items": [
+          {
+            "absolute_pnl": -2000.0,
+            "current_value": 30000.0,
+            "free_carry_estimate": "unknown",
+            "fund_code": "110011",
+            "fund_name": "Example Fund",
+            "hold_pressure": "low",
+            "invested_amount": 32000.0,
+            "pnl_pct": -0.0625,
+            "principal_recovered": "unknown",
+            "profit_level": "none",
+            "suggested_analysis_action": "watch",
+            "trim_pressure": "low",
+            "watch_condition": "normal"
+          }
+        ],
+        "summary": {
+          "has_high_profit_positions": false,
+          "has_principal_recovery_candidates": false,
+          "highest_profit_fund_code": "",
+          "notes": [
+            "transaction history missing; principal_recovered and free_carry may be unknown"
+          ]
+        }
       },
       "reconciliation": null,
       "report_limitations": [
@@ -789,6 +839,29 @@
       },
       "total_value": 200000.0
     },
+    "position_contribution": {
+      "positions": [
+        {
+          "absolute_pnl": -2000.0,
+          "current_value": 30000.0,
+          "fund_code": "110011",
+          "fund_name": "Example Fund",
+          "invested_amount": 32000.0,
+          "pnl_contribution_pct": 1.0,
+          "pnl_pct": -0.0625,
+          "portfolio_weight": 0.15,
+          "position_id": "110011",
+          "risk_contribution_hint": "normal"
+        }
+      ],
+      "summary": {
+        "high_weight_low_contribution_positions": [],
+        "largest_loss_contributor": "110011",
+        "largest_profit_contributor": "",
+        "largest_value_position": "110011",
+        "small_weight_high_volatility_hint_positions": []
+      }
+    },
     "position_summary": {
       "110011": {
         "current_value": 30000,
@@ -814,6 +887,33 @@
         "short_term_budget_status": "ok"
       },
       "professional_warnings": []
+    },
+    "profit_protection_diagnostics": {
+      "items": [
+        {
+          "absolute_pnl": -2000.0,
+          "current_value": 30000.0,
+          "free_carry_estimate": "unknown",
+          "fund_code": "110011",
+          "fund_name": "Example Fund",
+          "hold_pressure": "low",
+          "invested_amount": 32000.0,
+          "pnl_pct": -0.0625,
+          "principal_recovered": "unknown",
+          "profit_level": "none",
+          "suggested_analysis_action": "watch",
+          "trim_pressure": "low",
+          "watch_condition": "normal"
+        }
+      ],
+      "summary": {
+        "has_high_profit_positions": false,
+        "has_principal_recovery_candidates": false,
+        "highest_profit_fund_code": "",
+        "notes": [
+          "transaction history missing; principal_recovered and free_carry may be unknown"
+        ]
+      }
     },
     "report_limitations": [
       "Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data"

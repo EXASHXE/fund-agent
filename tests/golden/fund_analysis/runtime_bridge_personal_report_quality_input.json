@@ -873,6 +873,53 @@
         },
         "total_value": 500000.0
       },
+      "position_contribution": {
+        "positions": [
+          {
+            "absolute_pnl": 20000.0,
+            "current_value": 200000.0,
+            "fund_code": "110011",
+            "fund_name": "Sample Equity Growth Fund",
+            "invested_amount": 180000.0,
+            "pnl_contribution_pct": 0.666667,
+            "pnl_pct": 0.111111,
+            "portfolio_weight": 0.4,
+            "position_id": "110011",
+            "risk_contribution_hint": "high_weight"
+          },
+          {
+            "absolute_pnl": 5000.0,
+            "current_value": 180000.0,
+            "fund_code": "220022",
+            "fund_name": "Sample Bond Income Fund",
+            "invested_amount": 175000.0,
+            "pnl_contribution_pct": 0.166667,
+            "pnl_pct": 0.028571,
+            "portfolio_weight": 0.36,
+            "position_id": "220022",
+            "risk_contribution_hint": "high_weight"
+          },
+          {
+            "absolute_pnl": 5000.0,
+            "current_value": 70000.0,
+            "fund_code": "330033",
+            "fund_name": "Sample Balanced Fund",
+            "invested_amount": 65000.0,
+            "pnl_contribution_pct": 0.166667,
+            "pnl_pct": 0.076923,
+            "portfolio_weight": 0.14,
+            "position_id": "330033",
+            "risk_contribution_hint": "normal"
+          }
+        ],
+        "summary": {
+          "high_weight_low_contribution_positions": [],
+          "largest_loss_contributor": "",
+          "largest_profit_contributor": "110011",
+          "largest_value_position": "110011",
+          "small_weight_high_volatility_hint_positions": []
+        }
+      },
       "professional_diagnostics": {
         "cash_budget_diagnostics": {
           "cash_ratio": 0.1,
@@ -883,6 +930,63 @@
           "short_term_budget_status": "ok"
         },
         "professional_warnings": []
+      },
+      "profit_protection_diagnostics": {
+        "items": [
+          {
+            "absolute_pnl": 20000.0,
+            "current_value": 200000.0,
+            "free_carry_estimate": "unknown",
+            "fund_code": "110011",
+            "fund_name": "Sample Equity Growth Fund",
+            "hold_pressure": "medium",
+            "invested_amount": 180000.0,
+            "pnl_pct": 0.111111,
+            "principal_recovered": "unknown",
+            "profit_level": "moderate",
+            "suggested_analysis_action": "watch",
+            "trim_pressure": "medium",
+            "watch_condition": "moderate_profit_watch"
+          },
+          {
+            "absolute_pnl": 5000.0,
+            "current_value": 180000.0,
+            "free_carry_estimate": "unknown",
+            "fund_code": "220022",
+            "fund_name": "Sample Bond Income Fund",
+            "hold_pressure": "low",
+            "invested_amount": 175000.0,
+            "pnl_pct": 0.028571,
+            "principal_recovered": "unknown",
+            "profit_level": "low",
+            "suggested_analysis_action": "watch",
+            "trim_pressure": "low",
+            "watch_condition": "normal"
+          },
+          {
+            "absolute_pnl": 5000.0,
+            "current_value": 70000.0,
+            "free_carry_estimate": "unknown",
+            "fund_code": "330033",
+            "fund_name": "Sample Balanced Fund",
+            "hold_pressure": "medium",
+            "invested_amount": 65000.0,
+            "pnl_pct": 0.076923,
+            "principal_recovered": "unknown",
+            "profit_level": "moderate",
+            "suggested_analysis_action": "watch",
+            "trim_pressure": "low",
+            "watch_condition": "moderate_profit_watch"
+          }
+        ],
+        "summary": {
+          "has_high_profit_positions": false,
+          "has_principal_recovery_candidates": false,
+          "highest_profit_fund_code": "110011",
+          "notes": [
+            "transaction history missing; principal_recovered and free_carry may be unknown"
+          ]
+        }
       },
       "reconciliation": null,
       "redemption_summary": {
@@ -1447,6 +1551,53 @@
       },
       "total_value": 500000.0
     },
+    "position_contribution": {
+      "positions": [
+        {
+          "absolute_pnl": 20000.0,
+          "current_value": 200000.0,
+          "fund_code": "110011",
+          "fund_name": "Sample Equity Growth Fund",
+          "invested_amount": 180000.0,
+          "pnl_contribution_pct": 0.666667,
+          "pnl_pct": 0.111111,
+          "portfolio_weight": 0.4,
+          "position_id": "110011",
+          "risk_contribution_hint": "high_weight"
+        },
+        {
+          "absolute_pnl": 5000.0,
+          "current_value": 180000.0,
+          "fund_code": "220022",
+          "fund_name": "Sample Bond Income Fund",
+          "invested_amount": 175000.0,
+          "pnl_contribution_pct": 0.166667,
+          "pnl_pct": 0.028571,
+          "portfolio_weight": 0.36,
+          "position_id": "220022",
+          "risk_contribution_hint": "high_weight"
+        },
+        {
+          "absolute_pnl": 5000.0,
+          "current_value": 70000.0,
+          "fund_code": "330033",
+          "fund_name": "Sample Balanced Fund",
+          "invested_amount": 65000.0,
+          "pnl_contribution_pct": 0.166667,
+          "pnl_pct": 0.076923,
+          "portfolio_weight": 0.14,
+          "position_id": "330033",
+          "risk_contribution_hint": "normal"
+        }
+      ],
+      "summary": {
+        "high_weight_low_contribution_positions": [],
+        "largest_loss_contributor": "",
+        "largest_profit_contributor": "110011",
+        "largest_value_position": "110011",
+        "small_weight_high_volatility_hint_positions": []
+      }
+    },
     "position_summary": {
       "110011": {
         "current_value": 200000,
@@ -1500,6 +1651,63 @@
         "short_term_budget_status": "ok"
       },
       "professional_warnings": []
+    },
+    "profit_protection_diagnostics": {
+      "items": [
+        {
+          "absolute_pnl": 20000.0,
+          "current_value": 200000.0,
+          "free_carry_estimate": "unknown",
+          "fund_code": "110011",
+          "fund_name": "Sample Equity Growth Fund",
+          "hold_pressure": "medium",
+          "invested_amount": 180000.0,
+          "pnl_pct": 0.111111,
+          "principal_recovered": "unknown",
+          "profit_level": "moderate",
+          "suggested_analysis_action": "watch",
+          "trim_pressure": "medium",
+          "watch_condition": "moderate_profit_watch"
+        },
+        {
+          "absolute_pnl": 5000.0,
+          "current_value": 180000.0,
+          "free_carry_estimate": "unknown",
+          "fund_code": "220022",
+          "fund_name": "Sample Bond Income Fund",
+          "hold_pressure": "low",
+          "invested_amount": 175000.0,
+          "pnl_pct": 0.028571,
+          "principal_recovered": "unknown",
+          "profit_level": "low",
+          "suggested_analysis_action": "watch",
+          "trim_pressure": "low",
+          "watch_condition": "normal"
+        },
+        {
+          "absolute_pnl": 5000.0,
+          "current_value": 70000.0,
+          "free_carry_estimate": "unknown",
+          "fund_code": "330033",
+          "fund_name": "Sample Balanced Fund",
+          "hold_pressure": "medium",
+          "invested_amount": 65000.0,
+          "pnl_pct": 0.076923,
+          "principal_recovered": "unknown",
+          "profit_level": "moderate",
+          "suggested_analysis_action": "watch",
+          "trim_pressure": "low",
+          "watch_condition": "moderate_profit_watch"
+        }
+      ],
+      "summary": {
+        "has_high_profit_positions": false,
+        "has_principal_recovery_candidates": false,
+        "highest_profit_fund_code": "110011",
+        "notes": [
+          "transaction history missing; principal_recovered and free_carry may be unknown"
+        ]
+      }
     },
     "redemption_summary": {
       "funds_with_rules": [

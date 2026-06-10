@@ -312,6 +312,8 @@ def test_redemption_fee_blocker_detected() -> None:
             {"fund_code": "110011", "action": "BUY", "date": "2026-05-28", "amount": 30000},
         ],
     )
+    payload["portfolio"]["positions"][0]["total_cost"] = 100000.0
+    payload["portfolio"]["positions"][0]["current_value"] = 70000.0
     result = _run_plan(payload, run_diagnostics=True)
 
     plan = result["analysis_plan"]

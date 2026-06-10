@@ -14,9 +14,11 @@ from src.schemas.skill import SkillInput, SkillOutput
 from .evidence_stage import (
     build_baseline_evidence,
 )
+from .contribution_stage import compute_position_contribution
 from .diagnostics_stage import (
     compute_diagnostics,
 )
+from .profit_protection_rules import compute_profit_protection_diagnostics
 from .input_stage import (
     build_portfolio_input_bundle,
     collect_fund_codes,
@@ -133,6 +135,12 @@ class FundAnalysisSkill:
                 metrics,
                 warnings,
             )
+            position_contribution = compute_position_contribution(
+                bundle, metrics,
+            )
+            profit_protection = compute_profit_protection_diagnostics(
+                bundle, metrics,
+            )
             plan_result = build_analysis_plan(
                 bundle=bundle,
                 metrics=metrics,
@@ -151,6 +159,8 @@ class FundAnalysisSkill:
                 warnings=warnings,
                 professional_diagnostics=professional_diagnostics,
                 plan_result=plan_result,
+                position_contribution=position_contribution,
+                profit_protection=profit_protection,
             )
         except Exception as exc:
             return failed_output(

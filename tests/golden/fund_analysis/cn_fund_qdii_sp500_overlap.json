@@ -1084,6 +1084,67 @@
         },
         "total_value": 180000.0
       },
+      "position_contribution": {
+        "positions": [
+          {
+            "absolute_pnl": 4000.0,
+            "current_value": 60000.0,
+            "fund_code": "SYNQD001",
+            "fund_name": "Sample QDII S&P 500 Index Fund",
+            "invested_amount": 56000.0,
+            "pnl_contribution_pct": 0.8,
+            "pnl_pct": 0.071429,
+            "portfolio_weight": 0.333333,
+            "position_id": "SYNQD001",
+            "risk_contribution_hint": "high_weight"
+          },
+          {
+            "absolute_pnl": -2000.0,
+            "current_value": 50000.0,
+            "fund_code": "SYNQD002",
+            "fund_name": "Sample Nasdaq Growth Index Fund",
+            "invested_amount": 52000.0,
+            "pnl_contribution_pct": -0.4,
+            "pnl_pct": -0.038462,
+            "portfolio_weight": 0.277778,
+            "position_id": "SYNQD002",
+            "risk_contribution_hint": "normal"
+          },
+          {
+            "absolute_pnl": 3000.0,
+            "current_value": 45000.0,
+            "fund_code": "SYNQD003",
+            "fund_name": "Sample Global AI Leaders Fund",
+            "invested_amount": 42000.0,
+            "pnl_contribution_pct": 0.6,
+            "pnl_pct": 0.071429,
+            "portfolio_weight": 0.25,
+            "position_id": "SYNQD003",
+            "risk_contribution_hint": "high_profit_contributor"
+          },
+          {
+            "absolute_pnl": 0.0,
+            "current_value": 15000.0,
+            "fund_code": "SYNQD004",
+            "fund_name": "Sample China Bond Buffer Fund",
+            "invested_amount": 15000.0,
+            "pnl_contribution_pct": 0.0,
+            "pnl_pct": 0.0,
+            "portfolio_weight": 0.083333,
+            "position_id": "SYNQD004",
+            "risk_contribution_hint": "normal"
+          }
+        ],
+        "summary": {
+          "high_weight_low_contribution_positions": [
+            "SYNQD002"
+          ],
+          "largest_loss_contributor": "SYNQD002",
+          "largest_profit_contributor": "SYNQD001",
+          "largest_value_position": "SYNQD001",
+          "small_weight_high_volatility_hint_positions": []
+        }
+      },
       "professional_diagnostics": {
         "cash_budget_diagnostics": {
           "cash_ratio": 0.0556,
@@ -1153,6 +1214,76 @@
         "professional_warnings": [
           "Cash 10000 is below 8% liquidity reserve (14400). Gap: 4400."
         ]
+      },
+      "profit_protection_diagnostics": {
+        "items": [
+          {
+            "absolute_pnl": 4000.0,
+            "current_value": 60000.0,
+            "free_carry_estimate": "none",
+            "fund_code": "SYNQD001",
+            "fund_name": "Sample QDII S&P 500 Index Fund",
+            "hold_pressure": "medium",
+            "invested_amount": 56000.0,
+            "pnl_pct": 0.071429,
+            "principal_recovered": "false",
+            "profit_level": "moderate",
+            "suggested_analysis_action": "watch",
+            "trim_pressure": "medium",
+            "watch_condition": "moderate_profit_watch"
+          },
+          {
+            "absolute_pnl": -2000.0,
+            "current_value": 50000.0,
+            "free_carry_estimate": "none",
+            "fund_code": "SYNQD002",
+            "fund_name": "Sample Nasdaq Growth Index Fund",
+            "hold_pressure": "low",
+            "invested_amount": 52000.0,
+            "pnl_pct": -0.038462,
+            "principal_recovered": "false",
+            "profit_level": "none",
+            "suggested_analysis_action": "watch",
+            "trim_pressure": "low",
+            "watch_condition": "normal"
+          },
+          {
+            "absolute_pnl": 3000.0,
+            "current_value": 45000.0,
+            "free_carry_estimate": "none",
+            "fund_code": "SYNQD003",
+            "fund_name": "Sample Global AI Leaders Fund",
+            "hold_pressure": "medium",
+            "invested_amount": 42000.0,
+            "pnl_pct": 0.071429,
+            "principal_recovered": "false",
+            "profit_level": "moderate",
+            "suggested_analysis_action": "watch",
+            "trim_pressure": "medium",
+            "watch_condition": "moderate_profit_watch"
+          },
+          {
+            "absolute_pnl": 0.0,
+            "current_value": 15000.0,
+            "free_carry_estimate": "none",
+            "fund_code": "SYNQD004",
+            "fund_name": "Sample China Bond Buffer Fund",
+            "hold_pressure": "low",
+            "invested_amount": 15000.0,
+            "pnl_pct": 0.0,
+            "principal_recovered": "false",
+            "profit_level": "low",
+            "suggested_analysis_action": "watch",
+            "trim_pressure": "low",
+            "watch_condition": "normal"
+          }
+        ],
+        "summary": {
+          "has_high_profit_positions": false,
+          "has_principal_recovery_candidates": false,
+          "highest_profit_fund_code": "SYNQD001",
+          "notes": []
+        }
       },
       "reconciliation": {
         "match_count": 4,
@@ -1824,6 +1955,67 @@
       },
       "total_value": 180000.0
     },
+    "position_contribution": {
+      "positions": [
+        {
+          "absolute_pnl": 4000.0,
+          "current_value": 60000.0,
+          "fund_code": "SYNQD001",
+          "fund_name": "Sample QDII S&P 500 Index Fund",
+          "invested_amount": 56000.0,
+          "pnl_contribution_pct": 0.8,
+          "pnl_pct": 0.071429,
+          "portfolio_weight": 0.333333,
+          "position_id": "SYNQD001",
+          "risk_contribution_hint": "high_weight"
+        },
+        {
+          "absolute_pnl": -2000.0,
+          "current_value": 50000.0,
+          "fund_code": "SYNQD002",
+          "fund_name": "Sample Nasdaq Growth Index Fund",
+          "invested_amount": 52000.0,
+          "pnl_contribution_pct": -0.4,
+          "pnl_pct": -0.038462,
+          "portfolio_weight": 0.277778,
+          "position_id": "SYNQD002",
+          "risk_contribution_hint": "normal"
+        },
+        {
+          "absolute_pnl": 3000.0,
+          "current_value": 45000.0,
+          "fund_code": "SYNQD003",
+          "fund_name": "Sample Global AI Leaders Fund",
+          "invested_amount": 42000.0,
+          "pnl_contribution_pct": 0.6,
+          "pnl_pct": 0.071429,
+          "portfolio_weight": 0.25,
+          "position_id": "SYNQD003",
+          "risk_contribution_hint": "high_profit_contributor"
+        },
+        {
+          "absolute_pnl": 0.0,
+          "current_value": 15000.0,
+          "fund_code": "SYNQD004",
+          "fund_name": "Sample China Bond Buffer Fund",
+          "invested_amount": 15000.0,
+          "pnl_contribution_pct": 0.0,
+          "pnl_pct": 0.0,
+          "portfolio_weight": 0.083333,
+          "position_id": "SYNQD004",
+          "risk_contribution_hint": "normal"
+        }
+      ],
+      "summary": {
+        "high_weight_low_contribution_positions": [
+          "SYNQD002"
+        ],
+        "largest_loss_contributor": "SYNQD002",
+        "largest_profit_contributor": "SYNQD001",
+        "largest_value_position": "SYNQD001",
+        "small_weight_high_volatility_hint_positions": []
+      }
+    },
     "position_summary": {
       "SYNQD001": {
         "current_value": 60000.0,
@@ -1950,6 +2142,76 @@
       "professional_warnings": [
         "Cash 10000 is below 8% liquidity reserve (14400). Gap: 4400."
       ]
+    },
+    "profit_protection_diagnostics": {
+      "items": [
+        {
+          "absolute_pnl": 4000.0,
+          "current_value": 60000.0,
+          "free_carry_estimate": "none",
+          "fund_code": "SYNQD001",
+          "fund_name": "Sample QDII S&P 500 Index Fund",
+          "hold_pressure": "medium",
+          "invested_amount": 56000.0,
+          "pnl_pct": 0.071429,
+          "principal_recovered": "false",
+          "profit_level": "moderate",
+          "suggested_analysis_action": "watch",
+          "trim_pressure": "medium",
+          "watch_condition": "moderate_profit_watch"
+        },
+        {
+          "absolute_pnl": -2000.0,
+          "current_value": 50000.0,
+          "free_carry_estimate": "none",
+          "fund_code": "SYNQD002",
+          "fund_name": "Sample Nasdaq Growth Index Fund",
+          "hold_pressure": "low",
+          "invested_amount": 52000.0,
+          "pnl_pct": -0.038462,
+          "principal_recovered": "false",
+          "profit_level": "none",
+          "suggested_analysis_action": "watch",
+          "trim_pressure": "low",
+          "watch_condition": "normal"
+        },
+        {
+          "absolute_pnl": 3000.0,
+          "current_value": 45000.0,
+          "free_carry_estimate": "none",
+          "fund_code": "SYNQD003",
+          "fund_name": "Sample Global AI Leaders Fund",
+          "hold_pressure": "medium",
+          "invested_amount": 42000.0,
+          "pnl_pct": 0.071429,
+          "principal_recovered": "false",
+          "profit_level": "moderate",
+          "suggested_analysis_action": "watch",
+          "trim_pressure": "medium",
+          "watch_condition": "moderate_profit_watch"
+        },
+        {
+          "absolute_pnl": 0.0,
+          "current_value": 15000.0,
+          "free_carry_estimate": "none",
+          "fund_code": "SYNQD004",
+          "fund_name": "Sample China Bond Buffer Fund",
+          "hold_pressure": "low",
+          "invested_amount": 15000.0,
+          "pnl_pct": 0.0,
+          "principal_recovered": "false",
+          "profit_level": "low",
+          "suggested_analysis_action": "watch",
+          "trim_pressure": "low",
+          "watch_condition": "normal"
+        }
+      ],
+      "summary": {
+        "has_high_profit_positions": false,
+        "has_principal_recovery_candidates": false,
+        "highest_profit_fund_code": "SYNQD001",
+        "notes": []
+      }
     },
     "redemption_summary": {
       "funds_with_rules": [

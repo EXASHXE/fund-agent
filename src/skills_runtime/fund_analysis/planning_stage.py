@@ -233,18 +233,23 @@ def _infer_blockers(
 
     redemption_risk = diagnostics.get("redemption_fee_risk")
     if isinstance(redemption_risk, dict):
-        affected = redemption_risk.get("affected_funds", [])
-        if isinstance(affected, list) and affected:
-            has_high_fee = False
-            for item in affected:
-                if not isinstance(item, dict):
-                    continue
-                fee_pct = item.get("fee_pct")
-                if fee_pct is not None and float(fee_pct) > 0.01:
-                    has_high_fee = True
-                    break
-            if has_high_fee:
-                blockers.append("redemption_fee_blocker")
+        if redemption_risk.get("has_blocker"):
+            blockers.append("redemption_fee_blocker")
+        elif redemption_risk.get("has_warning"):
+            pass
+        else:
+            affected = redemption_risk.get("affected_funds", [])
+            if isinstance(affected, list) and affected:
+                has_high_fee = False
+                for item in affected:
+                    if not isinstance(item, dict):
+                        continue
+                    fee_pct = item.get("fee_pct")
+                    if fee_pct is not None and float(fee_pct) > 0.01:
+                        has_high_fee = True
+                        break
+                if has_high_fee:
+                    blockers.append("redemption_fee_blocker")
 
     return blockers
 
@@ -277,6 +282,10 @@ def _infer_warnings(
         overweight_themes = theme_overweight.get("overweight_themes", [])
         if isinstance(overweight_themes, list) and overweight_themes:
             plan_warnings.append("theme_overweight_warning")
+
+    redemption_risk = diagnostics.get("redemption_fee_risk")
+    if isinstance(redemption_risk, dict) and redemption_risk.get("has_warning"):
+        plan_warnings.append("redemption_fee_warning")
 
     for w in warnings:
         if "stale" in w.lower():

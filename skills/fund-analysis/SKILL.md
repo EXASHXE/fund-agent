@@ -263,6 +263,49 @@ Structured booleans for missing inputs:
   `missing_risk_preference`
 - `details`: list of `{code, severity, recommended_next_data}` items.
 
+### position_contribution
+
+Per-position PnL contribution analysis:
+
+- `positions`: list of `{position_id, fund_code, fund_name, current_value,
+  invested_amount, absolute_pnl, pnl_pct, portfolio_weight,
+  pnl_contribution_pct, risk_contribution_hint}`
+- `summary`: `{largest_value_position, largest_profit_contributor,
+  largest_loss_contributor, high_weight_low_contribution_positions,
+  small_weight_high_volatility_hint_positions}`
+- When `invested_amount` is unavailable, PnL fields are `null` and
+  `risk_contribution_hint` is `low_data`.
+
+### profit_protection_diagnostics
+
+Analysis-only artifact for high-profit positions. **Not a formal decision.**
+
+- `items`: list of `{fund_code, fund_name, current_value, invested_amount,
+  absolute_pnl, pnl_pct, profit_level, principal_recovered,
+  free_carry_estimate, trim_pressure, hold_pressure, watch_condition,
+  suggested_analysis_action}`
+- `profit_level`: `none | low | moderate | high | very_high | unknown`
+- `suggested_analysis_action`: always analysis-only — `watch | hold_bias |
+  trim_review | data_needed`. Never BUY/SELL/TRIM as a formal decision.
+- `principal_recovered` and `free_carry_estimate` require transaction
+  history; otherwise `unknown`.
+
+### Fee blocker vs warning
+
+`redemption_fee_risk` now includes:
+
+- `fee_items`: list of `{fund_code, fund_name, level, reason, fee_pct,
+  holding_days, threshold_days, current_value, absolute_pnl, pnl_pct}`
+- `level`: `blocker` (short holding + high fee + loss/unknown PnL) or
+  `warning` (short holding but profitable or small fee)
+- `has_blocker`: boolean — when true, `redemption_fee_blocker` appears in
+  `analysis_plan.blockers` and `decision_support_ready` is false
+- `has_warning`: boolean — when true, `redemption_fee_warning` appears in
+  `analysis_plan.warnings`
+
+Legacy `affected_funds` and `summary` fields remain for backward
+compatibility.
+
 ### How to use analysis_plan
 
 1. Call `fund_analysis` first with whatever data you have.
@@ -309,6 +352,16 @@ data is missing, mark it as a gap and let the host fetch it.
   next data to fetch
 - `evidence_gap_diagnostics` — structured booleans for missing inputs with
   severity-coded details
+- `position_contribution` — per-position PnL contribution analysis including
+  portfolio weight, absolute/percentage PnL, contribution to total portfolio PnL,
+  and risk contribution hints
+- `profit_protection_diagnostics` — profit protection analysis for high-profit
+  positions including profit level, principal recovery, free-carry estimate,
+  trim/hold pressure, and suggested analysis action. Analysis-only; not a formal
+  decision
+- `redemption_fee_risk` — now includes `fee_items` with blocker/warning
+  classification, `has_blocker`, and `has_warning` fields. Blockers prevent
+  `decision_support` readiness
 - `warnings`
 
 Artifact availability depends on host-provided data.

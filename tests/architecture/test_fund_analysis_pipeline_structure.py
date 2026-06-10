@@ -25,6 +25,8 @@ REQUIRED_FILES = {
     "status_stage.py",
     "diagnostics_stage.py",
     "professional_rules.py",
+    "contribution_stage.py",
+    "profit_protection_rules.py",
 }
 
 STAGE_FILES = {
@@ -40,6 +42,8 @@ STAGE_FILES = {
     "status_stage.py",
     "diagnostics_stage.py",
     "professional_rules.py",
+    "contribution_stage.py",
+    "profit_protection_rules.py",
 }
 
 PROVIDER_SDKS = {

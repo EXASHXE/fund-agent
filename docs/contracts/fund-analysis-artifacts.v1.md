@@ -130,6 +130,8 @@ separate top-level artifacts in the current runtime.
 | `professional_diagnostics` | `diagnostics` | No | object | No | Any professional diagnostic rule applies from host data. | Aggregated professional diagnostic results from local rules. |
 | `analysis_plan` | `planning_and_budget` | No | object | Yes | Normal structured `fund_analysis` portfolio/report run. | Deterministic planning artifact: available/missing inputs, recommended skill sequence, decision_support readiness, blockers, and next data to fetch. |
 | `evidence_gap_diagnostics` | `diagnostics` | No | object | Yes | Normal structured `fund_analysis` portfolio/report run. | Structured booleans for missing inputs with severity-coded details and recommended next data. |
+| `position_contribution` | `ledger_and_pnl` | No | object | Yes | Portfolio positions with current_value are available. | Per-position PnL contribution analysis including portfolio weight, absolute/percentage PnL, and contribution to total portfolio PnL. |
+| `profit_protection_diagnostics` | `diagnostics` | No | object | Yes | Portfolio positions with cost basis or transaction history are available. | Profit protection analysis for high-profit positions; analysis-only, not a formal decision. |
 
 ## Report Output
 

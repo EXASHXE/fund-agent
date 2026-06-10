@@ -657,6 +657,41 @@
         },
         "total_value": 71350.0
       },
+      "position_contribution": {
+        "positions": [
+          {
+            "absolute_pnl": 5200.0,
+            "current_value": 47200.0,
+            "fund_code": "SYNLED001",
+            "fund_name": "",
+            "invested_amount": 42000.0,
+            "pnl_contribution_pct": 0.622754,
+            "pnl_pct": 0.12381,
+            "portfolio_weight": 0.661528,
+            "position_id": "SYNLED001",
+            "risk_contribution_hint": "high_weight"
+          },
+          {
+            "absolute_pnl": 3150.0,
+            "current_value": 24150.0,
+            "fund_code": "SYNLED002",
+            "fund_name": "",
+            "invested_amount": 21000.0,
+            "pnl_contribution_pct": 0.377246,
+            "pnl_pct": 0.15,
+            "portfolio_weight": 0.338472,
+            "position_id": "SYNLED002",
+            "risk_contribution_hint": "high_weight"
+          }
+        ],
+        "summary": {
+          "high_weight_low_contribution_positions": [],
+          "largest_loss_contributor": "",
+          "largest_profit_contributor": "SYNLED001",
+          "largest_value_position": "SYNLED001",
+          "small_weight_high_volatility_hint_positions": []
+        }
+      },
       "professional_diagnostics": {
         "cash_budget_diagnostics": {
           "cash_ratio": 0.0981,
@@ -729,6 +764,46 @@
             "max_theme_weight": 0.6615,
             "overweight_count": 1
           }
+        }
+      },
+      "profit_protection_diagnostics": {
+        "items": [
+          {
+            "absolute_pnl": 5200.0,
+            "current_value": 47200.0,
+            "free_carry_estimate": "none",
+            "fund_code": "SYNLED001",
+            "fund_name": "",
+            "hold_pressure": "medium",
+            "invested_amount": 42000.0,
+            "pnl_pct": 0.12381,
+            "principal_recovered": "false",
+            "profit_level": "moderate",
+            "suggested_analysis_action": "watch",
+            "trim_pressure": "medium",
+            "watch_condition": "moderate_profit_watch"
+          },
+          {
+            "absolute_pnl": 3150.0,
+            "current_value": 24150.0,
+            "free_carry_estimate": "partial",
+            "fund_code": "SYNLED002",
+            "fund_name": "",
+            "hold_pressure": "medium",
+            "invested_amount": 21000.0,
+            "pnl_pct": 0.15,
+            "principal_recovered": "partial",
+            "profit_level": "high",
+            "suggested_analysis_action": "trim_review",
+            "trim_pressure": "high",
+            "watch_condition": "high_profit_high_weight_monitor"
+          }
+        ],
+        "summary": {
+          "has_high_profit_positions": true,
+          "has_principal_recovery_candidates": true,
+          "highest_profit_fund_code": "SYNLED002",
+          "notes": []
         }
       },
       "reconciliation": {
@@ -1313,6 +1388,41 @@
       },
       "total_value": 71350.0
     },
+    "position_contribution": {
+      "positions": [
+        {
+          "absolute_pnl": 5200.0,
+          "current_value": 47200.0,
+          "fund_code": "SYNLED001",
+          "fund_name": "",
+          "invested_amount": 42000.0,
+          "pnl_contribution_pct": 0.622754,
+          "pnl_pct": 0.12381,
+          "portfolio_weight": 0.661528,
+          "position_id": "SYNLED001",
+          "risk_contribution_hint": "high_weight"
+        },
+        {
+          "absolute_pnl": 3150.0,
+          "current_value": 24150.0,
+          "fund_code": "SYNLED002",
+          "fund_name": "",
+          "invested_amount": 21000.0,
+          "pnl_contribution_pct": 0.377246,
+          "pnl_pct": 0.15,
+          "portfolio_weight": 0.338472,
+          "position_id": "SYNLED002",
+          "risk_contribution_hint": "high_weight"
+        }
+      ],
+      "summary": {
+        "high_weight_low_contribution_positions": [],
+        "largest_loss_contributor": "",
+        "largest_profit_contributor": "SYNLED001",
+        "largest_value_position": "SYNLED001",
+        "small_weight_high_volatility_hint_positions": []
+      }
+    },
     "position_summary": {
       "SYNLED001": {
         "current_value": 47200.0,
@@ -1407,6 +1517,46 @@
           "max_theme_weight": 0.6615,
           "overweight_count": 1
         }
+      }
+    },
+    "profit_protection_diagnostics": {
+      "items": [
+        {
+          "absolute_pnl": 5200.0,
+          "current_value": 47200.0,
+          "free_carry_estimate": "none",
+          "fund_code": "SYNLED001",
+          "fund_name": "",
+          "hold_pressure": "medium",
+          "invested_amount": 42000.0,
+          "pnl_pct": 0.12381,
+          "principal_recovered": "false",
+          "profit_level": "moderate",
+          "suggested_analysis_action": "watch",
+          "trim_pressure": "medium",
+          "watch_condition": "moderate_profit_watch"
+        },
+        {
+          "absolute_pnl": 3150.0,
+          "current_value": 24150.0,
+          "free_carry_estimate": "partial",
+          "fund_code": "SYNLED002",
+          "fund_name": "",
+          "hold_pressure": "medium",
+          "invested_amount": 21000.0,
+          "pnl_pct": 0.15,
+          "principal_recovered": "partial",
+          "profit_level": "high",
+          "suggested_analysis_action": "trim_review",
+          "trim_pressure": "high",
+          "watch_condition": "high_profit_high_weight_monitor"
+        }
+      ],
+      "summary": {
+        "has_high_profit_positions": true,
+        "has_principal_recovery_candidates": true,
+        "highest_profit_fund_code": "SYNLED002",
+        "notes": []
       }
     },
     "redemption_summary": {
