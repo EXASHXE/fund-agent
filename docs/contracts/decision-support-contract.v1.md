@@ -90,22 +90,33 @@ Validate and convert selected suggested trade plan entries into formal
 
 **Policy:**
 - Active actions **must** be anchored to evidence. Without at least one real
-  evidence ID in the `EvidenceGraph`, the runtime rejects active actions
-  (contract violation in `single_decision` mode) or downgrades them to `HOLD`
-  / `WAIT` (in `trade_plan_decision` mode).
+  evidence ID in the `EvidenceGraph`, the runtime downgrades active requests
+  to `HOLD` / `WAIT` with structured blockage metadata.
 - Passive actions can be produced when evidence is insufficient or constraints
   block active actions. They must explain why not buy/sell, what evidence is
   missing, what trigger would change the recommendation, and what invalidates
   the current stance.
+- If host-provided `fund_analysis` artifacts are present, active requests are
+  gatekept against fee risk, right-side confirmation, event hype failure,
+  benchmark divergence, cash deployment readiness, and missing constraints.
 
 ## Structured Decision Justification
 
 Formal `Decision` artifacts include structured justification metadata:
 
 - `decision_reason_codes` — machine-readable reason codes. Current codes are
-  `EVIDENCE_AVAILABLE`, `INSUFFICIENT_EVIDENCE`, `CRITIC_BLOCKED`,
-  `CONSTRAINT_BLOCKED`, `BUDGET_BLOCKED`, `DOWNGRADED_ACTIVE_TO_HOLD`, and
-  `PASSIVE_ACTION`.
+  `EVIDENCE_AVAILABLE`, `EVIDENCE_MISSING`, `EVIDENCE_STALE`,
+  `EVIDENCE_WEAK`, `EVIDENCE_SUFFICIENT`, `EVIDENCE_CONTRADICTORY`,
+  `INSUFFICIENT_EVIDENCE`, `CRITIC_BLOCKED`, `REDEMPTION_FEE_RISK`,
+  `FEE_LOCKUP`, `THEME_OVERWEIGHT`, `RIGHT_SIDE_UNCONFIRMED`,
+  `MOMENTUM_UNCONFIRMED`, `NEWS_NEGATIVE`, `NEWS_POSITIVE_BUT_PRICE_WEAK`,
+  `BENCHMARK_DIVERGENCE`, `PROFIT_PROTECTION`, `LOSS_CONTROL`,
+  `EVENT_HYPE_FAILED`, `CASH_BUFFER_LOW`, `CASH_DEPLOYMENT_NOT_READY`,
+  `SHORT_TERM_BUDGET_EXCEEDED`, `TRANSACTION_HISTORY_MISSING`,
+  `USER_CONSTRAINT_MISSING`, `VALUATION_UNKNOWN`, `CONSTRAINT_BLOCKED`,
+  `BUDGET_BLOCKED`, `RISK_PROFILE_MISSING`, `LIQUIDITY_NEED_UNKNOWN`,
+  `DOWNGRADED_ACTIVE_TO_HOLD`, `PASSIVE_ACTION`, and
+  `ACTIVE_ACTION_ALLOWED`.
 - `evidence_state` — one of `ANCHORED`, `INSUFFICIENT_EVIDENCE`,
   `CRITIC_BLOCKED`, `CONSTRAINT_BLOCKED`, `BUDGET_BLOCKED`, or `DOWNGRADED`.
 - `blocked_by` — structured blocking causes such as `evidence`, `critic`,
@@ -121,6 +132,11 @@ new runtime outputs must populate the structured fields.
 Active `BUY` / `SELL` / `INCREASE` / `REDUCE` decisions still require
 `execution_amount > 0` and at least one real `rationale_anchor`. Structured
 reason fields never replace real evidence anchors for active decisions.
+
+When active actions are blocked by `fund_analysis` artifacts, the runtime
+emits `HOLD` or `WAIT` using existing action semantics. No `WATCH`, `ADD`, or
+`TRIM` formal action type is added; host-facing aliases map to the existing
+`HOLD`, `INCREASE`, or `REDUCE` contract actions.
 
 ## Output Artifacts
 
@@ -175,7 +191,7 @@ The runtime may emit these artifact keys depending on the input mode:
 |---|---|
 | `OK` | Decision or execution ledger produced successfully. |
 | `PARTIAL` | No suitable trades or decisions after validation, but the bridge command succeeded. A `WAIT` / passive decision or empty trade result was emitted. |
-| `FAILED` | Input contract violation (e.g. active decision without evidence) or runtime error. |
+| `FAILED` | Input contract violation (e.g. missing `payload.evidence_graph`) or runtime error. |
 
 ## Cross-References
 

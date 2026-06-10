@@ -21,8 +21,10 @@ Notes:
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -102,13 +104,17 @@ def _run_npm_pack_dry_run() -> dict:
     --dry-run --json`` is a single JSON object describing the
     files that would be packed into the tarball."""
     assert PACKAGE_JSON.exists(), "package.json is required"
-    proc = subprocess.run(
-        ["npm", "pack", "--dry-run", "--json"],
-        cwd=str(ROOT),
-        capture_output=True,
-        text=True,
-        timeout=60,
-    )
+    with tempfile.TemporaryDirectory(prefix="fund-agent-npm-cache-") as npm_cache:
+        env = dict(os.environ)
+        env["npm_config_cache"] = npm_cache
+        proc = subprocess.run(
+            ["npm", "pack", "--dry-run", "--json"],
+            cwd=str(ROOT),
+            capture_output=True,
+            text=True,
+            timeout=60,
+            env=env,
+        )
     assert proc.returncode == 0, (
         f"npm pack --dry-run failed: stdout={proc.stdout!r} stderr={proc.stderr!r}"
     )

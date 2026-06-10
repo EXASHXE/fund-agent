@@ -726,5 +726,17 @@ def test_energy_loss_can_produce_benchmark_divergence() -> None:
 def test_bond_cash_does_not_false_trigger_equity_timing() -> None:
     artifacts = _run_fixture("bond_cash_allocation.json")
     right_side = artifacts.get("right_side_confirmation_diagnostics", {})
-    for item in right_side.get("items", []):
-        assert item["right_side_confirmed"] is not True or item.get("evidence_state") == "sufficient"
+    items = right_side.get("items", [])
+    assert items, "bond_cash_allocation should emit right-side diagnostics"
+    false_confirmed = [
+        item for item in items
+        if item.get("right_side_confirmed") is True
+        and item.get("evidence_state") != "sufficient"
+    ]
+    assert false_confirmed == []
+    not_applicable = [
+        item for item in items
+        if item.get("applicability") == "not_applicable"
+    ]
+    for item in not_applicable:
+        assert item.get("right_side_confirmed") is False

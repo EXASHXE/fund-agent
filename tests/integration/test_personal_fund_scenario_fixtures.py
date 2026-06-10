@@ -79,11 +79,10 @@ def test_scenario_fixture_runs_without_formal_decision_artifacts(
     assert_no_formal_decision_artifacts(artifacts)
 
     report_sections = artifacts.get("report_sections")
-    if report_sections is not None:
-        assert isinstance(report_sections, list)
-        assert report_sections
-        assert artifacts.get("report_outline")
-        assert artifacts.get("report_quality_gate")
+    assert isinstance(report_sections, list)
+    assert report_sections
+    assert artifacts.get("report_outline")
+    assert artifacts.get("report_quality_gate")
 
 
 @pytest.mark.parametrize("fixture_name", SCENARIO_FIXTURES)

@@ -22,19 +22,30 @@ Sections are ordered. The canonical order is defined by `SECTION_ORDER`:
 1. `executive_summary` — Executive summary
 2. `portfolio_snapshot` — Portfolio snapshot
 3. `pnl_and_cost_basis` — PnL and cost basis
-4. `allocation_and_exposure` — Allocation and exposure
-5. `risk_flags` — Risk flags
-6. `performance_and_nav` — Performance and NAV
-7. `benchmark_and_peer` — Benchmark and peer
-8. `factor_and_style` — Factor and style
-9. `fees_and_redemption` — Fees and redemption
-10. `manager_and_fund_profile` — Manager and fund profile
-11. `dca_and_trade_budget` — DCA and trade budget
-12. `professional_diagnostics` — Professional diagnostics
-13. `rebalance_plan` — Rebalance plan
-14. `research_query_plan` — Research query plan
-15. `data_completeness_and_limitations` — Data completeness and limitations
-16. `evidence_appendix` — Evidence appendix
+4. `position_contribution` — Position contribution
+5. `allocation_and_exposure` — Allocation and exposure
+6. `risk_flags` — Risk flags
+7. `performance_and_nav` — Performance and NAV
+8. `benchmark_and_peer` — Benchmark and peer
+9. `benchmark_divergence` — Benchmark divergence
+10. `factor_and_style` — Factor and style
+11. `fees_and_redemption` — Fees and redemption
+12. `manager_and_fund_profile` — Manager and fund profile
+13. `dca_and_trade_budget` — DCA and trade budget
+14. `professional_diagnostics` — Professional diagnostics
+15. `profit_protection` — Profit protection
+16. `right_side_confirmation` — Right-side confirmation
+17. `event_hype_failure` — Event hype failure
+18. `cash_deployment` — Cash deployment
+19. `evidence_status` — Evidence status
+20. `action_watchlist` — Action watchlist
+21. `missing_data` — Missing data
+22. `suggested_next_checks` — Suggested next checks
+23. `uncertainty_note` — Uncertainty note
+24. `rebalance_plan` — Rebalance plan
+25. `research_query_plan` — Research query plan
+26. `data_completeness_and_limitations` — Data completeness and limitations
+27. `evidence_appendix` — Evidence appendix
 
 The ordering is stable. No section may be omitted; MISSING sections are
 represented with `status: "MISSING"` and an empty `bullets` list.
@@ -75,6 +86,12 @@ Every section dict MUST include:
   theme_overweight_diagnostics, dca_drawdown_diagnostics, cash_budget_diagnostics)
   produced by local deterministic rules. It is not a formal decision section.
   Formal Decision / ExecutionLedger artifacts remain `decision_support`-only.
+
+  The v1 artifact sections (`position_contribution`, `profit_protection`,
+  `benchmark_divergence`, `right_side_confirmation`, `event_hype_failure`,
+  `cash_deployment`, `evidence_status`, `action_watchlist`, `missing_data`,
+  `suggested_next_checks`, and `uncertainty_note`) surface deterministic
+  analysis artifacts. They do not create formal decisions.
 
 ---
 
@@ -127,6 +144,9 @@ exists (portfolio snapshot present).
 string from `report_sections`.
 
 - All section titles are rendered as `##` headings.
+- If `report_options.language` is `zh-CN`, section titles and common bullets
+  are rendered with deterministic Chinese templates. Unknown language values
+  fall back to English.
 - `PARTIAL` sections include a `[PARTIAL]` annotation.
 - `MISSING` sections include a `[MISSING]` annotation.
 - When any section is PARTIAL or MISSING, a **Limitations** footer is appended
@@ -185,8 +205,8 @@ are also present in `fund_analysis_report`.
 - Section IDs and ordering are stable within this contract version.
 - Required keys per section are stable.
 - Status semantics are stable.
-- New optional sections may be appended to the end of `SECTION_ORDER` without
-  a contract version bump.
+- New optional sections may be added to `SECTION_ORDER` with contract tests and
+  documentation updates when they surface existing deterministic artifacts.
 - Adding new keys to existing sections (e.g., a `charts` key for future visual
   data) is backward-compatible and does not require a contract bump.
 - Removing or reordering existing sections, or changing the `status` enum,

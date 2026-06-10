@@ -27,6 +27,23 @@ from .audit_stage import (
 )
 from .context import _dict
 from .graph_stage import _extract_rationale_anchor, _validate_anchor_membership
+from .gatekeeper import GatekeeperResult, evaluate_gatekeeper
+
+
+def _dedupe_strings(*groups: Any) -> list[str]:
+    result: list[str] = []
+    seen: set[str] = set()
+    for group in groups:
+        if isinstance(group, str):
+            values = [group]
+        else:
+            values = list(group or [])
+        for value in values:
+            text = str(value)
+            if text and text not in seen:
+                result.append(text)
+                seen.add(text)
+    return result
 
 
 def _task_from_payload(payload: dict[str, Any]) -> SimpleNamespace:
@@ -57,33 +74,37 @@ def _build_trigger_conditions(
     insufficient_evidence: bool,
     downgraded_reason: str,
     payload: dict[str, Any] | None = None,
+    gatekeeper: GatekeeperResult | None = None,
 ) -> list[str]:
     if insufficient_evidence:
-        return ["Insufficient evidence to support an active decision"]
-
-    conditions = [f"Critique status must be PASS for {action}"]
-    if action in ACTIVE_ACTIONS:
-        conditions.append("Evidence direction consensus confirmed")
-        conditions.append(amount_reason)
+        conditions = ["Insufficient evidence to support an active decision"]
     else:
-        payload = payload or {}
-        why_not_buy = payload.get("why_not_buy", "")
-        if why_not_buy:
-            conditions.append(f"Why not buy: {why_not_buy}")
-        why_not_sell = payload.get("why_not_sell", "")
-        if why_not_sell:
-            conditions.append(f"Why not sell: {why_not_sell}")
-        trigger_to_change = payload.get("trigger_to_change", "")
-        if trigger_to_change:
-            conditions.append(f"Trigger to change: {trigger_to_change}")
+        conditions = [f"Critique status must be PASS for {action}"]
+        if action in ACTIVE_ACTIONS:
+            conditions.append("Evidence direction consensus confirmed")
+            conditions.append(amount_reason)
+        else:
+            payload = payload or {}
+            why_not_buy = payload.get("why_not_buy", "")
+            if why_not_buy:
+                conditions.append(f"Why not buy: {why_not_buy}")
+            why_not_sell = payload.get("why_not_sell", "")
+            if why_not_sell:
+                conditions.append(f"Why not sell: {why_not_sell}")
+            trigger_to_change = payload.get("trigger_to_change", "")
+            if trigger_to_change:
+                conditions.append(f"Trigger to change: {trigger_to_change}")
     if downgraded_reason:
         conditions.append(downgraded_reason)
+    if gatekeeper is not None:
+        conditions.extend(gatekeeper.trigger_conditions)
     return conditions
 
 
 def _build_invalidating_conditions(
     action: str,
     payload: dict[str, Any] | None = None,
+    gatekeeper: GatekeeperResult | None = None,
 ) -> list[str]:
     conditions = [
         "Evidence contradiction detected",
@@ -97,6 +118,8 @@ def _build_invalidating_conditions(
         if what_invalidates:
             conditions.append(f"What invalidates: {what_invalidates}")
         conditions.append("Market regime change")
+    if gatekeeper is not None:
+        conditions.extend(gatekeeper.invalidating_conditions)
     return conditions
 
 
@@ -107,6 +130,7 @@ def _build_decision_justification(
     critique_status: str,
     insufficient_evidence: bool,
     downgraded_reason: str,
+    gatekeeper: GatekeeperResult | None = None,
 ) -> tuple[list[str], str, list[str]]:
     reason_codes: list[str] = []
     blocked_by: list[str] = []
@@ -132,6 +156,12 @@ def _build_decision_justification(
     if action in PASSIVE_ACTIONS:
         reason_codes.append("PASSIVE_ACTION")
 
+    if gatekeeper is not None:
+        reason_codes = _dedupe_strings(reason_codes, gatekeeper.reason_codes)
+        blocked_by = _dedupe_strings(blocked_by, gatekeeper.blocked_by)
+        if gatekeeper.evidence_state != "ANCHORED":
+            evidence_state = gatekeeper.evidence_state
+
     return reason_codes, evidence_state, blocked_by
 
 
@@ -147,6 +177,15 @@ def _build_decision(
 ) -> Decision:
     action = _determine_action(payload, graph, critique_status, requested_action)
     anchors = _extract_rationale_anchor(graph)
+    gatekeeper_action = action
+    if requested_action in ACTIVE_ACTIONS and (action in ACTIVE_ACTIONS or not graph.items):
+        gatekeeper_action = requested_action
+    gatekeeper = evaluate_gatekeeper(
+        payload=payload,
+        graph=graph,
+        action=gatekeeper_action,
+    )
+    action = gatekeeper.action if gatekeeper.downgraded else action
     _validate_anchor_membership(action, anchors, graph)
 
     amount, amount_reason = _derive_execution_amount(action, payload)
@@ -166,9 +205,10 @@ def _build_decision(
         insufficient_evidence=insufficient_evidence,
         downgraded_reason=downgraded_reason,
         payload=payload,
+        gatekeeper=gatekeeper,
     )
     invalidating_conditions = _build_invalidating_conditions(
-        action, payload=payload
+        action, payload=payload, gatekeeper=gatekeeper
     )
     risk_budget = _calculate_risk_budget(payload, action)
     missing_evidence = payload.get("missing_evidence", "") if action in PASSIVE_ACTIONS else ""
@@ -196,12 +236,14 @@ def _build_decision(
         missing_evidence=missing_evidence,
         deterministic_ts=deterministic_ts,
     )
+    audit_trail = _dedupe_strings(audit_trail, gatekeeper.audit_trail)
     decision_reason_codes, evidence_state, blocked_by = _build_decision_justification(
         action=action,
         anchors=anchors,
         critique_status=critique_status,
         insufficient_evidence=insufficient_evidence,
         downgraded_reason=downgraded_reason,
+        gatekeeper=gatekeeper,
     )
 
     return Decision(

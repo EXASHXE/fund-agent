@@ -24,7 +24,7 @@ FIXTURE_DIR = ROOT / "examples" / "decision_support"
 
 FIXTURES = [
     ("single_active_buy_with_evidence.json", "OK", True),
-    ("single_active_buy_without_evidence_invalid.json", "FAILED", False),
+    ("single_active_buy_without_evidence_invalid.json", "OK", True),
     ("single_passive_hold_without_evidence.json", "OK", True),
     ("trade_plan_selected_trade_with_caps.json", "OK", True),
     ("trade_plan_forbidden_action_skipped.json", "PARTIAL", True),
@@ -57,27 +57,12 @@ def test_fixture_runs_through_bridge(fixture_name, expected_status, expects_arti
     assert envelope.get("skill_name") == "decision_support"
     assert envelope.get("status") in {"OK", "PARTIAL", "FAILED"}
 
-    if expected_status == "FAILED":
-        assert envelope.get("status") == "FAILED"
-        errors = envelope.get("errors") or []
-        assert any(
-            e.get("code") == "CONTRACT_VIOLATION"
-            for e in errors
-        ) or "Active decision requires" in (
-            envelope.get("status") == "FAILED"
-            and json.dumps(envelope)
-        )
-    else:
-        assert envelope.get("status") in {"OK", "PARTIAL"}
+    assert envelope.get("status") in {"OK", "PARTIAL"}
 
 
 @pytest.mark.parametrize("fixture_name,expected_status,_", FIXTURES)
 def test_formal_decisions_have_structured_justification(fixture_name, expected_status, _):
     envelope = _run(fixture_name)
-
-    if expected_status == "FAILED":
-        assert extract_formal_decisions(envelope) == []
-        return
 
     decisions = extract_formal_decisions(envelope)
     assert_no_fake_rationale_anchors(decisions)
@@ -99,12 +84,13 @@ def test_active_buy_with_evidence_produces_decision():
     assert decision["action"] in {"BUY", "INCREASE"}
 
 
-def test_active_buy_without_evidence_is_failed():
+def test_active_buy_without_evidence_is_downgraded():
     envelope = _run("single_active_buy_without_evidence_invalid.json")
-    assert envelope["status"] == "FAILED"
-    errors = envelope.get("errors") or []
-    error_codes = {e.get("code", "") for e in errors}
-    assert "CONTRACT_VIOLATION" in error_codes
+    assert envelope["status"] == "OK"
+    decision = envelope.get("artifacts", {}).get("decision") or {}
+    assert decision.get("action") in {"WAIT", "HOLD"}
+    assert "EVIDENCE_MISSING" in decision.get("decision_reason_codes", [])
+    assert decision.get("blocked_by")
 
 
 def test_passive_hold_without_evidence_is_ok():

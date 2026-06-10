@@ -93,12 +93,10 @@ class TestBridgeUnsupportedEmitReport:
 
 
 class TestSkillLevelErrorsCanonical:
-    def test_decision_support_active_buy_without_evidence(self):
-        inp = str(ROOT / "examples" / "decision_support" / "single_active_buy_without_evidence_invalid.json")
-        fixture = json.loads(open(inp, encoding="utf-8").read())
+    def test_decision_support_missing_evidence_graph(self):
         result = run_bridge_inprocess_json(
             skill="decision_support",
-            input_data=fixture,
+            input_data={"payload": {"requested_action": "BUY"}},
         )
         assert_envelope_errors_are_canonical(result)
 

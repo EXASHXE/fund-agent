@@ -18,6 +18,11 @@
 Limitations:
 - Transaction-level cost-basis summary is absent; PnL uses provided position cost fields.
 
+## Position contribution [OK]
+- Position contribution covers 3 fund(s).
+- Largest value position: 110011.
+- Largest profit contributor: 110011.
+
 ## Allocation and exposure [OK]
 - Top fund type exposure is fund_type:equity at 44.44%.
 - Top industry exposure is industry:govt at 5.56%.
@@ -34,6 +39,10 @@ Limitations:
 ## Benchmark and peer [OK]
 - Benchmark gap comparison is available for 6 fund-benchmark pair(s).
 - Peer ranking data is available for 3 fund(s).
+
+## Benchmark divergence [OK]
+- Benchmark divergence reviewed 3 fund(s).
+- No severe benchmark divergence was detected from provided data.
 
 ## Factor and style [OK]
 - Host-provided factor dimensions: momentum, quality, size, value.
@@ -57,6 +66,47 @@ Limitations:
 - Cash ratio is 10.0%.
 - Short-term trade budget status: ok.
 
+## Profit protection [OK]
+- Profit protection reviewed 3 position(s).
+
+## Right-side confirmation [OK]
+- Right-side confirmation applies to 0 drawdown position(s); 0 confirmed.
+
+## Event hype failure [MISSING]
+- No section content available from provided artifacts.
+
+Limitations:
+- Event hype diagnostics are missing or no host event metadata was provided.
+
+## Cash deployment [OK]
+- Cash-like weight 10.00%; deployment readiness ready.
+- Cash accounting basis: conservative_effective_total.
+- Estimated deployable cash: 0.00.
+
+## Evidence status [PARTIAL]
+- decision_support_ready: False.
+- Formal decision blockers: missing_recent_news.
+- Analysis warnings: sentiment_missing, transaction_history_incomplete.
+- Missing evidence: missing_recent_news, missing_sentiment, missing_transaction_history.
+
+## Action watchlist [OK]
+- Action watchlist contains 0 simulated trade leg(s).
+- Formal action requires decision_support; this section is analysis-only.
+- Do not enter formal active decision until blockers clear: missing_recent_news.
+
+## Missing data [PARTIAL]
+- Missing data groups: missing_recent_news, missing_sentiment, missing_transaction_history.
+- missing_transaction_history: next data transaction ledger with BUY/SELL/DIVIDEND/FEE events.
+- missing_recent_news: next data recent fund or theme news.
+- missing_sentiment: next data sentiment snapshot for held funds or themes.
+
+## Suggested next checks [PARTIAL]
+- Next data to fetch: recent fund news, sentiment snapshot, transaction history, recent benchmark movement.
+
+## Uncertainty note [OK]
+- This conclusion is based on host-provided data and does not include live market fetching.
+- No formal decision generated; call decision-support for formal action.
+
 ## Rebalance plan [OK]
 - Rebalance simulation produced 0 trade leg(s) with total trade amount 0.00.
 - No single fund > 45%
@@ -77,3 +127,4 @@ Limitations:
 ## Limitations
 
 - DCA and trade budget: DCA plan review is absent; host did not provide DCA inputs.
+- Event hype failure: Event hype diagnostics are missing or no host event metadata was provided.

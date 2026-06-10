@@ -13,6 +13,7 @@ from .action_policy import ACTIVE_ACTIONS, PASSIVE_ACTIONS, _normalized_action
 from .amount_policy import _calculate_risk_budget, _validate_trade_amount
 from .audit_stage import _deterministic_decision_id, _deterministic_timestamp
 from .context import _dict, _float_value, _optional_float
+from .gatekeeper import evaluate_gatekeeper
 from .graph_stage import _resolve_trade_evidence_anchors
 
 
@@ -168,6 +169,15 @@ def _decision_from_trade(
     amount = _optional_float(trade.get("amount")) or 0.0
 
     anchors = _resolve_trade_evidence_anchors(trade, evidence_graph, action)
+    gatekeeper = evaluate_gatekeeper(
+        payload=payload,
+        graph=evidence_graph,
+        action=action,
+    )
+    if gatekeeper.downgraded:
+        action = gatekeeper.action
+        amount = 0.0
+        anchors = _resolve_trade_evidence_anchors(trade, evidence_graph, action)
 
     if action in ACTIVE_ACTIONS and not anchors:
         action = "HOLD"
@@ -210,6 +220,7 @@ def _decision_from_trade(
             risk_budget=0.01,
             audit_trail=audit_trail,
             decision_reason_codes=[
+                "EVIDENCE_MISSING",
                 "INSUFFICIENT_EVIDENCE",
                 "DOWNGRADED_ACTIVE_TO_HOLD",
                 "PASSIVE_ACTION",
@@ -245,6 +256,7 @@ def _decision_from_trade(
         )
         if trigger_to_change:
             trigger_conditions.append(f"Trigger to change: {trigger_to_change}")
+    trigger_conditions = _dedupe_reason_codes(trigger_conditions, gatekeeper.trigger_conditions)
 
     if not trigger_conditions:
         trigger_conditions.append(
@@ -262,6 +274,7 @@ def _decision_from_trade(
         )
         if what_invalidates:
             invalidating_conditions.append(f"What invalidates: {what_invalidates}")
+    invalidating_conditions = _dedupe_reason_codes(invalidating_conditions, gatekeeper.invalidating_conditions)
 
     time_horizon = trade.get(
         "time_horizon", payload.get("time_horizon", "medium_term")
@@ -296,6 +309,7 @@ def _decision_from_trade(
             audit_trail.append(f"Missing evidence: {missing_evidence}")
         if not evidence_graph.items:
             audit_trail.append("Insufficient evidence: no evidence items in graph")
+    audit_trail = _dedupe_reason_codes(audit_trail, gatekeeper.audit_trail)
 
     deterministic = bool(payload.get("deterministic"))
     deterministic_ts = _deterministic_timestamp(payload) if deterministic else None
@@ -319,6 +333,10 @@ def _decision_from_trade(
         action=action,
         anchors=anchors,
     )
+    decision_reason_codes = _dedupe_reason_codes(decision_reason_codes, gatekeeper.reason_codes)
+    blocked_by = _dedupe_reason_codes(blocked_by, gatekeeper.blocked_by)
+    if gatekeeper.evidence_state != "ANCHORED":
+        evidence_state = gatekeeper.evidence_state
 
     return Decision(
         decision_id=decision_id,

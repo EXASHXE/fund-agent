@@ -14,20 +14,61 @@ SECTION_ORDER: tuple[tuple[str, str], ...] = (
     ("executive_summary", "Executive summary"),
     ("portfolio_snapshot", "Portfolio snapshot"),
     ("pnl_and_cost_basis", "PnL and cost basis"),
+    ("position_contribution", "Position contribution"),
     ("allocation_and_exposure", "Allocation and exposure"),
     ("risk_flags", "Risk flags"),
     ("performance_and_nav", "Performance and NAV"),
     ("benchmark_and_peer", "Benchmark and peer"),
+    ("benchmark_divergence", "Benchmark divergence"),
     ("factor_and_style", "Factor and style"),
     ("fees_and_redemption", "Fees and redemption"),
     ("manager_and_fund_profile", "Manager and fund profile"),
     ("dca_and_trade_budget", "DCA and trade budget"),
     ("professional_diagnostics", "Professional diagnostics"),
+    ("profit_protection", "Profit protection"),
+    ("right_side_confirmation", "Right-side confirmation"),
+    ("event_hype_failure", "Event hype failure"),
+    ("cash_deployment", "Cash deployment"),
+    ("evidence_status", "Evidence status"),
+    ("action_watchlist", "Action watchlist"),
+    ("missing_data", "Missing data"),
+    ("suggested_next_checks", "Suggested next checks"),
+    ("uncertainty_note", "Uncertainty note"),
     ("rebalance_plan", "Rebalance plan"),
     ("research_query_plan", "Research query plan"),
     ("data_completeness_and_limitations", "Data completeness and limitations"),
     ("evidence_appendix", "Evidence appendix"),
 )
+
+ZH_CN_SECTION_TITLES: dict[str, str] = {
+    "executive_summary": "组合概览",
+    "portfolio_snapshot": "持仓快照",
+    "pnl_and_cost_basis": "收益与成本",
+    "position_contribution": "仓位贡献",
+    "allocation_and_exposure": "配置与暴露",
+    "risk_flags": "风险提示",
+    "performance_and_nav": "净值与表现",
+    "benchmark_and_peer": "基准与同类",
+    "benchmark_divergence": "基准偏离",
+    "factor_and_style": "风格因子",
+    "fees_and_redemption": "赎回费与持有期",
+    "manager_and_fund_profile": "基金资料与经理",
+    "dca_and_trade_budget": "定投与交易预算",
+    "professional_diagnostics": "专业诊断",
+    "profit_protection": "盈利保护",
+    "right_side_confirmation": "右侧确认",
+    "event_hype_failure": "事件催化检验",
+    "cash_deployment": "现金与低风险仓位",
+    "evidence_status": "证据状态",
+    "action_watchlist": "操作观察清单",
+    "missing_data": "缺失数据",
+    "suggested_next_checks": "后续检查项",
+    "uncertainty_note": "不确定性说明",
+    "rebalance_plan": "再平衡分析",
+    "research_query_plan": "研究查询计划",
+    "data_completeness_and_limitations": "数据限制",
+    "evidence_appendix": "证据附录",
+}
 
 VALID_STATUSES = {"OK", "PARTIAL", "MISSING"}
 
@@ -48,6 +89,8 @@ def compose_personal_fund_report(
         artifacts.get("report_limitations") or report.get("report_limitations") or []
     )
     combined_warnings = _unique_strings([*(warnings or []), *(_string_list(artifacts.get("warnings") or []))])
+    language = _select_language(options)
+    include_v1_sections = _include_v1_sections(options, language)
 
     context = {
         "artifacts": artifacts,
@@ -56,26 +99,50 @@ def compose_personal_fund_report(
         "analysis_coverage": analysis_coverage,
         "report_limitations": report_limitations,
         "warnings": combined_warnings,
+        "language": language,
     }
 
     sections = [
         _build_executive_summary(context),
         _build_portfolio_snapshot(context),
         _build_pnl_and_cost_basis(context),
+    ]
+    if include_v1_sections:
+        sections.append(_build_position_contribution(context))
+    sections.extend([
         _build_allocation_and_exposure(context),
         _build_risk_flags(context),
         _build_performance_and_nav(context),
         _build_benchmark_and_peer(context),
+    ])
+    if include_v1_sections:
+        sections.append(_build_benchmark_divergence(context))
+    sections.extend([
         _build_factor_and_style(context),
         _build_fees_and_redemption(context),
         _build_manager_and_fund_profile(context),
         _build_dca_and_trade_budget(context),
         _build_professional_diagnostics(context),
+    ])
+    if include_v1_sections:
+        sections.extend([
+            _build_profit_protection(context),
+            _build_right_side_confirmation(context),
+            _build_event_hype_failure(context),
+            _build_cash_deployment(context),
+            _build_evidence_status(context),
+            _build_action_watchlist(context),
+            _build_missing_data(context),
+            _build_suggested_next_checks(context),
+            _build_uncertainty_note(context),
+        ])
+    sections.extend([
         _build_rebalance_plan(context),
         _build_research_query_plan(context),
         _build_data_completeness_and_limitations(context),
         _build_evidence_appendix(context),
-    ]
+    ])
+    sections = _localize_sections(sections, language)
     quality_gate = _build_quality_gate(data_completeness, sections, options)
 
     return {
@@ -103,7 +170,12 @@ def render_report_markdown(report_sections: list[dict[str, Any]] | dict[str, Any
     if not isinstance(sections, list):
         sections = []
 
-    lines: list[str] = ["# Personal fund report", ""]
+    language = "zh-CN" if any(
+        isinstance(section, dict) and section.get("language") == "zh-CN"
+        for section in sections
+    ) else "en"
+    title = "个人基金报告" if language == "zh-CN" else "Personal fund report"
+    lines: list[str] = [f"# {title}", ""]
     global_limitations: list[str] = []
     for section in sections:
         if not isinstance(section, dict):
@@ -239,6 +311,37 @@ def _build_pnl_and_cost_basis(context: dict[str, Any]) -> dict[str, Any]:
     return _section("pnl_and_cost_basis", status, bullets, ["pnl_summary", "cost_basis_summary"], limitations)
 
 
+def _build_position_contribution(context: dict[str, Any]) -> dict[str, Any]:
+    contribution = _artifact(context, "position_contribution")
+    positions = _as_list(contribution.get("positions"))
+    summary = _as_dict(contribution.get("summary"))
+    bullets: list[str] = []
+    limitations: list[str] = []
+
+    if positions:
+        bullets.append(f"Position contribution covers {len(positions)} fund(s).")
+        largest_value = summary.get("largest_value_position")
+        if largest_value:
+            bullets.append(f"Largest value position: {largest_value}.")
+        largest_profit = summary.get("largest_profit_contributor")
+        if largest_profit:
+            bullets.append(f"Largest profit contributor: {largest_profit}.")
+        largest_loss = summary.get("largest_loss_contributor")
+        if largest_loss:
+            bullets.append(f"Largest loss contributor: {largest_loss}.")
+    else:
+        limitations.append("Position contribution artifact is missing.")
+
+    status = "OK" if positions else "MISSING"
+    return _section(
+        "position_contribution",
+        status,
+        bullets,
+        ["position_contribution"],
+        limitations,
+    )
+
+
 def _build_allocation_and_exposure(context: dict[str, Any]) -> dict[str, Any]:
     exposure = _as_dict(context["artifacts"].get("exposure_summary") or context["report"].get("exposure_summary"))
     concentration = _as_dict(context["report"].get("concentration"))
@@ -340,6 +443,33 @@ def _build_benchmark_and_peer(context: dict[str, Any]) -> dict[str, Any]:
 
     status = "OK" if benchmark and peer else "PARTIAL" if benchmark or peer else "MISSING"
     return _section("benchmark_and_peer", status, bullets, ["benchmark_summary", "peer_summary"], limitations)
+
+
+def _build_benchmark_divergence(context: dict[str, Any]) -> dict[str, Any]:
+    divergence = _artifact(context, "benchmark_divergence_diagnostics")
+    items = _as_list(divergence.get("items"))
+    summary = _as_dict(divergence.get("summary"))
+    bullets: list[str] = []
+    limitations: list[str] = []
+
+    if items:
+        bullets.append(f"Benchmark divergence reviewed {len(items)} fund(s).")
+        if summary.get("has_severe_underperformance"):
+            bullets.append("Severe benchmark underperformance is present in provided data.")
+        elif summary.get("has_benchmark_divergence"):
+            bullets.append("Benchmark divergence is present in provided data.")
+        else:
+            bullets.append("No severe benchmark divergence was detected from provided data.")
+    else:
+        limitations.append("Benchmark divergence diagnostics are missing.")
+
+    return _section(
+        "benchmark_divergence",
+        "OK" if items else "MISSING",
+        bullets,
+        ["benchmark_divergence_diagnostics"],
+        limitations,
+    )
 
 
 def _build_factor_and_style(context: dict[str, Any]) -> dict[str, Any]:
@@ -538,6 +668,266 @@ def _build_professional_diagnostics(context: dict[str, Any]) -> dict[str, Any]:
     )
 
 
+def _build_profit_protection(context: dict[str, Any]) -> dict[str, Any]:
+    diagnostics = _artifact(context, "profit_protection_diagnostics")
+    items = _as_list(diagnostics.get("items"))
+    summary = _as_dict(diagnostics.get("summary"))
+    bullets: list[str] = []
+    limitations: list[str] = []
+
+    if items:
+        bullets.append(f"Profit protection reviewed {len(items)} position(s).")
+        high_profit = [
+            item for item in items
+            if isinstance(item, dict) and item.get("profit_level") in {"high", "very_high"}
+        ]
+        if high_profit:
+            bullets.append(f"High-profit watchlist contains {len(high_profit)} position(s).")
+        action_counts = _as_dict(summary.get("suggested_action_counts"))
+        if action_counts:
+            bullets.append(f"Analysis-only action distribution: {_format_counts(action_counts)}.")
+    else:
+        limitations.append("Profit protection diagnostics are missing.")
+
+    return _section(
+        "profit_protection",
+        "OK" if items else "MISSING",
+        bullets,
+        ["profit_protection_diagnostics"],
+        limitations,
+    )
+
+
+def _build_right_side_confirmation(context: dict[str, Any]) -> dict[str, Any]:
+    diagnostics = _artifact(context, "right_side_confirmation_diagnostics")
+    items = _as_list(diagnostics.get("items"))
+    summary = _as_dict(diagnostics.get("summary"))
+    bullets: list[str] = []
+    limitations: list[str] = []
+
+    if items:
+        applicable = [
+            item for item in items
+            if isinstance(item, dict) and item.get("applicability") != "not_applicable"
+        ]
+        confirmed = [
+            item for item in applicable
+            if isinstance(item, dict) and item.get("right_side_confirmed") is True
+        ]
+        bullets.append(
+            f"Right-side confirmation applies to {len(applicable)} drawdown position(s); "
+            f"{len(confirmed)} confirmed."
+        )
+        if summary.get("needs_more_evidence"):
+            bullets.append("Fresh NAV, benchmark, news, or sentiment evidence is needed before action.")
+    else:
+        limitations.append("Right-side confirmation diagnostics are missing.")
+
+    return _section(
+        "right_side_confirmation",
+        "OK" if items else "MISSING",
+        bullets,
+        ["right_side_confirmation_diagnostics"],
+        limitations,
+    )
+
+
+def _build_event_hype_failure(context: dict[str, Any]) -> dict[str, Any]:
+    diagnostics = _artifact(context, "event_hype_failure_diagnostics")
+    items = _as_list(diagnostics.get("items"))
+    summary = _as_dict(diagnostics.get("summary"))
+    bullets: list[str] = []
+    limitations: list[str] = []
+
+    if items:
+        failed = [
+            item for item in items
+            if isinstance(item, dict) and item.get("hype_failed") is True
+        ]
+        bullets.append(f"Event catalyst review covers {len(items)} event(s).")
+        if failed:
+            bullets.append(f"Event hype failure detected for {len(failed)} event(s).")
+        else:
+            bullets.append("No event hype failure was concluded from available evidence.")
+        high_risk = _string_list(summary.get("high_risk_events") or [])
+        if high_risk:
+            bullets.append(f"High-risk event markers: {', '.join(high_risk)}.")
+    else:
+        limitations.append("Event hype diagnostics are missing or no host event metadata was provided.")
+
+    return _section(
+        "event_hype_failure",
+        "OK" if items else "MISSING",
+        bullets,
+        ["event_hype_failure_diagnostics"],
+        limitations,
+    )
+
+
+def _build_cash_deployment(context: dict[str, Any]) -> dict[str, Any]:
+    diagnostics = _artifact(context, "cash_deployment_diagnostics")
+    summary = _as_dict(diagnostics.get("summary"))
+    bullets: list[str] = []
+    limitations: list[str] = []
+
+    if summary:
+        bullets.append(
+            "Cash-like weight "
+            f"{_pct(summary.get('cash_like_weight'))}; deployment readiness "
+            f"{summary.get('deployment_readiness', 'unknown')}."
+        )
+        bullets.append(
+            f"Cash accounting basis: {summary.get('cash_accounting_basis', 'unspecified')}."
+        )
+        deployable = summary.get("estimated_deployable_cash")
+        if deployable is not None:
+            bullets.append(f"Estimated deployable cash: {_money(deployable)}.")
+    else:
+        limitations.append("Cash deployment diagnostics are missing.")
+
+    return _section(
+        "cash_deployment",
+        "OK" if summary else "MISSING",
+        bullets,
+        ["cash_deployment_diagnostics"],
+        limitations,
+    )
+
+
+def _build_evidence_status(context: dict[str, Any]) -> dict[str, Any]:
+    plan = _artifact(context, "analysis_plan")
+    gap = _artifact(context, "evidence_gap_diagnostics")
+    redemption = _artifact(context, "redemption_fee_risk")
+    bullets: list[str] = []
+    limitations: list[str] = []
+
+    if plan:
+        ready = bool(plan.get("decision_support_ready"))
+        bullets.append(f"decision_support_ready: {ready}.")
+        blockers = _string_list(plan.get("blockers") or [])
+        if blockers:
+            bullets.append(f"Formal decision blockers: {', '.join(blockers)}.")
+        warnings = _string_list(plan.get("warnings") or [])
+        if warnings:
+            bullets.append(f"Analysis warnings: {', '.join(warnings[:6])}.")
+    else:
+        limitations.append("analysis_plan artifact is missing.")
+
+    missing = _missing_gap_codes(gap)
+    if missing:
+        bullets.append(f"Missing evidence: {', '.join(missing)}.")
+    if redemption:
+        if redemption.get("has_blocker"):
+            bullets.append("Fee blocker is active from host-provided redemption rules.")
+        elif redemption.get("has_warning"):
+            bullets.append("Fee warning is present from host-provided redemption rules.")
+
+    status = "OK" if plan and not missing else "PARTIAL" if plan or gap else "MISSING"
+    return _section(
+        "evidence_status",
+        status,
+        bullets,
+        ["analysis_plan", "evidence_gap_diagnostics", "redemption_fee_risk"],
+        limitations,
+    )
+
+
+def _build_action_watchlist(context: dict[str, Any]) -> dict[str, Any]:
+    plan = _as_dict(context["artifacts"].get("suggested_rebalance_plan"))
+    analysis_plan = _artifact(context, "analysis_plan")
+    bullets: list[str] = []
+    limitations: list[str] = []
+
+    if plan:
+        trades = _as_list(plan.get("suggested_trade_plan"))
+        bullets.append(f"Action watchlist contains {len(trades)} simulated trade leg(s).")
+        bullets.append("Formal action requires decision_support; this section is analysis-only.")
+    else:
+        limitations.append("Suggested rebalance plan is missing.")
+
+    blockers = _string_list(analysis_plan.get("blockers") or [])
+    if blockers:
+        bullets.append(f"Do not enter formal active decision until blockers clear: {', '.join(blockers)}.")
+
+    return _section(
+        "action_watchlist",
+        "OK" if plan else "PARTIAL" if blockers else "MISSING",
+        bullets,
+        ["suggested_rebalance_plan", "analysis_plan"],
+        limitations,
+    )
+
+
+def _build_missing_data(context: dict[str, Any]) -> dict[str, Any]:
+    plan = _artifact(context, "analysis_plan")
+    gap = _artifact(context, "evidence_gap_diagnostics")
+    missing = _string_list(plan.get("missing_inputs") or []) or _missing_gap_codes(gap)
+    bullets: list[str] = []
+    limitations: list[str] = []
+
+    if missing:
+        bullets.append(f"Missing data groups: {', '.join(missing)}.")
+    elif plan or gap:
+        bullets.append("No required missing data groups were reported.")
+    else:
+        limitations.append("Missing-data diagnostics are unavailable.")
+
+    details = _as_list(gap.get("details"))
+    for detail in details[:5]:
+        if isinstance(detail, dict):
+            code = detail.get("code", "unknown")
+            next_data = detail.get("recommended_next_data", "")
+            bullets.append(f"{code}: next data {next_data}.")
+
+    return _section(
+        "missing_data",
+        "PARTIAL" if missing else "OK" if plan or gap else "MISSING",
+        bullets,
+        ["analysis_plan", "evidence_gap_diagnostics"],
+        limitations,
+    )
+
+
+def _build_suggested_next_checks(context: dict[str, Any]) -> dict[str, Any]:
+    plan = _artifact(context, "analysis_plan")
+    next_data = _string_list(plan.get("next_data_to_fetch") or [])
+    bullets: list[str] = []
+    limitations: list[str] = []
+
+    if next_data:
+        bullets.append(f"Next data to fetch: {', '.join(next_data)}.")
+    elif plan:
+        bullets.append("No additional next-data items were requested by analysis_plan.")
+    else:
+        limitations.append("analysis_plan is missing; no next checks can be derived.")
+
+    return _section(
+        "suggested_next_checks",
+        "PARTIAL" if next_data else "OK" if plan else "MISSING",
+        bullets,
+        ["analysis_plan.next_data_to_fetch"],
+        limitations,
+    )
+
+
+def _build_uncertainty_note(context: dict[str, Any]) -> dict[str, Any]:
+    limitations = list(context["report_limitations"])
+    bullets = [
+        "This conclusion is based on host-provided data and does not include live market fetching.",
+        "No formal decision generated; call decision-support for formal action.",
+    ]
+    if limitations:
+        bullets.append(f"Report limitations count: {len(limitations)}.")
+
+    return _section(
+        "uncertainty_note",
+        "PARTIAL" if limitations else "OK",
+        bullets,
+        ["report_limitations", "report_sections"],
+        limitations[:5],
+    )
+
+
 def _build_rebalance_plan(context: dict[str, Any]) -> dict[str, Any]:
     plan = _as_dict(context["artifacts"].get("suggested_rebalance_plan"))
     bullets: list[str] = []
@@ -666,6 +1056,124 @@ def _section(
         "data_sources": _unique_strings(data_sources),
         "limitations": _unique_strings(limitations),
     }
+
+
+def _select_language(options: dict[str, Any]) -> str:
+    language = str(options.get("language", "en") or "en")
+    normalized = language.replace("_", "-")
+    if normalized.lower() in {"zh-cn", "zh-hans-cn", "zh"}:
+        return "zh-CN"
+    return "en"
+
+
+def _include_v1_sections(options: dict[str, Any], language: str) -> bool:
+    return True
+
+
+def _localize_sections(sections: list[dict[str, Any]], language: str) -> list[dict[str, Any]]:
+    if language != "zh-CN":
+        return sections
+
+    localized: list[dict[str, Any]] = []
+    for section in sections:
+        if not isinstance(section, dict):
+            continue
+        copied = dict(section)
+        section_id = str(copied.get("id", ""))
+        copied["title"] = ZH_CN_SECTION_TITLES.get(section_id, str(copied.get("title", "")))
+        copied["bullets"] = [_localize_bullet(str(bullet)) for bullet in _string_list(copied.get("bullets") or [])]
+        copied["limitations"] = [
+            _localize_limitation(str(item))
+            for item in _string_list(copied.get("limitations") or [])
+        ]
+        copied["language"] = "zh-CN"
+        localized.append(copied)
+    return localized
+
+
+def _localize_bullet(text: str) -> str:
+    if text.startswith("Portfolio value "):
+        prefix = "Portfolio value "
+        rest = text[len(prefix):]
+        value, sep, tail = rest.partition(" across ")
+        if sep and " position(s); cash " in tail:
+            count, _, cash = tail.partition(" position(s); cash ")
+            return f"组合总市值：{value}；持仓数量：{count}；现金：{cash.rstrip('.')}。"
+    if text.startswith("Data completeness grade "):
+        rest = text[len("Data completeness grade "):].rstrip(".")
+        return f"数据完整度：{rest}。"
+    if text.startswith("Completeness grade "):
+        rest = text[len("Completeness grade "):].rstrip(".")
+        return f"数据完整度：{rest}。"
+    if text.startswith("Risk scan surfaced "):
+        return "风险扫描：" + text[len("Risk scan surfaced "):]
+    if text.startswith("No formal decision generated"):
+        return "未生成正式决策；如需正式操作请调用 decision-support。"
+    if text.startswith("As of "):
+        return "截至 " + text[len("As of "):]
+    if text.startswith("Position detail is available"):
+        return "持仓明细：" + text[len("Position detail is available "):]
+    if text.startswith("Missing data groups: "):
+        return "当前缺失的关键数据：" + text[len("Missing data groups: "):]
+    if text.startswith("Missing evidence: "):
+        return "当前缺失的关键证据：" + text[len("Missing evidence: "):]
+    if text.startswith("Next data to fetch: "):
+        return "下一步建议补充：" + text[len("Next data to fetch: "):]
+    if text.startswith("decision_support_ready: "):
+        return "正式决策准备状态：" + text[len("decision_support_ready: "):]
+    if text.startswith("Formal decision blockers: "):
+        return "暂不建议进入正式决策：" + text[len("Formal decision blockers: "):]
+    if text.startswith("Analysis warnings: "):
+        return "分析警示：" + text[len("Analysis warnings: "):]
+    if text.startswith("Fee blocker is active"):
+        return "赎回费阻断项仍然存在，来源为用户提供的赎回规则。"
+    if text.startswith("Fee warning is present"):
+        return "赎回费警示项仍然存在，来源为用户提供的赎回规则。"
+    if text.startswith("Action watchlist contains "):
+        return "操作观察清单：" + text[len("Action watchlist contains "):]
+    if text.startswith("Formal action requires decision_support"):
+        return "正式操作需要调用 decision-support；本节仅为分析观察。"
+    if text.startswith("Do not enter formal active decision"):
+        return "在阻断项清除前，不应进入正式主动决策：" + text.split(":", 1)[-1].strip()
+    if text.startswith("This conclusion is based on host-provided data"):
+        return "该结论基于用户提供的数据，不包含实时行情抓取。"
+    if text.startswith("Report limitations count: "):
+        return "报告限制项数量：" + text[len("Report limitations count: "):]
+    if text.startswith("Position contribution covers "):
+        return "仓位贡献覆盖：" + text[len("Position contribution covers "):]
+    if text.startswith("Profit protection reviewed "):
+        return "盈利保护复核：" + text[len("Profit protection reviewed "):]
+    if text.startswith("Right-side confirmation applies to "):
+        return "右侧确认适用于：" + text[len("Right-side confirmation applies to "):]
+    if text.startswith("Event catalyst review covers "):
+        return "事件催化复核：" + text[len("Event catalyst review covers "):]
+    if text.startswith("Cash-like weight "):
+        return "现金类仓位：" + text[len("Cash-like weight "):]
+    return text
+
+
+def _localize_limitation(text: str) -> str:
+    if "missing" in text.lower():
+        return "数据缺口：" + text
+    if "unavailable" in text.lower():
+        return "暂不可用：" + text
+    return text
+
+
+def _artifact(context: dict[str, Any], key: str) -> dict[str, Any]:
+    artifacts = context["artifacts"]
+    report = context["report"]
+    return _as_dict(artifacts.get(key) or report.get(key))
+
+
+def _missing_gap_codes(gap: dict[str, Any]) -> list[str]:
+    result: list[str] = []
+    for key in sorted(gap):
+        if key == "details":
+            continue
+        if key.startswith("missing_") and gap.get(key) is True:
+            result.append(key)
+    return result
 
 
 def _portfolio_summary(context: dict[str, Any]) -> dict[str, Any]:

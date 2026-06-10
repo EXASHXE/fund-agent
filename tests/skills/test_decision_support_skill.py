@@ -24,7 +24,7 @@ def test_decision_support_skill_outputs_decision_and_ledger():
     ]
 
 
-def test_decision_support_rejects_active_decision_without_anchor():
+def test_decision_support_downgrades_active_decision_without_anchor():
     output = DecisionSupportSkill().run(
         _input(
             evidence_graph=EvidenceGraph(),
@@ -32,9 +32,12 @@ def test_decision_support_rejects_active_decision_without_anchor():
         )
     )
 
-    assert output.status == "FAILED"
-    assert output.errors[0]["code"] == "CONTRACT_VIOLATION"
-    assert "Active decision requires" in output.errors[0]["message"]
+    assert output.status == "OK"
+    decision = output.artifacts["decision"]
+    assert decision["action"] in {"WAIT", "HOLD"}
+    assert "EVIDENCE_MISSING" in decision["decision_reason_codes"]
+    assert "DOWNGRADED_ACTIVE_TO_HOLD" in decision["decision_reason_codes"]
+    assert decision["blocked_by"]
 
 
 def test_decision_support_allows_wait_with_insufficient_evidence():

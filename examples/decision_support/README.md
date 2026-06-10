@@ -31,8 +31,10 @@ golden snapshots.
 ### `single_active_buy_without_evidence_invalid.json`
 - Input mode: `single_decision`
 - `requested_action: BUY` with an empty `evidence_graph`.
-- Expected: `FAILED` status with a `CONTRACT_VIOLATION` error, because active
-  decisions require at least one real evidence anchor.
+- Expected: `OK` status with the active request downgraded to `WAIT` or `HOLD`.
+  The formal decision includes structured reason codes such as
+  `EVIDENCE_MISSING`, `INSUFFICIENT_EVIDENCE`, and
+  `DOWNGRADED_ACTIVE_TO_HOLD`.
 
 ### `single_passive_hold_without_evidence.json`
 - Input mode: `single_decision`

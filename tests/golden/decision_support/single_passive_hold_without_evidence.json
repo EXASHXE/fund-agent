@@ -7,7 +7,8 @@
       "Blocked by critic: EXHAUSTED",
       "Issues: 1",
       "Execution amount: passive action does not require execution amount",
-      "Generated at: 2026-01-01T00:00:00"
+      "Generated at: 2026-01-01T00:00:00",
+      "Gatekeeper recorded missing evidence: evidence graph is empty"
     ],
     "decision": {
       "action": "WAIT",
@@ -18,7 +19,8 @@
         "Blocked by critic: EXHAUSTED",
         "Issues: 1",
         "Execution amount: passive action does not require execution amount",
-        "Generated at: 2026-01-01T00:00:00"
+        "Generated at: 2026-01-01T00:00:00",
+        "Gatekeeper recorded missing evidence: evidence graph is empty"
       ],
       "blocked_by": [
         "evidence"
@@ -27,7 +29,8 @@
       "decision_id": "<normalized-decision-id>",
       "decision_reason_codes": [
         "INSUFFICIENT_EVIDENCE",
-        "PASSIVE_ACTION"
+        "PASSIVE_ACTION",
+        "EVIDENCE_MISSING"
       ],
       "evidence_state": "INSUFFICIENT_EVIDENCE",
       "execution_amount": 0.0,
@@ -35,13 +38,15 @@
         "Evidence contradiction detected",
         "Risk budget exceeded",
         "What invalidates: any negative evidence contradicts current assessment",
-        "Market regime change"
+        "Market regime change",
+        "Fresh relevant evidence becomes available"
       ],
       "rationale_anchor": [],
       "risk_budget": 3000.0,
       "time_horizon": "1 year",
       "trigger_conditions": [
-        "Insufficient evidence to support an active decision"
+        "Insufficient evidence to support an active decision",
+        "No EvidenceGraph items are available"
       ],
       "version": "decision-contract.v2"
     },
@@ -57,7 +62,8 @@
             "Blocked by critic: EXHAUSTED",
             "Issues: 1",
             "Execution amount: passive action does not require execution amount",
-            "Generated at: 2026-01-01T00:00:00"
+            "Generated at: 2026-01-01T00:00:00",
+            "Gatekeeper recorded missing evidence: evidence graph is empty"
           ],
           "blocked_by": [
             "evidence"
@@ -66,7 +72,8 @@
           "decision_id": "<normalized-decision-id>",
           "decision_reason_codes": [
             "INSUFFICIENT_EVIDENCE",
-            "PASSIVE_ACTION"
+            "PASSIVE_ACTION",
+            "EVIDENCE_MISSING"
           ],
           "evidence_ids": [],
           "evidence_state": "INSUFFICIENT_EVIDENCE",
@@ -75,13 +82,15 @@
             "Evidence contradiction detected",
             "Risk budget exceeded",
             "What invalidates: any negative evidence contradicts current assessment",
-            "Market regime change"
+            "Market regime change",
+            "Fresh relevant evidence becomes available"
           ],
           "rationale_anchor": [],
           "risk_budget": 3000.0,
           "time_horizon": "1 year",
           "trigger_conditions": [
-            "Insufficient evidence to support an active decision"
+            "Insufficient evidence to support an active decision",
+            "No EvidenceGraph items are available"
           ],
           "version": "decision-contract.v2"
         }

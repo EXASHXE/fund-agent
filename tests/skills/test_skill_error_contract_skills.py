@@ -57,20 +57,19 @@ def test_mcp_call_failed_uses_standard_error_code():
     assert output.errors[0]["code"] == "MCP_CALL_FAILED"
 
 
-def test_decision_support_contract_violation_uses_standard_error_code():
+def test_decision_support_missing_evidence_graph_uses_standard_error_code():
     output = DecisionSupportSkill().run(
         SkillInput(
             task_id="skill-error",
             step_id="decision",
             skill_name="decision_support",
             payload={
-                "evidence_graph": {"items": {}, "edges": []},
                 "requested_action": "BUY",
             },
         )
     )
 
-    assert output.errors[0]["code"] == "CONTRACT_VIOLATION"
+    assert output.errors[0]["code"] == "INVALID_INPUT"
 
 
 def _news_input(required: list[str]) -> SkillInput:

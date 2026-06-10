@@ -20,7 +20,9 @@
         "created_at": "<normalized-timestamp>",
         "decision_id": "<normalized-decision-id>",
         "decision_reason_codes": [
-          "EVIDENCE_AVAILABLE"
+          "EVIDENCE_AVAILABLE",
+          "EVIDENCE_SUFFICIENT",
+          "ACTIVE_ACTION_ALLOWED"
         ],
         "evidence_state": "ANCHORED",
         "execution_amount": 5000.0,
@@ -55,7 +57,9 @@
           "created_at": "<normalized-timestamp>",
           "decision_id": "<normalized-decision-id>",
           "decision_reason_codes": [
-            "EVIDENCE_AVAILABLE"
+            "EVIDENCE_AVAILABLE",
+            "EVIDENCE_SUFFICIENT",
+            "ACTIVE_ACTION_ALLOWED"
           ],
           "evidence_ids": [
             "ev-f001-positive"

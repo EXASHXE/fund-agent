@@ -12,7 +12,7 @@ from typing import Any
 from src.schemas.decision import ExecutionLedger
 from src.schemas.skill import SkillInput, SkillOutput
 
-from .action_policy import ACTIVE_ACTIONS, _normalized_action
+from .action_policy import _normalized_action
 from .context import _dict
 from .decision_stage import (
     _build_decision,
@@ -143,11 +143,6 @@ class DecisionSupportSkill:
         requested_action = _normalized_action(
             skill_input.payload.get("requested_action")
         )
-        if requested_action in ACTIVE_ACTIONS and not graph.items:
-            raise _SkillContractError(
-                code="CONTRACT_VIOLATION",
-                message="Active decision requires at least one real evidence anchor",
-            )
 
         task = _task_from_payload(skill_input.payload)
         critique_status, critique_issues = _critique_from_payload(

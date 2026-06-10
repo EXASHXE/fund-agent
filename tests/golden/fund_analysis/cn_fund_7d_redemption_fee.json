@@ -1309,6 +1309,11 @@
           "title": "PnL and cost basis"
         },
         {
+          "id": "position_contribution",
+          "status": "OK",
+          "title": "Position contribution"
+        },
+        {
           "id": "allocation_and_exposure",
           "status": "OK",
           "title": "Allocation and exposure"
@@ -1327,6 +1332,11 @@
           "id": "benchmark_and_peer",
           "status": "MISSING",
           "title": "Benchmark and peer"
+        },
+        {
+          "id": "benchmark_divergence",
+          "status": "OK",
+          "title": "Benchmark divergence"
         },
         {
           "id": "factor_and_style",
@@ -1352,6 +1362,51 @@
           "id": "professional_diagnostics",
           "status": "PARTIAL",
           "title": "Professional diagnostics"
+        },
+        {
+          "id": "profit_protection",
+          "status": "OK",
+          "title": "Profit protection"
+        },
+        {
+          "id": "right_side_confirmation",
+          "status": "OK",
+          "title": "Right-side confirmation"
+        },
+        {
+          "id": "event_hype_failure",
+          "status": "MISSING",
+          "title": "Event hype failure"
+        },
+        {
+          "id": "cash_deployment",
+          "status": "OK",
+          "title": "Cash deployment"
+        },
+        {
+          "id": "evidence_status",
+          "status": "PARTIAL",
+          "title": "Evidence status"
+        },
+        {
+          "id": "action_watchlist",
+          "status": "OK",
+          "title": "Action watchlist"
+        },
+        {
+          "id": "missing_data",
+          "status": "PARTIAL",
+          "title": "Missing data"
+        },
+        {
+          "id": "suggested_next_checks",
+          "status": "PARTIAL",
+          "title": "Suggested next checks"
+        },
+        {
+          "id": "uncertainty_note",
+          "status": "PARTIAL",
+          "title": "Uncertainty note"
         },
         {
           "id": "rebalance_plan",
@@ -1429,6 +1484,20 @@
         },
         {
           "bullets": [
+            "Position contribution covers 3 fund(s).",
+            "Largest value position: SYN7D002.",
+            "Largest profit contributor: SYN7D001."
+          ],
+          "data_sources": [
+            "position_contribution"
+          ],
+          "id": "position_contribution",
+          "limitations": [],
+          "status": "OK",
+          "title": "Position contribution"
+        },
+        {
+          "bullets": [
             "Top fund type exposure is fund_type:bond at 44.64%.",
             "Top industry exposure is industry:policy_bank at 13.39%.",
             "Top theme exposure is region:CN at 53.48%.",
@@ -1482,6 +1551,19 @@
           ],
           "status": "MISSING",
           "title": "Benchmark and peer"
+        },
+        {
+          "bullets": [
+            "Benchmark divergence reviewed 3 fund(s).",
+            "No severe benchmark divergence was detected from provided data."
+          ],
+          "data_sources": [
+            "benchmark_divergence_diagnostics"
+          ],
+          "id": "benchmark_divergence",
+          "limitations": [],
+          "status": "OK",
+          "title": "Benchmark divergence"
         },
         {
           "bullets": [],
@@ -1567,6 +1649,134 @@
           "limitations": [],
           "status": "PARTIAL",
           "title": "Professional diagnostics"
+        },
+        {
+          "bullets": [
+            "Profit protection reviewed 3 position(s)."
+          ],
+          "data_sources": [
+            "profit_protection_diagnostics"
+          ],
+          "id": "profit_protection",
+          "limitations": [],
+          "status": "OK",
+          "title": "Profit protection"
+        },
+        {
+          "bullets": [
+            "Right-side confirmation applies to 0 drawdown position(s); 0 confirmed."
+          ],
+          "data_sources": [
+            "right_side_confirmation_diagnostics"
+          ],
+          "id": "right_side_confirmation",
+          "limitations": [],
+          "status": "OK",
+          "title": "Right-side confirmation"
+        },
+        {
+          "bullets": [],
+          "data_sources": [
+            "event_hype_failure_diagnostics"
+          ],
+          "id": "event_hype_failure",
+          "limitations": [
+            "Event hype diagnostics are missing or no host event metadata was provided."
+          ],
+          "status": "MISSING",
+          "title": "Event hype failure"
+        },
+        {
+          "bullets": [
+            "Cash-like weight 6.67%; deployment readiness ready.",
+            "Cash accounting basis: conservative_effective_total.",
+            "Estimated deployable cash: 0.00."
+          ],
+          "data_sources": [
+            "cash_deployment_diagnostics"
+          ],
+          "id": "cash_deployment",
+          "limitations": [],
+          "status": "OK",
+          "title": "Cash deployment"
+        },
+        {
+          "bullets": [
+            "decision_support_ready: False.",
+            "Formal decision blockers: missing_recent_news.",
+            "Analysis warnings: benchmark_data_missing, redemption_fee_warning, sentiment_missing, theme_overweight_warning.",
+            "Missing evidence: missing_benchmark_data, missing_recent_news, missing_sentiment.",
+            "Fee warning is present from host-provided redemption rules."
+          ],
+          "data_sources": [
+            "analysis_plan",
+            "evidence_gap_diagnostics",
+            "redemption_fee_risk"
+          ],
+          "id": "evidence_status",
+          "limitations": [],
+          "status": "PARTIAL",
+          "title": "Evidence status"
+        },
+        {
+          "bullets": [
+            "Action watchlist contains 2 simulated trade leg(s).",
+            "Formal action requires decision_support; this section is analysis-only.",
+            "Do not enter formal active decision until blockers clear: missing_recent_news."
+          ],
+          "data_sources": [
+            "suggested_rebalance_plan",
+            "analysis_plan"
+          ],
+          "id": "action_watchlist",
+          "limitations": [],
+          "status": "OK",
+          "title": "Action watchlist"
+        },
+        {
+          "bullets": [
+            "Missing data groups: missing_benchmark_data, missing_recent_news, missing_sentiment.",
+            "missing_benchmark_data: next data benchmark price history.",
+            "missing_recent_news: next data recent fund or theme news.",
+            "missing_sentiment: next data sentiment snapshot for held funds or themes."
+          ],
+          "data_sources": [
+            "analysis_plan",
+            "evidence_gap_diagnostics"
+          ],
+          "id": "missing_data",
+          "limitations": [],
+          "status": "PARTIAL",
+          "title": "Missing data"
+        },
+        {
+          "bullets": [
+            "Next data to fetch: recent benchmark movement, recent fund news, sentiment snapshot."
+          ],
+          "data_sources": [
+            "analysis_plan.next_data_to_fetch"
+          ],
+          "id": "suggested_next_checks",
+          "limitations": [],
+          "status": "PARTIAL",
+          "title": "Suggested next checks"
+        },
+        {
+          "bullets": [
+            "This conclusion is based on host-provided data and does not include live market fetching.",
+            "No formal decision generated; call decision-support for formal action.",
+            "Report limitations count: 1."
+          ],
+          "data_sources": [
+            "report_limitations",
+            "report_sections"
+          ],
+          "id": "uncertainty_note",
+          "limitations": [
+            "Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data"
+          ],
+          "status": "PARTIAL",
+          "title": "Uncertainty note"
         },
         {
           "bullets": [
@@ -2303,6 +2513,11 @@
         "title": "PnL and cost basis"
       },
       {
+        "id": "position_contribution",
+        "status": "OK",
+        "title": "Position contribution"
+      },
+      {
         "id": "allocation_and_exposure",
         "status": "OK",
         "title": "Allocation and exposure"
@@ -2321,6 +2536,11 @@
         "id": "benchmark_and_peer",
         "status": "MISSING",
         "title": "Benchmark and peer"
+      },
+      {
+        "id": "benchmark_divergence",
+        "status": "OK",
+        "title": "Benchmark divergence"
       },
       {
         "id": "factor_and_style",
@@ -2346,6 +2566,51 @@
         "id": "professional_diagnostics",
         "status": "PARTIAL",
         "title": "Professional diagnostics"
+      },
+      {
+        "id": "profit_protection",
+        "status": "OK",
+        "title": "Profit protection"
+      },
+      {
+        "id": "right_side_confirmation",
+        "status": "OK",
+        "title": "Right-side confirmation"
+      },
+      {
+        "id": "event_hype_failure",
+        "status": "MISSING",
+        "title": "Event hype failure"
+      },
+      {
+        "id": "cash_deployment",
+        "status": "OK",
+        "title": "Cash deployment"
+      },
+      {
+        "id": "evidence_status",
+        "status": "PARTIAL",
+        "title": "Evidence status"
+      },
+      {
+        "id": "action_watchlist",
+        "status": "OK",
+        "title": "Action watchlist"
+      },
+      {
+        "id": "missing_data",
+        "status": "PARTIAL",
+        "title": "Missing data"
+      },
+      {
+        "id": "suggested_next_checks",
+        "status": "PARTIAL",
+        "title": "Suggested next checks"
+      },
+      {
+        "id": "uncertainty_note",
+        "status": "PARTIAL",
+        "title": "Uncertainty note"
       },
       {
         "id": "rebalance_plan",
@@ -2423,6 +2688,20 @@
       },
       {
         "bullets": [
+          "Position contribution covers 3 fund(s).",
+          "Largest value position: SYN7D002.",
+          "Largest profit contributor: SYN7D001."
+        ],
+        "data_sources": [
+          "position_contribution"
+        ],
+        "id": "position_contribution",
+        "limitations": [],
+        "status": "OK",
+        "title": "Position contribution"
+      },
+      {
+        "bullets": [
           "Top fund type exposure is fund_type:bond at 44.64%.",
           "Top industry exposure is industry:policy_bank at 13.39%.",
           "Top theme exposure is region:CN at 53.48%.",
@@ -2476,6 +2755,19 @@
         ],
         "status": "MISSING",
         "title": "Benchmark and peer"
+      },
+      {
+        "bullets": [
+          "Benchmark divergence reviewed 3 fund(s).",
+          "No severe benchmark divergence was detected from provided data."
+        ],
+        "data_sources": [
+          "benchmark_divergence_diagnostics"
+        ],
+        "id": "benchmark_divergence",
+        "limitations": [],
+        "status": "OK",
+        "title": "Benchmark divergence"
       },
       {
         "bullets": [],
@@ -2561,6 +2853,134 @@
         "limitations": [],
         "status": "PARTIAL",
         "title": "Professional diagnostics"
+      },
+      {
+        "bullets": [
+          "Profit protection reviewed 3 position(s)."
+        ],
+        "data_sources": [
+          "profit_protection_diagnostics"
+        ],
+        "id": "profit_protection",
+        "limitations": [],
+        "status": "OK",
+        "title": "Profit protection"
+      },
+      {
+        "bullets": [
+          "Right-side confirmation applies to 0 drawdown position(s); 0 confirmed."
+        ],
+        "data_sources": [
+          "right_side_confirmation_diagnostics"
+        ],
+        "id": "right_side_confirmation",
+        "limitations": [],
+        "status": "OK",
+        "title": "Right-side confirmation"
+      },
+      {
+        "bullets": [],
+        "data_sources": [
+          "event_hype_failure_diagnostics"
+        ],
+        "id": "event_hype_failure",
+        "limitations": [
+          "Event hype diagnostics are missing or no host event metadata was provided."
+        ],
+        "status": "MISSING",
+        "title": "Event hype failure"
+      },
+      {
+        "bullets": [
+          "Cash-like weight 6.67%; deployment readiness ready.",
+          "Cash accounting basis: conservative_effective_total.",
+          "Estimated deployable cash: 0.00."
+        ],
+        "data_sources": [
+          "cash_deployment_diagnostics"
+        ],
+        "id": "cash_deployment",
+        "limitations": [],
+        "status": "OK",
+        "title": "Cash deployment"
+      },
+      {
+        "bullets": [
+          "decision_support_ready: False.",
+          "Formal decision blockers: missing_recent_news.",
+          "Analysis warnings: benchmark_data_missing, redemption_fee_warning, sentiment_missing, theme_overweight_warning.",
+          "Missing evidence: missing_benchmark_data, missing_recent_news, missing_sentiment.",
+          "Fee warning is present from host-provided redemption rules."
+        ],
+        "data_sources": [
+          "analysis_plan",
+          "evidence_gap_diagnostics",
+          "redemption_fee_risk"
+        ],
+        "id": "evidence_status",
+        "limitations": [],
+        "status": "PARTIAL",
+        "title": "Evidence status"
+      },
+      {
+        "bullets": [
+          "Action watchlist contains 2 simulated trade leg(s).",
+          "Formal action requires decision_support; this section is analysis-only.",
+          "Do not enter formal active decision until blockers clear: missing_recent_news."
+        ],
+        "data_sources": [
+          "suggested_rebalance_plan",
+          "analysis_plan"
+        ],
+        "id": "action_watchlist",
+        "limitations": [],
+        "status": "OK",
+        "title": "Action watchlist"
+      },
+      {
+        "bullets": [
+          "Missing data groups: missing_benchmark_data, missing_recent_news, missing_sentiment.",
+          "missing_benchmark_data: next data benchmark price history.",
+          "missing_recent_news: next data recent fund or theme news.",
+          "missing_sentiment: next data sentiment snapshot for held funds or themes."
+        ],
+        "data_sources": [
+          "analysis_plan",
+          "evidence_gap_diagnostics"
+        ],
+        "id": "missing_data",
+        "limitations": [],
+        "status": "PARTIAL",
+        "title": "Missing data"
+      },
+      {
+        "bullets": [
+          "Next data to fetch: recent benchmark movement, recent fund news, sentiment snapshot."
+        ],
+        "data_sources": [
+          "analysis_plan.next_data_to_fetch"
+        ],
+        "id": "suggested_next_checks",
+        "limitations": [],
+        "status": "PARTIAL",
+        "title": "Suggested next checks"
+      },
+      {
+        "bullets": [
+          "This conclusion is based on host-provided data and does not include live market fetching.",
+          "No formal decision generated; call decision-support for formal action.",
+          "Report limitations count: 1."
+        ],
+        "data_sources": [
+          "report_limitations",
+          "report_sections"
+        ],
+        "id": "uncertainty_note",
+        "limitations": [
+          "Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data"
+        ],
+        "status": "PARTIAL",
+        "title": "Uncertainty note"
       },
       {
         "bullets": [

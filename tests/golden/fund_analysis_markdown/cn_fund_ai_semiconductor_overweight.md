@@ -16,6 +16,12 @@
 - Position-level PnL is available for 4 fund(s).
 - Transaction-derived cost basis is available for 4 fund(s).
 
+## Position contribution [OK]
+- Position contribution covers 4 fund(s).
+- Largest value position: SYNAI001.
+- Largest profit contributor: SYNAI001.
+- Largest loss contributor: SYNAI002.
+
 ## Allocation and exposure [OK]
 - Top fund type exposure is fund_type:equity at 48.28%.
 - Top industry exposure is industry:ai_semiconductor at 15.28%.
@@ -35,6 +41,10 @@
 Limitations:
 - Benchmark data is missing; no benchmark comparison is fabricated.
 - Peer group data is missing; no peer ranking is fabricated.
+
+## Benchmark divergence [OK]
+- Benchmark divergence reviewed 4 fund(s).
+- No severe benchmark divergence was detected from provided data.
 
 ## Factor and style [OK]
 - Host-provided factor dimensions: ai_theme, duration, semiconductor_beta.
@@ -69,6 +79,52 @@ Limitations:
 - Fund SYNAI001 has max drawdown 11.3%. DCA may benefit from buying at lower NAV, but review risk tolerance.
 - Cash 5000 is below 10% liquidity reserve (15000). Gap: 10000.
 
+## Profit protection [OK]
+- Profit protection reviewed 4 position(s).
+
+## Right-side confirmation [OK]
+- Right-side confirmation applies to 3 drawdown position(s); 0 confirmed.
+- Fresh NAV, benchmark, news, or sentiment evidence is needed before action.
+
+## Event hype failure [MISSING]
+- No section content available from provided artifacts.
+
+Limitations:
+- Event hype diagnostics are missing or no host event metadata was provided.
+
+## Cash deployment [OK]
+- Cash-like weight 3.33%; deployment readiness not_ready.
+- Cash accounting basis: conservative_effective_total.
+- Estimated deployable cash: 0.00.
+
+## Evidence status [PARTIAL]
+- decision_support_ready: False.
+- Formal decision blockers: cash_deployment_not_ready, missing_recent_news.
+- Analysis warnings: benchmark_data_missing, cash_deployment_not_ready, right_side_unconfirmed, sentiment_missing, theme_overweight_warning.
+- Missing evidence: missing_benchmark_data, missing_recent_news, missing_sentiment.
+
+## Action watchlist [OK]
+- Action watchlist contains 4 simulated trade leg(s).
+- Formal action requires decision_support; this section is analysis-only.
+- Do not enter formal active decision until blockers clear: cash_deployment_not_ready, missing_recent_news.
+
+## Missing data [PARTIAL]
+- Missing data groups: missing_benchmark_data, missing_recent_news, missing_sentiment.
+- missing_benchmark_data: next data benchmark price history.
+- missing_recent_news: next data recent fund or theme news.
+- missing_sentiment: next data sentiment snapshot for held funds or themes.
+
+## Suggested next checks [PARTIAL]
+- Next data to fetch: recent benchmark movement, recent fund news, sentiment snapshot, benchmark price history, recent news evidence, target asset evidence.
+
+## Uncertainty note [PARTIAL]
+- This conclusion is based on host-provided data and does not include live market fetching.
+- No formal decision generated; call decision-support for formal action.
+- Report limitations count: 1.
+
+Limitations:
+- Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data
+
 ## Rebalance plan [OK]
 - Rebalance simulation produced 4 trade leg(s) with total trade amount 32,500.00.
 - Synthetic max_single_theme_weight included as host context.
@@ -97,4 +153,6 @@ Limitations:
 - Benchmark and peer: Benchmark data is missing; no benchmark comparison is fabricated.
 - Benchmark and peer: Peer group data is missing; no peer ranking is fabricated.
 - Manager and fund profile: Manager tenure and manager-change analysis are unavailable.
+- Event hype failure: Event hype diagnostics are missing or no host event metadata was provided.
+- Uncertainty note: Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data
 - Research query plan: Research planning was not requested by the host.

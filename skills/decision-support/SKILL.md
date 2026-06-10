@@ -93,6 +93,17 @@ Optional:
 - `payload.time_horizon`
 - `payload.requested_action`
 - `payload.deterministic`
+- `payload.analysis_plan`, `payload.evidence_gap_diagnostics`, and other
+  `fund_analysis` artifacts. The runtime reads these as plain dictionaries when
+  present; it does not import `fund_analysis` internals.
+
+Accepted host-facing action aliases:
+
+- `ADD` maps to formal `INCREASE`
+- `TRIM` maps to formal `REDUCE`
+- `WATCH` maps to formal `HOLD`
+
+No new formal action type is added to the `Decision` contract.
 
 ## Outputs
 
@@ -131,6 +142,32 @@ evidence actually supports that trade.
 Active evidence anchors must be explicit, real, and trade-specific.
 
 See `references/evidence-anchor-policy.md`.
+
+## Gatekeeper policy
+
+Before emitting a formal active action, `decision_support` applies deterministic
+preconditions:
+
+- evidence must not be missing, weak, or contradictory;
+- user constraints and risk preference should be present for active actions;
+- sell/reduce requests are blocked by active short-holding redemption fee risk;
+- buy/increase requests are blocked by unconfirmed right-side diagnostics,
+  event hype failure, severe benchmark divergence, low cash buffer, or cash
+  deployment not ready when those `fund_analysis` artifacts are supplied.
+
+When a blocker exists, active requests become `HOLD` or `WAIT` under the
+existing action enum. The formal `Decision` must expose `decision_reason_codes`,
+`evidence_state`, `blocked_by`, `trigger_conditions`, `invalidating_conditions`,
+and audit trail entries explaining what must change before active action can be
+reconsidered.
+
+Common reason codes include `EVIDENCE_MISSING`, `EVIDENCE_WEAK`,
+`EVIDENCE_CONTRADICTORY`, `REDEMPTION_FEE_RISK`,
+`RIGHT_SIDE_UNCONFIRMED`, `EVENT_HYPE_FAILED`,
+`CASH_DEPLOYMENT_NOT_READY`, `CASH_BUFFER_LOW`,
+`BENCHMARK_DIVERGENCE`, `USER_CONSTRAINT_MISSING`,
+`RISK_PROFILE_MISSING`, `DOWNGRADED_ACTIVE_TO_HOLD`,
+`PASSIVE_ACTION`, and `ACTIVE_ACTION_ALLOWED`.
 
 ## WAIT/HOLD policy
 
@@ -199,6 +236,7 @@ This skill must never:
 - emit active decisions without trade-specific evidence refs;
 - fetch or infer market data;
 - allow any other skill to emit formal `Decision` or `ExecutionLedger`.
+- place orders, connect to order systems, or perform execution.
 
 ## Active decision evidence-anchor policy (re-stated)
 

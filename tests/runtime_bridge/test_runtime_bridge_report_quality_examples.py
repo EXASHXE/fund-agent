@@ -7,29 +7,13 @@ from pathlib import Path
 
 import pytest
 
+from src.tools.portfolio.report_composer import SECTION_ORDER
 from tests.support.bridge_runner import run_bridge_inprocess_json
 
 
 EXAMPLES_DIR = Path(__file__).resolve().parent.parent.parent / "examples"
 
-REQUIRED_REPORT_SECTION_IDS = [
-    "executive_summary",
-    "portfolio_snapshot",
-    "pnl_and_cost_basis",
-    "allocation_and_exposure",
-    "risk_flags",
-    "performance_and_nav",
-    "benchmark_and_peer",
-    "factor_and_style",
-    "fees_and_redemption",
-    "manager_and_fund_profile",
-    "dca_and_trade_budget",
-    "professional_diagnostics",
-    "rebalance_plan",
-    "research_query_plan",
-    "data_completeness_and_limitations",
-    "evidence_appendix",
-]
+REQUIRED_REPORT_SECTION_IDS = [section_id for section_id, _ in SECTION_ORDER]
 
 
 def _run_skill_inprocess(skill: str, example_path: Path) -> dict:

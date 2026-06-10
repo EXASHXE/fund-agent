@@ -23,7 +23,14 @@ They freeze externally visible `decision_support` behavior before internal
 refactors. Only `decision_support` may produce formal `Decision` and
 `ExecutionLedger` artifacts. These snapshots include structured decision
 justification fields (`decision_reason_codes`, `evidence_state`, and
-`blocked_by`) for formal decision auditability.
+`blocked_by`) for formal decision auditability. They also cover gatekeeper
+reason codes such as evidence sufficiency, missing evidence, and active-to-hold
+downgrades.
+
+Fund_analysis report snapshots include stable v1 report sections for position
+contribution, profit protection, benchmark divergence, right-side confirmation,
+event hype failure, cash deployment, evidence status, missing data, suggested
+next checks, and uncertainty notes. These are analysis/report artifacts only.
 
 Thesis_generation golden snapshots live under `tests/golden/thesis_generation/`.
 They freeze externally visible `thesis_generation` behavior. Thesis_generation

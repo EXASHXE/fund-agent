@@ -38,17 +38,18 @@ class TestFundAnalysisErrorShape:
 
 
 class TestDecisionSupportErrorShape:
-    def test_contract_violation_active_buy_without_evidence(self):
+    def test_active_buy_without_evidence_downgrades_without_errors(self):
         fixture_path = str(ROOT / "examples" / "decision_support" / "single_active_buy_without_evidence_invalid.json")
         fixture = json.loads(Path(fixture_path).read_text(encoding="utf-8"))
         result = run_bridge_inprocess_json(
             skill="decision_support",
             input_text=json.dumps(fixture),
         )
-        assert_envelope_errors_are_canonical(result)
-        if result.get("status") == "FAILED":
-            errors = result.get("errors", [])
-            assert len(errors) > 0, "FAILED status should have errors"
+        assert result["status"] == "OK"
+        assert result.get("errors") == []
+        decision = result.get("artifacts", {}).get("decision") or {}
+        assert decision.get("action") in {"WAIT", "HOLD"}
+        assert "EVIDENCE_MISSING" in decision.get("decision_reason_codes", [])
 
     def test_missing_evidence_graph(self):
         result = run_bridge_inprocess_json(

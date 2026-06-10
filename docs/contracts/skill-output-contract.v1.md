@@ -53,7 +53,7 @@ Every item in `SkillOutput.errors` must be a dict with these canonical fields:
 | `EVIDENCE_BUILD_FAILED` | Individual evidence item construction failed | `true` |
 | `EMPTY_RESULT` | Skill produced no evidence items | `true` |
 | `INTERNAL_ERROR` | Unexpected runtime failure | `true` |
-| `CONTRACT_VIOLATION` | Skill contract rule violated (e.g. active action without evidence) | `false` |
+| `CONTRACT_VIOLATION` | Skill contract rule violated (e.g. a formal artifact crosses a forbidden boundary) | `false` |
 
 ### Bridge-Level Error Codes
 

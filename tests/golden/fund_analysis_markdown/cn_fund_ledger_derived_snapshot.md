@@ -16,6 +16,11 @@
 - Position-level PnL is available for 2 fund(s).
 - Transaction-derived cost basis is available for 2 fund(s).
 
+## Position contribution [OK]
+- Position contribution covers 2 fund(s).
+- Largest value position: SYNLED001.
+- Largest profit contributor: SYNLED001.
+
 ## Allocation and exposure [OK]
 - Top fund type exposure is fund_type:equity at 66.15%.
 - Top industry exposure is industry:broad_market at 48.23%.
@@ -35,6 +40,10 @@
 Limitations:
 - Benchmark data is missing; no benchmark comparison is fabricated.
 - Peer group data is missing; no peer ranking is fabricated.
+
+## Benchmark divergence [OK]
+- Benchmark divergence reviewed 2 fund(s).
+- No severe benchmark divergence was detected from provided data.
 
 ## Factor and style [MISSING]
 - No section content available from provided artifacts.
@@ -67,6 +76,53 @@ Limitations:
 - Theme 'broad_market' at 66.1% exceeds limit 55.0% by 11.2%
 - Cash 7000 is below 10% liquidity reserve (7135). Gap: 135.
 
+## Profit protection [OK]
+- Profit protection reviewed 2 position(s).
+- High-profit watchlist contains 1 position(s).
+
+## Right-side confirmation [OK]
+- Right-side confirmation applies to 0 drawdown position(s); 0 confirmed.
+
+## Event hype failure [MISSING]
+- No section content available from provided artifacts.
+
+Limitations:
+- Event hype diagnostics are missing or no host event metadata was provided.
+
+## Cash deployment [OK]
+- Cash-like weight 8.93%; deployment readiness ready.
+- Cash accounting basis: conservative_effective_total.
+- Estimated deployable cash: 0.00.
+
+## Evidence status [PARTIAL]
+- decision_support_ready: False.
+- Formal decision blockers: missing_recent_news.
+- Analysis warnings: benchmark_data_missing, sentiment_missing, theme_overweight_warning.
+- Missing evidence: missing_benchmark_data, missing_recent_news, missing_sentiment.
+
+## Action watchlist [PARTIAL]
+- Do not enter formal active decision until blockers clear: missing_recent_news.
+
+Limitations:
+- Suggested rebalance plan is missing.
+
+## Missing data [PARTIAL]
+- Missing data groups: missing_benchmark_data, missing_recent_news, missing_sentiment.
+- missing_benchmark_data: next data benchmark price history.
+- missing_recent_news: next data recent fund or theme news.
+- missing_sentiment: next data sentiment snapshot for held funds or themes.
+
+## Suggested next checks [PARTIAL]
+- Next data to fetch: recent benchmark movement, recent fund news, sentiment snapshot.
+
+## Uncertainty note [PARTIAL]
+- This conclusion is based on host-provided data and does not include live market fetching.
+- No formal decision generated; call decision-support for formal action.
+- Report limitations count: 1.
+
+Limitations:
+- Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data
+
 ## Rebalance plan [MISSING]
 - No section content available from provided artifacts.
 
@@ -97,5 +153,8 @@ Limitations:
 - Benchmark and peer: Peer group data is missing; no peer ranking is fabricated.
 - Factor and style: Factor exposure data is missing; no style exposure is fabricated.
 - Manager and fund profile: Manager tenure and manager-change analysis are unavailable.
+- Event hype failure: Event hype diagnostics are missing or no host event metadata was provided.
+- Action watchlist: Suggested rebalance plan is missing.
+- Uncertainty note: Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data
 - Rebalance plan: Rebalance plan is missing; target weights or constraints may be unavailable.
 - Research query plan: Research planning was not requested by the host.

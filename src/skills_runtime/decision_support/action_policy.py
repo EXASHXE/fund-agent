@@ -28,6 +28,12 @@ def _normalized_action(value: Any) -> str | None:
     if value is None:
         return None
     action = str(value).upper()
+    aliases = {
+        "ADD": "INCREASE",
+        "TRIM": "REDUCE",
+        "WATCH": "HOLD",
+    }
+    action = aliases.get(action, action)
     return action if action in ALL_ACTIONS else None
 
 

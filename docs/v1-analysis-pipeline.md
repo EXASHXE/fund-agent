@@ -10,8 +10,9 @@ External agent / host
   → read analysis_plan and evidence_gap_diagnostics
   → call news_research / sentiment_analysis / thesis_generation
     as recommended by analysis_plan
-  → call decision_support only when decision_support_ready is true
-  → render final report
+  → call decision_support when formal action is needed
+    and pass available fund_analysis artifacts for gatekeeping
+  → render final report, optionally with deterministic zh-CN sections
 ```
 
 ## Key principles
@@ -31,6 +32,11 @@ External agent / host
 - **Host owns orchestration and credentials.**
   The host decides which skills to call, in what order, with what data.
   The host provides all MCP credentials and manages data providers.
+
+- **Chinese report rendering is deterministic UX, not generation.**
+  `report_options.language = "zh-CN"` selects Chinese section titles and common
+  bullet templates for host-supplied facts. It does not call an LLM and does
+  not translate or invent missing market data.
 
 ## Pipeline stages
 
@@ -94,6 +100,21 @@ In Phase 1, this is intentionally conservative. Many realistic scenarios
 will return `false` because `missing_recent_news` is always true until
 the host injects news evidence.
 
+## Phase 2: Position and protection artifacts
+
+Phase 2 adds deterministic portfolio-level artifacts consumed by reports and,
+when passed in, by `decision_support` gatekeeping:
+
+- `position_contribution` — per-position value, PnL contribution, and risk
+  contribution hints.
+- `profit_protection_diagnostics` — analysis-only review of high-profit
+  positions, principal recovery status, and trim/watch pressure.
+- `redemption_fee_risk` — short-holding fee blocker/warning classification.
+  `has_blocker = true` prevents active sell/reduce readiness unless the host
+  supplies stronger context outside fund-agent.
+
+These artifacts are not formal decisions and do not execute actions.
+
 ## Phase 3: Evidence-aware diagnostics
 
 Phase 3 adds four deterministic diagnostic artifacts that consume
@@ -153,3 +174,45 @@ input_stage
 
 All Phase 3 diagnostics are deterministic, local-only, and do not fetch
 live data. Missing evidence is surfaced as gaps, not hallucinated.
+
+## decision_support gatekeeper role
+
+`decision_support` remains the only runtime skill that may emit formal
+`Decision` / `ExecutionLedger` artifacts. It consumes an `EvidenceGraph` and
+may also consume these `fund_analysis` artifacts as plain dictionaries:
+
+- `analysis_plan`
+- `evidence_gap_diagnostics`
+- `redemption_fee_risk`
+- `position_contribution`
+- `profit_protection_diagnostics`
+- `benchmark_divergence_diagnostics`
+- `right_side_confirmation_diagnostics`
+- `event_hype_failure_diagnostics`
+- `cash_deployment_diagnostics`
+
+Active BUY/SELL/INCREASE/REDUCE requests are gatekept against missing,
+weak, or contradictory evidence plus fund-specific blockers such as
+redemption fee risk, right-side unconfirmed, event hype failure, severe
+benchmark divergence, and cash deployment not ready. Blocked active requests
+are downgraded to existing passive actions (`HOLD` or `WAIT`) with
+`decision_reason_codes`, `evidence_state`, `blocked_by`,
+`trigger_conditions`, and `invalidating_conditions`.
+
+Host-facing aliases are accepted without changing the formal action enum:
+`ADD → INCREASE`, `TRIM → REDUCE`, and `WATCH → HOLD`.
+
+## Deterministic report UX
+
+`fund_analysis` report rendering supports:
+
+- `en` (default)
+- `zh-CN`
+
+Unknown language values fall back to English. `zh-CN` report rendering adds
+Chinese section titles such as `组合概览`, `持仓快照`, `仓位贡献`,
+`盈利保护`, `基准偏离`, `右侧确认`, `事件催化检验`, `现金与低风险仓位`,
+`证据状态`, `缺失数据`, and `后续检查项`.
+
+The report remains artifact-only: it does not create formal `Decision` or
+`ExecutionLedger`, does not fetch live data, and does not rely on LLM prose.

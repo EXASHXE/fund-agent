@@ -43,12 +43,16 @@ def test_single_active_buy_with_evidence_has_anchored_structured_fields() -> Non
     assert decision["blocked_by"] == []
 
 
-def test_single_active_buy_without_evidence_remains_contract_violation() -> None:
+def test_single_active_buy_without_evidence_downgrades_with_structured_reason() -> None:
     output = _run_fixture("single_active_buy_without_evidence_invalid.json")
 
-    assert output.status == "FAILED"
-    assert output.errors[0]["code"] == "CONTRACT_VIOLATION"
-    assert extract_formal_decisions(output.artifacts) == []
+    assert output.status == "OK"
+    decision = output.artifacts["decision"]
+    assert decision["action"] in {"WAIT", "HOLD"}
+    assert decision["rationale_anchor"] == []
+    assert "EVIDENCE_MISSING" in decision["decision_reason_codes"]
+    assert "DOWNGRADED_ACTIVE_TO_HOLD" in decision["decision_reason_codes"]
+    assert decision["blocked_by"]
 
 
 def test_single_passive_without_evidence_has_structured_passive_reason() -> None:

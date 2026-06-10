@@ -28,12 +28,37 @@ contracts:
       - created_at
     reason_codes:
       - EVIDENCE_AVAILABLE
+      - EVIDENCE_MISSING
+      - EVIDENCE_STALE
+      - EVIDENCE_WEAK
+      - EVIDENCE_SUFFICIENT
+      - EVIDENCE_CONTRADICTORY
       - INSUFFICIENT_EVIDENCE
       - CRITIC_BLOCKED
+      - REDEMPTION_FEE_RISK
+      - FEE_LOCKUP
+      - THEME_OVERWEIGHT
+      - RIGHT_SIDE_UNCONFIRMED
+      - MOMENTUM_UNCONFIRMED
+      - NEWS_NEGATIVE
+      - NEWS_POSITIVE_BUT_PRICE_WEAK
+      - BENCHMARK_DIVERGENCE
+      - PROFIT_PROTECTION
+      - LOSS_CONTROL
+      - EVENT_HYPE_FAILED
+      - CASH_BUFFER_LOW
+      - CASH_DEPLOYMENT_NOT_READY
+      - SHORT_TERM_BUDGET_EXCEEDED
+      - TRANSACTION_HISTORY_MISSING
+      - USER_CONSTRAINT_MISSING
+      - VALUATION_UNKNOWN
       - CONSTRAINT_BLOCKED
       - BUDGET_BLOCKED
+      - RISK_PROFILE_MISSING
+      - LIQUIDITY_NEED_UNKNOWN
       - DOWNGRADED_ACTIVE_TO_HOLD
       - PASSIVE_ACTION
+      - ACTIVE_ACTION_ALLOWED
     evidence_states:
       - ANCHORED
       - INSUFFICIENT_EVIDENCE
@@ -122,6 +147,7 @@ contracts:
     boundary_rules:
       - Only decision_support may emit Decision / ExecutionLedger artifacts.
       - Active actions require evidence anchors.
+      - Active actions are gatekept against evidence gaps and fund_analysis blockers before emission.
       - Passive actions may explain insufficient evidence or constraint blockage.
       - Passive empty-anchor decisions must carry structured justification fields.
       - Legacy text-only explanation is not sufficient for new runtime outputs.
