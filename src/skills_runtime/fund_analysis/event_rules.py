@@ -210,7 +210,9 @@ def _determine_hype_failed(
     has_positive_expectation = expected_direction == "positive" or bool(expected_positive_catalyst)
     if not has_positive_expectation:
         return False
-    if price_reaction in ("weak", "negative", "missing"):
+    if price_reaction == "missing":
+        return False
+    if price_reaction in ("weak", "negative"):
         if news_reaction not in ("positive",):
             return True
     return False

@@ -16,6 +16,7 @@ from .safe_parsing import _safe_float
 
 
 REBOUND_THRESHOLD = 0.02
+MATERIAL_DRAWDOWN_THRESHOLD = -0.03
 
 
 def compute_right_side_confirmation_diagnostics(
@@ -49,6 +50,10 @@ def compute_right_side_confirmation_diagnostics(
 
         recent_drawdown_pct = _compute_drawdown(fund_nav_series)
         recent_rebound_pct = _compute_rebound(fund_nav_series)
+        is_applicable = (
+            recent_drawdown_pct is not None
+            and recent_drawdown_pct <= MATERIAL_DRAWDOWN_THRESHOLD
+        )
 
         nav_confirmation = _assess_nav_confirmation(fund_nav_series)
         benchmark_confirmation = _assess_benchmark_confirmation(bench_series)
@@ -71,21 +76,29 @@ def compute_right_side_confirmation_diagnostics(
             missing_reason.append("missing_sentiment_evidence")
             recommended_next_data.append("sentiment snapshot")
 
-        right_side_confirmed = _determine_right_side_confirmed(
-            nav_confirmation, benchmark_confirmation,
-            news_confirmation, sentiment_confirmation,
-        )
+        applicability = "applicable" if is_applicable else "not_applicable"
+        not_applicable_reason = "" if is_applicable else "no_material_drawdown"
 
-        evidence_state = _determine_evidence_state(
-            nav_confirmation, benchmark_confirmation,
-            news_confirmation, sentiment_confirmation,
-        )
+        if is_applicable:
+            right_side_confirmed = _determine_right_side_confirmed(
+                nav_confirmation, benchmark_confirmation,
+                news_confirmation, sentiment_confirmation,
+            )
+
+            evidence_state = _determine_evidence_state(
+                nav_confirmation, benchmark_confirmation,
+                news_confirmation, sentiment_confirmation,
+            )
+        else:
+            right_side_confirmed = False
+            evidence_state = "not_applicable"
+            recommended_next_data = []
 
         if right_side_confirmed:
             has_confirmed_right_side = True
-        elif nav_confirmation == "confirmed":
+        elif is_applicable and nav_confirmation == "confirmed":
             has_unconfirmed_rebound = True
-        if evidence_state in ("missing", "weak", "contradictory"):
+        if is_applicable and evidence_state in ("missing", "weak", "contradictory"):
             needs_more_evidence = True
 
         items.append({
@@ -99,6 +112,8 @@ def compute_right_side_confirmation_diagnostics(
             "sentiment_confirmation": sentiment_confirmation,
             "right_side_confirmed": right_side_confirmed,
             "evidence_state": evidence_state,
+            "applicability": applicability,
+            "not_applicable_reason": not_applicable_reason,
             "missing_reason": missing_reason,
             "recommended_next_data": recommended_next_data,
         })

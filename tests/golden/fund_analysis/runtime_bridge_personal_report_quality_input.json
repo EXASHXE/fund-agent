@@ -46,9 +46,7 @@
         "recent fund news",
         "sentiment snapshot",
         "transaction history",
-        "recent benchmark movement",
-        "benchmark price history",
-        "recent news evidence"
+        "recent benchmark movement"
       ],
       "recommended_mcp_capabilities": [
         "market_news_search",
@@ -60,7 +58,6 @@
       ],
       "user_goal": "",
       "warnings": [
-        "right_side_unconfirmed",
         "sentiment_missing",
         "transaction_history_incomplete"
       ]
@@ -258,12 +255,17 @@
       ],
       "recommended_next_data": [],
       "summary": {
+        "cash_accounting_basis": "conservative_effective_total",
+        "cash_available": 50000.0,
         "cash_buffer_status": "adequate",
         "cash_like_value": 50000.0,
         "cash_like_weight": 0.1,
         "deployment_readiness": "ready",
+        "effective_total_value": 500000.0,
         "estimated_deployable_cash": 0.0,
         "notes": [],
+        "position_total_value": 450000.0,
+        "reported_total_value": 500000.0,
         "risk_budget_status": "available"
       }
     },
@@ -482,9 +484,7 @@
           "recent fund news",
           "sentiment snapshot",
           "transaction history",
-          "recent benchmark movement",
-          "benchmark price history",
-          "recent news evidence"
+          "recent benchmark movement"
         ],
         "recommended_mcp_capabilities": [
           "market_news_search",
@@ -496,7 +496,6 @@
         ],
         "user_goal": "",
         "warnings": [
-          "right_side_unconfirmed",
           "sentiment_missing",
           "transaction_history_incomplete"
         ]
@@ -694,12 +693,17 @@
         ],
         "recommended_next_data": [],
         "summary": {
+          "cash_accounting_basis": "conservative_effective_total",
+          "cash_available": 50000.0,
           "cash_buffer_status": "adequate",
           "cash_like_value": 50000.0,
           "cash_like_weight": 0.1,
           "deployment_readiness": "ready",
+          "effective_total_value": 500000.0,
           "estimated_deployable_cash": 0.0,
           "notes": [],
+          "position_total_value": 450000.0,
+          "reported_total_value": 500000.0,
           "risk_budget_status": "available"
         }
       },
@@ -1631,8 +1635,9 @@
       "right_side_confirmation_diagnostics": {
         "items": [
           {
+            "applicability": "not_applicable",
             "benchmark_confirmation": "missing",
-            "evidence_state": "missing",
+            "evidence_state": "not_applicable",
             "fund_code": "110011",
             "fund_name": "Sample Equity Growth Fund",
             "missing_reason": [
@@ -1642,19 +1647,17 @@
             ],
             "nav_confirmation": "confirmed",
             "news_confirmation": "missing",
+            "not_applicable_reason": "no_material_drawdown",
             "recent_drawdown_pct": null,
             "recent_rebound_pct": 0.43,
-            "recommended_next_data": [
-              "benchmark price history",
-              "recent news evidence",
-              "sentiment snapshot"
-            ],
+            "recommended_next_data": [],
             "right_side_confirmed": false,
             "sentiment_confirmation": "missing"
           },
           {
+            "applicability": "not_applicable",
             "benchmark_confirmation": "missing",
-            "evidence_state": "missing",
+            "evidence_state": "not_applicable",
             "fund_code": "220022",
             "fund_name": "Sample Bond Income Fund",
             "missing_reason": [
@@ -1664,19 +1667,17 @@
             ],
             "nav_confirmation": "confirmed",
             "news_confirmation": "missing",
+            "not_applicable_reason": "no_material_drawdown",
             "recent_drawdown_pct": null,
             "recent_rebound_pct": 0.090909,
-            "recommended_next_data": [
-              "benchmark price history",
-              "recent news evidence",
-              "sentiment snapshot"
-            ],
+            "recommended_next_data": [],
             "right_side_confirmed": false,
             "sentiment_confirmation": "missing"
           },
           {
+            "applicability": "not_applicable",
             "benchmark_confirmation": "missing",
-            "evidence_state": "missing",
+            "evidence_state": "not_applicable",
             "fund_code": "330033",
             "fund_name": "Sample Balanced Fund",
             "missing_reason": [
@@ -1686,21 +1687,18 @@
             ],
             "nav_confirmation": "confirmed",
             "news_confirmation": "missing",
+            "not_applicable_reason": "no_material_drawdown",
             "recent_drawdown_pct": -0.017857,
             "recent_rebound_pct": 0.085714,
-            "recommended_next_data": [
-              "benchmark price history",
-              "recent news evidence",
-              "sentiment snapshot"
-            ],
+            "recommended_next_data": [],
             "right_side_confirmed": false,
             "sentiment_confirmation": "missing"
           }
         ],
         "summary": {
           "has_confirmed_right_side": false,
-          "has_unconfirmed_rebound": true,
-          "needs_more_evidence": true,
+          "has_unconfirmed_rebound": false,
+          "needs_more_evidence": false,
           "notes": []
         }
       },
@@ -2433,8 +2431,9 @@
     "right_side_confirmation_diagnostics": {
       "items": [
         {
+          "applicability": "not_applicable",
           "benchmark_confirmation": "missing",
-          "evidence_state": "missing",
+          "evidence_state": "not_applicable",
           "fund_code": "110011",
           "fund_name": "Sample Equity Growth Fund",
           "missing_reason": [
@@ -2444,19 +2443,17 @@
           ],
           "nav_confirmation": "confirmed",
           "news_confirmation": "missing",
+          "not_applicable_reason": "no_material_drawdown",
           "recent_drawdown_pct": null,
           "recent_rebound_pct": 0.43,
-          "recommended_next_data": [
-            "benchmark price history",
-            "recent news evidence",
-            "sentiment snapshot"
-          ],
+          "recommended_next_data": [],
           "right_side_confirmed": false,
           "sentiment_confirmation": "missing"
         },
         {
+          "applicability": "not_applicable",
           "benchmark_confirmation": "missing",
-          "evidence_state": "missing",
+          "evidence_state": "not_applicable",
           "fund_code": "220022",
           "fund_name": "Sample Bond Income Fund",
           "missing_reason": [
@@ -2466,19 +2463,17 @@
           ],
           "nav_confirmation": "confirmed",
           "news_confirmation": "missing",
+          "not_applicable_reason": "no_material_drawdown",
           "recent_drawdown_pct": null,
           "recent_rebound_pct": 0.090909,
-          "recommended_next_data": [
-            "benchmark price history",
-            "recent news evidence",
-            "sentiment snapshot"
-          ],
+          "recommended_next_data": [],
           "right_side_confirmed": false,
           "sentiment_confirmation": "missing"
         },
         {
+          "applicability": "not_applicable",
           "benchmark_confirmation": "missing",
-          "evidence_state": "missing",
+          "evidence_state": "not_applicable",
           "fund_code": "330033",
           "fund_name": "Sample Balanced Fund",
           "missing_reason": [
@@ -2488,21 +2483,18 @@
           ],
           "nav_confirmation": "confirmed",
           "news_confirmation": "missing",
+          "not_applicable_reason": "no_material_drawdown",
           "recent_drawdown_pct": -0.017857,
           "recent_rebound_pct": 0.085714,
-          "recommended_next_data": [
-            "benchmark price history",
-            "recent news evidence",
-            "sentiment snapshot"
-          ],
+          "recommended_next_data": [],
           "right_side_confirmed": false,
           "sentiment_confirmation": "missing"
         }
       ],
       "summary": {
         "has_confirmed_right_side": false,
-        "has_unconfirmed_rebound": true,
-        "needs_more_evidence": true,
+        "has_unconfirmed_rebound": false,
+        "needs_more_evidence": false,
         "notes": []
       }
     },

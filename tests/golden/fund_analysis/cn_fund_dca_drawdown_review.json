@@ -152,12 +152,17 @@
       ],
       "recommended_next_data": [],
       "summary": {
+        "cash_accounting_basis": "conservative_effective_total",
+        "cash_available": 12000.0,
         "cash_buffer_status": "adequate",
         "cash_like_value": 12000.0,
         "cash_like_weight": 0.12,
         "deployment_readiness": "ready",
+        "effective_total_value": 100000.0,
         "estimated_deployable_cash": 0.0,
         "notes": [],
+        "position_total_value": 88000.0,
+        "reported_total_value": 100000.0,
         "risk_budget_status": "available"
       }
     },
@@ -528,12 +533,17 @@
         ],
         "recommended_next_data": [],
         "summary": {
+          "cash_accounting_basis": "conservative_effective_total",
+          "cash_available": 12000.0,
           "cash_buffer_status": "adequate",
           "cash_like_value": 12000.0,
           "cash_like_weight": 0.12,
           "deployment_readiness": "ready",
+          "effective_total_value": 100000.0,
           "estimated_deployable_cash": 0.0,
           "notes": [],
+          "position_total_value": 88000.0,
+          "reported_total_value": 100000.0,
           "risk_budget_status": "available"
         }
       },
@@ -1500,6 +1510,7 @@
       "right_side_confirmation_diagnostics": {
         "items": [
           {
+            "applicability": "applicable",
             "benchmark_confirmation": "missing",
             "evidence_state": "missing",
             "fund_code": "SYNDCA001",
@@ -1511,6 +1522,7 @@
             ],
             "nav_confirmation": "confirmed",
             "news_confirmation": "missing",
+            "not_applicable_reason": "",
             "recent_drawdown_pct": -0.291667,
             "recent_rebound_pct": 0.058824,
             "recommended_next_data": [
@@ -1522,6 +1534,7 @@
             "sentiment_confirmation": "missing"
           },
           {
+            "applicability": "applicable",
             "benchmark_confirmation": "missing",
             "evidence_state": "missing",
             "fund_code": "SYNDCA002",
@@ -1533,6 +1546,7 @@
             ],
             "nav_confirmation": "confirmed",
             "news_confirmation": "missing",
+            "not_applicable_reason": "",
             "recent_drawdown_pct": -0.066667,
             "recent_rebound_pct": 0.020408,
             "recommended_next_data": [
@@ -1544,8 +1558,9 @@
             "sentiment_confirmation": "missing"
           },
           {
+            "applicability": "not_applicable",
             "benchmark_confirmation": "missing",
-            "evidence_state": "missing",
+            "evidence_state": "not_applicable",
             "fund_code": "SYNMM001",
             "fund_name": "Sample Money Market Sleeve",
             "missing_reason": [
@@ -1555,13 +1570,10 @@
             ],
             "nav_confirmation": "mixed",
             "news_confirmation": "missing",
+            "not_applicable_reason": "no_material_drawdown",
             "recent_drawdown_pct": null,
             "recent_rebound_pct": null,
-            "recommended_next_data": [
-              "benchmark price history",
-              "recent news evidence",
-              "sentiment snapshot"
-            ],
+            "recommended_next_data": [],
             "right_side_confirmed": false,
             "sentiment_confirmation": "missing"
           }
@@ -2463,6 +2475,7 @@
     "right_side_confirmation_diagnostics": {
       "items": [
         {
+          "applicability": "applicable",
           "benchmark_confirmation": "missing",
           "evidence_state": "missing",
           "fund_code": "SYNDCA001",
@@ -2474,6 +2487,7 @@
           ],
           "nav_confirmation": "confirmed",
           "news_confirmation": "missing",
+          "not_applicable_reason": "",
           "recent_drawdown_pct": -0.291667,
           "recent_rebound_pct": 0.058824,
           "recommended_next_data": [
@@ -2485,6 +2499,7 @@
           "sentiment_confirmation": "missing"
         },
         {
+          "applicability": "applicable",
           "benchmark_confirmation": "missing",
           "evidence_state": "missing",
           "fund_code": "SYNDCA002",
@@ -2496,6 +2511,7 @@
           ],
           "nav_confirmation": "confirmed",
           "news_confirmation": "missing",
+          "not_applicable_reason": "",
           "recent_drawdown_pct": -0.066667,
           "recent_rebound_pct": 0.020408,
           "recommended_next_data": [
@@ -2507,8 +2523,9 @@
           "sentiment_confirmation": "missing"
         },
         {
+          "applicability": "not_applicable",
           "benchmark_confirmation": "missing",
-          "evidence_state": "missing",
+          "evidence_state": "not_applicable",
           "fund_code": "SYNMM001",
           "fund_name": "Sample Money Market Sleeve",
           "missing_reason": [
@@ -2518,13 +2535,10 @@
           ],
           "nav_confirmation": "mixed",
           "news_confirmation": "missing",
+          "not_applicable_reason": "no_material_drawdown",
           "recent_drawdown_pct": null,
           "recent_rebound_pct": null,
-          "recommended_next_data": [
-            "benchmark price history",
-            "recent news evidence",
-            "sentiment snapshot"
-          ],
+          "recommended_next_data": [],
           "right_side_confirmed": false,
           "sentiment_confirmation": "missing"
         }

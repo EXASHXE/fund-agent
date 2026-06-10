@@ -11,6 +11,7 @@ from __future__ import annotations
 from typing import Any
 
 from .context import CoreMetricsBundle, PortfolioInputBundle
+from .safe_parsing import _safe_float
 
 
 CASH_LOW_THRESHOLD = 0.05
@@ -28,28 +29,38 @@ def compute_cash_deployment_diagnostics(
     bundle: PortfolioInputBundle,
     metrics: CoreMetricsBundle,
 ) -> dict[str, Any]:
-    total_value = float(bundle.portfolio.get("total_value", 0) or 0)
-    cash_available = float(bundle.portfolio.get("cash_available", 0) or 0)
+    reported_total_value = _safe_float(bundle.portfolio.get("total_value"), 0.0) or 0.0
+    cash_available = _safe_float(bundle.portfolio.get("cash_available"), 0.0) or 0.0
     fund_profiles = bundle.fund_profiles or {}
     risk_profile = bundle.risk_profile or {}
     constraints = bundle.constraints or {}
     notes: list[str] = []
     recommended_next_data: list[str] = []
 
-    cash_like_value = cash_available
     bucket_items: list[dict[str, Any]] = []
 
-    cash_bucket_value = cash_available
+    position_total_value = 0.0
+    cash_bucket_value = 0.0
     money_market_value = 0.0
     short_bond_value = 0.0
     bond_value = 0.0
     equity_value = 0.0
 
     for pos in bundle.positions:
+        if not isinstance(pos, dict):
+            continue
+        position_total_value += _safe_float(pos.get("current_value"), 0.0) or 0.0
+
+    effective_total_value = max(
+        reported_total_value,
+        position_total_value + cash_available,
+    )
+
+    for pos in bundle.positions:
         if not isinstance(pos, dict) or not pos.get("fund_code"):
             continue
         fund_code = str(pos["fund_code"])
-        current_value = float(pos.get("current_value", 0) or 0)
+        current_value = _safe_float(pos.get("current_value"), 0.0) or 0.0
         profile = fund_profiles.get(fund_code, {}) if isinstance(fund_profiles, dict) else {}
         fund_type = str(profile.get("fund_type", "")).lower() if isinstance(profile, dict) else ""
         theme = str(profile.get("theme", "")).lower() if isinstance(profile, dict) else ""
@@ -59,7 +70,7 @@ def compute_cash_deployment_diagnostics(
 
         bucket = _classify_bucket(fund_type, theme, tags)
         liquidity_hint = _classify_liquidity(bucket)
-        weight = round(current_value / total_value, 6) if total_value > 0 else 0.0
+        weight = round(current_value / effective_total_value, 6) if effective_total_value > 0 else 0.0
 
         bucket_items.append({
             "bucket": bucket,
@@ -79,8 +90,12 @@ def compute_cash_deployment_diagnostics(
         elif bucket == "equity":
             equity_value += current_value
 
-    cash_like_value = cash_available + money_market_value + short_bond_value
-    cash_like_weight = round(cash_like_value / total_value, 6) if total_value > 0 else 0.0
+    cash_like_value = max(cash_available, cash_bucket_value) + money_market_value + short_bond_value
+    cash_like_weight = (
+        round(cash_like_value / effective_total_value, 6)
+        if effective_total_value > 0
+        else 0.0
+    )
 
     cash_buffer_status = _classify_cash_buffer(cash_like_weight)
     risk_budget_status = _classify_risk_budget(risk_profile, constraints)
@@ -96,11 +111,19 @@ def compute_cash_deployment_diagnostics(
         recommended_next_data.append("target asset evidence")
 
     estimated_deployable_cash = 0.0
-    if cash_like_weight > CASH_HIGH_THRESHOLD and total_value > 0:
-        estimated_deployable_cash = round(cash_like_value - total_value * CASH_HIGH_THRESHOLD, 2)
+    if cash_like_weight > CASH_HIGH_THRESHOLD and effective_total_value > 0:
+        estimated_deployable_cash = round(
+            cash_like_value - effective_total_value * CASH_HIGH_THRESHOLD,
+            2,
+        )
 
     return {
         "summary": {
+            "cash_accounting_basis": "conservative_effective_total",
+            "reported_total_value": round(reported_total_value, 2),
+            "effective_total_value": round(effective_total_value, 2),
+            "position_total_value": round(position_total_value, 2),
+            "cash_available": round(cash_available, 2),
             "cash_like_value": round(cash_like_value, 2),
             "cash_like_weight": cash_like_weight,
             "estimated_deployable_cash": estimated_deployable_cash,
@@ -116,7 +139,9 @@ def compute_cash_deployment_diagnostics(
 
 def _classify_bucket(fund_type: str, theme: str, tags: list[str]) -> str:
     if fund_type in CASH_LIKE_FUND_TYPES:
-        if fund_type == "cash" or fund_type == "money_market":
+        if fund_type == "cash":
+            return "cash"
+        if fund_type == "money_market":
             return "money_market"
         return "short_bond"
     if fund_type == "bond":
@@ -127,7 +152,9 @@ def _classify_bucket(fund_type: str, theme: str, tags: list[str]) -> str:
     tag_set = {str(t).lower() for t in tags}
     tag_set.add(theme)
     if tag_set & CASH_LIKE_KEYWORDS:
-        if "cash" in tag_set or "货币" in tag_set or "money_market" in tag_set:
+        if "cash" in tag_set or "现金" in tag_set:
+            return "cash"
+        if "货币" in tag_set or "money_market" in tag_set:
             return "money_market"
         return "short_bond"
 

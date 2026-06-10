@@ -257,7 +257,9 @@ def test_malformed_fee_pct_does_not_crash() -> None:
     metrics, _ = _metrics(bundle, payload)
     from src.skills_runtime.fund_analysis.professional_rules import compute_redemption_fee_risk
     result = compute_redemption_fee_risk(bundle, metrics)
-    assert result is not None or result is None
+    assert isinstance(result, dict)
+    assert "has_blocker" in result
+    assert "affected_funds" in result
 
 
 def test_malformed_holding_days_does_not_crash() -> None:
@@ -272,7 +274,9 @@ def test_malformed_holding_days_does_not_crash() -> None:
     metrics, _ = _metrics(bundle, payload)
     from src.skills_runtime.fund_analysis.professional_rules import compute_redemption_fee_risk
     result = compute_redemption_fee_risk(bundle, metrics)
-    assert result is not None or result is None
+    assert isinstance(result, dict)
+    assert "has_blocker" in result
+    assert "affected_funds" in result
 
 
 def test_malformed_numeric_fields_no_false_blocker() -> None:
@@ -290,7 +294,7 @@ def test_malformed_numeric_fields_no_false_blocker() -> None:
     plan = build_analysis_plan(
         bundle=bundle, metrics=metrics, diagnostics=diag, warnings=warnings,
     )
-    assert "redemption_fee_blocker" not in plan["analysis_plan"]["blockers"] or True
+    assert "redemption_fee_blocker" not in plan["analysis_plan"]["blockers"]
 
 
 # ── Phase 3: benchmark_divergence_diagnostics ────────────────────────────
@@ -349,6 +353,35 @@ def test_benchmark_divergence_missing_in_analysis_plan() -> None:
 
 # ── Phase 3: right_side_confirmation_diagnostics ─────────────────────────
 
+def test_right_side_not_applicable_without_material_drawdown() -> None:
+    payload = _base_payload()
+    payload["nav_history"]["110011"] = [
+        {"date": "2026-03-01", "nav": 1.00},
+        {"date": "2026-04-01", "nav": 1.03},
+        {"date": "2026-05-01", "nav": 1.06},
+        {"date": "2026-06-01", "nav": 1.09},
+    ]
+    payload["benchmark_history"] = {}
+    bundle = _bundle(payload)
+    metrics, warnings = _metrics(bundle, payload)
+    result = compute_right_side_confirmation_diagnostics(bundle, metrics)
+
+    item = next(i for i in result["items"] if i["fund_code"] == "110011")
+    assert item["recent_drawdown_pct"] is None
+    assert item["right_side_confirmed"] is False
+    assert item["evidence_state"] == "not_applicable"
+    assert item["applicability"] == "not_applicable"
+    assert item["not_applicable_reason"] == "no_material_drawdown"
+
+    plan = build_analysis_plan(
+        bundle=bundle, metrics=metrics, warnings=warnings,
+        right_side_confirmation=result,
+        user_goal="这个上涨基金要不要加仓？",
+    )
+    assert "right_side_unconfirmed" not in plan["analysis_plan"]["warnings"]
+    assert "right_side_unconfirmed" not in plan["analysis_plan"]["blockers"]
+
+
 def test_right_side_confirmed_with_rebound() -> None:
     payload = _base_payload()
     payload["nav_history"]["110011"] = [
@@ -376,19 +409,27 @@ def test_right_side_confirmed_with_rebound() -> None:
     item = next(i for i in result["items"] if i["fund_code"] == "110011")
     assert item["right_side_confirmed"] is True
     assert item["nav_confirmation"] == "confirmed"
+    assert item["applicability"] == "applicable"
 
 
 def test_right_side_missing_evidence() -> None:
     payload = _base_payload()
+    payload["nav_history"]["110011"] = [
+        {"date": "2026-03-01", "nav": 1.6},
+        {"date": "2026-04-01", "nav": 1.2},
+        {"date": "2026-05-01", "nav": 1.21},
+        {"date": "2026-06-01", "nav": 1.22},
+    ]
     payload["benchmark_history"] = {}
     bundle = _bundle(payload)
     metrics, _ = _metrics(bundle, payload)
     result = compute_right_side_confirmation_diagnostics(bundle, metrics)
 
-    for item in result["items"]:
-        if item["evidence_state"] in ("missing", "weak"):
-            assert item["right_side_confirmed"] is False
-            assert len(item["recommended_next_data"]) > 0
+    item = next(i for i in result["items"] if i["fund_code"] == "110011")
+    assert item["applicability"] == "applicable"
+    assert item["evidence_state"] in ("missing", "weak")
+    assert item["right_side_confirmed"] is False
+    assert item["recommended_next_data"]
 
 
 def test_right_side_contradictory_evidence() -> None:
@@ -415,6 +456,12 @@ def test_right_side_contradictory_evidence() -> None:
 
 def test_right_side_unconfirmed_blocks_decision_for_action_goal() -> None:
     payload = _base_payload()
+    payload["nav_history"]["110011"] = [
+        {"date": "2026-03-01", "nav": 1.6},
+        {"date": "2026-04-01", "nav": 1.2},
+        {"date": "2026-05-01", "nav": 1.21},
+        {"date": "2026-06-01", "nav": 1.22},
+    ]
     payload["benchmark_history"] = {}
     bundle = _bundle(payload)
     metrics, warnings = _metrics(bundle, payload)
@@ -425,6 +472,7 @@ def test_right_side_unconfirmed_blocks_decision_for_action_goal() -> None:
         user_goal="创新药基金要不要加仓？",
     )
     assert "right_side_unconfirmed" in plan["analysis_plan"]["warnings"]
+    assert "right_side_unconfirmed" in plan["analysis_plan"]["blockers"]
 
 
 # ── Phase 3: event_hype_failure_diagnostics ──────────────────────────────
@@ -433,7 +481,10 @@ def test_event_hype_failure_positive_event_weak_reaction() -> None:
     payload = _base_payload()
     payload["nav_history"]["110011"] = [
         {"date": "2026-05-01", "nav": 1.6},
-        {"date": "2026-06-01", "nav": 1.59},
+        {"date": "2026-06-01", "nav": 1.58},
+    ]
+    payload["news_evidence"] = [
+        {"fund_code": "110011", "headline": "catalyst disappointed", "sentiment": "negative"},
     ]
     payload["events"] = [
         {
@@ -448,15 +499,21 @@ def test_event_hype_failure_positive_event_weak_reaction() -> None:
     metrics, _ = _metrics(bundle, payload)
     result = compute_event_hype_failure_diagnostics(bundle, metrics)
 
-    item = next((i for i in result["items"] if i["fund_code"] == "110011"), None)
-    if item is not None:
-        assert item["hype_failed"] is True
-        assert item["risk_level"] in ("medium", "high", "low", "unknown")
-        assert item["suggested_analysis_action"] in ("watch", "reduce_hype_weight", "data_needed")
+    item = next(i for i in result["items"] if i["fund_code"] == "110011")
+    assert item["post_event_return_pct"] is not None
+    assert item["price_reaction"] == "negative"
+    assert item["news_reaction"] == "negative"
+    assert item["hype_failed"] is True
+    assert item["risk_level"] in ("medium", "high")
+    assert item["suggested_analysis_action"] == "reduce_hype_weight"
+    assert result["summary"]["has_event_hype_failure"] is True
 
 
 def test_event_hype_failure_missing_evidence() -> None:
     payload = _base_payload()
+    payload["nav_history"]["110011"] = [
+        {"date": "2026-05-01", "nav": 1.6},
+    ]
     payload["events"] = [
         {
             "event_name": "ASCO",
@@ -470,10 +527,14 @@ def test_event_hype_failure_missing_evidence() -> None:
     metrics, _ = _metrics(bundle, payload)
     result = compute_event_hype_failure_diagnostics(bundle, metrics)
 
-    item = next((i for i in result["items"] if i["fund_code"] == "110011"), None)
-    if item is not None:
-        assert item["evidence_state"] in ("missing", "weak", "sufficient")
-        assert item["suggested_analysis_action"] in ("watch", "reduce_hype_weight", "data_needed")
+    item = next(i for i in result["items"] if i["fund_code"] == "110011")
+    assert item["post_event_return_pct"] is None
+    assert item["price_reaction"] == "missing"
+    assert item["hype_failed"] is False
+    assert item["evidence_state"] in ("missing", "weak")
+    assert item["suggested_analysis_action"] == "data_needed"
+    assert "missing_nav_history" in item["missing_reason"]
+    assert result["summary"]["has_event_hype_failure"] is False
 
 
 # ── Phase 3: cash_deployment_diagnostics ─────────────────────────────────
@@ -497,6 +558,9 @@ def test_cash_deployment_high_cash_with_constraints() -> None:
 
     assert result["summary"]["cash_buffer_status"] in ("high", "adequate")
     assert result["summary"]["deployment_readiness"] in ("ready", "partial", "not_ready", "unknown")
+    assert result["summary"]["cash_accounting_basis"] == "conservative_effective_total"
+    assert result["summary"]["effective_total_value"] >= result["summary"]["position_total_value"]
+    assert 0.0 <= result["summary"]["cash_like_weight"] <= 1.0
 
 
 def test_cash_deployment_low_cash_buffer() -> None:
@@ -507,6 +571,8 @@ def test_cash_deployment_low_cash_buffer() -> None:
     result = compute_cash_deployment_diagnostics(bundle, metrics)
 
     assert result["summary"]["cash_buffer_status"] in ("low", "adequate")
+    assert result["summary"]["effective_total_value"] > 0
+    assert result["summary"]["cash_accounting_basis"] == "conservative_effective_total"
 
 
 def test_cash_deployment_missing_constraints() -> None:
@@ -520,6 +586,48 @@ def test_cash_deployment_missing_constraints() -> None:
 
     assert result["summary"]["deployment_readiness"] in ("not_ready", "unknown")
     assert len(result["recommended_next_data"]) > 0
+
+
+def test_cash_deployment_uses_effective_total_without_double_counting_cash_bucket() -> None:
+    payload = _base_payload()
+    payload["portfolio"]["total_value"] = 120000.0
+    payload["portfolio"]["cash_available"] = 50000.0
+    payload["portfolio"]["positions"] = [
+        {
+            "fund_code": "CASH",
+            "fund_name": "Cash Account",
+            "current_value": 50000.0,
+            "tags": ["cash"],
+        },
+        {
+            "fund_code": "MM001",
+            "fund_name": "Money Market Sample",
+            "current_value": 10000.0,
+            "tags": ["money_market"],
+        },
+        {
+            "fund_code": "EQ001",
+            "fund_name": "Equity Sample",
+            "current_value": 60000.0,
+            "tags": ["equity"],
+        },
+    ]
+    payload["fund_profiles"] = {
+        "CASH": {"fund_code": "CASH", "fund_type": "cash"},
+        "MM001": {"fund_code": "MM001", "fund_type": "money_market"},
+        "EQ001": {"fund_code": "EQ001", "fund_type": "equity"},
+    }
+    bundle = _bundle(payload)
+    metrics, _ = _metrics(bundle, payload)
+    result = compute_cash_deployment_diagnostics(bundle, metrics)
+    summary = result["summary"]
+
+    assert summary["cash_accounting_basis"] == "conservative_effective_total"
+    assert summary["position_total_value"] == 120000.0
+    assert summary["effective_total_value"] == 170000.0
+    assert summary["cash_like_value"] == 60000.0
+    assert 0.0 <= summary["cash_like_weight"] <= 1.0
+    assert summary["cash_like_weight"] == round(60000.0 / 170000.0, 6)
 
 
 # ── Integration: user flows produce Phase 3 diagnostics ──────────────────

@@ -484,12 +484,20 @@ def _apply_phase3_blockers_and_warnings(
                 "趋势", "时机", "timing", "trend", "右侧", "反弹",
             )
             is_action_oriented = any(kw in goal for kw in action_keywords)
-            if is_action_oriented:
-                for item in right_side_confirmation.get("items", []):
-                    if isinstance(item, dict) and not item.get("right_side_confirmed", True):
-                        if "right_side_unconfirmed" not in blockers:
-                            blockers.append("right_side_unconfirmed")
-                        break
+            has_applicable_unconfirmed = False
+            for item in right_side_confirmation.get("items", []):
+                if not isinstance(item, dict):
+                    continue
+                if item.get("applicability") == "not_applicable":
+                    continue
+                if not item.get("right_side_confirmed", True):
+                    has_applicable_unconfirmed = True
+                    break
+            if not has_applicable_unconfirmed:
+                pass
+            elif is_action_oriented:
+                if "right_side_unconfirmed" not in blockers:
+                    blockers.append("right_side_unconfirmed")
                 if "right_side_unconfirmed" not in plan_warnings:
                     plan_warnings.append("right_side_unconfirmed")
             else:

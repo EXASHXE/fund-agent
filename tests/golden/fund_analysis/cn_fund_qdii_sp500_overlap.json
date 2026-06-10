@@ -296,12 +296,17 @@
       ],
       "recommended_next_data": [],
       "summary": {
+        "cash_accounting_basis": "conservative_effective_total",
+        "cash_available": 10000.0,
         "cash_buffer_status": "adequate",
         "cash_like_value": 10000.0,
         "cash_like_weight": 0.055556,
         "deployment_readiness": "ready",
+        "effective_total_value": 180000.0,
         "estimated_deployable_cash": 0.0,
         "notes": [],
+        "position_total_value": 170000.0,
+        "reported_total_value": 180000.0,
         "risk_budget_status": "available"
       }
     },
@@ -869,12 +874,17 @@
         ],
         "recommended_next_data": [],
         "summary": {
+          "cash_accounting_basis": "conservative_effective_total",
+          "cash_available": 10000.0,
           "cash_buffer_status": "adequate",
           "cash_like_value": 10000.0,
           "cash_like_weight": 0.055556,
           "deployment_readiness": "ready",
+          "effective_total_value": 180000.0,
           "estimated_deployable_cash": 0.0,
           "notes": [],
+          "position_total_value": 170000.0,
+          "reported_total_value": 180000.0,
           "risk_budget_status": "available"
         }
       },
@@ -1958,8 +1968,9 @@
       "right_side_confirmation_diagnostics": {
         "items": [
           {
+            "applicability": "not_applicable",
             "benchmark_confirmation": "missing",
-            "evidence_state": "missing",
+            "evidence_state": "not_applicable",
             "fund_code": "SYNQD001",
             "fund_name": "Sample QDII S&P 500 Index Fund",
             "missing_reason": [
@@ -1969,17 +1980,15 @@
             ],
             "nav_confirmation": "confirmed",
             "news_confirmation": "missing",
+            "not_applicable_reason": "no_material_drawdown",
             "recent_drawdown_pct": null,
             "recent_rebound_pct": 0.2,
-            "recommended_next_data": [
-              "benchmark price history",
-              "recent news evidence",
-              "sentiment snapshot"
-            ],
+            "recommended_next_data": [],
             "right_side_confirmed": false,
             "sentiment_confirmation": "missing"
           },
           {
+            "applicability": "applicable",
             "benchmark_confirmation": "missing",
             "evidence_state": "missing",
             "fund_code": "SYNQD002",
@@ -1991,6 +2000,7 @@
             ],
             "nav_confirmation": "confirmed",
             "news_confirmation": "missing",
+            "not_applicable_reason": "",
             "recent_drawdown_pct": -0.047619,
             "recent_rebound_pct": 0.2,
             "recommended_next_data": [
@@ -2002,8 +2012,9 @@
             "sentiment_confirmation": "missing"
           },
           {
+            "applicability": "not_applicable",
             "benchmark_confirmation": "missing",
-            "evidence_state": "missing",
+            "evidence_state": "not_applicable",
             "fund_code": "SYNQD003",
             "fund_name": "Sample Global AI Leaders Fund",
             "missing_reason": [
@@ -2013,19 +2024,17 @@
             ],
             "nav_confirmation": "confirmed",
             "news_confirmation": "missing",
+            "not_applicable_reason": "no_material_drawdown",
             "recent_drawdown_pct": null,
             "recent_rebound_pct": 0.25,
-            "recommended_next_data": [
-              "benchmark price history",
-              "recent news evidence",
-              "sentiment snapshot"
-            ],
+            "recommended_next_data": [],
             "right_side_confirmed": false,
             "sentiment_confirmation": "missing"
           },
           {
+            "applicability": "not_applicable",
             "benchmark_confirmation": "missing",
-            "evidence_state": "missing",
+            "evidence_state": "not_applicable",
             "fund_code": "SYNQD004",
             "fund_name": "Sample China Bond Buffer Fund",
             "missing_reason": [
@@ -2035,13 +2044,10 @@
             ],
             "nav_confirmation": "mixed",
             "news_confirmation": "missing",
+            "not_applicable_reason": "no_material_drawdown",
             "recent_drawdown_pct": null,
             "recent_rebound_pct": 0.010101,
-            "recommended_next_data": [
-              "benchmark price history",
-              "recent news evidence",
-              "sentiment snapshot"
-            ],
+            "recommended_next_data": [],
             "right_side_confirmed": false,
             "sentiment_confirmation": "missing"
           }
@@ -2956,8 +2962,9 @@
     "right_side_confirmation_diagnostics": {
       "items": [
         {
+          "applicability": "not_applicable",
           "benchmark_confirmation": "missing",
-          "evidence_state": "missing",
+          "evidence_state": "not_applicable",
           "fund_code": "SYNQD001",
           "fund_name": "Sample QDII S&P 500 Index Fund",
           "missing_reason": [
@@ -2967,17 +2974,15 @@
           ],
           "nav_confirmation": "confirmed",
           "news_confirmation": "missing",
+          "not_applicable_reason": "no_material_drawdown",
           "recent_drawdown_pct": null,
           "recent_rebound_pct": 0.2,
-          "recommended_next_data": [
-            "benchmark price history",
-            "recent news evidence",
-            "sentiment snapshot"
-          ],
+          "recommended_next_data": [],
           "right_side_confirmed": false,
           "sentiment_confirmation": "missing"
         },
         {
+          "applicability": "applicable",
           "benchmark_confirmation": "missing",
           "evidence_state": "missing",
           "fund_code": "SYNQD002",
@@ -2989,6 +2994,7 @@
           ],
           "nav_confirmation": "confirmed",
           "news_confirmation": "missing",
+          "not_applicable_reason": "",
           "recent_drawdown_pct": -0.047619,
           "recent_rebound_pct": 0.2,
           "recommended_next_data": [
@@ -3000,8 +3006,9 @@
           "sentiment_confirmation": "missing"
         },
         {
+          "applicability": "not_applicable",
           "benchmark_confirmation": "missing",
-          "evidence_state": "missing",
+          "evidence_state": "not_applicable",
           "fund_code": "SYNQD003",
           "fund_name": "Sample Global AI Leaders Fund",
           "missing_reason": [
@@ -3011,19 +3018,17 @@
           ],
           "nav_confirmation": "confirmed",
           "news_confirmation": "missing",
+          "not_applicable_reason": "no_material_drawdown",
           "recent_drawdown_pct": null,
           "recent_rebound_pct": 0.25,
-          "recommended_next_data": [
-            "benchmark price history",
-            "recent news evidence",
-            "sentiment snapshot"
-          ],
+          "recommended_next_data": [],
           "right_side_confirmed": false,
           "sentiment_confirmation": "missing"
         },
         {
+          "applicability": "not_applicable",
           "benchmark_confirmation": "missing",
-          "evidence_state": "missing",
+          "evidence_state": "not_applicable",
           "fund_code": "SYNQD004",
           "fund_name": "Sample China Bond Buffer Fund",
           "missing_reason": [
@@ -3033,13 +3038,10 @@
           ],
           "nav_confirmation": "mixed",
           "news_confirmation": "missing",
+          "not_applicable_reason": "no_material_drawdown",
           "recent_drawdown_pct": null,
           "recent_rebound_pct": 0.010101,
-          "recommended_next_data": [
-            "benchmark price history",
-            "recent news evidence",
-            "sentiment snapshot"
-          ],
+          "recommended_next_data": [],
           "right_side_confirmed": false,
           "sentiment_confirmation": "missing"
         }

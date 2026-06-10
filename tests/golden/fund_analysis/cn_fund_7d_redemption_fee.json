@@ -41,9 +41,7 @@
       "next_data_to_fetch": [
         "recent benchmark movement",
         "recent fund news",
-        "sentiment snapshot",
-        "benchmark price history",
-        "recent news evidence"
+        "sentiment snapshot"
       ],
       "recommended_mcp_capabilities": [
         "benchmark_price_history",
@@ -58,7 +56,6 @@
       "warnings": [
         "benchmark_data_missing",
         "redemption_fee_warning",
-        "right_side_unconfirmed",
         "sentiment_missing",
         "theme_overweight_warning"
       ]
@@ -156,12 +153,17 @@
       ],
       "recommended_next_data": [],
       "summary": {
+        "cash_accounting_basis": "conservative_effective_total",
+        "cash_available": 8000.0,
         "cash_buffer_status": "adequate",
         "cash_like_value": 8000.0,
         "cash_like_weight": 0.066667,
         "deployment_readiness": "ready",
+        "effective_total_value": 120000.0,
         "estimated_deployable_cash": 0.0,
         "notes": [],
+        "position_total_value": 112000.0,
+        "reported_total_value": 120000.0,
         "risk_budget_status": "available"
       }
     },
@@ -413,9 +415,7 @@
         "next_data_to_fetch": [
           "recent benchmark movement",
           "recent fund news",
-          "sentiment snapshot",
-          "benchmark price history",
-          "recent news evidence"
+          "sentiment snapshot"
         ],
         "recommended_mcp_capabilities": [
           "benchmark_price_history",
@@ -430,7 +430,6 @@
         "warnings": [
           "benchmark_data_missing",
           "redemption_fee_warning",
-          "right_side_unconfirmed",
           "sentiment_missing",
           "theme_overweight_warning"
         ]
@@ -528,12 +527,17 @@
         ],
         "recommended_next_data": [],
         "summary": {
+          "cash_accounting_basis": "conservative_effective_total",
+          "cash_available": 8000.0,
           "cash_buffer_status": "adequate",
           "cash_like_value": 8000.0,
           "cash_like_weight": 0.066667,
           "deployment_readiness": "ready",
+          "effective_total_value": 120000.0,
           "estimated_deployable_cash": 0.0,
           "notes": [],
+          "position_total_value": 112000.0,
+          "reported_total_value": 120000.0,
           "risk_budget_status": "available"
         }
       },
@@ -1624,8 +1628,9 @@
       "right_side_confirmation_diagnostics": {
         "items": [
           {
+            "applicability": "not_applicable",
             "benchmark_confirmation": "missing",
-            "evidence_state": "missing",
+            "evidence_state": "not_applicable",
             "fund_code": "SYN7D001",
             "fund_name": "Sample Recent Growth Mix",
             "missing_reason": [
@@ -1635,19 +1640,17 @@
             ],
             "nav_confirmation": "confirmed",
             "news_confirmation": "missing",
+            "not_applicable_reason": "no_material_drawdown",
             "recent_drawdown_pct": null,
             "recent_rebound_pct": 0.120833,
-            "recommended_next_data": [
-              "benchmark price history",
-              "recent news evidence",
-              "sentiment snapshot"
-            ],
+            "recommended_next_data": [],
             "right_side_confirmed": false,
             "sentiment_confirmation": "missing"
           },
           {
+            "applicability": "not_applicable",
             "benchmark_confirmation": "missing",
-            "evidence_state": "missing",
+            "evidence_state": "not_applicable",
             "fund_code": "SYN7D002",
             "fund_name": "Sample Long Hold Income Bond",
             "missing_reason": [
@@ -1657,19 +1660,17 @@
             ],
             "nav_confirmation": "confirmed",
             "news_confirmation": "missing",
+            "not_applicable_reason": "no_material_drawdown",
             "recent_drawdown_pct": null,
             "recent_rebound_pct": 0.075,
-            "recommended_next_data": [
-              "benchmark price history",
-              "recent news evidence",
-              "sentiment snapshot"
-            ],
+            "recommended_next_data": [],
             "right_side_confirmed": false,
             "sentiment_confirmation": "missing"
           },
           {
+            "applicability": "not_applicable",
             "benchmark_confirmation": "missing",
-            "evidence_state": "missing",
+            "evidence_state": "not_applicable",
             "fund_code": "SYN7D003",
             "fund_name": "Sample Cash Plus Fund",
             "missing_reason": [
@@ -1679,21 +1680,18 @@
             ],
             "nav_confirmation": "mixed",
             "news_confirmation": "missing",
+            "not_applicable_reason": "no_material_drawdown",
             "recent_drawdown_pct": null,
             "recent_rebound_pct": 0.01,
-            "recommended_next_data": [
-              "benchmark price history",
-              "recent news evidence",
-              "sentiment snapshot"
-            ],
+            "recommended_next_data": [],
             "right_side_confirmed": false,
             "sentiment_confirmation": "missing"
           }
         ],
         "summary": {
           "has_confirmed_right_side": false,
-          "has_unconfirmed_rebound": true,
-          "needs_more_evidence": true,
+          "has_unconfirmed_rebound": false,
+          "needs_more_evidence": false,
           "notes": []
         }
       },
@@ -2624,8 +2622,9 @@
     "right_side_confirmation_diagnostics": {
       "items": [
         {
+          "applicability": "not_applicable",
           "benchmark_confirmation": "missing",
-          "evidence_state": "missing",
+          "evidence_state": "not_applicable",
           "fund_code": "SYN7D001",
           "fund_name": "Sample Recent Growth Mix",
           "missing_reason": [
@@ -2635,19 +2634,17 @@
           ],
           "nav_confirmation": "confirmed",
           "news_confirmation": "missing",
+          "not_applicable_reason": "no_material_drawdown",
           "recent_drawdown_pct": null,
           "recent_rebound_pct": 0.120833,
-          "recommended_next_data": [
-            "benchmark price history",
-            "recent news evidence",
-            "sentiment snapshot"
-          ],
+          "recommended_next_data": [],
           "right_side_confirmed": false,
           "sentiment_confirmation": "missing"
         },
         {
+          "applicability": "not_applicable",
           "benchmark_confirmation": "missing",
-          "evidence_state": "missing",
+          "evidence_state": "not_applicable",
           "fund_code": "SYN7D002",
           "fund_name": "Sample Long Hold Income Bond",
           "missing_reason": [
@@ -2657,19 +2654,17 @@
           ],
           "nav_confirmation": "confirmed",
           "news_confirmation": "missing",
+          "not_applicable_reason": "no_material_drawdown",
           "recent_drawdown_pct": null,
           "recent_rebound_pct": 0.075,
-          "recommended_next_data": [
-            "benchmark price history",
-            "recent news evidence",
-            "sentiment snapshot"
-          ],
+          "recommended_next_data": [],
           "right_side_confirmed": false,
           "sentiment_confirmation": "missing"
         },
         {
+          "applicability": "not_applicable",
           "benchmark_confirmation": "missing",
-          "evidence_state": "missing",
+          "evidence_state": "not_applicable",
           "fund_code": "SYN7D003",
           "fund_name": "Sample Cash Plus Fund",
           "missing_reason": [
@@ -2679,21 +2674,18 @@
           ],
           "nav_confirmation": "mixed",
           "news_confirmation": "missing",
+          "not_applicable_reason": "no_material_drawdown",
           "recent_drawdown_pct": null,
           "recent_rebound_pct": 0.01,
-          "recommended_next_data": [
-            "benchmark price history",
-            "recent news evidence",
-            "sentiment snapshot"
-          ],
+          "recommended_next_data": [],
           "right_side_confirmed": false,
           "sentiment_confirmation": "missing"
         }
       ],
       "summary": {
         "has_confirmed_right_side": false,
-        "has_unconfirmed_rebound": true,
-        "needs_more_evidence": true,
+        "has_unconfirmed_rebound": false,
+        "needs_more_evidence": false,
         "notes": []
       }
     },
