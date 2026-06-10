@@ -1,0 +1,106 @@
+{
+  "user_question": "半导体基金盈利很多，已经减仓一次，剩余利润仓还拿不拿？",
+  "portfolio": {
+    "as_of_date": "2026-06-01",
+    "total_value": 300000,
+    "cash_available": 45000,
+    "positions": [
+      {
+        "fund_code": "008253",
+        "fund_name": "国泰中证半导体ETF联接C",
+        "current_value": 85000,
+        "total_cost": 50000,
+        "shares": 53000,
+        "target_weight": 0.25,
+        "tags": ["semiconductor", "equity", "high_profit"]
+      },
+      {
+        "fund_code": "001198",
+        "fund_name": "华夏创新前沿",
+        "current_value": 70000,
+        "total_cost": 65000,
+        "shares": 42000,
+        "target_weight": 0.25,
+        "tags": ["innovation", "equity"]
+      },
+      {
+        "fund_code": "003547",
+        "fund_name": "鹏华丰禄债券",
+        "current_value": 60000,
+        "total_cost": 58000,
+        "shares": 55000,
+        "target_weight": 0.20,
+        "tags": ["bond", "income"]
+      },
+      {
+        "fund_code": "000198",
+        "fund_name": "天弘增利短债",
+        "current_value": 40000,
+        "total_cost": 39500,
+        "shares": 38000,
+        "target_weight": 0.15,
+        "tags": ["short_bond", "cash_substitute"]
+      }
+    ]
+  },
+  "fund_metadata": [
+    {"fund_code": "008253", "name": "国泰中证半导体ETF联接C", "fund_type": "index", "benchmark": "中证半导体指数", "theme": "semiconductor"},
+    {"fund_code": "001198", "name": "华夏创新前沿", "fund_type": "active", "benchmark": "创业板指", "theme": "innovation"},
+    {"fund_code": "003547", "name": "鹏华丰禄债券", "fund_type": "bond", "benchmark": "中债综合指数", "theme": "bond"},
+    {"fund_code": "000198", "name": "天弘增利短债", "fund_type": "short_bond", "benchmark": "中债短融指数", "theme": "cash"}
+  ],
+  "transactions": [
+    {"fund_code": "008253", "action": "BUY", "date": "2025-03-15", "amount": 30000, "shares": 20000},
+    {"fund_code": "008253", "action": "BUY", "date": "2025-06-10", "amount": 20000, "shares": 12000},
+    {"fund_code": "008253", "action": "SELL", "date": "2026-03-20", "amount": 15000, "shares": 9000},
+    {"fund_code": "008253", "action": "BUY", "date": "2026-05-28", "amount": 10000, "shares": 5800},
+    {"fund_code": "001198", "action": "BUY", "date": "2025-04-01", "amount": 40000, "shares": 25000},
+    {"fund_code": "001198", "action": "BUY", "date": "2025-09-15", "amount": 25000, "shares": 15000},
+    {"fund_code": "001198", "action": "BUY", "date": "2026-02-01", "amount": 10000, "shares": 5500},
+    {"fund_code": "003547", "action": "BUY", "date": "2025-01-10", "amount": 35000, "shares": 32000},
+    {"fund_code": "003547", "action": "BUY", "date": "2025-07-20", "amount": 23000, "shares": 21000},
+    {"fund_code": "000198", "action": "BUY", "date": "2025-05-01", "amount": 25000, "shares": 24000},
+    {"fund_code": "000198", "action": "BUY", "date": "2026-01-15", "amount": 15000, "shares": 14000}
+  ],
+  "nav_history": {
+    "008253": [
+      {"date": "2025-03-15", "nav": 1.50},
+      {"date": "2025-06-10", "nav": 1.67},
+      {"date": "2025-12-31", "nav": 1.85},
+      {"date": "2026-03-20", "nav": 1.72},
+      {"date": "2026-05-28", "nav": 1.65},
+      {"date": "2026-06-01", "nav": 1.60}
+    ],
+    "001198": [
+      {"date": "2025-04-01", "nav": 1.60},
+      {"date": "2025-09-15", "nav": 1.67},
+      {"date": "2025-12-31", "nav": 1.70},
+      {"date": "2026-02-01", "nav": 1.82},
+      {"date": "2026-06-01", "nav": 1.67}
+    ],
+    "003547": [
+      {"date": "2025-01-10", "nav": 1.094},
+      {"date": "2025-07-20", "nav": 1.095},
+      {"date": "2025-12-31", "nav": 1.098},
+      {"date": "2026-06-01", "nav": 1.091}
+    ],
+    "000198": [
+      {"date": "2025-05-01", "nav": 1.042},
+      {"date": "2025-12-31", "nav": 1.048},
+      {"date": "2026-06-01", "nav": 1.045}
+    ]
+  },
+  "fee_schedule": [
+    {"fund_code": "008253", "redemption_fee_pct": 0.005, "holding_period_days": 7, "short_redemption_fee_pct": 0.015}
+  ],
+  "benchmark_data": [],
+  "news_evidence": [],
+  "sentiment_evidence": [],
+  "user_constraints": {
+    "risk_level": "moderate",
+    "max_single_fund_weight": 0.30,
+    "max_theme_weight": 0.35,
+    "liquidity_reserve_pct": 0.10,
+    "planned_holding_period": "1-3 years"
+  }
+}

@@ -12,6 +12,55 @@
       "redemption": "available",
       "research_plan": "available"
     },
+    "analysis_plan": {
+      "available_inputs": [
+        "benchmark_data",
+        "benchmark_summary",
+        "factor_summary",
+        "fee_schedule",
+        "fee_summary",
+        "fund_metadata",
+        "holdings",
+        "holdings_detail",
+        "manager_summary",
+        "nav_history",
+        "peer_summary",
+        "redemption_summary",
+        "risk_preference",
+        "user_constraints"
+      ],
+      "blockers": [
+        "missing_recent_news"
+      ],
+      "decision_support_ready": false,
+      "evidence_requirements": [
+        "transaction history",
+        "recent news evidence"
+      ],
+      "missing_inputs": [
+        "missing_recent_news",
+        "missing_sentiment",
+        "missing_transaction_history"
+      ],
+      "next_data_to_fetch": [
+        "recent fund news",
+        "sentiment snapshot",
+        "transaction history"
+      ],
+      "recommended_mcp_capabilities": [
+        "market_news_search",
+        "sentiment_snapshot"
+      ],
+      "recommended_skill_sequence": [
+        "fund_analysis",
+        "news_research"
+      ],
+      "user_goal": "",
+      "warnings": [
+        "sentiment_missing",
+        "transaction_history_incomplete"
+      ]
+    },
     "benchmark_summary": {
       "benchmark_history": {
         "chinabond": [
@@ -154,6 +203,36 @@
       "score": 0.967
     },
     "dca_plan_review": null,
+    "evidence_gap_diagnostics": {
+      "details": [
+        {
+          "code": "missing_transaction_history",
+          "recommended_next_data": "transaction ledger with BUY/SELL/DIVIDEND/FEE events",
+          "severity": "warning"
+        },
+        {
+          "code": "missing_recent_news",
+          "recommended_next_data": "recent fund or theme news",
+          "severity": "blocker"
+        },
+        {
+          "code": "missing_sentiment",
+          "recommended_next_data": "sentiment snapshot for held funds or themes",
+          "severity": "warning"
+        }
+      ],
+      "missing_benchmark_data": false,
+      "missing_fee_schedule": false,
+      "missing_fund_metadata": false,
+      "missing_holdings": false,
+      "missing_holdings_detail": false,
+      "missing_nav_history": false,
+      "missing_recent_news": true,
+      "missing_risk_preference": false,
+      "missing_sentiment": true,
+      "missing_transaction_history": true,
+      "missing_user_constraints": false
+    },
     "exposure_summary": {
       "fund_type_exposure": {
         "fund_type:balanced": 0.155556,
@@ -263,6 +342,55 @@
         "portfolio": "available",
         "redemption": "available",
         "research_plan": "available"
+      },
+      "analysis_plan": {
+        "available_inputs": [
+          "benchmark_data",
+          "benchmark_summary",
+          "factor_summary",
+          "fee_schedule",
+          "fee_summary",
+          "fund_metadata",
+          "holdings",
+          "holdings_detail",
+          "manager_summary",
+          "nav_history",
+          "peer_summary",
+          "redemption_summary",
+          "risk_preference",
+          "user_constraints"
+        ],
+        "blockers": [
+          "missing_recent_news"
+        ],
+        "decision_support_ready": false,
+        "evidence_requirements": [
+          "transaction history",
+          "recent news evidence"
+        ],
+        "missing_inputs": [
+          "missing_recent_news",
+          "missing_sentiment",
+          "missing_transaction_history"
+        ],
+        "next_data_to_fetch": [
+          "recent fund news",
+          "sentiment snapshot",
+          "transaction history"
+        ],
+        "recommended_mcp_capabilities": [
+          "market_news_search",
+          "sentiment_snapshot"
+        ],
+        "recommended_skill_sequence": [
+          "fund_analysis",
+          "news_research"
+        ],
+        "user_goal": "",
+        "warnings": [
+          "sentiment_missing",
+          "transaction_history_incomplete"
+        ]
       },
       "benchmark_summary": {
         "benchmark_history": {
@@ -415,6 +543,36 @@
         "score": 0.967
       },
       "dca_review": null,
+      "evidence_gap_diagnostics": {
+        "details": [
+          {
+            "code": "missing_transaction_history",
+            "recommended_next_data": "transaction ledger with BUY/SELL/DIVIDEND/FEE events",
+            "severity": "warning"
+          },
+          {
+            "code": "missing_recent_news",
+            "recommended_next_data": "recent fund or theme news",
+            "severity": "blocker"
+          },
+          {
+            "code": "missing_sentiment",
+            "recommended_next_data": "sentiment snapshot for held funds or themes",
+            "severity": "warning"
+          }
+        ],
+        "missing_benchmark_data": false,
+        "missing_fee_schedule": false,
+        "missing_fund_metadata": false,
+        "missing_holdings": false,
+        "missing_holdings_detail": false,
+        "missing_nav_history": false,
+        "missing_recent_news": true,
+        "missing_risk_preference": false,
+        "missing_sentiment": true,
+        "missing_transaction_history": true,
+        "missing_user_constraints": false
+      },
       "exposure_summary": {
         "fund_type_exposure": {
           "fund_type:balanced": 0.155556,

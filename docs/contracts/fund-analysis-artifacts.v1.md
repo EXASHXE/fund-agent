@@ -128,6 +128,8 @@ separate top-level artifacts in the current runtime.
 | `dca_drawdown_diagnostics` | `diagnostics` | No | object | No | Host supplies dca_plans and nav_history with recent drawdown. | DCA plan review under drawdown; diagnostic only. |
 | `cash_budget_diagnostics` | `diagnostics` | No | object | No | Host supplies portfolio and risk_profile with liquidity/budget constraints. | Cash reserve and short-term budget diagnostic. |
 | `professional_diagnostics` | `diagnostics` | No | object | No | Any professional diagnostic rule applies from host data. | Aggregated professional diagnostic results from local rules. |
+| `analysis_plan` | `planning_and_budget` | No | object | Yes | Normal structured `fund_analysis` portfolio/report run. | Deterministic planning artifact: available/missing inputs, recommended skill sequence, decision_support readiness, blockers, and next data to fetch. |
+| `evidence_gap_diagnostics` | `diagnostics` | No | object | Yes | Normal structured `fund_analysis` portfolio/report run. | Structured booleans for missing inputs with severity-coded details and recommended next data. |
 
 ## Report Output
 

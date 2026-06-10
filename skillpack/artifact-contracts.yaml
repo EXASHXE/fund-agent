@@ -314,3 +314,17 @@ contracts:
         top_level: true
         produced_when: any professional diagnostic rule applies from host data
         description: Aggregated professional diagnostic analysis results from local rules.
+      - key: analysis_plan
+        category: planning_and_budget
+        required: false
+        type: object
+        top_level: true
+        produced_when: normal structured fund_analysis portfolio/report run
+        description: Deterministic planning artifact listing available/missing inputs, recommended skill sequence, decision_support readiness, blockers, and next data to fetch.
+      - key: evidence_gap_diagnostics
+        category: diagnostics
+        required: false
+        type: object
+        top_level: true
+        produced_when: normal structured fund_analysis portfolio/report run
+        description: Structured booleans for missing inputs with severity-coded details and recommended next data.

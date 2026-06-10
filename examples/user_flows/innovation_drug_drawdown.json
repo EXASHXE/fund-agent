@@ -1,0 +1,115 @@
+{
+  "user_question": "创新药基金连续下跌，ASCO催化失败，是否止损或等待右侧？",
+  "portfolio": {
+    "as_of_date": "2026-06-01",
+    "total_value": 250000,
+    "cash_available": 30000,
+    "positions": [
+      {
+        "fund_code": "017436",
+        "fund_name": "广发全球精选",
+        "current_value": 55000,
+        "total_cost": 60000,
+        "shares": 38000,
+        "target_weight": 0.22,
+        "tags": ["QDII", "NASDAQ", "equity"]
+      },
+      {
+        "fund_code": "012421",
+        "fund_name": "中欧医疗创新C",
+        "current_value": 40000,
+        "total_cost": 55000,
+        "shares": 35000,
+        "target_weight": 0.20,
+        "tags": ["innovation_drug", "healthcare", "drawdown"]
+      },
+      {
+        "fund_code": "003547",
+        "fund_name": "鹏华丰禄债券",
+        "current_value": 65000,
+        "total_cost": 62000,
+        "shares": 59000,
+        "target_weight": 0.25,
+        "tags": ["bond", "income"]
+      },
+      {
+        "fund_code": "000198",
+        "fund_name": "天弘增利短债",
+        "current_value": 35000,
+        "total_cost": 34000,
+        "shares": 33000,
+        "target_weight": 0.15,
+        "tags": ["short_bond", "cash_substitute"]
+      },
+      {
+        "fund_code": "021620",
+        "fund_name": "华宝油气指数C",
+        "current_value": 25000,
+        "total_cost": 30000,
+        "shares": 22000,
+        "target_weight": 0.10,
+        "tags": ["energy", "commodity", "loss"]
+      }
+    ]
+  },
+  "fund_metadata": [
+    {"fund_code": "017436", "name": "广发全球精选", "fund_type": "QDII", "benchmark": "纳斯达克100", "theme": "QDII_NASDAQ"},
+    {"fund_code": "012421", "name": "中欧医疗创新C", "fund_type": "active", "benchmark": "中证医药", "theme": "innovation_drug"},
+    {"fund_code": "003547", "name": "鹏华丰禄债券", "fund_type": "bond", "benchmark": "中债综合指数", "theme": "bond"},
+    {"fund_code": "000198", "name": "天弘增利短债", "fund_type": "short_bond", "benchmark": "中债短融指数", "theme": "cash"},
+    {"fund_code": "021620", "name": "华宝油气指数C", "fund_type": "index", "benchmark": "标普石油天然气指数", "theme": "energy"}
+  ],
+  "transactions": [
+    {"fund_code": "012421", "action": "BUY", "date": "2025-02-01", "amount": 30000, "shares": 20000},
+    {"fund_code": "012421", "action": "BUY", "date": "2025-08-15", "amount": 15000, "shares": 9000},
+    {"fund_code": "012421", "action": "BUY", "date": "2026-01-10", "amount": 10000, "shares": 6500},
+    {"fund_code": "017436", "action": "BUY", "date": "2025-03-01", "amount": 35000, "shares": 22000},
+    {"fund_code": "017436", "action": "BUY", "date": "2025-09-10", "amount": 25000, "shares": 15000},
+    {"fund_code": "021620", "action": "BUY", "date": "2025-04-15", "amount": 20000, "shares": 16000},
+    {"fund_code": "021620", "action": "BUY", "date": "2025-11-01", "amount": 10000, "shares": 7000}
+  ],
+  "nav_history": {
+    "012421": [
+      {"date": "2025-02-01", "nav": 1.50},
+      {"date": "2025-08-15", "nav": 1.67},
+      {"date": "2025-12-31", "nav": 1.55},
+      {"date": "2026-03-01", "nav": 1.30},
+      {"date": "2026-06-01", "nav": 1.14}
+    ],
+    "017436": [
+      {"date": "2025-03-01", "nav": 1.59},
+      {"date": "2025-09-10", "nav": 1.67},
+      {"date": "2025-12-31", "nav": 1.75},
+      {"date": "2026-06-01", "nav": 1.45}
+    ],
+    "003547": [
+      {"date": "2025-01-10", "nav": 1.094},
+      {"date": "2025-12-31", "nav": 1.098},
+      {"date": "2026-06-01", "nav": 1.091}
+    ],
+    "000198": [
+      {"date": "2025-05-01", "nav": 1.042},
+      {"date": "2026-06-01", "nav": 1.045}
+    ],
+    "021620": [
+      {"date": "2025-04-15", "nav": 1.25},
+      {"date": "2025-11-01", "nav": 1.43},
+      {"date": "2025-12-31", "nav": 1.30},
+      {"date": "2026-06-01", "nav": 1.14}
+    ]
+  },
+  "fee_schedule": [
+    {"fund_code": "012421", "redemption_fee_pct": 0.005, "holding_period_days": 7},
+    {"fund_code": "021620", "redemption_fee_pct": 0.005, "holding_period_days": 7}
+  ],
+  "benchmark_data": [],
+  "news_evidence": [],
+  "sentiment_evidence": [],
+  "user_constraints": {
+    "risk_level": "moderate",
+    "max_single_fund_weight": 0.25,
+    "max_theme_weight": 0.30,
+    "liquidity_reserve_pct": 0.10,
+    "planned_holding_period": "1-3 years"
+  }
+}

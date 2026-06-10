@@ -30,6 +30,7 @@ from .ledger_stage import (
 )
 from .metrics_stage import compute_core_metrics
 from .optional_data_stage import build_optional_summaries
+from .planning_stage import build_analysis_plan
 from .report_stage import assemble_analysis_report_and_artifacts
 from .status_stage import (
     build_final_skill_output,
@@ -132,6 +133,14 @@ class FundAnalysisSkill:
                 metrics,
                 warnings,
             )
+            plan_result = build_analysis_plan(
+                bundle=bundle,
+                metrics=metrics,
+                optional=optional,
+                diagnostics=professional_diagnostics,
+                warnings=warnings,
+                user_goal=payload.get("user_goal"),
+            )
             artifacts_bundle = assemble_analysis_report_and_artifacts(
                 bundle=bundle,
                 metrics=metrics,
@@ -141,6 +150,7 @@ class FundAnalysisSkill:
                 reconciliation_report=reconciliation_report,
                 warnings=warnings,
                 professional_diagnostics=professional_diagnostics,
+                plan_result=plan_result,
             )
         except Exception as exc:
             return failed_output(

@@ -37,6 +37,7 @@ def assemble_analysis_report_and_artifacts(
     reconciliation_report: dict[str, Any] | None,
     warnings: list[str],
     professional_diagnostics: dict[str, Any] | None = None,
+    plan_result: dict[str, Any] | None = None,
 ) -> AssembledArtifactsBundle:
     report = FundAnalysisReport(
         fund_metrics=metrics.fund_metrics,
@@ -160,6 +161,17 @@ def assemble_analysis_report_and_artifacts(
                 report[key] = professional_diagnostics[key]
         artifacts["professional_diagnostics"] = professional_diagnostics
         report["professional_diagnostics"] = professional_diagnostics
+
+    # Analysis plan and evidence gap diagnostics
+    if plan_result:
+        analysis_plan = plan_result.get("analysis_plan")
+        evidence_gap = plan_result.get("evidence_gap_diagnostics")
+        if analysis_plan is not None:
+            artifacts["analysis_plan"] = analysis_plan
+            report["analysis_plan"] = analysis_plan
+        if evidence_gap is not None:
+            artifacts["evidence_gap_diagnostics"] = evidence_gap
+            report["evidence_gap_diagnostics"] = evidence_gap
 
     data_completeness = attach_report_artifacts(
         payload=bundle.payload,

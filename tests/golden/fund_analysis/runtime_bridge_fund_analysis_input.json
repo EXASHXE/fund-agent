@@ -12,6 +12,57 @@
       "redemption": "missing",
       "research_plan": "not_requested"
     },
+    "analysis_plan": {
+      "available_inputs": [
+        "fund_metadata",
+        "holdings",
+        "holdings_detail",
+        "nav_history",
+        "risk_preference",
+        "user_constraints"
+      ],
+      "blockers": [
+        "missing_fee_schedule",
+        "missing_recent_news"
+      ],
+      "decision_support_ready": false,
+      "evidence_requirements": [
+        "transaction history",
+        "fee schedule",
+        "benchmark recent movement",
+        "recent news evidence"
+      ],
+      "missing_inputs": [
+        "missing_benchmark_data",
+        "missing_fee_schedule",
+        "missing_recent_news",
+        "missing_sentiment",
+        "missing_transaction_history"
+      ],
+      "next_data_to_fetch": [
+        "fund fee schedule",
+        "recent benchmark movement",
+        "recent fund news",
+        "sentiment snapshot",
+        "transaction history"
+      ],
+      "recommended_mcp_capabilities": [
+        "benchmark_price_history",
+        "fund_fee_schedule",
+        "market_news_search",
+        "sentiment_snapshot"
+      ],
+      "recommended_skill_sequence": [
+        "fund_analysis",
+        "news_research"
+      ],
+      "user_goal": "",
+      "warnings": [
+        "benchmark_data_missing",
+        "sentiment_missing",
+        "transaction_history_incomplete"
+      ]
+    },
     "cash_budget_diagnostics": {
       "cash_ratio": 0.1,
       "errors": [],
@@ -59,6 +110,46 @@
       "score": 0.7
     },
     "dca_plan_review": null,
+    "evidence_gap_diagnostics": {
+      "details": [
+        {
+          "code": "missing_transaction_history",
+          "recommended_next_data": "transaction ledger with BUY/SELL/DIVIDEND/FEE events",
+          "severity": "warning"
+        },
+        {
+          "code": "missing_fee_schedule",
+          "recommended_next_data": "fee schedule and redemption rules",
+          "severity": "warning"
+        },
+        {
+          "code": "missing_benchmark_data",
+          "recommended_next_data": "benchmark price history",
+          "severity": "warning"
+        },
+        {
+          "code": "missing_recent_news",
+          "recommended_next_data": "recent fund or theme news",
+          "severity": "blocker"
+        },
+        {
+          "code": "missing_sentiment",
+          "recommended_next_data": "sentiment snapshot for held funds or themes",
+          "severity": "warning"
+        }
+      ],
+      "missing_benchmark_data": true,
+      "missing_fee_schedule": true,
+      "missing_fund_metadata": false,
+      "missing_holdings": false,
+      "missing_holdings_detail": false,
+      "missing_nav_history": false,
+      "missing_recent_news": true,
+      "missing_risk_preference": false,
+      "missing_sentiment": true,
+      "missing_transaction_history": true,
+      "missing_user_constraints": false
+    },
     "exposure_summary": {
       "fund_type_exposure": {
         "fund_type:active": 1.0
@@ -83,6 +174,57 @@
         "portfolio": "available",
         "redemption": "missing",
         "research_plan": "not_requested"
+      },
+      "analysis_plan": {
+        "available_inputs": [
+          "fund_metadata",
+          "holdings",
+          "holdings_detail",
+          "nav_history",
+          "risk_preference",
+          "user_constraints"
+        ],
+        "blockers": [
+          "missing_fee_schedule",
+          "missing_recent_news"
+        ],
+        "decision_support_ready": false,
+        "evidence_requirements": [
+          "transaction history",
+          "fee schedule",
+          "benchmark recent movement",
+          "recent news evidence"
+        ],
+        "missing_inputs": [
+          "missing_benchmark_data",
+          "missing_fee_schedule",
+          "missing_recent_news",
+          "missing_sentiment",
+          "missing_transaction_history"
+        ],
+        "next_data_to_fetch": [
+          "fund fee schedule",
+          "recent benchmark movement",
+          "recent fund news",
+          "sentiment snapshot",
+          "transaction history"
+        ],
+        "recommended_mcp_capabilities": [
+          "benchmark_price_history",
+          "fund_fee_schedule",
+          "market_news_search",
+          "sentiment_snapshot"
+        ],
+        "recommended_skill_sequence": [
+          "fund_analysis",
+          "news_research"
+        ],
+        "user_goal": "",
+        "warnings": [
+          "benchmark_data_missing",
+          "sentiment_missing",
+          "transaction_history_incomplete"
+        ]
       },
       "cash_budget_diagnostics": {
         "cash_ratio": 0.1,
@@ -140,6 +282,46 @@
         "score": 0.7
       },
       "dca_review": null,
+      "evidence_gap_diagnostics": {
+        "details": [
+          {
+            "code": "missing_transaction_history",
+            "recommended_next_data": "transaction ledger with BUY/SELL/DIVIDEND/FEE events",
+            "severity": "warning"
+          },
+          {
+            "code": "missing_fee_schedule",
+            "recommended_next_data": "fee schedule and redemption rules",
+            "severity": "warning"
+          },
+          {
+            "code": "missing_benchmark_data",
+            "recommended_next_data": "benchmark price history",
+            "severity": "warning"
+          },
+          {
+            "code": "missing_recent_news",
+            "recommended_next_data": "recent fund or theme news",
+            "severity": "blocker"
+          },
+          {
+            "code": "missing_sentiment",
+            "recommended_next_data": "sentiment snapshot for held funds or themes",
+            "severity": "warning"
+          }
+        ],
+        "missing_benchmark_data": true,
+        "missing_fee_schedule": true,
+        "missing_fund_metadata": false,
+        "missing_holdings": false,
+        "missing_holdings_detail": false,
+        "missing_nav_history": false,
+        "missing_recent_news": true,
+        "missing_risk_preference": false,
+        "missing_sentiment": true,
+        "missing_transaction_history": true,
+        "missing_user_constraints": false
+      },
       "exposure_summary": {
         "fund_type_exposure": {
           "fund_type:active": 1.0

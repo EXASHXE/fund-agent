@@ -57,9 +57,12 @@ Rules of thumb:
 ## Purpose
 
 Use `fund_analysis` to turn host-provided fund and portfolio data into
-deterministic portfolio artifacts, risk flags, warnings, and `HardEvidence`.
-This skill is the analytical layer for personal fund review. It is not a trade
-decision engine and never emits formal `Decision` or `ExecutionLedger` objects.
+deterministic portfolio artifacts, risk flags, warnings, `HardEvidence`,
+and an `analysis_plan` that tells the external host/agent what data is
+available, what is missing, which skills to call next, and whether
+`decision_support` is ready. This skill is the analytical layer for
+personal fund review. It is not a trade decision engine and never emits
+formal `Decision` or `ExecutionLedger` objects.
 
 ## When to use this skill
 
@@ -220,6 +223,64 @@ provided, omit scenario claims or mark the scenario gap in warnings.
 
 See `references/market-scenario-policy.md`.
 
+## Analysis plan and evidence gaps
+
+`fund_analysis` now outputs two additional artifacts:
+
+### analysis_plan
+
+A deterministic artifact that tells the external host/agent:
+
+- **available_inputs**: what data the skill already received.
+- **missing_inputs**: what data is absent or insufficient.
+- **recommended_skill_sequence**: which skills to call next, in order.
+- **recommended_mcp_capabilities**: provider-agnostic MCP capabilities
+  the host should inject (e.g. `market_news_search`, `benchmark_price_history`).
+- **evidence_requirements**: what evidence is needed before actionable advice.
+- **decision_support_ready**: whether the evidence is sufficient to call
+  `decision_support`. Default is `false`; only `true` when holdings,
+  deterministic metrics, fee data, and recent evidence are all available
+  and no blockers exist.
+- **blockers**: items that prevent formal `decision_support` (e.g.
+  `missing_holdings`, `missing_recent_news`, `redemption_fee_blocker`).
+- **warnings**: non-blocking concerns (e.g. `sentiment_missing`,
+  `benchmark_data_missing`, `theme_overweight_warning`).
+- **next_data_to_fetch**: concrete data items the host should obtain next.
+
+**Important**: `analysis_plan` is a deterministic artifact for the
+external host/agent to consume. It is NOT an autonomous planner. The
+host/agent owns all orchestration decisions.
+
+### evidence_gap_diagnostics
+
+Structured booleans for missing inputs:
+
+- `missing_holdings`, `missing_transaction_history`,
+  `missing_fund_metadata`, `missing_fee_schedule`,
+  `missing_nav_history`, `missing_benchmark_data`,
+  `missing_recent_news`, `missing_sentiment`,
+  `missing_holdings_detail`, `missing_user_constraints`,
+  `missing_risk_preference`
+- `details`: list of `{code, severity, recommended_next_data}` items.
+
+### How to use analysis_plan
+
+1. Call `fund_analysis` first with whatever data you have.
+2. Read `analysis_plan.missing_inputs` and `evidence_gap_diagnostics`.
+3. If `missing_recent_news` is true, call `news_research` with
+   host-injected MCP responses.
+4. If `missing_sentiment` is true and the user asks for action or timing,
+   call `sentiment_analysis`.
+5. If evidence is sufficient but no formal decision should be made yet,
+   call `thesis_generation`.
+6. **Only** call `decision_support` when
+   `analysis_plan.decision_support_ready` is `true`.
+7. If evidence is missing, stale, or insufficient, output WATCH or
+   missing-evidence guidance rather than direct buy/sell advice.
+
+**Do not hallucinate live data.** If news, sentiment, benchmark, or fee
+data is missing, mark it as a gap and let the host fetch it.
+
 ## Outputs
 
 ### Artifacts produced
@@ -243,6 +304,11 @@ See `references/market-scenario-policy.md`.
 - `report_sections` — deterministic host-displayable report sections
 - `report_outline` — ordered section id/title/status summary
 - `report_quality_gate` — publishability gate for professional reports
+- `analysis_plan` — deterministic planning artifact: available/missing inputs,
+  recommended skill sequence, decision_support readiness, blockers, warnings,
+  next data to fetch
+- `evidence_gap_diagnostics` — structured booleans for missing inputs with
+  severity-coded details
 - `warnings`
 
 Artifact availability depends on host-provided data.
@@ -339,6 +405,33 @@ call `decision_support`. Active decisions require trade-specific evidence refs.
   "required_mcp_capabilities": []
 }
 ```
+
+## OpenCode plugin adapter boundary
+
+The OpenCode plugin adapter (`opencode.plugin.js`) provides metadata and
+doc-reader functionality only. It lets the agent discover fund-agent skills
+and read SKILL.md files. It does NOT launch Python, call the runtime bridge,
+fetch live data, or manage MCP servers. Runtime execution requires host,
+manual, Python subprocess, or other integration outside the OpenCode plugin.
+
+## Chinese personal fund example
+
+A typical Chinese fund user scenario:
+
+1. 用户持有半导体基金、创新药基金、债基和现金仓，询问是否减仓或加仓。
+2. `fund_analysis` computes holdings, fees, risk, and evidence gaps.
+3. `analysis_plan` shows `missing_recent_news` and `missing_benchmark_data`
+   as blockers; `decision_support_ready` is `false`.
+4. Agent calls `news_research` to get recent semiconductor and pharma news
+   via host-injected MCP.
+5. Agent calls `sentiment_analysis` if the user asked for action/timing.
+6. With fresh evidence, `decision_support_ready` may become `true`.
+7. Agent calls `decision_support` for a formal WATCH or TRIM decision.
+8. Agent renders a Chinese report with risk warnings, evidence status,
+   and cautious guidance.
+
+If recent news or benchmark data is missing, output WATCH / missing-evidence
+guidance rather than direct buy/sell advice.
 
 ## Report-writing guidance for host agents
 

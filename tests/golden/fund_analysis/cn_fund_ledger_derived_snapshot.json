@@ -12,6 +12,53 @@
       "redemption": "available",
       "research_plan": "not_requested"
     },
+    "analysis_plan": {
+      "available_inputs": [
+        "fee_schedule",
+        "fee_summary",
+        "fund_metadata",
+        "holdings",
+        "holdings_detail",
+        "nav_history",
+        "redemption_summary",
+        "risk_preference",
+        "transactions",
+        "user_constraints"
+      ],
+      "blockers": [
+        "missing_recent_news"
+      ],
+      "decision_support_ready": false,
+      "evidence_requirements": [
+        "benchmark recent movement",
+        "recent news evidence"
+      ],
+      "missing_inputs": [
+        "missing_benchmark_data",
+        "missing_recent_news",
+        "missing_sentiment"
+      ],
+      "next_data_to_fetch": [
+        "recent benchmark movement",
+        "recent fund news",
+        "sentiment snapshot"
+      ],
+      "recommended_mcp_capabilities": [
+        "benchmark_price_history",
+        "market_news_search",
+        "sentiment_snapshot"
+      ],
+      "recommended_skill_sequence": [
+        "fund_analysis",
+        "news_research"
+      ],
+      "user_goal": "",
+      "warnings": [
+        "benchmark_data_missing",
+        "sentiment_missing",
+        "theme_overweight_warning"
+      ]
+    },
     "cash_budget_diagnostics": {
       "cash_ratio": 0.0981,
       "errors": [
@@ -181,6 +228,36 @@
       "unresolved_events": [],
       "warnings": []
     },
+    "evidence_gap_diagnostics": {
+      "details": [
+        {
+          "code": "missing_benchmark_data",
+          "recommended_next_data": "benchmark price history",
+          "severity": "warning"
+        },
+        {
+          "code": "missing_recent_news",
+          "recommended_next_data": "recent fund or theme news",
+          "severity": "blocker"
+        },
+        {
+          "code": "missing_sentiment",
+          "recommended_next_data": "sentiment snapshot for held funds or themes",
+          "severity": "warning"
+        }
+      ],
+      "missing_benchmark_data": true,
+      "missing_fee_schedule": false,
+      "missing_fund_metadata": false,
+      "missing_holdings": false,
+      "missing_holdings_detail": false,
+      "missing_nav_history": false,
+      "missing_recent_news": true,
+      "missing_risk_preference": false,
+      "missing_sentiment": true,
+      "missing_transaction_history": false,
+      "missing_user_constraints": false
+    },
     "exposure_summary": {
       "fund_type_exposure": {
         "fund_type:balanced": 0.338472,
@@ -234,6 +311,53 @@
         "portfolio": "derived",
         "redemption": "available",
         "research_plan": "not_requested"
+      },
+      "analysis_plan": {
+        "available_inputs": [
+          "fee_schedule",
+          "fee_summary",
+          "fund_metadata",
+          "holdings",
+          "holdings_detail",
+          "nav_history",
+          "redemption_summary",
+          "risk_preference",
+          "transactions",
+          "user_constraints"
+        ],
+        "blockers": [
+          "missing_recent_news"
+        ],
+        "decision_support_ready": false,
+        "evidence_requirements": [
+          "benchmark recent movement",
+          "recent news evidence"
+        ],
+        "missing_inputs": [
+          "missing_benchmark_data",
+          "missing_recent_news",
+          "missing_sentiment"
+        ],
+        "next_data_to_fetch": [
+          "recent benchmark movement",
+          "recent fund news",
+          "sentiment snapshot"
+        ],
+        "recommended_mcp_capabilities": [
+          "benchmark_price_history",
+          "market_news_search",
+          "sentiment_snapshot"
+        ],
+        "recommended_skill_sequence": [
+          "fund_analysis",
+          "news_research"
+        ],
+        "user_goal": "",
+        "warnings": [
+          "benchmark_data_missing",
+          "sentiment_missing",
+          "theme_overweight_warning"
+        ]
       },
       "cash_budget_diagnostics": {
         "cash_ratio": 0.0981,
@@ -359,6 +483,36 @@
         "warnings": [
           "DCA plan sample_ledger_monthly for SYNLED001 exceeds concentration limit"
         ]
+      },
+      "evidence_gap_diagnostics": {
+        "details": [
+          {
+            "code": "missing_benchmark_data",
+            "recommended_next_data": "benchmark price history",
+            "severity": "warning"
+          },
+          {
+            "code": "missing_recent_news",
+            "recommended_next_data": "recent fund or theme news",
+            "severity": "blocker"
+          },
+          {
+            "code": "missing_sentiment",
+            "recommended_next_data": "sentiment snapshot for held funds or themes",
+            "severity": "warning"
+          }
+        ],
+        "missing_benchmark_data": true,
+        "missing_fee_schedule": false,
+        "missing_fund_metadata": false,
+        "missing_holdings": false,
+        "missing_holdings_detail": false,
+        "missing_nav_history": false,
+        "missing_recent_news": true,
+        "missing_risk_preference": false,
+        "missing_sentiment": true,
+        "missing_transaction_history": false,
+        "missing_user_constraints": false
       },
       "exposure_summary": {
         "fund_type_exposure": {
