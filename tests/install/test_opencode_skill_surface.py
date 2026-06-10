@@ -161,6 +161,8 @@ def _eval_plugin_function(function_name: str, args: dict) -> dict:
              str(staged_path), function_name, json.dumps(args)],
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=30,
         )
         assert result.returncode == 0, (
