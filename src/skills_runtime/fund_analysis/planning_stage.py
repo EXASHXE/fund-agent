@@ -38,16 +38,16 @@ def build_analysis_plan(
         if is_missing and key != "details"
     ]
     blockers = _infer_blockers(evidence_gap, diagnostics)
+    decision_support_ready = _compute_decision_support_ready(
+        bundle, metrics, evidence_gap, diagnostics, blockers,
+    )
     plan_warnings = _infer_warnings(evidence_gap, diagnostics, warnings)
     recommended_skills = _infer_recommended_skills(
-        evidence_gap, user_goal, blockers,
+        evidence_gap, user_goal, decision_support_ready,
     )
     recommended_mcp = _infer_recommended_mcp_capabilities(evidence_gap)
     evidence_requirements = _infer_evidence_requirements(evidence_gap)
     next_data_to_fetch = _infer_next_data_to_fetch(evidence_gap)
-    decision_support_ready = _compute_decision_support_ready(
-        bundle, metrics, evidence_gap, diagnostics, blockers,
-    )
 
     return {
         "analysis_plan": {
@@ -103,6 +103,11 @@ def _infer_available_inputs(
             available.append("factor_summary")
         if optional.manager_summary is not None:
             available.append("manager_summary")
+    raw_payload = bundle.payload or {}
+    if any(raw_payload.get(k) for k in ("news_evidence", "recent_news", "news_items")):
+        available.append("recent_news")
+    if any(raw_payload.get(k) for k in ("sentiment_evidence", "sentiment_snapshot")):
+        available.append("sentiment")
     return available
 
 
@@ -117,8 +122,15 @@ def _build_evidence_gap_diagnostics(
     missing_fee_schedule = not bundle.fee_schedules and not bundle.redemption_rules
     missing_nav_history = not bundle.nav_history or not bundle.nav_data
     missing_benchmark_data = not bundle.benchmarks and not bundle.benchmark_history
-    missing_recent_news = True
-    missing_sentiment = True
+    raw_payload = bundle.payload or {}
+    news_keys = ("news_evidence", "recent_news", "news_items")
+    sentiment_keys = ("sentiment_evidence", "sentiment_snapshot")
+    missing_recent_news = not any(
+        raw_payload.get(k) for k in news_keys
+    )
+    missing_sentiment = not any(
+        raw_payload.get(k) for k in sentiment_keys
+    )
     missing_holdings_detail = not bundle.holdings
     missing_user_constraints = not bundle.constraints
     missing_risk_preference = not bundle.risk_profile
@@ -277,7 +289,7 @@ def _infer_warnings(
 def _infer_recommended_skills(
     evidence_gap: dict[str, Any],
     user_goal: str | None,
-    blockers: list[str],
+    decision_support_ready: bool,
 ) -> list[str]:
     skills: list[str] = ["fund_analysis"]
     if evidence_gap.get("missing_recent_news"):
@@ -291,10 +303,9 @@ def _infer_recommended_skills(
         )
         if any(kw in goal for kw in action_keywords):
             skills.append("sentiment_analysis")
-    has_blockers = bool(blockers)
-    if not has_blockers and not evidence_gap.get("missing_recent_news"):
+    if not evidence_gap.get("missing_recent_news") and not evidence_gap.get("missing_holdings"):
         skills.append("thesis_generation")
-    if not has_blockers:
+    if decision_support_ready:
         skills.append("decision_support")
     return skills
 

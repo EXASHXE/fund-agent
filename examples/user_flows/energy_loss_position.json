@@ -43,12 +43,12 @@
       }
     ]
   },
-  "fund_metadata": [
-    {"fund_code": "021620", "name": "华宝油气指数C", "fund_type": "index", "benchmark": "标普石油天然气指数", "theme": "energy"},
-    {"fund_code": "008253", "name": "国泰中证半导体ETF联接C", "fund_type": "index", "benchmark": "中证半导体指数", "theme": "semiconductor"},
-    {"fund_code": "003547", "name": "鹏华丰禄债券", "fund_type": "bond", "benchmark": "中债综合指数", "theme": "bond"},
-    {"fund_code": "000198", "name": "天弘增利短债", "fund_type": "short_bond", "benchmark": "中债短融指数", "theme": "cash"}
-  ],
+  "fund_profiles": {
+    "021620": {"fund_code": "021620", "name": "华宝油气指数C", "fund_type": "index", "benchmark": "标普石油天然气指数", "theme": "energy"},
+    "008253": {"fund_code": "008253", "name": "国泰中证半导体ETF联接C", "fund_type": "index", "benchmark": "中证半导体指数", "theme": "semiconductor"},
+    "003547": {"fund_code": "003547", "name": "鹏华丰禄债券", "fund_type": "bond", "benchmark": "中债综合指数", "theme": "bond"},
+    "000198": {"fund_code": "000198", "name": "天弘增利短债", "fund_type": "short_bond", "benchmark": "中债短融指数", "theme": "cash"}
+  },
   "transactions": [
     {"fund_code": "021620", "action": "BUY", "date": "2025-01-15", "amount": 20000, "shares": 14000},
     {"fund_code": "021620", "action": "BUY", "date": "2025-06-01", "amount": 15000, "shares": 9500},
@@ -88,13 +88,17 @@
       {"date": "2026-06-01", "nav": 1.045}
     ]
   },
-  "fee_schedule": [
-    {"fund_code": "021620", "redemption_fee_pct": 0.005, "holding_period_days": 7}
-  ],
-  "benchmark_data": [],
+  "fee_schedules": {
+    "021620": {"management_fee": 0.01}
+  },
+  "redemption_rules": {
+    "021620": {"holding_period_days": 7, "redemption_fee_pct": 0.005}
+  },
+  "benchmarks": {},
+  "benchmark_history": {},
   "news_evidence": [],
   "sentiment_evidence": [],
-  "user_constraints": {
+  "constraints": {
     "risk_level": "moderate",
     "max_single_fund_weight": 0.30,
     "max_theme_weight": 0.35,

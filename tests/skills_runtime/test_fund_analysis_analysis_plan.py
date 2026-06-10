@@ -347,13 +347,15 @@ class TestUserFlowFixtures:
         required_keys = {
             "user_question",
             "portfolio",
-            "fund_metadata",
+            "fund_profiles",
             "nav_history",
-            "fee_schedule",
-            "benchmark_data",
+            "fee_schedules",
+            "redemption_rules",
+            "benchmarks",
+            "benchmark_history",
             "news_evidence",
             "sentiment_evidence",
-            "user_constraints",
+            "constraints",
         }
         for filename in self.USER_FLOW_FILES:
             data = self._load_fixture(filename)

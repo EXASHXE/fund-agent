@@ -139,7 +139,7 @@ class FundAnalysisSkill:
                 optional=optional,
                 diagnostics=professional_diagnostics,
                 warnings=warnings,
-                user_goal=payload.get("user_goal"),
+                user_goal=payload.get("user_goal") or payload.get("user_question"),
             )
             artifacts_bundle = assemble_analysis_report_and_artifacts(
                 bundle=bundle,
