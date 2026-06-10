@@ -101,47 +101,25 @@ class TestNoRequiredEnvVars:
 
 
 class TestNoCredentialsRequired:
-    def test_list_skills_without_credentials(self):
-        env = os.environ.copy()
+    def test_list_skills_without_credentials(self, monkeypatch):
         for key in [
             "OPENAI_API_KEY", "TAVILY_API_KEY", "FINNHUB_API_KEY",
             "EXA_API_KEY", "FIRECRAWL_API_KEY",
         ]:
-            env.pop(key, None)
-        result = subprocess.run(
-            [sys.executable, str(ROOT / "scripts" / "run_skill.py"), "--list-skills", "--pretty"],
-            capture_output=True,
-            timeout=60,
-            cwd=str(ROOT),
-            env=env,
-        )
-        assert result.returncode == 0
-        stdout = result.stdout.decode("utf-8", errors="replace") if isinstance(result.stdout, bytes) else (result.stdout or "")
-        data = json.loads(stdout)
+            monkeypatch.delenv(key, raising=False)
+        from tests.support.bridge_runner import run_bridge_inprocess_metadata
+        data = run_bridge_inprocess_metadata(list_skills=True, pretty=True)
         assert data.get("ok") is True
 
-    def test_fund_analysis_without_credentials(self):
-        env = os.environ.copy()
+    def test_fund_analysis_without_credentials(self, monkeypatch):
         for key in [
             "OPENAI_API_KEY", "TAVILY_API_KEY", "FINNHUB_API_KEY",
             "EXA_API_KEY", "FIRECRAWL_API_KEY",
         ]:
-            env.pop(key, None)
-        result = subprocess.run(
-            [
-                sys.executable, str(ROOT / "scripts" / "run_skill.py"),
-                "--skill", "fund_analysis",
-                "--input", str(ROOT / "examples" / "scenarios" / "cn_fund_7d_redemption_fee.json"),
-                "--pretty",
-            ],
-            capture_output=True,
-            timeout=60,
-            cwd=str(ROOT),
-            env=env,
-        )
-        assert result.returncode == 0
-        stdout = result.stdout.decode("utf-8", errors="replace") if isinstance(result.stdout, bytes) else (result.stdout or "")
-        data = json.loads(stdout)
+            monkeypatch.delenv(key, raising=False)
+        from tests.support.bridge_runner import run_bridge_inprocess_json
+        input_text = (ROOT / "examples" / "scenarios" / "cn_fund_7d_redemption_fee.json").read_text(encoding="utf-8")
+        data = run_bridge_inprocess_json(skill="fund_analysis", input_text=input_text, pretty=True)
         assert data.get("ok") is True
 
 

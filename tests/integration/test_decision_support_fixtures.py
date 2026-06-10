@@ -1,6 +1,6 @@
 """Integration tests for decision_support fixture files.
 
-Runs each fixture through the runtime bridge CLI and verifies contract
+Runs each fixture through the runtime bridge in-process and verifies contract
 boundaries, not exact investment conclusions.
 """
 
@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.support.bridge_runner import parse_stdout_json, run_bridge_subprocess
+from tests.support.bridge_runner import run_bridge_inprocess_json
 from tests.support.formal_boundary import (
     assert_active_decisions_have_anchors,
     assert_no_fake_rationale_anchors,
@@ -32,19 +32,9 @@ FIXTURES = [
 ]
 
 
-def _run(fixture_name: str):
-    input_path = FIXTURE_DIR / fixture_name
-    return run_bridge_subprocess([
-        "--skill",
-        "decision_support",
-        "--input",
-        str(input_path),
-        "--pretty",
-    ])
-
-
-def _parse(proc) -> dict:
-    return parse_stdout_json(proc)
+def _run(fixture_name: str) -> dict:
+    input_text = (FIXTURE_DIR / fixture_name).read_text(encoding="utf-8")
+    return run_bridge_inprocess_json(skill="decision_support", input_text=input_text)
 
 
 @pytest.mark.parametrize("fixture_name,expected_status,_", FIXTURES)
@@ -63,18 +53,7 @@ def test_fixture_parses_json(fixture_name, expected_status, _):
 
 @pytest.mark.parametrize("fixture_name,expected_status,expects_artifacts", FIXTURES)
 def test_fixture_runs_through_bridge(fixture_name, expected_status, expects_artifacts):
-    proc = _run(fixture_name)
-    if expected_status == "FAILED":
-        assert proc.returncode == 0, (
-            f"Bridge should exit 0 even when skill status is FAILED: "
-            f"rc={proc.returncode} stderr={proc.stderr!r}"
-        )
-    else:
-        assert proc.returncode == 0, (
-            f"Bridge failed for {fixture_name}: rc={proc.returncode} stderr={proc.stderr!r}"
-        )
-
-    envelope = _parse(proc)
+    envelope = _run(fixture_name)
     assert envelope.get("skill_name") == "decision_support"
     assert envelope.get("status") in {"OK", "PARTIAL", "FAILED"}
 
@@ -94,8 +73,7 @@ def test_fixture_runs_through_bridge(fixture_name, expected_status, expects_arti
 
 @pytest.mark.parametrize("fixture_name,expected_status,_", FIXTURES)
 def test_formal_decisions_have_structured_justification(fixture_name, expected_status, _):
-    proc = _run(fixture_name)
-    envelope = _parse(proc)
+    envelope = _run(fixture_name)
 
     if expected_status == "FAILED":
         assert extract_formal_decisions(envelope) == []
@@ -112,8 +90,7 @@ def test_formal_decisions_have_structured_justification(fixture_name, expected_s
 
 
 def test_active_buy_with_evidence_produces_decision():
-    proc = _run("single_active_buy_with_evidence.json")
-    envelope = _parse(proc)
+    envelope = _run("single_active_buy_with_evidence.json")
     assert envelope["status"] == "OK"
     artifacts = envelope.get("artifacts") or {}
     assert "decision" in artifacts
@@ -123,8 +100,7 @@ def test_active_buy_with_evidence_produces_decision():
 
 
 def test_active_buy_without_evidence_is_failed():
-    proc = _run("single_active_buy_without_evidence_invalid.json")
-    envelope = _parse(proc)
+    envelope = _run("single_active_buy_without_evidence_invalid.json")
     assert envelope["status"] == "FAILED"
     errors = envelope.get("errors") or []
     error_codes = {e.get("code", "") for e in errors}
@@ -132,8 +108,7 @@ def test_active_buy_without_evidence_is_failed():
 
 
 def test_passive_hold_without_evidence_is_ok():
-    proc = _run("single_passive_hold_without_evidence.json")
-    envelope = _parse(proc)
+    envelope = _run("single_passive_hold_without_evidence.json")
     assert envelope["status"] in {"OK", "PARTIAL"}
     artifacts = envelope.get("artifacts") or {}
     decision = artifacts.get("decision") or {}
@@ -141,8 +116,7 @@ def test_passive_hold_without_evidence_is_ok():
 
 
 def test_trade_plan_capped_produces_capped_decision():
-    proc = _run("trade_plan_selected_trade_with_caps.json")
-    envelope = _parse(proc)
+    envelope = _run("trade_plan_selected_trade_with_caps.json")
     assert envelope["status"] == "OK"
     artifacts = envelope.get("artifacts") or {}
     decisions = artifacts.get("decisions") or []
@@ -154,8 +128,7 @@ def test_trade_plan_capped_produces_capped_decision():
 
 
 def test_forbidden_action_not_emitted():
-    proc = _run("trade_plan_forbidden_action_skipped.json")
-    envelope = _parse(proc)
+    envelope = _run("trade_plan_forbidden_action_skipped.json")
     artifacts = envelope.get("artifacts") or {}
     decisions = artifacts.get("decisions") or []
     decision = artifacts.get("decision") or {}
@@ -173,8 +146,7 @@ def test_forbidden_action_not_emitted():
 
 
 def test_no_evidence_downgrades():
-    proc = _run("trade_plan_no_evidence_downgraded.json")
-    envelope = _parse(proc)
+    envelope = _run("trade_plan_no_evidence_downgraded.json")
     artifacts = envelope.get("artifacts") or {}
     decisions = artifacts.get("decisions") or []
     decision = artifacts.get("decision") or {}

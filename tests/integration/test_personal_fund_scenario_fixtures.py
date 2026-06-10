@@ -7,7 +7,12 @@ from pathlib import Path
 
 import pytest
 
-from tests.support.bridge_runner import parse_stdout_json, run_bridge_subprocess
+from tests.support.bridge_runner import (
+    run_bridge_inprocess_json,
+    run_bridge_inprocess_metadata,
+    run_bridge_inprocess_text,
+    run_bridge_subprocess,
+)
 from tests.support.formal_boundary import assert_no_formal_decision_artifacts
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -29,12 +34,9 @@ LEDGER_DERIVED_ARTIFACTS = {
 }
 
 
-def _run(args: list[str]):
-    return run_bridge_subprocess(args)
-
-
-def _load_json_output(proc) -> dict:
-    return parse_stdout_json(proc)
+def _run_fund_analysis(fixture_name: str) -> dict:
+    input_text = (SCENARIO_DIR / fixture_name).read_text(encoding="utf-8")
+    return run_bridge_inprocess_json(skill="fund_analysis", input_text=input_text)
 
 
 @pytest.mark.parametrize("fixture_name", SCENARIO_FIXTURES)
@@ -49,18 +51,13 @@ def test_scenario_fixture_exists_and_uses_payload_envelope(fixture_name: str) ->
 
 @pytest.mark.parametrize("fixture_name", SCENARIO_FIXTURES)
 def test_scenario_fixture_validates_successfully(fixture_name: str) -> None:
-    path = SCENARIO_DIR / fixture_name
-    proc = _run([
-        "--skill",
-        "fund_analysis",
-        "--input",
-        str(path),
-        "--validate-input",
-        "--pretty",
-    ])
-    assert proc.returncode == 0, proc.stderr
-
-    out = _load_json_output(proc)
+    input_text = (SCENARIO_DIR / fixture_name).read_text(encoding="utf-8")
+    out = run_bridge_inprocess_metadata(
+        skill="fund_analysis",
+        validate_input=True,
+        input_text=input_text,
+        pretty=True,
+    )
     result = out["validation_result"]
     assert out["ok"] is True
     assert result["valid"] is True
@@ -72,17 +69,7 @@ def test_scenario_fixture_validates_successfully(fixture_name: str) -> None:
 def test_scenario_fixture_runs_without_formal_decision_artifacts(
     fixture_name: str,
 ) -> None:
-    path = SCENARIO_DIR / fixture_name
-    proc = _run([
-        "--skill",
-        "fund_analysis",
-        "--input",
-        str(path),
-        "--pretty",
-    ])
-    assert proc.returncode == 0, proc.stderr
-
-    out = _load_json_output(proc)
+    out = _run_fund_analysis(fixture_name)
     assert out["ok"] is True
     assert out["skill_name"] == "fund_analysis"
     assert out["status"] in {"OK", "PARTIAL"}
@@ -102,36 +89,19 @@ def test_scenario_fixture_runs_without_formal_decision_artifacts(
 @pytest.mark.parametrize("fixture_name", SCENARIO_FIXTURES)
 def test_scenario_fixture_emit_report_markdown_when_sections_exist(
     fixture_name: str,
-    tmp_path: Path,
 ) -> None:
     path = SCENARIO_DIR / fixture_name
-    run_proc = _run([
-        "--skill",
-        "fund_analysis",
-        "--input",
-        str(path),
-        "--pretty",
-    ])
-    assert run_proc.returncode == 0, run_proc.stderr
-    run_out = _load_json_output(run_proc)
+    run_out = _run_fund_analysis(fixture_name)
     if not run_out["artifacts"].get("report_sections"):
         return
 
-    report_path = tmp_path / f"{path.stem}.md"
-    proc = _run([
-        "--skill",
-        "fund_analysis",
-        "--input",
-        str(path),
-        "--emit-report",
-        "markdown",
-        "--output",
-        str(report_path),
-    ])
-    assert proc.returncode == 0, proc.stderr
-    assert proc.stdout == ""
-
-    text = report_path.read_text(encoding="utf-8")
+    input_text = path.read_text(encoding="utf-8")
+    raw = run_bridge_inprocess_text(
+        skill="fund_analysis",
+        input_text=input_text,
+        emit_report="markdown",
+    )
+    text = raw.replace("\r\n", "\n")
     assert text.startswith("# Personal fund report\n")
     assert "## Executive summary" in text
     with pytest.raises(json.JSONDecodeError):
@@ -139,29 +109,18 @@ def test_scenario_fixture_emit_report_markdown_when_sections_exist(
 
 
 def test_ledger_derived_scenario_detects_mode_and_surfaces_current_artifacts() -> None:
-    path = SCENARIO_DIR / "cn_fund_ledger_derived_snapshot.json"
+    input_text = (SCENARIO_DIR / "cn_fund_ledger_derived_snapshot.json").read_text(encoding="utf-8")
 
-    validate_proc = _run([
-        "--skill",
-        "fund_analysis",
-        "--input",
-        str(path),
-        "--validate-input",
-        "--pretty",
-    ])
-    assert validate_proc.returncode == 0, validate_proc.stderr
-    validation = _load_json_output(validate_proc)["validation_result"]
+    validation_out = run_bridge_inprocess_metadata(
+        skill="fund_analysis",
+        validate_input=True,
+        input_text=input_text,
+        pretty=True,
+    )
+    validation = validation_out["validation_result"]
     assert validation["detected_input_mode"] == "ledger_derived"
 
-    run_proc = _run([
-        "--skill",
-        "fund_analysis",
-        "--input",
-        str(path),
-        "--pretty",
-    ])
-    assert run_proc.returncode == 0, run_proc.stderr
-    out = _load_json_output(run_proc)
+    out = run_bridge_inprocess_json(skill="fund_analysis", input_text=input_text)
     assert out["ok"] is True
 
     artifacts = out["artifacts"]
@@ -175,45 +134,35 @@ def test_ledger_derived_scenario_detects_mode_and_surfaces_current_artifacts() -
 # ── Scenario-specific diagnostic assertions ────────────────────────────────
 
 def test_cn_fund_7d_redemption_fee_emits_redemption_fee_risk():
-    path = SCENARIO_DIR / "cn_fund_7d_redemption_fee.json"
-    proc = _run(["--skill", "fund_analysis", "--input", str(path), "--pretty"])
-    artifacts = _load_json_output(proc)["artifacts"]
+    artifacts = _run_fund_analysis("cn_fund_7d_redemption_fee.json")["artifacts"]
     assert "redemption_fee_risk" in artifacts
     assert "professional_diagnostics" in artifacts
     assert_no_formal_decision_artifacts(artifacts)
 
 
 def test_cn_fund_qdii_sp500_overlap_emits_overlap_diagnostics():
-    path = SCENARIO_DIR / "cn_fund_qdii_sp500_overlap.json"
-    proc = _run(["--skill", "fund_analysis", "--input", str(path), "--pretty"])
-    artifacts = _load_json_output(proc)["artifacts"]
+    artifacts = _run_fund_analysis("cn_fund_qdii_sp500_overlap.json")["artifacts"]
     assert "overlap_diagnostics" in artifacts
     assert "professional_diagnostics" in artifacts
     assert_no_formal_decision_artifacts(artifacts)
 
 
 def test_cn_fund_ai_semiconductor_overweight_emits_theme_overweight():
-    path = SCENARIO_DIR / "cn_fund_ai_semiconductor_overweight.json"
-    proc = _run(["--skill", "fund_analysis", "--input", str(path), "--pretty"])
-    artifacts = _load_json_output(proc)["artifacts"]
+    artifacts = _run_fund_analysis("cn_fund_ai_semiconductor_overweight.json")["artifacts"]
     assert "theme_overweight_diagnostics" in artifacts
     assert "professional_diagnostics" in artifacts
     assert_no_formal_decision_artifacts(artifacts)
 
 
 def test_cn_fund_dca_drawdown_review_emits_dca_diagnostics():
-    path = SCENARIO_DIR / "cn_fund_dca_drawdown_review.json"
-    proc = _run(["--skill", "fund_analysis", "--input", str(path), "--pretty"])
-    artifacts = _load_json_output(proc)["artifacts"]
+    artifacts = _run_fund_analysis("cn_fund_dca_drawdown_review.json")["artifacts"]
     assert "dca_drawdown_diagnostics" in artifacts
     assert "professional_diagnostics" in artifacts
     assert_no_formal_decision_artifacts(artifacts)
 
 
 def test_cn_fund_ledger_derived_snapshot_emits_cash_budget_diagnostics():
-    path = SCENARIO_DIR / "cn_fund_ledger_derived_snapshot.json"
-    proc = _run(["--skill", "fund_analysis", "--input", str(path), "--pretty"])
-    artifacts = _load_json_output(proc)["artifacts"]
+    artifacts = _run_fund_analysis("cn_fund_ledger_derived_snapshot.json")["artifacts"]
     assert "cash_budget_diagnostics" in artifacts
     assert "professional_diagnostics" in artifacts
     assert_no_formal_decision_artifacts(artifacts)

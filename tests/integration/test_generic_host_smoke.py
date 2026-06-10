@@ -19,8 +19,8 @@ from tests.support.bridge_runner import (
     parse_stdout_json,
     project_root,
     run_bridge_inprocess_json,
+    run_bridge_inprocess_metadata,
     run_bridge_subprocess,
-    write_temp_json,
 )
 from tests.support.error_shape import assert_envelope_errors_are_canonical
 from tests.support.formal_boundary import FORMAL_DECISION_ARTIFACT_KEYS
@@ -71,43 +71,39 @@ class TestListSkills:
 class TestExplainInput:
     @pytest.mark.parametrize("skill", ALL_SKILLS)
     def test_explain_input_by_runtime_id(self, skill):
-        result = run_bridge_subprocess(["--skill", skill, "--explain-input", "--pretty"])
-        data = parse_stdout_json(result)
+        data = run_bridge_inprocess_metadata(skill=skill, explain_input=True, pretty=True)
         assert data.get("ok") is True
         assert data.get("skill_name") == skill
 
     @pytest.mark.parametrize("slug", ALL_SLUGS)
     def test_explain_input_by_doc_slug(self, slug):
-        result = run_bridge_subprocess(["--skill", slug, "--explain-input", "--pretty"])
-        data = parse_stdout_json(result)
+        data = run_bridge_inprocess_metadata(skill=slug, explain_input=True, pretty=True)
         assert data.get("ok") is True
 
 
 class TestOutputSchema:
     @pytest.mark.parametrize("skill", ALL_SKILLS)
     def test_output_schema_by_runtime_id(self, skill):
-        result = run_bridge_subprocess(["--skill", skill, "--output-schema", "--pretty"])
-        data = parse_stdout_json(result)
+        data = run_bridge_inprocess_metadata(skill=skill, output_schema=True, pretty=True)
         assert data.get("ok") is True
         assert data.get("skill_name") == skill
 
     @pytest.mark.parametrize("slug", ALL_SLUGS)
     def test_output_schema_by_doc_slug(self, slug):
-        result = run_bridge_subprocess(["--skill", slug, "--output-schema", "--pretty"])
-        data = parse_stdout_json(result)
+        data = run_bridge_inprocess_metadata(skill=slug, output_schema=True, pretty=True)
         assert data.get("ok") is True
 
 
 class TestValidateFixtures:
     @pytest.mark.parametrize("case", [c for c in HOST_SMOKE_CASES if c.input_path], ids=lambda c: c.skill)
     def test_validate_fixture_succeeds(self, case):
-        result = run_bridge_subprocess([
-            "--skill", case.skill,
-            "--input", case.input_path,
-            "--validate-input",
-            "--pretty",
-        ])
-        data = parse_stdout_json(result)
+        input_text = (ROOT / case.input_path).read_text(encoding="utf-8")
+        data = run_bridge_inprocess_metadata(
+            skill=case.skill,
+            validate_input=True,
+            input_text=input_text,
+            pretty=True,
+        )
         assert data.get("ok") is True
         vr = data.get("validation_result", {})
         assert vr.get("valid") is True or vr.get("severity") in {"OK", "PARTIAL", "WARN"}
@@ -154,8 +150,7 @@ class TestRunSmokeCases:
 class TestHyphenSlugSmoke:
     @pytest.mark.parametrize("slug", ALL_SLUGS)
     def test_hyphenated_slug_resolves(self, slug):
-        result = run_bridge_subprocess(["--skill", slug, "--explain-input", "--pretty"])
-        data = parse_stdout_json(result)
+        data = run_bridge_inprocess_metadata(skill=slug, explain_input=True, pretty=True)
         assert data.get("ok") is True
 
     def test_fund_analysis_hyphenated_runs(self):

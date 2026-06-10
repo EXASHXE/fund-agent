@@ -7,7 +7,10 @@ from pathlib import Path
 
 import pytest
 
-from tests.support.bridge_runner import parse_stdout_json, run_bridge_subprocess
+from tests.support.bridge_runner import (
+    run_bridge_inprocess_json,
+    run_bridge_subprocess,
+)
 from tests.support.formal_boundary import (
     assert_no_formal_decision_artifacts,
 )
@@ -42,8 +45,9 @@ REQUIRED_THESIS_DRAFT_FIELDS = [
 ]
 
 
-def _run_bridge(args: list[str]):
-    return run_bridge_subprocess(args)
+def _run_thesis(fixture_path: str) -> dict:
+    input_text = (ROOT / fixture_path).read_text(encoding="utf-8")
+    return run_bridge_inprocess_json(skill="thesis_generation", input_text=input_text)
 
 
 @pytest.mark.parametrize("fixture_path", THESIS_FIXTURES)
@@ -61,9 +65,7 @@ def test_fixture_parses(fixture_path: str):
 
 @pytest.mark.parametrize("fixture_path", THESIS_FIXTURES)
 def test_fixture_runs_through_bridge(fixture_path: str):
-    proc = _run_bridge(["--skill", "thesis_generation", "--input", fixture_path, "--pretty"])
-    assert proc.returncode == 0, f"Bridge failed for {fixture_path}: {proc.stderr}"
-    envelope = parse_stdout_json(proc)
+    envelope = _run_thesis(fixture_path)
     assert envelope.get("ok") is True
     assert envelope.get("skill_name") == "thesis_generation"
     assert envelope.get("status") in ("OK", "PARTIAL")
@@ -71,16 +73,14 @@ def test_fixture_runs_through_bridge(fixture_path: str):
 
 @pytest.mark.parametrize("fixture_path", THESIS_FIXTURES)
 def test_thesis_draft_artifact_exists(fixture_path: str):
-    proc = _run_bridge(["--skill", "thesis_generation", "--input", fixture_path, "--pretty"])
-    envelope = parse_stdout_json(proc)
+    envelope = _run_thesis(fixture_path)
     artifacts = envelope.get("artifacts", {})
     assert "thesis_draft" in artifacts, f"Missing thesis_draft in artifacts for {fixture_path}"
 
 
 @pytest.mark.parametrize("fixture_path", THESIS_FIXTURES)
 def test_thesis_draft_required_fields(fixture_path: str):
-    proc = _run_bridge(["--skill", "thesis_generation", "--input", fixture_path, "--pretty"])
-    envelope = parse_stdout_json(proc)
+    envelope = _run_thesis(fixture_path)
     draft = envelope.get("artifacts", {}).get("thesis_draft", {})
     for field in REQUIRED_THESIS_DRAFT_FIELDS:
         assert field in draft, f"Missing field '{field}' in thesis_draft for {fixture_path}"
@@ -88,19 +88,13 @@ def test_thesis_draft_required_fields(fixture_path: str):
 
 @pytest.mark.parametrize("fixture_path", THESIS_FIXTURES)
 def test_no_formal_decision_artifacts(fixture_path: str):
-    proc = _run_bridge(["--skill", "thesis_generation", "--input", fixture_path, "--pretty"])
-    envelope = parse_stdout_json(proc)
+    envelope = _run_thesis(fixture_path)
     artifacts = envelope.get("artifacts", {})
     assert_no_formal_decision_artifacts(artifacts)
 
 
 def test_confidence_assessment_structure():
-    proc = _run_bridge([
-        "--skill", "thesis_generation",
-        "--input", "examples/thesis_generation/thesis_with_mixed_evidence.json",
-        "--pretty",
-    ])
-    envelope = parse_stdout_json(proc)
+    envelope = _run_thesis("examples/thesis_generation/thesis_with_mixed_evidence.json")
     draft = envelope["artifacts"]["thesis_draft"]
     ca = draft["confidence_assessment"]
     assert "level" in ca
@@ -111,21 +105,18 @@ def test_confidence_assessment_structure():
 
 
 def test_decision_boundary_note_present():
-    proc = _run_bridge([
-        "--skill", "thesis_generation",
-        "--input", "examples/thesis_generation/thesis_with_mixed_evidence.json",
-        "--pretty",
-    ])
-    envelope = parse_stdout_json(proc)
+    envelope = _run_thesis("examples/thesis_generation/thesis_with_mixed_evidence.json")
     draft = envelope["artifacts"]["thesis_draft"]
     assert "decision_support" in draft["decision_boundary_note"]
 
 
 @pytest.mark.parametrize("fixture_path", THESIS_FIXTURES)
+@pytest.mark.subprocess
 def test_hyphenated_slug_works(fixture_path: str):
-    proc = _run_bridge(["--skill", "thesis-generation", "--input", fixture_path, "--pretty"])
+    proc = run_bridge_subprocess(["--skill", "thesis-generation", "--input", fixture_path, "--pretty"])
     assert proc.returncode == 0, f"Hyphenated slug failed for {fixture_path}: {proc.stderr}"
-    envelope = parse_stdout_json(proc)
+    import json as _json
+    envelope = _json.loads(proc.stdout.strip())
     assert envelope.get("ok") is True
     assert envelope.get("skill_name") == "thesis_generation"
 
@@ -138,8 +129,7 @@ def test_fixture_has_payload_envelope(fixture_path: str):
 
 @pytest.mark.parametrize("fixture_path", THESIS_FIXTURES)
 def test_no_formal_buy_sell_hold_in_thesis_draft(fixture_path: str):
-    proc = _run_bridge(["--skill", "thesis_generation", "--input", fixture_path, "--pretty"])
-    envelope = parse_stdout_json(proc)
+    envelope = _run_thesis(fixture_path)
     draft = envelope.get("artifacts", {}).get("thesis_draft", {})
     assert "action" not in draft
     assert "recommendation" not in draft
