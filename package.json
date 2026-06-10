@@ -1,6 +1,6 @@
 {
   "name": "fund-agent",
-  "version": "0.4.9-dev",
+  "version": "0.4.9",
   "description": "Host-agnostic AI financial research skill pack / agent plugin. Markdown-first skill catalog with optional deterministic Python runtime.",
   "type": "module",
   "main": "opencode.plugin.js",

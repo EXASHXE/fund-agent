@@ -2,11 +2,12 @@
 
 ## Status
 
-- v0.4.9-dev is a release-ready candidate.
-- No tag has been created yet.
+- v0.4.9 metadata has been prepared.
+- Tag has not been created yet.
 - No PyPI package has been published.
 - No npm package has been published.
 - Source checkout plus `scripts/run_skill.py` is the canonical deterministic runtime path.
+- Final gates must pass before tagging.
 
 ## Final Gate Commands
 
@@ -89,20 +90,9 @@ Expected:
 - [ ] Deprecated src-level surfaces remain absent (core, infra, workflows,
   config, data, db, kg, vectorstore directories and cli.py under src/).
 
-## Tag Decision Options
+## Tag Decision
 
-1. **Keep v0.4.9-dev as a development checkpoint.** No tag, no version bump.
-   The current state is a validated candidate on the default branch.
-2. **Bump metadata from 0.4.9-dev to 0.4.9, rerun all gates, then tag v0.4.9.**
-   This makes the version string explicit and creates a permanent reference.
-3. **Optionally create a non-release checkpoint tag** (e.g.
-   `v0.4.9-dev-checkpoint`) only if a maintainer wants a lightweight
-   reference without implying a release.
-
-## Manual Post-Tag Commands (NOT YET EXECUTED)
-
-These commands are for reference only. Do not run them until a maintainer
-decides to create a release tag.
+After all gates pass, a maintainer may create the release tag:
 
 ```bash
 # Create annotated tag
@@ -111,3 +101,6 @@ git tag -a v0.4.9 -m "v0.4.9"
 # Push tag to remote
 git push origin v0.4.9
 ```
+
+These commands are NOT YET EXECUTED. They should only be run after final
+gate confirmation.

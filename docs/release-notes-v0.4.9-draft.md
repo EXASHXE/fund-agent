@@ -2,11 +2,14 @@
 
 ## Summary
 
-fund-agent v0.4.9-dev is a host-agnostic, source-checkout runtime skill pack.
+fund-agent v0.4.9 is a host-agnostic, source-checkout runtime skill pack.
 It provides Markdown-first external agent skill documentation and a
 deterministic runtime bridge for structured financial research tasks. Formal
 decision boundaries have been hardened: only `decision_support` may emit
 `Decision` and `ExecutionLedger` artifacts.
+
+This is a draft until a maintainer creates the v0.4.9 tag. No tag exists
+yet. No package has been published to PyPI or npm.
 
 ## Added / Hardened
 

@@ -15,14 +15,25 @@ class TestReleaseChecklist:
     def test_checklist_exists(self):
         assert CHECKLIST.is_file()
 
+    def test_v049_metadata_prepared(self):
+        text = CHECKLIST.read_text(encoding="utf-8")
+        assert "v0.4.9 metadata has been prepared" in text.lower()
+
     def test_no_tag_created_yet(self):
         text = CHECKLIST.read_text(encoding="utf-8")
-        assert "no tag has been created" in text.lower()
+        assert "tag has not been created" in text.lower()
 
-    def test_no_pypi_npm_published(self):
+    def test_no_pypi_published(self):
         text = CHECKLIST.read_text(encoding="utf-8")
-        assert "no pypi" in text.lower() or "no pypi" in text.lower()
+        assert "no pypi" in text.lower()
+
+    def test_no_npm_published(self):
+        text = CHECKLIST.read_text(encoding="utf-8")
         assert "no npm" in text.lower()
+
+    def test_gates_must_pass_before_tagging(self):
+        text = CHECKLIST.read_text(encoding="utf-8")
+        assert "gates must pass before tagging" in text.lower()
 
     def test_includes_compileall_gate(self):
         text = CHECKLIST.read_text(encoding="utf-8")
@@ -96,10 +107,18 @@ class TestReleaseChecklist:
         text = CHECKLIST.read_text(encoding="utf-8")
         assert "source-checkout" in text.lower() and "canonical" in text.lower()
 
+    def test_tag_commands_not_yet_executed(self):
+        text = CHECKLIST.read_text(encoding="utf-8")
+        assert "not yet executed" in text.lower()
+
 
 class TestReleaseNotes:
     def test_notes_exist(self):
         assert NOTES.is_file()
+
+    def test_refers_to_v049(self):
+        text = NOTES.read_text(encoding="utf-8")
+        assert "v0.4.9" in text
 
     def test_host_owns_data_fetching(self):
         text = NOTES.read_text(encoding="utf-8")
@@ -140,38 +159,50 @@ class TestReleaseNotes:
 
     def test_fake_sample_fixtures_only(self):
         text = NOTES.read_text(encoding="utf-8")
-        assert "fake" in text.lower() or "sample" in text.lower()
-        assert "fixture" in text.lower()
+        assert ("fake" in text.lower() or "sample" in text.lower()) and "fixture" in text.lower()
 
-    def test_no_pypi_npm_publication_claim(self):
-        text = NOTES.read_text(encoding="utf-8")
-        assert "no pypi" in text.lower() or "no pypi" in text.lower()
-        assert "no npm" in text.lower()
-
-    def test_no_tag_exists_claim(self):
+    def test_no_pypi_publication_claim(self):
         text = NOTES.read_text(encoding="utf-8")
         lower = text.lower()
-        assert "tag" not in lower or "no tag" in lower or "not yet" in lower or "draft" in lower
+        assert "no pypi" in lower
+
+    def test_no_npm_publication_claim(self):
+        text = NOTES.read_text(encoding="utf-8")
+        lower = text.lower()
+        assert "no npm" in lower
+
+    def test_draft_until_tag(self):
+        text = NOTES.read_text(encoding="utf-8")
+        lower = text.lower()
+        assert "draft" in lower or "no tag" in lower
+
+    def test_does_not_claim_tag_exists(self):
+        text = NOTES.read_text(encoding="utf-8")
+        lower = text.lower()
+        for phrase in ("a tag exists", "the tag exists", "tag already exists"):
+            assert phrase not in lower
 
 
 class TestNeitherFileClaimsPublication:
     def test_checklist_does_not_claim_publication(self):
         text = CHECKLIST.read_text(encoding="utf-8")
         lower = text.lower()
-        assert "no pypi" in lower or "no pypi" in lower
+        assert "no pypi" in lower
         assert "no npm" in lower
 
     def test_notes_does_not_claim_publication(self):
         text = NOTES.read_text(encoding="utf-8")
         lower = text.lower()
-        assert "no pypi" in lower or "no pypi" in lower or "no package publication" in lower
+        assert "no pypi" in lower or "no package publication" in lower
+        assert "no npm" in lower
 
     def test_checklist_does_not_claim_tag_exists(self):
         text = CHECKLIST.read_text(encoding="utf-8")
         lower = text.lower()
-        assert "no tag has been created" in lower
+        assert "tag has not been created" in lower
 
     def test_notes_does_not_claim_tag_exists(self):
         text = NOTES.read_text(encoding="utf-8")
         lower = text.lower()
-        assert "tag" not in lower or "no tag" in lower or "draft" in lower or "not yet" in lower
+        for phrase in ("a tag exists", "the tag exists", "tag already exists"):
+            assert phrase not in lower
