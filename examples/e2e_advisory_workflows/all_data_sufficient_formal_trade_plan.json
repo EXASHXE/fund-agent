@@ -196,6 +196,7 @@
         "requested_amount": 30000,
         "amount": 30000,
         "evidence_refs": [],
+        "evidence_source_refs": ["profit_protection"],
         "rationale": "高盈利减仓保护收益",
         "time_horizon": "medium_term"
       },
@@ -206,6 +207,7 @@
         "requested_amount": 25000,
         "amount": 25000,
         "evidence_refs": [],
+        "evidence_source_refs": ["benchmark_history", "host_news"],
         "rationale": "低估创新基金加仓",
         "time_horizon": "medium_term"
       },
@@ -216,6 +218,7 @@
         "requested_amount": 20000,
         "amount": 20000,
         "evidence_refs": [],
+        "evidence_source_refs": ["fee_schedule"],
         "rationale": "债券稳定收益配置",
         "time_horizon": "medium_term"
       }

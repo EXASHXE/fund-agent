@@ -12,8 +12,9 @@ from src.schemas.decision import Decision, ExecutionLedger
 from src.schemas.evidence_graph import EvidenceGraph
 from src.skills_runtime.fund_analysis import FundAnalysisSkill
 from src.skills_runtime.decision_support import DecisionSupportSkill
-from src.tools.workflow.evidence_bridge import (
+from src.skills_runtime.workflow.evidence_bridge import (
     build_evidence_graph_from_workflow,
+    resolve_evidence_source_refs,
     WorkflowEvidenceGraphResult,
 )
 from src.tools.workflow.final_report import compose_advisory_workflow_report
@@ -86,22 +87,12 @@ def run_decision_support(
 
     trade_plan = fixture.get("trade_plan") or fixture.get("requested_trade_plan")
     if trade_plan:
-        # Auto-fill evidence_refs from evidence bridge when trade legs have empty refs
+        # Resolve evidence_source_refs deterministically if provided
         if evidence_bridge_result and evidence_bridge_result.graph.items:
-            bridge_ids = list(evidence_bridge_result.graph.items.keys())
-            tp_copy = dict(trade_plan)
-            suggested = tp_copy.get("suggested_trade_plan", [])
-            if isinstance(suggested, list):
-                updated_trades = []
-                for i, trade in enumerate(suggested):
-                    t = dict(trade)
-                    existing_refs = t.get("evidence_refs", [])
-                    if not existing_refs and bridge_ids:
-                        # Assign a valid evidence_id to each trade leg
-                        t["evidence_refs"] = [bridge_ids[i % len(bridge_ids)]]
-                    updated_trades.append(t)
-                tp_copy["suggested_trade_plan"] = updated_trades
-            payload["trade_plan"] = tp_copy
+            resolved_plan, resolve_warnings = resolve_evidence_source_refs(
+                trade_plan, evidence_bridge_result.graph
+            )
+            payload["trade_plan"] = resolved_plan
         else:
             payload["trade_plan"] = trade_plan
         payload["selected_trade_ids"] = fixture.get("selected_trade_ids", [])

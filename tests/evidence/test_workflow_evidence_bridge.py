@@ -10,11 +10,17 @@ import pytest
 from src.schemas.evidence import EvidenceItem
 from src.schemas.evidence_graph import EvidenceGraph
 from src.schemas.skill import SkillOutput
-from src.tools.workflow.evidence_bridge import (
+from src.skills_runtime.workflow.evidence_bridge import (
     build_evidence_graph_from_workflow,
     convert_host_news_to_soft_evidence,
     convert_host_sentiment_to_soft_evidence,
+    convert_host_benchmark_to_hard_evidence,
+    convert_host_fee_to_hard_evidence,
+    convert_host_redemption_to_hard_evidence,
+    resolve_evidence_source_refs,
     WorkflowEvidenceGraphResult,
+    _stable_evidence_id,
+    _stable_timestamp,
 )
 
 
@@ -318,3 +324,315 @@ class TestBuildEvidenceGraphFromWorkflow:
         assert "edges" in graph_dict
         assert "stats" in graph_dict
         assert graph_dict["stats"]["total"] >= 2
+
+
+# ── A. Benchmark / Fee / Redemption converters ──────────────────────────────
+
+
+class TestBenchmarkConverter:
+    def test_converts_benchmark_dict_item(self):
+        item = convert_host_benchmark_to_hard_evidence({
+            "fund_code": "008253",
+            "nav": 6400.0,
+            "date": "2026-06-01",
+        })
+        assert item is not None
+        assert item.evidence_type == "HardEvidence"
+        assert item.source_type == "benchmark_history"
+        assert item.confidence_weight == 1.0
+        assert "008253" in item.related_entities
+
+    def test_converts_benchmark_with_source(self):
+        item = convert_host_benchmark_to_hard_evidence({
+            "fund_code": "008253",
+            "source": "custom_benchmark",
+        })
+        assert item.source_type == "custom_benchmark"
+
+    def test_benchmark_without_fund_code_uses_entities_field(self):
+        item = convert_host_benchmark_to_hard_evidence({
+            "entities": ["001198"],
+        })
+        assert item is not None
+        assert item.related_entities == ["001198"]
+
+    def test_benchmark_not_dict(self):
+        assert convert_host_benchmark_to_hard_evidence(None) is None
+        assert convert_host_benchmark_to_hard_evidence("bad") is None
+
+
+class TestFeeConverter:
+    def test_converts_fee_dict_item(self):
+        item = convert_host_fee_to_hard_evidence({
+            "fund_code": "008253",
+            "management_fee": 0.005,
+            "redemption_fee_pct": 0.005,
+        })
+        assert item is not None
+        assert item.evidence_type == "HardEvidence"
+        assert item.source_type == "fee_schedule"
+        assert item.confidence_weight == 1.0
+
+    def test_fee_not_dict(self):
+        assert convert_host_fee_to_hard_evidence(None) is None
+
+
+class TestRedemptionConverter:
+    def test_converts_redemption_dict_item(self):
+        item = convert_host_redemption_to_hard_evidence({
+            "fund_code": "008253",
+            "holding_period_days": 7,
+            "short_redemption_fee_pct": 0.015,
+        })
+        assert item is not None
+        assert item.evidence_type == "HardEvidence"
+        assert item.source_type == "redemption_rules"
+        assert item.confidence_weight == 1.0
+
+    def test_redemption_not_dict(self):
+        assert convert_host_redemption_to_hard_evidence(None) is None
+
+
+class TestBridgeIngestsHardEvidence:
+    """Bridge ingests benchmark, fee, and redemption evidence."""
+    
+    def _make_fa_output(self):
+        ei = EvidenceItem(
+            evidence_id="hard-001",
+            evidence_type="HardEvidence",
+            source_type="quant_tool",
+            timestamp=datetime.now(timezone.utc),
+            related_entities=["008253"],
+            claim="Position weight: 30%",
+            value={"weight": 0.30},
+            confidence_weight=1.0,
+            direction="neutral",
+        )
+        return {
+            "evidence_items": [ei.to_dict()],
+            "artifacts": {},
+            "status": "OK",
+            "portfolio": {"as_of_date": "2026-06-01"},
+        }
+
+    def test_ingests_benchmark_list(self):
+        result = build_evidence_graph_from_workflow(
+            fund_analysis_output=self._make_fa_output(),
+            host_benchmark_evidence=[
+                {"fund_code": "008253"},
+                {"fund_code": "001198"},
+            ],
+        )
+        hard = result.graph.hard_evidence_count()
+        assert hard >= 3  # fa hard + 2 benchmark
+
+    def test_ingests_benchmark_dict_keyed_by_fund_code(self):
+        result = build_evidence_graph_from_workflow(
+            fund_analysis_output=self._make_fa_output(),
+            host_benchmark_evidence={
+                "008253": {"nav": 6400.0},
+                "001198": {"nav": 4500.0},
+            },
+        )
+        hard = result.graph.hard_evidence_count()
+        assert hard >= 3
+
+    def test_ingests_fee_evidence(self):
+        result = build_evidence_graph_from_workflow(
+            fund_analysis_output=self._make_fa_output(),
+            host_fee_evidence=[
+                {"fund_code": "008253", "management_fee": 0.005},
+            ],
+        )
+        hard = result.graph.hard_evidence_count()
+        assert hard >= 2
+
+    def test_ingests_redemption_evidence(self):
+        result = build_evidence_graph_from_workflow(
+            fund_analysis_output=self._make_fa_output(),
+            host_redemption_evidence=[
+                {"fund_code": "008253", "short_redemption_fee_pct": 0.015},
+            ],
+        )
+        hard = result.graph.hard_evidence_count()
+        assert hard >= 2
+
+    def test_ingests_fee_dict_keyed_by_fund_code(self):
+        result = build_evidence_graph_from_workflow(
+            fund_analysis_output=self._make_fa_output(),
+            host_fee_evidence={
+                "008253": {"management_fee": 0.005},
+            },
+        )
+        hard = result.graph.hard_evidence_count()
+        assert hard >= 2
+
+
+# ── B. Determinism tests ────────────────────────────────────────────────────
+
+
+class TestDeterministicEvidenceIDs:
+    """Evidence IDs and timestamps are stable and deterministic."""
+
+    def test_stable_evidence_id_same_input_same_output(self):
+        payload = {"source_type": "test", "entities": ["008253"], "claim": "test claim"}
+        id1 = _stable_evidence_id("pref", payload)
+        id2 = _stable_evidence_id("pref", payload)
+        assert id1 == id2
+
+    def test_stable_evidence_id_different_input_different_output(self):
+        id1 = _stable_evidence_id("pref", {"source_type": "test", "entities": ["A"], "claim": "X"})
+        id2 = _stable_evidence_id("pref", {"source_type": "test", "entities": ["B"], "claim": "Y"})
+        assert id1 != id2
+
+    def test_stable_timestamp_from_item_date(self):
+        ts = _stable_timestamp({"date": "2026-06-01"}, None)
+        assert ts.year == 2026
+        assert ts.month == 6
+
+    def test_stable_timestamp_fallback_as_of_date(self):
+        ts = _stable_timestamp({}, "2026-01-15")
+        assert ts.year == 2026
+        assert ts.month == 1
+        assert ts.day == 15
+        assert ts.hour == 0
+
+    def test_stable_timestamp_frozen_default(self):
+        ts = _stable_timestamp({}, None)
+        assert ts.year == 1970
+        assert ts.month == 1
+
+    def test_news_converter_produces_stable_id(self):
+        item1 = convert_host_news_to_soft_evidence({
+            "title": "Same news", "entities": ["008253"], "source": "finnhub",
+        })
+        item2 = convert_host_news_to_soft_evidence({
+            "title": "Same news", "entities": ["008253"], "source": "finnhub",
+        })
+        assert item1.evidence_id == item2.evidence_id
+
+    def test_sentiment_converter_produces_stable_id(self):
+        item1 = convert_host_sentiment_to_soft_evidence({
+            "entity": "008253", "score": 0.5, "source": "reddit",
+        })
+        item2 = convert_host_sentiment_to_soft_evidence({
+            "entity": "008253", "score": 0.5, "source": "reddit",
+        })
+        assert item1.evidence_id == item2.evidence_id
+
+    def test_diagnostic_evidence_stable_ids(self):
+        fa_output = {
+            "evidence_items": [],
+            "artifacts": {
+                "redemption_fee_risk": {
+                    "fund_codes": ["008253"],
+                    "summary": {"has_blocker": True, "fund_codes": ["008253"]},
+                },
+            },
+            "status": "OK",
+        }
+        result1 = build_evidence_graph_from_workflow(fund_analysis_output=fa_output)
+        result2 = build_evidence_graph_from_workflow(fund_analysis_output=fa_output)
+        items1 = dict(result1.graph.items)
+        items2 = dict(result2.graph.items)
+        assert items1.keys() == items2.keys()
+        for key in items1:
+            assert items1[key].evidence_id == items2[key].evidence_id
+
+    def test_bridge_no_uuid_import_in_source(self):
+        import inspect
+        from src.skills_runtime.workflow import evidence_bridge as mod
+        source = inspect.getsource(mod)
+        assert "uuid" not in source, "evidence_bridge should not import uuid"
+        assert "datetime.now" not in source and "datetime.now(" not in source, \
+            "evidence_bridge should not use datetime.now"
+
+
+# ── C. Evidence source refs resolver ────────────────────────────────────────
+
+
+class TestEvidenceSourceRefsResolver:
+    """resolve_evidence_source_refs maps aliases to real graph evidence IDs."""
+
+    def test_resolves_known_source_refs(self):
+        graph = EvidenceGraph()
+        ei = EvidenceItem(
+            evidence_id="bm-ev-001",
+            evidence_type="HardEvidence",
+            source_type="benchmark_history",
+            timestamp=datetime.now(timezone.utc),
+            related_entities=["001198"],
+            claim="Benchmark data",
+            value={},
+            confidence_weight=1.0,
+        )
+        graph.add(ei)
+
+        trade_plan = {
+            "suggested_trade_plan": [{
+                "trade_id": "t1",
+                "action": "INCREASE",
+                "evidence_source_refs": ["benchmark_history"],
+                "evidence_refs": [],
+            }]
+        }
+        resolved, warnings = resolve_evidence_source_refs(trade_plan, graph)
+        assert len(warnings) == 0
+        t1 = resolved["suggested_trade_plan"][0]
+        assert len(t1["evidence_refs"]) == 1
+        assert t1["evidence_refs"][0] == "bm-ev-001"
+
+    def test_unresolved_source_ref_warns(self):
+        graph = EvidenceGraph()
+        trade_plan = {
+            "suggested_trade_plan": [{
+                "trade_id": "t1",
+                "action": "INCREASE",
+                "evidence_source_refs": ["nonexistent_ref"],
+                "evidence_refs": [],
+            }]
+        }
+        resolved, warnings = resolve_evidence_source_refs(trade_plan, graph)
+        assert len(warnings) >= 1
+        t1 = resolved["suggested_trade_plan"][0]
+        assert len(t1["evidence_refs"]) == 0
+
+    def test_no_source_refs_no_change(self):
+        graph = EvidenceGraph()
+        trade_plan = {
+            "suggested_trade_plan": [{
+                "trade_id": "t1",
+                "action": "HOLD",
+                "evidence_refs": ["existing-ref"],
+            }]
+        }
+        resolved, warnings = resolve_evidence_source_refs(trade_plan, graph)
+        assert len(warnings) == 0
+        t1 = resolved["suggested_trade_plan"][0]
+        assert t1["evidence_refs"] == ["existing-ref"]
+
+    def test_does_not_assign_arbitrary_ids(self):
+        graph = EvidenceGraph()
+        ei = EvidenceItem(
+            evidence_id="some-id",
+            evidence_type="HardEvidence",
+            source_type="irrelevant",
+            timestamp=datetime.now(timezone.utc),
+            related_entities=["TEST"],
+            claim="Irrelevant",
+            value={},
+            confidence_weight=1.0,
+        )
+        graph.add(ei)
+        trade_plan = {
+            "suggested_trade_plan": [{
+                "trade_id": "t1",
+                "action": "INCREASE",
+                "evidence_source_refs": [],  # empty source refs
+                "evidence_refs": [],         # empty evidence refs
+            }]
+        }
+        resolved, warnings = resolve_evidence_source_refs(trade_plan, graph)
+        t1 = resolved["suggested_trade_plan"][0]
+        assert len(t1["evidence_refs"]) == 0, "Should not assign arbitrary IDs"
+

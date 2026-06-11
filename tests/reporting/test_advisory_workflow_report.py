@@ -325,3 +325,99 @@ class TestEdgeCases:
         assert len(json_str) > 0
         parsed = json.loads(json_str)
         assert parsed["workflow_summary"]["scenario_id"] == "test"
+
+
+# ── E. Recursive execution field detection ──────────────────────────────────
+
+
+class TestSafetyBoundaryExecutionFieldDetection:
+    """Recursive detection of forbidden broker/order execution fields."""
+
+    def test_clean_output_no_forbidden_fields(self):
+        fa = _make_fa_output()
+        report = compose_advisory_workflow_report(
+            scenario_id="test",
+            fund_analysis_output=fa,
+        )
+        safety = report["safety_boundary"]
+        assert safety["no_broker_execution"] is True
+        assert safety["forbidden_execution_fields_found"] == []
+
+    def test_nested_forbidden_field_detected(self):
+        fa = _make_fa_output()
+        ds = _make_ds_output()
+        ds["artifacts"]["execution_ledger"]["decisions"][0]["broker_order_id"] = "evil-001"
+        report = compose_advisory_workflow_report(
+            scenario_id="test",
+            fund_analysis_output=fa,
+            decision_support_output=ds,
+        )
+        safety = report["safety_boundary"]
+        assert safety["no_broker_execution"] is False
+        found = safety["forbidden_execution_fields_found"]
+        assert len(found) > 0
+        assert any("broker_order_id" in f for f in found)
+
+    def test_deeply_nested_forbidden_field_detected(self):
+        fa = _make_fa_output()
+        ds = _make_ds_output()
+        ds["artifacts"]["decision"]["submitted_at"] = "2026-01-01T00:00:00Z"
+        report = compose_advisory_workflow_report(
+            scenario_id="test",
+            fund_analysis_output=fa,
+            decision_support_output=ds,
+        )
+        safety = report["safety_boundary"]
+        assert safety["no_broker_execution"] is False
+        found = safety["forbidden_execution_fields_found"]
+        assert any("submitted_at" in f for f in found)
+
+    def test_multiple_forbidden_fields_all_detected(self):
+        fa = _make_fa_output()
+        ds = _make_ds_output()
+        ds["artifacts"]["execution_ledger"]["decisions"][0]["order_id"] = "o-1"
+        ds["artifacts"]["execution_ledger"]["decisions"][0]["broker"] = "bad-broker"
+        report = compose_advisory_workflow_report(
+            scenario_id="test",
+            fund_analysis_output=fa,
+            decision_support_output=ds,
+        )
+        safety = report["safety_boundary"]
+        assert safety["no_broker_execution"] is False
+        found = safety["forbidden_execution_fields_found"]
+        assert len(found) >= 2
+
+
+# ── D. Decision status reporting ────────────────────────────────────────────
+
+
+class TestDecisionStatusReporting:
+    """Tests for correct decision_status in various scenarios."""
+
+    def test_blocked_formal_decision_is_blocked_not_no_formal(self):
+        fa = _make_fa_output(status="OK", decision_ready=True)
+        ds = _make_ds_output(action="HOLD", amount=0, blocked_by=["redemption_fee_blocker"])
+        report = compose_advisory_workflow_report(
+            scenario_id="test",
+            fund_analysis_output=fa,
+            decision_support_output=ds,
+        )
+        assert report["workflow_summary"]["decision_status"] in ("BLOCKED", "DOWNGRADED")
+
+    def test_no_decision_support_output_is_no_formal(self):
+        fa = _make_fa_output(status="OK", decision_ready=False)
+        report = compose_advisory_workflow_report(
+            scenario_id="test",
+            fund_analysis_output=fa,
+        )
+        assert report["workflow_summary"]["decision_status"] == "NO_FORMAL_DECISION"
+
+    def test_active_formal_decision_is_formal(self):
+        fa = _make_fa_output(status="OK", decision_ready=True)
+        ds = _make_ds_output(action="BUY", amount=10000)
+        report = compose_advisory_workflow_report(
+            scenario_id="test",
+            fund_analysis_output=fa,
+            decision_support_output=ds,
+        )
+        assert report["workflow_summary"]["decision_status"] == "FORMAL_DECISION"
