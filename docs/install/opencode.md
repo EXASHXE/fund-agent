@@ -97,7 +97,14 @@ Mode A uses the plugin mechanism only. Mode B makes the canonical
 skill surface visible to OpenCode's native Agent Skills discovery
 on top of Mode A. Mode C is documented for completeness.
 
-### Mode A — Plugin metadata + doc-reader (current target)
+### Mode A — Plugin metadata + doc-reader (optional, environment-dependent)
+
+Mode A custom plugin tools are **optional and environment-dependent**. In the
+verified test environment, `fund_agent_skills` returned `TOOL_UNAVAILABLE`,
+meaning plugin custom tools were not registered in the current OpenCode session.
+If `fund_agent_skills` returns `TOOL_UNAVAILABLE`, use the verified
+**Mode B native Agent Skills** path instead. See
+[opencode-troubleshooting.md](./opencode-troubleshooting.md).
 
 The plugin is a project-local JavaScript file that lives under
 `.opencode/plugins/`. OpenCode loads it at startup. The plugin can
@@ -119,7 +126,7 @@ ln -s /absolute/path/to/fund-agent/opencode.plugin.js .opencode/plugins/fund-age
 Restart OpenCode and you should see in the logs:
 
 ```
-fund-agent v0.4.9-dev plugin loaded; primary skill: fund-analysis;
+fund-agent v1.1.0 plugin loaded; primary skill: fund-analysis;
 supporting skills: decision-support, news-research, sentiment-analysis,
 thesis-generation
 ```
@@ -128,6 +135,10 @@ thesis-generation
 supporting skills are loaded only when their description matches
 the subtask. See the `fund-analysis` SKILL.md "When to load
 supporting skills" table for the matching policy.
+
+> **Note:** If `fund_agent_skills` returns `TOOL_UNAVAILABLE` or
+> project-local skills are not discovered, see
+> [opencode-troubleshooting.md](./opencode-troubleshooting.md).
 
 #### Plugin metadata only — no runtime bridge
 
@@ -147,13 +158,18 @@ through the OpenCode plugin would require either a sidecar process
 (bloats the plugin and pulls in transitive npm deps), neither of which
 is appropriate for the current release.
 
-### Mode B — Native Agent Skills install (optional)
+### Mode B — Native Agent Skills install (recommended, verified)
 
 OpenCode's native `Agent Skills` discovery looks for `SKILL.md`
 files under `.opencode/skills/<slug>/SKILL.md` (and the other
 canonical locations above). Mode A is **not** enough on its own to
 make the canonical skills visible to that native discovery — the
 plugin only exposes the metadata + doc-reader tools.
+
+Project-local `.opencode/skills` are discovered when OpenCode is
+launched from the target project directory. On Windows/Git Bash,
+prefer relative paths or `C:/Users/...` paths when invoking Python
+install scripts.
 
 To make the canonical Markdown skill collection visible to
 OpenCode's native skill discovery, run the bundled sync helper:
@@ -191,6 +207,13 @@ thesis-generation          (supporting)
 Use Mode A + Mode B together if you want both the plugin's
 metadata + doc-reader tools and OpenCode's native Agent Skills
 discovery to see the fund-agent collection.
+
+> **Note:** Project-local `.opencode/skills` are discovered only when
+> OpenCode is launched from the target project directory. On
+> Windows/Git Bash, prefer relative paths or `C:/Users/...` paths
+> when invoking Python install scripts. See
+> [opencode-troubleshooting.md](./opencode-troubleshooting.md) for
+> details.
 
 ### Mode C — Future runtime bridge (design only)
 
@@ -249,15 +272,15 @@ they assert that the install artifacts are coherent and honest.
 ## Pinning / version management
 
 `fund-agent` uses git tags for versioning. The current version is
-`v0.4.9-dev` and matches the `VERSION` file, the `package.json` `version`
+`v1.1.0` and matches the `VERSION` file, the `package.json` `version`
 field, and the `skillpack/fund-agent.skillpack.yaml` `version` field.
 
 Pin to a specific version:
 
 ```bash
-git clone --branch v0.4.9-dev https://github.com/EXASHXE/fund-agent.git
+git clone --branch v1.1.0 https://github.com/EXASHXE/fund-agent.git
 cd fund-agent
-git checkout v0.4.9-dev # if you cloned without --branch
+git checkout v1.1.0 # if you cloned without --branch
 ```
 
 For a project that already has the symlink in place, update the
@@ -266,7 +289,7 @@ checkout:
 ```bash
 cd /path/to/fund-agent
 git fetch
-git checkout v0.4.9-dev
+git checkout v1.1.0
 # restart OpenCode
 ```
 
