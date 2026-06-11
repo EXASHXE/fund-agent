@@ -5,8 +5,12 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from src.schemas.evidence import EvidenceItem
+from src.schemas.evidence_graph import EvidenceGraph
 from src.schemas.skill import SkillInput
 from src.skills_runtime.decision_support import DecisionSupportSkill
+
+from datetime import datetime
 
 
 def _evidence_graph() -> dict[str, Any]:
@@ -212,3 +216,145 @@ def test_decision_support_output_has_no_order_execution_fields() -> None:
 
     for forbidden in ("place_order", "submit_order", "trade_execution_api"):
         assert forbidden not in rendered
+
+
+def _graph_with_evidence(evidence_id: str = "ev-positive") -> EvidenceGraph:
+    graph = EvidenceGraph()
+    graph.add(
+        EvidenceItem(
+            evidence_id=evidence_id,
+            evidence_type="HardEvidence",
+            source_type="quant_tool",
+            timestamp=datetime.now(),
+            related_entities=["fund:F001"],
+            claim="Positive risk-adjusted return signal",
+            value={"score": 1.0},
+            confidence_weight=1.0,
+            direction="positive",
+            provenance={"tool": "test"},
+        )
+    )
+    return graph
+
+
+def _trade_plan_payload(trades: list[dict], **overrides: Any) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "objective": "trade plan gatekeeper test",
+        "time_horizon": "medium_term",
+        "deterministic": True,
+        "task_id": "trade-plan-gatekeeper-test",
+        "step_id": "decision-support-trade-plan-gatekeeper",
+        "portfolio_context": {"total_value": 100000.0, "cash_available": 20000.0},
+        "risk_profile": {"risk_level": "moderate", "max_trade_pct": 0.1},
+        "constraints": {"min_trade_amount": 100.0, "forbidden_actions": []},
+        "risk_budget": {"risk_budget": 5000.0},
+        "evidence_graph": _graph_with_evidence().to_dict(),
+        "trade_plan": {"suggested_trade_plan": trades},
+        "selected_trade_ids": [t.get("trade_id", "") for t in trades],
+    }
+    payload.update(overrides)
+    return payload
+
+
+def _run_trade_plan(payload: dict[str, Any]):
+    return DecisionSupportSkill().run(
+        SkillInput(
+            task_id="trade-plan-gatekeeper-test",
+            step_id="decision-support",
+            skill_name="decision_support",
+            payload=payload,
+        )
+    )
+
+
+def test_trade_plan_buy_blocked_by_right_side_unconfirmed_is_downgraded() -> None:
+    graph = _graph_with_evidence()
+    trade = {
+        "trade_id": "trade-buy-rs",
+        "fund_code": "F001",
+        "action": "BUY",
+        "amount": 5000.0,
+        "evidence_refs": ["ev-positive"],
+    }
+    payload = _trade_plan_payload(
+        [trade],
+        evidence_graph=graph.to_dict(),
+        right_side_confirmation_diagnostics={
+            "items": [
+                {
+                    "fund_code": "F001",
+                    "applicability": "applicable",
+                    "right_side_confirmed": False,
+                }
+            ],
+            "summary": {"needs_more_evidence": True},
+        },
+    )
+
+    output = _run_trade_plan(payload)
+    decisions = output.artifacts.get("decisions", [])
+    assert len(decisions) >= 1
+    decision = decisions[0]
+    assert decision["action"] in {"HOLD", "WAIT"}
+    assert "RIGHT_SIDE_UNCONFIRMED" in decision["decision_reason_codes"]
+    assert "right_side_unconfirmed" in decision["blocked_by"]
+
+
+def test_trade_plan_sell_blocked_by_redemption_fee_risk_is_downgraded() -> None:
+    graph = _graph_with_evidence()
+    trade = {
+        "trade_id": "trade-sell-fee",
+        "fund_code": "F001",
+        "action": "SELL",
+        "amount": 3000.0,
+        "current_value": 30000.0,
+        "evidence_refs": ["ev-positive"],
+    }
+    payload = _trade_plan_payload(
+        [trade],
+        evidence_graph=graph.to_dict(),
+        redemption_fee_risk={
+            "has_blocker": True,
+            "fee_items": [{"fund_code": "F001", "level": "blocker"}],
+        },
+    )
+
+    output = _run_trade_plan(payload)
+    decisions = output.artifacts.get("decisions", [])
+    assert len(decisions) >= 1
+    decision = decisions[0]
+    assert decision["action"] in {"HOLD", "WAIT"}
+    assert "REDEMPTION_FEE_RISK" in decision["decision_reason_codes"]
+    assert "redemption_fee_blocker" in decision["blocked_by"]
+
+
+def test_trade_plan_decisions_include_reason_codes_and_blocked_by() -> None:
+    graph = _graph_with_evidence()
+    trade = {
+        "trade_id": "trade-buy-1",
+        "fund_code": "F001",
+        "action": "BUY",
+        "amount": 5000.0,
+        "evidence_refs": ["ev-positive"],
+    }
+    payload = _trade_plan_payload(
+        [trade],
+        evidence_graph=graph.to_dict(),
+        cash_deployment_diagnostics={
+            "summary": {
+                "deployment_readiness": "not_ready",
+                "cash_buffer_status": "low",
+            }
+        },
+    )
+
+    output = _run_trade_plan(payload)
+    decisions = output.artifacts.get("decisions", [])
+    assert len(decisions) >= 1
+    decision = decisions[0]
+    assert isinstance(decision["decision_reason_codes"], list)
+    assert len(decision["decision_reason_codes"]) > 0
+    assert isinstance(decision["blocked_by"], list)
+    assert len(decision["blocked_by"]) > 0
+    assert "CASH_DEPLOYMENT_NOT_READY" in decision["decision_reason_codes"]
+    assert "cash_deployment_not_ready" in decision["blocked_by"]

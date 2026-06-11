@@ -209,6 +209,21 @@ def _decision_from_trade(
             else str(uuid.uuid4())
         )
 
+        reason_codes = _dedupe_reason_codes(
+            [
+                "EVIDENCE_MISSING",
+                "INSUFFICIENT_EVIDENCE",
+                "DOWNGRADED_ACTIVE_TO_HOLD",
+                "PASSIVE_ACTION",
+            ],
+            gatekeeper.reason_codes,
+        )
+        blocked_by = _dedupe_reason_codes(["evidence"], gatekeeper.blocked_by)
+        evidence_state = gatekeeper.evidence_state if gatekeeper.evidence_state != "ANCHORED" else "DOWNGRADED"
+        trigger_conditions = _dedupe_reason_codes(trigger_conditions, gatekeeper.trigger_conditions)
+        invalidating_conditions = _dedupe_reason_codes(invalidating_conditions, gatekeeper.invalidating_conditions)
+        audit_trail = _dedupe_reason_codes(audit_trail, gatekeeper.audit_trail)
+
         return Decision(
             decision_id=decision_id,
             action=action,
@@ -219,14 +234,9 @@ def _decision_from_trade(
             time_horizon=trade.get("time_horizon", payload.get("time_horizon", "medium_term")),
             risk_budget=0.01,
             audit_trail=audit_trail,
-            decision_reason_codes=[
-                "EVIDENCE_MISSING",
-                "INSUFFICIENT_EVIDENCE",
-                "DOWNGRADED_ACTIVE_TO_HOLD",
-                "PASSIVE_ACTION",
-            ],
-            evidence_state="DOWNGRADED",
-            blocked_by=["evidence"],
+            decision_reason_codes=reason_codes,
+            evidence_state=evidence_state,
+            blocked_by=blocked_by,
             created_at=created_at,
         )
 

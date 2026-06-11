@@ -176,6 +176,7 @@ def render_report_markdown(report_sections: list[dict[str, Any]] | dict[str, Any
     ) else "en"
     title = "个人基金报告" if language == "zh-CN" else "Personal fund report"
     lines: list[str] = [f"# {title}", ""]
+    limitations_heading = "限制说明" if language == "zh-CN" else "Limitations"
     global_limitations: list[str] = []
     for section in sections:
         if not isinstance(section, dict):
@@ -192,7 +193,7 @@ def render_report_markdown(report_sections: list[dict[str, Any]] | dict[str, Any
         limitations = _string_list(section.get("limitations") or [])
         if limitations:
             lines.append("")
-            lines.append("Limitations:")
+            lines.append(f"{limitations_heading}:")
             for limitation in limitations:
                 lines.append(f"- {limitation}")
         if status in {"PARTIAL", "MISSING"}:
@@ -206,7 +207,8 @@ def render_report_markdown(report_sections: list[dict[str, Any]] | dict[str, Any
         and str(section.get("status", "MISSING")) in {"PARTIAL", "MISSING"}
         for section in sections
     ):
-        lines.append("## Limitations")
+        limitations_heading = "限制说明" if language == "zh-CN" else "Limitations"
+        lines.append(f"## {limitations_heading}")
         lines.append("")
         for limitation in global_limitations:
             lines.append(f"- {limitation}")
@@ -1149,6 +1151,66 @@ def _localize_bullet(text: str) -> str:
         return "事件催化复核：" + text[len("Event catalyst review covers "):]
     if text.startswith("Cash-like weight "):
         return "现金类仓位：" + text[len("Cash-like weight "):]
+    if text.startswith("Unrealized PnL is "):
+        return "未实现盈亏：" + text[len("Unrealized PnL is "):]
+    if text.startswith("Position-level PnL is available"):
+        return "持仓级盈亏明细：" + text[len("Position-level PnL is available "):]
+    if text.startswith("Transaction-derived cost basis is available"):
+        return "交易成本基础：" + text[len("Transaction-derived cost basis is available "):]
+    if text.startswith("Largest position is "):
+        return "最大持仓：" + text[len("Largest position is "):]
+    if text.startswith("Largest value position: "):
+        return "最大市值持仓：" + text[len("Largest value position: "):]
+    if text.startswith("Largest profit contributor: "):
+        return "最大盈利贡献：" + text[len("Largest profit contributor: "):]
+    if text.startswith("Largest loss contributor: "):
+        return "最大亏损贡献：" + text[len("Largest loss contributor: "):]
+    if text.startswith("High-profit watchlist contains "):
+        return "高盈利观察清单：" + text[len("High-profit watchlist contains "):]
+    if text.startswith("Analysis-only action distribution: "):
+        return "分析操作分布：" + text[len("Analysis-only action distribution: "):]
+    if text.startswith("Fee schedule is available for "):
+        return "费率表覆盖：" + text[len("Fee schedule is available for "):]
+    if text.startswith("Redemption rules are available for "):
+        return "赎回规则覆盖：" + text[len("Redemption rules are available for "):]
+    if text.startswith("Short-holding redemption fee scan found "):
+        return "短期赎回费扫描：" + text[len("Short-holding redemption fee scan found "):]
+    if text.startswith("Severe benchmark underperformance is present"):
+        return "存在严重基准偏离，来源为提供的数据。"
+    if text.startswith("Benchmark divergence is present"):
+        return "存在基准偏离，来源为提供的数据。"
+    if text.startswith("No severe benchmark divergence was detected"):
+        return "未检测到严重基准偏离。"
+    if text.startswith("Benchmark divergence reviewed "):
+        return "基准偏离复核：" + text[len("Benchmark divergence reviewed "):]
+    if text.startswith("Event hype failure detected for "):
+        return "事件催化失效：" + text[len("Event hype failure detected for "):]
+    if text.startswith("No event hype failure was concluded"):
+        return "未得出事件催化失效结论。"
+    if text.startswith("Cash accounting basis: "):
+        return "现金核算基准：" + text[len("Cash accounting basis: "):]
+    if text.startswith("Estimated deployable cash: "):
+        return "预计可部署现金：" + text[len("Estimated deployable cash: "):]
+    if text.startswith("No risk flags were generated"):
+        return "风险扫描未产生标记。"
+    if text.startswith("Risk flags by severity: "):
+        return "风险标记按严重程度：" + text[len("Risk flags by severity: "):]
+    if text.startswith("NAV-derived metrics are available for "):
+        return "净值指标覆盖：" + text[len("NAV-derived metrics are available for "):]
+    if text.startswith("Highest total return in provided NAV history is "):
+        return "历史最高总回报：" + text[len("Highest total return in provided NAV history is "):]
+    if text.startswith("Trade budget: max buy "):
+        return "交易预算：" + text[len("Trade budget: max buy "):]
+    if text.startswith("DCA review includes "):
+        return "定投复核：" + text[len("DCA review includes "):]
+    if text.startswith("FundAnalysisSkill emits HardEvidence"):
+        return "FundAnalysisSkill 单独输出 HardEvidence 至 SkillOutput.evidence_items。"
+    if text.startswith("This composed report does not create"):
+        return "本报告不生成正式决策或执行账本。"
+    if text.startswith("Optional gaps: "):
+        return "可选项缺口：" + text[len("Optional gaps: "):]
+    if text.startswith("No required missing data groups were reported"):
+        return "未报告必要数据缺口。"
     return text
 
 
@@ -1157,6 +1219,10 @@ def _localize_limitation(text: str) -> str:
         return "数据缺口：" + text
     if "unavailable" in text.lower():
         return "暂不可用：" + text
+    if "absent" in text.lower():
+        return "暂缺：" + text
+    if "not fabricated" in text.lower():
+        return "未合成：" + text
     return text
 
 

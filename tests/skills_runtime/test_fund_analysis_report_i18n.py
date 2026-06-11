@@ -106,3 +106,32 @@ def test_fund_analysis_report_i18n_does_not_emit_formal_decision_artifacts() -> 
     output = _run(payload)
 
     assert FORMAL_DECISION_ARTIFACTS.isdisjoint(output.artifacts)
+
+
+def test_zh_cn_markdown_uses_localized_limitations_heading() -> None:
+    payload = _payload()
+    payload["report_options"] = {
+        **payload.get("report_options", {}),
+        "language": "zh-CN",
+        "detail_level": "professional",
+    }
+
+    output = _run(payload)
+    markdown = render_report_markdown(output.artifacts["report_sections"])
+
+    assert "## 限制说明" in markdown
+    assert "## Limitations" not in markdown
+
+
+def test_zh_cn_report_still_does_not_emit_formal_decision_from_fund_analysis() -> None:
+    payload = copy.deepcopy(_payload())
+    payload["report_options"] = {
+        **payload.get("report_options", {}),
+        "language": "zh-CN",
+        "detail_level": "professional",
+    }
+
+    output = _run(payload)
+
+    for artifact_key in ("decision", "decisions", "execution_ledger", "execution_ledgers"):
+        assert artifact_key not in output.artifacts

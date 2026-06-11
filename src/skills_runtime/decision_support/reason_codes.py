@@ -1,6 +1,49 @@
-"""Stable decision_support reason-code constants."""
+"""Stable decision_support reason-code constants.
+
+evidence_state semantics (no schema migration — documentation only):
+- ANCHORED: Sufficient anchored evidence supports the decision direction.
+- INSUFFICIENT_EVIDENCE: Evidence is missing, weak, or stale; cannot support
+  an active action.
+- CRITIC_BLOCKED: Critique pipeline rejected the proposed action.
+- CONSTRAINT_BLOCKED: Evidence may exist but action is blocked by constraints
+  or artifacts (redemption fee, position contribution, etc.).
+- BUDGET_BLOCKED: Action is blocked by cash/budget conditions (cash
+  deployment not ready, cash buffer low, etc.).
+- DOWNGRADED: Gatekeeper downgraded an active action to HOLD/WAIT due to
+  one or more blockers.
+"""
 
 from __future__ import annotations
+
+EVIDENCE_STATE_ANCHORED = "ANCHORED"
+EVIDENCE_STATE_INSUFFICIENT_EVIDENCE = "INSUFFICIENT_EVIDENCE"
+EVIDENCE_STATE_CRITIC_BLOCKED = "CRITIC_BLOCKED"
+EVIDENCE_STATE_CONSTRAINT_BLOCKED = "CONSTRAINT_BLOCKED"
+EVIDENCE_STATE_BUDGET_BLOCKED = "BUDGET_BLOCKED"
+EVIDENCE_STATE_DOWNGRADED = "DOWNGRADED"
+
+ALL_EVIDENCE_STATES: tuple[str, ...] = (
+    EVIDENCE_STATE_ANCHORED,
+    EVIDENCE_STATE_INSUFFICIENT_EVIDENCE,
+    EVIDENCE_STATE_CRITIC_BLOCKED,
+    EVIDENCE_STATE_CONSTRAINT_BLOCKED,
+    EVIDENCE_STATE_BUDGET_BLOCKED,
+    EVIDENCE_STATE_DOWNGRADED,
+)
+
+
+def is_active_evidence_state(state: str) -> bool:
+    return state == EVIDENCE_STATE_ANCHORED
+
+
+def is_blocked_evidence_state(state: str) -> bool:
+    return state in (
+        EVIDENCE_STATE_INSUFFICIENT_EVIDENCE,
+        EVIDENCE_STATE_CRITIC_BLOCKED,
+        EVIDENCE_STATE_CONSTRAINT_BLOCKED,
+        EVIDENCE_STATE_BUDGET_BLOCKED,
+        EVIDENCE_STATE_DOWNGRADED,
+    )
 
 EVIDENCE_AVAILABLE = "EVIDENCE_AVAILABLE"
 EVIDENCE_MISSING = "EVIDENCE_MISSING"
