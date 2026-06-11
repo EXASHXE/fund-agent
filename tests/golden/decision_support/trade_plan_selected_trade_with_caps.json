@@ -43,6 +43,41 @@
         "version": "decision-contract.v2"
       }
     ],
+    "evidence_anchor_diagnostics": {
+      "active_action_requires_anchor": true,
+      "anchor_count": 1,
+      "anchor_entity_mismatch": [],
+      "invalid_anchor_refs": [],
+      "limitations": [],
+      "missing_anchor_refs": [],
+      "trade_anchor_coverage": [
+        {
+          "action": "BUY",
+          "coverage": "full",
+          "invalid_refs": [],
+          "provided_refs": [
+            "ev-f001-positive"
+          ],
+          "required": true,
+          "trade_id": "trade-buy-capped",
+          "valid_refs": [
+            "ev-f001-positive"
+          ]
+        },
+        {
+          "action": "HOLD",
+          "coverage": "none",
+          "invalid_refs": [],
+          "provided_refs": [],
+          "required": false,
+          "trade_id": "trade-hold-other",
+          "valid_refs": []
+        }
+      ],
+      "valid_anchor_refs": [
+        "ev-f001-positive"
+      ]
+    },
     "execution_ledger": {
       "decisions": [
         {
@@ -85,7 +120,40 @@
       ],
       "generated_at": "<normalized-timestamp>",
       "ledger_id": "<normalized-ledger-id>",
+      "ledger_summary": {
+        "action_counts": {
+          "BUY": 1,
+          "HOLD": 0,
+          "INCREASE": 0,
+          "PAUSE_DCA": 0,
+          "REDUCE": 0,
+          "SELL": 0,
+          "WAIT": 0
+        },
+        "active_decision_count": 1,
+        "blocked_by_counts": {},
+        "blocked_decision_count": 0,
+        "decision_count": 1,
+        "downgraded_decision_count": 0,
+        "passive_decision_count": 0,
+        "reason_code_counts": {
+          "ACTIVE_ACTION_ALLOWED": 1,
+          "EVIDENCE_AVAILABLE": 1,
+          "EVIDENCE_SUFFICIENT": 1
+        },
+        "total_execution_amount": 5000.0,
+        "total_risk_budget": 0.05
+      },
       "version": "execution-ledger.v1"
+    },
+    "risk_constraint_conflicts": {
+      "items": [],
+      "summary": {
+        "blocked_trade_count": 0,
+        "capped_trade_count": 0,
+        "has_blocking_conflict": false,
+        "has_capping_conflict": false
+      }
     }
   },
   "errors": [],

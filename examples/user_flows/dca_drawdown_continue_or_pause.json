@@ -1,0 +1,326 @@
+{
+  "user_question": "定投基金持续回撤，是继续定投还是暂停？如何避免盲目暂停？",
+  "portfolio": {
+    "as_of_date": "2026-06-01",
+    "total_value": 200000,
+    "cash_available": 25000,
+    "positions": [
+      {
+        "fund_code": "161725",
+        "fund_name": "招商中证白酒指数C",
+        "current_value": 60000,
+        "total_cost": 80000,
+        "shares": 50000,
+        "current_nav": 1.2,
+        "cost_nav": 1.6,
+        "pnl_pct": -0.25,
+        "asset_type": "index",
+        "target_weight": 0.3,
+        "tags": [
+          "index",
+          "liquor",
+          "drawdown",
+          "dca"
+        ]
+      },
+      {
+        "fund_code": "007119",
+        "fund_name": "景顺长城绩优成长混合",
+        "current_value": 70000,
+        "total_cost": 75000,
+        "shares": 48000,
+        "current_nav": 1.458,
+        "cost_nav": 1.563,
+        "pnl_pct": -0.067,
+        "asset_type": "active",
+        "target_weight": 0.35,
+        "tags": [
+          "active",
+          "growth",
+          "drawdown",
+          "dca"
+        ]
+      },
+      {
+        "fund_code": "003547",
+        "fund_name": "鹏华丰禄债券",
+        "current_value": 45000,
+        "total_cost": 43000,
+        "shares": 41000,
+        "current_nav": 1.098,
+        "cost_nav": 1.049,
+        "pnl_pct": 0.047,
+        "asset_type": "bond",
+        "target_weight": 0.25,
+        "tags": [
+          "bond",
+          "income",
+          "stabilizer"
+        ]
+      }
+    ]
+  },
+  "fund_profiles": {
+    "161725": {
+      "fund_code": "161725",
+      "name": "招商中证白酒指数C",
+      "fund_type": "index",
+      "benchmark": "中证白酒指数",
+      "theme": "liquor"
+    },
+    "007119": {
+      "fund_code": "007119",
+      "name": "景顺长城绩优成长混合",
+      "fund_type": "active",
+      "benchmark": "沪深300",
+      "theme": "growth"
+    },
+    "003547": {
+      "fund_code": "003547",
+      "name": "鹏华丰禄债券",
+      "fund_type": "bond",
+      "benchmark": "中债综合指数",
+      "theme": "bond"
+    }
+  },
+  "dca_plans": {
+    "161725": {
+      "fund_code": "161725",
+      "status": "active",
+      "frequency": "monthly",
+      "amount_per_period": 5000,
+      "start_date": "2025-01-01",
+      "next_execution_date": "2026-06-15",
+      "total_invested": 85000,
+      "total_shares_acquired": 53000,
+      "pause_count": 0
+    },
+    "007119": {
+      "fund_code": "007119",
+      "status": "active",
+      "frequency": "biweekly",
+      "amount_per_period": 3000,
+      "start_date": "2025-03-01",
+      "next_execution_date": "2026-06-10",
+      "total_invested": 72000,
+      "total_shares_acquired": 49000,
+      "pause_count": 0
+    }
+  },
+  "transactions": [
+    {
+      "fund_code": "161725",
+      "action": "BUY",
+      "date": "2025-01-15",
+      "amount": 5000,
+      "shares": 2800
+    },
+    {
+      "fund_code": "161725",
+      "action": "BUY",
+      "date": "2025-04-01",
+      "amount": 5000,
+      "shares": 3200
+    },
+    {
+      "fund_code": "161725",
+      "action": "BUY",
+      "date": "2025-07-01",
+      "amount": 5000,
+      "shares": 3500
+    },
+    {
+      "fund_code": "161725",
+      "action": "BUY",
+      "date": "2025-10-01",
+      "amount": 5000,
+      "shares": 3800
+    },
+    {
+      "fund_code": "161725",
+      "action": "BUY",
+      "date": "2026-01-01",
+      "amount": 5000,
+      "shares": 4000
+    },
+    {
+      "fund_code": "161725",
+      "action": "BUY",
+      "date": "2026-04-01",
+      "amount": 5000,
+      "shares": 4200
+    },
+    {
+      "fund_code": "007119",
+      "action": "BUY",
+      "date": "2025-03-15",
+      "amount": 3000,
+      "shares": 1800
+    },
+    {
+      "fund_code": "007119",
+      "action": "BUY",
+      "date": "2025-06-01",
+      "amount": 3000,
+      "shares": 1900
+    },
+    {
+      "fund_code": "007119",
+      "action": "BUY",
+      "date": "2025-09-01",
+      "amount": 3000,
+      "shares": 2000
+    },
+    {
+      "fund_code": "007119",
+      "action": "BUY",
+      "date": "2025-12-01",
+      "amount": 3000,
+      "shares": 2100
+    },
+    {
+      "fund_code": "007119",
+      "action": "BUY",
+      "date": "2026-03-01",
+      "amount": 3000,
+      "shares": 2200
+    },
+    {
+      "fund_code": "003547",
+      "action": "BUY",
+      "date": "2025-01-01",
+      "amount": 25000,
+      "shares": 23000
+    },
+    {
+      "fund_code": "003547",
+      "action": "BUY",
+      "date": "2025-09-01",
+      "amount": 18000,
+      "shares": 16500
+    }
+  ],
+  "nav_history": {
+    "161725": [
+      {
+        "date": "2025-01-15",
+        "nav": 1.786
+      },
+      {
+        "date": "2025-04-01",
+        "nav": 1.563
+      },
+      {
+        "date": "2025-07-01",
+        "nav": 1.429
+      },
+      {
+        "date": "2025-10-01",
+        "nav": 1.316
+      },
+      {
+        "date": "2025-12-31",
+        "nav": 1.28
+      },
+      {
+        "date": "2026-03-01",
+        "nav": 1.25
+      },
+      {
+        "date": "2026-06-01",
+        "nav": 1.2
+      }
+    ],
+    "007119": [
+      {
+        "date": "2025-03-15",
+        "nav": 1.667
+      },
+      {
+        "date": "2025-06-01",
+        "nav": 1.579
+      },
+      {
+        "date": "2025-09-01",
+        "nav": 1.5
+      },
+      {
+        "date": "2025-12-01",
+        "nav": 1.429
+      },
+      {
+        "date": "2025-12-31",
+        "nav": 1.4
+      },
+      {
+        "date": "2026-03-01",
+        "nav": 1.45
+      },
+      {
+        "date": "2026-06-01",
+        "nav": 1.458
+      }
+    ],
+    "003547": [
+      {
+        "date": "2025-01-01",
+        "nav": 1.087
+      },
+      {
+        "date": "2025-04-01",
+        "nav": 1.092
+      },
+      {
+        "date": "2025-09-01",
+        "nav": 1.094
+      },
+      {
+        "date": "2025-12-31",
+        "nav": 1.098
+      },
+      {
+        "date": "2026-06-01",
+        "nav": 1.098
+      }
+    ]
+  },
+  "fee_schedules": {
+    "161725": {
+      "management_fee": 0.01
+    },
+    "007119": {
+      "management_fee": 0.015
+    }
+  },
+  "redemption_rules": {
+    "161725": {
+      "holding_period_days": 7,
+      "redemption_fee_pct": 0.005
+    },
+    "007119": {
+      "holding_period_days": 7,
+      "redemption_fee_pct": 0.005
+    }
+  },
+  "benchmarks": {
+    "161725": "中证白酒指数",
+    "007119": "沪深300"
+  },
+  "benchmark_history": {},
+  "events": [],
+  "news_evidence": [],
+  "sentiment_evidence": [],
+  "constraints": {
+    "risk_level": "moderate",
+    "max_single_fund_weight": 0.35,
+    "max_theme_weight": 0.4,
+    "max_trade_pct": 0.1,
+    "liquidity_reserve_pct": 0.1,
+    "forbidden_actions": [
+      "leverage",
+      "short_sell",
+      "all_in"
+    ],
+    "planned_holding_period": "3-5 years"
+  }
+}

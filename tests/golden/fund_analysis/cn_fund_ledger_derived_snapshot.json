@@ -775,6 +775,22 @@
           "total_return": 0.15
         }
       },
+      "knowledge_graph_summary": {
+        "enabled": true,
+        "event_count": 0,
+        "fund_count": 2,
+        "industry_count": 0,
+        "limitations": [
+          "No stock nodes in knowledge graph",
+          "No industry nodes in knowledge graph",
+          "No host-provided events; event relations not available"
+        ],
+        "related_events": [],
+        "stock_count": 0,
+        "theme_count": 0,
+        "theme_paths": [],
+        "top_shared_holdings": []
+      },
       "market_scenario": null,
       "overlap_diagnostics": {
         "overlapping_holdings": [],
@@ -1754,6 +1770,22 @@
         "Theme 'broad_market' at 66.1% exceeds limit 55.0% by 11.2%",
         "Cash 7000 is below 10% liquidity reserve (7135). Gap: 135."
       ]
+    },
+    "knowledge_graph_summary": {
+      "enabled": true,
+      "event_count": 0,
+      "fund_count": 2,
+      "industry_count": 0,
+      "limitations": [
+        "No stock nodes in knowledge graph",
+        "No industry nodes in knowledge graph",
+        "No host-provided events; event relations not available"
+      ],
+      "related_events": [],
+      "stock_count": 0,
+      "theme_count": 0,
+      "theme_paths": [],
+      "top_shared_holdings": []
     },
     "ledger_cashflow_summary": {
       "dividend_income": 300.0,

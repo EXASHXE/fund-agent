@@ -441,6 +441,11 @@ data is missing, mark it as a gap and let the host fetch it.
 - `cash_deployment_diagnostics` — cash deployment readiness assessment
   including cash-like allocation, buffer status, and risk budget. Analysis-only;
   does not recommend specific buys
+- `knowledge_graph_summary` — optional KnowledgeGraph-derived context layer
+  summarizing entity relationships, sector/theme links, and cross-fund overlap
+  patterns. Only emitted when holdings data supports KG construction. When
+  holdings data is insufficient, this artifact is omitted (`enabled=false`).
+  There is no requirement to have KG data for normal reports.
 - `warnings`
 
 Artifact availability depends on host-provided data.
@@ -472,6 +477,10 @@ This skill must never:
 - generate formal `Decision` or `ExecutionLedger` artifacts;
 - convert `suggested_rebalance_plan` into executable advice by itself;
 - use `src.core.research_os` as a required path.
+
+`fund_analysis` never emits `Decision` or `ExecutionLedger` under any
+circumstances. This boundary is absolute regardless of input mode, data
+availability, or pipeline stage.
 
 ## When to escalate to decision_support
 

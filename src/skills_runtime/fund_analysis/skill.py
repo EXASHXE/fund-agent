@@ -23,6 +23,7 @@ from .benchmark_rules import compute_benchmark_divergence_diagnostics
 from .right_side_rules import compute_right_side_confirmation_diagnostics
 from .event_rules import compute_event_hype_failure_diagnostics
 from .cash_deployment_rules import compute_cash_deployment_diagnostics
+from .knowledge_graph_stage import build_knowledge_graph_summary
 from .input_stage import (
     build_portfolio_input_bundle,
     collect_fund_codes,
@@ -157,6 +158,15 @@ class FundAnalysisSkill:
             cash_deployment = compute_cash_deployment_diagnostics(
                 bundle, metrics,
             )
+            try:
+                knowledge_graph_summary = build_knowledge_graph_summary(
+                    positions=positions,
+                    fund_profiles=bundle.fund_profiles,
+                    holdings=bundle.holdings,
+                    events=payload.get("events", payload.get("catalyst_events")),
+                )
+            except Exception:
+                knowledge_graph_summary = None
             plan_result = build_analysis_plan(
                 bundle=bundle,
                 metrics=metrics,
@@ -185,6 +195,7 @@ class FundAnalysisSkill:
                 right_side_confirmation=right_side_confirmation,
                 event_hype_failure=event_hype_failure,
                 cash_deployment=cash_deployment,
+                knowledge_graph_summary=knowledge_graph_summary,
             )
         except Exception as exc:
             return failed_output(

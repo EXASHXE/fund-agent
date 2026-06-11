@@ -224,6 +224,39 @@ Every formal decision output must be recorded in an `ExecutionLedger`. The
 ledger should preserve decision IDs, actions, execution amounts, evidence IDs,
 audit trail, version, and timestamps according to the decision contract.
 
+The `ExecutionLedger` now includes a `ledger_summary` field that provides a
+deterministic summary of all decisions within the ledger, including total
+execution amounts, passive/active action counts, and a high-level status
+overview. This field is always present when an `ExecutionLedger` is emitted.
+
+## evidence_anchor_diagnostics artifact
+
+When a formal `Decision` is produced, `decision_support` may emit an
+`evidence_anchor_diagnostics` artifact that explains anchor validity and
+coverage per decision and per trade:
+
+- Which evidence IDs were used as anchors for each decision.
+- Which evidence IDs were missing, weak, or unrelated.
+- The resulting anchor coverage ratio per decision.
+- Whether the decision was downgraded due to insufficient anchors.
+
+This artifact is intended for host-facing auditability and explainability.
+It does not replace the `rationale_anchor` field on `Decision` objects; it
+provides supplementary diagnostic detail.
+
+## risk_constraint_conflicts artifact
+
+When constraints or budget block an active action, `decision_support` may emit
+a `risk_constraint_conflicts` artifact that explains the blocking:
+
+- Which constraints conflicted with the requested action.
+- The original vs capped execution amount.
+- The downgrade reason (e.g. `BUDGET_BLOCKED`, `CONSTRAINT_BLOCKED`).
+- The specific risk profile or constraint field that triggered the block.
+
+This artifact is produced alongside formal `Decision` / `ExecutionLedger`
+artifacts and is intended for host-facing auditability and explainability.
+
 ## Forbidden behavior
 
 This skill must never:

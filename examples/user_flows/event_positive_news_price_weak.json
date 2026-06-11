@@ -1,0 +1,138 @@
+{
+  "user_question": "新能源利好频出但基金净值不涨反跌，是利好出尽还是市场错杀？",
+  "portfolio": {
+    "as_of_date": "2026-06-01",
+    "total_value": 300000,
+    "cash_available": 35000,
+    "positions": [
+      {
+        "fund_code": "012869",
+        "fund_name": "华夏中证新能源汽车ETF联接C",
+        "current_value": 120000,
+        "total_cost": 110000,
+        "shares": 75000,
+        "current_nav": 1.600,
+        "cost_nav": 1.467,
+        "pnl_pct": 0.091,
+        "asset_type": "index",
+        "target_weight": 0.40,
+        "tags": ["index", "NEV", "catalyst", "event_hype_failure"]
+      },
+      {
+        "fund_code": "005827",
+        "fund_name": "易方达环保主题混合",
+        "current_value": 80000,
+        "total_cost": 85000,
+        "shares": 55000,
+        "current_nav": 1.455,
+        "cost_nav": 1.545,
+        "pnl_pct": -0.058,
+        "asset_type": "active",
+        "target_weight": 0.27,
+        "tags": ["active", "green", "catalyst", "event_hype_failure"]
+      },
+      {
+        "fund_code": "000198",
+        "fund_name": "天弘增利短债",
+        "current_value": 65000,
+        "total_cost": 63000,
+        "shares": 62000,
+        "current_nav": 1.048,
+        "cost_nav": 1.016,
+        "pnl_pct": 0.032,
+        "asset_type": "short_bond",
+        "target_weight": 0.22,
+        "tags": ["short_bond", "cash_substitute"]
+      }
+    ]
+  },
+  "fund_profiles": {
+    "012869": {"fund_code": "012869", "name": "华夏中证新能源汽车ETF联接C", "fund_type": "index", "benchmark": "中证新能源汽车指数", "theme": "NEV"},
+    "005827": {"fund_code": "005827", "name": "易方达环保主题混合", "fund_type": "active", "benchmark": "中证环保指数", "theme": "green"},
+    "000198": {"fund_code": "000198", "name": "天弘增利短债", "fund_type": "short_bond", "benchmark": "中债短融指数", "theme": "cash"}
+  },
+  "transactions": [
+    {"fund_code": "012869", "action": "BUY", "date": "2025-03-01", "amount": 60000, "shares": 38000},
+    {"fund_code": "012869", "action": "BUY", "date": "2025-09-01", "amount": 50000, "shares": 32000},
+    {"fund_code": "012869", "action": "BUY", "date": "2026-02-01", "amount": 15000, "shares": 9000},
+    {"fund_code": "005827", "action": "BUY", "date": "2025-04-15", "amount": 50000, "shares": 30000},
+    {"fund_code": "005827", "action": "BUY", "date": "2025-10-01", "amount": 35000, "shares": 22000},
+    {"fund_code": "000198", "action": "BUY", "date": "2025-01-01", "amount": 35000, "shares": 33500},
+    {"fund_code": "000198", "action": "BUY", "date": "2025-08-01", "amount": 28000, "shares": 26500}
+  ],
+  "nav_history": {
+    "012869": [
+      {"date": "2025-03-01", "nav": 1.579},
+      {"date": "2025-06-01", "nav": 1.650},
+      {"date": "2025-09-01", "nav": 1.563},
+      {"date": "2025-12-31", "nav": 1.580},
+      {"date": "2026-03-01", "nav": 1.620},
+      {"date": "2026-05-15", "nav": 1.610},
+      {"date": "2026-06-01", "nav": 1.600}
+    ],
+    "005827": [
+      {"date": "2025-04-15", "nav": 1.667},
+      {"date": "2025-07-01", "nav": 1.600},
+      {"date": "2025-10-01", "nav": 1.591},
+      {"date": "2025-12-31", "nav": 1.520},
+      {"date": "2026-03-01", "nav": 1.500},
+      {"date": "2026-05-15", "nav": 1.470},
+      {"date": "2026-06-01", "nav": 1.455}
+    ],
+    "000198": [
+      {"date": "2025-01-01", "nav": 1.045},
+      {"date": "2025-04-01", "nav": 1.046},
+      {"date": "2025-08-01", "nav": 1.047},
+      {"date": "2025-12-31", "nav": 1.048},
+      {"date": "2026-06-01", "nav": 1.048}
+    ]
+  },
+  "fee_schedules": {
+    "012869": {"management_fee": 0.01},
+    "005827": {"management_fee": 0.015}
+  },
+  "redemption_rules": {
+    "012869": {"holding_period_days": 7, "redemption_fee_pct": 0.005},
+    "005827": {"holding_period_days": 7, "redemption_fee_pct": 0.005}
+  },
+  "benchmarks": {
+    "012869": "中证新能源汽车指数",
+    "005827": "中证环保指数"
+  },
+  "benchmark_history": {},
+  "events": [
+    {
+      "event_name": "新能源汽车购置税延续",
+      "fund_code": "012869",
+      "event_date": "2026-05-20",
+      "expected_positive_catalyst": "购置税减免政策延续至2027年底，市场预期利好",
+      "expected_direction": "positive"
+    },
+    {
+      "event_name": "欧盟碳边境调节机制落地",
+      "fund_code": "005827",
+      "event_date": "2026-05-25",
+      "expected_positive_catalyst": "CBAM正式实施利好国内环保产业出口竞争力",
+      "expected_direction": "positive"
+    }
+  ],
+  "news_evidence": [
+    {"fund_code": "012869", "headline": "新能源汽车购置税延续政策正式落地，行业长期受益", "date": "2026-05-20", "sentiment": "positive"},
+    {"fund_code": "012869", "headline": "新能源车渗透率突破50%但增速放缓，市场担忧天花板", "date": "2026-05-28", "sentiment": "neutral"},
+    {"fund_code": "005827", "headline": "欧盟CBAM落地，国内环保企业短期承压长期受益", "date": "2026-05-25", "sentiment": "positive"},
+    {"fund_code": "005827", "headline": "环保行业一季度业绩不及预期，机构下调评级", "date": "2026-05-30", "sentiment": "negative"}
+  ],
+  "sentiment_evidence": [
+    {"fund_code": "012869", "sentiment": "bullish", "score": 0.4},
+    {"fund_code": "005827", "sentiment": "neutral", "score": 0.0}
+  ],
+  "constraints": {
+    "risk_level": "moderate",
+    "max_single_fund_weight": 0.40,
+    "max_theme_weight": 0.50,
+    "max_trade_pct": 0.12,
+    "liquidity_reserve_pct": 0.10,
+    "forbidden_actions": ["leverage", "short_sell"],
+    "planned_holding_period": "1-3 years"
+  }
+}

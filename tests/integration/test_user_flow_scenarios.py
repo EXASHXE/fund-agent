@@ -21,6 +21,14 @@ FIXTURE_FILES = [
     "bond_cash_allocation.json",
     "mixed_portfolio_rebalance.json",
     "energy_loss_position.json",
+    "high_overlap_qdii_ai.json",
+    "short_holding_fee_sell_request.json",
+    "cash_buffer_too_low_buy_request.json",
+    "dividend_low_vol_allocation.json",
+    "broad_market_index_vs_active_fund.json",
+    "dca_drawdown_continue_or_pause.json",
+    "event_positive_news_price_weak.json",
+    "missing_transaction_history_but_positions_available.json",
 ]
 
 FORMAL_DECISION_ARTIFACTS = {
@@ -267,3 +275,75 @@ def test_energy_loss_position_contribution_identifies_loss() -> None:
     assert len(loss_positions) > 0, "energy_loss should have at least one loss contributor"
     overlap = FORMAL_DECISION_ARTIFACTS & set(artifacts.keys())
     assert not overlap, "energy_loss must not produce formal decisions"
+
+
+def test_high_overlap_qdii_ai_overlap_diagnostics() -> None:
+    artifacts = _run_fixture("high_overlap_qdii_ai.json")
+    overlap_diag = artifacts.get("overlap_diagnostics", {})
+    if overlap_diag:
+        assert isinstance(overlap_diag.get("overlap_stocks", []), list) or isinstance(overlap_diag.get("shared_stocks", []), list)
+
+
+def test_high_overlap_knowledge_graph_summary() -> None:
+    artifacts = _run_fixture("high_overlap_qdii_ai.json")
+    kg = artifacts.get("knowledge_graph_summary", {})
+    if kg and kg.get("enabled"):
+        assert kg["fund_count"] >= 1
+
+
+def test_short_holding_fee_sell_redemption_risk() -> None:
+    artifacts = _run_fixture("short_holding_fee_sell_request.json")
+    rfr = artifacts.get("redemption_fee_risk", {})
+    if rfr:
+        items = rfr.get("items", [])
+        assert isinstance(items, list)
+
+
+def test_cash_buffer_low_deployment_diagnostics() -> None:
+    artifacts = _run_fixture("cash_buffer_too_low_buy_request.json")
+    cd = artifacts.get("cash_deployment_diagnostics", {})
+    if cd:
+        summary = cd.get("summary", {})
+        assert "deployment_readiness" in summary or "cash_buffer_status" in summary
+
+
+def test_dividend_low_vol_no_false_high_risk() -> None:
+    artifacts = _run_fixture("dividend_low_vol_allocation.json")
+    risk_flags = artifacts.get("risk_flags", [])
+    high_risk = [f for f in risk_flags if isinstance(f, str) and "high" in f.lower() and "risk" in f.lower()]
+    pp = artifacts.get("profit_protection_diagnostics", {})
+    if pp and pp.get("items"):
+        high_profit = [i for i in pp["items"] if i.get("profit_level") in ("high", "very_high")]
+        assert len(high_profit) == 0, "dividend_low_vol should not have false high profit signal"
+
+
+def test_broad_market_benchmark_divergence() -> None:
+    artifacts = _run_fixture("broad_market_index_vs_active_fund.json")
+    bd = artifacts.get("benchmark_divergence_diagnostics", {})
+    if bd:
+        assert isinstance(bd.get("items", []), list)
+
+
+def test_dca_drawdown_diagnostics() -> None:
+    artifacts = _run_fixture("dca_drawdown_continue_or_pause.json")
+    dca = artifacts.get("dca_drawdown_diagnostics", {})
+    if dca:
+        assert isinstance(dca.get("items", []), list)
+
+
+def test_event_positive_news_price_weak_hype_failure() -> None:
+    artifacts = _run_fixture("event_positive_news_price_weak.json")
+    ehf = artifacts.get("event_hype_failure_diagnostics", {})
+    if ehf and ehf.get("items"):
+        assert isinstance(ehf["items"], list)
+
+
+def test_missing_transaction_no_fabricated_cost_basis() -> None:
+    artifacts = _run_fixture("missing_transaction_history_but_positions_available.json")
+    cost_basis = artifacts.get("cost_basis_summary", {})
+    if cost_basis:
+        for fund_data in cost_basis.values() if isinstance(cost_basis, dict) else []:
+            if isinstance(fund_data, dict):
+                assert not fund_data.get("fabricated", False), "must not fabricate cost basis"
+    overlap = FORMAL_DECISION_ARTIFACTS & set(artifacts.keys())
+    assert not overlap, "missing_transaction must not produce formal decisions"

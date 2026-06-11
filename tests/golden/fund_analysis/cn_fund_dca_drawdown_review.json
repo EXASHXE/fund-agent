@@ -847,6 +847,22 @@
           "total_return": 0.0
         }
       },
+      "knowledge_graph_summary": {
+        "enabled": true,
+        "event_count": 0,
+        "fund_count": 3,
+        "industry_count": 0,
+        "limitations": [
+          "No stock nodes in knowledge graph",
+          "No industry nodes in knowledge graph",
+          "No host-provided events; event relations not available"
+        ],
+        "related_events": [],
+        "stock_count": 0,
+        "theme_count": 0,
+        "theme_paths": [],
+        "top_shared_holdings": []
+      },
       "market_scenario": {
         "assumptions": {
           "equity_drawdown_window": "2025-10-31 to 2026-01-31",
@@ -1980,6 +1996,22 @@
         "SYNDCA001: shares mismatch [high] — snapshot=52992.8699/47693.58, portfolio=50000.0000/45000.0, delta=2992.8699/2693.58",
         "Fund SYNDCA001 has max drawdown 29.2%. DCA may benefit from buying at lower NAV, but review risk tolerance."
       ]
+    },
+    "knowledge_graph_summary": {
+      "enabled": true,
+      "event_count": 0,
+      "fund_count": 3,
+      "industry_count": 0,
+      "limitations": [
+        "No stock nodes in knowledge graph",
+        "No industry nodes in knowledge graph",
+        "No host-provided events; event relations not available"
+      ],
+      "related_events": [],
+      "stock_count": 0,
+      "theme_count": 0,
+      "theme_paths": [],
+      "top_shared_holdings": []
     },
     "ledger_reconciliation_report": {
       "comparisons": [

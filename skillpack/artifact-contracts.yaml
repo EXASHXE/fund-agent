@@ -370,3 +370,10 @@ contracts:
         top_level: true
         produced_when: portfolio positions are available
         description: Cash deployment readiness assessment including cash-like allocation, buffer status, and risk budget. Analysis-only; does not recommend specific buys.
+      - key: knowledge_graph_summary
+        category: diagnostics
+        required: false
+        type: object
+        top_level: true
+        produced_when: host supplies holdings data for at least one fund
+        description: Optional KnowledgeGraph summary with fund/stock/industry/theme/event counts, shared holdings, and theme paths. Not required for normal reports.

@@ -965,6 +965,21 @@
           "total_return": 0.085714
         }
       },
+      "knowledge_graph_summary": {
+        "enabled": true,
+        "event_count": 0,
+        "fund_count": 3,
+        "industry_count": 0,
+        "limitations": [
+          "No industry nodes in knowledge graph",
+          "No host-provided events; event relations not available"
+        ],
+        "related_events": [],
+        "stock_count": 7,
+        "theme_count": 0,
+        "theme_paths": [],
+        "top_shared_holdings": []
+      },
       "manager_summary": {
         "funds_with_profiles": [
           "110011",
@@ -1924,6 +1939,21 @@
       "trading_flags": [],
       "transaction_summary": null,
       "warnings": []
+    },
+    "knowledge_graph_summary": {
+      "enabled": true,
+      "event_count": 0,
+      "fund_count": 3,
+      "industry_count": 0,
+      "limitations": [
+        "No industry nodes in knowledge graph",
+        "No host-provided events; event relations not available"
+      ],
+      "related_events": [],
+      "stock_count": 7,
+      "theme_count": 0,
+      "theme_paths": [],
+      "top_shared_holdings": []
     },
     "manager_summary": {
       "funds_with_profiles": [

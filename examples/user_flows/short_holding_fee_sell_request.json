@@ -1,0 +1,134 @@
+{
+  "user_question": "刚买的QDII基金想卖出，持有不到7天，可以赎回吗？",
+  "portfolio": {
+    "as_of_date": "2026-06-09",
+    "total_value": 200000,
+    "cash_available": 30000,
+    "positions": [
+      {
+        "fund_code": "017436",
+        "fund_name": "广发全球精选",
+        "current_value": 85000,
+        "total_cost": 82000,
+        "shares": 55000,
+        "target_weight": 0.40,
+        "tags": ["QDII", "NASDAQ", "recent_buy"]
+      },
+      {
+        "fund_code": "003547",
+        "fund_name": "鹏华丰禄债券",
+        "current_value": 55000,
+        "total_cost": 53000,
+        "shares": 50000,
+        "target_weight": 0.28,
+        "tags": ["bond", "income"]
+      },
+      {
+        "fund_code": "000198",
+        "fund_name": "天弘增利短债",
+        "current_value": 30000,
+        "total_cost": 29000,
+        "shares": 29000,
+        "target_weight": 0.15,
+        "tags": ["short_bond", "cash_substitute"]
+      }
+    ]
+  },
+  "fund_profiles": {
+    "017436": {
+      "fund_code": "017436",
+      "name": "广发全球精选",
+      "fund_type": "QDII",
+      "benchmark": "纳斯达克100",
+      "theme": "QDII_NASDAQ"
+    },
+    "003547": {
+      "fund_code": "003547",
+      "name": "鹏华丰禄债券",
+      "fund_type": "bond",
+      "benchmark": "中债综合指数",
+      "theme": "bond"
+    },
+    "000198": {
+      "fund_code": "000198",
+      "name": "天弘增利短债",
+      "fund_type": "short_bond",
+      "benchmark": "中债短融指数",
+      "theme": "cash"
+    }
+  },
+  "transactions": [
+    {"fund_code": "017436", "action": "BUY", "date": "2025-04-01", "amount": 35000, "shares": 22000},
+    {"fund_code": "017436", "action": "BUY", "date": "2025-10-15", "amount": 25000, "shares": 16000},
+    {"fund_code": "017436", "action": "BUY", "date": "2026-06-07", "amount": 22000, "shares": 13000},
+    {"fund_code": "003547", "action": "BUY", "date": "2025-02-10", "amount": 30000, "shares": 28000},
+    {"fund_code": "003547", "action": "BUY", "date": "2025-09-01", "amount": 23000, "shares": 21000},
+    {"fund_code": "000198", "action": "BUY", "date": "2025-06-15", "amount": 20000, "shares": 19000},
+    {"fund_code": "000198", "action": "BUY", "date": "2026-01-10", "amount": 10000, "shares": 9500}
+  ],
+  "nav_history": {
+    "017436": [
+      {"date": "2025-04-01", "nav": 1.591},
+      {"date": "2025-10-15", "nav": 1.563},
+      {"date": "2025-12-31", "nav": 1.720},
+      {"date": "2026-06-07", "nav": 1.692},
+      {"date": "2026-06-09", "nav": 1.545}
+    ],
+    "003547": [
+      {"date": "2025-02-10", "nav": 1.071},
+      {"date": "2025-09-01", "nav": 1.095},
+      {"date": "2025-12-31", "nav": 1.098},
+      {"date": "2026-06-09", "nav": 1.091}
+    ],
+    "000198": [
+      {"date": "2025-06-15", "nav": 1.053},
+      {"date": "2025-12-31", "nav": 1.058},
+      {"date": "2026-06-09", "nav": 1.045}
+    ]
+  },
+  "fee_schedules": {
+    "017436": {"management_fee": 0.018},
+    "003547": {"management_fee": 0.003},
+    "000198": {"management_fee": 0.002}
+  },
+  "redemption_rules": {
+    "017436": {
+      "holding_period_days": 7,
+      "redemption_fee_pct": 0.005,
+      "short_redemption_fee_pct": 0.015
+    },
+    "003547": {
+      "holding_period_days": 7,
+      "redemption_fee_pct": 0.001,
+      "short_redemption_fee_pct": 0.005
+    },
+    "000198": {
+      "holding_period_days": 0,
+      "redemption_fee_pct": 0.0,
+      "short_redemption_fee_pct": 0.0
+    }
+  },
+  "benchmarks": {
+    "017436": "纳斯达克100"
+  },
+  "benchmark_history": {
+    "017436": [
+      {"date": "2025-04-01", "nav": 18800.0},
+      {"date": "2025-10-15", "nav": 19500.0},
+      {"date": "2025-12-31", "nav": 20100.0},
+      {"date": "2026-06-07", "nav": 20300.0},
+      {"date": "2026-06-09", "nav": 20200.0}
+    ]
+  },
+  "news_evidence": [],
+  "sentiment_evidence": [],
+  "constraints": {
+    "risk_level": "moderate",
+    "max_single_fund_weight": 0.40,
+    "max_theme_weight": 0.35,
+    "liquidity_reserve_pct": 0.10,
+    "max_trade_pct": 0.15,
+    "forbidden_actions": ["short_term_redemption_within_7d"],
+    "planned_holding_period": "1-3 years"
+  }
+}

@@ -18,7 +18,7 @@ from __future__ import annotations
 from collections import Counter
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 import uuid
 
 ActionType = Literal["BUY", "SELL", "HOLD", "PAUSE_DCA", "REDUCE", "INCREASE", "WAIT"]
@@ -249,6 +249,55 @@ class ExecutionLedger:
     generated_at: datetime = field(default_factory=datetime.now)
     version: str = "execution-ledger.v1"
 
+    def ledger_summary(self) -> dict[str, Any]:
+        """Compute aggregate summary across all decisions in the ledger."""
+        _ACTIVE = _ACTIONS_NEED_AMOUNT
+
+        action_counts: dict[str, int] = {}
+        for action in ("BUY", "SELL", "INCREASE", "REDUCE", "HOLD", "WAIT", "PAUSE_DCA"):
+            action_counts[action] = 0
+
+        active_count = 0
+        passive_count = 0
+        downgraded_count = 0
+        blocked_count = 0
+        total_execution_amount = 0.0
+        total_risk_budget = 0.0
+        blocked_by_counts: dict[str, int] = {}
+        reason_code_counts: dict[str, int] = {}
+
+        for d in self.decisions:
+            action_counts[d.action] = action_counts.get(d.action, 0) + 1
+            if d.action in _ACTIVE:
+                active_count += 1
+            else:
+                passive_count += 1
+
+            if "DOWNGRADED_ACTIVE_TO_HOLD" in d.decision_reason_codes:
+                downgraded_count += 1
+            if d.blocked_by:
+                blocked_count += 1
+                for b in d.blocked_by:
+                    blocked_by_counts[b] = blocked_by_counts.get(b, 0) + 1
+            for rc in d.decision_reason_codes:
+                reason_code_counts[rc] = reason_code_counts.get(rc, 0) + 1
+
+            total_execution_amount += d.execution_amount
+            total_risk_budget += d.risk_budget
+
+        return {
+            "action_counts": action_counts,
+            "decision_count": len(self.decisions),
+            "active_decision_count": active_count,
+            "passive_decision_count": passive_count,
+            "downgraded_decision_count": downgraded_count,
+            "blocked_decision_count": blocked_count,
+            "total_execution_amount": round(total_execution_amount, 2),
+            "total_risk_budget": round(total_risk_budget, 4),
+            "blocked_by_counts": blocked_by_counts,
+            "reason_code_counts": reason_code_counts,
+        }
+
     def to_dict(self) -> dict:
         """Serialize to a JSON-compatible dict."""
         decisions = []
@@ -261,6 +310,7 @@ class ExecutionLedger:
             "version": self.version,
             "generated_at": self.generated_at.isoformat(),
             "decisions": decisions,
+            "ledger_summary": self.ledger_summary(),
         }
 
     def total_risk_budget(self) -> float:

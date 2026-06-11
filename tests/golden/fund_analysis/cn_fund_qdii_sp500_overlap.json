@@ -1266,6 +1266,22 @@
           "total_return": 0.010101
         }
       },
+      "knowledge_graph_summary": {
+        "enabled": true,
+        "event_count": 0,
+        "fund_count": 4,
+        "industry_count": 0,
+        "limitations": [
+          "No stock nodes in knowledge graph",
+          "No industry nodes in knowledge graph",
+          "No host-provided events; event relations not available"
+        ],
+        "related_events": [],
+        "stock_count": 0,
+        "theme_count": 0,
+        "theme_paths": [],
+        "top_shared_holdings": []
+      },
       "market_scenario": null,
       "overlap_diagnostics": {
         "overlapping_holdings": [
@@ -2397,6 +2413,22 @@
       "warnings": [
         "Cash 10000 is below 8% liquidity reserve (14400). Gap: 4400."
       ]
+    },
+    "knowledge_graph_summary": {
+      "enabled": true,
+      "event_count": 0,
+      "fund_count": 4,
+      "industry_count": 0,
+      "limitations": [
+        "No stock nodes in knowledge graph",
+        "No industry nodes in knowledge graph",
+        "No host-provided events; event relations not available"
+      ],
+      "related_events": [],
+      "stock_count": 0,
+      "theme_count": 0,
+      "theme_paths": [],
+      "top_shared_holdings": []
     },
     "ledger_reconciliation_report": {
       "comparisons": [

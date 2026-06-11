@@ -51,6 +51,18 @@
       "version": "decision-contract.v2"
     },
     "decision_status": "WAIT",
+    "evidence_anchor_diagnostics": {
+      "active_action_requires_anchor": false,
+      "anchor_count": 0,
+      "anchor_entity_mismatch": [],
+      "invalid_anchor_refs": [],
+      "limitations": [
+        "Passive action with no anchors; evidence_state explains blockage"
+      ],
+      "missing_anchor_refs": [],
+      "trade_anchor_coverage": [],
+      "valid_anchor_refs": []
+    },
     "execution_ledger": {
       "decisions": [
         {
@@ -97,7 +109,42 @@
       ],
       "generated_at": "<normalized-timestamp>",
       "ledger_id": "<normalized-ledger-id>",
+      "ledger_summary": {
+        "action_counts": {
+          "BUY": 0,
+          "HOLD": 0,
+          "INCREASE": 0,
+          "PAUSE_DCA": 0,
+          "REDUCE": 0,
+          "SELL": 0,
+          "WAIT": 1
+        },
+        "active_decision_count": 0,
+        "blocked_by_counts": {
+          "evidence": 1
+        },
+        "blocked_decision_count": 1,
+        "decision_count": 1,
+        "downgraded_decision_count": 0,
+        "passive_decision_count": 1,
+        "reason_code_counts": {
+          "EVIDENCE_MISSING": 1,
+          "INSUFFICIENT_EVIDENCE": 1,
+          "PASSIVE_ACTION": 1
+        },
+        "total_execution_amount": 0.0,
+        "total_risk_budget": 3000.0
+      },
       "version": "execution-ledger.v1"
+    },
+    "risk_constraint_conflicts": {
+      "items": [],
+      "summary": {
+        "blocked_trade_count": 0,
+        "capped_trade_count": 0,
+        "has_blocking_conflict": false,
+        "has_capping_conflict": false
+      }
     }
   },
   "errors": [],

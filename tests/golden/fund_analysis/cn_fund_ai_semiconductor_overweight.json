@@ -1049,6 +1049,22 @@
           "total_return": 0.002004
         }
       },
+      "knowledge_graph_summary": {
+        "enabled": true,
+        "event_count": 0,
+        "fund_count": 4,
+        "industry_count": 0,
+        "limitations": [
+          "No stock nodes in knowledge graph",
+          "No industry nodes in knowledge graph",
+          "No host-provided events; event relations not available"
+        ],
+        "related_events": [],
+        "stock_count": 0,
+        "theme_count": 0,
+        "theme_paths": [],
+        "top_shared_holdings": []
+      },
       "market_scenario": {
         "assumptions": {
           "ai_semiconductor_factor_shock": -0.15,
@@ -2289,6 +2305,22 @@
         "Fund SYNAI001 has max drawdown 11.3%. DCA may benefit from buying at lower NAV, but review risk tolerance.",
         "Cash 5000 is below 10% liquidity reserve (15000). Gap: 10000."
       ]
+    },
+    "knowledge_graph_summary": {
+      "enabled": true,
+      "event_count": 0,
+      "fund_count": 4,
+      "industry_count": 0,
+      "limitations": [
+        "No stock nodes in knowledge graph",
+        "No industry nodes in knowledge graph",
+        "No host-provided events; event relations not available"
+      ],
+      "related_events": [],
+      "stock_count": 0,
+      "theme_count": 0,
+      "theme_paths": [],
+      "top_shared_holdings": []
     },
     "ledger_reconciliation_report": {
       "comparisons": [

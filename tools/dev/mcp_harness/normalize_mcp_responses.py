@@ -18,26 +18,51 @@ def load_fake_responses() -> dict[str, Any]:
 
 
 def normalize_news_evidence(raw: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    if not raw:
+        return []
+    first = raw[0]
+    if "source_type" in first:
+        return [
+            {
+                "source": item.get("source_type", ""),
+                "headline": item.get("claim", ""),
+                "date": item.get("timestamp", ""),
+                "sentiment": item.get("direction", "neutral"),
+            }
+            for item in raw
+        ]
     return [
         {
-            "source": item.get("source_type", ""),
-            "headline": item.get("claim", ""),
-            "date": item.get("timestamp", ""),
-            "sentiment": item.get("direction", "neutral"),
+            "source": item.get("source", ""),
+            "headline": item.get("headline", item.get("title", "")),
+            "date": item.get("date", ""),
+            "sentiment": item.get("sentiment", "neutral"),
         }
         for item in raw
     ]
 
 
 def normalize_sentiment_evidence(raw: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    if not raw:
+        return []
+    first = raw[0]
+    if "source_type" in first:
+        return [
+            {
+                "fund_code": next(
+                    (e.split(":")[1] for e in item.get("related_entities", []) if e.startswith("fund:")),
+                    "",
+                ),
+                "sentiment": item.get("direction", "neutral"),
+                "score": item.get("confidence_weight", 0.5),
+            }
+            for item in raw
+        ]
     return [
         {
-            "fund_code": next(
-                (e.split(":")[1] for e in item.get("related_entities", []) if e.startswith("fund:")),
-                "",
-            ),
-            "sentiment": item.get("direction", "neutral"),
-            "score": item.get("confidence_weight", 0.5),
+            "fund_code": item.get("fund_code", ""),
+            "sentiment": item.get("sentiment", "neutral"),
+            "score": item.get("score", 0.5),
         }
         for item in raw
     ]
@@ -50,12 +75,17 @@ def normalize_benchmark_history(raw: dict[str, Any]) -> dict[str, Any]:
 def normalize_all(raw: dict[str, Any] | None = None) -> dict[str, Any]:
     if raw is None:
         raw = load_fake_responses()
+    news_raw = raw.get("news_evidence", raw.get("financial_news", []))
+    sentiment_raw = raw.get("sentiment_evidence", raw.get("social_sentiment", []))
+    benchmark_raw = raw.get("benchmark_history", raw.get("benchmark_price_history", {}))
+    fund_profiles_raw = raw.get("fund_profiles", raw.get("fund_metadata_lookup", {}))
+    fee_schedules_raw = raw.get("fee_schedules", raw.get("fund_fee_schedule", {}))
     return {
-        "news_evidence": normalize_news_evidence(raw.get("news_evidence", [])),
-        "sentiment_evidence": normalize_sentiment_evidence(raw.get("sentiment_evidence", [])),
-        "benchmark_history": normalize_benchmark_history(raw.get("benchmark_history", {})),
-        "fund_profiles": raw.get("fund_profiles", {}),
-        "fee_schedules": raw.get("fee_schedules", {}),
+        "news_evidence": normalize_news_evidence(news_raw),
+        "sentiment_evidence": normalize_sentiment_evidence(sentiment_raw),
+        "benchmark_history": normalize_benchmark_history(benchmark_raw),
+        "fund_profiles": fund_profiles_raw,
+        "fee_schedules": fee_schedules_raw,
         "redemption_rules": raw.get("redemption_rules", {}),
     }
 

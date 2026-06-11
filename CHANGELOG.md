@@ -1,5 +1,57 @@
 # Changelog
 
+## [Unreleased] v1.1.0
+
+### Added
+
+- **KnowledgeGraph enum-safe queries** — `src/graph/queries.py` now uses
+  `KGEdgeType` enum comparison instead of raw string comparison, preventing
+  typos and ensuring edge-type safety across the graph layer.
+- **`knowledge_graph_summary` artifact** — optional `fund_analysis` artifact
+  emitted when holdings data supports KnowledgeGraph construction. Provides
+  KG-derived context summarizing entity relationships, sector/theme links,
+  and cross-fund overlap patterns. Omitted (`enabled=false`) when data is
+  insufficient. No requirement to have KG data for normal reports.
+- **`evidence_anchor_diagnostics` artifact** — `decision_support` artifact
+  that explains anchor validity and coverage per decision and per trade.
+  Surfaces which evidence IDs were used, which were missing or weak, and the
+  resulting anchor coverage ratio.
+- **`risk_constraint_conflicts` artifact** — `decision_support` artifact
+  that explains budget/constraint blocking with cap/downgrade details.
+  Surfaces which constraints conflicted, the original vs capped execution
+  amount, and the downgrade reason.
+- **`ledger_summary` field in ExecutionLedger** — `ExecutionLedger.to_dict()`
+  now includes a `ledger_summary` field providing a deterministic summary of
+  all decisions, total execution amounts, and passive/active action counts.
+- **8 new user flow fixtures** — expanded scenario-specific user flow
+  assertions covering KnowledgeGraph context, evidence anchor diagnostics,
+  risk constraint conflicts, and ledger summary validation.
+- **Expanded MCP harness** — dev-only MCP harness (`tools/dev/mcp_harness/`)
+  now handles `financial_news`, `web_search`, and `social_sentiment`
+  capability types in fake mode.
+
+### Changed
+
+- **`queries.py` now uses `KGEdgeType` enum comparison** — all edge-type
+  checks in `src/graph/queries.py` compare against `KGEdgeType` enum members
+  instead of raw strings, improving type safety and preventing silent
+  mismatches.
+- **`ExecutionLedger.to_dict()` includes `ledger_summary`** — the serialized
+  ledger output now contains a `ledger_summary` field with deterministic
+  counts and totals.
+- **MCP harness handles `financial_news`/`web_search`/`social_sentiment`** —
+  the fake MCP harness now normalizes responses for all three capability
+  types, enabling more complete integration testing without live providers.
+
+### Honesty
+
+- No live provider integration was added. All MCP responses remain fake/dev-only.
+- No broker/order execution exists.
+- MCP live mode is documented but not implemented in v1.1.
+- `fund_analysis` still does not emit formal `Decision` or `ExecutionLedger`.
+- KnowledgeGraph context is optional and does not affect report output when
+  holdings data is insufficient.
+
 ## [Unreleased] v1.0.0-rc
 
 ### Added

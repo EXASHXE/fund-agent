@@ -1,5 +1,6 @@
 """Knowledge Graph query functions — typed query interface from plan.txt spec."""
 from src.graph.knowledge_graph import KnowledgeGraph
+from src.graph.schema import KGEdgeType
 
 
 def get_entity_chain(kg: KnowledgeGraph, fund_code: str, depth: int = 3) -> dict:
@@ -30,17 +31,16 @@ def find_related_events(kg: KnowledgeGraph, entity_id: str) -> list:
         return []
 
     if entity_id.startswith("fund:"):
-        # Walk through fund → holdings to find stocks impacted by events
         related = []
         fund_id = entity_id
         if kg.graph.has_node(fund_id):
             for _, stock_dst, data in kg.graph.edges(fund_id, data=True):
                 edge = data.get("edge_data")
-                if edge and edge.edge_type is not None and str(edge.edge_type) == "holds":
-                    for _, event_dst, ev_data in kg.graph.in_edges(stock_dst, data=True):
+                if edge and edge.edge_type == KGEdgeType.HOLDS:
+                    for event_src, _, ev_data in kg.graph.in_edges(stock_dst, data=True):
                         ev_edge = ev_data.get("edge_data")
-                        if ev_edge and ev_edge.edge_type is not None and str(ev_edge.edge_type) == "impacts":
-                            event_node = kg.graph.nodes[event_dst].get("data")
+                        if ev_edge and ev_edge.edge_type == KGEdgeType.IMPACTS:
+                            event_node = kg.graph.nodes[event_src].get("data")
                             if event_node:
                                 related.append({
                                     "event_id": event_node.event_id,
@@ -55,10 +55,10 @@ def find_related_events(kg: KnowledgeGraph, entity_id: str) -> list:
         stock_id = entity_id
         related = []
         if kg.graph.has_node(stock_id):
-            for _, event_dst, ev_data in kg.graph.in_edges(stock_id, data=True):
+            for event_src, _, ev_data in kg.graph.in_edges(stock_id, data=True):
                 ev_edge = ev_data.get("edge_data")
-                if ev_edge and ev_edge.edge_type is not None and str(ev_edge.edge_type) == "impacts":
-                    event_node = kg.graph.nodes[event_dst].get("data")
+                if ev_edge and ev_edge.edge_type == KGEdgeType.IMPACTS:
+                    event_node = kg.graph.nodes[event_src].get("data")
                     if event_node:
                         related.append({
                             "event_id": event_node.event_id,

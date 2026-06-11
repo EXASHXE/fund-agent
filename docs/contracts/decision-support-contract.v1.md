@@ -151,6 +151,8 @@ The runtime may emit these artifact keys depending on the input mode:
 | `decision_count` | integer | `trade_plan_decision` path; number of formal decisions emitted |
 | `audit_trail` | list | Decision artifacts include audit data |
 | `warnings` | list | Validation/capping/skipping warnings are emitted |
+| `evidence_anchor_diagnostics` | object | Formal decision is produced; explains anchor validity/coverage per decision and per trade |
+| `risk_constraint_conflicts` | object | Constraints or budget block an active action; explains budget/constraint blocking with cap/downgrade details |
 
 ## Formal Decision Boundary
 
@@ -161,6 +163,9 @@ The runtime may emit these artifact keys depending on the input mode:
   an order, not a formal decision, and not a broker instruction.
 - `decision_support` does not execute trades, does not place orders, and does
   not connect to brokerage systems.
+- `execution_ledger` now includes a `ledger_summary` field providing a
+  deterministic summary of all decisions, total execution amounts, and
+  passive/active action counts within the ledger.
 
 ## Risk and Trade Amount Policy
 

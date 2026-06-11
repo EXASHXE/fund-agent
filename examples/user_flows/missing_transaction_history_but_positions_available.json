@@ -1,0 +1,106 @@
+{
+  "user_question": "持仓基金有余额但无交易记录，成本基础如何判断？能否直接卖出？",
+  "portfolio": {
+    "as_of_date": "2026-06-01",
+    "total_value": 150000,
+    "cash_available": 20000,
+    "positions": [
+      {
+        "fund_code": "001156",
+        "fund_name": "申万菱信新能源汽车",
+        "current_value": 60000,
+        "total_cost": null,
+        "shares": 42000,
+        "current_nav": 1.429,
+        "cost_nav": null,
+        "pnl_pct": null,
+        "asset_type": "active",
+        "target_weight": 0.40,
+        "tags": ["active", "NEV", "missing_cost_basis"]
+      },
+      {
+        "fund_code": "005827",
+        "fund_name": "易方达环保主题混合",
+        "current_value": 45000,
+        "total_cost": null,
+        "shares": 31000,
+        "current_nav": 1.452,
+        "cost_nav": null,
+        "pnl_pct": null,
+        "asset_type": "active",
+        "target_weight": 0.30,
+        "tags": ["active", "green", "missing_cost_basis"]
+      },
+      {
+        "fund_code": "003547",
+        "fund_name": "鹏华丰禄债券",
+        "current_value": 25000,
+        "total_cost": null,
+        "shares": 23000,
+        "current_nav": 1.087,
+        "cost_nav": null,
+        "pnl_pct": null,
+        "asset_type": "bond",
+        "target_weight": 0.17,
+        "tags": ["bond", "income", "missing_cost_basis"]
+      }
+    ]
+  },
+  "fund_profiles": {
+    "001156": {"fund_code": "001156", "name": "申万菱信新能源汽车", "fund_type": "active", "benchmark": "中证新能源汽车指数", "theme": "NEV"},
+    "005827": {"fund_code": "005827", "name": "易方达环保主题混合", "fund_type": "active", "benchmark": "中证环保指数", "theme": "green"},
+    "003547": {"fund_code": "003547", "name": "鹏华丰禄债券", "fund_type": "bond", "benchmark": "中债综合指数", "theme": "bond"}
+  },
+  "transactions": [],
+  "nav_history": {
+    "001156": [
+      {"date": "2025-06-01", "nav": 1.350},
+      {"date": "2025-09-01", "nav": 1.380},
+      {"date": "2025-12-31", "nav": 1.400},
+      {"date": "2026-03-01", "nav": 1.420},
+      {"date": "2026-06-01", "nav": 1.429}
+    ],
+    "005827": [
+      {"date": "2025-06-01", "nav": 1.520},
+      {"date": "2025-09-01", "nav": 1.500},
+      {"date": "2025-12-31", "nav": 1.480},
+      {"date": "2026-03-01", "nav": 1.465},
+      {"date": "2026-06-01", "nav": 1.452}
+    ],
+    "003547": [
+      {"date": "2025-06-01", "nav": 1.080},
+      {"date": "2025-09-01", "nav": 1.083},
+      {"date": "2025-12-31", "nav": 1.085},
+      {"date": "2026-03-01", "nav": 1.086},
+      {"date": "2026-06-01", "nav": 1.087}
+    ]
+  },
+  "fee_schedules": {
+    "001156": {"management_fee": 0.015},
+    "005827": {"management_fee": 0.015},
+    "003547": {"management_fee": 0.005}
+  },
+  "redemption_rules": {
+    "001156": {"holding_period_days": 7, "redemption_fee_pct": 0.005},
+    "005827": {"holding_period_days": 7, "redemption_fee_pct": 0.005},
+    "003547": {"holding_period_days": 0, "redemption_fee_pct": 0.0}
+  },
+  "benchmarks": {
+    "001156": "中证新能源汽车指数",
+    "005827": "中证环保指数",
+    "003547": "中债综合指数"
+  },
+  "benchmark_history": {},
+  "events": [],
+  "news_evidence": [],
+  "sentiment_evidence": [],
+  "constraints": {
+    "risk_level": "moderate",
+    "max_single_fund_weight": 0.40,
+    "max_theme_weight": 0.50,
+    "max_trade_pct": 0.10,
+    "liquidity_reserve_pct": 0.12,
+    "forbidden_actions": ["leverage", "short_sell", "fabricate_cost_basis", "free_carry_assumption"],
+    "planned_holding_period": "unknown"
+  }
+}

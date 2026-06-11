@@ -1,0 +1,174 @@
+{
+  "user_question": "红利低波组合收益稳健，是否需要调整仓位？",
+  "portfolio": {
+    "as_of_date": "2026-06-09",
+    "total_value": 300000,
+    "cash_available": 45000,
+    "positions": [
+      {
+        "fund_code": "501062",
+        "fund_name": "华宝标普中国A股红利机会C",
+        "current_value": 90000,
+        "total_cost": 82000,
+        "shares": 79000,
+        "target_weight": 0.28,
+        "tags": ["dividend", "value", "low_vol"]
+      },
+      {
+        "fund_code": "007119",
+        "fund_name": "景顺长城中证低波动指数C",
+        "current_value": 75000,
+        "total_cost": 70000,
+        "shares": 68000,
+        "target_weight": 0.24,
+        "tags": ["low_vol", "smart_beta"]
+      },
+      {
+        "fund_code": "003547",
+        "fund_name": "鹏华丰禄债券",
+        "current_value": 60000,
+        "total_cost": 57000,
+        "shares": 55000,
+        "target_weight": 0.20,
+        "tags": ["bond", "income"]
+      },
+      {
+        "fund_code": "000198",
+        "fund_name": "天弘增利短债",
+        "current_value": 30000,
+        "total_cost": 29000,
+        "shares": 29000,
+        "target_weight": 0.10,
+        "tags": ["short_bond", "cash_substitute"]
+      }
+    ]
+  },
+  "fund_profiles": {
+    "501062": {
+      "fund_code": "501062",
+      "name": "华宝标普中国A股红利机会C",
+      "fund_type": "index",
+      "benchmark": "标普中国A股红利机会指数",
+      "theme": "dividend"
+    },
+    "007119": {
+      "fund_code": "007119",
+      "name": "景顺长城中证低波动指数C",
+      "fund_type": "index",
+      "benchmark": "中证低波动指数",
+      "theme": "low_vol"
+    },
+    "003547": {
+      "fund_code": "003547",
+      "name": "鹏华丰禄债券",
+      "fund_type": "bond",
+      "benchmark": "中债综合指数",
+      "theme": "bond"
+    },
+    "000198": {
+      "fund_code": "000198",
+      "name": "天弘增利短债",
+      "fund_type": "short_bond",
+      "benchmark": "中债短融指数",
+      "theme": "cash"
+    }
+  },
+  "transactions": [
+    {"fund_code": "501062", "action": "BUY", "date": "2025-01-10", "amount": 40000, "shares": 37000},
+    {"fund_code": "501062", "action": "BUY", "date": "2025-07-15", "amount": 25000, "shares": 22000},
+    {"fund_code": "501062", "action": "BUY", "date": "2026-02-01", "amount": 20000, "shares": 17500},
+    {"fund_code": "007119", "action": "BUY", "date": "2025-03-01", "amount": 35000, "shares": 30000},
+    {"fund_code": "007119", "action": "BUY", "date": "2025-09-10", "amount": 22000, "shares": 19000},
+    {"fund_code": "007119", "action": "BUY", "date": "2026-04-15", "amount": 15000, "shares": 12500},
+    {"fund_code": "003547", "action": "BUY", "date": "2025-02-20", "amount": 32000, "shares": 29500},
+    {"fund_code": "003547", "action": "BUY", "date": "2025-10-01", "amount": 25000, "shares": 23000},
+    {"fund_code": "000198", "action": "BUY", "date": "2025-06-01", "amount": 18000, "shares": 17000},
+    {"fund_code": "000198", "action": "BUY", "date": "2026-01-20", "amount": 12000, "shares": 11500}
+  ],
+  "nav_history": {
+    "501062": [
+      {"date": "2025-01-10", "nav": 1.081},
+      {"date": "2025-07-15", "nav": 1.136},
+      {"date": "2025-12-31", "nav": 1.120},
+      {"date": "2026-02-01", "nav": 1.143},
+      {"date": "2026-06-09", "nav": 1.139}
+    ],
+    "007119": [
+      {"date": "2025-03-01", "nav": 1.167},
+      {"date": "2025-09-10", "nav": 1.158},
+      {"date": "2025-12-31", "nav": 1.180},
+      {"date": "2026-04-15", "nav": 1.200},
+      {"date": "2026-06-09", "nav": 1.103}
+    ],
+    "003547": [
+      {"date": "2025-02-20", "nav": 1.085},
+      {"date": "2025-10-01", "nav": 1.087},
+      {"date": "2025-12-31", "nav": 1.098},
+      {"date": "2026-06-09", "nav": 1.091}
+    ],
+    "000198": [
+      {"date": "2025-06-01", "nav": 1.059},
+      {"date": "2025-12-31", "nav": 1.058},
+      {"date": "2026-06-09", "nav": 1.045}
+    ]
+  },
+  "fee_schedules": {
+    "501062": {"management_fee": 0.005},
+    "007119": {"management_fee": 0.005},
+    "003547": {"management_fee": 0.003},
+    "000198": {"management_fee": 0.002}
+  },
+  "redemption_rules": {
+    "501062": {
+      "holding_period_days": 7,
+      "redemption_fee_pct": 0.005,
+      "short_redemption_fee_pct": 0.015
+    },
+    "007119": {
+      "holding_period_days": 7,
+      "redemption_fee_pct": 0.005,
+      "short_redemption_fee_pct": 0.015
+    },
+    "003547": {
+      "holding_period_days": 7,
+      "redemption_fee_pct": 0.001,
+      "short_redemption_fee_pct": 0.005
+    },
+    "000198": {
+      "holding_period_days": 0,
+      "redemption_fee_pct": 0.0,
+      "short_redemption_fee_pct": 0.0
+    }
+  },
+  "benchmarks": {
+    "501062": "标普中国A股红利机会指数",
+    "007119": "中证低波动指数"
+  },
+  "benchmark_history": {
+    "501062": [
+      {"date": "2025-01-10", "nav": 4500.0},
+      {"date": "2025-07-15", "nav": 4700.0},
+      {"date": "2025-12-31", "nav": 4650.0},
+      {"date": "2026-02-01", "nav": 4720.0},
+      {"date": "2026-06-09", "nav": 4750.0}
+    ],
+    "007119": [
+      {"date": "2025-03-01", "nav": 3200.0},
+      {"date": "2025-09-10", "nav": 3250.0},
+      {"date": "2025-12-31", "nav": 3300.0},
+      {"date": "2026-04-15", "nav": 3350.0},
+      {"date": "2026-06-09", "nav": 3320.0}
+    ]
+  },
+  "news_evidence": [],
+  "sentiment_evidence": [],
+  "constraints": {
+    "risk_level": "conservative",
+    "max_single_fund_weight": 0.30,
+    "max_theme_weight": 0.35,
+    "liquidity_reserve_pct": 0.15,
+    "max_trade_pct": 0.10,
+    "forbidden_actions": [],
+    "planned_holding_period": "3+ years"
+  }
+}

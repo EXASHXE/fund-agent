@@ -216,3 +216,45 @@ Chinese section titles such as `组合概览`, `持仓快照`, `仓位贡献`,
 
 The report remains artifact-only: it does not create formal `Decision` or
 `ExecutionLedger`, does not fetch live data, and does not rely on LLM prose.
+
+## KG as optional context layer
+
+`fund_analysis` may emit an optional `knowledge_graph_summary` artifact when
+holdings data supports it. This artifact provides a KnowledgeGraph-derived
+context layer summarizing entity relationships, sector/theme links, and
+cross-fund overlap patterns. It is not required for normal reports; when
+holdings data is insufficient, the artifact is omitted (`enabled=false`).
+
+The KnowledgeGraph context layer is distinct from the `EvidenceGraph`:
+- **KnowledgeGraph** (`src/graph/`) provides structural entity/relationship
+  context for portfolio analysis (sectors, themes, overlap). It is an optional
+  enrichment layer consumed by `fund_analysis`.
+- **EvidenceGraph** (`src/schemas/evidence_graph`) is the evidence layer
+  consumed by `decision_support` for formal decision gatekeeping. It tracks
+  evidence items, edges, and stats.
+
+## MCP harness boundary
+
+The dev-only MCP harness (`tools/dev/mcp_harness/`) provides fake MCP
+responses for testing and development. It is not part of the production
+runtime. Live MCP providers are host-injected via `MCPHostAdapter`. The
+harness handles `financial_news`, `web_search`, and `social_sentiment`
+capability types in fake mode only; live mode is env-gated and not
+implemented in v1.
+
+## decision_support evidence diagnostics
+
+`decision_support` now consumes and may emit two additional diagnostic
+artifacts:
+
+- **`evidence_anchor_diagnostics`** — explains anchor validity and coverage
+  per decision and per trade. Surfaces which evidence IDs were used, which
+  were missing or weak, and the resulting anchor coverage ratio.
+- **`risk_constraint_conflicts`** — explains budget and constraint blocking
+  with cap/downgrade details. Surfaces which constraints conflicted, the
+  original vs capped execution amount, and the downgrade reason.
+
+These diagnostics are produced alongside formal `Decision` / `ExecutionLedger`
+artifacts and are intended for host-facing auditability and explainability.
+The `ExecutionLedger` now includes a `ledger_summary` field summarizing all
+decisions, total execution amounts, and passive/active action counts.

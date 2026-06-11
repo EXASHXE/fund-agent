@@ -1,0 +1,165 @@
+{
+  "user_question": "宽基指数基金和主动基金对比，谁更值得持有？基准偏离度如何影响判断？",
+  "portfolio": {
+    "as_of_date": "2026-06-01",
+    "total_value": 400000,
+    "cash_available": 40000,
+    "positions": [
+      {
+        "fund_code": "110011",
+        "fund_name": "易方达沪深300ETF联接A",
+        "current_value": 120000,
+        "total_cost": 100000,
+        "shares": 85000,
+        "current_nav": 1.412,
+        "cost_nav": 1.176,
+        "pnl_pct": 0.20,
+        "asset_type": "index",
+        "target_weight": 0.30,
+        "tags": ["index", "CSI300", "broad_market"]
+      },
+      {
+        "fund_code": "163406",
+        "fund_name": "兴全合润混合",
+        "current_value": 100000,
+        "total_cost": 95000,
+        "shares": 62000,
+        "current_nav": 1.613,
+        "cost_nav": 1.532,
+        "pnl_pct": 0.053,
+        "asset_type": "active",
+        "target_weight": 0.25,
+        "tags": ["active", "balanced", "benchmark_divergence"]
+      },
+      {
+        "fund_code": "519736",
+        "fund_name": "交银新成长混合",
+        "current_value": 80000,
+        "total_cost": 90000,
+        "shares": 55000,
+        "current_nav": 1.455,
+        "cost_nav": 1.636,
+        "pnl_pct": -0.111,
+        "asset_type": "active",
+        "target_weight": 0.20,
+        "tags": ["active", "growth", "benchmark_divergence"]
+      },
+      {
+        "fund_code": "003547",
+        "fund_name": "鹏华丰禄债券",
+        "current_value": 60000,
+        "total_cost": 57000,
+        "shares": 55000,
+        "current_nav": 1.091,
+        "cost_nav": 1.036,
+        "pnl_pct": 0.053,
+        "asset_type": "bond",
+        "target_weight": 0.15,
+        "tags": ["bond", "income", "stabilizer"]
+      }
+    ]
+  },
+  "fund_profiles": {
+    "110011": {"fund_code": "110011", "name": "易方达沪深300ETF联接A", "fund_type": "index", "benchmark": "沪深300", "theme": "CSI300"},
+    "163406": {"fund_code": "163406", "name": "兴全合润混合", "fund_type": "active", "benchmark": "沪深300", "theme": "balanced"},
+    "519736": {"fund_code": "519736", "name": "交银新成长混合", "fund_type": "active", "benchmark": "中证500", "theme": "growth"},
+    "003547": {"fund_code": "003547", "name": "鹏华丰禄债券", "fund_type": "bond", "benchmark": "中债综合指数", "theme": "bond"}
+  },
+  "transactions": [
+    {"fund_code": "110011", "action": "BUY", "date": "2025-01-15", "amount": 50000, "shares": 40000},
+    {"fund_code": "110011", "action": "BUY", "date": "2025-07-01", "amount": 50000, "shares": 38000},
+    {"fund_code": "110011", "action": "BUY", "date": "2026-01-10", "amount": 20000, "shares": 15000},
+    {"fund_code": "163406", "action": "BUY", "date": "2025-02-01", "amount": 50000, "shares": 30000},
+    {"fund_code": "163406", "action": "BUY", "date": "2025-09-15", "amount": 45000, "shares": 28000},
+    {"fund_code": "519736", "action": "BUY", "date": "2025-03-01", "amount": 50000, "shares": 28000},
+    {"fund_code": "519736", "action": "BUY", "date": "2025-10-01", "amount": 40000, "shares": 25000},
+    {"fund_code": "003547", "action": "BUY", "date": "2025-01-01", "amount": 35000, "shares": 32000},
+    {"fund_code": "003547", "action": "BUY", "date": "2025-08-01", "amount": 22000, "shares": 20000}
+  ],
+  "nav_history": {
+    "110011": [
+      {"date": "2025-01-15", "nav": 1.250},
+      {"date": "2025-04-01", "nav": 1.280},
+      {"date": "2025-07-01", "nav": 1.316},
+      {"date": "2025-10-01", "nav": 1.350},
+      {"date": "2025-12-31", "nav": 1.380},
+      {"date": "2026-06-01", "nav": 1.412}
+    ],
+    "163406": [
+      {"date": "2025-02-01", "nav": 1.667},
+      {"date": "2025-05-01", "nav": 1.620},
+      {"date": "2025-09-15", "nav": 1.607},
+      {"date": "2025-12-31", "nav": 1.580},
+      {"date": "2026-03-01", "nav": 1.600},
+      {"date": "2026-06-01", "nav": 1.613}
+    ],
+    "519736": [
+      {"date": "2025-03-01", "nav": 1.786},
+      {"date": "2025-06-01", "nav": 1.720},
+      {"date": "2025-10-01", "nav": 1.600},
+      {"date": "2025-12-31", "nav": 1.520},
+      {"date": "2026-03-01", "nav": 1.490},
+      {"date": "2026-06-01", "nav": 1.455}
+    ],
+    "003547": [
+      {"date": "2025-01-01", "nav": 1.094},
+      {"date": "2025-04-01", "nav": 1.096},
+      {"date": "2025-08-01", "nav": 1.100},
+      {"date": "2025-12-31", "nav": 1.098},
+      {"date": "2026-06-01", "nav": 1.091}
+    ]
+  },
+  "fee_schedules": {
+    "110011": {"management_fee": 0.005},
+    "163406": {"management_fee": 0.015},
+    "519736": {"management_fee": 0.015}
+  },
+  "redemption_rules": {
+    "110011": {"holding_period_days": 7, "redemption_fee_pct": 0.005},
+    "163406": {"holding_period_days": 7, "redemption_fee_pct": 0.005},
+    "519736": {"holding_period_days": 7, "redemption_fee_pct": 0.005}
+  },
+  "benchmarks": {
+    "110011": "沪深300",
+    "163406": "沪深300",
+    "519736": "中证500"
+  },
+  "benchmark_history": {
+    "110011": [
+      {"date": "2025-01-15", "nav": 3800.0},
+      {"date": "2025-04-01", "nav": 3900.0},
+      {"date": "2025-07-01", "nav": 3950.0},
+      {"date": "2025-10-01", "nav": 4050.0},
+      {"date": "2025-12-31", "nav": 4100.0},
+      {"date": "2026-06-01", "nav": 4200.0}
+    ],
+    "163406": [
+      {"date": "2025-02-01", "nav": 3800.0},
+      {"date": "2025-05-01", "nav": 3850.0},
+      {"date": "2025-09-15", "nav": 4000.0},
+      {"date": "2025-12-31", "nav": 4100.0},
+      {"date": "2026-03-01", "nav": 4150.0},
+      {"date": "2026-06-01", "nav": 4200.0}
+    ],
+    "519736": [
+      {"date": "2025-03-01", "nav": 5500.0},
+      {"date": "2025-06-01", "nav": 5400.0},
+      {"date": "2025-10-01", "nav": 5200.0},
+      {"date": "2025-12-31", "nav": 5100.0},
+      {"date": "2026-03-01", "nav": 5050.0},
+      {"date": "2026-06-01", "nav": 5000.0}
+    ]
+  },
+  "events": [],
+  "news_evidence": [],
+  "sentiment_evidence": [],
+  "constraints": {
+    "risk_level": "moderate",
+    "max_single_fund_weight": 0.30,
+    "max_theme_weight": 0.35,
+    "max_trade_pct": 0.15,
+    "liquidity_reserve_pct": 0.10,
+    "forbidden_actions": ["leverage", "short_sell"],
+    "planned_holding_period": "1-3 years"
+  }
+}

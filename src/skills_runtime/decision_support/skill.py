@@ -13,6 +13,7 @@ from src.schemas.decision import ExecutionLedger
 from src.schemas.skill import SkillInput, SkillOutput
 
 from .action_policy import _normalized_action
+from .anchor_diagnostics import build_evidence_anchor_diagnostics
 from .context import _dict
 from .decision_stage import (
     _build_decision,
@@ -20,6 +21,7 @@ from .decision_stage import (
     _task_from_payload,
 )
 from .graph_stage import _graph_from_payload
+from .risk_constraint_conflicts import build_risk_constraint_conflicts
 from .status_stage import _SkillContractError, build_failed_output
 from .trade_plan_stage import (
     _decision_from_trade,
@@ -96,6 +98,22 @@ class DecisionSupportSkill:
                 for t in validated_trades
             ]
             ledger = ExecutionLedger(decisions=decisions)
+
+            anchor_diag = build_evidence_anchor_diagnostics(
+                action=decisions[0].action if decisions else "HOLD",
+                evidence_graph=graph,
+                rationale_anchor=decisions[0].rationale_anchor if decisions else [],
+                trade_plan=trades,
+            )
+
+            risk_conflicts = build_risk_constraint_conflicts(
+                action=decisions[0].action if decisions else "HOLD",
+                payload=skill_input.payload,
+                requested_amount=decisions[0].execution_amount if decisions else 0.0,
+                capped_amount=decisions[0].execution_amount if decisions else 0.0,
+                trade_plan=trades,
+            )
+
             return SkillOutput(
                 step_id=skill_input.step_id,
                 skill_name=skill_input.skill_name,
@@ -108,6 +126,8 @@ class DecisionSupportSkill:
                         for d in decisions
                         for entry in d.audit_trail
                     ],
+                    "evidence_anchor_diagnostics": anchor_diag,
+                    "risk_constraint_conflicts": risk_conflicts,
                 },
                 warnings=output_warnings,
                 status="OK" if decisions else "PARTIAL",
@@ -160,6 +180,20 @@ class DecisionSupportSkill:
         ledger = ExecutionLedger(decisions=[decision])
         decision_payload = decision.to_dict()
         ledger_payload = ledger.to_dict()
+
+        anchor_diag = build_evidence_anchor_diagnostics(
+            action=decision.action,
+            evidence_graph=graph,
+            rationale_anchor=decision.rationale_anchor,
+        )
+
+        risk_conflicts = build_risk_constraint_conflicts(
+            action=decision.action,
+            payload=skill_input.payload,
+            requested_amount=decision.execution_amount,
+            capped_amount=decision.execution_amount,
+        )
+
         return SkillOutput(
             step_id=skill_input.step_id,
             skill_name=skill_input.skill_name,
@@ -168,6 +202,8 @@ class DecisionSupportSkill:
                 "execution_ledger": ledger_payload,
                 "decision_status": decision.action,
                 "audit_trail": list(decision.audit_trail),
+                "evidence_anchor_diagnostics": anchor_diag,
+                "risk_constraint_conflicts": risk_conflicts,
             },
             status="OK",
         )

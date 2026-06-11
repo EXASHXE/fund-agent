@@ -44,6 +44,7 @@ def assemble_analysis_report_and_artifacts(
     right_side_confirmation: dict[str, Any] | None = None,
     event_hype_failure: dict[str, Any] | None = None,
     cash_deployment: dict[str, Any] | None = None,
+    knowledge_graph_summary: dict[str, Any] | None = None,
 ) -> AssembledArtifactsBundle:
     report = FundAnalysisReport(
         fund_metrics=metrics.fund_metrics,
@@ -202,6 +203,10 @@ def assemble_analysis_report_and_artifacts(
     if cash_deployment:
         artifacts["cash_deployment_diagnostics"] = cash_deployment
         report["cash_deployment_diagnostics"] = cash_deployment
+
+    if knowledge_graph_summary:
+        artifacts["knowledge_graph_summary"] = knowledge_graph_summary
+        report["knowledge_graph_summary"] = knowledge_graph_summary
 
     data_completeness = attach_report_artifacts(
         payload=bundle.payload,

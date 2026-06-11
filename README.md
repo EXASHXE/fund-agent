@@ -400,6 +400,44 @@ Core runtime is deterministic, local-only, and provider-agnostic:
 
 The external host owns credentials, live data providers, MCP implementations, and final UX.
 
+## v1.1 Reliability and Explainability
+
+v1.1 hardens the decision pipeline with improved diagnostics, KnowledgeGraph
+integration, and explainability artifacts:
+
+- **KnowledgeGraph hardening** — enum-safe queries via `KGEdgeType` comparison
+  in `src/graph/queries.py`. The KnowledgeGraph provides structural
+  entity/relationship context (sectors, themes, overlap) as an optional
+  enrichment layer for portfolio analysis.
+- **`knowledge_graph_summary`** — optional `fund_analysis` artifact emitted
+  when holdings data supports it. Provides KG-derived context for reports.
+  Omitted (`enabled=false`) when data is insufficient.
+- **`evidence_anchor_diagnostics`** — `decision_support` artifact that
+  explains anchor validity and coverage per decision and per trade.
+- **`risk_constraint_conflicts`** — `decision_support` artifact that
+  explains budget/constraint blocking with cap/downgrade details.
+- **`ledger_summary`** — new field in `ExecutionLedger` providing a
+  deterministic summary of all decisions, total execution amounts, and
+  passive/active action counts.
+
+### KnowledgeGraph vs EvidenceGraph
+
+- **KnowledgeGraph** (`src/graph/`) — structural entity/relationship context
+  for portfolio analysis (sectors, themes, cross-fund overlap). Optional
+  enrichment layer consumed by `fund_analysis`.
+- **EvidenceGraph** (`src/schemas/evidence_graph`) — evidence layer consumed
+  by `decision_support` for formal decision gatekeeping. Tracks evidence
+  items, edges, and stats. Remains the sole evidence layer for formal
+  `Decision` / `ExecutionLedger` production.
+
+### Host-injected MCP boundary
+
+MCP providers are always host-injected via `MCPHostAdapter`. The dev-only
+MCP harness (`tools/dev/mcp_harness/`) provides fake responses for testing
+and handles `financial_news`, `web_search`, and `social_sentiment`
+capability types in fake mode only. Live mode is env-gated and not
+implemented. No skill makes direct network requests.
+
 ## Test Gates
 
 ```bash
