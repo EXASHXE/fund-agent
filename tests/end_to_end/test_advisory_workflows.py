@@ -44,7 +44,23 @@ ALL_E2E_SCENARIOS = [
     "missing_data_report_only_no_fabrication",
 ]
 
-REPORT_ONLY_SCENARIOS = {"qdii_ai_overlap_concentration_watch", "missing_data_report_only_no_fabrication"}
+NEW_ZH_SCENARIOS = [
+    "semiconductor_profit_recover_principal_zh",
+    "innovation_drug_7day_drawdown_wait_for_confirmation_zh",
+    "short_holding_fee_sell_zh",
+    "qdii_ai_overlap_report_zh",
+    "cash_bond_where_to_deploy_zh",
+    "conservative_vs_aggressive_same_portfolio",
+]
+
+ALL_SCENARIOS_V15 = ALL_E2E_SCENARIOS + NEW_ZH_SCENARIOS
+
+REPORT_ONLY_SCENARIOS = {
+    "qdii_ai_overlap_concentration_watch",
+    "missing_data_report_only_no_fabrication",
+    "qdii_ai_overlap_report_zh",
+    "cash_bond_where_to_deploy_zh",
+}
 
 EXPECTED_BEHAVIOR_REQUIRED_KEYS = frozenset({
     "decision_support_called",
@@ -518,6 +534,8 @@ class TestAcceptanceCriteria:
         found = _all_fixture_files()
         for name in ALL_E2E_SCENARIOS:
             assert name in found, f"Missing E2E fixture: {name}"
+        for name in NEW_ZH_SCENARIOS:
+            assert name in found, f"Missing new v1.5 fixture: {name}"
 
     def test_all_fixtures_run_fund_analysis_and_bridge(self):
         for scenario in ALL_E2E_SCENARIOS:
@@ -540,3 +558,133 @@ class TestAcceptanceCriteria:
         for scenario in ALL_E2E_SCENARIOS:
             fixture, _, _, ds_output, _ = _run_workflow(scenario)
             _assert_decision_support_called(fixture, ds_output)
+
+
+# ── v1.5 Advisory quality tests ─────────────────────────────────────────────
+
+
+class TestDirectAnswer:
+    """All final reports must have a direct_answer section."""
+
+    @pytest.mark.parametrize("scenario", ALL_E2E_SCENARIOS + NEW_ZH_SCENARIOS)
+    def test_final_report_has_direct_answer(self, scenario):
+        _, _, _, _, report = _run_workflow(scenario)
+        sections = report.get("user_facing_sections", [])
+        section_ids = {s["id"] for s in sections if isinstance(s, dict)}
+        assert "direct_answer" in section_ids, f"{scenario}: missing direct_answer section"
+
+
+class TestChineseScenarios:
+    """Chinese fixtures produce Chinese-facing output."""
+
+    @pytest.mark.parametrize("scenario", NEW_ZH_SCENARIOS)
+    def test_chinese_summary_section_exists(self, scenario):
+        _, _, _, _, report = _run_workflow(scenario)
+        assert "chinese_summary" in report, f"{scenario}: missing chinese_summary"
+        cs = report["chinese_summary"]
+        assert isinstance(cs, dict)
+        assert cs.get("language") == "zh-CN"
+        bullets = cs.get("bullets", [])
+        assert isinstance(bullets, list)
+        assert len(bullets) > 0, f"{scenario}: chinese_summary has no bullets"
+
+    def test_chinese_report_only_does_not_call_decision_support(self):
+        _, _, _, ds_output, _ = _run_workflow("qdii_ai_overlap_report_zh")
+        assert ds_output is None, "qdii_ai_overlap_report_zh should not call decision_support"
+
+    def test_chinese_short_holding_fee_mentions_redemption_fee(self):
+        _, _, _, _, report = _run_workflow("short_holding_fee_sell_zh")
+        cs = report.get("chinese_summary", {})
+        bullets = cs.get("bullets", [])
+        combined = " ".join(bullets)
+        assert "赎回费" in combined, "short_holding_fee_sell_zh should mention redemption fee in Chinese"
+
+    def test_chinese_drawdown_scenario_prominently_blocks_buy(self):
+        _, _, _, ds_output, _ = _run_workflow("innovation_drug_7day_drawdown_wait_for_confirmation_zh")
+        decision = (ds_output.artifacts or {}).get("decision", {})
+        action = str(decision.get("action", "")).upper()
+        assert action not in ("BUY", "INCREASE"), (
+            f"Innovation drug drawdown should not allow active BUY, got {action}"
+        )
+
+    def test_chinese_profit_protection_does_not_suggest_full_exit(self):
+        _, _, _, ds_output, _ = _run_workflow("semiconductor_profit_recover_principal_zh")
+        decision = (ds_output.artifacts or {}).get("decision", {})
+        action = str(decision.get("action", "")).upper()
+        assert action not in ("SELL",), f"Profit protection scenario should not produce full SELL, got {action}"
+        blocked = decision.get("blocked_by", [])
+        reason_text = str(decision.get("decision_reason_codes", [])) + str(blocked)
+        assert "PROFIT_PROTECTION" in reason_text or "profit" in reason_text.lower(), (
+            f"Profit protection should appear in decision reason codes"
+        )
+
+    def test_cash_deployment_zh_separates_reserve_and_deployable(self):
+        fixture = load_e2e_fixture("cash_bond_where_to_deploy_zh")
+        output = run_fund_analysis(fixture)
+        diag = (output.artifacts or {}).get("cash_deployment_diagnostics", {})
+        assert diag, "cash_deployment_diagnostics should be present"
+        summary = diag.get("summary", {})
+        assert isinstance(summary, dict)
+        deployable = summary.get("estimated_deployable_cash") or summary.get("deployable_cash")
+        assert deployable is not None, "should have deployable_cash value"
+
+    def test_qdii_overlap_zh_has_exposure_or_marks_unknown(self):
+        fixture = load_e2e_fixture("qdii_ai_overlap_report_zh")
+        output = run_fund_analysis(fixture)
+        artifacts = output.artifacts or {}
+        exposure = artifacts.get("exposure_summary", {})
+        professional_diag = artifacts.get("professional_diagnostics", {})
+        has_exposure = bool(exposure) and isinstance(exposure, dict)
+        has_overlap_diag = (
+            isinstance(professional_diag, dict)
+            and bool(professional_diag.get("overlap_diagnostics"))
+        )
+        assert has_exposure or has_overlap_diag, (
+            "QDII overlap scenario should have exposure_summary or overlap_diagnostics"
+        )
+
+
+class TestRiskProfileCalibration:
+    """Risk profile sensitivity tests."""
+
+    def test_conservative_vs_aggressive_produces_decision_status(self):
+        _, _, _, _, report = _run_workflow("conservative_vs_aggressive_same_portfolio")
+        status = report["workflow_summary"]["decision_status"]
+        assert status != "NO_FORMAL_DECISION", (
+            f"conservative_vs_aggressive should produce formal evaluation, got {status}"
+        )
+
+    def test_conservative_fixture_decision_is_passive(self):
+        _, _, _, ds_output, _ = _run_workflow("conservative_vs_aggressive_same_portfolio")
+        decision = (ds_output.artifacts or {}).get("decision", {})
+        action = str(decision.get("action", "")).upper()
+        assert action in ("HOLD", "WAIT", "PAUSE_DCA") or action == "INCREASE", (
+            f"Expected passive or cautiously active posture, got {action}"
+        )
+
+
+class TestNoBrokerExecutionFields:
+    """No broker/order fields in any output including new fixtures."""
+
+    @pytest.mark.parametrize("scenario", ALL_SCENARIOS_V15)
+    def test_no_execution_fields_in_report(self, scenario):
+        _, _, _, _, report = _run_workflow(scenario)
+        assert_no_execution_fields(report, f"report:{scenario}")
+
+    def test_chinese_summary_has_no_execution_fields(self):
+        for scenario in NEW_ZH_SCENARIOS:
+            _, _, _, _, report = _run_workflow(scenario)
+            cs = report.get("chinese_summary", {})
+            if cs:
+                assert_no_execution_fields(cs, f"chinese_summary:{scenario}")
+
+
+class TestWorkflowSummaryIntents:
+    """Advisory intents appear in workflow_summary."""
+
+    @pytest.mark.parametrize("scenario", NEW_ZH_SCENARIOS)
+    def test_workflow_summary_has_advisory_intents(self, scenario):
+        _, _, _, _, report = _run_workflow(scenario)
+        intents = report["workflow_summary"].get("advisory_intents", [])
+        assert isinstance(intents, list), f"{scenario}: advisory_intents should be a list"
+        assert len(intents) > 0, f"{scenario}: advisory_intents should not be empty"

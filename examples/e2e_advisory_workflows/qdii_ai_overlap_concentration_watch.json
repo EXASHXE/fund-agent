@@ -14,8 +14,13 @@
         "current_value": 120000,
         "total_cost": 100000,
         "shares": 75000,
-        "target_weight": 0.30,
-        "tags": ["QDII", "technology", "AI", "internet"]
+        "target_weight": 0.3,
+        "tags": [
+          "QDII",
+          "technology",
+          "AI",
+          "internet"
+        ]
       },
       {
         "fund_code": "270042",
@@ -23,8 +28,13 @@
         "current_value": 120000,
         "total_cost": 95000,
         "shares": 68000,
-        "target_weight": 0.30,
-        "tags": ["QDII", "technology", "AI", "nasdaq"]
+        "target_weight": 0.3,
+        "tags": [
+          "QDII",
+          "technology",
+          "AI",
+          "nasdaq"
+        ]
       },
       {
         "fund_code": "006123",
@@ -32,8 +42,12 @@
         "current_value": 80000,
         "total_cost": 65000,
         "shares": 50000,
-        "target_weight": 0.20,
-        "tags": ["equity", "technology", "AI"]
+        "target_weight": 0.2,
+        "tags": [
+          "equity",
+          "technology",
+          "AI"
+        ]
       },
       {
         "fund_code": "003547",
@@ -41,88 +55,283 @@
         "current_value": 80000,
         "total_cost": 75000,
         "shares": 73000,
-        "target_weight": 0.20,
-        "tags": ["bond", "income"]
+        "target_weight": 0.2,
+        "tags": [
+          "bond",
+          "income"
+        ]
       }
     ]
   },
   "transactions": [
-    {"fund_code": "000988", "action": "BUY", "date": "2025-03-01", "amount": 60000, "shares": 38000},
-    {"fund_code": "000988", "action": "BUY", "date": "2025-09-15", "amount": 40000, "shares": 25000},
-    {"fund_code": "270042", "action": "BUY", "date": "2025-02-01", "amount": 50000, "shares": 29000},
-    {"fund_code": "270042", "action": "BUY", "date": "2025-08-15", "amount": 45000, "shares": 26000},
-    {"fund_code": "006123", "action": "BUY", "date": "2025-05-01", "amount": 40000, "shares": 25000},
-    {"fund_code": "006123", "action": "BUY", "date": "2025-11-15", "amount": 25000, "shares": 16000},
-    {"fund_code": "003547", "action": "BUY", "date": "2025-01-10", "amount": 45000, "shares": 41000},
-    {"fund_code": "003547", "action": "BUY", "date": "2025-07-20", "amount": 30000, "shares": 27500}
+    {
+      "fund_code": "000988",
+      "action": "BUY",
+      "date": "2025-03-01",
+      "amount": 60000,
+      "shares": 38000
+    },
+    {
+      "fund_code": "000988",
+      "action": "BUY",
+      "date": "2025-09-15",
+      "amount": 40000,
+      "shares": 25000
+    },
+    {
+      "fund_code": "270042",
+      "action": "BUY",
+      "date": "2025-02-01",
+      "amount": 50000,
+      "shares": 29000
+    },
+    {
+      "fund_code": "270042",
+      "action": "BUY",
+      "date": "2025-08-15",
+      "amount": 45000,
+      "shares": 26000
+    },
+    {
+      "fund_code": "006123",
+      "action": "BUY",
+      "date": "2025-05-01",
+      "amount": 40000,
+      "shares": 25000
+    },
+    {
+      "fund_code": "006123",
+      "action": "BUY",
+      "date": "2025-11-15",
+      "amount": 25000,
+      "shares": 16000
+    },
+    {
+      "fund_code": "003547",
+      "action": "BUY",
+      "date": "2025-01-10",
+      "amount": 45000,
+      "shares": 41000
+    },
+    {
+      "fund_code": "003547",
+      "action": "BUY",
+      "date": "2025-07-20",
+      "amount": 30000,
+      "shares": 27500
+    }
   ],
   "nav_history": {
     "000988": [
-      {"date": "2025-03-01", "nav": 1.58},
-      {"date": "2025-09-15", "nav": 1.60},
-      {"date": "2025-12-31", "nav": 1.72},
-      {"date": "2026-06-01", "nav": 1.60}
+      {
+        "date": "2025-03-01",
+        "nav": 1.58
+      },
+      {
+        "date": "2025-09-15",
+        "nav": 1.6
+      },
+      {
+        "date": "2025-12-31",
+        "nav": 1.72
+      },
+      {
+        "date": "2026-06-01",
+        "nav": 1.6
+      }
     ],
     "270042": [
-      {"date": "2025-02-01", "nav": 1.72},
-      {"date": "2025-08-15", "nav": 1.73},
-      {"date": "2025-12-31", "nav": 1.85},
-      {"date": "2026-06-01", "nav": 1.76}
+      {
+        "date": "2025-02-01",
+        "nav": 1.72
+      },
+      {
+        "date": "2025-08-15",
+        "nav": 1.73
+      },
+      {
+        "date": "2025-12-31",
+        "nav": 1.85
+      },
+      {
+        "date": "2026-06-01",
+        "nav": 1.76
+      }
     ],
     "006123": [
-      {"date": "2025-05-01", "nav": 1.60},
-      {"date": "2025-11-15", "nav": 1.56},
-      {"date": "2025-12-31", "nav": 1.65},
-      {"date": "2026-06-01", "nav": 1.60}
+      {
+        "date": "2025-05-01",
+        "nav": 1.6
+      },
+      {
+        "date": "2025-11-15",
+        "nav": 1.56
+      },
+      {
+        "date": "2025-12-31",
+        "nav": 1.65
+      },
+      {
+        "date": "2026-06-01",
+        "nav": 1.6
+      }
     ],
     "003547": [
-      {"date": "2025-01-10", "nav": 1.098},
-      {"date": "2025-07-20", "nav": 1.096},
-      {"date": "2025-12-31", "nav": 1.095},
-      {"date": "2026-06-01", "nav": 1.096}
+      {
+        "date": "2025-01-10",
+        "nav": 1.098
+      },
+      {
+        "date": "2025-07-20",
+        "nav": 1.096
+      },
+      {
+        "date": "2025-12-31",
+        "nav": 1.095
+      },
+      {
+        "date": "2026-06-01",
+        "nav": 1.096
+      }
     ]
   },
   "fund_profiles": {
-    "000988": {"fund_code": "000988", "name": "嘉实全球互联网股票QDII", "fund_type": "QDII", "benchmark": "MSCI全球科技指数", "theme": "AI_tech"},
-    "270042": {"fund_code": "270042", "name": "广发纳斯达克100ETF联接QDII", "fund_type": "QDII", "benchmark": "纳斯达克100", "theme": "AI_tech"},
-    "006123": {"fund_code": "006123", "name": "广发科技先锋", "fund_type": "equity", "benchmark": "中证科技指数", "theme": "AI_tech"},
-    "003547": {"fund_code": "003547", "name": "鹏华丰禄债券", "fund_type": "bond", "benchmark": "中债综合指数", "theme": "bond"}
+    "000988": {
+      "fund_code": "000988",
+      "name": "嘉实全球互联网股票QDII",
+      "fund_type": "QDII",
+      "benchmark": "MSCI全球科技指数",
+      "theme": "AI_tech"
+    },
+    "270042": {
+      "fund_code": "270042",
+      "name": "广发纳斯达克100ETF联接QDII",
+      "fund_type": "QDII",
+      "benchmark": "纳斯达克100",
+      "theme": "AI_tech"
+    },
+    "006123": {
+      "fund_code": "006123",
+      "name": "广发科技先锋",
+      "fund_type": "equity",
+      "benchmark": "中证科技指数",
+      "theme": "AI_tech"
+    },
+    "003547": {
+      "fund_code": "003547",
+      "name": "鹏华丰禄债券",
+      "fund_type": "bond",
+      "benchmark": "中债综合指数",
+      "theme": "bond"
+    }
   },
   "holdings": {
     "000988": [
-      {"stock_code": "NVDA", "stock_name": "NVIDIA", "weight": 10.0, "sector": "technology", "industry": "semiconductor"},
-      {"stock_code": "MSFT", "stock_name": "Microsoft", "weight": 8.0, "sector": "technology", "industry": "software"},
-      {"stock_code": "GOOGL", "stock_name": "Alphabet", "weight": 6.0, "sector": "technology", "industry": "internet"}
+      {
+        "stock_code": "NVDA",
+        "stock_name": "NVIDIA",
+        "weight": 10.0,
+        "sector": "technology",
+        "industry": "semiconductor"
+      },
+      {
+        "stock_code": "MSFT",
+        "stock_name": "Microsoft",
+        "weight": 8.0,
+        "sector": "technology",
+        "industry": "software"
+      },
+      {
+        "stock_code": "GOOGL",
+        "stock_name": "Alphabet",
+        "weight": 6.0,
+        "sector": "technology",
+        "industry": "internet"
+      }
     ],
     "270042": [
-      {"stock_code": "NVDA", "stock_name": "NVIDIA", "weight": 8.0, "sector": "technology", "industry": "semiconductor"},
-      {"stock_code": "MSFT", "stock_name": "Microsoft", "weight": 7.0, "sector": "technology", "industry": "software"},
-      {"stock_code": "AAPL", "stock_name": "Apple", "weight": 7.0, "sector": "technology", "industry": "consumer_electronics"}
+      {
+        "stock_code": "NVDA",
+        "stock_name": "NVIDIA",
+        "weight": 8.0,
+        "sector": "technology",
+        "industry": "semiconductor"
+      },
+      {
+        "stock_code": "MSFT",
+        "stock_name": "Microsoft",
+        "weight": 7.0,
+        "sector": "technology",
+        "industry": "software"
+      },
+      {
+        "stock_code": "AAPL",
+        "stock_name": "Apple",
+        "weight": 7.0,
+        "sector": "technology",
+        "industry": "consumer_electronics"
+      }
     ],
     "006123": [
-      {"stock_code": "NVDA", "stock_name": "NVIDIA", "weight": 5.0, "sector": "technology", "industry": "semiconductor"},
-      {"stock_code": "MSFT", "stock_name": "Microsoft", "weight": 4.0, "sector": "technology", "industry": "software"},
-      {"stock_code": "TSM", "stock_name": "台积电", "weight": 3.5, "sector": "technology", "industry": "semiconductor"}
+      {
+        "stock_code": "NVDA",
+        "stock_name": "NVIDIA",
+        "weight": 5.0,
+        "sector": "technology",
+        "industry": "semiconductor"
+      },
+      {
+        "stock_code": "MSFT",
+        "stock_name": "Microsoft",
+        "weight": 4.0,
+        "sector": "technology",
+        "industry": "software"
+      },
+      {
+        "stock_code": "TSM",
+        "stock_name": "台积电",
+        "weight": 3.5,
+        "sector": "technology",
+        "industry": "semiconductor"
+      }
     ],
     "003547": [
-      {"stock_code": "019733", "stock_name": "24附息国债13", "weight": 12.0, "sector": "government", "industry": "bond"}
+      {
+        "stock_code": "019733",
+        "stock_name": "24附息国债13",
+        "weight": 12.0,
+        "sector": "government",
+        "industry": "bond"
+      }
     ]
   },
   "fee_schedules": {
-    "000988": {"management_fee": 0.018, "redemption_fee_pct": 0.005},
-    "270042": {"management_fee": 0.006, "redemption_fee_pct": 0.005},
-    "006123": {"management_fee": 0.015, "redemption_fee_pct": 0.005},
-    "003547": {"management_fee": 0.003, "redemption_fee_pct": 0.001}
+    "000988": {
+      "management_fee": 0.018,
+      "redemption_fee_pct": 0.005
+    },
+    "270042": {
+      "management_fee": 0.006,
+      "redemption_fee_pct": 0.005
+    },
+    "006123": {
+      "management_fee": 0.015,
+      "redemption_fee_pct": 0.005
+    },
+    "003547": {
+      "management_fee": 0.003,
+      "redemption_fee_pct": 0.001
+    }
   },
   "redemption_rules": {},
   "news_evidence": [],
   "sentiment_evidence": [],
   "risk_profile": {
     "risk_level": "moderate",
-    "max_trade_pct": 0.10
+    "max_trade_pct": 0.1
   },
   "constraints": {
-    "max_theme_weight": 0.40,
+    "max_theme_weight": 0.4,
     "max_single_fund_weight": 0.35
   },
   "requested_action": "",
@@ -138,7 +347,16 @@
     "expected_downgraded_decision_count": 0,
     "expected_reason_code_contains": [],
     "expected_risk_conflict_kinds": [],
-    "expected_required_report_sections": ["summary", "evidence_status", "decision_explanation", "limitations"],
+    "expected_required_report_sections": [
+      "direct_answer",
+      "evidence_status",
+      "portfolio_diagnosis",
+      "summary",
+      "decision_explanation",
+      "action_boundary",
+      "recommended_next_steps",
+      "limitations"
+    ],
     "fund_analysis": {
       "no_formal_decision": true,
       "exposure_summary_present": true

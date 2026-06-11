@@ -1,0 +1,105 @@
+{
+  "scenario_id": "qdii_ai_overlap_report_zh",
+  "user_question": "我这些AI/QDII基金是不是重合度太高？",
+  "user_intent": "overlap_check",
+  "as_of_date": "2026-06-10",
+  "language": "zh-CN",
+  "portfolio": {
+    "as_of_date": "2026-06-10",
+    "total_value": 250000,
+    "cash_available": 30000,
+    "positions": [
+      {
+        "fund_code": "000834",
+        "fund_name": "大成纳斯达克100联接",
+        "current_value": 80000,
+        "total_cost": 70000,
+        "shares": 55000,
+        "target_weight": 0.30,
+        "tags": ["QDII", "US_tech", "AI"]
+      },
+      {
+        "fund_code": "005311",
+        "fund_name": "万家AI主题混合",
+        "current_value": 70000,
+        "total_cost": 65000,
+        "shares": 48000,
+        "target_weight": 0.28,
+        "tags": ["equity", "AI", "US_tech"]
+      },
+      {
+        "fund_code": "006479",
+        "fund_name": "广发全球精选QDII",
+        "current_value": 50000,
+        "total_cost": 48000,
+        "shares": 35000,
+        "target_weight": 0.20,
+        "tags": ["QDII", "US_tech", "AI"]
+      },
+      {
+        "fund_code": "003547",
+        "fund_name": "鹏华丰禄债券",
+        "current_value": 50000,
+        "total_cost": 50000,
+        "shares": 48000,
+        "target_weight": 0.22,
+        "tags": ["bond"]
+      }
+    ]
+  },
+  "transactions": [],
+  "nav_history": {},
+  "fund_profiles": {
+    "000834": {"fund_code": "000834", "name": "大成纳斯达克100联接", "fund_type": "QDII_index", "benchmark": "纳斯达克100", "theme": "US_tech"},
+    "005311": {"fund_code": "005311", "name": "万家AI主题混合", "fund_type": "active", "benchmark": "中证AI指数", "theme": "AI"},
+    "006479": {"fund_code": "006479", "name": "广发全球精选QDII", "fund_type": "QDII_active", "benchmark": "MSCI全球科技", "theme": "US_tech"},
+    "003547": {"fund_code": "003547", "name": "鹏华丰禄债券", "fund_type": "bond", "benchmark": "中债综合指数", "theme": "bond"}
+  },
+  "holdings": {
+    "000834": [
+      {"stock_code": "NVDA", "stock_name": "NVIDIA", "weight": 0.12, "sector": "technology", "industry": "semiconductors"},
+      {"stock_code": "MSFT", "stock_name": "Microsoft", "weight": 0.10, "sector": "technology", "industry": "software"},
+      {"stock_code": "GOOGL", "stock_name": "Alphabet", "weight": 0.08, "sector": "technology", "industry": "internet"}
+    ],
+    "005311": [
+      {"stock_code": "NVDA", "stock_name": "NVIDIA", "weight": 0.09, "sector": "technology", "industry": "semiconductors"},
+      {"stock_code": "MSFT", "stock_name": "Microsoft", "weight": 0.08, "sector": "technology", "industry": "software"},
+      {"stock_code": "AMD", "stock_name": "AMD", "weight": 0.05, "sector": "technology", "industry": "semiconductors"}
+    ],
+    "006479": [
+      {"stock_code": "MSFT", "stock_name": "Microsoft", "weight": 0.11, "sector": "technology", "industry": "software"},
+      {"stock_code": "NVDA", "stock_name": "NVIDIA", "weight": 0.10, "sector": "technology", "industry": "semiconductors"},
+      {"stock_code": "AAPL", "stock_name": "Apple", "weight": 0.07, "sector": "technology", "industry": "hardware"}
+    ]
+  },
+  "fee_schedules": {},
+  "redemption_rules": {},
+  "benchmark_history": {},
+  "news_evidence": [],
+  "sentiment_evidence": [],
+  "risk_profile": {
+    "risk_level": "balanced"
+  },
+  "constraints": {},
+  "requested_action": "",
+  "target_trade_amount": 0,
+  "time_horizon": "long_term",
+  "expected_behavior": {
+    "decision_support_called": false,
+    "expected_report_status": "PARTIAL",
+    "expected_decision_status": "NO_FORMAL_DECISION",
+    "expected_formal_source": "none",
+    "expected_active_decision_count": 0,
+    "expected_passive_decision_count": 0,
+    "expected_blocked_decision_count": 0,
+    "expected_downgraded_decision_count": 0,
+    "expected_reason_code_contains": [],
+    "expected_risk_conflict_kinds": [],
+    "expected_required_report_sections": ["direct_answer", "evidence_status", "portfolio_diagnosis", "summary", "decision_explanation", "action_boundary", "recommended_next_steps", "limitations"],
+    "fund_analysis": {
+      "no_formal_decision": true,
+      "analysis_plan_decision_support_ready": false,
+      "exposure_summary_present": true
+    }
+  }
+}

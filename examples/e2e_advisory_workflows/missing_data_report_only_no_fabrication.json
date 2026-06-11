@@ -14,8 +14,11 @@
         "current_value": 60000,
         "total_cost": 50000,
         "shares": 40000,
-        "target_weight": 0.30,
-        "tags": ["equity", "semiconductor"]
+        "target_weight": 0.3,
+        "tags": [
+          "equity",
+          "semiconductor"
+        ]
       },
       {
         "fund_code": "001198",
@@ -23,8 +26,11 @@
         "current_value": 55000,
         "total_cost": 50000,
         "shares": 35000,
-        "target_weight": 0.30,
-        "tags": ["equity", "innovation"]
+        "target_weight": 0.3,
+        "tags": [
+          "equity",
+          "innovation"
+        ]
       },
       {
         "fund_code": "003547",
@@ -33,7 +39,9 @@
         "total_cost": 52000,
         "shares": 50000,
         "target_weight": 0.25,
-        "tags": ["bond"]
+        "tags": [
+          "bond"
+        ]
       },
       {
         "fund_code": "000198",
@@ -42,15 +50,41 @@
         "total_cost": 29000,
         "shares": 28500,
         "target_weight": 0.15,
-        "tags": ["short_bond"]
+        "tags": [
+          "short_bond"
+        ]
       }
     ]
   },
   "fund_profiles": {
-    "008253": {"fund_code": "008253", "name": "国泰中证半导体ETF联接C", "fund_type": "index", "benchmark": "中证半导体指数", "theme": "semiconductor"},
-    "001198": {"fund_code": "001198", "name": "华夏创新前沿", "fund_type": "active", "benchmark": "创业板指", "theme": "innovation"},
-    "003547": {"fund_code": "003547", "name": "鹏华丰禄债券", "fund_type": "bond", "benchmark": "中债综合指数", "theme": "bond"},
-    "000198": {"fund_code": "000198", "name": "天弘增利短债", "fund_type": "short_bond", "benchmark": "中债短融指数", "theme": "cash"}
+    "008253": {
+      "fund_code": "008253",
+      "name": "国泰中证半导体ETF联接C",
+      "fund_type": "index",
+      "benchmark": "中证半导体指数",
+      "theme": "semiconductor"
+    },
+    "001198": {
+      "fund_code": "001198",
+      "name": "华夏创新前沿",
+      "fund_type": "active",
+      "benchmark": "创业板指",
+      "theme": "innovation"
+    },
+    "003547": {
+      "fund_code": "003547",
+      "name": "鹏华丰禄债券",
+      "fund_type": "bond",
+      "benchmark": "中债综合指数",
+      "theme": "bond"
+    },
+    "000198": {
+      "fund_code": "000198",
+      "name": "天弘增利短债",
+      "fund_type": "short_bond",
+      "benchmark": "中债短融指数",
+      "theme": "cash"
+    }
   },
   "transactions": [],
   "nav_history": {},
@@ -77,7 +111,16 @@
     "expected_downgraded_decision_count": 0,
     "expected_reason_code_contains": [],
     "expected_risk_conflict_kinds": [],
-    "expected_required_report_sections": ["summary", "evidence_status", "decision_explanation", "limitations"],
+    "expected_required_report_sections": [
+      "direct_answer",
+      "evidence_status",
+      "portfolio_diagnosis",
+      "summary",
+      "decision_explanation",
+      "action_boundary",
+      "recommended_next_steps",
+      "limitations"
+    ],
     "fund_analysis": {
       "no_formal_decision": true,
       "analysis_plan_decision_support_ready": false

@@ -89,12 +89,12 @@ def _make_eg_diagnostics():
     """Make minimal evidence graph diagnostics."""
     return {
         "graph": {
-            "items": {"ev-001": {"evidence_id": "ev-001", "evidence_type": "SoftEvidence"}},
+            "items": {"ev-001": {"evidence_id": "ev-001", "evidence_type": "HardEvidence"}},
             "edges": [],
-            "stats": {"total": 1, "hard": 0, "soft": 1, "hybrid": 0, "conflicts": 0},
+            "stats": {"total": 2, "hard": 1, "soft": 1, "hybrid": 0, "conflicts": 0},
         },
-        "included_evidence_count": 1,
-        "host_soft_evidence_count": 0,
+        "included_evidence_count": 2,
+        "host_soft_evidence_count": 1,
         "warnings": [],
         "missing_or_invalid_evidence": [],
     }

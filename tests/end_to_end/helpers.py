@@ -149,6 +149,7 @@ def compose_final_report(
     fund_analysis_output: SkillOutput,
     decision_support_output: SkillOutput | None = None,
     evidence_result: WorkflowEvidenceGraphResult | None = None,
+    advisory_intents: list[str] | None = None,
 ) -> dict[str, Any]:
     """Compose the final advisory workflow report."""
     fa_dict = fund_analysis_output.to_dict()
@@ -162,12 +163,24 @@ def compose_final_report(
         if isinstance(gap, dict):
             missing_data = gap
 
+    language = fixture.get("language", "en")
+
+    if advisory_intents is None:
+        from src.skills_runtime.workflow.advisory_intent import classify_advisory_intent
+        advisory_intents = classify_advisory_intent(
+            host_intent_hint=fixture.get("user_intent"),
+            user_question=fixture.get("user_question"),
+            requested_action=fixture.get("requested_action"),
+        )
+
     return compose_advisory_workflow_report(
         scenario_id=fixture.get("scenario_id", "unknown"),
         fund_analysis_output=fa_dict,
         decision_support_output=ds_dict,
         evidence_graph_diagnostics=eg_dict,
         missing_data_diagnostics=missing_data,
+        language=language,
+        advisory_intents=advisory_intents,
     )
 
 

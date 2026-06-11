@@ -14,8 +14,12 @@
         "current_value": 100000,
         "total_cost": 50000,
         "shares": 60000,
-        "target_weight": 0.30,
-        "tags": ["semiconductor", "equity", "high_profit"]
+        "target_weight": 0.3,
+        "tags": [
+          "semiconductor",
+          "equity",
+          "high_profit"
+        ]
       },
       {
         "fund_code": "001198",
@@ -24,7 +28,10 @@
         "total_cost": 65000,
         "shares": 48000,
         "target_weight": 0.25,
-        "tags": ["innovation", "equity"]
+        "tags": [
+          "innovation",
+          "equity"
+        ]
       },
       {
         "fund_code": "003547",
@@ -33,7 +40,10 @@
         "total_cost": 65000,
         "shares": 64000,
         "target_weight": 0.25,
-        "tags": ["bond", "income"]
+        "tags": [
+          "bond",
+          "income"
+        ]
       },
       {
         "fund_code": "000198",
@@ -41,109 +51,330 @@
         "current_value": 50000,
         "total_cost": 48500,
         "shares": 47000,
-        "target_weight": 0.20,
-        "tags": ["short_bond", "cash_substitute"]
+        "target_weight": 0.2,
+        "tags": [
+          "short_bond",
+          "cash_substitute"
+        ]
       }
     ]
   },
   "transactions": [
-    {"fund_code": "008253", "action": "BUY", "date": "2025-03-15", "amount": 30000, "shares": 20000},
-    {"fund_code": "008253", "action": "BUY", "date": "2025-06-10", "amount": 20000, "shares": 12000},
-    {"fund_code": "008253", "action": "BUY", "date": "2026-02-01", "amount": 10000, "shares": 5500},
-    {"fund_code": "001198", "action": "BUY", "date": "2025-04-01", "amount": 40000, "shares": 25000},
-    {"fund_code": "001198", "action": "BUY", "date": "2025-09-15", "amount": 25000, "shares": 15000},
-    {"fund_code": "003547", "action": "BUY", "date": "2025-01-10", "amount": 40000, "shares": 37000},
-    {"fund_code": "003547", "action": "BUY", "date": "2025-07-20", "amount": 25000, "shares": 23000},
-    {"fund_code": "000198", "action": "BUY", "date": "2025-05-01", "amount": 30000, "shares": 28800},
-    {"fund_code": "000198", "action": "BUY", "date": "2026-01-15", "amount": 18500, "shares": 17800}
+    {
+      "fund_code": "008253",
+      "action": "BUY",
+      "date": "2025-03-15",
+      "amount": 30000,
+      "shares": 20000
+    },
+    {
+      "fund_code": "008253",
+      "action": "BUY",
+      "date": "2025-06-10",
+      "amount": 20000,
+      "shares": 12000
+    },
+    {
+      "fund_code": "008253",
+      "action": "BUY",
+      "date": "2026-02-01",
+      "amount": 10000,
+      "shares": 5500
+    },
+    {
+      "fund_code": "001198",
+      "action": "BUY",
+      "date": "2025-04-01",
+      "amount": 40000,
+      "shares": 25000
+    },
+    {
+      "fund_code": "001198",
+      "action": "BUY",
+      "date": "2025-09-15",
+      "amount": 25000,
+      "shares": 15000
+    },
+    {
+      "fund_code": "003547",
+      "action": "BUY",
+      "date": "2025-01-10",
+      "amount": 40000,
+      "shares": 37000
+    },
+    {
+      "fund_code": "003547",
+      "action": "BUY",
+      "date": "2025-07-20",
+      "amount": 25000,
+      "shares": 23000
+    },
+    {
+      "fund_code": "000198",
+      "action": "BUY",
+      "date": "2025-05-01",
+      "amount": 30000,
+      "shares": 28800
+    },
+    {
+      "fund_code": "000198",
+      "action": "BUY",
+      "date": "2026-01-15",
+      "amount": 18500,
+      "shares": 17800
+    }
   ],
   "nav_history": {
     "008253": [
-      {"date": "2025-03-15", "nav": 1.50},
-      {"date": "2025-06-10", "nav": 1.67},
-      {"date": "2025-12-31", "nav": 1.90},
-      {"date": "2026-02-01", "nav": 1.82},
-      {"date": "2026-06-01", "nav": 1.67}
+      {
+        "date": "2025-03-15",
+        "nav": 1.5
+      },
+      {
+        "date": "2025-06-10",
+        "nav": 1.67
+      },
+      {
+        "date": "2025-12-31",
+        "nav": 1.9
+      },
+      {
+        "date": "2026-02-01",
+        "nav": 1.82
+      },
+      {
+        "date": "2026-06-01",
+        "nav": 1.67
+      }
     ],
     "001198": [
-      {"date": "2025-04-01", "nav": 1.60},
-      {"date": "2025-09-15", "nav": 1.67},
-      {"date": "2025-12-31", "nav": 1.72},
-      {"date": "2026-06-01", "nav": 1.67}
+      {
+        "date": "2025-04-01",
+        "nav": 1.6
+      },
+      {
+        "date": "2025-09-15",
+        "nav": 1.67
+      },
+      {
+        "date": "2025-12-31",
+        "nav": 1.72
+      },
+      {
+        "date": "2026-06-01",
+        "nav": 1.67
+      }
     ],
     "003547": [
-      {"date": "2025-01-10", "nav": 1.081},
-      {"date": "2025-07-20", "nav": 1.087},
-      {"date": "2025-12-31", "nav": 1.095},
-      {"date": "2026-06-01", "nav": 1.094}
+      {
+        "date": "2025-01-10",
+        "nav": 1.081
+      },
+      {
+        "date": "2025-07-20",
+        "nav": 1.087
+      },
+      {
+        "date": "2025-12-31",
+        "nav": 1.095
+      },
+      {
+        "date": "2026-06-01",
+        "nav": 1.094
+      }
     ],
     "000198": [
-      {"date": "2025-05-01", "nav": 1.042},
-      {"date": "2025-12-31", "nav": 1.055},
-      {"date": "2026-06-01", "nav": 1.064}
+      {
+        "date": "2025-05-01",
+        "nav": 1.042
+      },
+      {
+        "date": "2025-12-31",
+        "nav": 1.055
+      },
+      {
+        "date": "2026-06-01",
+        "nav": 1.064
+      }
     ]
   },
   "fund_profiles": {
-    "008253": {"fund_code": "008253", "name": "国泰中证半导体ETF联接C", "fund_type": "index", "benchmark": "中证半导体指数", "theme": "semiconductor"},
-    "001198": {"fund_code": "001198", "name": "华夏创新前沿", "fund_type": "active", "benchmark": "创业板指", "theme": "innovation"},
-    "003547": {"fund_code": "003547", "name": "鹏华丰禄债券", "fund_type": "bond", "benchmark": "中债综合指数", "theme": "bond"},
-    "000198": {"fund_code": "000198", "name": "天弘增利短债", "fund_type": "short_bond", "benchmark": "中债短融指数", "theme": "cash"}
+    "008253": {
+      "fund_code": "008253",
+      "name": "国泰中证半导体ETF联接C",
+      "fund_type": "index",
+      "benchmark": "中证半导体指数",
+      "theme": "semiconductor"
+    },
+    "001198": {
+      "fund_code": "001198",
+      "name": "华夏创新前沿",
+      "fund_type": "active",
+      "benchmark": "创业板指",
+      "theme": "innovation"
+    },
+    "003547": {
+      "fund_code": "003547",
+      "name": "鹏华丰禄债券",
+      "fund_type": "bond",
+      "benchmark": "中债综合指数",
+      "theme": "bond"
+    },
+    "000198": {
+      "fund_code": "000198",
+      "name": "天弘增利短债",
+      "fund_type": "short_bond",
+      "benchmark": "中债短融指数",
+      "theme": "cash"
+    }
   },
   "holdings": {
     "008253": [
-      {"stock_code": "NVDA", "stock_name": "NVIDIA", "weight": 15.0, "sector": "technology", "industry": "semiconductor"},
-      {"stock_code": "TSM", "stock_name": "台积电", "weight": 12.0, "sector": "technology", "industry": "semiconductor"},
-      {"stock_code": "ASML", "stock_name": "ASML", "weight": 8.0, "sector": "technology", "industry": "semiconductor_equipment"}
+      {
+        "stock_code": "NVDA",
+        "stock_name": "NVIDIA",
+        "weight": 15.0,
+        "sector": "technology",
+        "industry": "semiconductor"
+      },
+      {
+        "stock_code": "TSM",
+        "stock_name": "台积电",
+        "weight": 12.0,
+        "sector": "technology",
+        "industry": "semiconductor"
+      },
+      {
+        "stock_code": "ASML",
+        "stock_name": "ASML",
+        "weight": 8.0,
+        "sector": "technology",
+        "industry": "semiconductor_equipment"
+      }
     ],
     "001198": [
-      {"stock_code": "300750", "stock_name": "宁德时代", "weight": 8.0, "sector": "manufacturing", "industry": "battery"},
-      {"stock_code": "002415", "stock_name": "海康威视", "weight": 6.0, "sector": "technology", "industry": "security"}
+      {
+        "stock_code": "300750",
+        "stock_name": "宁德时代",
+        "weight": 8.0,
+        "sector": "manufacturing",
+        "industry": "battery"
+      },
+      {
+        "stock_code": "002415",
+        "stock_name": "海康威视",
+        "weight": 6.0,
+        "sector": "technology",
+        "industry": "security"
+      }
     ],
     "003547": [
-      {"stock_code": "019733", "stock_name": "24附息国债13", "weight": 12.0, "sector": "government", "industry": "bond"}
+      {
+        "stock_code": "019733",
+        "stock_name": "24附息国债13",
+        "weight": 12.0,
+        "sector": "government",
+        "industry": "bond"
+      }
     ],
     "000198": [
-      {"stock_code": "230205", "stock_name": "23国开05", "weight": 10.0, "sector": "government", "industry": "bond"}
+      {
+        "stock_code": "230205",
+        "stock_name": "23国开05",
+        "weight": 10.0,
+        "sector": "government",
+        "industry": "bond"
+      }
     ]
   },
   "fee_schedules": {
-    "008253": {"management_fee": 0.005, "redemption_fee_pct": 0.005},
-    "001198": {"management_fee": 0.015, "redemption_fee_pct": 0.005},
-    "003547": {"management_fee": 0.003, "redemption_fee_pct": 0.001},
-    "000198": {"management_fee": 0.003, "redemption_fee_pct": 0.0}
+    "008253": {
+      "management_fee": 0.005,
+      "redemption_fee_pct": 0.005
+    },
+    "001198": {
+      "management_fee": 0.015,
+      "redemption_fee_pct": 0.005
+    },
+    "003547": {
+      "management_fee": 0.003,
+      "redemption_fee_pct": 0.001
+    },
+    "000198": {
+      "management_fee": 0.003,
+      "redemption_fee_pct": 0.0
+    }
   },
   "redemption_rules": {
-    "008253": {"holding_period_days": 90, "redemption_fee_pct": 0.005, "short_redemption_fee_pct": 0.015}
+    "008253": {
+      "holding_period_days": 90,
+      "redemption_fee_pct": 0.005,
+      "short_redemption_fee_pct": 0.015
+    }
   },
   "benchmarks": {
     "008253": "中证半导体指数"
   },
   "benchmark_history": {
     "008253": [
-      {"date": "2025-03-15", "nav": 5200.0},
-      {"date": "2025-06-10", "nav": 5800.0},
-      {"date": "2025-12-31", "nav": 6500.0},
-      {"date": "2026-06-01", "nav": 6400.0}
+      {
+        "date": "2025-03-15",
+        "nav": 5200.0
+      },
+      {
+        "date": "2025-06-10",
+        "nav": 5800.0
+      },
+      {
+        "date": "2025-12-31",
+        "nav": 6500.0
+      },
+      {
+        "date": "2026-06-01",
+        "nav": 6400.0
+      }
     ]
   },
   "news_evidence": [
-    {"title": "半导体行业景气度维持高位，全球芯片需求强劲", "entities": ["008253"], "direction": "positive", "confidence": 0.75, "source": "finnhub"},
-    {"title": "AI芯片需求推动半导体设备订单增长", "entities": ["008253"], "direction": "positive", "confidence": 0.80, "source": "tavily"}
+    {
+      "title": "半导体行业景气度维持高位，全球芯片需求强劲",
+      "entities": [
+        "008253"
+      ],
+      "direction": "positive",
+      "confidence": 0.75,
+      "source": "finnhub"
+    },
+    {
+      "title": "AI芯片需求推动半导体设备订单增长",
+      "entities": [
+        "008253"
+      ],
+      "direction": "positive",
+      "confidence": 0.8,
+      "source": "tavily"
+    }
   ],
   "sentiment_evidence": [
-    {"entity": "008253", "score": 0.65, "claim": "社交媒体对半导体基金情绪偏正面", "confidence": 0.70, "source": "reddit"}
+    {
+      "entity": "008253",
+      "score": 0.65,
+      "claim": "社交媒体对半导体基金情绪偏正面",
+      "confidence": 0.7,
+      "source": "reddit"
+    }
   ],
   "risk_profile": {
     "risk_level": "moderate",
     "max_trade_pct": 0.15,
-    "liquidity_reserve_pct": 0.10
+    "liquidity_reserve_pct": 0.1
   },
   "constraints": {
     "max_trade_pct": 0.15,
     "min_trade_amount": 1000,
     "max_sell_amount": 50000,
     "forbidden_actions": [],
-    "liquidity_reserve_pct": 0.10
+    "liquidity_reserve_pct": 0.1
   },
   "requested_action": "REDUCE",
   "target_trade_amount": 30000,
@@ -157,9 +388,22 @@
     "expected_passive_decision_count": 1,
     "expected_blocked_decision_count": 1,
     "expected_downgraded_decision_count": 1,
-    "expected_reason_code_contains": ["EVIDENCE_CONTRADICTORY", "CONSTRAINT_BLOCKED", "PROFIT_PROTECTION"],
+    "expected_reason_code_contains": [
+      "EVIDENCE_CONTRADICTORY",
+      "CONSTRAINT_BLOCKED",
+      "PROFIT_PROTECTION"
+    ],
     "expected_risk_conflict_kinds": [],
-    "expected_required_report_sections": ["summary", "evidence_status", "decision_explanation", "limitations"],
+    "expected_required_report_sections": [
+      "direct_answer",
+      "evidence_status",
+      "portfolio_diagnosis",
+      "summary",
+      "decision_explanation",
+      "action_boundary",
+      "recommended_next_steps",
+      "limitations"
+    ],
     "fund_analysis": {
       "no_formal_decision": true,
       "profit_protection_diagnostics_present": true
