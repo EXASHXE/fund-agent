@@ -122,3 +122,92 @@ class TestEvidenceAnchorDiagnostics:
         )
         assert result["anchor_count"] == 1
         assert "ev_no_entities" in result["valid_anchor_refs"]
+
+
+class TestEvidenceAnchorDiagnosticsSingleDecisionPath:
+    def test_active_buy_with_invalid_ref_populates_invalid_anchor_refs(self):
+        graph = EvidenceGraph()
+        graph.add(_make_evidence("ev_valid"))
+        result = build_evidence_anchor_diagnostics(
+            action="BUY",
+            evidence_graph=graph,
+            rationale_anchor=["ev_valid", "ev_invalid_ref"],
+        )
+        assert "ev_valid" in result["valid_anchor_refs"]
+        assert "ev_invalid_ref" in result["invalid_anchor_refs"]
+        assert any("invalid" in lim.lower() or "not found" in lim.lower() for lim in result["limitations"])
+
+    def test_active_buy_all_invalid_refs(self):
+        graph = EvidenceGraph()
+        graph.add(_make_evidence("ev1"))
+        result = build_evidence_anchor_diagnostics(
+            action="BUY",
+            evidence_graph=graph,
+            rationale_anchor=["ev_fake1", "ev_fake2"],
+        )
+        assert len(result["valid_anchor_refs"]) == 0
+        assert len(result["invalid_anchor_refs"]) == 2
+        assert any("no valid" in lim.lower() for lim in result["limitations"])
+
+
+class TestEvidenceAnchorDiagnosticsTradePlanPath:
+    def test_trade_plan_mixed_valid_invalid_coverage(self):
+        graph = EvidenceGraph()
+        graph.add(_make_evidence("ev1"))
+        graph.add(_make_evidence("ev2"))
+
+        trade_plan = [
+            {"trade_id": "T1", "fund_code": "110011", "action": "BUY", "evidence_refs": ["ev1", "ev2"], "risk_flags_refs": []},
+            {"trade_id": "T2", "fund_code": "006123", "action": "BUY", "evidence_refs": ["ev_invalid"], "risk_flags_refs": []},
+        ]
+
+        result = build_evidence_anchor_diagnostics(
+            action="BUY",
+            evidence_graph=graph,
+            rationale_anchor=["ev1"],
+            trade_plan=trade_plan,
+        )
+        coverage = result["trade_anchor_coverage"]
+        assert len(coverage) == 2
+        t1 = next(c for c in coverage if c["trade_id"] == "T1")
+        assert t1["coverage"] == "full"
+        assert t1["required"] is True
+        t2 = next(c for c in coverage if c["trade_id"] == "T2")
+        assert t2["coverage"] == "none"
+        assert t2["required"] is True
+        assert len(t2["invalid_refs"]) == 1
+
+    def test_trade_plan_partial_coverage(self):
+        graph = EvidenceGraph()
+        graph.add(_make_evidence("ev1"))
+
+        trade_plan = [
+            {"trade_id": "T1", "fund_code": "110011", "action": "BUY", "evidence_refs": ["ev1", "ev_missing"], "risk_flags_refs": []},
+        ]
+
+        result = build_evidence_anchor_diagnostics(
+            action="BUY",
+            evidence_graph=graph,
+            rationale_anchor=["ev1"],
+            trade_plan=trade_plan,
+        )
+        coverage = result["trade_anchor_coverage"]
+        assert len(coverage) == 1
+        assert coverage[0]["coverage"] == "partial"
+        assert "ev1" in coverage[0]["valid_refs"]
+        assert "ev_missing" in coverage[0]["invalid_refs"]
+
+    def test_trade_plan_passive_action_no_coverage_required(self):
+        graph = EvidenceGraph()
+        trade_plan = [
+            {"trade_id": "T1", "fund_code": "110011", "action": "HOLD", "evidence_refs": [], "risk_flags_refs": []},
+        ]
+        result = build_evidence_anchor_diagnostics(
+            action="HOLD",
+            evidence_graph=graph,
+            rationale_anchor=[],
+            trade_plan=trade_plan,
+        )
+        coverage = result["trade_anchor_coverage"]
+        assert len(coverage) == 1
+        assert coverage[0]["required"] is False

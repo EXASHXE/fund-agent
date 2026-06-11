@@ -776,14 +776,12 @@
         }
       },
       "knowledge_graph_summary": {
-        "enabled": true,
+        "enabled": false,
         "event_count": 0,
-        "fund_count": 2,
+        "fund_count": 0,
         "industry_count": 0,
         "limitations": [
-          "No stock nodes in knowledge graph",
-          "No industry nodes in knowledge graph",
-          "No host-provided events; event relations not available"
+          "Insufficient holdings data to build knowledge graph"
         ],
         "related_events": [],
         "stock_count": 0,
@@ -1772,14 +1770,12 @@
       ]
     },
     "knowledge_graph_summary": {
-      "enabled": true,
+      "enabled": false,
       "event_count": 0,
-      "fund_count": 2,
+      "fund_count": 0,
       "industry_count": 0,
       "limitations": [
-        "No stock nodes in knowledge graph",
-        "No industry nodes in knowledge graph",
-        "No host-provided events; event relations not available"
+        "Insufficient holdings data to build knowledge graph"
       ],
       "related_events": [],
       "stock_count": 0,

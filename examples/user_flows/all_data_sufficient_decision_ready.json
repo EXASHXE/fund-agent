@@ -1,0 +1,212 @@
+{
+  "user_question": "组合数据齐全，请给出完整分析和决策建议",
+  "portfolio": {
+    "as_of_date": "2026-06-09",
+    "total_value": 500000,
+    "cash_available": 80000,
+    "positions": [
+      {
+        "fund_code": "110011",
+        "fund_name": "易方达中小盘混合",
+        "current_value": 150000,
+        "total_cost": 120000,
+        "shares": 100000,
+        "target_weight": 0.30,
+        "tags": ["equity", "consumer", "high_profit"]
+      },
+      {
+        "fund_code": "006123",
+        "fund_name": "广发科技先锋",
+        "current_value": 120000,
+        "total_cost": 100000,
+        "shares": 75000,
+        "target_weight": 0.25,
+        "tags": ["equity", "technology", "moderate_profit"]
+      },
+      {
+        "fund_code": "003547",
+        "fund_name": "鹏华丰禄债券",
+        "current_value": 100000,
+        "total_cost": 95000,
+        "shares": 90000,
+        "target_weight": 0.20,
+        "tags": ["bond", "income", "stable"]
+      },
+      {
+        "fund_code": "000198",
+        "fund_name": "天弘增利短债",
+        "current_value": 50000,
+        "total_cost": 48000,
+        "shares": 47000,
+        "target_weight": 0.10,
+        "tags": ["short_bond", "cash_substitute"]
+      }
+    ]
+  },
+  "fund_profiles": {
+    "110011": {
+      "fund_code": "110011",
+      "name": "易方达中小盘混合",
+      "fund_type": "equity",
+      "benchmark": "中证700指数",
+      "theme": "consumer_equity"
+    },
+    "006123": {
+      "fund_code": "006123",
+      "name": "广发科技先锋",
+      "fund_type": "equity",
+      "benchmark": "中证科技指数",
+      "theme": "technology"
+    },
+    "003547": {
+      "fund_code": "003547",
+      "name": "鹏华丰禄债券",
+      "fund_type": "bond",
+      "benchmark": "中债综合指数",
+      "theme": "bond"
+    },
+    "000198": {
+      "fund_code": "000198",
+      "name": "天弘增利短债",
+      "fund_type": "short_bond",
+      "benchmark": "中债短融指数",
+      "theme": "cash"
+    }
+  },
+  "holdings": {
+    "110011": [
+      {"stock_code": "600519", "stock_name": "贵州茅台", "weight": 9.5, "sector": "consumer", "industry": "baijiu"},
+      {"stock_code": "000858", "stock_name": "五粮液", "weight": 7.2, "sector": "consumer", "industry": "baijiu"},
+      {"stock_code": "000333", "stock_name": "美的集团", "weight": 5.8, "sector": "manufacturing", "industry": "home_appliance"},
+      {"stock_code": "600036", "stock_name": "招商银行", "weight": 4.5, "sector": "finance", "industry": "banking"}
+    ],
+    "006123": [
+      {"stock_code": "300750", "stock_name": "宁德时代", "weight": 8.2, "sector": "manufacturing", "industry": "battery"},
+      {"stock_code": "002415", "stock_name": "海康威视", "weight": 6.5, "sector": "technology", "industry": "security"},
+      {"stock_code": "600519", "stock_name": "贵州茅台", "weight": 3.2, "sector": "consumer", "industry": "baijiu"}
+    ],
+    "003547": [
+      {"stock_code": "019733", "stock_name": "24附息国债13", "weight": 15.0, "sector": "government", "industry": "bond"},
+      {"stock_code": "230015", "stock_name": "23光大银行CD015", "weight": 10.0, "sector": "finance", "industry": "cd"}
+    ],
+    "000198": [
+      {"stock_code": "230205", "stock_name": "23国开05", "weight": 12.0, "sector": "government", "industry": "bond"}
+    ]
+  },
+  "transactions": [
+    {"fund_code": "110011", "action": "BUY", "date": "2025-01-15", "amount": 50000, "shares": 33000},
+    {"fund_code": "110011", "action": "BUY", "date": "2025-07-01", "amount": 40000, "shares": 27000},
+    {"fund_code": "110011", "action": "BUY", "date": "2026-01-10", "amount": 30000, "shares": 20000},
+    {"fund_code": "110011", "action": "BUY", "date": "2026-05-15", "amount": 20000, "shares": 13000},
+    {"fund_code": "006123", "action": "BUY", "date": "2025-03-01", "amount": 45000, "shares": 29000},
+    {"fund_code": "006123", "action": "BUY", "date": "2025-09-15", "amount": 35000, "shares": 22000},
+    {"fund_code": "006123", "action": "BUY", "date": "2026-04-01", "amount": 20000, "shares": 12000},
+    {"fund_code": "003547", "action": "BUY", "date": "2025-02-10", "amount": 55000, "shares": 51000},
+    {"fund_code": "003547", "action": "BUY", "date": "2025-10-01", "amount": 40000, "shares": 37000},
+    {"fund_code": "000198", "action": "BUY", "date": "2025-06-01", "amount": 30000, "shares": 28500},
+    {"fund_code": "000198", "action": "BUY", "date": "2026-02-01", "amount": 18000, "shares": 17000}
+  ],
+  "nav_history": {
+    "110011": [
+      {"date": "2025-01-15", "nav": 1.515},
+      {"date": "2025-07-01", "nav": 1.481},
+      {"date": "2025-12-31", "nav": 1.650},
+      {"date": "2026-01-10", "nav": 1.500},
+      {"date": "2026-05-15", "nav": 1.538},
+      {"date": "2026-06-09", "nav": 1.500}
+    ],
+    "006123": [
+      {"date": "2025-03-01", "nav": 1.552},
+      {"date": "2025-09-15", "nav": 1.591},
+      {"date": "2025-12-31", "nav": 1.780},
+      {"date": "2026-04-01", "nav": 1.667},
+      {"date": "2026-06-09", "nav": 1.600}
+    ],
+    "003547": [
+      {"date": "2025-02-10", "nav": 1.078},
+      {"date": "2025-10-01", "nav": 1.081},
+      {"date": "2025-12-31", "nav": 1.098},
+      {"date": "2026-06-09", "nav": 1.111}
+    ],
+    "000198": [
+      {"date": "2025-06-01", "nav": 1.053},
+      {"date": "2025-12-31", "nav": 1.058},
+      {"date": "2026-06-09", "nav": 1.064}
+    ]
+  },
+  "fund_profiles_extended": {
+    "110011": {"management_fee": 0.015, "benchmark": "中证700指数"},
+    "006123": {"management_fee": 0.012, "benchmark": "中证科技指数"},
+    "003547": {"management_fee": 0.003, "benchmark": "中债综合指数"},
+    "000198": {"management_fee": 0.002, "benchmark": "中债短融指数"}
+  },
+  "fee_schedules": {
+    "110011": {"management_fee": 0.015},
+    "006123": {"management_fee": 0.012},
+    "003547": {"management_fee": 0.003},
+    "000198": {"management_fee": 0.002}
+  },
+  "redemption_rules": {
+    "110011": {"holding_period_days": 7, "redemption_fee_pct": 0.005, "short_redemption_fee_pct": 0.015},
+    "006123": {"holding_period_days": 7, "redemption_fee_pct": 0.005, "short_redemption_fee_pct": 0.015},
+    "003547": {"holding_period_days": 7, "redemption_fee_pct": 0.001, "short_redemption_fee_pct": 0.005},
+    "000198": {"holding_period_days": 0, "redemption_fee_pct": 0.0, "short_redemption_fee_pct": 0.0}
+  },
+  "benchmarks": {
+    "110011": "中证700指数",
+    "006123": "中证科技指数",
+    "003547": "中债综合指数",
+    "000198": "中债短融指数"
+  },
+  "benchmark_history": {
+    "110011": [
+      {"date": "2025-01-15", "nav": 3200.0},
+      {"date": "2025-07-01", "nav": 3350.0},
+      {"date": "2025-12-31", "nav": 3500.0},
+      {"date": "2026-06-09", "nav": 3600.0}
+    ],
+    "006123": [
+      {"date": "2025-03-01", "nav": 4800.0},
+      {"date": "2025-09-15", "nav": 5100.0},
+      {"date": "2025-12-31", "nav": 5500.0},
+      {"date": "2026-06-09", "nav": 5800.0}
+    ],
+    "003547": [
+      {"date": "2025-02-10", "nav": 210.0},
+      {"date": "2025-12-31", "nav": 215.0},
+      {"date": "2026-06-09", "nav": 218.0}
+    ],
+    "000198": [
+      {"date": "2025-06-01", "nav": 105.0},
+      {"date": "2025-12-31", "nav": 106.5},
+      {"date": "2026-06-09", "nav": 107.2}
+    ]
+  },
+  "news_evidence": [
+    {"source": "reuters", "headline": "Consumer sector shows strong recovery in Q2", "date": "2026-06-01"},
+    {"source": "bloomberg", "headline": "Technology funds benefit from AI infrastructure spending", "date": "2026-06-03"},
+    {"source": "caixin", "headline": "Bond yields stable amid moderate monetary policy", "date": "2026-06-05"}
+  ],
+  "sentiment_evidence": [
+    {"fund_code": "110011", "sentiment": "positive", "score": 0.75},
+    {"fund_code": "006123", "sentiment": "positive", "score": 0.65},
+    {"fund_code": "003547", "sentiment": "neutral", "score": 0.50},
+    {"fund_code": "000198", "sentiment": "neutral", "score": 0.45}
+  ],
+  "risk_profile": {
+    "risk_level": "moderate",
+    "max_trade_pct": 0.10,
+    "liquidity_reserve_pct": 0.10,
+    "short_term_trade_budget_pct": 0.05
+  },
+  "constraints": {
+    "risk_level": "moderate",
+    "max_single_fund_weight": 0.30,
+    "max_theme_weight": 0.50,
+    "liquidity_reserve_pct": 0.10,
+    "max_trade_pct": 0.10,
+    "min_trade_amount": 1000.0,
+    "forbidden_actions": [],
+    "planned_holding_period": "1-3 years"
+  }
+}

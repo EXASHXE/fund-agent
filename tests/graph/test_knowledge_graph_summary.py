@@ -41,6 +41,47 @@ class TestKnowledgeGraphSummary:
         assert result["fund_count"] == 0
         assert len(result["limitations"]) >= 1
 
+    def test_positions_present_but_holdings_empty_produces_disabled_with_limitations(self):
+        positions = [
+            {"fund_code": "110011", "fund_name": "Test Fund", "shares": 1000, "current_value": 1500},
+        ]
+        fund_profiles = {"110011": {"fund_type": "equity"}}
+        holdings = {}
+        result = build_knowledge_graph_summary(
+            positions=positions,
+            fund_profiles=fund_profiles,
+            holdings=holdings,
+        )
+        assert result["enabled"] is False
+        assert len(result["limitations"]) >= 1
+        assert any("holdings" in lim.lower() or "insufficient" in lim.lower() for lim in result["limitations"])
+
+    def test_holdings_present_but_empty_list_produces_disabled(self):
+        positions = [
+            {"fund_code": "110011", "fund_name": "Test Fund", "shares": 1000, "current_value": 1500},
+        ]
+        fund_profiles = {"110011": {"fund_type": "equity"}}
+        holdings = {"110011": []}
+        result = build_knowledge_graph_summary(
+            positions=positions,
+            fund_profiles=fund_profiles,
+            holdings=holdings,
+        )
+        assert result["enabled"] is False
+        assert len(result["limitations"]) >= 1
+
+    def test_disabled_summary_has_all_required_fields(self):
+        result = build_knowledge_graph_summary(
+            positions=[],
+            fund_profiles={},
+            holdings={},
+        )
+        assert result["enabled"] is False
+        for field in ("fund_count", "stock_count", "industry_count", "theme_count",
+                      "event_count", "top_shared_holdings", "theme_paths",
+                      "related_events", "limitations"):
+            assert field in result, f"disabled summary must include {field}"
+
     def test_events_appear_when_host_provided(self):
         positions = [
             {"fund_code": "110011", "fund_name": "Test Fund", "shares": 1000, "current_nav": 1.5, "cost_nav": 1.2, "current_value": 1500, "cost_value": 1200, "pnl_pct": 25.0, "asset_type": "equity"},
@@ -84,6 +125,7 @@ class TestKnowledgeGraphSummaryWithFixture:
         "bond_cash_allocation.json",
         "energy_loss_position.json",
         "mixed_portfolio_rebalance.json",
+        "all_data_sufficient_decision_ready.json",
     ])
     def fixture_data(self, request):
         fixtures_dir = os.path.join(os.path.dirname(__file__), "..", "..", "examples", "user_flows")

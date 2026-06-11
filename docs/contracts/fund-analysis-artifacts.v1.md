@@ -136,7 +136,7 @@ separate top-level artifacts in the current runtime.
 | `right_side_confirmation_diagnostics` | `diagnostics` | No | object | Yes | Portfolio positions are available. | Right-side confirmation assessment for drawdown positions; evidence readiness diagnostic only. |
 | `event_hype_failure_diagnostics` | `diagnostics` | No | object | Yes | Host supplies events or catalyst_events metadata. | Event hype failure detection for expected positive catalysts with weak/negative post-event reaction; analysis-only. |
 | `cash_deployment_diagnostics` | `diagnostics` | No | object | Yes | Portfolio positions are available. | Cash deployment readiness assessment including cash-like allocation, buffer status, and risk budget; analysis-only. |
-| `knowledge_graph_summary` | `Knowledge Graph` | No | object or null | Yes | Holdings data available. | Optional KG context layer; enabled=false when data insufficient. |
+| `knowledge_graph_summary` | `diagnostics` | No | object or null | Yes | Holdings data available. | Optional KG context layer. When holdings data supports KG, emits `enabled=true` with fund/stock/industry/theme/event counts, shared holdings, and theme paths. When holdings data is missing or insufficient, emits `enabled=false` with `limitations` list explaining why. Hosts should always receive this artifact when positions exist; `enabled=false` with limitations is preferred over omitting the artifact for host-friendliness. |
 
 ## Report Output
 

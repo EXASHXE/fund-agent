@@ -72,21 +72,60 @@ def normalize_benchmark_history(raw: dict[str, Any]) -> dict[str, Any]:
     return raw
 
 
+def normalize_web_search(raw: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    if not raw:
+        return []
+    return [
+        {
+            "source": "web_search",
+            "headline": item.get("title", item.get("snippet", "")),
+            "date": item.get("date", ""),
+            "sentiment": "neutral",
+        }
+        for item in raw
+    ]
+
+
+def normalize_fund_metadata_lookup(raw: dict[str, Any]) -> dict[str, Any]:
+    return raw
+
+
+def normalize_fund_fee_schedule(raw: dict[str, Any]) -> dict[str, Any]:
+    return raw
+
+
 def normalize_all(raw: dict[str, Any] | None = None) -> dict[str, Any]:
     if raw is None:
         raw = load_fake_responses()
-    news_raw = raw.get("news_evidence", raw.get("financial_news", []))
-    sentiment_raw = raw.get("sentiment_evidence", raw.get("social_sentiment", []))
-    benchmark_raw = raw.get("benchmark_history", raw.get("benchmark_price_history", {}))
-    fund_profiles_raw = raw.get("fund_profiles", raw.get("fund_metadata_lookup", {}))
-    fee_schedules_raw = raw.get("fee_schedules", raw.get("fund_fee_schedule", {}))
+
+    if "news_evidence" in raw:
+        news_normalized = normalize_news_evidence(raw["news_evidence"])
+    elif "financial_news" in raw:
+        news_normalized = normalize_news_evidence(raw["financial_news"])
+    elif "web_search" in raw:
+        news_normalized = normalize_web_search(raw["web_search"])
+    else:
+        news_normalized = []
+
+    if "sentiment_evidence" in raw:
+        sentiment_normalized = normalize_sentiment_evidence(raw["sentiment_evidence"])
+    elif "social_sentiment" in raw:
+        sentiment_normalized = normalize_sentiment_evidence(raw["social_sentiment"])
+    else:
+        sentiment_normalized = []
+
+    benchmark_raw = raw.get("benchmark_history") or raw.get("benchmark_price_history") or {}
+    fund_profiles_raw = raw.get("fund_profiles") or raw.get("fund_metadata_lookup") or {}
+    fee_schedules_raw = raw.get("fee_schedules") or raw.get("fund_fee_schedule") or {}
+    redemption_rules_raw = raw.get("redemption_rules") or {}
+
     return {
-        "news_evidence": normalize_news_evidence(news_raw),
-        "sentiment_evidence": normalize_sentiment_evidence(sentiment_raw),
+        "news_evidence": news_normalized,
+        "sentiment_evidence": sentiment_normalized,
         "benchmark_history": normalize_benchmark_history(benchmark_raw),
         "fund_profiles": fund_profiles_raw,
         "fee_schedules": fee_schedules_raw,
-        "redemption_rules": raw.get("redemption_rules", {}),
+        "redemption_rules": redemption_rules_raw,
     }
 
 

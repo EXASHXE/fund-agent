@@ -2,11 +2,11 @@
 
 Dev-only harness test. Validates that fake MCP responses can be normalized
 into fund_analysis-compatible payload fields without network or credentials.
+Covers all 6 MCP->fund_analysis mappings.
 """
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 
@@ -19,6 +19,7 @@ from tools.dev.mcp_harness.normalize_mcp_responses import (
     normalize_all,
     normalize_news_evidence,
     normalize_sentiment_evidence,
+    normalize_web_search,
 )
 
 
@@ -60,6 +61,110 @@ def test_normalize_all_does_not_require_network():
     result = normalize_all()
     assert "news_evidence" in result
     assert result["news_evidence"] or result["sentiment_evidence"]
+
+
+def test_financial_news_maps_to_news_evidence():
+    raw = load_fake_responses()
+    assert "financial_news" in raw
+    subset = {"financial_news": raw["financial_news"]}
+    result = normalize_all(subset)
+    assert isinstance(result["news_evidence"], list)
+    assert len(result["news_evidence"]) > 0
+    assert result["news_evidence"][0]["headline"] != ""
+
+
+def test_web_search_maps_to_news_evidence():
+    raw = load_fake_responses()
+    assert "web_search" in raw
+    subset = {"web_search": raw["web_search"]}
+    result = normalize_all(subset)
+    assert isinstance(result["news_evidence"], list)
+    assert len(result["news_evidence"]) > 0
+    assert result["news_evidence"][0]["source"] == "web_search"
+
+
+def test_web_search_normalizer_directly():
+    raw = load_fake_responses()
+    normalized = normalize_web_search(raw["web_search"])
+    assert len(normalized) > 0
+    assert normalized[0]["headline"] != ""
+    assert normalized[0]["source"] == "web_search"
+
+
+def test_social_sentiment_maps_to_sentiment_evidence():
+    raw = load_fake_responses()
+    assert "social_sentiment" in raw
+    subset = {"social_sentiment": raw["social_sentiment"]}
+    result = normalize_all(subset)
+    assert isinstance(result["sentiment_evidence"], list)
+    assert len(result["sentiment_evidence"]) > 0
+    assert result["sentiment_evidence"][0]["fund_code"] != ""
+
+
+def test_benchmark_price_history_maps_to_benchmark_history():
+    raw = load_fake_responses()
+    assert "benchmark_price_history" in raw
+    subset = {"benchmark_price_history": raw["benchmark_price_history"]}
+    result = normalize_all(subset)
+    assert isinstance(result["benchmark_history"], dict)
+    assert len(result["benchmark_history"]) > 0
+
+
+def test_fund_metadata_lookup_maps_to_fund_profiles():
+    raw = load_fake_responses()
+    assert "fund_metadata_lookup" in raw
+    subset = {"fund_metadata_lookup": raw["fund_metadata_lookup"]}
+    result = normalize_all(subset)
+    assert isinstance(result["fund_profiles"], dict)
+    assert "110011" in result["fund_profiles"]
+
+
+def test_fund_fee_schedule_maps_to_fee_schedules():
+    raw = load_fake_responses()
+    assert "fund_fee_schedule" in raw
+    subset = {"fund_fee_schedule": raw["fund_fee_schedule"]}
+    result = normalize_all(subset)
+    assert isinstance(result["fee_schedules"], dict)
+    assert "110011" in result["fee_schedules"]
+
+
+def test_redemption_rules_passthrough():
+    raw = load_fake_responses()
+    assert "redemption_rules" in raw
+    subset = {"redemption_rules": raw["redemption_rules"]}
+    result = normalize_all(subset)
+    assert isinstance(result["redemption_rules"], dict)
+
+
+def test_normalize_all_with_mixed_mcp_and_legacy_keys():
+    raw = load_fake_responses()
+    result = normalize_all(raw)
+    assert len(result["news_evidence"]) > 0
+    assert len(result["sentiment_evidence"]) > 0
+    assert len(result["benchmark_history"]) > 0
+    assert len(result["fund_profiles"]) > 0
+    assert len(result["fee_schedules"]) > 0
+    assert len(result["redemption_rules"]) > 0
+
+
+def test_normalize_all_empty_input():
+    result = normalize_all({})
+    assert result["news_evidence"] == []
+    assert result["sentiment_evidence"] == []
+    assert result["benchmark_history"] == {}
+    assert result["fund_profiles"] == {}
+    assert result["fee_schedules"] == {}
+    assert result["redemption_rules"] == {}
+
+
+def test_no_core_runtime_imports_in_harness():
+    import importlib
+    mod = importlib.import_module("tools.dev.mcp_harness.normalize_mcp_responses")
+    assert mod.__file__ is not None
+    source = open(mod.__file__, encoding="utf-8").read()
+    forbidden = ["from src.", "import src."]
+    for pattern in forbidden:
+        assert pattern not in source, f"harness must not import core runtime: {pattern}"
 
 
 def test_harness_output_can_be_used_by_fund_analysis():

@@ -36,7 +36,7 @@ def build_knowledge_graph_summary(
 
     fund_data_list = _build_fund_data_from_positions(positions, holdings, fund_profiles)
 
-    if not fund_data_list:
+    if not fund_data_list or not any(fd.get("holdings") for fd in fund_data_list):
         return {
             "enabled": False,
             "fund_count": 0,

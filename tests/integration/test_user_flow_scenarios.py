@@ -29,6 +29,7 @@ FIXTURE_FILES = [
     "dca_drawdown_continue_or_pause.json",
     "event_positive_news_price_weak.json",
     "missing_transaction_history_but_positions_available.json",
+    "all_data_sufficient_decision_ready.json",
 ]
 
 FORMAL_DECISION_ARTIFACTS = {
@@ -347,3 +348,56 @@ def test_missing_transaction_no_fabricated_cost_basis() -> None:
                 assert not fund_data.get("fabricated", False), "must not fabricate cost basis"
     overlap = FORMAL_DECISION_ARTIFACTS & set(artifacts.keys())
     assert not overlap, "missing_transaction must not produce formal decisions"
+
+
+def test_all_data_sufficient_analysis_plan_exists() -> None:
+    artifacts = _run_fixture("all_data_sufficient_decision_ready.json")
+    assert "analysis_plan" in artifacts
+    plan = artifacts["analysis_plan"]
+    assert isinstance(plan["available_inputs"], list)
+    assert len(plan["available_inputs"]) >= 5, "all-data fixture should have many available inputs"
+
+
+def test_all_data_sufficient_no_critical_evidence_gap() -> None:
+    artifacts = _run_fixture("all_data_sufficient_decision_ready.json")
+    gap = artifacts.get("evidence_gap_diagnostics", {})
+    assert isinstance(gap.get("missing_holdings"), bool)
+    assert isinstance(gap.get("missing_recent_news"), bool)
+    assert isinstance(gap.get("missing_sentiment"), bool)
+    critical_blockers = [
+        d for d in gap.get("details", [])
+        if isinstance(d, dict) and d.get("severity") == "critical"
+    ]
+    assert len(critical_blockers) == 0, (
+        "all-data fixture should have no critical evidence gap blockers"
+    )
+
+
+def test_all_data_sufficient_decision_support_ready() -> None:
+    artifacts = _run_fixture("all_data_sufficient_decision_ready.json")
+    plan = artifacts.get("analysis_plan", {})
+    assert plan.get("decision_support_ready") is True, (
+        "all-data fixture should be decision_support_ready"
+    )
+
+
+def test_all_data_sufficient_no_formal_decision() -> None:
+    artifacts = _run_fixture("all_data_sufficient_decision_ready.json")
+    overlap = FORMAL_DECISION_ARTIFACTS & set(artifacts.keys())
+    assert not overlap, (
+        "fund_analysis must not produce formal decisions even with all data"
+    )
+
+
+def test_all_data_sufficient_knowledge_graph_enabled() -> None:
+    artifacts = _run_fixture("all_data_sufficient_decision_ready.json")
+    kg = artifacts.get("knowledge_graph_summary", {})
+    assert kg is not None, "all-data fixture should produce knowledge_graph_summary"
+    assert kg.get("enabled") is True, "KG should be enabled with holdings data"
+
+
+def test_all_data_sufficient_has_news_and_sentiment() -> None:
+    artifacts = _run_fixture("all_data_sufficient_decision_ready.json")
+    gap = artifacts.get("evidence_gap_diagnostics", {})
+    assert gap.get("missing_recent_news") is False
+    assert gap.get("missing_sentiment") is False

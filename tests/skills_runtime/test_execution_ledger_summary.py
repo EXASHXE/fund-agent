@@ -87,3 +87,38 @@ class TestExecutionLedgerSummary:
         summary = ledger.ledger_summary()
         for action in ("BUY", "SELL", "INCREASE", "REDUCE", "HOLD", "WAIT", "PAUSE_DCA"):
             assert action in summary["action_counts"]
+
+    def test_summary_all_required_fields_present(self):
+        d1 = _make_decision()
+        ledger = ExecutionLedger(decisions=[d1])
+        summary = ledger.ledger_summary()
+        required_fields = [
+            "action_counts",
+            "decision_count",
+            "active_decision_count",
+            "passive_decision_count",
+            "downgraded_decision_count",
+            "blocked_decision_count",
+            "total_execution_amount",
+            "total_risk_budget",
+            "blocked_by_counts",
+            "reason_code_counts",
+        ]
+        for field in required_fields:
+            assert field in summary, f"ledger_summary missing required field: {field}"
+
+    def test_to_dict_includes_ledger_summary_with_all_fields(self):
+        d1 = _make_decision(action="BUY", execution_amount=5000.0, risk_budget=0.05)
+        d2 = _make_decision(action="HOLD", execution_amount=0.0, rationale_anchor=[], evidence_state="INSUFFICIENT_EVIDENCE", reason_codes=["INSUFFICIENT_EVIDENCE", "PASSIVE_ACTION"], blocked_by=["evidence"])
+        ledger = ExecutionLedger(decisions=[d1, d2])
+        serialized = ledger.to_dict()
+        ls = serialized["ledger_summary"]
+        assert ls["decision_count"] == 2
+        assert ls["active_decision_count"] == 1
+        assert ls["passive_decision_count"] == 1
+        assert ls["blocked_decision_count"] == 1
+        assert ls["total_execution_amount"] == 5000.0
+        assert ls["total_risk_budget"] == pytest.approx(0.10)
+        assert "evidence" in ls["blocked_by_counts"]
+        assert ls["reason_code_counts"]["EVIDENCE_AVAILABLE"] == 1
+        assert ls["reason_code_counts"]["INSUFFICIENT_EVIDENCE"] == 1
