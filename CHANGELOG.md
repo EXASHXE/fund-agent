@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased] v1.1.0
+## [1.1.0] — 2026-06-11
 
 ### Added
 
@@ -10,25 +10,37 @@
 - **`knowledge_graph_summary` artifact** — optional `fund_analysis` artifact
   emitted when holdings data supports KnowledgeGraph construction. Provides
   KG-derived context summarizing entity relationships, sector/theme links,
-  and cross-fund overlap patterns. Omitted (`enabled=false`) when data is
-  insufficient. No requirement to have KG data for normal reports.
+  and cross-fund overlap patterns. Emits `enabled=false` with `limitations`
+  when data is insufficient; hosts always receive the artifact for
+  host-friendliness. No requirement to have KG data for normal reports.
 - **`evidence_anchor_diagnostics` artifact** — `decision_support` artifact
   that explains anchor validity and coverage per decision and per trade.
   Surfaces which evidence IDs were used, which were missing or weak, and the
-  resulting anchor coverage ratio.
+  resulting anchor coverage ratio. Includes `trade_plan_has_active_actions`
+  and `trade_plan_requires_anchor` top-level fields when trade_plan is
+  present, avoiding misleading single-action diagnostics for multi-trade
+  plans.
 - **`risk_constraint_conflicts` artifact** — `decision_support` artifact
   that explains budget/constraint blocking with cap/downgrade details.
-  Surfaces which constraints conflicted, the original vs capped execution
-  amount, and the downgrade reason.
+  Surfaces which constraints conflicted, the original requested vs capped
+  execution amount, and the downgrade reason. Trade plan path now consumes
+  validated trades with `cap_reasons` and `requested_amount` for accurate
+  conflict reporting.
 - **`ledger_summary` field in ExecutionLedger** — `ExecutionLedger.to_dict()`
   now includes a `ledger_summary` field providing a deterministic summary of
-  all decisions, total execution amounts, and passive/active action counts.
-- **8 new user flow fixtures** — expanded scenario-specific user flow
+  all decisions, total execution amounts, passive/active action counts,
+  blocked_by_counts, and reason_code_counts.
+- **9 new user flow fixtures** — expanded scenario-specific user flow
   assertions covering KnowledgeGraph context, evidence anchor diagnostics,
-  risk constraint conflicts, and ledger summary validation.
+  risk constraint conflicts, ledger summary validation, and an
+  all-data-sufficient decision-ready scenario.
 - **Expanded MCP harness** — dev-only MCP harness (`tools/dev/mcp_harness/`)
-  now handles `financial_news`, `web_search`, and `social_sentiment`
-  capability types in fake mode.
+  now handles all 6 MCP→fund_analysis mappings: `financial_news`→
+  `news_evidence`, `web_search`→`news_evidence`, `social_sentiment`→
+  `sentiment_evidence`, `benchmark_price_history`→`benchmark_history`,
+  `fund_metadata_lookup`→`fund_profiles`, `fund_fee_schedule`→
+  `fee_schedules`/`redemption_rules`. No network, no API keys, no provider
+  SDKs, no core runtime imports.
 
 ### Changed
 
@@ -39,9 +51,23 @@
 - **`ExecutionLedger.to_dict()` includes `ledger_summary`** — the serialized
   ledger output now contains a `ledger_summary` field with deterministic
   counts and totals.
-- **MCP harness handles `financial_news`/`web_search`/`social_sentiment`** —
-  the fake MCP harness now normalizes responses for all three capability
-  types, enabling more complete integration testing without live providers.
+- **MCP harness handles all 6 capability types** — the fake MCP harness
+  normalizes responses for all six capability types with priority-based
+  fallback, enabling complete integration testing without live providers.
+- **Single-decision `requested_amount` derived from payload** —
+  `DecisionSupportSkill._run_single_decision_path` now derives the original
+  requested amount from `payload.requested_amount` → `target_trade_amount` →
+  `execution_amount` → `decision.execution_amount`, so
+  `risk_constraint_conflicts` accurately reports the original requested
+  amount vs the capped/final amount.
+- **Trade plan `risk_constraint_conflicts` uses validated trades** —
+  `_run_trade_plan_path` now passes `validated_trades` (with `cap_reasons`
+  and `requested_amount`) instead of raw `trades` to both
+  `build_evidence_anchor_diagnostics` and `build_risk_constraint_conflicts`.
+- **`knowledge_graph_summary` emits `enabled=false` with limitations** —
+  when positions exist but holdings data is empty or insufficient, the
+  artifact now consistently emits `enabled=false` with a `limitations` list
+  rather than `enabled=true` with empty stock nodes.
 
 ### Honesty
 
@@ -51,8 +77,11 @@
 - `fund_analysis` still does not emit formal `Decision` or `ExecutionLedger`.
 - KnowledgeGraph context is optional and does not affect report output when
   holdings data is insufficient.
+- `risk_budget` as a standalone constraint in `_check_single_decision_conflicts`
+  is deferred; it is handled via `BUDGET_BLOCKED` evidence_state in the
+  decision stage.
 
-## [Unreleased] v1.0.0-rc
+## [1.0.0-rc]
 
 ### Added
 
