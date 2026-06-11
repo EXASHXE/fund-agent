@@ -1,0 +1,242 @@
+{
+  "scenario_id": "all_data_sufficient_formal_trade_plan",
+  "user_question": "给一个完整的组合再平衡方案，包括减仓盈利品种、加仓低估品种",
+  "user_intent": "formal_trade_plan",
+  "as_of_date": "2026-06-01",
+  "portfolio": {
+    "as_of_date": "2026-06-01",
+    "total_value": 500000,
+    "cash_available": 80000,
+    "positions": [
+      {
+        "fund_code": "110011",
+        "fund_name": "易方达中小盘混合",
+        "current_value": 150000,
+        "total_cost": 100000,
+        "shares": 100000,
+        "target_weight": 0.25,
+        "tags": ["equity", "consumer", "high_profit"]
+      },
+      {
+        "fund_code": "006123",
+        "fund_name": "广发科技先锋",
+        "current_value": 120000,
+        "total_cost": 95000,
+        "shares": 75000,
+        "target_weight": 0.25,
+        "tags": ["equity", "technology", "moderate_profit"]
+      },
+      {
+        "fund_code": "003547",
+        "fund_name": "鹏华丰禄债券",
+        "current_value": 100000,
+        "total_cost": 95000,
+        "shares": 91000,
+        "target_weight": 0.25,
+        "tags": ["bond", "income", "stable"]
+      },
+      {
+        "fund_code": "000198",
+        "fund_name": "天弘增利短债",
+        "current_value": 50000,
+        "total_cost": 48000,
+        "shares": 47000,
+        "target_weight": 0.10,
+        "tags": ["short_bond", "cash_substitute"]
+      },
+      {
+        "fund_code": "001198",
+        "fund_name": "华夏创新前沿",
+        "current_value": 80000,
+        "total_cost": 75000,
+        "shares": 48000,
+        "target_weight": 0.15,
+        "tags": ["innovation", "equity", "undervalued"]
+      }
+    ]
+  },
+  "transactions": [
+    {"fund_code": "110011", "action": "BUY", "date": "2025-01-15", "amount": 50000, "shares": 34000},
+    {"fund_code": "110011", "action": "BUY", "date": "2025-07-01", "amount": 30000, "shares": 20000},
+    {"fund_code": "110011", "action": "BUY", "date": "2026-01-10", "amount": 20000, "shares": 14000},
+    {"fund_code": "006123", "action": "BUY", "date": "2025-03-01", "amount": 50000, "shares": 31000},
+    {"fund_code": "006123", "action": "BUY", "date": "2025-09-15", "amount": 30000, "shares": 19000},
+    {"fund_code": "006123", "action": "BUY", "date": "2026-02-15", "amount": 15000, "shares": 9500},
+    {"fund_code": "003547", "action": "BUY", "date": "2025-04-01", "amount": 50000, "shares": 46000},
+    {"fund_code": "003547", "action": "BUY", "date": "2025-10-15", "amount": 45000, "shares": 41000},
+    {"fund_code": "000198", "action": "BUY", "date": "2025-06-01", "amount": 30000, "shares": 28500},
+    {"fund_code": "000198", "action": "BUY", "date": "2025-12-15", "amount": 18000, "shares": 17200},
+    {"fund_code": "001198", "action": "BUY", "date": "2025-05-01", "amount": 40000, "shares": 25000},
+    {"fund_code": "001198", "action": "BUY", "date": "2025-11-01", "amount": 35000, "shares": 22000}
+  ],
+  "nav_history": {
+    "110011": [
+      {"date": "2025-01-15", "nav": 1.35},
+      {"date": "2025-07-01", "nav": 1.42},
+      {"date": "2025-12-31", "nav": 1.48},
+      {"date": "2026-03-01", "nav": 1.50},
+      {"date": "2026-06-01", "nav": 1.55}
+    ],
+    "006123": [
+      {"date": "2025-03-01", "nav": 1.45},
+      {"date": "2025-09-15", "nav": 1.52},
+      {"date": "2025-12-31", "nav": 1.58},
+      {"date": "2026-03-01", "nav": 1.62},
+      {"date": "2026-06-01", "nav": 1.65}
+    ],
+    "003547": [
+      {"date": "2025-04-01", "nav": 1.080},
+      {"date": "2025-10-15", "nav": 1.088},
+      {"date": "2025-12-31", "nav": 1.095},
+      {"date": "2026-03-01", "nav": 1.098},
+      {"date": "2026-06-01", "nav": 1.102}
+    ],
+    "000198": [
+      {"date": "2025-06-01", "nav": 1.045},
+      {"date": "2025-12-15", "nav": 1.052},
+      {"date": "2026-03-01", "nav": 1.058},
+      {"date": "2026-06-01", "nav": 1.064}
+    ],
+    "001198": [
+      {"date": "2025-05-01", "nav": 1.45},
+      {"date": "2025-11-01", "nav": 1.52},
+      {"date": "2025-12-31", "nav": 1.58},
+      {"date": "2026-03-01", "nav": 1.62},
+      {"date": "2026-06-01", "nav": 1.68}
+    ]
+  },
+  "fund_profiles": {
+    "110011": {"fund_code": "110011", "name": "易方达中小盘混合", "fund_type": "equity", "benchmark": "中证700指数", "theme": "consumer_equity"},
+    "006123": {"fund_code": "006123", "name": "广发科技先锋", "fund_type": "equity", "benchmark": "中证科技指数", "theme": "technology"},
+    "003547": {"fund_code": "003547", "name": "鹏华丰禄债券", "fund_type": "bond", "benchmark": "中债综合指数", "theme": "bond"},
+    "000198": {"fund_code": "000198", "name": "天弘增利短债", "fund_type": "short_bond", "benchmark": "中债短融指数", "theme": "cash"},
+    "001198": {"fund_code": "001198", "name": "华夏创新前沿", "fund_type": "active", "benchmark": "创业板指", "theme": "innovation"}
+  },
+  "holdings": {
+    "110011": [
+      {"stock_code": "600519", "stock_name": "贵州茅台", "weight": 9.5, "sector": "consumer", "industry": "baijiu"},
+      {"stock_code": "000858", "stock_name": "五粮液", "weight": 7.0, "sector": "consumer", "industry": "baijiu"},
+      {"stock_code": "000333", "stock_name": "美的集团", "weight": 5.5, "sector": "manufacturing", "industry": "home_appliance"}
+    ],
+    "006123": [
+      {"stock_code": "300750", "stock_name": "宁德时代", "weight": 8.0, "sector": "manufacturing", "industry": "battery"},
+      {"stock_code": "MSFT", "stock_name": "Microsoft", "weight": 5.0, "sector": "technology", "industry": "software"}
+    ],
+    "003547": [
+      {"stock_code": "019733", "stock_name": "24附息国债13", "weight": 15.0, "sector": "government", "industry": "bond"}
+    ],
+    "000198": [
+      {"stock_code": "230205", "stock_name": "23国开05", "weight": 12.0, "sector": "government", "industry": "bond"}
+    ],
+    "001198": [
+      {"stock_code": "300014", "stock_name": "亿纬锂能", "weight": 6.0, "sector": "manufacturing", "industry": "battery"},
+      {"stock_code": "002594", "stock_name": "比亚迪", "weight": 5.0, "sector": "manufacturing", "industry": "automotive"}
+    ]
+  },
+  "fee_schedules": {
+    "110011": {"management_fee": 0.015, "redemption_fee_pct": 0.005},
+    "006123": {"management_fee": 0.015, "redemption_fee_pct": 0.005},
+    "003547": {"management_fee": 0.003, "redemption_fee_pct": 0.001},
+    "000198": {"management_fee": 0.003, "redemption_fee_pct": 0.0},
+    "001198": {"management_fee": 0.015, "redemption_fee_pct": 0.005}
+  },
+  "redemption_rules": {
+    "110011": {"holding_period_days": 90, "redemption_fee_pct": 0.005, "short_redemption_fee_pct": 0.015}
+  },
+  "benchmarks": {
+    "110011": "中证700指数",
+    "006123": "中证科技指数",
+    "001198": "创业板指"
+  },
+  "benchmark_history": {
+    "110011": [
+      {"date": "2025-01-15", "nav": 5200.0},
+      {"date": "2025-12-31", "nav": 5500.0},
+      {"date": "2026-06-01", "nav": 5700.0}
+    ],
+    "006123": [
+      {"date": "2025-03-01", "nav": 3000.0},
+      {"date": "2025-12-31", "nav": 3300.0},
+      {"date": "2026-06-01", "nav": 3450.0}
+    ],
+    "001198": [
+      {"date": "2025-05-01", "nav": 2200.0},
+      {"date": "2025-12-31", "nav": 2450.0},
+      {"date": "2026-06-01", "nav": 2550.0}
+    ]
+  },
+  "news_evidence": [
+    {"title": "消费板块龙头业绩稳健，估值修复预期强", "entities": ["110011"], "direction": "positive", "confidence": 0.75, "source": "finnhub"},
+    {"title": "科技创新政策持续加码，科技板块前景明朗", "entities": ["006123", "001198"], "direction": "positive", "confidence": 0.80, "source": "tavily"},
+    {"title": "债券市场利率平稳，固收配置价值凸显", "entities": ["003547"], "direction": "neutral", "confidence": 0.65, "source": "finnhub"}
+  ],
+  "sentiment_evidence": [
+    {"entity": "110011", "score": 0.55, "claim": "消费板块市场情绪正面", "confidence": 0.70, "source": "reddit"},
+    {"entity": "001198", "score": 0.60, "claim": "创新药板块情绪偏正面", "confidence": 0.65, "source": "reddit"}
+  ],
+  "risk_profile": {
+    "risk_level": "moderate",
+    "max_trade_pct": 0.10,
+    "liquidity_reserve_pct": 0.10
+  },
+  "constraints": {
+    "max_trade_pct": 0.10,
+    "min_trade_amount": 5000,
+    "max_buy_amount": 50000,
+    "max_sell_amount": 50000,
+    "liquidity_reserve_pct": 0.10,
+    "forbidden_actions": []
+  },
+  "trade_plan": {
+    "suggested_trade_plan": [
+      {
+        "trade_id": "trade_1",
+        "fund_code": "110011",
+        "action": "REDUCE",
+        "requested_amount": 30000,
+        "amount": 30000,
+        "evidence_refs": [],
+        "rationale": "高盈利减仓保护收益",
+        "time_horizon": "medium_term"
+      },
+      {
+        "trade_id": "trade_2",
+        "fund_code": "001198",
+        "action": "INCREASE",
+        "requested_amount": 25000,
+        "amount": 25000,
+        "evidence_refs": [],
+        "rationale": "低估创新基金加仓",
+        "time_horizon": "medium_term"
+      },
+      {
+        "trade_id": "trade_3",
+        "fund_code": "003547",
+        "action": "INCREASE",
+        "requested_amount": 20000,
+        "amount": 20000,
+        "evidence_refs": [],
+        "rationale": "债券稳定收益配置",
+        "time_horizon": "medium_term"
+      }
+    ]
+  },
+  "selected_trade_ids": ["trade_1", "trade_2", "trade_3"],
+  "time_horizon": "medium_term",
+  "expected_behavior": {
+    "fund_analysis": {
+      "analysis_plan.decision_support_ready": "should be true",
+      "evidence_gap_diagnostics": "no formal blockers",
+      "no_formal_decision": true
+    },
+    "evidence_bridge": {
+      "has_hard_evidence": true,
+      "has_soft_evidence": true
+    },
+    "decision_support": {
+      "has_multiple_decisions": true,
+      "execution_ledger.ledger_summary": "should summarize active/passive/blocked counts",
+      "risk_constraint_conflicts_present": true
+    }
+  }
+}

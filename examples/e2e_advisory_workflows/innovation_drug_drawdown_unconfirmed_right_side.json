@@ -1,0 +1,135 @@
+{
+  "scenario_id": "innovation_drug_drawdown_unconfirmed_right_side",
+  "user_question": "创新药基金大跌后想抄底加仓，现在能买吗？",
+  "user_intent": "formal_buy_after_drawdown",
+  "as_of_date": "2026-06-01",
+  "portfolio": {
+    "as_of_date": "2026-06-01",
+    "total_value": 200000,
+    "cash_available": 30000,
+    "positions": [
+      {
+        "fund_code": "002563",
+        "fund_name": "华宝医药生物优选",
+        "current_value": 60000,
+        "total_cost": 80000,
+        "shares": 40000,
+        "target_weight": 0.35,
+        "tags": ["healthcare", "equity", "loss"]
+      },
+      {
+        "fund_code": "003547",
+        "fund_name": "鹏华丰禄债券",
+        "current_value": 90000,
+        "total_cost": 85000,
+        "shares": 82000,
+        "target_weight": 0.40,
+        "tags": ["bond", "income"]
+      },
+      {
+        "fund_code": "000198",
+        "fund_name": "天弘增利短债",
+        "current_value": 50000,
+        "total_cost": 48000,
+        "shares": 47000,
+        "target_weight": 0.25,
+        "tags": ["short_bond", "cash_substitute"]
+      }
+    ]
+  },
+  "transactions": [
+    {"fund_code": "002563", "action": "BUY", "date": "2025-09-01", "amount": 50000, "shares": 28000},
+    {"fund_code": "002563", "action": "BUY", "date": "2025-12-15", "amount": 30000, "shares": 16000},
+    {"fund_code": "003547", "action": "BUY", "date": "2025-03-01", "amount": 50000, "shares": 46000},
+    {"fund_code": "003547", "action": "BUY", "date": "2025-08-15", "amount": 35000, "shares": 32000},
+    {"fund_code": "000198", "action": "BUY", "date": "2025-06-01", "amount": 30000, "shares": 28500},
+    {"fund_code": "000198", "action": "BUY", "date": "2025-11-15", "amount": 18000, "shares": 17200}
+  ],
+  "nav_history": {
+    "002563": [
+      {"date": "2025-09-01", "nav": 1.79},
+      {"date": "2025-12-15", "nav": 1.88},
+      {"date": "2026-01-15", "nav": 1.65},
+      {"date": "2026-03-01", "nav": 1.42},
+      {"date": "2026-04-15", "nav": 1.48},
+      {"date": "2026-05-15", "nav": 1.50},
+      {"date": "2026-06-01", "nav": 1.50}
+    ],
+    "003547": [
+      {"date": "2025-03-01", "nav": 1.087},
+      {"date": "2025-08-15", "nav": 1.092},
+      {"date": "2025-12-31", "nav": 1.098},
+      {"date": "2026-06-01", "nav": 1.098}
+    ],
+    "000198": [
+      {"date": "2025-06-01", "nav": 1.053},
+      {"date": "2025-12-31", "nav": 1.060},
+      {"date": "2026-06-01", "nav": 1.064}
+    ]
+  },
+  "fund_profiles": {
+    "002563": {"fund_code": "002563", "name": "华宝医药生物优选", "fund_type": "active", "benchmark": "中证医药卫生指数", "theme": "healthcare_innovation"},
+    "003547": {"fund_code": "003547", "name": "鹏华丰禄债券", "fund_type": "bond", "benchmark": "中债综合指数", "theme": "bond"},
+    "000198": {"fund_code": "000198", "name": "天弘增利短债", "fund_type": "short_bond", "benchmark": "中债短融指数", "theme": "cash"}
+  },
+  "holdings": {
+    "002563": [
+      {"stock_code": "600276", "stock_name": "恒瑞医药", "weight": 9.0, "sector": "healthcare", "industry": "pharmaceutical"},
+      {"stock_code": "300760", "stock_name": "迈瑞医疗", "weight": 7.5, "sector": "healthcare", "industry": "medical_devices"},
+      {"stock_code": "688185", "stock_name": "康希诺", "weight": 5.0, "sector": "healthcare", "industry": "biotech"}
+    ],
+    "003547": [
+      {"stock_code": "019733", "stock_name": "24附息国债13", "weight": 12.0, "sector": "government", "industry": "bond"}
+    ],
+    "000198": [
+      {"stock_code": "230205", "stock_name": "23国开05", "weight": 10.0, "sector": "government", "industry": "bond"}
+    ]
+  },
+  "fee_schedules": {
+    "002563": {"management_fee": 0.015, "redemption_fee_pct": 0.005}
+  },
+  "redemption_rules": {
+    "002563": {"holding_period_days": 7, "redemption_fee_pct": 0.005}
+  },
+  "benchmarks": {
+    "002563": "中证医药卫生指数"
+  },
+  "benchmark_history": {
+  },
+  "news_evidence": [
+    {"title": "创新药板块估值承压，机构降低仓位", "entities": ["002563"], "direction": "negative", "confidence": 0.65, "source": "finnhub"}
+  ],
+  "sentiment_evidence": [
+    {"entity": "002563", "score": -0.30, "claim": "医药生物板块市场情绪偏悲观", "confidence": 0.55, "source": "reddit"}
+  ],
+  "risk_profile": {
+    "risk_level": "moderate",
+    "max_trade_pct": 0.10,
+    "liquidity_reserve_pct": 0.10
+  },
+  "constraints": {
+    "max_trade_pct": 0.10,
+    "min_trade_amount": 1000,
+    "max_buy_amount": 30000,
+    "liquidity_reserve_pct": 0.10
+  },
+  "requested_action": "BUY",
+  "target_trade_amount": 15000,
+  "time_horizon": "medium_term",
+  "expected_behavior": {
+    "fund_analysis": {
+      "right_side_confirmation_diagnostics": "should show right_side_confirmed is false",
+      "analysis_plan": "should include blockers or warnings",
+      "no_formal_decision": true
+    },
+    "evidence_bridge": {
+      "has_hard_evidence": true,
+      "right_side_not_confirmed": true
+    },
+    "decision_support": {
+      "action": "must not be BUY or INCREASE",
+      "blocked_or_downgraded": true,
+      "reason_codes_include_right_side": true
+    }
+  }
+}

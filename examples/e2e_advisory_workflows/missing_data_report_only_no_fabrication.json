@@ -1,0 +1,81 @@
+{
+  "scenario_id": "missing_data_report_only_no_fabrication",
+  "user_question": "帮我看看我的基金组合怎么样？",
+  "user_intent": "report_only",
+  "as_of_date": "2026-06-01",
+  "portfolio": {
+    "as_of_date": "2026-06-01",
+    "total_value": 200000,
+    "cash_available": 30000,
+    "positions": [
+      {
+        "fund_code": "008253",
+        "fund_name": "国泰中证半导体ETF联接C",
+        "current_value": 60000,
+        "total_cost": 50000,
+        "shares": 40000,
+        "target_weight": 0.30,
+        "tags": ["equity", "semiconductor"]
+      },
+      {
+        "fund_code": "001198",
+        "fund_name": "华夏创新前沿",
+        "current_value": 55000,
+        "total_cost": 50000,
+        "shares": 35000,
+        "target_weight": 0.30,
+        "tags": ["equity", "innovation"]
+      },
+      {
+        "fund_code": "003547",
+        "fund_name": "鹏华丰禄债券",
+        "current_value": 55000,
+        "total_cost": 52000,
+        "shares": 50000,
+        "target_weight": 0.25,
+        "tags": ["bond"]
+      },
+      {
+        "fund_code": "000198",
+        "fund_name": "天弘增利短债",
+        "current_value": 30000,
+        "total_cost": 29000,
+        "shares": 28500,
+        "target_weight": 0.15,
+        "tags": ["short_bond"]
+      }
+    ]
+  },
+  "fund_profiles": {
+    "008253": {"fund_code": "008253", "name": "国泰中证半导体ETF联接C", "fund_type": "index", "benchmark": "中证半导体指数", "theme": "semiconductor"},
+    "001198": {"fund_code": "001198", "name": "华夏创新前沿", "fund_type": "active", "benchmark": "创业板指", "theme": "innovation"},
+    "003547": {"fund_code": "003547", "name": "鹏华丰禄债券", "fund_type": "bond", "benchmark": "中债综合指数", "theme": "bond"},
+    "000198": {"fund_code": "000198", "name": "天弘增利短债", "fund_type": "short_bond", "benchmark": "中债短融指数", "theme": "cash"}
+  },
+  "transactions": [],
+  "nav_history": {},
+  "holdings": {},
+  "fee_schedules": {},
+  "redemption_rules": {},
+  "benchmark_history": {},
+  "news_evidence": [],
+  "sentiment_evidence": [],
+  "risk_profile": {
+    "risk_level": "moderate"
+  },
+  "constraints": {},
+  "requested_action": "",
+  "time_horizon": "long_term",
+  "expected_behavior": {
+    "fund_analysis": {
+      "status": "OK or PARTIAL with explicit missing data diagnostics",
+      "report_quality_gate": "may allow limited report with explicit limitations",
+      "analysis_plan.decision_support_ready": false,
+      "no_formal_decision": true,
+      "no_fabricated_data": true
+    },
+    "decision_support": {
+      "not_called_or_blocked": true
+    }
+  }
+}

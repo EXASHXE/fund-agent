@@ -1,0 +1,161 @@
+{
+  "scenario_id": "cash_bond_deployment_budget_guard",
+  "user_question": "现金和债券仓位偏高，资金该往哪里配置？",
+  "user_intent": "deploy_cash",
+  "as_of_date": "2026-06-01",
+  "portfolio": {
+    "as_of_date": "2026-06-01",
+    "total_value": 500000,
+    "cash_available": 150000,
+    "positions": [
+      {
+        "fund_code": "003547",
+        "fund_name": "鹏华丰禄债券",
+        "current_value": 200000,
+        "total_cost": 190000,
+        "shares": 182000,
+        "target_weight": 0.40,
+        "tags": ["bond", "income"]
+      },
+      {
+        "fund_code": "000198",
+        "fund_name": "天弘增利短债",
+        "current_value": 100000,
+        "total_cost": 97000,
+        "shares": 95000,
+        "target_weight": 0.20,
+        "tags": ["short_bond", "cash_substitute"]
+      },
+      {
+        "fund_code": "110011",
+        "fund_name": "易方达中小盘混合",
+        "current_value": 100000,
+        "total_cost": 90000,
+        "shares": 70000,
+        "target_weight": 0.25,
+        "tags": ["equity", "consumer"]
+      },
+      {
+        "fund_code": "006123",
+        "fund_name": "广发科技先锋",
+        "current_value": 100000,
+        "total_cost": 85000,
+        "shares": 62000,
+        "target_weight": 0.15,
+        "tags": ["equity", "technology"]
+      }
+    ]
+  },
+  "transactions": [
+    {"fund_code": "003547", "action": "BUY", "date": "2025-03-01", "amount": 100000, "shares": 92000},
+    {"fund_code": "003547", "action": "BUY", "date": "2025-09-15", "amount": 90000, "shares": 82000},
+    {"fund_code": "000198", "action": "BUY", "date": "2025-04-01", "amount": 60000, "shares": 57000},
+    {"fund_code": "000198", "action": "BUY", "date": "2025-10-15", "amount": 37000, "shares": 35000},
+    {"fund_code": "110011", "action": "BUY", "date": "2025-06-01", "amount": 50000, "shares": 33000},
+    {"fund_code": "110011", "action": "BUY", "date": "2026-01-15", "amount": 40000, "shares": 27000},
+    {"fund_code": "006123", "action": "BUY", "date": "2025-08-01", "amount": 50000, "shares": 31000},
+    {"fund_code": "006123", "action": "BUY", "date": "2026-02-15", "amount": 35000, "shares": 22000}
+  ],
+  "nav_history": {
+    "003547": [
+      {"date": "2025-03-01", "nav": 1.087},
+      {"date": "2025-09-15", "nav": 1.098},
+      {"date": "2025-12-31", "nav": 1.097},
+      {"date": "2026-06-01", "nav": 1.099}
+    ],
+    "000198": [
+      {"date": "2025-04-01", "nav": 1.053},
+      {"date": "2025-10-15", "nav": 1.057},
+      {"date": "2025-12-31", "nav": 1.058},
+      {"date": "2026-06-01", "nav": 1.053}
+    ],
+    "110011": [
+      {"date": "2025-06-01", "nav": 1.52},
+      {"date": "2025-12-31", "nav": 1.48},
+      {"date": "2026-06-01", "nav": 1.43}
+    ],
+    "006123": [
+      {"date": "2025-08-01", "nav": 1.61},
+      {"date": "2025-12-31", "nav": 1.68},
+      {"date": "2026-06-01", "nav": 1.61}
+    ]
+  },
+  "fund_profiles": {
+    "003547": {"fund_code": "003547", "name": "鹏华丰禄债券", "fund_type": "bond", "benchmark": "中债综合指数", "theme": "bond"},
+    "000198": {"fund_code": "000198", "name": "天弘增利短债", "fund_type": "short_bond", "benchmark": "中债短融指数", "theme": "cash"},
+    "110011": {"fund_code": "110011", "name": "易方达中小盘混合", "fund_type": "equity", "benchmark": "中证700指数", "theme": "consumer_equity"},
+    "006123": {"fund_code": "006123", "name": "广发科技先锋", "fund_type": "equity", "benchmark": "中证科技指数", "theme": "technology"}
+  },
+  "holdings": {
+    "003547": [
+      {"stock_code": "019733", "stock_name": "24附息国债13", "weight": 15.0, "sector": "government", "industry": "bond"}
+    ],
+    "000198": [
+      {"stock_code": "230205", "stock_name": "23国开05", "weight": 12.0, "sector": "government", "industry": "bond"}
+    ],
+    "110011": [
+      {"stock_code": "600519", "stock_name": "贵州茅台", "weight": 9.0, "sector": "consumer", "industry": "baijiu"},
+      {"stock_code": "000858", "stock_name": "五粮液", "weight": 6.5, "sector": "consumer", "industry": "baijiu"}
+    ],
+    "006123": [
+      {"stock_code": "300750", "stock_name": "宁德时代", "weight": 8.0, "sector": "manufacturing", "industry": "battery"},
+      {"stock_code": "MSFT", "stock_name": "Microsoft", "weight": 5.0, "sector": "technology", "industry": "software"}
+    ]
+  },
+  "fee_schedules": {
+    "003547": {"management_fee": 0.003, "redemption_fee_pct": 0.001},
+    "000198": {"management_fee": 0.003, "redemption_fee_pct": 0.0},
+    "110011": {"management_fee": 0.015, "redemption_fee_pct": 0.005},
+    "006123": {"management_fee": 0.015, "redemption_fee_pct": 0.005}
+  },
+  "redemption_rules": {
+    "110011": {"holding_period_days": 7, "redemption_fee_pct": 0.005}
+  },
+  "benchmarks": {
+    "110011": "中证700指数",
+    "006123": "中证科技指数"
+  },
+  "benchmark_history": {
+    "110011": [
+      {"date": "2025-06-01", "nav": 5800.0},
+      {"date": "2025-12-31", "nav": 5600.0},
+      {"date": "2026-06-01", "nav": 5500.0}
+    ],
+    "006123": [
+      {"date": "2025-08-01", "nav": 3200.0},
+      {"date": "2025-12-31", "nav": 3400.0},
+      {"date": "2026-06-01", "nav": 3150.0}
+    ]
+  },
+  "news_evidence": [
+    {"title": "消费板块估值处于历史低位，机构关注度回升", "entities": ["110011"], "direction": "positive", "confidence": 0.65, "source": "finnhub"}
+  ],
+  "sentiment_evidence": [
+    {"entity": "110011", "score": 0.40, "claim": "消费板块市场情绪中性偏正面", "confidence": 0.55, "source": "reddit"}
+  ],
+  "risk_profile": {
+    "risk_level": "moderate",
+    "max_trade_pct": 0.10,
+    "liquidity_reserve_pct": 0.10
+  },
+  "constraints": {
+    "max_trade_pct": 0.10,
+    "min_trade_amount": 5000,
+    "max_buy_amount": 30000,
+    "liquidity_reserve_pct": 0.10
+  },
+  "requested_action": "BUY",
+  "target_trade_amount": 50000,
+  "time_horizon": "medium_term",
+  "expected_behavior": {
+    "fund_analysis": {
+      "cash_deployment_diagnostics": "should assess deployment readiness",
+      "trade_budget": "should be visible",
+      "no_formal_decision": true
+    },
+    "decision_support": {
+      "capped_or_blocked_by_budget": true,
+      "risk_constraint_conflicts_present": true
+    }
+  }
+}

@@ -1,0 +1,125 @@
+{
+  "scenario_id": "short_holding_fee_sell_blocked",
+  "user_question": "刚买的基金不想要了，想卖掉",
+  "user_intent": "sell_recent_buy",
+  "as_of_date": "2026-06-10",
+  "portfolio": {
+    "as_of_date": "2026-06-10",
+    "total_value": 150000,
+    "cash_available": 20000,
+    "positions": [
+      {
+        "fund_code": "006308",
+        "fund_name": "汇添富全球消费行业",
+        "current_value": 55000,
+        "total_cost": 55000,
+        "shares": 33000,
+        "target_weight": 0.35,
+        "tags": ["equity", "consumer", "global"]
+      },
+      {
+        "fund_code": "003547",
+        "fund_name": "鹏华丰禄债券",
+        "current_value": 60000,
+        "total_cost": 58000,
+        "shares": 55000,
+        "target_weight": 0.40,
+        "tags": ["bond", "income"]
+      },
+      {
+        "fund_code": "000198",
+        "fund_name": "天弘增利短债",
+        "current_value": 35000,
+        "total_cost": 34000,
+        "shares": 33000,
+        "target_weight": 0.25,
+        "tags": ["short_bond", "cash_substitute"]
+      }
+    ]
+  },
+  "transactions": [
+    {"fund_code": "006308", "action": "BUY", "date": "2026-06-05", "amount": 55000, "shares": 33000},
+    {"fund_code": "003547", "action": "BUY", "date": "2025-06-01", "amount": 35000, "shares": 32000},
+    {"fund_code": "003547", "action": "BUY", "date": "2025-12-15", "amount": 23000, "shares": 21000},
+    {"fund_code": "000198", "action": "BUY", "date": "2025-09-01", "amount": 20000, "shares": 19000},
+    {"fund_code": "000198", "action": "BUY", "date": "2026-02-15", "amount": 14000, "shares": 13400}
+  ],
+  "nav_history": {
+    "006308": [
+      {"date": "2026-06-05", "nav": 1.67},
+      {"date": "2026-06-10", "nav": 1.67}
+    ],
+    "003547": [
+      {"date": "2025-06-01", "nav": 1.094},
+      {"date": "2025-12-15", "nav": 1.095},
+      {"date": "2026-06-10", "nav": 1.091}
+    ],
+    "000198": [
+      {"date": "2025-09-01", "nav": 1.053},
+      {"date": "2026-02-15", "nav": 1.058},
+      {"date": "2026-06-10", "nav": 1.061}
+    ]
+  },
+  "fund_profiles": {
+    "006308": {"fund_code": "006308", "name": "汇添富全球消费行业", "fund_type": "active", "benchmark": "MSCI全球消费品指数", "theme": "consumer"},
+    "003547": {"fund_code": "003547", "name": "鹏华丰禄债券", "fund_type": "bond", "benchmark": "中债综合指数", "theme": "bond"},
+    "000198": {"fund_code": "000198", "name": "天弘增利短债", "fund_type": "short_bond", "benchmark": "中债短融指数", "theme": "cash"}
+  },
+  "holdings": {
+    "006308": [
+      {"stock_code": "AMZN", "stock_name": "Amazon", "weight": 9.0, "sector": "consumer", "industry": "ecommerce"},
+      {"stock_code": "NKE", "stock_name": "Nike", "weight": 6.0, "sector": "consumer", "industry": "apparel"}
+    ],
+    "003547": [
+      {"stock_code": "019733", "stock_name": "24附息国债13", "weight": 12.0, "sector": "government", "industry": "bond"}
+    ],
+    "000198": [
+      {"stock_code": "230205", "stock_name": "23国开05", "weight": 10.0, "sector": "government", "industry": "bond"}
+    ]
+  },
+  "fee_schedules": {
+    "006308": {"management_fee": 0.015, "redemption_fee_pct": 0.015},
+    "003547": {"management_fee": 0.003, "redemption_fee_pct": 0.001},
+    "000198": {"management_fee": 0.003, "redemption_fee_pct": 0.0}
+  },
+  "redemption_rules": {
+    "006308": {"holding_period_days": 7, "redemption_fee_pct": 0.015, "short_redemption_fee_pct": 0.015, "min_holding_days": 7}
+  },
+  "benchmarks": {
+    "006308": "MSCI全球消费品指数"
+  },
+  "benchmark_history": {
+    "006308": [
+      {"date": "2026-06-05", "nav": 3200.0},
+      {"date": "2026-06-10", "nav": 3210.0}
+    ]
+  },
+  "news_evidence": [],
+  "sentiment_evidence": [],
+  "risk_profile": {
+    "risk_level": "moderate",
+    "max_trade_pct": 0.20,
+    "liquidity_reserve_pct": 0.10
+  },
+  "constraints": {
+    "max_trade_pct": 0.20,
+    "min_trade_amount": 1000,
+    "max_sell_amount": 50000,
+    "liquidity_reserve_pct": 0.10
+  },
+  "requested_action": "SELL",
+  "target_trade_amount": 55000,
+  "time_horizon": "short_term",
+  "expected_behavior": {
+    "fund_analysis": {
+      "redemption_fee_risk": "should have short-holding blocker or fee warning",
+      "analysis_plan.decision_support_ready": "should be false or blockers present",
+      "no_formal_decision": true
+    },
+    "decision_support": {
+      "action": "must not allow active SELL",
+      "blocked_or_downgraded": true,
+      "reason_codes_includes_fee_redemption": true
+    }
+  }
+}

@@ -132,6 +132,13 @@ appear in the manifest.
 |---|---|---|---|
 | `registry.py` | internal runtime infrastructure | No | Generic ToolRegistry class; not auto-populated from tools.yaml |
 
+### `src/tools/workflow/` — Workflow-level bridge tools
+
+| File | Classification | Registered in tools.yaml | Notes |
+|---|---|---|---|
+| `final_report.py` | internal deterministic helper | No | Composes final advisory workflow report from fund_analysis and decision_support outputs |
+| `__init__.py` | internal | No | Package init; re-exports from src.skills_runtime.workflow |
+
 ## Classification Legend
 
 | Classification | Meaning |
