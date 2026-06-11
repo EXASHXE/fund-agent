@@ -298,6 +298,8 @@
     "fund_analysis": {
       "no_formal_decision": true,
       "right_side_confirmation_diagnostics_present": true
-    }
+    },
+    "expected_advisory_intents": [],
+    "expected_chinese_summary_contains": []
   }
 }

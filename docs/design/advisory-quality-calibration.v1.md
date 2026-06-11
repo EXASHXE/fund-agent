@@ -1,7 +1,7 @@
-# Advisory Quality Calibration — v1.5
+# Advisory Quality Calibration — v1.5.1
 
 **Status:** implemented
-**Sections:** A-I (full advisory quality calibration)
+**Versions:** v1.5 (initial) → v1.5.1 (tightening)
 
 ---
 
@@ -193,6 +193,72 @@ New test classes:
 ---
 
 ## 7. Non-Goals (Not Done)
+
+- No install/plugin/deployment changes.
+- No network/provider SDK/broker execution.
+- No LLM calls inside runtime.
+- No new provider SDKs.
+- No broker/order execution.
+- fund_analysis still never emits formal Decision/ExecutionLedger.
+- decision_support remains the only formal decision producer.
+
+---
+
+## 8. v1.5.1 — SOFT_ACTION_ADVICE and Tightening
+
+### 8.1 SOFT_ACTION_ADVICE Intent
+
+New intent distinguishes "advisory guidance" from "formal execution":
+
+- `SOFT_ACTION_ADVICE` triggers on: 操作建议, 怎么操作, 怎么处理, 该怎么办, 要不要动, 如何应对
+- `FORMAL_TRADE_DECISION` triggers ONLY on explicit trade language: 买入, 卖出, 减仓, 加仓, 下单, 正式决策
+- `"操作建议"` was REMOVED from FORMAL_TRADE_DECISION keywords
+- `is_soft_advice_only()` helper added
+- SOFT_ACTION_ADVICE alone does NOT require decision_support
+
+### 8.2 Strict expected_behavior for ALL v1.5+ Fixtures
+
+All fixtures now include:
+- `expected_advisory_intents` — expected intent classification list
+- `expected_chinese_summary_contains` — key Chinese phrases expected in summary
+- 11 required expected_behavior keys validated for ALL_SCENARIOS_V15
+
+### 8.3 Risk Profile A/B Calibration
+
+Two explicit fixtures replace the single conservative_vs_aggressive:
+- `same_portfolio_conservative_profile.json` — risk_level=conservative, max_trade_pct=0.05, max_buy=5000
+- `same_portfolio_aggressive_profile.json` — risk_level=aggressive, max_trade_pct=0.15, max_buy=30000
+
+Tests assert:
+- Conservative execution_amount <= aggressive execution_amount
+- Neither fabricates evidence anchors
+- Neither contains broker/order fields
+
+### 8.4 zh-CN Section Localization
+
+All 8 section titles are localized to Chinese when language=zh-CN:
+- direct_answer → 直接回答
+- evidence_status → 证据状态
+- portfolio_diagnosis → 组合诊断
+- decision_explanation → 决策说明
+- action_boundary → 操作边界
+- recommended_next_steps → 建议下一步
+- limitations → 限制与警告
+
+Key sections include Chinese-text bullets:
+- direct_answer: Chinese blocked/downgraded/formal status messages
+- action_boundary: "不执行券商下单" safety text
+- recommended_next_steps: Chinese missing-data and blocker guidance
+
+### 8.5 final_report.py Modularization
+
+Split into sub-modules without changing output contracts:
+- `report_status.py` — normalize_language, compute_report_status, compute_decision_status, data_completeness_grade
+- `report_safety.py` — FORBIDDEN_EXECUTION_FIELDS, find_forbidden_execution_fields, build_safety_boundary
+- `report_zh.py` — ZH_CN_SECTION_TITLES, build_zh_blocked_reason, build_zh_downgraded_reason, build_chinese_summary, localize_section_titles
+- `final_report.py` — imports from sub-modules, keeps section builders and compose_advisory_workflow_report
+
+### 8.6 Non-Goals (Unchanged)
 
 - No install/plugin/deployment changes.
 - No network/provider SDK/broker execution.

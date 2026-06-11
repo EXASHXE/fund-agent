@@ -1,5 +1,5 @@
 {
-  "scenario_id": "conservative_vs_aggressive_same_portfolio",
+  "scenario_id": "same_portfolio_conservative_profile",
   "user_question": "我想加仓半导体，不同风险偏好有什么不同建议？",
   "user_intent": "formal_trade",
   "as_of_date": "2026-06-10",
@@ -143,14 +143,14 @@
     }
   ],
   "risk_profile": {
-    "risk_level": "balanced",
-    "max_trade_pct": 0.1,
-    "liquidity_reserve_pct": 0.1
+    "risk_level": "conservative",
+    "max_trade_pct": 0.05,
+    "liquidity_reserve_pct": 0.2
   },
   "constraints": {
-    "max_trade_pct": 0.1,
+    "max_trade_pct": 0.05,
     "min_trade_amount": 1000,
-    "max_buy_amount": 20000
+    "max_buy_amount": 5000
   },
   "requested_action": "INCREASE",
   "target_trade_amount": 20000,
@@ -178,16 +178,16 @@
       "recommended_next_steps",
       "limitations"
     ],
-    "fund_analysis": {
-      "no_formal_decision": true,
-      "analysis_plan_decision_support_ready": false
-    },
     "expected_advisory_intents": [
       "FORMAL_TRADE_DECISION"
     ],
     "expected_chinese_summary_contains": [
       "被阻断",
       "证据不足"
-    ]
+    ],
+    "fund_analysis": {
+      "no_formal_decision": true,
+      "analysis_plan_decision_support_ready": false
+    }
   }
 }

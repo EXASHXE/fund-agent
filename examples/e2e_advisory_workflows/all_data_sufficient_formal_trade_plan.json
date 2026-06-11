@@ -594,6 +594,8 @@
     "fund_analysis": {
       "no_formal_decision": true,
       "analysis_plan_decision_support_ready": true
-    }
+    },
+    "expected_advisory_intents": [],
+    "expected_chinese_summary_contains": []
   }
 }

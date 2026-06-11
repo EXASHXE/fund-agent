@@ -385,6 +385,8 @@
     "fund_analysis": {
       "no_formal_decision": true,
       "cash_deployment_diagnostics_present": true
-    }
+    },
+    "expected_advisory_intents": [],
+    "expected_chinese_summary_contains": []
   }
 }

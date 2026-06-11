@@ -15,8 +15,12 @@
         "current_value": 80000,
         "total_cost": 70000,
         "shares": 55000,
-        "target_weight": 0.30,
-        "tags": ["QDII", "US_tech", "AI"]
+        "target_weight": 0.3,
+        "tags": [
+          "QDII",
+          "US_tech",
+          "AI"
+        ]
       },
       {
         "fund_code": "005311",
@@ -25,7 +29,11 @@
         "total_cost": 65000,
         "shares": 48000,
         "target_weight": 0.28,
-        "tags": ["equity", "AI", "US_tech"]
+        "tags": [
+          "equity",
+          "AI",
+          "US_tech"
+        ]
       },
       {
         "fund_code": "006479",
@@ -33,8 +41,12 @@
         "current_value": 50000,
         "total_cost": 48000,
         "shares": 35000,
-        "target_weight": 0.20,
-        "tags": ["QDII", "US_tech", "AI"]
+        "target_weight": 0.2,
+        "tags": [
+          "QDII",
+          "US_tech",
+          "AI"
+        ]
       },
       {
         "fund_code": "003547",
@@ -43,33 +55,113 @@
         "total_cost": 50000,
         "shares": 48000,
         "target_weight": 0.22,
-        "tags": ["bond"]
+        "tags": [
+          "bond"
+        ]
       }
     ]
   },
   "transactions": [],
   "nav_history": {},
   "fund_profiles": {
-    "000834": {"fund_code": "000834", "name": "大成纳斯达克100联接", "fund_type": "QDII_index", "benchmark": "纳斯达克100", "theme": "US_tech"},
-    "005311": {"fund_code": "005311", "name": "万家AI主题混合", "fund_type": "active", "benchmark": "中证AI指数", "theme": "AI"},
-    "006479": {"fund_code": "006479", "name": "广发全球精选QDII", "fund_type": "QDII_active", "benchmark": "MSCI全球科技", "theme": "US_tech"},
-    "003547": {"fund_code": "003547", "name": "鹏华丰禄债券", "fund_type": "bond", "benchmark": "中债综合指数", "theme": "bond"}
+    "000834": {
+      "fund_code": "000834",
+      "name": "大成纳斯达克100联接",
+      "fund_type": "QDII_index",
+      "benchmark": "纳斯达克100",
+      "theme": "US_tech"
+    },
+    "005311": {
+      "fund_code": "005311",
+      "name": "万家AI主题混合",
+      "fund_type": "active",
+      "benchmark": "中证AI指数",
+      "theme": "AI"
+    },
+    "006479": {
+      "fund_code": "006479",
+      "name": "广发全球精选QDII",
+      "fund_type": "QDII_active",
+      "benchmark": "MSCI全球科技",
+      "theme": "US_tech"
+    },
+    "003547": {
+      "fund_code": "003547",
+      "name": "鹏华丰禄债券",
+      "fund_type": "bond",
+      "benchmark": "中债综合指数",
+      "theme": "bond"
+    }
   },
   "holdings": {
     "000834": [
-      {"stock_code": "NVDA", "stock_name": "NVIDIA", "weight": 0.12, "sector": "technology", "industry": "semiconductors"},
-      {"stock_code": "MSFT", "stock_name": "Microsoft", "weight": 0.10, "sector": "technology", "industry": "software"},
-      {"stock_code": "GOOGL", "stock_name": "Alphabet", "weight": 0.08, "sector": "technology", "industry": "internet"}
+      {
+        "stock_code": "NVDA",
+        "stock_name": "NVIDIA",
+        "weight": 0.12,
+        "sector": "technology",
+        "industry": "semiconductors"
+      },
+      {
+        "stock_code": "MSFT",
+        "stock_name": "Microsoft",
+        "weight": 0.1,
+        "sector": "technology",
+        "industry": "software"
+      },
+      {
+        "stock_code": "GOOGL",
+        "stock_name": "Alphabet",
+        "weight": 0.08,
+        "sector": "technology",
+        "industry": "internet"
+      }
     ],
     "005311": [
-      {"stock_code": "NVDA", "stock_name": "NVIDIA", "weight": 0.09, "sector": "technology", "industry": "semiconductors"},
-      {"stock_code": "MSFT", "stock_name": "Microsoft", "weight": 0.08, "sector": "technology", "industry": "software"},
-      {"stock_code": "AMD", "stock_name": "AMD", "weight": 0.05, "sector": "technology", "industry": "semiconductors"}
+      {
+        "stock_code": "NVDA",
+        "stock_name": "NVIDIA",
+        "weight": 0.09,
+        "sector": "technology",
+        "industry": "semiconductors"
+      },
+      {
+        "stock_code": "MSFT",
+        "stock_name": "Microsoft",
+        "weight": 0.08,
+        "sector": "technology",
+        "industry": "software"
+      },
+      {
+        "stock_code": "AMD",
+        "stock_name": "AMD",
+        "weight": 0.05,
+        "sector": "technology",
+        "industry": "semiconductors"
+      }
     ],
     "006479": [
-      {"stock_code": "MSFT", "stock_name": "Microsoft", "weight": 0.11, "sector": "technology", "industry": "software"},
-      {"stock_code": "NVDA", "stock_name": "NVIDIA", "weight": 0.10, "sector": "technology", "industry": "semiconductors"},
-      {"stock_code": "AAPL", "stock_name": "Apple", "weight": 0.07, "sector": "technology", "industry": "hardware"}
+      {
+        "stock_code": "MSFT",
+        "stock_name": "Microsoft",
+        "weight": 0.11,
+        "sector": "technology",
+        "industry": "software"
+      },
+      {
+        "stock_code": "NVDA",
+        "stock_name": "NVIDIA",
+        "weight": 0.1,
+        "sector": "technology",
+        "industry": "semiconductors"
+      },
+      {
+        "stock_code": "AAPL",
+        "stock_name": "Apple",
+        "weight": 0.07,
+        "sector": "technology",
+        "industry": "hardware"
+      }
     ]
   },
   "fee_schedules": {},
@@ -95,11 +187,28 @@
     "expected_downgraded_decision_count": 0,
     "expected_reason_code_contains": [],
     "expected_risk_conflict_kinds": [],
-    "expected_required_report_sections": ["direct_answer", "evidence_status", "portfolio_diagnosis", "summary", "decision_explanation", "action_boundary", "recommended_next_steps", "limitations"],
+    "expected_required_report_sections": [
+      "direct_answer",
+      "evidence_status",
+      "portfolio_diagnosis",
+      "summary",
+      "decision_explanation",
+      "action_boundary",
+      "recommended_next_steps",
+      "limitations"
+    ],
     "fund_analysis": {
       "no_formal_decision": true,
       "analysis_plan_decision_support_ready": false,
       "exposure_summary_present": true
-    }
+    },
+    "expected_advisory_intents": [
+      "REPORT_ONLY",
+      "OVERLAP_CONCENTRATION_CHECK"
+    ],
+    "expected_chinese_summary_contains": [
+      "分析报告",
+      "不包含正式交易决策"
+    ]
   }
 }

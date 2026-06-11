@@ -9,6 +9,7 @@ from .advisory_intent import (
     intent_requires_decision_support,
     is_formal_decision_requested,
     is_report_only,
+    is_soft_advice_only,
 )
 from .evidence_bridge import (
     build_evidence_graph_from_workflow,
@@ -27,5 +28,6 @@ __all__ = [
     "intent_requires_decision_support",
     "is_formal_decision_requested",
     "is_report_only",
+    "is_soft_advice_only",
     "WorkflowEvidenceGraphResult",
 ]

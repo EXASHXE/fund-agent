@@ -407,6 +407,8 @@
     "fund_analysis": {
       "no_formal_decision": true,
       "profit_protection_diagnostics_present": true
-    }
+    },
+    "expected_advisory_intents": [],
+    "expected_chinese_summary_contains": []
   }
 }

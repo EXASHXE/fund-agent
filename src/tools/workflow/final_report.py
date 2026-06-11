@@ -1,46 +1,39 @@
-"""Workflow-level final report / explanation composer — v1.5 advisory quality.
+"""Workflow-level final report / explanation composer — v1.5.1 advisory quality.
 
 Given fund_analysis output, optional decision_support output, and
 EvidenceGraph diagnostics, produce a host-facing structured final
 explanation. This layer does not use LLM, does not create decisions,
 and only composes existing artifacts.
 
-v1.5 adds:
-  - direct_answer — 2-5 bullet answer to user's actual question
-  - evidence_status (enhanced) — data sufficiency with blocker/warning/missing
-  - portfolio_diagnosis — portfolio-level issues
-  - action_boundary — analysis vs formal decision boundary
-  - recommended_next_steps — safe next steps
-  - chinese_summary — zh-CN natural language bullets
-  - advisory_intent support — integrate intent classification into metadata
+v1.5.1 adds:
+  - Modularized into report_status, report_safety, report_zh sub-modules
+  - SOFT_ACTION_ADVICE intent support
+  - zh-CN section title localization and Chinese bullets for key sections
+  - Enhanced action_boundary and recommended_next_steps Chinese text
 """
 
 from __future__ import annotations
 
 from typing import Any
 
-FORBIDDEN_EXECUTION_FIELDS = frozenset({
-    "broker_order_id",
-    "order_id",
-    "order_status",
-    "filled_quantity",
-    "fill_price",
-    "execution_venue",
-    "submitted_at",
-    "broker",
-    "exchange_order_id",
-})
-
-ZH_CN_SECTION_TITLES: dict[str, str] = {
-    "direct_answer": "直接回答",
-    "evidence_status": "证据状态",
-    "portfolio_diagnosis": "组合诊断",
-    "decision_explanation": "决策说明",
-    "action_boundary": "操作边界",
-    "recommended_next_steps": "建议下一步",
-    "summary": "摘要",
-    "limitations": "限制与警告",
-}
+from .report_status import (
+    compute_decision_status,
+    compute_report_status,
+    data_completeness_grade,
+    normalize_language,
+)
+from .report_safety import (
+    FORBIDDEN_EXECUTION_FIELDS,
+    build_safety_boundary,
+    find_forbidden_execution_fields,
+)
+from .report_zh import (
+    ZH_CN_SECTION_TITLES,
+    build_chinese_summary,
+    build_zh_blocked_reason,
+    build_zh_downgraded_reason,
+    localize_section_titles,
+)
 
 
 def compose_advisory_workflow_report(
@@ -53,17 +46,7 @@ def compose_advisory_workflow_report(
     language: str = "en",
     advisory_intents: list[str] | None = None,
 ) -> dict[str, Any]:
-    """Compose a host-facing structured final explanation from all workflow artifacts.
-
-    Args:
-        scenario_id: Fixture or user scenario identifier.
-        fund_analysis_output: FundAnalysisSkill output dict.
-        decision_support_output: DecisionSupportSkill output dict (None if not called).
-        evidence_graph_diagnostics: WorkflowEvidenceGraphResult.to_dict().
-        missing_data_diagnostics: Missing data details from evidence_gap_diagnostics.
-        language: "en" or "zh-CN" — controls Chinese sections.
-        advisory_intents: Classified advisory intents from AdvisoryIntent taxonomy.
-    """
+    """Compose a host-facing structured final explanation from all workflow artifacts."""
     fa = fund_analysis_output or {}
     fa_artifacts = fa.get("artifacts", {}) if isinstance(fa, dict) else {}
     ds = decision_support_output or {}
@@ -77,9 +60,9 @@ def compose_advisory_workflow_report(
     analysis_plan = fa_artifacts.get("analysis_plan", {}) if isinstance(fa_artifacts, dict) else {}
     decision_ready = bool(analysis_plan.get("decision_support_ready", False))
 
-    report_status = _compute_report_status(fa_status, fa_artifacts, md)
-    decision_status = _compute_decision_status(ds_has_decision, ds_artifacts)
-    normalized_lang = _normalize_language(language)
+    report_status = compute_report_status(fa_status, fa_artifacts, md)
+    decision_status = compute_decision_status(ds_has_decision, ds_artifacts)
+    normalized_lang = normalize_language(language)
 
     user_facing_sections = _build_user_facing_sections(
         scenario_id=scenario_id,
@@ -92,12 +75,12 @@ def compose_advisory_workflow_report(
         decision_status=decision_status,
         decision_ready=decision_ready,
         intents=intents,
+        language=normalized_lang,
     )
 
-    safety_boundary = _build_safety_boundary(
+    safety_boundary = build_safety_boundary(
         ds_has_decision=ds_has_decision,
         fa_artifacts=fa_artifacts,
-        ds_artifacts=ds_artifacts,
         full_report_data={
             "fund_analysis_output": fa,
             "decision_support_output": ds,
@@ -108,7 +91,7 @@ def compose_advisory_workflow_report(
         "scenario_id": scenario_id,
         "report_status": report_status,
         "decision_status": decision_status,
-        "data_completeness_grade": _data_completeness_grade(fa_artifacts, md),
+        "data_completeness_grade": data_completeness_grade(fa_artifacts, md),
         "decision_support_ready": decision_ready,
         "advisory_intents": intents,
     }
@@ -121,7 +104,7 @@ def compose_advisory_workflow_report(
 
     # Chinese summary when language is zh-CN
     if normalized_lang == "zh-CN":
-        chinese = _build_chinese_summary(
+        chinese = build_chinese_summary(
             fa_artifacts=fa_artifacts,
             ds_artifacts=ds_artifacts,
             ds_has_decision=ds_has_decision,
@@ -132,117 +115,6 @@ def compose_advisory_workflow_report(
         result["chinese_summary"] = chinese
 
     return result
-
-
-# ── Language ────────────────────────────────────────────────────────────────
-
-
-def _normalize_language(language: str) -> str:
-    normalized = str(language).replace("_", "-")
-    if normalized.lower() in {"zh-cn", "zh-hans-cn", "zh"}:
-        return "zh-CN"
-    return "en"
-
-
-# ── Report status ───────────────────────────────────────────────────────────
-
-
-def _compute_report_status(
-    fa_status: str,
-    fa_artifacts: dict[str, Any],
-    md: dict[str, Any],
-) -> str:
-    if fa_status == "FAILED":
-        return "FAILED"
-    quality_gate = fa_artifacts.get("report_quality_gate", {})
-    if isinstance(quality_gate, dict):
-        if quality_gate.get("can_publish_professional_report") is False:
-            return "PARTIAL"
-    if md.get("critical_missing") or md.get("blockers"):
-        return "PARTIAL"
-    if md.get("missing_user_constraints") or md.get("missing_risk_preference"):
-        return "PARTIAL"
-    return "OK" if fa_status == "OK" else "PARTIAL"
-
-
-def _compute_decision_status(
-    ds_has_decision: bool,
-    ds_artifacts: dict[str, Any],
-) -> str:
-    """Compute decision_status from decision_support output.
-
-    Priority:
-    1. If no decision_support output exists -> NO_FORMAL_DECISION.
-    2. Check single-decision path first (decision dict).
-    3. Then check multi-decision path (ledger/decisions).
-    """
-    if not ds_has_decision:
-        return "NO_FORMAL_DECISION"
-
-    decision = ds_artifacts.get("decision", {})
-    decisions_list = ds_artifacts.get("decisions", [])
-    is_multi = isinstance(decisions_list, list) and len(decisions_list) > 1
-
-    if isinstance(decision, dict) and not is_multi:
-        action = str(decision.get("action", "")).upper()
-        blocked_by = decision.get("blocked_by", [])
-        evidence_state = str(decision.get("evidence_state", ""))
-        reason_codes = decision.get("decision_reason_codes", [])
-        if action in ("HOLD", "WAIT", "PAUSE_DCA"):
-            if blocked_by:
-                return "BLOCKED"
-            if evidence_state in ("DOWNGRADED", "INSUFFICIENT_EVIDENCE", "CONSTRAINT_BLOCKED", "BUDGET_BLOCKED"):
-                return "DOWNGRADED"
-            if any(rc in ("DOWNGRADED_ACTIVE_TO_HOLD", "INSUFFICIENT_EVIDENCE", "CONSTRAINT_BLOCKED", "BUDGET_BLOCKED")
-                   for rc in (reason_codes or [])):
-                return "DOWNGRADED"
-            return "DOWNGRADED"
-        if action in ("BUY", "SELL", "INCREASE", "REDUCE"):
-            return "FORMAL_DECISION"
-        return "NO_FORMAL_DECISION"
-
-    if isinstance(ledger_dict := ds_artifacts.get("execution_ledger", {}), dict):
-        summary = ledger_dict.get("ledger_summary", {})
-        if isinstance(summary, dict):
-            active = summary.get("active_decision_count", 0)
-            blocked = summary.get("blocked_decision_count", 0)
-            downgraded = summary.get("downgraded_decision_count", 0)
-            if blocked > 0 and active == 0:
-                return "BLOCKED"
-            if blocked > 0 and active > 0:
-                return "DOWNGRADED"
-            if downgraded > 0:
-                return "DOWNGRADED"
-            if active > 0:
-                return "FORMAL_DECISION"
-
-    if isinstance(decisions_list, list) and decisions_list:
-        has_active = any(
-            str(d.get("action", "")).upper() in ("BUY", "SELL", "INCREASE", "REDUCE")
-            for d in decisions_list if isinstance(d, dict)
-        )
-        has_blocked = any(
-            d.get("blocked_by") for d in decisions_list if isinstance(d, dict)
-        )
-        if has_active:
-            return "FORMAL_DECISION" if not has_blocked else "DOWNGRADED"
-        return "BLOCKED" if has_blocked else "DOWNGRADED"
-
-    return "NO_FORMAL_DECISION"
-
-
-def _data_completeness_grade(
-    fa_artifacts: dict[str, Any],
-    md: dict[str, Any],
-) -> str:
-    data_comp = fa_artifacts.get("data_completeness", {})
-    if isinstance(data_comp, dict):
-        grade = data_comp.get("grade", "")
-        if grade:
-            return str(grade)
-    if md.get("critical_missing"):
-        return "POOR"
-    return "FAIR"
 
 
 # ── User-facing sections builder ────────────────────────────────────────────
@@ -260,8 +132,10 @@ def _build_user_facing_sections(
     decision_status: str,
     decision_ready: bool,
     intents: list[str],
+    language: str = "en",
 ) -> list[dict[str, Any]]:
     sections: list[dict[str, Any]] = []
+    is_zh = language == "zh-CN"
 
     # 1. Direct Answer — always first
     sections.append(_build_direct_answer_section(
@@ -273,9 +147,10 @@ def _build_user_facing_sections(
         decision_ready=decision_ready,
         intents=intents,
         md=md,
+        language=language,
     ))
 
-    # 2. Evidence status — enhanced
+    # 2. Evidence status
     sections.append(_build_evidence_status_section(
         eg=eg,
         fa_artifacts=fa_artifacts,
@@ -283,31 +158,37 @@ def _build_user_facing_sections(
         ds_has_decision=ds_has_decision,
         decision_status=decision_status,
         decision_ready=decision_ready,
+        language=language,
     ))
 
     # 3. Portfolio diagnosis
-    sections.append(_build_portfolio_diagnosis_section(fa_artifacts=fa_artifacts))
+    sections.append(_build_portfolio_diagnosis_section(
+        fa_artifacts=fa_artifacts,
+        language=language,
+    ))
 
-    # 4. Workflow summary
+    # 4. Summary
     sections.append(_build_summary_section(
         scenario_id=scenario_id,
         fa_status=fa_status,
         decision_status=decision_status,
         decision_ready=decision_ready,
         fa_artifacts=fa_artifacts,
+        language=language,
     ))
 
-    # 5. Decision explanation (if applicable)
+    # 5. Decision explanation
     if ds_has_decision:
-        sections.append(_build_decision_section(ds_artifacts, decision_status))
+        sections.append(_build_decision_section(ds_artifacts, decision_status, language=language))
     elif decision_status == "NO_FORMAL_DECISION":
-        sections.append(_build_analysis_only_section(fa_artifacts))
+        sections.append(_build_analysis_only_section(fa_artifacts, language=language))
 
     # 6. Action boundary
     sections.append(_build_action_boundary_section(
         ds_has_decision=ds_has_decision,
         decision_status=decision_status,
         fa_artifacts=fa_artifacts,
+        language=language,
     ))
 
     # 7. Recommended next steps
@@ -317,6 +198,7 @@ def _build_user_facing_sections(
         ds_has_decision=ds_has_decision,
         decision_status=decision_status,
         md=md,
+        language=language,
     ))
 
     # 8. Limitations
@@ -324,9 +206,11 @@ def _build_user_facing_sections(
         md=md,
         fa_artifacts=fa_artifacts,
         decision_status=decision_status,
+        language=language,
     ))
 
-    return sections
+    # Localize section titles for zh-CN
+    return localize_section_titles(sections, language)
 
 
 # ── Section: direct_answer ──────────────────────────────────────────────────
@@ -342,52 +226,95 @@ def _build_direct_answer_section(
     decision_ready: bool,
     intents: list[str],
     md: dict[str, Any],
+    language: str = "en",
 ) -> dict[str, Any]:
     bullets: list[str] = []
+    is_zh = language == "zh-CN"
 
     has_fee_blocker = _has_fee_blocker(fa_artifacts)
     has_right_side_unconfirmed = _has_right_side_unconfirmed(fa_artifacts)
     has_missing_data = bool(md.get("critical_missing") or md.get("blockers"))
     has_profit_concern = _has_profit_concern(fa_artifacts)
-
     is_report_only = "FORMAL_TRADE_DECISION" not in intents and not ds_has_decision
+    is_soft_advice = "SOFT_ACTION_ADVICE" in intents and not ds_has_decision
 
     if decision_status == "BLOCKED":
         reasons = _collect_blocked_reasons(ds_artifacts, fa_artifacts)
-        if reasons:
-            bullets.append(f"Formal decision was evaluated and blocked: {', '.join(reasons[:3])}.")
+        if is_zh:
+            if reasons:
+                bullets.append(f"正式决策已评估但被阻断：{', '.join(reasons[:3])}。当前不应执行操作。")
+            else:
+                bullets.append("正式决策已评估但被阻断，因证据或约束条件不足。当前不应执行操作。")
         else:
-            bullets.append("Formal decision was evaluated and blocked due to evidence or constraint issues.")
+            if reasons:
+                bullets.append(f"Formal decision was evaluated and blocked: {', '.join(reasons[:3])}.")
+            else:
+                bullets.append("Formal decision was evaluated and blocked due to evidence or constraint issues.")
 
     elif decision_status == "DOWNGRADED":
         reasons = _collect_blocked_reasons(ds_artifacts, fa_artifacts)
-        if reasons:
-            bullets.append(f"Requested active action was downgraded to a passive posture: {', '.join(reasons[:3])}.")
+        if is_zh:
+            if reasons:
+                bullets.append(f"主动操作请求已被降级为被动等待建议：{', '.join(reasons[:3])}。")
+            else:
+                bullets.append("主动操作请求已被降级为被动等待建议，证据或约束条件不足。")
         else:
-            bullets.append("Requested active action was downgraded — evidence or constraints insufficient.")
+            if reasons:
+                bullets.append(f"Requested active action was downgraded to a passive posture: {', '.join(reasons[:3])}.")
+            else:
+                bullets.append("Requested active action was downgraded — evidence or constraints insufficient.")
 
     elif decision_status == "FORMAL_DECISION":
-        bullets.append("Formal decision has been generated with evidence anchors. Review detail in decision explanation.")
+        if is_zh:
+            bullets.append("已生成正式决策，包含证据锚点。请查看决策说明了解详情。")
+        else:
+            bullets.append("Formal decision has been generated with evidence anchors. Review detail in decision explanation.")
 
     elif is_report_only:
-        bullets.append("This is an analysis / report-only scenario. No formal trade decision was evaluated.")
+        if is_zh:
+            bullets.append("此为分析/报告场景，未评估正式交易决策。")
+        else:
+            bullets.append("This is an analysis / report-only scenario. No formal trade decision was evaluated.")
+
+    if is_soft_advice:
+        if is_zh:
+            bullets.append("您请求了操作建议但未明确要求正式决策。以下输出为分析建议，不构成正式操作指令。")
+        else:
+            bullets.append("You requested action guidance without a formal decision. Output is advisory only, not execution instructions.")
 
     if has_fee_blocker:
-        bullets.append("Short-holding redemption fee risk is prominent — active sell/reduce would trigger additional cost.")
+        if is_zh:
+            bullets.append("短期赎回费风险显著 — 主动卖出/减仓将产生额外费用。")
+        else:
+            bullets.append("Short-holding redemption fee risk is prominent — active sell/reduce would trigger additional cost.")
 
     if has_right_side_unconfirmed:
-        bullets.append("Right-side confirmation is missing — active add/buy is not yet advised; observe before acting.")
+        if is_zh:
+            bullets.append("右侧确认信号缺失 — 当前不建议主动加仓/买入，建议继续观察。")
+        else:
+            bullets.append("Right-side confirmation is missing — active add/buy is not yet advised; observe before acting.")
 
     if has_missing_data:
-        bullets.append("Significant data is missing; recommendations are limited and should not be treated as actionable without data completion.")
+        if is_zh:
+            bullets.append("存在显著数据缺失，建议在补充数据后再做决策，当前分析结果不应被视为可执行建议。")
+        else:
+            bullets.append("Significant data is missing; recommendations are limited and should not be treated as actionable without data completion.")
 
     if has_profit_concern:
-        bullets.append("Profit protection diagnostics are active — review partial trim options before adding to positions.")
+        if is_zh:
+            bullets.append("盈利保护诊断已激活 — 在考虑加仓前，建议先评估部分减仓控制风险。")
+        else:
+            bullets.append("Profit protection diagnostics are active — review partial trim options before adding to positions.")
 
     if not bullets:
-        bullets.append("Analysis generated. Review report sections for detailed findings.")
-        if not ds_has_decision:
-            bullets.append("No formal decision was requested or evaluated.")
+        if is_zh:
+            bullets.append("分析已生成。请查看报告各节获取详细结果。")
+            if not ds_has_decision:
+                bullets.append("未请求或未评估正式决策。")
+        else:
+            bullets.append("Analysis generated. Review report sections for detailed findings.")
+            if not ds_has_decision:
+                bullets.append("No formal decision was requested or evaluated.")
 
     return {
         "id": "direct_answer",
@@ -396,7 +323,7 @@ def _build_direct_answer_section(
     }
 
 
-# ── Section: evidence_status (enhanced) ─────────────────────────────────────
+# ── Section: evidence_status ─────────────────────────────────────────────────
 
 
 def _build_evidence_status_section(
@@ -407,6 +334,7 @@ def _build_evidence_status_section(
     ds_has_decision: bool,
     decision_status: str,
     decision_ready: bool,
+    language: str = "en",
 ) -> dict[str, Any]:
     bullets: list[str] = []
     sufficient: list[str] = []
@@ -498,6 +426,7 @@ def _build_evidence_status_section(
 def _build_portfolio_diagnosis_section(
     *,
     fa_artifacts: dict[str, Any],
+    language: str = "en",
 ) -> dict[str, Any]:
     bullets: list[str] = []
 
@@ -510,7 +439,6 @@ def _build_portfolio_diagnosis_section(
         if position_count:
             bullets.append(f"Number of positions: {position_count}")
 
-    # Concentration / overlap
     exposure = fa_artifacts.get("exposure_summary", {})
     if isinstance(exposure, dict):
         for key, val in exposure.items():
@@ -521,7 +449,6 @@ def _build_portfolio_diagnosis_section(
         if exposure.get("top_industry"):
             bullets.append(f"Top industry exposure: {exposure['top_industry']}")
 
-    # Cash / bond deployment
     cash_diag = fa_artifacts.get("cash_deployment_diagnostics", {})
     if isinstance(cash_diag, dict):
         summary = cash_diag.get("summary", {})
@@ -539,7 +466,6 @@ def _build_portfolio_diagnosis_section(
             if buffer_status:
                 bullets.append(f"Cash buffer status: {buffer_status}")
 
-    # Profit protection
     profit_diag = fa_artifacts.get("profit_protection_diagnostics", {})
     if isinstance(profit_diag, dict):
         items = profit_diag.get("items", [])
@@ -552,7 +478,6 @@ def _build_portfolio_diagnosis_section(
                     if level in ("high", "very_high"):
                         bullets.append(f"Profit protection: {fund} ({level}, suggested: {action})")
 
-    # Drawdown / right-side
     right_side = fa_artifacts.get("right_side_confirmation_diagnostics", {})
     if isinstance(right_side, dict):
         rs_items = right_side.get("items", [])
@@ -566,7 +491,6 @@ def _build_portfolio_diagnosis_section(
                         status = "unconfirmed" if confirmed is False else "confirmed" if confirmed else "unknown"
                         bullets.append(f"Right-side confirmation: {fund} (drawdown: {drawdown}, {status})")
 
-    # Fee / redemption
     redemption = fa_artifacts.get("redemption_fee_risk", {})
     if isinstance(redemption, dict):
         if redemption.get("has_blocker"):
@@ -578,7 +502,6 @@ def _build_portfolio_diagnosis_section(
             if affected:
                 bullets.append(f"Redemption fee warning for: {', '.join(str(f) for f in affected)}")
 
-    # PnL summary
     pnl = fa_artifacts.get("pnl_summary", {})
     if isinstance(pnl, dict):
         unrealized = pnl.get("total_unrealized_pnl")
@@ -608,6 +531,7 @@ def _build_summary_section(
     decision_status: str,
     decision_ready: bool,
     fa_artifacts: dict[str, Any],
+    language: str = "en",
 ) -> dict[str, Any]:
     bullets: list[str] = []
 
@@ -649,7 +573,7 @@ def _build_summary_section(
 # ── Section: decision explanation ───────────────────────────────────────────
 
 
-def _build_decision_section(ds_artifacts: dict[str, Any], decision_status: str) -> dict[str, Any]:
+def _build_decision_section(ds_artifacts: dict[str, Any], decision_status: str, language: str = "en") -> dict[str, Any]:
     bullets: list[str] = []
 
     if decision_status == "BLOCKED":
@@ -720,10 +644,10 @@ def _build_decision_section(ds_artifacts: dict[str, Any], decision_status: str) 
     }
 
 
-# ── Section: analysis-only (when no formal decision) ────────────────────────
+# ── Section: analysis-only ──────────────────────────────────────────────────
 
 
-def _build_analysis_only_section(fa_artifacts: dict[str, Any]) -> dict[str, Any]:
+def _build_analysis_only_section(fa_artifacts: dict[str, Any], language: str = "en") -> dict[str, Any]:
     bullets: list[str] = []
 
     bullets.append("No formal decision was evaluated.")
@@ -757,24 +681,45 @@ def _build_action_boundary_section(
     ds_has_decision: bool,
     decision_status: str,
     fa_artifacts: dict[str, Any],
+    language: str = "en",
 ) -> dict[str, Any]:
     bullets: list[str] = []
+    is_zh = language == "zh-CN"
 
-    bullets.append("fund-agent does not execute broker orders. All output is analysis and audit artifacts only.")
+    if is_zh:
+        bullets.append("fund-agent 不执行券商下单。所有输出均为分析产物和审计痕迹。")
+    else:
+        bullets.append("fund-agent does not execute broker orders. All output is analysis and audit artifacts only.")
 
     if ds_has_decision:
-        bullets.append("Formal decision was produced by decision_support (the only authorized formal decision producer).")
-        if decision_status == "BLOCKED":
-            bullets.append("The formal decision was BLOCKED — do not treat as an execution signal.")
-        elif decision_status == "DOWNGRADED":
-            bullets.append("The formal decision was DOWNGRADED — active action was reduced to passive posture.")
-        elif decision_status == "FORMAL_DECISION":
-            bullets.append("A formal decision was generated with evidence anchors. Host should present to user for review.")
+        if is_zh:
+            bullets.append("正式决策由 decision_support（唯一授权的正式决策产生者）生成。")
+            if decision_status == "BLOCKED":
+                bullets.append("正式决策已被阻断 — 请勿将其视为执行信号。")
+            elif decision_status == "DOWNGRADED":
+                bullets.append("正式决策已被降级 — 主动操作已降为被动等待姿势。")
+            elif decision_status == "FORMAL_DECISION":
+                bullets.append("已生成含有证据锚点的正式决策。请展示给用户审核。")
+        else:
+            bullets.append("Formal decision was produced by decision_support (the only authorized formal decision producer).")
+            if decision_status == "BLOCKED":
+                bullets.append("The formal decision was BLOCKED — do not treat as an execution signal.")
+            elif decision_status == "DOWNGRADED":
+                bullets.append("The formal decision was DOWNGRADED — active action was reduced to passive posture.")
+            elif decision_status == "FORMAL_DECISION":
+                bullets.append("A formal decision was generated with evidence anchors. Host should present to user for review.")
     else:
-        bullets.append("No formal decision was produced. This is analysis-only output.")
-        bullets.append("suggested_rebalance_plan from fund_analysis is analysis-only — not formal decisions.")
+        if is_zh:
+            bullets.append("未产生正式决策，此为纯分析输出。")
+            bullets.append("fund_analysis 中的 suggested_rebalance_plan 仅为分析建议 — 不构成正式决策。")
+            bullets.append("调用方不得将分析建议转化为券商下单，除非经 decision_support 审批。")
+        else:
+            bullets.append("No formal decision was produced. This is analysis-only output.")
+            bullets.append("suggested_rebalance_plan from fund_analysis is analysis-only — not formal decisions.")
+            bullets.append("Host must not convert analysis-only suggestions into broker orders without decision_support approval.")
 
-    bullets.append("Host must not convert analysis-only suggestions into broker orders without decision_support approval.")
+    if ds_has_decision and not is_zh:
+        bullets.append("Host must not convert analysis-only suggestions into broker orders without decision_support approval.")
 
     return {
         "id": "action_boundary",
@@ -793,21 +738,38 @@ def _build_recommended_next_steps_section(
     ds_has_decision: bool,
     decision_status: str,
     md: dict[str, Any],
+    language: str = "en",
 ) -> dict[str, Any]:
     bullets: list[str] = []
+    is_zh = language == "zh-CN"
 
     evidence_gap = fa_artifacts.get("evidence_gap_diagnostics", {})
     if isinstance(evidence_gap, dict):
         if evidence_gap.get("missing_recent_news"):
-            bullets.append("Fetch recent fund/theme news and sentiment data to improve evidence quality.")
+            if is_zh:
+                bullets.append("获取近期基金/主题新闻和情绪数据，以改善证据质量。")
+            else:
+                bullets.append("Fetch recent fund/theme news and sentiment data to improve evidence quality.")
         if evidence_gap.get("missing_user_constraints"):
-            bullets.append("Provide trading constraints (max_trade_pct, forbidden_actions, liquidity_reserve_pct).")
+            if is_zh:
+                bullets.append("提供交易约束参数（max_trade_pct, forbidden_actions, liquidity_reserve_pct）。")
+            else:
+                bullets.append("Provide trading constraints (max_trade_pct, forbidden_actions, liquidity_reserve_pct).")
         if evidence_gap.get("missing_risk_preference"):
-            bullets.append("Provide risk profile (conservative/balanced/aggressive) for calibrated advice.")
+            if is_zh:
+                bullets.append("提供风险偏好（conservative/balanced/aggressive）以获得校准建议。")
+            else:
+                bullets.append("Provide risk profile (conservative/balanced/aggressive) for calibrated advice.")
         if evidence_gap.get("missing_transaction_history"):
-            bullets.append("Provide transaction history to enable cost basis and holding period analysis.")
+            if is_zh:
+                bullets.append("提供交易历史记录以支持成本基础与持有期分析。")
+            else:
+                bullets.append("Provide transaction history to enable cost basis and holding period analysis.")
         if evidence_gap.get("missing_benchmark"):
-            bullets.append("Fetch benchmark history for relative performance assessment.")
+            if is_zh:
+                bullets.append("获取基准指数历史数据以进行相对表现评估。")
+            else:
+                bullets.append("Fetch benchmark history for relative performance assessment.")
 
         next_data = evidence_gap.get("next_data_to_fetch") or evidence_gap.get("recommended_next_data", [])
         if isinstance(next_data, list):
@@ -815,24 +777,46 @@ def _build_recommended_next_steps_section(
                 bullets.append(f"Recommended: {item}")
 
     if decision_status == "BLOCKED":
-        bullets.append("Resolve blockers before re-evaluating formal decision.")
+        if is_zh:
+            bullets.append("请解决阻断项后再重新评估正式决策。")
+        else:
+            bullets.append("Resolve blockers before re-evaluating formal decision.")
     elif decision_status == "DOWNGRADED":
-        bullets.append("Address missing evidence and constraints to re-evaluate active action.")
+        if is_zh:
+            bullets.append("请补充缺失证据和约束条件，以便重新评估主动操作。")
+        else:
+            bullets.append("Address missing evidence and constraints to re-evaluate active action.")
 
     if _has_fee_blocker(fa_artifacts):
-        bullets.append("Wait for short-holding period to expire or confirm exact redemption fee schedule.")
+        if is_zh:
+            bullets.append("等待短期持有期到期，或确认准确的赎回费率表。")
+        else:
+            bullets.append("Wait for short-holding period to expire or confirm exact redemption fee schedule.")
 
     if _has_right_side_unconfirmed(fa_artifacts):
-        bullets.append("Wait for NAV/news/benchmark confirmation before considering add/buy.")
-        bullets.append("Monitor: sustained NAV rebound, positive news catalyst, improving sentiment.")
+        if is_zh:
+            bullets.append("等待 NAV/新闻/基准确认信号后再考虑加仓或买入。")
+            bullets.append("持续监控：净值持续反弹、正面新闻催化、情绪改善。")
+        else:
+            bullets.append("Wait for NAV/news/benchmark confirmation before considering add/buy.")
+            bullets.append("Monitor: sustained NAV rebound, positive news catalyst, improving sentiment.")
 
     if not bullets:
         if ds_has_decision and decision_status == "FORMAL_DECISION":
-            bullets.append("Review formal decision detail and present to user for approval.")
+            if is_zh:
+                bullets.append("请查看正式决策详情并展示给用户审批。")
+            else:
+                bullets.append("Review formal decision detail and present to user for approval.")
         else:
-            bullets.append("Re-run analysis with updated data to track portfolio changes over time.")
+            if is_zh:
+                bullets.append("使用最新数据重新运行分析，以跟踪组合变化。")
+            else:
+                bullets.append("Re-run analysis with updated data to track portfolio changes over time.")
 
-    bullets.append("Use decision_support for any formal trade decisions — fund_analysis output is analysis-only.")
+    if is_zh:
+        bullets.append("如需正式交易决策请使用 decision_support — fund_analysis 输出仅为分析参考。")
+    else:
+        bullets.append("Use decision_support for any formal trade decisions — fund_analysis output is analysis-only.")
 
     return {
         "id": "recommended_next_steps",
@@ -849,8 +833,10 @@ def _build_limitations_section(
     md: dict[str, Any],
     fa_artifacts: dict[str, Any],
     decision_status: str,
+    language: str = "en",
 ) -> dict[str, Any]:
     bullets: list[str] = []
+    is_zh = language == "zh-CN"
 
     report_quality = fa_artifacts.get("report_quality_gate", {})
     if isinstance(report_quality, dict):
@@ -879,289 +865,21 @@ def _build_limitations_section(
     elif decision_status == "NO_FORMAL_DECISION":
         bullets.append("Decision support was either not requested or no formal decision was evaluated.")
 
-    fa_status_str = fa_artifacts.get("status", "")
     fa_warnings = fa_artifacts.get("warnings", [])
     if isinstance(fa_warnings, list) and fa_warnings:
         for w in fa_warnings[:3]:
             bullets.append(f"Warning: {w}")
 
-    bullets.append("Safety: fund-agent does not execute broker orders. All formal decisions are audit artifacts only.")
+    if is_zh:
+        bullets.append("安全声明：fund-agent 不执行券商下单。所有正式决策仅为审计痕迹。")
+    else:
+        bullets.append("Safety: fund-agent does not execute broker orders. All formal decisions are audit artifacts only.")
 
     return {
         "id": "limitations",
         "title": "Limitations and Warnings",
         "bullets": bullets,
     }
-
-
-# ── Chinese summary helpers ──────────────────────────────────────────────────
-
-
-def _build_zh_blocked_reason(
-    fa_artifacts: dict[str, Any],
-    ds_artifacts: dict[str, Any],
-) -> str:
-    """Build a natural Chinese explanation for why a decision was blocked."""
-    reasons: list[str] = []
-
-    # Check analysis_plan blockers
-    analysis_plan = fa_artifacts.get("analysis_plan", {})
-    if isinstance(analysis_plan, dict):
-        blockers = analysis_plan.get("blockers", [])
-        if isinstance(blockers, list):
-            for b in blockers:
-                b_str = str(b)
-                if "redemption_fee" in b_str:
-                    reasons.append("短期赎回费阻断")
-                elif "right_side" in b_str:
-                    reasons.append("右侧信号未确认")
-                elif "event_hype" in b_str:
-                    reasons.append("事件催化失效")
-                elif "cash_deployment" in b_str:
-                    reasons.append("现金部署未就绪")
-                else:
-                    reasons.append(b_str)
-
-    # Check decision blocked_by
-    decision = ds_artifacts.get("decision", {})
-    if isinstance(decision, dict):
-        blocked_by = decision.get("blocked_by", [])
-        if isinstance(blocked_by, list):
-            for b in blocked_by:
-                b_str = str(b)
-                if "redemption_fee" in b_str:
-                    reasons.append("赎回费风险")
-                elif "right_side" in b_str:
-                    reasons.append("右侧确认缺失")
-                elif "evidence" in b_str:
-                    reasons.append("证据不足")
-                elif "profit" in b_str:
-                    reasons.append("盈利保护")
-                elif "constraint" in b_str:
-                    reasons.append("约束限制")
-                else:
-                    reasons.append(b_str)
-
-    # Deduplicate
-    seen: set[str] = set()
-    unique: list[str] = []
-    for r in reasons:
-        if r not in seen:
-            unique.append(r)
-            seen.add(r)
-
-    if unique:
-        return f"已评估的正式决策被阻断（原因：{'、'.join(unique[:3])}），当前不应执行操作。"
-    return "已评估的正式决策被阻断，当前不应执行操作。"
-
-
-def _build_zh_downgraded_reason(
-    fa_artifacts: dict[str, Any],
-    ds_artifacts: dict[str, Any],
-) -> str:
-    """Build a natural Chinese explanation for why a decision was downgraded."""
-    reasons: list[str] = []
-
-    decision = ds_artifacts.get("decision", {})
-    if isinstance(decision, dict):
-        codes = decision.get("decision_reason_codes", [])
-        if isinstance(codes, list):
-            for c in codes:
-                c_str = str(c)
-                if "EVIDENCE_MISSING" in c_str:
-                    reasons.append("证据缺失")
-                elif "INSUFFICIENT_EVIDENCE" in c_str:
-                    reasons.append("证据不足")
-                elif "REDEMPTION_FEE" in c_str:
-                    reasons.append("赎回费风险")
-                elif "RIGHT_SIDE" in c_str:
-                    reasons.append("右侧信号未确认")
-                elif "PROFIT_PROTECTION" in c_str:
-                    reasons.append("盈利保护")
-                elif "CONSTRAINT" in c_str:
-                    reasons.append("约束限制")
-                elif "BUDGET" in c_str:
-                    reasons.append("预算不足")
-                elif "DOWNGRADED" in c_str:
-                    reasons.append("已降级")
-
-    seen: set[str] = set()
-    unique: list[str] = []
-    for r in reasons:
-        if r not in seen:
-            unique.append(r)
-            seen.add(r)
-
-    if unique:
-        return f"主动操作请求已被降级为被动等待建议（原因：{'、'.join(unique[:3])}）。"
-    return "主动操作请求已被降级为被动等待建议。"
-
-
-# ── Section: chinese_summary (zh-CN only) ───────────────────────────────────
-
-
-def _build_chinese_summary(
-    *,
-    fa_artifacts: dict[str, Any],
-    ds_artifacts: dict[str, Any],
-    ds_has_decision: bool,
-    decision_status: str,
-    eg: dict[str, Any],
-    md: dict[str, Any],
-) -> dict[str, Any]:
-    """Build a natural Chinese summary suitable for direct user display."""
-    bullets: list[str] = []
-
-    # Portfolio overview
-    portfolio_summary = fa_artifacts.get("portfolio_summary", {})
-    if isinstance(portfolio_summary, dict):
-        total_value = portfolio_summary.get("total_value", "")
-        position_count = portfolio_summary.get("position_count", 0)
-        if total_value and position_count:
-            bullets.append(f"当前组合总市值为 {total_value}，共持有 {position_count} 只基金。")
-
-    # Decision status in Chinese
-    status_map = {
-        "FORMAL_DECISION": "已生成正式决策，包含证据锚点和具体操作指引。",
-        "BLOCKED": _build_zh_blocked_reason(fa_artifacts, ds_artifacts),
-        "DOWNGRADED": _build_zh_downgraded_reason(fa_artifacts, ds_artifacts),
-        "NO_FORMAL_DECISION": "未生成正式决策，当前输出为分析报告。",
-    }
-    status_cn = status_map.get(decision_status, "决策状态：待定。")
-    bullets.append(status_cn)
-
-    # Evidence summary
-    graph_stats = eg.get("graph", {}).get("stats", {})
-    if isinstance(graph_stats, dict):
-        total = graph_stats.get("total", 0)
-        hard = graph_stats.get("hard", 0)
-        soft = graph_stats.get("soft", 0)
-        if total == 0:
-            bullets.append("当前证据图为空，分析基于持仓快照基础数据。缺少 news/sentiment/benchmark/fee evidence。")
-        else:
-            parts = []
-            if hard:
-                parts.append(f"硬证据 {hard} 条")
-            if soft:
-                parts.append(f"软证据 {soft} 条")
-            bullets.append(f"证据状态：{'，'.join(parts)}。共 {total} 条证据项。")
-
-    # Fee blocker — check both top-level and professional_diagnostics
-    redemption = fa_artifacts.get("redemption_fee_risk", {})
-    if not (isinstance(redemption, dict) and redemption):
-        prof_diag = fa_artifacts.get("professional_diagnostics", {})
-        if isinstance(prof_diag, dict):
-            redemption = prof_diag.get("redemption_fee_risk", {})
-    if isinstance(redemption, dict) and redemption.get("has_blocker"):
-        affected = redemption.get("affected_funds", [])
-        fund_names = _get_fund_names(affected, fa_artifacts)
-        bullets.append(f"赎回费风险：{', '.join(fund_names) if fund_names else '部分持仓'} 存在短期赎回费阻断，当前不建议主动卖出或减仓。")
-    elif isinstance(redemption, dict) and redemption.get("has_warning"):
-        affected = redemption.get("affected_funds", [])
-        fund_names = _get_fund_names(affected, fa_artifacts)
-        bullets.append(f"赎回费提示：{', '.join(fund_names) if fund_names else '部分持仓'} 存在短期赎回费，请确认赎回费率。")
-
-    # Right-side unconfirmed
-    right_side = fa_artifacts.get("right_side_confirmation_diagnostics", {})
-    if isinstance(right_side, dict):
-        rs_items = right_side.get("items", [])
-        if isinstance(rs_items, list):
-            for item in rs_items:
-                if isinstance(item, dict) and item.get("right_side_confirmed") is False:
-                    fund = item.get("fund_code") or item.get("fund_name", "")
-                    bullets.append(f"{fund}：右侧信号尚未确认，建议继续观察，不宜追涨或补仓。")
-
-    # Profit protection
-    profit = fa_artifacts.get("profit_protection_diagnostics", {})
-    if isinstance(profit, dict):
-        p_items = profit.get("items", [])
-        if isinstance(p_items, list):
-            for item in p_items:
-                if isinstance(item, dict) and str(item.get("profit_level", "")) in ("high", "very_high"):
-                    fund = item.get("fund_code") or item.get("fund_name", "")
-                    action = item.get("suggested_analysis_action", "")
-                    principal = item.get("principal_recovered", "")
-                    if principal == "likely":
-                        bullets.append(f"{fund}：盈利水平较高且本金可能已回收，可根据风险偏好考虑部分减仓控制风险，不建议一次性清仓。")
-                    else:
-                        bullets.append(f"{fund}：盈利水平较高（建议：{action}），本金回收状态未知，建议先确认交易记录再决策。")
-
-    # Cash deployment
-    cash = fa_artifacts.get("cash_deployment_diagnostics", {})
-    if isinstance(cash, dict):
-        c_summary = cash.get("summary", {})
-        if isinstance(c_summary, dict):
-            deployable = c_summary.get("estimated_deployable_cash") or c_summary.get("deployable_cash", 0)
-            readiness = c_summary.get("deployment_readiness", "")
-            if deployable and float(deployable) > 0:
-                bullets.append(f"可部署资金：约 {deployable}。当前部署准备状态：{readiness}。建议先确认流动性储备需求后再部署。")
-
-    # Next steps
-    if decision_status in ("BLOCKED", "DOWNGRADED"):
-        bullets.append("建议补充缺失数据后重新评估正式决策。在阻断项清除之前，不建议执行主动操作。")
-
-    if ds_has_decision and decision_status == "NO_FORMAL_DECISION":
-        pass  # Already covered
-    elif not ds_has_decision:
-        bullets.append("本输出仅为分析报告，不包含正式交易决策。如需正式操作，请提供完整数据后调用 decision-support。")
-
-    # Safety footer
-    bullets.append("声明：fund-agent 不执行券商下单，所有输出为分析产物和审计痕迹。正式决策需经 decision_support 生成，并由用户审批。")
-
-    return {
-        "language": "zh-CN",
-        "bullets": bullets,
-    }
-
-
-# ── Safety boundary ─────────────────────────────────────────────────────────
-
-
-def _build_safety_boundary(
-    *,
-    ds_has_decision: bool,
-    fa_artifacts: dict[str, Any],
-    ds_artifacts: dict[str, Any],
-    full_report_data: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    analysis_only_sections: list[str] = []
-
-    if fa_artifacts.get("suggested_rebalance_plan"):
-        analysis_only_sections.append("suggested_rebalance_plan")
-    if fa_artifacts.get("analysis_plan"):
-        analysis_only_sections.append("analysis_plan")
-
-    forbidden_found = []
-    if full_report_data:
-        forbidden_found = _find_forbidden_execution_fields(full_report_data)
-
-    formal_source = "none"
-    if ds_has_decision:
-        formal_source = "decision_support"
-
-    return {
-        "no_broker_execution": len(forbidden_found) == 0,
-        "forbidden_execution_fields_found": forbidden_found,
-        "formal_decision_source": formal_source,
-        "analysis_only_sections": analysis_only_sections,
-    }
-
-
-def _find_forbidden_execution_fields(data: Any, path: str = "") -> list[str]:
-    """Recursively detect forbidden broker/order execution fields."""
-    found: list[str] = []
-    if isinstance(data, dict):
-        for key, value in data.items():
-            if key in FORBIDDEN_EXECUTION_FIELDS:
-                found.append(f"{path}.{key}" if path else key)
-            if isinstance(value, (dict, list)):
-                new_path = f"{path}.{key}" if path else key
-                found.extend(_find_forbidden_execution_fields(value, new_path))
-    elif isinstance(data, list):
-        for i, item in enumerate(data):
-            if isinstance(item, (dict, list)):
-                found.extend(_find_forbidden_execution_fields(item, f"{path}[{i}]"))
-    return found
 
 
 # ── Helper: conditional checks ──────────────────────────────────────────────
@@ -1171,6 +889,11 @@ def _has_fee_blocker(fa_artifacts: dict[str, Any]) -> bool:
     redemption = fa_artifacts.get("redemption_fee_risk", {})
     if isinstance(redemption, dict) and redemption.get("has_blocker"):
         return True
+    prof_diag = fa_artifacts.get("professional_diagnostics", {})
+    if isinstance(prof_diag, dict):
+        rf = prof_diag.get("redemption_fee_risk", {})
+        if isinstance(rf, dict) and rf.get("has_blocker"):
+            return True
     analysis_plan = fa_artifacts.get("analysis_plan", {})
     if isinstance(analysis_plan, dict):
         blockers = analysis_plan.get("blockers", [])
@@ -1233,7 +956,6 @@ def _collect_blocked_reasons(
                 if isinstance(codes, list):
                     reasons.extend(str(c) for c in codes if c)
 
-    # Deduplicate while preserving order
     seen: set[str] = set()
     unique: list[str] = []
     for r in reasons:
@@ -1241,14 +963,3 @@ def _collect_blocked_reasons(
             unique.append(r)
             seen.add(r)
     return unique
-
-
-def _get_fund_names(fund_codes: list[str], fa_artifacts: dict[str, Any]) -> list[str]:
-    names: list[str] = []
-    fund_profiles = fa_artifacts.get("fund_profiles", {})
-    if isinstance(fund_profiles, dict):
-        for code in fund_codes:
-            profile = fund_profiles.get(str(code), {})
-            name = profile.get("name") or profile.get("fund_name", str(code))
-            names.append(str(name))
-    return names or [str(c) for c in fund_codes]

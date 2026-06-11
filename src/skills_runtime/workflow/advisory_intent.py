@@ -14,10 +14,11 @@ from typing import Any
 
 
 class AdvisoryIntent(StrEnum):
-    """Advisory intent taxonomy for fund-agent v1.5."""
+    """Advisory intent taxonomy for fund-agent v1.5.1."""
 
     REPORT_ONLY = "REPORT_ONLY"
     FORMAL_TRADE_DECISION = "FORMAL_TRADE_DECISION"
+    SOFT_ACTION_ADVICE = "SOFT_ACTION_ADVICE"
     PROFIT_PROTECTION = "PROFIT_PROTECTION"
     DRAWDOWN_RESPONSE = "DRAWDOWN_RESPONSE"
     RIGHT_SIDE_CONFIRMATION = "RIGHT_SIDE_CONFIRMATION"
@@ -34,7 +35,11 @@ INTENT_KEYWORD_RULES: dict[AdvisoryIntent, list[str]] = {
     AdvisoryIntent.FORMAL_TRADE_DECISION: [
         "买入", "卖出", "减仓", "加仓", "正式决策",
         "给我决策", "正式操作", "今天卖出", "今天买入",
-        "执行", "操作建议", "下单",
+        "执行", "下单",
+    ],
+    AdvisoryIntent.SOFT_ACTION_ADVICE: [
+        "操作建议", "怎么操作", "怎么处理", "该怎么办",
+        "要不要动", "如何应对", "怎么调整", "怎么应对",
     ],
     AdvisoryIntent.PROFIT_PROTECTION: [
         "盈利很多", "止盈", "落袋", "本金回收",
@@ -99,6 +104,9 @@ HOST_INTENT_ALIASES: dict[str, AdvisoryIntent] = {
     "formal_trade": AdvisoryIntent.FORMAL_TRADE_DECISION,
     "formal_sell": AdvisoryIntent.FORMAL_TRADE_DECISION,
     "formal_decision": AdvisoryIntent.FORMAL_TRADE_DECISION,
+    "soft_action": AdvisoryIntent.SOFT_ACTION_ADVICE,
+    "soft_advice": AdvisoryIntent.SOFT_ACTION_ADVICE,
+    "action_advice": AdvisoryIntent.SOFT_ACTION_ADVICE,
     "profit_protection": AdvisoryIntent.PROFIT_PROTECTION,
     "drawdown_response": AdvisoryIntent.DRAWDOWN_RESPONSE,
     "right_side": AdvisoryIntent.RIGHT_SIDE_CONFIRMATION,
@@ -165,17 +173,37 @@ def classify_advisory_intent(
 
 
 def is_report_only(intents: list[str]) -> bool:
-    """Return True if the intents describe a report-only (non-formal) scenario."""
+    """Return True if the intents describe a report-only (non-formal) scenario.
+
+    SOFT_ACTION_ADVICE alone does not imply formal decision — it means the user
+    wants guidance, not execution.
+    """
     return AdvisoryIntent.FORMAL_TRADE_DECISION.value not in intents
 
 
 def is_formal_decision_requested(intents: list[str]) -> bool:
-    """Return True if FORMAL_TRADE_DECISION is in the intents."""
+    """Return True if FORMAL_TRADE_DECISION is in the intents.
+
+    SOFT_ACTION_ADVICE does NOT count as formal. Only explicit trade
+    language (买入/卖出/减仓/加仓/下单/正式决策) triggers formal path.
+    """
     return AdvisoryIntent.FORMAL_TRADE_DECISION.value in intents
 
 
+def is_soft_advice_only(intents: list[str]) -> bool:
+    """Return True if user only requested soft advice, not a formal decision."""
+    return (
+        AdvisoryIntent.SOFT_ACTION_ADVICE.value in intents
+        and AdvisoryIntent.FORMAL_TRADE_DECISION.value not in intents
+    )
+
+
 def intent_requires_decision_support(intents: list[str]) -> bool:
-    """Return True if any intent implies decision_support should be called."""
+    """Return True if any intent implies decision_support should be called.
+
+    Only FORMAL_TRADE_DECISION requires decision_support.
+    SOFT_ACTION_ADVICE without formal trade intent does not.
+    """
     return is_formal_decision_requested(intents)
 
 
@@ -187,6 +215,8 @@ def get_direct_answer_hints(intents: list[str]) -> list[str]:
         hints.append("report_only_flow")
     if AdvisoryIntent.FORMAL_TRADE_DECISION.value in intents:
         hints.append("formal_trade_requested")
+    if AdvisoryIntent.SOFT_ACTION_ADVICE.value in intents:
+        hints.append("soft_action_advice")
     if AdvisoryIntent.PROFIT_PROTECTION.value in intents:
         hints.append("profit_protection_concern")
     if AdvisoryIntent.DRAWDOWN_RESPONSE.value in intents:

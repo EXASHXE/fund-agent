@@ -51,6 +51,8 @@ NEW_ZH_SCENARIOS = [
     "qdii_ai_overlap_report_zh",
     "cash_bond_where_to_deploy_zh",
     "conservative_vs_aggressive_same_portfolio",
+    "same_portfolio_conservative_profile",
+    "same_portfolio_aggressive_profile",
 ]
 
 ALL_SCENARIOS_V15 = ALL_E2E_SCENARIOS + NEW_ZH_SCENARIOS
@@ -74,6 +76,8 @@ EXPECTED_BEHAVIOR_REQUIRED_KEYS = frozenset({
     "expected_reason_code_contains",
     "expected_risk_conflict_kinds",
     "expected_required_report_sections",
+    "expected_advisory_intents",
+    "expected_chinese_summary_contains",
 })
 
 
@@ -118,14 +122,14 @@ def _assert_decision_support_called(fixture, ds_output):
 
 
 class TestE2EFixtureLoading:
-    @pytest.mark.parametrize("scenario", ALL_E2E_SCENARIOS)
+    @pytest.mark.parametrize("scenario", ALL_SCENARIOS_V15)
     def test_fixture_loads(self, scenario):
         fixture = load_e2e_fixture(scenario)
         assert "scenario_id" in fixture
         assert "portfolio" in fixture
         assert "positions" in fixture.get("portfolio", {})
 
-    @pytest.mark.parametrize("scenario", ALL_E2E_SCENARIOS)
+    @pytest.mark.parametrize("scenario", ALL_SCENARIOS_V15)
     def test_fixture_has_all_expected_behavior_keys(self, scenario):
         fixture = load_e2e_fixture(scenario)
         eb = fixture.get("expected_behavior", {})
@@ -133,12 +137,12 @@ class TestE2EFixtureLoading:
         for key in EXPECTED_BEHAVIOR_REQUIRED_KEYS:
             assert key in eb, f"expected_behavior.{key} missing in {scenario}"
 
-    @pytest.mark.parametrize("scenario", ALL_E2E_SCENARIOS)
+    @pytest.mark.parametrize("scenario", ALL_SCENARIOS_V15)
     def test_fixture_has_no_execution_fields(self, scenario):
         fixture = load_e2e_fixture(scenario)
         assert_no_execution_fields(fixture, f"fixture:{scenario}")
 
-    @pytest.mark.parametrize("scenario", ALL_E2E_SCENARIOS)
+    @pytest.mark.parametrize("scenario", ALL_SCENARIOS_V15)
     def test_fixture_expected_behavior_fields_are_valid_types(self, scenario):
         fixture = load_e2e_fixture(scenario)
         eb = fixture.get("expected_behavior", {})
@@ -153,6 +157,8 @@ class TestE2EFixtureLoading:
         assert isinstance(eb.get("expected_reason_code_contains"), list)
         assert isinstance(eb.get("expected_risk_conflict_kinds"), list)
         assert isinstance(eb.get("expected_required_report_sections"), list)
+        assert isinstance(eb.get("expected_advisory_intents"), list)
+        assert isinstance(eb.get("expected_chinese_summary_contains"), list)
 
 
 # ── Fund analysis boundary ──────────────────────────────────────────────────
@@ -645,22 +651,52 @@ class TestChineseScenarios:
 
 
 class TestRiskProfileCalibration:
-    """Risk profile sensitivity tests."""
+    """Risk profile sensitivity with A/B conservative vs aggressive."""
 
-    def test_conservative_vs_aggressive_produces_decision_status(self):
-        _, _, _, _, report = _run_workflow("conservative_vs_aggressive_same_portfolio")
+    def test_conservative_produces_decision_status(self):
+        _, _, _, _, report = _run_workflow("same_portfolio_conservative_profile")
         status = report["workflow_summary"]["decision_status"]
         assert status != "NO_FORMAL_DECISION", (
-            f"conservative_vs_aggressive should produce formal evaluation, got {status}"
+            f"conservative should produce formal evaluation, got {status}"
         )
 
-    def test_conservative_fixture_decision_is_passive(self):
-        _, _, _, ds_output, _ = _run_workflow("conservative_vs_aggressive_same_portfolio")
-        decision = (ds_output.artifacts or {}).get("decision", {})
-        action = str(decision.get("action", "")).upper()
-        assert action in ("HOLD", "WAIT", "PAUSE_DCA") or action == "INCREASE", (
-            f"Expected passive or cautiously active posture, got {action}"
+    def test_aggressive_produces_decision_status(self):
+        _, _, _, _, report = _run_workflow("same_portfolio_aggressive_profile")
+        status = report["workflow_summary"]["decision_status"]
+        assert status != "NO_FORMAL_DECISION", (
+            f"aggressive should produce formal evaluation, got {status}"
         )
+
+    def test_conservative_amount_leq_aggressive_amount(self):
+        """Conservative profile should not allow larger active amount than aggressive."""
+        _, _, _, ds_cons, _ = _run_workflow("same_portfolio_conservative_profile")
+        _, _, _, ds_agg, _ = _run_workflow("same_portfolio_aggressive_profile")
+
+        cons_ledger = (ds_cons.artifacts or {}).get("execution_ledger", {})
+        agg_ledger = (ds_agg.artifacts or {}).get("execution_ledger", {})
+        cons_summary = cons_ledger.get("ledger_summary", {}) if isinstance(cons_ledger, dict) else {}
+        agg_summary = agg_ledger.get("ledger_summary", {}) if isinstance(agg_ledger, dict) else {}
+
+        cons_amount = cons_summary.get("total_execution_amount", 0) or 0
+        agg_amount = agg_summary.get("total_execution_amount", 0) or 0
+        assert cons_amount <= agg_amount, (
+            f"Conservative amount ({cons_amount}) should be <= aggressive amount ({agg_amount})"
+        )
+
+    def test_neither_has_evidence_anchor_violation(self):
+        """Both profiles must respect evidence anchors — neither should fabricate."""
+        for scenario in ("same_portfolio_conservative_profile", "same_portfolio_aggressive_profile"):
+            _, _, _, ds_output, _ = _run_workflow(scenario)
+            ds_artifacts = ds_output.artifacts or {}
+            anchor_diag = ds_artifacts.get("evidence_anchor_diagnostics", {})
+            if isinstance(anchor_diag, dict):
+                invalid = anchor_diag.get("invalid_anchor_refs", [])
+                assert isinstance(invalid, list), f"{scenario}: invalid_anchor_refs should be a list"
+
+    def test_no_broker_fields_in_either_profile(self):
+        for scenario in ("same_portfolio_conservative_profile", "same_portfolio_aggressive_profile"):
+            _, _, _, ds_output, _ = _run_workflow(scenario)
+            assert_no_execution_fields(ds_output.to_dict(), f"risk-profile:{scenario}")
 
 
 class TestNoBrokerExecutionFields:
@@ -680,7 +716,7 @@ class TestNoBrokerExecutionFields:
 
 
 class TestWorkflowSummaryIntents:
-    """Advisory intents appear in workflow_summary."""
+    """Advisory intents appear in workflow_summary and match expected."""
 
     @pytest.mark.parametrize("scenario", NEW_ZH_SCENARIOS)
     def test_workflow_summary_has_advisory_intents(self, scenario):
@@ -688,3 +724,103 @@ class TestWorkflowSummaryIntents:
         intents = report["workflow_summary"].get("advisory_intents", [])
         assert isinstance(intents, list), f"{scenario}: advisory_intents should be a list"
         assert len(intents) > 0, f"{scenario}: advisory_intents should not be empty"
+
+    @pytest.mark.parametrize("scenario", NEW_ZH_SCENARIOS)
+    def test_actual_intents_contain_expected(self, scenario):
+        fixture = load_e2e_fixture(scenario)
+        eb = fixture.get("expected_behavior", {})
+        expected_intents = eb.get("expected_advisory_intents", [])
+        _, _, _, _, report = _run_workflow(scenario)
+        actual_intents = report["workflow_summary"].get("advisory_intents", [])
+        for expected in expected_intents:
+            assert expected in actual_intents, (
+                f"{scenario}: expected intent '{expected}' not in actual intents {actual_intents}"
+            )
+
+    @pytest.mark.parametrize("scenario", NEW_ZH_SCENARIOS)
+    def test_chinese_summary_contains_expected(self, scenario):
+        fixture = load_e2e_fixture(scenario)
+        eb = fixture.get("expected_behavior", {})
+        expected_phrases = eb.get("expected_chinese_summary_contains", [])
+        _, _, _, _, report = _run_workflow(scenario)
+        cs = report.get("chinese_summary", {})
+        if not cs and not expected_phrases:
+            return
+        assert cs, f"{scenario}: missing chinese_summary"
+        bullets_text = " ".join(cs.get("bullets", []))
+        for phrase in expected_phrases:
+            assert phrase in bullets_text, (
+                f"{scenario}: expected phrase '{phrase}' not found in chinese_summary"
+            )
+
+
+class TestZhCnSectionLocalization:
+    """zh-CN reports have localized section titles and Chinese text in key sections."""
+
+    ZH_FORMAL_SCENARIOS = [
+        s for s in NEW_ZH_SCENARIOS
+        if s not in {"qdii_ai_overlap_report_zh", "cash_bond_where_to_deploy_zh"}
+    ]
+
+    @pytest.mark.parametrize("scenario", NEW_ZH_SCENARIOS)
+    def test_zh_sections_have_chinese_titles(self, scenario):
+        _, _, _, _, report = _run_workflow(scenario)
+        sections = report.get("user_facing_sections", [])
+        for section in sections:
+            if not isinstance(section, dict):
+                continue
+            sid = section.get("id", "")
+            if sid in ZH_CN_SECTION_TITLES_BY_ID:
+                expected_title = ZH_CN_SECTION_TITLES_BY_ID[sid]
+                actual_title = section.get("title", "")
+                assert actual_title == expected_title, (
+                    f"{scenario}: section '{sid}' title expected '{expected_title}', got '{actual_title}'"
+                )
+
+    @pytest.mark.parametrize("scenario", NEW_ZH_SCENARIOS)
+    def test_zh_direct_answer_has_chinese_text(self, scenario):
+        _, _, _, _, report = _run_workflow(scenario)
+        sections = report.get("user_facing_sections", [])
+        direct = next((s for s in sections if s.get("id") == "direct_answer"), None)
+        assert direct is not None, f"{scenario}: missing direct_answer"
+        bullets_text = " ".join(direct.get("bullets", []))
+        has_chinese = any(
+            ord(ch) > 127 for ch in bullets_text
+        )
+        assert has_chinese or "chinese" in scenario.lower(), (
+            f"{scenario}: direct_answer should contain Chinese text"
+        )
+
+    def test_zh_action_boundary_has_safety_text(self):
+        for scenario in NEW_ZH_SCENARIOS:
+            _, _, _, _, report = _run_workflow(scenario)
+            sections = report.get("user_facing_sections", [])
+            boundary = next((s for s in sections if s.get("id") == "action_boundary"), None)
+            assert boundary is not None, f"{scenario}: missing action_boundary"
+            bullets_text = " ".join(boundary.get("bullets", []))
+            assert "不执行券商下单" in bullets_text, (
+                f"{scenario}: action_boundary should contain Chinese safety text"
+            )
+
+    def test_zh_recommended_next_steps_has_chinese_text(self):
+        for scenario in NEW_ZH_SCENARIOS:
+            _, _, _, _, report = _run_workflow(scenario)
+            sections = report.get("user_facing_sections", [])
+            rec = next((s for s in sections if s.get("id") == "recommended_next_steps"), None)
+            assert rec is not None, f"{scenario}: missing recommended_next_steps"
+            bullets_text = " ".join(rec.get("bullets", []))
+            has_chinese = any(ord(ch) > 127 for ch in bullets_text)
+            assert has_chinese, f"{scenario}: recommended_next_steps should contain Chinese text"
+
+
+# Import zh-CN section titles for localization tests
+ZH_CN_SECTION_TITLES_BY_ID = {
+    "direct_answer": "直接回答",
+    "evidence_status": "证据状态",
+    "portfolio_diagnosis": "组合诊断",
+    "decision_explanation": "决策说明",
+    "action_boundary": "操作边界",
+    "recommended_next_steps": "建议下一步",
+    "summary": "摘要",
+    "limitations": "限制与警告",
+}

@@ -360,6 +360,8 @@
     "fund_analysis": {
       "no_formal_decision": true,
       "exposure_summary_present": true
-    }
+    },
+    "expected_advisory_intents": [],
+    "expected_chinese_summary_contains": []
   }
 }
