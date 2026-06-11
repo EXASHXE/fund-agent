@@ -1,0 +1,90 @@
+{
+  "task_id": "runtime-bridge-decision-support-v1.2",
+  "step_id": "decision-support-sell-1",
+  "skill_name": "decision_support",
+  "payload": {
+    "evidence_graph": {
+      "items": {
+        "ev-hard-loss-signal": {
+          "evidence_id": "ev-hard-loss-signal",
+          "evidence_type": "HardEvidence",
+          "source_type": "quant_tool",
+          "timestamp": "2026-06-01T00:00:00",
+          "related_entities": ["fund:110011"],
+          "claim": "Negative risk-adjusted return signal detected",
+          "value": {"score": -0.5, "metric": "sortino", "result": -1.2},
+          "confidence_weight": 1.0,
+          "direction": "negative",
+          "version": "evidence-contract.v2",
+          "provenance": {"tool": "quant_tool"}
+        },
+        "ev-hard-concentration": {
+          "evidence_id": "ev-hard-concentration",
+          "evidence_type": "HardEvidence",
+          "source_type": "portfolio_analysis",
+          "timestamp": "2026-06-01T00:00:00",
+          "related_entities": ["fund:110011"],
+          "claim": "Position is 53% of portfolio, exceeding 50% max_single_fund_weight",
+          "value": {"weight": 0.53, "max_allowed": 0.50},
+          "confidence_weight": 1.0,
+          "direction": "negative",
+          "version": "evidence-contract.v2",
+          "provenance": {"tool": "portfolio_analysis"}
+        }
+      },
+      "edges": [
+        ["ev-hard-loss-signal", "ev-hard-concentration", "supports"]
+      ],
+      "stats": {
+        "total": 2,
+        "hard": 2,
+        "soft": 0,
+        "hybrid": 0,
+        "conflicts": 0
+      }
+    },
+    "requested_action": "SELL",
+    "target_trade_amount": 20000.0,
+    "objective": "reduce concentration and exit loss position",
+    "time_horizon": "short_term",
+    "deterministic": true,
+    "task_id": "runtime-bridge-decision-support-v1.2",
+    "step_id": "decision-support-sell-1",
+    "portfolio_context": {
+      "total_value": 150000.0,
+      "cash_available": 15000.0
+    },
+    "risk_profile": {
+      "risk_level": "moderate",
+      "max_single_fund_weight": 0.50,
+      "max_trade_pct": 0.10,
+      "liquidity_reserve_pct": 0.10,
+      "short_term_trade_budget_pct": 0.10
+    },
+    "constraints": {
+      "min_trade_amount": 100.0,
+      "forbidden_actions": []
+    },
+    "risk_budget": {
+      "risk_budget": 5000.0
+    },
+    "critique_status": "PASS",
+    "analysis_plan": {
+      "available_inputs": ["holdings", "transactions", "fund_metadata", "nav_history"],
+      "missing_inputs": [],
+      "blockers": [],
+      "warnings": [],
+      "decision_support_ready": true
+    },
+    "evidence_gap_diagnostics": {
+      "missing_recent_news": false,
+      "missing_sentiment": false
+    },
+    "redemption_rules": {
+      "110011": {
+        "holding_period_days": 7,
+        "redemption_fee_pct": 0.015
+      }
+    }
+  }
+}

@@ -1,7 +1,7 @@
 # OpenCode troubleshooting
 
 This document covers common issues when installing `fund-agent` for
-OpenCode, and recommends the verified path for v1.1.0. It does not
+OpenCode, and recommends the verified path for v1.2.0. It does not
 change runtime behavior, skill semantics, or plugin behavior.
 
 ## Symptom: fund_agent_skills returns TOOL_UNAVAILABLE
@@ -48,7 +48,7 @@ skills are invalid.
 
 ## Recommended verified path: native Agent Skills
 
-Native Agent Skills are the **recommended OpenCode path for v1.1.0**.
+Native Agent Skills are the **recommended OpenCode path for v1.2.0**.
 
 Install the `SKILL.md` directories into the target project:
 
@@ -190,3 +190,51 @@ Expected:
 - `fund_analysis` does **not** emit `Decision` / `ExecutionLedger`.
 - `decision_support` is the only formal decision runtime.
 - No broker/order execution occurs.
+
+## Automated verification
+
+The `verify_install_discovery.py` script automates the manual
+installation discovery checks:
+
+```bash
+python scripts/verify_install_discovery.py \
+  --project ../demo-project \
+  --fund-agent-root . \
+  --json
+```
+
+Skip runtime bridge checks (no subprocess calls):
+
+```bash
+python scripts/verify_install_discovery.py \
+  --project ../demo-project \
+  --fund-agent-root . \
+  --skip-runtime \
+  --json
+```
+
+This script does **not** prove `fund_agent_skills` custom tool
+registration. It verifies:
+
+- Native Agent Skills files are present
+- Manifest roles match (fund-analysis primary, others supporting)
+- Runtime bridge readiness (unless `--skip-runtime`)
+- Plugin file presence (if applicable)
+
+Mode A custom tools remain environment-dependent. Mode B native Agent
+Skills remain the recommended verified path.
+
+## Manual verification checklist
+
+1. Start OpenCode from the target project directory.
+2. Ask OpenCode to list native skills.
+3. Load `fund-analysis` skill.
+4. Load `decision-support` skill.
+5. Run runtime bridge commands separately:
+
+   ```bash
+   fund-agent-doctor --pretty
+   python scripts/smoke_host_install.py
+   python scripts/run_skill.py --skill fund_analysis --input examples/runtime_bridge_fund_analysis_input.json --pretty
+   python scripts/run_skill.py --skill decision_support --input examples/runtime_bridge_decision_support_input_v2.json --pretty
+   ```

@@ -254,6 +254,8 @@ The plugin approach was chosen because:
 
 ## Verifying the install
 
+### Manual verification
+
 ```bash
 # 1. Confirm the symlink / file is in place
 ls -la .opencode/plugins/fund-agent.js
@@ -268,6 +270,37 @@ head -5 /path/to/fund-agent/opencode.plugin.js
 Tests that validate file presence and metadata live under
 `tests/install/`. They do **not** attempt to execute OpenCode itself;
 they assert that the install artifacts are coherent and honest.
+
+### Automated verification
+
+The `verify_install_discovery.py` script automates install discovery
+checks:
+
+```bash
+python scripts/verify_install_discovery.py \
+  --project ../demo-project \
+  --fund-agent-root . \
+  --json
+```
+
+Skip runtime bridge subprocess checks:
+
+```bash
+python scripts/verify_install_discovery.py \
+  --project ../demo-project \
+  --fund-agent-root . \
+  --skip-runtime \
+  --json
+```
+
+This script does **not** verify `fund_agent_skills` custom tool
+registration. It verifies native Agent Skills files, manifest roles,
+and optionally runtime bridge readiness. Mode A custom tools remain
+environment-dependent. Mode B native Agent Skills remain the
+recommended verified path.
+
+See [opencode-troubleshooting.md](./opencode-troubleshooting.md) for
+the full troubleshooting guide.
 
 ## Pinning / version management
 

@@ -300,6 +300,7 @@ The source-checkout runtime bridge path is:
 - Codex (manual / light): [`docs/install/codex.md`](docs/install/codex.md)
 - Other harnesses: see [`docs/host-compatibility.md`](docs/host-compatibility.md)
 - OpenCode troubleshooting: [`docs/install/opencode-troubleshooting.md`](docs/install/opencode-troubleshooting.md)
+- v1.2 host integration checklist: [`docs/v1.2-host-integration-checklist.md`](docs/v1.2-host-integration-checklist.md)
 - Deeper runtime bridge design (subprocess handlers, OpenCode
   plugin tool wrapper — still future):
   [`docs/design/runtime-bridge.md`](docs/design/runtime-bridge.md)
