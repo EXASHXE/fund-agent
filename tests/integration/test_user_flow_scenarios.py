@@ -197,3 +197,73 @@ def test_no_user_flow_produces_formal_decision_from_phase2() -> None:
             artifact = artifacts.get(key, {})
             overlap = FORMAL_DECISION_ARTIFACTS & set(artifact.keys()) if isinstance(artifact, dict) else set()
             assert not overlap, f"{filename} {key}: must not contain formal decision keys"
+
+
+def test_semiconductor_profit_protection_diagnostics_exists() -> None:
+    artifacts = _run_fixture("semiconductor_profit_protection.json")
+    pp = artifacts.get("profit_protection_diagnostics", {})
+    assert pp, "semiconductor fixture must produce profit_protection_diagnostics"
+    items = pp.get("items", [])
+    high_profit = [i for i in items if i.get("profit_level") in ("high", "very_high")]
+    assert len(high_profit) > 0, "semiconductor fixture should have high/very_high profit positions"
+
+
+def test_semiconductor_no_formal_decision() -> None:
+    artifacts = _run_fixture("semiconductor_profit_protection.json")
+    overlap = FORMAL_DECISION_ARTIFACTS & set(artifacts.keys())
+    assert not overlap, f"semiconductor must not produce formal decisions: {overlap}"
+
+
+def test_innovation_drug_right_side_diagnostics_exists() -> None:
+    artifacts = _run_fixture("innovation_drug_drawdown.json")
+    rs = artifacts.get("right_side_confirmation_diagnostics", {})
+    assert rs, "innovation_drug fixture must produce right_side_confirmation_diagnostics"
+    items = rs.get("items", [])
+    assert len(items) > 0, "innovation_drug should have right-side items"
+    applicable_items = [
+        i for i in items
+        if isinstance(i, dict) and i.get("applicability") != "not_applicable"
+    ]
+    if applicable_items:
+        for item in applicable_items:
+            assert "right_side_confirmed" in item, "right-side item must have right_side_confirmed field"
+            assert "evidence_state" in item, "right-side item must have evidence_state field"
+
+
+def test_innovation_drug_event_hype_failure_may_exist() -> None:
+    artifacts = _run_fixture("innovation_drug_drawdown.json")
+    ehf = artifacts.get("event_hype_failure_diagnostics", {})
+    if ehf and ehf.get("items"):
+        assert isinstance(ehf["items"], list)
+
+
+def test_bond_cash_deployment_diagnostics_exists() -> None:
+    artifacts = _run_fixture("bond_cash_allocation.json")
+    cd = artifacts.get("cash_deployment_diagnostics", {})
+    assert cd, "bond_cash fixture must produce cash_deployment_diagnostics"
+    summary = cd.get("summary", {})
+    assert "deployment_readiness" in summary
+    pp = artifacts.get("profit_protection_diagnostics", {})
+    if pp and pp.get("items"):
+        high_profit = [i for i in pp["items"] if i.get("profit_level") in ("high", "very_high")]
+        assert len(high_profit) == 0, "bond_cash should not have false high profit_protection signal"
+
+
+def test_mixed_portfolio_position_contribution_summary() -> None:
+    artifacts = _run_fixture("mixed_portfolio_rebalance.json")
+    pc = artifacts.get("position_contribution", {})
+    assert pc, "mixed_portfolio must produce position_contribution"
+    summary = pc.get("summary", {})
+    assert summary.get("largest_value_position", "") != ""
+    assert "exposure_summary" in artifacts or "risk_flags" in artifacts
+
+
+def test_energy_loss_position_contribution_identifies_loss() -> None:
+    artifacts = _run_fixture("energy_loss_position.json")
+    pc = artifacts.get("position_contribution", {})
+    assert pc, "energy_loss must produce position_contribution"
+    positions = pc.get("positions", [])
+    loss_positions = [p for p in positions if isinstance(p, dict) and p.get("pnl_contribution_pct", 0) < 0]
+    assert len(loss_positions) > 0, "energy_loss should have at least one loss contributor"
+    overlap = FORMAL_DECISION_ARTIFACTS & set(artifacts.keys())
+    assert not overlap, "energy_loss must not produce formal decisions"

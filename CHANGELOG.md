@@ -1,5 +1,56 @@
 # Changelog
 
+## [Unreleased] v1.0.0-rc
+
+### Added
+
+- **Evidence state constants module** — `src/skills_runtime/decision_support/evidence_states.py`
+  provides named constants and helper functions for evidence_state semantics
+  (ANCHORED, INSUFFICIENT_EVIDENCE, CRITIC_BLOCKED, CONSTRAINT_BLOCKED,
+  BUDGET_BLOCKED, DOWNGRADED) with `describe_evidence_state()` documentation.
+- **zh-CN report localization improvements** — additional bullet localizations
+  for right-side confirmation, event hype failure, cash deployment, research
+  query plan, rebalance plan, and professional diagnostics sections in
+  `report_composer.py`.
+- **Host integration examples** — `examples/host_integration/` with three new
+  examples: `minimal_fund_analysis_runtime_call.py`,
+  `minimal_decision_support_call.py`, and `full_personal_fund_workflow.json`.
+- **Dev-only MCP harness** — `tools/dev/mcp_harness/` with fake MCP responses,
+  normalization utilities, and README. Fake mode only; live mode is env-gated
+  and not implemented in v1.
+- **MCP harness integration test** — `tests/integration/test_mcp_harness_fake_mode.py`
+  validates fake responses normalize correctly and can be used by fund_analysis.
+- **Scenario-specific user flow assertions** — semiconductor profit protection,
+  innovation drug drawdown, bond cash allocation, mixed portfolio rebalance,
+  and energy loss position scenario-specific tests in
+  `tests/integration/test_user_flow_scenarios.py`.
+- **v1 release readiness doc** — `docs/v1-release-readiness.md` with full
+  checklist, non-goals, deferred items, and validation commands.
+- **MCP live testing doc** — `docs/mcp-live-testing.md` documents dev-only
+  harness usage and rules.
+
+### Changed
+
+- **Weak test assertions hardened** — replaced bare `assert x is not None`
+  with `assert isinstance(x, dict)` and structural checks in
+  `test_fund_analysis_professional_diagnostics.py`,
+  `test_fund_analysis_phase3.py`, `test_ledger_tools.py`, and
+  `test_runtime_skill_surface.py`.
+- **README updated** — added v1 artifacts table, data boundary section,
+  test gates, and release readiness status.
+- **Trade plan gatekeeper** — already implemented: `_decision_from_trade`
+  calls `evaluate_gatekeeper` and applies downgrades with reason_codes,
+  blocked_by, evidence_state, trigger_conditions, invalidating_conditions,
+  and audit_trail.
+
+### Honesty
+
+- No live-data fetching was added to core runtime.
+- No broker/order execution exists.
+- OpenCode plugin does not launch Python runtime.
+- fund_analysis does not emit formal Decision or ExecutionLedger.
+- MCP live mode is documented but not implemented in v1.
+
 ## 0.4.9-dev-end-to-end-personal-fund-flow
 
 ### Added

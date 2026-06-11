@@ -1,0 +1,117 @@
+{
+  "description": "Full personal fund workflow: user question → fund_analysis → evidence compilation → decision_support → zh-CN report",
+  "steps": [
+    {
+      "step": 1,
+      "type": "user_question",
+      "question_zh": "半导体基金盈利很多，要不要减仓？",
+      "question_en": "My semiconductor fund has significant gains, should I trim?"
+    },
+    {
+      "step": 2,
+      "type": "fund_analysis_input",
+      "payload": {
+        "portfolio": {
+          "as_of_date": "2026-06-01",
+          "total_value": 300000.0,
+          "cash_available": 20000.0,
+          "positions": [
+            {
+              "fund_code": "008253",
+              "fund_name": "半导体ETF联接",
+              "current_value": 150000.0,
+              "total_cost": 80000.0,
+              "shares": 100000.0,
+              "target_weight": 0.5,
+              "tags": ["equity", "semiconductor"]
+            }
+          ]
+        },
+        "fund_profiles": {
+          "008253": {"fund_code": "008253", "name": "半导体ETF联接", "fund_type": "equity", "benchmark": "CSI半导体", "theme": "semiconductor"}
+        },
+        "nav_history": {
+          "008253": [{"date": "2025-06-01", "nav": 0.8}, {"date": "2026-06-01", "nav": 1.5}]
+        },
+        "fee_schedules": {"008253": {"management_fee": 0.005}},
+        "redemption_rules": {"008253": {"holding_period_days": 7, "redemption_fee_pct": 0.005}},
+        "risk_profile": {"risk_level": "moderate", "max_single_fund_weight": 0.4},
+        "constraints": {"min_trade_amount": 100.0, "forbidden_actions": []},
+        "report_options": {"language": "zh-CN", "detail_level": "professional"}
+      }
+    },
+    {
+      "step": 3,
+      "type": "fund_analysis_output",
+      "expected_artifacts": [
+        "portfolio_summary",
+        "analysis_plan",
+        "evidence_gap_diagnostics",
+        "position_contribution",
+        "profit_protection_diagnostics",
+        "benchmark_divergence_diagnostics",
+        "right_side_confirmation_diagnostics",
+        "event_hype_failure_diagnostics",
+        "cash_deployment_diagnostics",
+        "report_sections",
+        "report_outline",
+        "report_quality_gate",
+        "data_completeness"
+      ],
+      "forbidden_artifacts": ["decision", "decisions", "execution_ledger"],
+      "next_data_to_fetch": ["recent fund news", "sentiment snapshot"]
+    },
+    {
+      "step": 4,
+      "type": "evidence_compilation",
+      "description": "Host compiles evidence from fund_analysis HardEvidence items, news_research SoftEvidence, and sentiment_analysis SoftEvidence into an EvidenceGraph",
+      "evidence_graph": {
+        "items": {
+          "ev-hard-1": {
+            "evidence_id": "ev-hard-1",
+            "evidence_type": "HardEvidence",
+            "source_type": "fund_analysis",
+            "timestamp": "2026-06-01T00:00:00",
+            "related_entities": ["fund:008253"],
+            "claim": "Semiconductor position has very high unrealized profit",
+            "value": {"profit_level": "very_high"},
+            "confidence_weight": 1.0,
+            "direction": "positive",
+            "provenance": {"tool": "profit_protection_diagnostics"}
+          }
+        },
+        "edges": []
+      }
+    },
+    {
+      "step": 5,
+      "type": "decision_support_input",
+      "payload": {
+        "evidence_graph": "<compiled EvidenceGraph from step 4>",
+        "requested_action": "REDUCE",
+        "objective": "trim semiconductor position to lock in profit",
+        "time_horizon": "medium_term",
+        "portfolio_context": {"total_value": 300000.0, "cash_available": 20000.0},
+        "risk_profile": {"risk_level": "moderate", "max_trade_pct": 0.1},
+        "constraints": {"min_trade_amount": 100.0, "forbidden_actions": []},
+        "fund_analysis_artifacts": {
+          "profit_protection_diagnostics": "<from step 3>",
+          "redemption_fee_risk": "<from step 3>",
+          "analysis_plan": "<from step 3>"
+        }
+      }
+    },
+    {
+      "step": 6,
+      "type": "decision_support_output",
+      "expected_artifacts": ["decision", "execution_ledger", "decision_status", "audit_trail"],
+      "decision_fields": ["action", "execution_amount", "rationale_anchor", "decision_reason_codes", "evidence_state", "blocked_by", "trigger_conditions", "invalidating_conditions", "audit_trail"]
+    }
+  ],
+  "zh_cn_report_option": {
+    "language": "zh-CN",
+    "detail_level": "professional",
+    "limitations_heading": "限制说明",
+    "no_live_data_claim": true
+  }
+}

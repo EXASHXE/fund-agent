@@ -126,8 +126,8 @@ def test_pnl_contribution_uses_absolute_pnl_denominator() -> None:
 
     assert pos_a["absolute_pnl"] == -30000.0
     assert pos_b["absolute_pnl"] == 40000.0
-    assert pos_a["pnl_contribution_pct"] is not None
-    assert pos_b["pnl_contribution_pct"] is not None
+    assert isinstance(pos_a["pnl_contribution_pct"], float)
+    assert isinstance(pos_b["pnl_contribution_pct"], float)
     assert pos_a["pnl_contribution_pct"] < 0
     assert pos_b["pnl_contribution_pct"] > 0
     total_abs = abs(pos_a["absolute_pnl"]) + abs(pos_b["absolute_pnl"])
@@ -500,7 +500,7 @@ def test_event_hype_failure_positive_event_weak_reaction() -> None:
     result = compute_event_hype_failure_diagnostics(bundle, metrics)
 
     item = next(i for i in result["items"] if i["fund_code"] == "110011")
-    assert item["post_event_return_pct"] is not None
+    assert isinstance(item["post_event_return_pct"], float)
     assert item["price_reaction"] == "negative"
     assert item["news_reaction"] == "negative"
     assert item["hype_failed"] is True

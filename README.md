@@ -348,6 +348,72 @@ mutate the project requirements.
 Provider credentials are host concerns. The skill pack itself only declares MCP
 capabilities and contracts.
 
+## v1 Artifacts
+
+### fund_analysis artifacts (never emits Decision/ExecutionLedger)
+
+| Artifact | Category | Required |
+|---|---|---|
+| `portfolio_summary` | core_portfolio | yes |
+| `position_summary` | core_portfolio | yes |
+| `pnl_summary` | ledger_and_pnl | yes |
+| `exposure_summary` | exposure_and_risk | yes |
+| `risk_flags` | exposure_and_risk | yes |
+| `warnings` | core | yes |
+| `fund_analysis_report` | core | yes |
+| `report_sections` | report_output | yes |
+| `report_outline` | report_output | yes |
+| `report_quality_gate` | report_output | yes |
+| `data_completeness` | report_output | yes |
+| `analysis_coverage` | report_output | yes |
+| `report_limitations` | report_output | yes |
+| `analysis_plan` | diagnostics | yes |
+| `evidence_gap_diagnostics` | diagnostics | yes |
+| `position_contribution` | diagnostics | yes |
+| `profit_protection_diagnostics` | diagnostics | conditional |
+| `redemption_fee_risk` | diagnostics | conditional |
+| `benchmark_divergence_diagnostics` | diagnostics | conditional |
+| `right_side_confirmation_diagnostics` | diagnostics | conditional |
+| `event_hype_failure_diagnostics` | diagnostics | conditional |
+| `cash_deployment_diagnostics` | diagnostics | conditional |
+
+### decision_support artifacts (only formal Decision/ExecutionLedger producer)
+
+| Artifact | Description |
+|---|---|
+| `decision` | Single formal Decision with reason_codes, blocked_by, evidence_state |
+| `decisions` | Trade-plan mode: list of formal Decisions |
+| `execution_ledger` | ExecutionLedger wrapping all decisions |
+| `decision_status` | Top-level action string |
+| `decision_count` | Number of decisions |
+| `audit_trail` | Combined audit entries |
+| `warnings` | Pipeline warnings |
+
+## Data Boundary
+
+Core runtime is deterministic, local-only, and provider-agnostic:
+- No network calls
+- No API keys
+- No provider SDK imports (OpenAI, Anthropic, Tavily, Exa, Firecrawl, Finnhub, AkShare, LangChain, broker APIs)
+- No broker/order execution
+- No autonomous planner loops
+
+The external host owns credentials, live data providers, MCP implementations, and final UX.
+
+## Test Gates
+
+```bash
+PYTHONPATH=. pytest -q
+bash scripts/check_plugin_gate.sh
+PYTHONPATH=. pytest tests/architecture -q
+PYTHONPATH=. pytest tests/contracts -q
+PYTHONPATH=. pytest tests/install -q
+```
+
+## Release Readiness Status
+
+See [docs/v1-release-readiness.md](docs/v1-release-readiness.md) for the full v1 release checklist.
+
 ## License
 
 MIT

@@ -137,20 +137,23 @@ class TestThesisGenerationBoundaries:
 class TestRuntimePathsResolve:
     def test_fund_analysis_imports(self):
         from src.skills_runtime.fund_analysis import FundAnalysisSkill
-        assert FundAnalysisSkill is not None
+        assert hasattr(FundAnalysisSkill, "run")
 
     def test_decision_support_imports(self):
         from src.skills_runtime.decision_support import DecisionSupportSkill
-        assert DecisionSupportSkill is not None
+        assert hasattr(DecisionSupportSkill, "run")
 
     def test_news_research_imports(self):
         from src.skills_runtime.news_research import NewsResearchSkill
-        assert NewsResearchSkill is not None
+        assert issubclass(NewsResearchSkill, MCPAdapterSkill)
+        assert hasattr(NewsResearchSkill, "run")
 
     def test_sentiment_analysis_imports(self):
         from src.skills_runtime.sentiment_analysis import SentimentAnalysisSkill
-        assert SentimentAnalysisSkill is not None
+        assert issubclass(SentimentAnalysisSkill, MCPAdapterSkill)
+        assert hasattr(SentimentAnalysisSkill, "run")
 
     def test_thesis_generation_imports(self):
         from src.skills_runtime.thesis_generation import ThesisGenerationSkill
-        assert ThesisGenerationSkill is not None
+        assert issubclass(ThesisGenerationSkill, BaseSkillRuntime)
+        assert hasattr(ThesisGenerationSkill, "run")

@@ -54,7 +54,7 @@ def test_redemption_fee_risk_from_7d_fixture():
     bundle, _ = _bundle_from_payload(payload)
     metrics = compute_core_metrics(bundle, [], _make_skill_input())
     result = compute_redemption_fee_risk(bundle, metrics)
-    assert result is not None
+    assert isinstance(result, dict)
     assert "affected_funds" in result
     assert len(result["affected_funds"]) >= 1
     syn7d = [f for f in result["affected_funds"] if f["fund_code"] == "SYN7D001"]
@@ -66,7 +66,7 @@ def test_overlap_from_qdii_sp500_fixture():
     bundle, _ = _bundle_from_payload(payload)
     metrics = compute_core_metrics(bundle, [], _make_skill_input())
     result = compute_overlap_diagnostics(bundle, metrics)
-    assert result is not None
+    assert isinstance(result, dict)
     assert "overlapping_holdings" in result
     assert "overlapping_themes" in result
 
@@ -76,7 +76,7 @@ def test_theme_overweight_from_ai_semiconductor_fixture():
     bundle, _ = _bundle_from_payload(payload)
     metrics = compute_core_metrics(bundle, [], _make_skill_input())
     result = compute_theme_overweight_diagnostics(bundle, metrics)
-    assert result is not None
+    assert isinstance(result, dict)
     assert "overweight_themes" in result
     assert len(result["overweight_themes"]) >= 1
     themes = {t["theme"] for t in result["overweight_themes"]}
@@ -88,7 +88,7 @@ def test_dca_drawdown_from_dca_fixture():
     bundle, _ = _bundle_from_payload(payload)
     metrics = compute_core_metrics(bundle, [], _make_skill_input())
     result = compute_dca_drawdown_diagnostics(bundle, metrics)
-    assert result is not None
+    assert isinstance(result, dict)
     assert "reviewed_funds" in result
 
 
@@ -97,7 +97,7 @@ def test_cash_budget_diagnostics_for_low_cash():
     bundle, _ = _bundle_from_payload(payload)
     metrics = compute_core_metrics(bundle, [], _make_skill_input())
     result = compute_cash_budget_diagnostics(bundle, metrics)
-    assert result is not None
+    assert isinstance(result, dict)
     assert "cash_ratio" in result
     assert result["cash_ratio"] < 0.1  # low cash scenario
 

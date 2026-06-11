@@ -1,0 +1,43 @@
+{
+  "description": "Fake MCP responses for dev-only harness testing. No live data.",
+  "news_evidence": [
+    {
+      "source_type": "financial_news",
+      "claim": "Fund demonstrates strong Q1 performance",
+      "direction": "positive",
+      "confidence_weight": 0.75,
+      "related_entities": ["fund:110011"],
+      "timestamp": "2026-06-01T00:00:00"
+    }
+  ],
+  "sentiment_evidence": [
+    {
+      "source_type": "social_sentiment",
+      "claim": "Market sentiment is cautiously optimistic",
+      "direction": "positive",
+      "confidence_weight": 0.6,
+      "related_entities": ["fund:110011"],
+      "timestamp": "2026-06-01T00:00:00"
+    }
+  ],
+  "benchmark_history": {
+    "110011": [
+      {"date": "2025-06-01", "nav": 1000.0},
+      {"date": "2026-06-01", "nav": 1100.0}
+    ]
+  },
+  "fund_profiles": {
+    "110011": {
+      "fund_code": "110011",
+      "name": "Example Equity Fund",
+      "fund_type": "equity",
+      "benchmark": "CSI300"
+    }
+  },
+  "fee_schedules": {
+    "110011": {"management_fee": 0.015}
+  },
+  "redemption_rules": {
+    "110011": {"holding_period_days": 7, "redemption_fee_pct": 0.015}
+  }
+}

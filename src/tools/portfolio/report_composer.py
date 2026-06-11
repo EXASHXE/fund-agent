@@ -1211,6 +1211,26 @@ def _localize_bullet(text: str) -> str:
         return "可选项缺口：" + text[len("Optional gaps: "):]
     if text.startswith("No required missing data groups were reported"):
         return "未报告必要数据缺口。"
+    if text.startswith("Fresh NAV, benchmark, news, or sentiment evidence is needed"):
+        return "需要新的净值、基准、新闻或情绪证据才能采取行动。"
+    if text.startswith("High-risk event markers: "):
+        return "高风险事件标记：" + text[len("High-risk event markers: "):]
+    if text.startswith("Event catalyst review covers "):
+        return "事件催化复核：" + text[len("Event catalyst review covers "):]
+    if text.startswith("Rebalance simulation produced "):
+        return "再平衡模拟：" + text[len("Rebalance simulation produced "):]
+    if text.startswith("Research query plan includes "):
+        return "研究查询计划：" + text[len("Research query plan includes "):]
+    if text.startswith("Short-term trade budget usage is available"):
+        return "短期交易预算使用情况可用。"
+    if text.startswith("No additional next-data items were requested"):
+        return "分析计划未要求补充额外数据。"
+    if text.startswith("Cash ratio is "):
+        return "现金比例：" + text[len("Cash ratio is "):]
+    if text.startswith("Liquidity reserve gap: "):
+        return "流动性储备缺口：" + text[len("Liquidity reserve gap: "):]
+    if text.startswith("Short-term trade budget status: "):
+        return "短期交易预算状态：" + text[len("Short-term trade budget status: "):]
     return text
 
 

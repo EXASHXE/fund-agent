@@ -138,8 +138,8 @@ class TestLedgerTools:
         assert isinstance(result["total_shares"], float)
         # Not more than 6 meaningful decimal digits
         shares_str = f"{result['total_shares']:.12f}"
-        # Allow up to 6 significant decimal places
-        assert True  # structural test passes
+        assert isinstance(result["total_shares"], float)
+        assert result["total_shares"] > 0
 
 
 class TestSimulatePositionLedger:
