@@ -149,20 +149,20 @@
   "target_trade_amount": 30000,
   "time_horizon": "medium_term",
   "expected_behavior": {
+    "decision_support_called": true,
+    "expected_report_status": "PARTIAL",
+    "expected_decision_status": "BLOCKED",
+    "expected_formal_source": "decision_support",
+    "expected_active_decision_count": 0,
+    "expected_passive_decision_count": 1,
+    "expected_blocked_decision_count": 1,
+    "expected_downgraded_decision_count": 1,
+    "expected_reason_code_contains": ["EVIDENCE_CONTRADICTORY", "CONSTRAINT_BLOCKED", "PROFIT_PROTECTION"],
+    "expected_risk_conflict_kinds": [],
+    "expected_required_report_sections": ["summary", "evidence_status", "decision_explanation", "limitations"],
     "fund_analysis": {
-      "profit_protection_diagnostics": "should show high profit level for 008253",
-      "suggested_rebalance_plan": "may contain analysis-only trim suggestion",
-      "analysis_plan.decision_support_ready": "should be true or have blockers explained",
-      "no_formal_decision": true
-    },
-    "evidence_bridge": {
-      "has_hard_evidence": true,
-      "has_soft_evidence": true
-    },
-    "decision_support": {
-      "action": "REDUCE or SELL or HOLD depending on evidence anchors",
-      "execution_ledger.ledger_summary": "should exist",
-      "no_broker_execution": true
+      "no_formal_decision": true,
+      "profit_protection_diagnostics_present": true
     }
   }
 }

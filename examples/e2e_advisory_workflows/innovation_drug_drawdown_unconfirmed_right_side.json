@@ -117,19 +117,20 @@
   "target_trade_amount": 15000,
   "time_horizon": "medium_term",
   "expected_behavior": {
+    "decision_support_called": true,
+    "expected_report_status": "PARTIAL",
+    "expected_decision_status": "BLOCKED",
+    "expected_formal_source": "decision_support",
+    "expected_active_decision_count": 0,
+    "expected_passive_decision_count": 1,
+    "expected_blocked_decision_count": 1,
+    "expected_downgraded_decision_count": 1,
+    "expected_reason_code_contains": ["LOSS_CONTROL", "CONSTRAINT_BLOCKED"],
+    "expected_risk_conflict_kinds": [],
+    "expected_required_report_sections": ["summary", "evidence_status", "decision_explanation", "limitations"],
     "fund_analysis": {
-      "right_side_confirmation_diagnostics": "should show right_side_confirmed is false",
-      "analysis_plan": "should include blockers or warnings",
-      "no_formal_decision": true
-    },
-    "evidence_bridge": {
-      "has_hard_evidence": true,
-      "right_side_not_confirmed": true
-    },
-    "decision_support": {
-      "action": "must not be BUY or INCREASE",
-      "blocked_or_downgraded": true,
-      "reason_codes_include_right_side": true
+      "no_formal_decision": true,
+      "right_side_confirmation_diagnostics_present": true
     }
   }
 }

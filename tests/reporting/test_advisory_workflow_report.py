@@ -421,3 +421,87 @@ class TestDecisionStatusReporting:
             decision_support_output=ds,
         )
         assert report["workflow_summary"]["decision_status"] == "FORMAL_DECISION"
+
+    def test_blocked_decision_never_returns_no_formal(self):
+        """Blocked decision with decision_support output must NOT return NO_FORMAL_DECISION."""
+        fa = _make_fa_output(status="OK", decision_ready=False)
+        ds = _make_ds_output(action="HOLD", amount=0, blocked_by=["evidence", "fee"])
+        report = compose_advisory_workflow_report(
+            scenario_id="test",
+            fund_analysis_output=fa,
+            decision_support_output=ds,
+        )
+        assert report["workflow_summary"]["decision_status"] != "NO_FORMAL_DECISION", (
+            f"Blocked decision should not return NO_FORMAL_DECISION, got {report['workflow_summary']['decision_status']}"
+        )
+
+    def test_formal_decision_cannot_be_blocked_unless_specifically_blocked(self):
+        """A BUY with no blockers must return FORMAL_DECISION."""
+        fa = _make_fa_output(status="OK", decision_ready=True)
+        ds = _make_ds_output(action="BUY", amount=5000)
+        report = compose_advisory_workflow_report(
+            scenario_id="test",
+            fund_analysis_output=fa,
+            decision_support_output=ds,
+        )
+        assert report["workflow_summary"]["decision_status"] == "FORMAL_DECISION"
+
+
+# ── Extra: nested forbidden field in multi-level objects ─────────────────────
+
+
+class TestSafetyBoundaryExtraNesting:
+    """Extra tests for deeply nested forbidden execution fields."""
+
+    def test_forbidden_field_5_levels_deep(self):
+        fa = _make_fa_output()
+        ds = _make_ds_output()
+        # Create 5-level deep nested forbidden field
+        ds["artifacts"]["execution_ledger"]["decisions"][0]["extra"] = {
+            "nested1": {
+                "nested2": {
+                    "nested3": {
+                        "exchange_order_id": "deeply-hidden-001"
+                    }
+                }
+            }
+        }
+        report = compose_advisory_workflow_report(
+            scenario_id="test",
+            fund_analysis_output=fa,
+            decision_support_output=ds,
+        )
+        safety = report["safety_boundary"]
+        assert safety["no_broker_execution"] is False
+        found = safety["forbidden_execution_fields_found"]
+        assert any("exchange_order_id" in f for f in found)
+
+    def test_forbidden_fields_in_list_items(self):
+        fa = _make_fa_output()
+        ds = _make_ds_output()
+        ds["artifacts"]["extra_list"] = [
+            {"ok_field": "safe"},
+            {"order_id": "list-item-bad"},
+        ]
+        report = compose_advisory_workflow_report(
+            scenario_id="test",
+            fund_analysis_output=fa,
+            decision_support_output=ds,
+        )
+        safety = report["safety_boundary"]
+        assert safety["no_broker_execution"] is False
+
+    def test_multiple_forbidden_fields_at_various_depths(self):
+        fa = _make_fa_output()
+        ds = _make_ds_output()
+        ds["artifacts"]["broker"] = "top-level-broker"
+        ds["artifacts"]["execution_ledger"]["decisions"][0]["order_status"] = "filled"
+        report = compose_advisory_workflow_report(
+            scenario_id="test",
+            fund_analysis_output=fa,
+            decision_support_output=ds,
+        )
+        safety = report["safety_boundary"]
+        assert safety["no_broker_execution"] is False
+        found = safety["forbidden_execution_fields_found"]
+        assert len(found) >= 2

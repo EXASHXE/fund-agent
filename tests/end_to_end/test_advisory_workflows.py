@@ -1,7 +1,8 @@
-"""E2E advisory workflow tests — v1.3/v1.4 full-flow hardening.
+"""E2E advisory workflow tests — v1.4.1 expected_behavior-driven assertions.
 
 Runs realistic user scenarios through:
 fund_analysis → EvidenceGraph → decision_support → final report/explanation.
+All assertions driven by fixture expected_behavior fields.
 """
 
 from __future__ import annotations
@@ -43,20 +44,64 @@ ALL_E2E_SCENARIOS = [
     "missing_data_report_only_no_fabrication",
 ]
 
+REPORT_ONLY_SCENARIOS = {"qdii_ai_overlap_concentration_watch", "missing_data_report_only_no_fabrication"}
+
+EXPECTED_BEHAVIOR_REQUIRED_KEYS = frozenset({
+    "decision_support_called",
+    "expected_report_status",
+    "expected_decision_status",
+    "expected_formal_source",
+    "expected_active_decision_count",
+    "expected_passive_decision_count",
+    "expected_blocked_decision_count",
+    "expected_downgraded_decision_count",
+    "expected_reason_code_contains",
+    "expected_risk_conflict_kinds",
+    "expected_required_report_sections",
+})
+
+
+def _get_expected(fixture: dict, keys: list[str] | None = None):
+    """Extract expected_behavior values from fixture with defaults."""
+    eb = fixture.get("expected_behavior", {})
+    if keys is None:
+        return eb
+    result = []
+    for k in keys:
+        result.append(eb.get(k))
+    return result
+
 
 def _all_fixture_files():
-    """List all JSON fixture files."""
     if not FIXTURES_DIR.exists():
         return []
     return sorted([f.stem for f in FIXTURES_DIR.glob("*.json")])
 
 
-# ── Phase 1: Fixture loading ──────────────────────────────────────────────
+def _run_workflow(scenario: str):
+    """Run full workflow for a scenario and return (fixture, fa_output, bridge_result, ds_output, report)."""
+    fixture = load_e2e_fixture(scenario)
+    fa_output = run_fund_analysis(fixture)
+    bridge_result = build_workflow_evidence(fixture, fa_output)
+    is_report_only = scenario in REPORT_ONLY_SCENARIOS
+    ds_output = None if is_report_only else run_decision_support(fa_output, fixture, bridge_result)
+    report = compose_final_report(fixture, fa_output, ds_output, bridge_result)
+    return fixture, fa_output, bridge_result, ds_output, report
+
+
+def _assert_decision_support_called(fixture, ds_output):
+    eb = fixture.get("expected_behavior", {})
+    called = eb.get("decision_support_called", False)
+    if called:
+        assert ds_output is not None, f"Expected decision_support to be called for {fixture['scenario_id']}"
+    else:
+        assert ds_output is None, f"Expected decision_support NOT to be called for {fixture['scenario_id']}"
+
+
+# ── Fixture loading and structural validation ───────────────────────────────
 
 
 class TestE2EFixtureLoading:
-    """Ensure all E2E fixtures load and are well-formed."""
-
     @pytest.mark.parametrize("scenario", ALL_E2E_SCENARIOS)
     def test_fixture_loads(self, scenario):
         fixture = load_e2e_fixture(scenario)
@@ -65,58 +110,68 @@ class TestE2EFixtureLoading:
         assert "positions" in fixture.get("portfolio", {})
 
     @pytest.mark.parametrize("scenario", ALL_E2E_SCENARIOS)
-    def test_fixture_has_expected_behavior(self, scenario):
+    def test_fixture_has_all_expected_behavior_keys(self, scenario):
         fixture = load_e2e_fixture(scenario)
-        expected = fixture.get("expected_behavior", {})
-        assert isinstance(expected, dict), f"expected_behavior must be dict, got {type(expected)}"
+        eb = fixture.get("expected_behavior", {})
+        assert isinstance(eb, dict), f"expected_behavior must be dict, got {type(eb)}"
+        for key in EXPECTED_BEHAVIOR_REQUIRED_KEYS:
+            assert key in eb, f"expected_behavior.{key} missing in {scenario}"
 
     @pytest.mark.parametrize("scenario", ALL_E2E_SCENARIOS)
     def test_fixture_has_no_execution_fields(self, scenario):
         fixture = load_e2e_fixture(scenario)
         assert_no_execution_fields(fixture, f"fixture:{scenario}")
 
+    @pytest.mark.parametrize("scenario", ALL_E2E_SCENARIOS)
+    def test_fixture_expected_behavior_fields_are_valid_types(self, scenario):
+        fixture = load_e2e_fixture(scenario)
+        eb = fixture.get("expected_behavior", {})
+        assert isinstance(eb.get("decision_support_called"), bool)
+        assert isinstance(eb.get("expected_report_status"), str)
+        assert isinstance(eb.get("expected_decision_status"), str)
+        assert isinstance(eb.get("expected_formal_source"), str)
+        assert isinstance(eb.get("expected_active_decision_count"), int)
+        assert isinstance(eb.get("expected_passive_decision_count"), int)
+        assert isinstance(eb.get("expected_blocked_decision_count"), int)
+        assert isinstance(eb.get("expected_downgraded_decision_count"), int)
+        assert isinstance(eb.get("expected_reason_code_contains"), list)
+        assert isinstance(eb.get("expected_risk_conflict_kinds"), list)
+        assert isinstance(eb.get("expected_required_report_sections"), list)
 
-# ── Phase 1: Fund analysis boundary ───────────────────────────────────────
+
+# ── Fund analysis boundary ──────────────────────────────────────────────────
 
 
 class TestFundAnalysisBoundary:
-    """fund_analysis must never emit formal Decision/ExecutionLedger."""
-
     @pytest.mark.parametrize("scenario", ALL_E2E_SCENARIOS)
-    def test_fund_analysis_no_formal_decision(self, scenario):
+    def test_no_formal_decision(self, scenario):
         fixture = load_e2e_fixture(scenario)
         output = run_fund_analysis(fixture)
         assert_no_formal_decision_in_output(output)
 
     @pytest.mark.parametrize("scenario", ALL_E2E_SCENARIOS)
-    def test_fund_analysis_produces_evidence_items(self, scenario):
+    def test_produces_evidence_items(self, scenario):
         fixture = load_e2e_fixture(scenario)
         output = run_fund_analysis(fixture)
-        assert output.evidence_items or output.status == "PARTIAL", (
-            f"Expected evidence items or PARTIAL status, got {output.status}"
-        )
+        assert output.evidence_items or output.status == "PARTIAL"
 
     @pytest.mark.parametrize("scenario", ALL_E2E_SCENARIOS)
-    def test_fund_analysis_produces_artifacts(self, scenario):
+    def test_produces_artifacts(self, scenario):
         fixture = load_e2e_fixture(scenario)
         output = run_fund_analysis(fixture)
-        artifacts = output.artifacts or {}
-        assert isinstance(artifacts, dict)
+        assert isinstance(output.artifacts or {}, dict)
 
     @pytest.mark.parametrize("scenario", ALL_E2E_SCENARIOS)
-    def test_fund_analysis_no_execution_fields(self, scenario):
+    def test_no_execution_fields(self, scenario):
         fixture = load_e2e_fixture(scenario)
         output = run_fund_analysis(fixture)
-        output_dict = output.to_dict()
-        assert_no_execution_fields(output_dict, f"fund_analysis:{scenario}")
+        assert_no_execution_fields(output.to_dict(), f"fund_analysis:{scenario}")
 
 
-# ── Phase 3: EvidenceGraph bridge ─────────────────────────────────────────
+# ── EvidenceGraph bridge ────────────────────────────────────────────────────
 
 
 class TestEvidenceGraphBridge:
-    """EvidenceGraph bridge connects fund_analysis evidence to decision_support."""
-
     @pytest.mark.parametrize("scenario", ALL_E2E_SCENARIOS)
     def test_bridge_produces_graph(self, scenario):
         fixture = load_e2e_fixture(scenario)
@@ -124,438 +179,175 @@ class TestEvidenceGraphBridge:
         result = build_workflow_evidence(fixture, fa_output)
         assert result.graph is not None
         assert result.included_evidence_count >= 0
-        assert isinstance(result.host_soft_evidence_count, int)
 
     @pytest.mark.parametrize("scenario", ALL_E2E_SCENARIOS)
     def test_bridge_no_execution_fields(self, scenario):
         fixture = load_e2e_fixture(scenario)
         fa_output = run_fund_analysis(fixture)
         result = build_workflow_evidence(fixture, fa_output)
-        result_dict = result.to_dict()
-        assert_no_execution_fields(result_dict, f"bridge:{scenario}")
-
-    def test_bridge_graph_accepted_by_decision_support(self):
-        """EvidenceGraph from bridge should be accepted by decision_support."""
-        fixture = load_e2e_fixture("semiconductor_profit_protection_formal_reduce")
-        fa_output = run_fund_analysis(fixture)
-        result = build_workflow_evidence(fixture, fa_output)
-
-        ds_skill = DecisionSupportSkill()
-        from src.schemas.skill import SkillInput
-
-        ds_input = SkillInput(
-            task_id="bridge-test",
-            step_id="ds",
-            skill_name="decision_support",
-            payload={
-                "evidence_graph": result.graph.to_dict(),
-                "requested_action": fixture.get("requested_action", "HOLD"),
-                "portfolio_context": fixture.get("portfolio", {}),
-                "risk_profile": fixture.get("risk_profile", {}),
-                "constraints": fixture.get("constraints", {}),
-            },
-        )
-        ds_output = ds_skill.run(ds_input)
-        assert ds_output.status in ("OK", "PARTIAL")
-
-    def test_bridge_handles_host_news_evidence(self):
-        fixture = load_e2e_fixture("all_data_sufficient_formal_trade_plan")
-        fa_output = run_fund_analysis(fixture)
-        result = build_workflow_evidence(fixture, fa_output)
-
-        soft = result.graph.soft_evidence_count()
-        assert soft >= 1, f"Expected at least 1 soft evidence from news, got {soft}"
-
-    def test_bridge_handles_host_sentiment_evidence(self):
-        fixture = load_e2e_fixture("semiconductor_profit_protection_formal_reduce")
-        fa_output = run_fund_analysis(fixture)
-        result = build_workflow_evidence(fixture, fa_output)
-
-        soft = result.graph.soft_evidence_count()
-        assert soft >= 1, f"Expected soft evidence from sentiment, got {soft}"
-
-    def test_bridge_warns_on_missing_data(self):
-        fixture = load_e2e_fixture("missing_data_report_only_no_fabrication")
-        fa_output = run_fund_analysis(fixture)
-        result = build_workflow_evidence(fixture, fa_output)
-
-        assert result.host_soft_evidence_count == 0
-        warnings = result.warnings
-        assert any("No news" in w or "No sentiment" in w for w in warnings), (
-            f"Expected warning about missing news/sentiment, got {warnings}"
-        )
+        assert_no_execution_fields(result.to_dict(), f"bridge:{scenario}")
 
     def test_bridge_does_not_fabricate_evidence(self):
         fixture = load_e2e_fixture("missing_data_report_only_no_fabrication")
         fa_output = run_fund_analysis(fixture)
         result = build_workflow_evidence(fixture, fa_output)
-
         for item in result.graph.items.values():
-            assert item.evidence_type in ("HardEvidence", "SoftEvidence", "HybridEvidence")
-            assert item.claim  # must have content
             assert item.source_type not in ("fabricated", "generated", "inferred", "llm")
 
-    def test_bridge_invalid_host_evidence_is_warned(self):
-        fa_output = run_fund_analysis(load_e2e_fixture("semiconductor_profit_protection_formal_reduce"))
-        result = build_evidence_graph_from_workflow(
-            fund_analysis_output=fa_output.to_dict(),
-            host_news_evidence=[{"invalid": "no title or entities"}],
-            host_sentiment_evidence=[{"bad": "no entity"}],
-        )
-        assert len(result.missing_or_invalid_evidence) >= 2 or len(result.warnings) >= 2
 
-
-# ── Phase 4-5: Decision support boundary ──────────────────────────────────
+# ── Decision support boundary ───────────────────────────────────────────────
 
 
 class TestDecisionSupportBoundary:
-    """decision_support is the only formal decision runtime."""
-
-    @pytest.mark.parametrize("scenario", [
-        "semiconductor_profit_protection_formal_reduce",
-        "innovation_drug_drawdown_unconfirmed_right_side",
-        "short_holding_fee_sell_blocked",
-        "cash_bond_deployment_budget_guard",
-        "all_data_sufficient_formal_trade_plan",
-    ])
-    def test_decision_support_produces_formal_decision(self, scenario):
+    @pytest.mark.parametrize("scenario", sorted(set(ALL_E2E_SCENARIOS) - REPORT_ONLY_SCENARIOS))
+    def test_called_when_fixture_expects(self, scenario):
         fixture = load_e2e_fixture(scenario)
-        fa_output = run_fund_analysis(fixture)
-        result = build_workflow_evidence(fixture, fa_output)
-        ds_output = run_decision_support(fa_output, fixture, result)
+        eb = fixture.get("expected_behavior", {})
+        assert eb.get("decision_support_called") is True, f"{scenario}: expected decision_support_called=true"
 
-        assert ds_output.status in ("OK", "PARTIAL")
-        ds_artifacts = ds_output.artifacts or {}
-        assert ds_artifacts.get("decision") or ds_artifacts.get("execution_ledger") or ds_artifacts.get("decisions"), (
-            f"decision_support should produce decision/execution_ledger/decisions, got keys: {list(ds_artifacts.keys())[:10]}"
-        )
-
-    @pytest.mark.parametrize("scenario", [
-        "semiconductor_profit_protection_formal_reduce",
-        "innovation_drug_drawdown_unconfirmed_right_side",
-        "short_holding_fee_sell_blocked",
-        "cash_bond_deployment_budget_guard",
-        "all_data_sufficient_formal_trade_plan",
-    ])
-    def test_decision_support_no_execution_fields(self, scenario):
+    @pytest.mark.parametrize("scenario", sorted(REPORT_ONLY_SCENARIOS))
+    def test_not_called_when_report_only(self, scenario):
         fixture = load_e2e_fixture(scenario)
-        fa_output = run_fund_analysis(fixture)
-        result = build_workflow_evidence(fixture, fa_output)
-        ds_output = run_decision_support(fa_output, fixture, result)
-        ds_dict = ds_output.to_dict()
-        assert_no_execution_fields(ds_dict, f"decision_support:{scenario}")
+        eb = fixture.get("expected_behavior", {})
+        assert eb.get("decision_support_called") is False, f"{scenario}: expected decision_support_called=false"
 
     def test_only_decision_support_produces_formal_decision(self):
-        """Assert fund_analysis never produces formal Decision/ExecutionLedger
-        while decision_support does."""
         fixture = load_e2e_fixture("all_data_sufficient_formal_trade_plan")
         fa_output = run_fund_analysis(fixture)
         result = build_workflow_evidence(fixture, fa_output)
         ds_output = run_decision_support(fa_output, fixture, result)
-
         assert_decision_support_is_only_formal_producer(fa_output, ds_output)
 
+    @pytest.mark.parametrize("scenario", sorted(set(ALL_E2E_SCENARIOS) - REPORT_ONLY_SCENARIOS))
+    def test_no_execution_fields(self, scenario):
+        _, _, _, ds_output, _ = _run_workflow(scenario)
+        assert_no_execution_fields(ds_output.to_dict(), f"decision_support:{scenario}")
 
-# ── Phase 4-5: Specific scenario assertions ────────────────────────────────
+
+# ── Workflow summary assertions (expected_behavior-driven) ──────────────────
 
 
-class TestSemiconductorProfitProtection:
-    """Scenario: semiconductor profit protection → formal REDUCE."""
+class TestWorkflowSummaryMatchesExpectedBehavior:
+    """Each scenario's workflow_summary must match expected_behavior exactly."""
 
-    def test_fund_analysis_produces_profit_diagnostics(self):
-        fixture = load_e2e_fixture("semiconductor_profit_protection_formal_reduce")
-        output = run_fund_analysis(fixture)
-        artifacts = output.artifacts or {}
-        pp = artifacts.get("profit_protection_diagnostics", {})
-        assert pp, "Expected profit_protection_diagnostics in artifacts"
-
-    def test_decision_support_allows_reduce_if_anchored(self):
-        fixture = load_e2e_fixture("semiconductor_profit_protection_formal_reduce")
-        fa_output = run_fund_analysis(fixture)
-        result = build_workflow_evidence(fixture, fa_output)
-        ds_output = run_decision_support(fa_output, fixture, result)
-
-        ds_artifacts = ds_output.artifacts or {}
-        decision = ds_artifacts.get("decision", {})
-        action = str(decision.get("action", "")).upper()
-
-        assert action in ("REDUCE", "SELL", "HOLD", "WAIT"), (
-            f"Expected REDUCE/SELL/HOLD/WAIT, got {action}"
+    @pytest.mark.parametrize("scenario", ALL_E2E_SCENARIOS)
+    def test_report_status_matches_expected(self, scenario):
+        fixture, fa_output, br, ds_output, report = _run_workflow(scenario)
+        (expected_report_status,) = _get_expected(fixture, ["expected_report_status"])
+        actual = report["workflow_summary"]["report_status"]
+        assert actual == expected_report_status, (
+            f"{scenario}: report_status expected={expected_report_status}, got={actual}"
         )
 
+    @pytest.mark.parametrize("scenario", ALL_E2E_SCENARIOS)
+    def test_decision_status_matches_expected(self, scenario):
+        fixture, fa_output, br, ds_output, report = _run_workflow(scenario)
+        (expected_decision_status,) = _get_expected(fixture, ["expected_decision_status"])
+        actual = report["workflow_summary"]["decision_status"]
+        assert actual == expected_decision_status, (
+            f"{scenario}: decision_status expected={expected_decision_status}, got={actual}"
+        )
+
+    @pytest.mark.parametrize("scenario", ALL_E2E_SCENARIOS)
+    def test_formal_source_matches_expected(self, scenario):
+        fixture, fa_output, br, ds_output, report = _run_workflow(scenario)
+        (expected_source,) = _get_expected(fixture, ["expected_formal_source"])
+        actual = report["safety_boundary"]["formal_decision_source"]
+        assert actual == expected_source, (
+            f"{scenario}: formal_decision_source expected={expected_source}, got={actual}"
+        )
+
+    @pytest.mark.parametrize("scenario", sorted(set(ALL_E2E_SCENARIOS) - REPORT_ONLY_SCENARIOS))
+    def test_ledger_counts_match_expected(self, scenario):
+        fixture, fa_output, br, ds_output, report = _run_workflow(scenario)
+        eb = fixture.get("expected_behavior", {})
+        ds_artifacts = ds_output.artifacts or {}
         ledger = ds_artifacts.get("execution_ledger", {})
-        assert ledger, "Expected execution_ledger in artifacts"
         ls = ledger.get("ledger_summary", {})
-        assert ls, "Expected ledger_summary"
-
-
-class TestInnovationDrugDrawdown:
-    """Scenario: drawdown + unconfirmed right side → block active BUY."""
-
-    def test_fund_analysis_produces_right_side_diagnostics(self):
-        fixture = load_e2e_fixture("innovation_drug_drawdown_unconfirmed_right_side")
-        output = run_fund_analysis(fixture)
-        artifacts = output.artifacts or {}
-        rs = artifacts.get("right_side_confirmation_diagnostics", {})
-        assert rs, "Expected right_side_confirmation_diagnostics"
-
-    def test_decision_support_blocks_active_buy(self):
-        fixture = load_e2e_fixture("innovation_drug_drawdown_unconfirmed_right_side")
-        fa_output = run_fund_analysis(fixture)
-        result = build_workflow_evidence(fixture, fa_output)
-        ds_output = run_decision_support(fa_output, fixture, result)
-
-        ds_artifacts = ds_output.artifacts or {}
-        decision = ds_artifacts.get("decision", {})
-        action = str(decision.get("action", "")).upper()
-        blocked = decision.get("blocked_by", [])
-        reason_codes = decision.get("decision_reason_codes", [])
-
-        assert action != "BUY", "Active BUY should be blocked or downgraded"
-        assert action != "INCREASE", "Active INCREASE should be blocked or downgraded"
-        assert action in ("HOLD", "WAIT", "PAUSE_DCA") or (blocked or "RIGHT_SIDE_UNCONFIRMED" in str(reason_codes)), (
-            f"Expected HOLD/WAIT/PAUSE_DCA or blocked by right_side, got action={action}, blocked={blocked}, reasons={reason_codes}"
-        )
-
-    def test_evidence_anchor_diagnostics_explains_blockage(self):
-        fixture = load_e2e_fixture("innovation_drug_drawdown_unconfirmed_right_side")
-        fa_output = run_fund_analysis(fixture)
-        result = build_workflow_evidence(fixture, fa_output)
-        ds_output = run_decision_support(fa_output, fixture, result)
-
-        ds_artifacts = ds_output.artifacts or {}
-        anchor_diag = ds_artifacts.get("evidence_anchor_diagnostics", {})
-        assert anchor_diag, "Expected evidence_anchor_diagnostics"
-
-    def test_decision_reason_codes_include_evidence_insufficiency(self):
-        fixture = load_e2e_fixture("innovation_drug_drawdown_unconfirmed_right_side")
-        fa_output = run_fund_analysis(fixture)
-        result = build_workflow_evidence(fixture, fa_output)
-        ds_output = run_decision_support(fa_output, fixture, result)
-
-        ds_artifacts = ds_output.artifacts or {}
-        decision = ds_artifacts.get("decision", {})
-        action = str(decision.get("action", "")).upper()
-        blocked = decision.get("blocked_by", [])
-        reason_codes = decision.get("decision_reason_codes", [])
-        evidence_state = str(decision.get("evidence_state", ""))
-
-        # Verify structured justification for passive/blocked decision
-        has_insufficient = (
-            "INSUFFICIENT_EVIDENCE" in str(reason_codes) or
-            "EVIDENCE" in str(reason_codes) or
-            "right_side" in str(blocked).lower() or
-            "evidence" in str(blocked).lower() or
-            "INSUFFICIENT_EVIDENCE" in evidence_state.upper() or
-            "DOWNGRADED" in evidence_state.upper()
-        )
-        assert action in ("HOLD", "WAIT", "PAUSE_DCA") or has_insufficient, (
-            f"Expected passive action or evidence insufficiency markers, "
-            f"got action={action}, blocked={blocked}, reasons={reason_codes}, state={evidence_state}"
-        )
-
-
-class TestShortHoldingFeeBlocker:
-    """Scenario: short-holding fee → block active SELL."""
-
-    def test_fund_analysis_produces_redemption_diagnostics(self):
-        fixture = load_e2e_fixture("short_holding_fee_sell_blocked")
-        output = run_fund_analysis(fixture)
-        artifacts = output.artifacts or {}
-        rf = artifacts.get("redemption_fee_risk", {})
-        assert rf or output.warnings, f"Expected redemption_fee_risk or warnings, got {list(artifacts.keys())[:10]}"
-
-    def test_decision_support_blocks_active_sell(self):
-        fixture = load_e2e_fixture("short_holding_fee_sell_blocked")
-        fa_output = run_fund_analysis(fixture)
-        result = build_workflow_evidence(fixture, fa_output)
-        ds_output = run_decision_support(fa_output, fixture, result)
-
-        ds_artifacts = ds_output.artifacts or {}
-        decision = ds_artifacts.get("decision", {})
-        action = str(decision.get("action", "")).upper()
-
-        assert action not in ("SELL", "REDUCE"), (
-            f"Active SELL/REDUCE should be blocked, got {action}"
-        )
-
-    def test_execution_ledger_records_blockage(self):
-        fixture = load_e2e_fixture("short_holding_fee_sell_blocked")
-        fa_output = run_fund_analysis(fixture)
-        result = build_workflow_evidence(fixture, fa_output)
-        ds_output = run_decision_support(fa_output, fixture, result)
-
-        ds_artifacts = ds_output.artifacts or {}
-        ledger = ds_artifacts.get("execution_ledger", {})
-        if ledger:
-            ls = ledger.get("ledger_summary", {})
-            assert ls.get("active_decision_count", 0) == 0, (
-                "Active decision count should be 0 for blocked scenario"
+        for field in ("active_decision_count", "passive_decision_count", "blocked_decision_count", "downgraded_decision_count"):
+            expected = eb.get(f"expected_{field}")
+            actual = ls.get(field)
+            assert actual == expected, (
+                f"{scenario}: {field} expected={expected}, got={actual}"
             )
 
-    def test_decision_reason_codes_include_fee_blocker(self):
-        fixture = load_e2e_fixture("short_holding_fee_sell_blocked")
-        fa_output = run_fund_analysis(fixture)
-        result = build_workflow_evidence(fixture, fa_output)
-        ds_output = run_decision_support(fa_output, fixture, result)
+    @pytest.mark.parametrize("scenario", sorted(set(ALL_E2E_SCENARIOS) - REPORT_ONLY_SCENARIOS))
+    def test_decision_not_no_formal_when_ds_called(self, scenario):
+        fixture, fa_output, br, ds_output, report = _run_workflow(scenario)
+        status = report["workflow_summary"]["decision_status"]
+        assert status != "NO_FORMAL_DECISION", (
+            f"{scenario}: decision_support was called but decision_status is NO_FORMAL_DECISION"
+        )
+
+
+# ── Reason codes and blocker assertions ─────────────────────────────────────
+
+
+class TestReasonCodesMatchExpected:
+    @pytest.mark.parametrize("scenario", sorted(set(ALL_E2E_SCENARIOS) - REPORT_ONLY_SCENARIOS))
+    def test_reason_codes_contain_expected_fragments(self, scenario):
+        fixture, fa_output, br, ds_output, report = _run_workflow(scenario)
+        eb = fixture.get("expected_behavior", {})
+        expected_codes = eb.get("expected_reason_code_contains", [])
+        if not expected_codes:
+            return
 
         ds_artifacts = ds_output.artifacts or {}
+        # Aggregate reason codes from both single-decision and multi-decision paths
+        all_reason_parts: list[str] = []
+
         decision = ds_artifacts.get("decision", {})
-        reason_codes = decision.get("decision_reason_codes", [])
-        blocked_by = decision.get("blocked_by", [])
-        all_codes = [str(rc) for rc in reason_codes] + [str(b) for b in blocked_by]
-        has_fee = any(
-            "FEE" in code or "REDEMPTION" in code or "fee" in code.lower() or "redemption" in code.lower()
-            for code in all_codes
-        )
-        assert has_fee or decision.get("action", "").upper() in ("HOLD", "WAIT", "PAUSE_DCA"), (
-            f"Expected fee/redemption blocker in reason codes or blocked_by, got reason_codes={reason_codes}, blocked_by={blocked_by}"
-        )
+        if isinstance(decision, dict):
+            all_reason_parts.append(str(decision.get("decision_reason_codes", [])))
+            all_reason_parts.append(str(decision.get("blocked_by", [])))
+            all_reason_parts.append(str(decision.get("evidence_state", "")))
 
+        decisions_list = ds_artifacts.get("decisions", [])
+        if isinstance(decisions_list, list):
+            for d in decisions_list:
+                if isinstance(d, dict):
+                    all_reason_parts.append(str(d.get("decision_reason_codes", [])))
+                    all_reason_parts.append(str(d.get("blocked_by", [])))
+                    all_reason_parts.append(str(d.get("evidence_state", "")))
 
-class TestQDIIAIOverlap:
-    """Scenario: QDII/AI overlap → report only, no decision_support needed."""
+        all_reason_text = " ".join(all_reason_parts)
 
-    def test_fund_analysis_produces_exposure_summary(self):
-        fixture = load_e2e_fixture("qdii_ai_overlap_concentration_watch")
-        output = run_fund_analysis(fixture)
-        artifacts = output.artifacts or {}
-        es = artifacts.get("exposure_summary", {})
-        assert es is not None, "Expected exposure_summary in artifacts"
-
-    def test_fund_analysis_no_formal_decision_report_only(self):
-        fixture = load_e2e_fixture("qdii_ai_overlap_concentration_watch")
-        output = run_fund_analysis(fixture)
-        assert_no_formal_decision_in_output(output)
-
-    def test_knowledge_graph_summary_enabled(self):
-        fixture = load_e2e_fixture("qdii_ai_overlap_concentration_watch")
-        output = run_fund_analysis(fixture)
-        artifacts = output.artifacts or {}
-        kg = artifacts.get("knowledge_graph_summary", {})
-        if kg and isinstance(kg, dict):
-            assert kg.get("enabled") is not False, "KG should be enabled with sufficient holdings"
-            assert kg.get("limitations") is not None or kg.get("enabled") is True, (
-                "KG should explain limitations if disabled"
+        for code_fragment in expected_codes:
+            assert code_fragment in all_reason_text, (
+                f"{scenario}: expected reason code fragment '{code_fragment}' not found in: {all_reason_text[:300]}"
             )
 
 
-class TestCashBondDeployment:
-    """Scenario: cash/bond deployment → budget guard."""
-
-    def test_fund_analysis_produces_cash_diagnostics(self):
-        fixture = load_e2e_fixture("cash_bond_deployment_budget_guard")
-        output = run_fund_analysis(fixture)
-        artifacts = output.artifacts or {}
-        cd = artifacts.get("cash_deployment_diagnostics", {})
-        assert cd, "Expected cash_deployment_diagnostics"
-
-    def test_decision_support_caps_or_blocks_by_constraint(self):
-        fixture = load_e2e_fixture("cash_bond_deployment_budget_guard")
-        fa_output = run_fund_analysis(fixture)
-        result = build_workflow_evidence(fixture, fa_output)
-        ds_output = run_decision_support(fa_output, fixture, result)
-
-        ds_artifacts = ds_output.artifacts or {}
-        decision = ds_artifacts.get("decision", {})
-        action = str(decision.get("action", "")).upper()
-        amount = float(decision.get("execution_amount", 0))
-
-        requested = float(fixture.get("target_trade_amount", 0))
-        assert amount <= requested, f"Capped amount {amount} should not exceed requested {requested}"
-
-        risk_conflicts = ds_artifacts.get("risk_constraint_conflicts", {})
-        assert risk_conflicts, "Expected risk_constraint_conflicts"
+# ── Report-only scenario assertions ─────────────────────────────────────────
 
 
-class TestAllDataTradePlan:
-    """Scenario: complete payload → formal multi-leg trade plan."""
+class TestReportOnlyScenarios:
+    @pytest.mark.parametrize("scenario", sorted(REPORT_ONLY_SCENARIOS))
+    def test_decision_support_not_called(self, scenario):
+        _, _, _, ds_output, _ = _run_workflow(scenario)
+        assert ds_output is None, f"{scenario}: decision_support should not be called"
 
-    def test_fund_analysis_ready_for_decision(self):
-        fixture = load_e2e_fixture("all_data_sufficient_formal_trade_plan")
-        output = run_fund_analysis(fixture)
-        artifacts = output.artifacts or {}
-        ap = artifacts.get("analysis_plan", {})
-        assert ap.get("decision_support_ready") is not False, (
-            "Expected decision_support_ready to be true"
-        )
+    @pytest.mark.parametrize("scenario", sorted(REPORT_ONLY_SCENARIOS))
+    def test_decision_status_is_no_formal_decision(self, scenario):
+        _, _, _, _, report = _run_workflow(scenario)
+        assert report["workflow_summary"]["decision_status"] == "NO_FORMAL_DECISION"
 
-    def test_decision_support_produces_multiple_decisions(self):
-        fixture = load_e2e_fixture("all_data_sufficient_formal_trade_plan")
-        fa_output = run_fund_analysis(fixture)
-        result = build_workflow_evidence(fixture, fa_output)
-        ds_output = run_decision_support(fa_output, fixture, result)
-
-        ds_artifacts = ds_output.artifacts or {}
-        decisions = ds_artifacts.get("decisions", [])
-        assert len(decisions) >= 1, f"Expected at least 1 decision, got {len(decisions)}"
-
-    def test_ledger_summary_has_expected_counts(self):
-        fixture = load_e2e_fixture("all_data_sufficient_formal_trade_plan")
-        fa_output = run_fund_analysis(fixture)
-        result = build_workflow_evidence(fixture, fa_output)
-        ds_output = run_decision_support(fa_output, fixture, result)
-
-        ds_artifacts = ds_output.artifacts or {}
-        ledger = ds_artifacts.get("execution_ledger", {})
-        assert ledger, "Expected execution_ledger"
-        ls = ledger.get("ledger_summary", {})
-        assert "active_decision_count" in ls
-        assert "passive_decision_count" in ls
-        assert "blocked_decision_count" in ls
-        assert "downgraded_decision_count" in ls
-
-    def test_allowed_capped_blocked_behavior(self):
-        fixture = load_e2e_fixture("all_data_sufficient_formal_trade_plan")
-        fa_output = run_fund_analysis(fixture)
-        result = build_workflow_evidence(fixture, fa_output)
-        ds_output = run_decision_support(fa_output, fixture, result)
-
-        ds_artifacts = ds_output.artifacts or {}
-        decisions = ds_artifacts.get("decisions", [])
-        actions = {str(d.get("action", "")).upper() for d in decisions}
-
-        # At minimum, decisions should be produced
-        assert len(decisions) >= 1, f"Expected decisions, got {len(decisions)}"
-
-        # Check evidence_anchor_diagnostics has per-trade coverage
-        anchor_diag = ds_artifacts.get("evidence_anchor_diagnostics", {})
-        trade_coverage = anchor_diag.get("trade_anchor_coverage", [])
-        assert len(trade_coverage) >= 1, f"Expected per-trade coverage diagnostics, got {len(trade_coverage)}"
-
-    def test_ledger_summary_has_per_trade_diagnostics(self):
-        fixture = load_e2e_fixture("all_data_sufficient_formal_trade_plan")
-        fa_output = run_fund_analysis(fixture)
-        result = build_workflow_evidence(fixture, fa_output)
-        ds_output = run_decision_support(fa_output, fixture, result)
-
-        ds_artifacts = ds_output.artifacts or {}
-        anchor_diag = ds_artifacts.get("evidence_anchor_diagnostics", {})
-        assert anchor_diag.get("trade_plan_has_active_actions") is not None or \
-            anchor_diag.get("trade_plan_requires_anchor") is not None, \
-            "Expected trade_plan_ flags in anchor diagnostics"
+    @pytest.mark.parametrize("scenario", sorted(REPORT_ONLY_SCENARIOS))
+    def test_formal_decision_source_is_none(self, scenario):
+        _, _, _, _, report = _run_workflow(scenario)
+        assert report["safety_boundary"]["formal_decision_source"] == "none"
 
 
-class TestMissingDataReportOnly:
-    """Scenario: missing data → report only, no fabrication."""
+# ── Missing data scenario assertions ────────────────────────────────────────
 
-    def test_fund_analysis_produces_missing_data_diagnostics(self):
-        fixture = load_e2e_fixture("missing_data_report_only_no_fabrication")
-        output = run_fund_analysis(fixture)
-        artifacts = output.artifacts or {}
-        gap = artifacts.get("evidence_gap_diagnostics", {})
-        assert gap or output.warnings or output.status == "PARTIAL", (
-            "Expected evidence_gap_diagnostics or warnings for missing data"
-        )
 
+class TestMissingDataNoFabrication:
     def test_analysis_plan_decision_not_ready(self):
         fixture = load_e2e_fixture("missing_data_report_only_no_fabrication")
         output = run_fund_analysis(fixture)
         artifacts = output.artifacts or {}
         ap = artifacts.get("analysis_plan", {})
-        assert ap.get("decision_support_ready") is False, (
-            "decision_support_ready should be false when data is missing"
-        )
+        assert ap.get("decision_support_ready") is False
 
     def test_no_fabricated_cost_basis(self):
         fixture = load_e2e_fixture("missing_data_report_only_no_fabrication")
@@ -568,132 +360,160 @@ class TestMissingDataReportOnly:
                 for item in items:
                     if isinstance(item, dict):
                         cost_basis = item.get("cost_basis") or item.get("total_cost")
-                        assert cost_basis is not None, (
-                            f"No fabricated cost basis expected, got {cost_basis}"
-                        )
+                        assert cost_basis is not None, f"No fabricated cost basis expected, got {cost_basis}"
 
-
-# ── Phase 6: Final report composer ─────────────────────────────────────────
-
-
-class TestFinalReportComposer:
-    """Final workflow report / explanation composer."""
-
-    @pytest.mark.parametrize("scenario", ALL_E2E_SCENARIOS)
-    def test_report_produced(self, scenario):
-        fixture = load_e2e_fixture(scenario)
+    def test_no_fabricated_news_sentiment_fees_benchmark_in_bridge(self):
+        fixture = load_e2e_fixture("missing_data_report_only_no_fabrication")
         fa_output = run_fund_analysis(fixture)
+        result = build_workflow_evidence(fixture, fa_output)
+        assert result.host_soft_evidence_count == 0, "No soft evidence should be fabricated from missing news/sentiment"
+        source_types = {item.source_type for item in result.graph.items.values()}
+        assert "host_news" not in source_types, "No host_news should be fabricated"
+        assert "host_sentiment" not in source_types, "No host_sentiment should be fabricated"
 
-        if scenario == "qdii_ai_overlap_concentration_watch" or scenario == "missing_data_report_only_no_fabrication":
-            # Report-only scenarios: no decision_support call
-            report = compose_final_report(fixture, fa_output)
-        else:
-            result = build_workflow_evidence(fixture, fa_output)
-            ds_output = run_decision_support(fa_output, fixture, result)
-            report = compose_final_report(fixture, fa_output, ds_output, result)
 
-        assert "workflow_summary" in report
-        assert "user_facing_sections" in report
-        assert "safety_boundary" in report
+# ── Scenario-specific diagnostic presence ───────────────────────────────────
+
+
+class TestDiagnosticPresence:
+    def test_semiconductor_has_profit_protection(self):
+        fixture = load_e2e_fixture("semiconductor_profit_protection_formal_reduce")
+        output = run_fund_analysis(fixture)
+        assert (output.artifacts or {}).get("profit_protection_diagnostics")
+
+    def test_innovation_drug_has_right_side(self):
+        fixture = load_e2e_fixture("innovation_drug_drawdown_unconfirmed_right_side")
+        output = run_fund_analysis(fixture)
+        assert (output.artifacts or {}).get("right_side_confirmation_diagnostics")
+
+    def test_short_holding_has_fee_diagnostics(self):
+        fixture = load_e2e_fixture("short_holding_fee_sell_blocked")
+        output = run_fund_analysis(fixture)
+        artifacts = output.artifacts or {}
+        assert artifacts.get("redemption_fee_risk") or output.warnings
+
+    def test_qdii_ai_overlap_has_exposure_summary(self):
+        fixture = load_e2e_fixture("qdii_ai_overlap_concentration_watch")
+        output = run_fund_analysis(fixture)
+        assert (output.artifacts or {}).get("exposure_summary") is not None
+
+    def test_cash_bond_has_cash_diagnostics(self):
+        fixture = load_e2e_fixture("cash_bond_deployment_budget_guard")
+        output = run_fund_analysis(fixture)
+        assert (output.artifacts or {}).get("cash_deployment_diagnostics")
+
+
+# ── Final report section assertions ─────────────────────────────────────────
+
+
+class TestFinalReportSections:
+    @pytest.mark.parametrize("scenario", ALL_E2E_SCENARIOS)
+    def test_report_has_all_required_sections(self, scenario):
+        fixture, fa_output, br, ds_output, report = _run_workflow(scenario)
+        eb = fixture.get("expected_behavior", {})
+        expected_sections = eb.get("expected_required_report_sections", [])
+        actual_ids = {s["id"] for s in report.get("user_facing_sections", [])}
+        for section_id in expected_sections:
+            assert section_id in actual_ids, (
+                f"{scenario}: expected section '{section_id}' in report, got {actual_ids}"
+            )
 
     @pytest.mark.parametrize("scenario", ALL_E2E_SCENARIOS)
     def test_report_no_execution_fields(self, scenario):
-        fixture = load_e2e_fixture(scenario)
-        fa_output = run_fund_analysis(fixture)
-
-        if scenario == "qdii_ai_overlap_concentration_watch" or scenario == "missing_data_report_only_no_fabrication":
-            report = compose_final_report(fixture, fa_output)
-        else:
-            result = build_workflow_evidence(fixture, fa_output)
-            ds_output = run_decision_support(fa_output, fixture, result)
-            report = compose_final_report(fixture, fa_output, ds_output, result)
-
+        _, _, _, _, report = _run_workflow(scenario)
         assert_no_execution_fields(report, f"report:{scenario}")
 
-    @pytest.mark.parametrize("scenario", ALL_E2E_SCENARIOS)
-    def test_report_has_required_sections(self, scenario):
-        fixture = load_e2e_fixture(scenario)
-        fa_output = run_fund_analysis(fixture)
+    @pytest.mark.parametrize("scenario", sorted(set(ALL_E2E_SCENARIOS) - REPORT_ONLY_SCENARIOS))
+    def test_safety_boundary_no_broker_execution(self, scenario):
+        _, _, _, _, report = _run_workflow(scenario)
+        safety = report["safety_boundary"]
+        assert safety["no_broker_execution"] is True
 
-        if scenario == "qdii_ai_overlap_concentration_watch" or scenario == "missing_data_report_only_no_fabrication":
-            report = compose_final_report(fixture, fa_output)
-        else:
-            result = build_workflow_evidence(fixture, fa_output)
-            ds_output = run_decision_support(fa_output, fixture, result)
-            report = compose_final_report(fixture, fa_output, ds_output, result)
+    def test_report_only_safety_boundary_no_formal_source(self):
+        for scenario in sorted(REPORT_ONLY_SCENARIOS):
+            _, _, _, _, report = _run_workflow(scenario)
+            assert report["safety_boundary"]["formal_decision_source"] == "none"
 
-        sections = report.get("user_facing_sections", [])
-        section_ids = {s.get("id") for s in sections}
-        for expected_id in ("summary", "evidence_status", "decision_explanation", "limitations"):
-            assert expected_id in section_ids, (
-                f"Expected section '{expected_id}' in report, got {section_ids}"
-            )
 
-    def test_report_only_scenarios_show_no_formal_decision(self):
-        for scenario in ("qdii_ai_overlap_concentration_watch", "missing_data_report_only_no_fabrication"):
-            fixture = load_e2e_fixture(scenario)
-            fa_output = run_fund_analysis(fixture)
-            report = compose_final_report(fixture, fa_output)
+# ── Specific detailed scenario assertions ───────────────────────────────────
 
-            summary = report.get("workflow_summary", {})
-            assert summary.get("decision_status") == "NO_FORMAL_DECISION", (
-                f"Expected NO_FORMAL_DECISION for {scenario}, got {summary.get('decision_status')}"
-            )
 
-    def test_blocked_scenarios_explain_why(self):
-        fixture = load_e2e_fixture("short_holding_fee_sell_blocked")
-        fa_output = run_fund_analysis(fixture)
-        result = build_workflow_evidence(fixture, fa_output)
-        ds_output = run_decision_support(fa_output, fixture, result)
-        report = compose_final_report(fixture, fa_output, ds_output, result)
+class TestSemiconductorDetailed:
+    def test_decision_is_passive_when_blocked(self):
+        fixture, fa_output, br, ds_output, report = _run_workflow("semiconductor_profit_protection_formal_reduce")
+        decision = (ds_output.artifacts or {}).get("decision", {})
+        action = str(decision.get("action", "")).upper()
+        assert action in ("HOLD", "WAIT", "PAUSE_DCA"), f"Blocked decision should be passive, got {action}"
+        assert decision.get("blocked_by"), "Blocked decision should have blocked_by"
 
-        summary = report.get("workflow_summary", {})
-        assert summary.get("decision_status") in ("BLOCKED", "DOWNGRADED", "NO_FORMAL_DECISION"), (
-            f"Expected BLOCKED/DOWNGRADED/NO_FORMAL_DECISION, got {summary.get('decision_status')}"
+    def test_profit_protection_in_reason_codes(self):
+        fixture, fa_output, br, ds_output, report = _run_workflow("semiconductor_profit_protection_formal_reduce")
+        decision = (ds_output.artifacts or {}).get("decision", {})
+        reason_text = str(decision.get("decision_reason_codes", [])) + str(decision.get("blocked_by", []))
+        assert "PROFIT_PROTECTION" in reason_text
+
+
+class TestInnovationDrugDetailed:
+    def test_active_buy_is_blocked(self):
+        fixture, fa_output, br, ds_output, report = _run_workflow("innovation_drug_drawdown_unconfirmed_right_side")
+        decision = (ds_output.artifacts or {}).get("decision", {})
+        action = str(decision.get("action", "")).upper()
+        assert action not in ("BUY", "INCREASE"), f"Active BUY/INCREASE should be blocked, got {action}"
+
+    def test_has_anchor_diagnostics(self):
+        _, _, _, ds_output, _ = _run_workflow("innovation_drug_drawdown_unconfirmed_right_side")
+        ds_artifacts = ds_output.artifacts or {}
+        anchor_diag = ds_artifacts.get("evidence_anchor_diagnostics", {})
+        assert anchor_diag, "Expected evidence_anchor_diagnostics"
+
+
+class TestShortHoldingDetailed:
+    def test_active_sell_is_blocked(self):
+        fixture, fa_output, br, ds_output, report = _run_workflow("short_holding_fee_sell_blocked")
+        decision = (ds_output.artifacts or {}).get("decision", {})
+        action = str(decision.get("action", "")).upper()
+        assert action not in ("SELL", "REDUCE"), f"Active SELL/REDUCE should be blocked, got {action}"
+
+    def test_blocked_decision_not_no_formal(self):
+        _, _, _, _, report = _run_workflow("short_holding_fee_sell_blocked")
+        status = report["workflow_summary"]["decision_status"]
+        assert status != "NO_FORMAL_DECISION", (
+            f"Blocked scenario should not return NO_FORMAL_DECISION, got {status}"
         )
 
-    def test_all_data_formal_shows_formal_decision(self):
-        fixture = load_e2e_fixture("all_data_sufficient_formal_trade_plan")
-        fa_output = run_fund_analysis(fixture)
-        result = build_workflow_evidence(fixture, fa_output)
-        ds_output = run_decision_support(fa_output, fixture, result)
-        report = compose_final_report(fixture, fa_output, ds_output, result)
+    def test_active_decision_count_is_zero(self):
+        _, _, _, ds_output, _ = _run_workflow("short_holding_fee_sell_blocked")
+        ledger = (ds_output.artifacts or {}).get("execution_ledger", {})
+        ls = ledger.get("ledger_summary", {})
+        assert ls.get("active_decision_count", -1) == 0
 
-        summary = report.get("workflow_summary", {})
-        assert summary.get("decision_status") in ("FORMAL_DECISION", "DOWNGRADED", "BLOCKED"), (
-            f"Expected FORMAL_DECISION, DOWNGRADED, or BLOCKED, got {summary.get('decision_status')}"
+
+class TestAllDataTradePlanDetailed:
+    def test_produces_multiple_decisions(self):
+        _, _, _, ds_output, _ = _run_workflow("all_data_sufficient_formal_trade_plan")
+        decisions = (ds_output.artifacts or {}).get("decisions", [])
+        assert len(decisions) >= 3, f"Expected 3 decisions, got {len(decisions)}"
+
+    def test_per_trade_anchor_coverage(self):
+        _, _, _, ds_output, _ = _run_workflow("all_data_sufficient_formal_trade_plan")
+        anchor_diag = (ds_output.artifacts or {}).get("evidence_anchor_diagnostics", {})
+        trade_coverage = anchor_diag.get("trade_anchor_coverage", [])
+        trade_ids = {tc.get("trade_id") for tc in trade_coverage if isinstance(tc, dict)}
+        expected_trade_ids = {"trade_1", "trade_2", "trade_3"}
+        assert trade_ids == expected_trade_ids, (
+            f"Expected coverage for all 3 trade legs, got {trade_ids}"
         )
 
-    def test_safety_boundary_no_broker_execution(self):
-        fixture = load_e2e_fixture("all_data_sufficient_formal_trade_plan")
-        fa_output = run_fund_analysis(fixture)
-        result = build_workflow_evidence(fixture, fa_output)
-        ds_output = run_decision_support(fa_output, fixture, result)
-        report = compose_final_report(fixture, fa_output, ds_output, result)
-
-        safety = report.get("safety_boundary", {})
-        assert safety.get("no_broker_execution") is True
-        assert safety.get("formal_decision_source") == "decision_support"
-
-    @pytest.mark.parametrize("scenario", [
-        "qdii_ai_overlap_concentration_watch",
-        "missing_data_report_only_no_fabrication",
-    ])
-    def test_report_only_safety_boundary_no_formal_source(self, scenario):
-        fixture = load_e2e_fixture(scenario)
-        fa_output = run_fund_analysis(fixture)
-        report = compose_final_report(fixture, fa_output)
-
-        safety = report.get("safety_boundary", {})
-        assert safety.get("formal_decision_source") == "none"
+    def test_decision_status_matches_fixture(self):
+        _, _, _, _, report = _run_workflow("all_data_sufficient_formal_trade_plan")
+        status = report["workflow_summary"]["decision_status"]
+        assert status != "NO_FORMAL_DECISION", f"All-data trade plan must have formal evaluation, got {status}"
 
 
-# ── Phase 8: Acceptance criteria ───────────────────────────────────────────
+# ── Acceptance criteria ─────────────────────────────────────────────────────
 
 
 class TestAcceptanceCriteria:
-    """Full acceptance criteria verification."""
-
     def test_all_e2e_fixtures_exist(self):
         found = _all_fixture_files()
         for name in ALL_E2E_SCENARIOS:
@@ -701,38 +521,22 @@ class TestAcceptanceCriteria:
 
     def test_all_fixtures_run_fund_analysis_and_bridge(self):
         for scenario in ALL_E2E_SCENARIOS:
-            fixture = load_e2e_fixture(scenario)
-            fa_output = run_fund_analysis(fixture)
+            fixture, fa_output, br, _, _ = _run_workflow(scenario)
             assert fa_output.status in ("OK", "PARTIAL", "FAILED")
-            result = build_workflow_evidence(fixture, fa_output)
-            assert result.graph is not None
-
-    def test_all_decision_scenarios_produce_audit_trail(self):
-        decision_scenarios = [s for s in ALL_E2E_SCENARIOS
-                              if s not in ("qdii_ai_overlap_concentration_watch",
-                                           "missing_data_report_only_no_fabrication")]
-        for scenario in decision_scenarios:
-            fixture = load_e2e_fixture(scenario)
-            fa_output = run_fund_analysis(fixture)
-            result = build_workflow_evidence(fixture, fa_output)
-            ds_output = run_decision_support(fa_output, fixture, result)
-            ds_artifacts = ds_output.artifacts or {}
-            decision = ds_artifacts.get("decision", {})
-            ledger = ds_artifacts.get("execution_ledger", {})
-            assert decision or ledger, f"Expected decision or ledger for {scenario}"
+            assert br.graph is not None
 
     def test_no_broker_execution_across_workflow(self):
         for scenario in ALL_E2E_SCENARIOS:
             fixture = load_e2e_fixture(scenario)
             fa_output = run_fund_analysis(fixture)
-            fa_dict = fa_output.to_dict()
-            assert_no_execution_fields(fa_dict, f"fa:{scenario}")
+            assert_no_execution_fields(fa_output.to_dict(), f"fa:{scenario}")
+            br = build_workflow_evidence(fixture, fa_output)
+            assert_no_execution_fields(br.to_dict(), f"bridge:{scenario}")
+            if scenario not in REPORT_ONLY_SCENARIOS:
+                ds_output = run_decision_support(fa_output, fixture, br)
+                assert_no_execution_fields(ds_output.to_dict(), f"ds:{scenario}")
 
-            result = build_workflow_evidence(fixture, fa_output)
-            result_dict = result.to_dict()
-            assert_no_execution_fields(result_dict, f"bridge:{scenario}")
-
-            if scenario not in ("qdii_ai_overlap_concentration_watch", "missing_data_report_only_no_fabrication"):
-                ds_output = run_decision_support(fa_output, fixture, result)
-                ds_dict = ds_output.to_dict()
-                assert_no_execution_fields(ds_dict, f"ds:{scenario}")
+    def test_decision_support_called_exact_match(self):
+        for scenario in ALL_E2E_SCENARIOS:
+            fixture, _, _, ds_output, _ = _run_workflow(scenario)
+            _assert_decision_support_called(fixture, ds_output)

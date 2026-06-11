@@ -67,15 +67,20 @@
   "requested_action": "",
   "time_horizon": "long_term",
   "expected_behavior": {
+    "decision_support_called": false,
+    "expected_report_status": "PARTIAL",
+    "expected_decision_status": "NO_FORMAL_DECISION",
+    "expected_formal_source": "none",
+    "expected_active_decision_count": 0,
+    "expected_passive_decision_count": 0,
+    "expected_blocked_decision_count": 0,
+    "expected_downgraded_decision_count": 0,
+    "expected_reason_code_contains": [],
+    "expected_risk_conflict_kinds": [],
+    "expected_required_report_sections": ["summary", "evidence_status", "decision_explanation", "limitations"],
     "fund_analysis": {
-      "status": "OK or PARTIAL with explicit missing data diagnostics",
-      "report_quality_gate": "may allow limited report with explicit limitations",
-      "analysis_plan.decision_support_ready": false,
       "no_formal_decision": true,
-      "no_fabricated_data": true
-    },
-    "decision_support": {
-      "not_called_or_blocked": true
+      "analysis_plan_decision_support_ready": false
     }
   }
 }
