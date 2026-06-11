@@ -184,9 +184,9 @@ def _check_trade_plan_conflicts(
         if action not in ACTIVE_ACTIONS:
             continue
 
-        requested = _float_value(trade.get("amount"), _float_value(trade.get("requested_amount"), 0.0))
+        requested = _float_value(trade.get("requested_amount"), _float_value(trade.get("amount"), 0.0))
         capped = _float_value(trade.get("amount"), 0.0)
-        cap_reasons = trade.get("cap_reasons", [])
+        cap_reasons = list(trade.get("cap_reasons", []))
 
         if cap_reasons:
             for reason in cap_reasons:

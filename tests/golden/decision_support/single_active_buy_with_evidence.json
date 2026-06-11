@@ -53,6 +53,8 @@
       "limitations": [],
       "missing_anchor_refs": [],
       "trade_anchor_coverage": [],
+      "trade_plan_has_active_actions": false,
+      "trade_plan_requires_anchor": false,
       "valid_anchor_refs": [
         "ev-hard-positive",
         "ev-hard-fundamentals"

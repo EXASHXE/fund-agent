@@ -67,15 +67,17 @@
       "missing_anchor_refs": [],
       "trade_anchor_coverage": [
         {
-          "action": "BUY",
+          "action": "HOLD",
           "coverage": "none",
           "invalid_refs": [],
           "provided_refs": [],
-          "required": true,
+          "required": false,
           "trade_id": "trade-buy-no-evidence",
           "valid_refs": []
         }
       ],
+      "trade_plan_has_active_actions": false,
+      "trade_plan_requires_anchor": false,
       "valid_anchor_refs": []
     },
     "execution_ledger": {

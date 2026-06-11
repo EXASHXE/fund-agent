@@ -229,3 +229,123 @@ class TestRiskConstraintConflictsSummary:
         assert summary["has_capping_conflict"] is False
         assert summary["blocked_trade_count"] == 0
         assert summary["capped_trade_count"] == 0
+
+
+class TestSingleDecisionRequestedVsCapped:
+    def test_requested_amount_from_payload_exceeds_max_trade_pct(self):
+        payload = {
+            "portfolio_context": {"total_value": 100000, "cash_available": 50000},
+            "risk_profile": {"max_trade_pct": 0.05},
+            "constraints": {},
+        }
+        result = build_risk_constraint_conflicts(
+            action="BUY",
+            payload=payload,
+            requested_amount=15000,
+            capped_amount=5000,
+        )
+        items = result["items"]
+        max_trade_item = next(i for i in items if i["constraint"] == "max_trade_pct")
+        assert max_trade_item["requested"] == 15000
+        assert max_trade_item["allowed"] == 5000.0
+        assert max_trade_item["actual"] == 5000
+        assert max_trade_item["resolution"] == "cap_amount"
+
+    def test_requested_amount_from_payload_exceeds_max_buy_amount(self):
+        payload = {
+            "portfolio_context": {"total_value": 100000, "cash_available": 50000},
+            "risk_profile": {"max_trade_pct": 0.5},
+            "constraints": {"max_buy_amount": 3000},
+        }
+        result = build_risk_constraint_conflicts(
+            action="BUY",
+            payload=payload,
+            requested_amount=10000,
+            capped_amount=3000,
+        )
+        items = result["items"]
+        max_buy_item = next(i for i in items if i["constraint"] == "max_buy_amount")
+        assert max_buy_item["requested"] == 10000
+        assert max_buy_item["allowed"] == 3000
+        assert max_buy_item["actual"] == 3000
+        assert max_buy_item["resolution"] == "cap_amount"
+
+
+class TestTradePlanCapReasonsFromValidatedTrades:
+    def test_validated_trade_with_cap_reasons(self):
+        payload = {
+            "portfolio_context": {"total_value": 100000},
+            "risk_profile": {},
+            "constraints": {},
+        }
+        validated_trades = [
+            {
+                "trade_id": "T1",
+                "fund_code": "110011",
+                "action": "BUY",
+                "requested_amount": 10000,
+                "amount": 5000,
+                "cap_reasons": ["max_trade_pct (0.05) exceeded"],
+            },
+        ]
+        result = build_risk_constraint_conflicts(
+            action="BUY",
+            payload=payload,
+            trade_plan=validated_trades,
+        )
+        items = result["items"]
+        assert len(items) >= 1
+        cap_item = next(i for i in items if i["constraint"] == "max_trade_pct")
+        assert cap_item["requested"] == 10000
+        assert cap_item["allowed"] == 5000
+        assert cap_item["actual"] == 5000
+        assert cap_item["resolution"] == "cap_amount"
+
+    def test_validated_trade_forbidden_action(self):
+        payload = {
+            "portfolio_context": {"total_value": 100000},
+            "risk_profile": {},
+            "constraints": {"forbidden_actions": ["SELL"]},
+        }
+        validated_trades = [
+            {
+                "trade_id": "T1",
+                "fund_code": "110011",
+                "action": "SELL",
+                "requested_amount": 5000,
+                "amount": 5000,
+            },
+        ]
+        result = build_risk_constraint_conflicts(
+            action="BUY",
+            payload=payload,
+            trade_plan=validated_trades,
+        )
+        items = result["items"]
+        assert any(i["constraint"] == "forbidden_actions" and i["resolution"] == "reject_trade" for i in items)
+
+    def test_validated_trade_cash_available_cap_reason(self):
+        payload = {
+            "portfolio_context": {"total_value": 100000},
+            "risk_profile": {},
+            "constraints": {},
+        }
+        validated_trades = [
+            {
+                "trade_id": "T1",
+                "fund_code": "110011",
+                "action": "BUY",
+                "requested_amount": 20000,
+                "amount": 3000,
+                "cap_reasons": ["cash_available insufficient after liquidity reserve"],
+            },
+        ]
+        result = build_risk_constraint_conflicts(
+            action="BUY",
+            payload=payload,
+            trade_plan=validated_trades,
+        )
+        items = result["items"]
+        cash_item = next(i for i in items if i["constraint"] == "cash_available")
+        assert cash_item["requested"] == 20000
+        assert cash_item["allowed"] == 3000

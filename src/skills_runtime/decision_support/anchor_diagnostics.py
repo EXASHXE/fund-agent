@@ -55,6 +55,18 @@ def build_evidence_anchor_diagnostics(
     if not active_action_requires_anchor and not rationale_anchor:
         limitations.append("Passive action with no anchors; evidence_state explains blockage")
 
+    trade_plan_has_active_actions = False
+    trade_plan_requires_anchor = False
+    if trade_plan:
+        for trade in trade_plan:
+            if not isinstance(trade, dict):
+                continue
+            trade_action = str(trade.get("action", "")).upper()
+            if trade_action in ACTIVE_ACTIONS:
+                trade_plan_has_active_actions = True
+                trade_plan_requires_anchor = True
+                break
+
     return {
         "active_action_requires_anchor": active_action_requires_anchor,
         "anchor_count": anchor_count,
@@ -64,6 +76,8 @@ def build_evidence_anchor_diagnostics(
         "trade_anchor_coverage": trade_anchor_coverage,
         "anchor_entity_mismatch": anchor_entity_mismatch,
         "limitations": limitations,
+        "trade_plan_has_active_actions": trade_plan_has_active_actions,
+        "trade_plan_requires_anchor": trade_plan_requires_anchor,
     }
 
 

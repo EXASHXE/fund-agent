@@ -63,17 +63,10 @@
           "valid_refs": [
             "ev-f001-positive"
           ]
-        },
-        {
-          "action": "HOLD",
-          "coverage": "none",
-          "invalid_refs": [],
-          "provided_refs": [],
-          "required": false,
-          "trade_id": "trade-hold-other",
-          "valid_refs": []
         }
       ],
+      "trade_plan_has_active_actions": true,
+      "trade_plan_requires_anchor": true,
       "valid_anchor_refs": [
         "ev-f001-positive"
       ]
@@ -147,12 +140,32 @@
       "version": "execution-ledger.v1"
     },
     "risk_constraint_conflicts": {
-      "items": [],
+      "items": [
+        {
+          "actual": 5000.0,
+          "allowed": 5000.0,
+          "constraint": "max_buy_amount",
+          "reason": "Requested 10000.0 exceeds max_buy_amount (5000.0)",
+          "requested": 10000.0,
+          "resolution": "cap_amount",
+          "scope": "decision"
+        },
+        {
+          "actual": 5000.0,
+          "allowed": 5000.0,
+          "constraint": "max_buy_amount",
+          "reason": "max_buy_amount (5000.0)",
+          "requested": 10000.0,
+          "resolution": "cap_amount",
+          "scope": "trade",
+          "trade_id": "trade-buy-capped"
+        }
+      ],
       "summary": {
         "blocked_trade_count": 0,
-        "capped_trade_count": 0,
+        "capped_trade_count": 2,
         "has_blocking_conflict": false,
-        "has_capping_conflict": false
+        "has_capping_conflict": true
       }
     }
   },

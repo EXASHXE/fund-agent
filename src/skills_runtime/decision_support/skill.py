@@ -12,9 +12,9 @@ from typing import Any
 from src.schemas.decision import ExecutionLedger
 from src.schemas.skill import SkillInput, SkillOutput
 
-from .action_policy import _normalized_action
+from .action_policy import _normalized_action, ACTIVE_ACTIONS
 from .anchor_diagnostics import build_evidence_anchor_diagnostics
-from .context import _dict
+from .context import _dict, _optional_float
 from .decision_stage import (
     _build_decision,
     _critique_from_payload,
@@ -103,15 +103,21 @@ class DecisionSupportSkill:
                 action=decisions[0].action if decisions else "HOLD",
                 evidence_graph=graph,
                 rationale_anchor=decisions[0].rationale_anchor if decisions else [],
-                trade_plan=trades,
+                trade_plan=validated_trades,
             )
+
+            first_decision = decisions[0] if decisions else None
+            first_trade = validated_trades[0] if validated_trades else {}
+            first_requested = _optional_float(
+                first_trade.get("requested_amount", first_trade.get("amount"))
+            ) or (first_decision.execution_amount if first_decision else 0.0)
 
             risk_conflicts = build_risk_constraint_conflicts(
                 action=decisions[0].action if decisions else "HOLD",
                 payload=skill_input.payload,
-                requested_amount=decisions[0].execution_amount if decisions else 0.0,
+                requested_amount=first_requested,
                 capped_amount=decisions[0].execution_amount if decisions else 0.0,
-                trade_plan=trades,
+                trade_plan=validated_trades,
             )
 
             return SkillOutput(
@@ -187,10 +193,18 @@ class DecisionSupportSkill:
             rationale_anchor=decision.rationale_anchor,
         )
 
+        requested_amount = _optional_float(
+            skill_input.payload.get("requested_amount")
+        ) or _optional_float(
+            skill_input.payload.get("target_trade_amount")
+        ) or _optional_float(
+            skill_input.payload.get("execution_amount")
+        ) or decision.execution_amount
+
         risk_conflicts = build_risk_constraint_conflicts(
             action=decision.action,
             payload=skill_input.payload,
-            requested_amount=decision.execution_amount,
+            requested_amount=requested_amount,
             capped_amount=decision.execution_amount,
         )
 

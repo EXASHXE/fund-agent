@@ -211,3 +211,82 @@ class TestEvidenceAnchorDiagnosticsTradePlanPath:
         coverage = result["trade_anchor_coverage"]
         assert len(coverage) == 1
         assert coverage[0]["required"] is False
+
+
+class TestTradePlanAnchorDiagnosticsTopLevelFields:
+    def test_trade_plan_has_active_actions_true(self):
+        graph = EvidenceGraph()
+        graph.add(_make_evidence("ev1"))
+        trade_plan = [
+            {"trade_id": "T1", "fund_code": "110011", "action": "HOLD", "evidence_refs": [], "risk_flags_refs": []},
+            {"trade_id": "T2", "fund_code": "006123", "action": "BUY", "evidence_refs": ["ev1"], "risk_flags_refs": []},
+        ]
+        result = build_evidence_anchor_diagnostics(
+            action="HOLD",
+            evidence_graph=graph,
+            rationale_anchor=[],
+            trade_plan=trade_plan,
+        )
+        assert result["trade_plan_has_active_actions"] is True
+        assert result["trade_plan_requires_anchor"] is True
+
+    def test_trade_plan_has_active_actions_false(self):
+        graph = EvidenceGraph()
+        trade_plan = [
+            {"trade_id": "T1", "fund_code": "110011", "action": "HOLD", "evidence_refs": [], "risk_flags_refs": []},
+            {"trade_id": "T2", "fund_code": "006123", "action": "WAIT", "evidence_refs": [], "risk_flags_refs": []},
+        ]
+        result = build_evidence_anchor_diagnostics(
+            action="HOLD",
+            evidence_graph=graph,
+            rationale_anchor=[],
+            trade_plan=trade_plan,
+        )
+        assert result["trade_plan_has_active_actions"] is False
+        assert result["trade_plan_requires_anchor"] is False
+
+    def test_trade_plan_no_trades_both_false(self):
+        graph = EvidenceGraph()
+        result = build_evidence_anchor_diagnostics(
+            action="HOLD",
+            evidence_graph=graph,
+            rationale_anchor=[],
+        )
+        assert result["trade_plan_has_active_actions"] is False
+        assert result["trade_plan_requires_anchor"] is False
+
+    def test_existing_fields_preserved(self):
+        graph = EvidenceGraph()
+        graph.add(_make_evidence("ev1"))
+        trade_plan = [
+            {"trade_id": "T1", "fund_code": "110011", "action": "BUY", "evidence_refs": ["ev1"], "risk_flags_refs": []},
+        ]
+        result = build_evidence_anchor_diagnostics(
+            action="BUY",
+            evidence_graph=graph,
+            rationale_anchor=["ev1"],
+            trade_plan=trade_plan,
+        )
+        for field in ("active_action_requires_anchor", "anchor_count",
+                      "missing_anchor_refs", "invalid_anchor_refs",
+                      "valid_anchor_refs", "trade_anchor_coverage",
+                      "anchor_entity_mismatch", "limitations",
+                      "trade_plan_has_active_actions", "trade_plan_requires_anchor"):
+            assert field in result, f"missing field: {field}"
+
+    def test_mixed_downgraded_and_active_trades(self):
+        graph = EvidenceGraph()
+        graph.add(_make_evidence("ev1"))
+        trade_plan = [
+            {"trade_id": "T1", "fund_code": "110011", "action": "HOLD", "evidence_refs": [], "risk_flags_refs": []},
+            {"trade_id": "T2", "fund_code": "006123", "action": "BUY", "evidence_refs": ["ev1"], "risk_flags_refs": []},
+        ]
+        result = build_evidence_anchor_diagnostics(
+            action="HOLD",
+            evidence_graph=graph,
+            rationale_anchor=[],
+            trade_plan=trade_plan,
+        )
+        assert result["active_action_requires_anchor"] is False
+        assert result["trade_plan_has_active_actions"] is True
+        assert result["trade_plan_requires_anchor"] is True
