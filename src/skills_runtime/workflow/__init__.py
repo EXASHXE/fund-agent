@@ -17,6 +17,7 @@ from .evidence_bridge import (
     convert_host_sentiment_to_soft_evidence,
     WorkflowEvidenceGraphResult,
 )
+from .workflow_trace import WorkflowTrace
 
 __all__ = [
     "AdvisoryIntent",
@@ -30,4 +31,5 @@ __all__ = [
     "is_report_only",
     "is_soft_advice_only",
     "WorkflowEvidenceGraphResult",
+    "WorkflowTrace",
 ]

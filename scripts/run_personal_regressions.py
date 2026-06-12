@@ -61,6 +61,8 @@ def run_scenario(path: Path) -> dict[str, Any]:
         "direct_answer": [item.strip() for item in direct_bullets if item.strip()][:4],
         "blockers_reason_codes": reason_codes,
         "no_broker_execution": result.final_report["safety_boundary"]["no_broker_execution"],
+        "quality_gate": result.quality_gate,
+        "workflow_trace": result.workflow_trace,
     }
 
 
@@ -72,12 +74,17 @@ def print_pretty(payload: dict[str, Any]) -> None:
     )
     for result in payload["results"]:
         status = "PASS" if result["passed"] else "FAIL"
-        print(f"\n[{status}] {result['scenario_id']}")
-        print(f"  intents: {', '.join(result['advisory_intents'])}")
+        qg = result.get("quality_gate", {})
+        gate_status = "PASS" if qg.get("passed", True) else "FAIL"
+        gate_fails = qg.get("summary", {}).get("fail_count", 0) if qg else 0
+        gate_warns = qg.get("summary", {}).get("warn_count", 0) if qg else 0
         print(
-            f"  report={result['report_status']} decision={result['decision_status']} "
-            f"formal_source={result['formal_source']}"
+            f"\n[{status}] {result['scenario_id']} | "
+            f"report={result['report_status']} decision={result['decision_status']} "
+            f"gate={gate_status} fails={gate_fails} warns={gate_warns}"
         )
+        print(f"  intents: {', '.join(result['advisory_intents'])}")
+        print(f"  formal_source={result['formal_source']}")
         print(f"  direct_answer: {' / '.join(result['direct_answer'])}")
         if result["blockers_reason_codes"]:
             print(f"  reason_codes: {result['blockers_reason_codes']}")
@@ -86,11 +93,29 @@ def print_pretty(payload: dict[str, Any]) -> None:
                 print(f"  - {failure}")
 
 
+def print_trace(payload: dict[str, Any]) -> None:
+    for result in payload["results"]:
+        trace = result.get("workflow_trace", {})
+        if not trace:
+            continue
+        print(f"\n=== {result['scenario_id']} ===")
+        for event in trace.get("events", []):
+            seq = event.get("sequence", "?")
+            etype = event.get("type", "?")
+            msg = event.get("message", "")
+            details = event.get("details", {})
+            detail_str = f" {details}" if details else ""
+            print(f"  [{seq}] {etype}: {msg}{detail_str}")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--scenario", help="Run one scenario_id")
     parser.add_argument("--json", action="store_true", help="Print JSON summary")
     parser.add_argument("--pretty", action="store_true", help="Print readable summary")
+    parser.add_argument("--show-trace", action="store_true", help="Print compact stage trace")
+    parser.add_argument("--emit-trace", metavar="PATH", help="Write JSONL trace to file")
+    parser.add_argument("--gate-only", action="store_true", help="Print gate results and exit nonzero on fail")
     args = parser.parse_args(argv)
 
     paths = fixture_paths(args.scenario)
@@ -106,8 +131,36 @@ def main(argv: list[str] | None = None) -> int:
         "results": results,
     }
 
+    if args.emit_trace:
+        trace_path = Path(args.emit_trace)
+        lines: list[str] = []
+        for result in results:
+            trace = result.get("workflow_trace", {})
+            for event in trace.get("events", []):
+                lines.append(json.dumps(event, ensure_ascii=False, sort_keys=True))
+        trace_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    if args.gate_only:
+        gate_failures = []
+        for result in results:
+            qg = result.get("quality_gate", {})
+            if not qg.get("passed", True):
+                gate_failures.append(result["scenario_id"])
+        if gate_failures:
+            print(f"Gate FAILED for: {', '.join(gate_failures)}")
+            for result in results:
+                qg = result.get("quality_gate", {})
+                for check in qg.get("checks", []):
+                    if check["status"] == "FAIL":
+                        print(f"  {result['scenario_id']}: {check['id']} - {check['message']}")
+            return 1
+        print(f"All {len(results)} scenarios passed quality gate")
+        return 0
+
     if args.json:
         print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
+    elif args.show_trace:
+        print_trace(payload)
     else:
         print_pretty(payload)
 

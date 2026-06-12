@@ -28,6 +28,8 @@ testpaths = [
     "tests/runtime_bridge",
     "tests/personal_regression",
     "tests/scripts",
+    "tests/workflow",
+    "tests/host_data",
 ]
 pythonpath = ["."]
 markers = [

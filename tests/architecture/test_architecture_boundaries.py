@@ -513,7 +513,7 @@ def test_manifest_skill_docs_have_runtime_contract_fields_and_workflow_sections(
 
 ALLOWLIST = frozenset({
     "schemas", "graph", "tools",
-    "skills_runtime", "skillpack",
+    "skills_runtime", "skillpack", "host_data",
     "__init__.py",
 })
 

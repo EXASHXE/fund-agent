@@ -20,6 +20,8 @@ from src.skills_runtime.workflow.evidence_bridge import (
     build_evidence_graph_from_workflow,
     resolve_evidence_source_refs,
 )
+from src.skills_runtime.workflow.workflow_trace import WorkflowTrace
+from src.tools.workflow.advisory_quality_gate import evaluate_advisory_quality_gate
 from src.tools.workflow.final_report import compose_advisory_workflow_report
 
 from tests.end_to_end.helpers import (
@@ -78,6 +80,8 @@ class PersonalRegressionResult:
     evidence_graph: dict
     decision_support_output: dict | None
     final_report: dict
+    workflow_trace: dict | None = None
+    quality_gate: dict | None = None
     checks: list[dict] = field(default_factory=list)
     ok: bool = True
     errors: list[str] = field(default_factory=list)
@@ -100,19 +104,53 @@ def run_personal_regression_fixture(
     scenario_id = fixture["scenario_id"]
     eb = fixture["expected_behavior"]
 
+    trace = WorkflowTrace(scenario_id=scenario_id)
+    trace.add_event("input_loaded", f"Loaded personal regression fixture: {scenario_id}")
+
     intents = _classify_intents(fixture)
+    trace.add_event("intent_classified", f"Intents: {', '.join(intents)}", {"intents": intents})
+
+    trace.add_event("fund_analysis_started", "Starting fund_analysis")
     fa_output = _run_fund_analysis(fixture)
+    trace.add_event("fund_analysis_completed", "fund_analysis completed", {"status": fa_output.status})
+
+    trace.add_event("evidence_graph_started", "Building evidence graph")
     evidence_result = _build_evidence(fixture, fa_output)
+    trace.add_event("evidence_graph_built", "Evidence graph built", {"item_count": len(evidence_result.graph.items)})
 
-    ds_output = (
-        _run_decision_support(fixture, fa_output, evidence_result)
-        if eb["decision_support_called"]
-        else None
-    )
+    ds_output = None
+    if eb["decision_support_called"]:
+        trace.add_event("decision_support_started", "Starting decision_support")
+        ds_output = _run_decision_support(fixture, fa_output, evidence_result)
+        trace.add_event("decision_support_completed", "decision_support completed", {"status": ds_output.status})
+    else:
+        trace.add_event("decision_support_skipped", "decision_support skipped (report-only)")
 
+    trace.add_event("final_report_started", "Composing final report")
     report = _compose_report(
         fixture, fa_output, ds_output, evidence_result, intents,
     )
+    trace.add_event("final_report_composed", "Final report composed", {
+        "report_status": report.get("workflow_summary", {}).get("report_status"),
+        "decision_status": report.get("workflow_summary", {}).get("decision_status"),
+    })
+
+    trace.add_event("quality_gate_started", "Evaluating quality gate")
+    quality_gate = evaluate_advisory_quality_gate(
+        fund_analysis_output=fa_output.to_dict(),
+        evidence_graph=evidence_result.to_dict(),
+        decision_support_output=ds_output.to_dict() if ds_output else None,
+        final_report=report,
+        expected_behavior=eb,
+        language=fixture.get("language", "zh-CN"),
+    )
+    trace.add_event("quality_gate_evaluated", "Quality gate evaluated", {
+        "passed": quality_gate["passed"],
+        "fail_count": quality_gate["summary"]["fail_count"],
+        "warn_count": quality_gate["summary"]["warn_count"],
+    })
+
+    trace.add_event("workflow_completed", f"Workflow completed: {scenario_id}")
 
     return PersonalRegressionResult(
         scenario_id=scenario_id,
@@ -122,6 +160,8 @@ def run_personal_regression_fixture(
         evidence_graph=evidence_result.to_dict(),
         decision_support_output=ds_output.to_dict() if ds_output else None,
         final_report=report,
+        workflow_trace=trace.to_dict(),
+        quality_gate=quality_gate,
     )
 
 
