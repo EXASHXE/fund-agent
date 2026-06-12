@@ -404,7 +404,7 @@ for err in output.errors:
 
 ## 8. What NOT To Do
 
-- Do NOT call `src.core.research_os` as a required host integration path.
+- Do NOT call `src.core.research_os` as a required host integration path (historical; removed from current runtime).
 - Do NOT import `legacy` modules from plugin code.
 - Do NOT hardcode Tavily, Finnhub, Exa, Firecrawl, Reddit, AkShare, OpenAI,
   Anthropic, LangChain, or other provider SDKs in skill runtimes.

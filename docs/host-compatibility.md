@@ -29,7 +29,7 @@ For host-specific cookbooks, see
 2. **Orchestration:** Owned by external host
 3. **MCP Providers:** Injected by external host via `MCPHostAdapter`
 4. **Provider SDKs:** Not shipped with fund-agent
-5. **ResearchOS:** Not required for host integration
+5. **ResearchOS:** Historical reference only (see `v0.1.0-skillpack-alpha` tag); not required for host integration
 6. **Minimal Demo:** `examples/minimal_host_news_to_decision.py`
 7. **Skill Docs:** `skills/<slug>/SKILL.md` is policy, not discovery
 8. **Directory Names:** Do not infer runtime skill IDs from folder names

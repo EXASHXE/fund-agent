@@ -20,6 +20,19 @@ _FORBIDDEN_PATTERNS = [
 _OVERCLAIM_PATTERNS = [
     (r"(?i)live\s+news\s+built\s+into\s+core", "live news built into core"),
     (r"(?i)custom\s+opencode\s+plugin\s+tools?\s+verified", "custom OpenCode plugin tools verified"),
+    (r"(?i)researchos\s+runtime", "ResearchOS runtime (historical only)"),
+    (r"(?i)planner\s+loop", "planner loop (use 'autonomous agent' instead)"),
+]
+
+_REQUIRED_CLAIMS = [
+    (r"no\s+broker\s+execution", "no broker execution boundary"),
+    (r"(?i)no[\s-]?network", "no-network core boundary"),
+    (r"(?i)host[\s-]owned\s+(?:live\s+)?data", "host-owned data boundary"),
+    (r"(?i)optional.*prototype|prototype.*optional", "provider adapters optional/prototype"),
+    (r"(?i)decision_support.*formal\s+decision|formal\s+decision.*decision_support", "decision_support is formal decision runtime"),
+    (r"(?i)fund_analysis.*analysis.*report\s+only|report[\s-]only.*fund_analysis", "fund_analysis is analysis/report only"),
+    (r"(?i)host[\s-]owned.*(?:news|mcp|api).*key|news.*mcp.*(?:credential|key).*host", "news MCP/API credentials are host-owned"),
+    (r"fund_agent\.\w+", "fund_agent.* public API"),
 ]
 
 
@@ -100,3 +113,57 @@ class TestDocsNoForbiddenClaims:
                 )
                 assert negation_present, \
                     f"{path}: broker execution mentioned without negation context"
+
+    def test_no_researchos_runtime_claim(self, md_contents):
+        for path, content in md_contents.items():
+            if "docs/archive/" in path or "CHANGELOG" in path:
+                continue
+            assert not re.search(r"(?i)researchos\s+runtime", content), \
+                f"{path}: overclaim 'ResearchOS runtime' (use 'historical' or 'host')"
+
+    def test_no_planner_loop_claim(self, md_contents):
+        for path, content in md_contents.items():
+            if "docs/archive/" in path or "CHANGELOG" in path:
+                continue
+            assert not re.search(r"(?i)planner\s+loop", content), \
+                f"{path}: overclaim 'planner loop' (use 'autonomous agent' instead)"
+
+    def test_required_no_broker_execution(self, md_contents):
+        readme = md_contents.get("README.md", "")
+        assert re.search(r"no\s+broker\s+execution", readme, re.IGNORECASE), \
+            "README.md: missing 'no broker execution' boundary"
+
+    def test_required_no_network_core(self, md_contents):
+        readme = md_contents.get("README.md", "")
+        assert re.search(r"(?i)no[\s-]?network", readme), \
+            "README.md: missing 'no-network' core boundary"
+
+    def test_required_host_owned_data(self, md_contents):
+        readme = md_contents.get("README.md", "")
+        assert re.search(r"(?i)host[\s-]owned", readme), \
+            "README.md: missing 'host-owned' data boundary"
+
+    def test_required_provider_optional_prototype(self, md_contents):
+        readme = md_contents.get("README.md", "")
+        assert re.search(r"(?i)(optional|prototype).*adapter|adapter.*(optional|prototype)", readme), \
+            "README.md: missing 'optional/prototype' provider adapter status"
+
+    def test_required_decision_support_formal(self, md_contents):
+        readme = md_contents.get("README.md", "")
+        assert re.search(r"(?i)decision_support.*formal|formal.*decision.*decision_support", readme), \
+            "README.md: missing decision_support as formal decision runtime"
+
+    def test_required_fund_analysis_report_only(self, md_contents):
+        readme = md_contents.get("README.md", "")
+        assert re.search(r"(?i)report[\s-]only", readme), \
+            "README.md: missing report-only behavior description"
+
+    def test_required_host_owned_news_keys(self, md_contents):
+        readme = md_contents.get("README.md", "")
+        assert re.search(r"(?i)host[\s-]owned.*(?:news|mcp|api|credential)|news.*mcp.*host", readme), \
+            "README.md: missing host-owned news/MCP/API key boundary"
+
+    def test_required_fund_agent_public_api(self, md_contents):
+        readme = md_contents.get("README.md", "")
+        assert re.search(r"fund_agent\.\w+", readme), \
+            "README.md: missing fund_agent.* public API references"

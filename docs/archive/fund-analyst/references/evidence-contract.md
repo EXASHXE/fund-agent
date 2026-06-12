@@ -96,7 +96,7 @@
 | `news_evidence[code].research_summaries` | array | 研究式新闻摘要 |
 | `news_evidence[code].extracted_events` | array | 从保留新闻中抽出的结构化事件 |
 | `score_evidence[code]` | object | ScoreEngine 产出的五维评分证据 |
-| `score_evidence[code].agent_state` | object | LangGraph agent 节点产出的评分状态快照 |
+| `score_evidence[code].agent_state` | object | *(legacy; not produced by current skill runtime)* |
 | `strategy_evidence[code]` | object | StrategyEngine 或 StrategyAgent 产出的动作建议 |
 
 ## 向后兼容

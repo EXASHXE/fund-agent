@@ -11,7 +11,7 @@ repository provides callable skills and contracts.
 1. `Planner` reads task and KG context, then emits ordered `PlanStep` objects.
 2. Each `PlanStep` declares `required_mcp_capabilities` and
    `evidence_requirements`.
-3. `ResearchOS` converts the step to `SkillInput` with task id, step id,
+3. The **host** converts the step to `SkillInput` with task id, step id,
    payload, KG context, required MCP capabilities, current evidence ids, and
    metadata.
 4. `SkillRegistry` injects `MCPHostAdapter` and invokes the registered skill.

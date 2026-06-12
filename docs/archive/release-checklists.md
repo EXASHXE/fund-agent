@@ -156,7 +156,7 @@ For the current checklist, see `docs/release-checklist.md` sections
 - [ ] No new `__pycache__/`, `*.pyc`, `__init__.py`, or
       underscore-skill dirs in the published npm tarball
 - [ ] No new provider SDKs, no new network calls, no new
-      autonomous loop, no runtime bridge, no planner loop
+      autonomous loop, no runtime bridge, no autonomous agent
 
 ## 16. v0.4.7-dev Runtime Bridge CLI
 
@@ -203,7 +203,7 @@ For the current checklist, see `docs/release-checklist.md` sections
       `scripts/check_examples.py`)
 - [ ] No new fund metrics, no new portfolio tools, no new
       schemas, no new runtime contracts, no new MCP providers, no
-      autonomous loop, no planner loop, no server, no daemon
+      autonomous loop, no autonomous agent, no server, no daemon
 
 ### v0.4.7-dev hardening additions
 

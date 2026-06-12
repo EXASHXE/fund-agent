@@ -41,7 +41,7 @@ All three add real complexity:
 
 - A sidecar requires the plugin to manage a child process, lifecycle,
   crashes, and re-spawns. That pulls the plugin closer to a
-  "planner loop" in violation of the host-agnostic architecture
+  "autonomous agent" in violation of the host-agnostic architecture
   constraints.
 - An embedded interpreter (e.g. via `pythonia` or `node-python-bridge`)
   pulls in large transitive npm dependencies and platform-specific

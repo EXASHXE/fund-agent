@@ -14,7 +14,7 @@ required entrypoint for the fund-agent skill pack. External agents should use
 2. `Planner` builds ordered skill steps from task and KnowledgeGraph context.
 3. KG queries run before planning context is used. Query failures fall back to
    empty context and must be recorded as warnings.
-4. `ResearchOS` converts each `PlanStep` to `SkillInput`.
+4. The **host** converts each `PlanStep` to `SkillInput`. (Historical: see `v0.1.0-skillpack-alpha` tag for the `research_os` wrapper.)
 5. `SkillRegistry` executes skill handlers with an injected `MCPHostAdapter`.
    Missing skills, missing MCP capabilities, and skill failures are recorded in
    runtime audit fields.

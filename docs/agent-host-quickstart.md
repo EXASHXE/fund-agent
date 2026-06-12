@@ -22,7 +22,7 @@ order, retry policy, memory, MCP provider wiring, and final user interaction.
 - Decision support
 - MCP adapter boundary interfaces
 
-Do not call ResearchOS for host integration. ResearchOS is optional reference only, not required. The optional reference workflows are teaching examples.
+ResearchOS is a historical reference workflow (see `v0.1.0-skillpack-alpha` tag). It is not required for host integration and not part of the current runtime.
 
 Discover callable skills from the manifest. Do not infer runtime skill IDs from
 folder names: `fund_analysis` is a runtime skill ID, while `fund-analysis` is a

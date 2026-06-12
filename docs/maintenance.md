@@ -181,7 +181,7 @@ The project maintains four requirements files:
   networkx) for local demos and notebooks, not required for production.
 - `requirements-legacy.txt` — **historical / reference-only**. Contains
   all legacy dependencies (akshare, finnhub, tavily, langchain-core,
-  langgraph, streamlit, qdrant-client, sqlalchemy, etc.) that were part
+  langgraph (historical), streamlit, qdrant-client, sqlalchemy, etc.) that were part
   of the old ResearchOS architecture. These are NOT installed by
   default and are NOT required for the current host-agnostic skill pack.
 

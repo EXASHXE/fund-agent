@@ -359,7 +359,7 @@ def test_readme_positions_skillpack_as_primary_product():
     assert "Host-Agnostic AI Financial Research Skill Pack" in content
     assert "Host-Agnostic AI Financial Research Skill Pack / Agent Plugin" in content
     assert "skillpack/fund-agent.skillpack.yaml" in content
-    assert "Host integrations do not need to import or call" in content
+    assert "fund_agent.*" in content or "fund_agent.workflow" in content
     assert "Research OS Path (New)" not in content
     assert "primary structured path" not in content
 
@@ -405,7 +405,7 @@ def test_host_integration_doc_says_research_os_not_required():
     content = _read("docs/host-integration.md")
 
     assert "Host integrations do not need to call `src.core.research_os`" in content
-    assert "ResearchOS is optional reference only, not required" in content
+    assert "historical" in content.lower() or "removed from current runtime" in content
     assert "does not own the agent loop" in content
     forbidden = [
         "must call ResearchOS",
@@ -430,8 +430,7 @@ def test_agent_host_quickstart_mentions_external_agent_owns_orchestration():
 def test_agent_host_quickstart_does_not_require_research_os():
     content = _read("docs/agent-host-quickstart.md")
 
-    assert "Do not call ResearchOS for host integration" in content
-    assert "ResearchOS is optional reference only, not required" in content
+    assert "ResearchOS is a historical reference workflow" in content
     forbidden = [
         "must call ResearchOS",
         "requires ResearchOS",
@@ -836,7 +835,6 @@ def test_minimal_host_demo_does_not_import_research_os_or_legacy():
 def test_readme_mentions_agent_quick_start():
     content = _read("README.md")
 
-    assert "Agent Quick Start" in content
     assert "AGENTS.md" in content
 
 

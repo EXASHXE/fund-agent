@@ -7,7 +7,7 @@ fund-agent skill catalog and can read the Markdown-first
 
 The install is metadata + docs only. The Python runtime is **host-driven**:
 the host owns data fetching, orchestration, MCP provider wiring, and
-final user interaction. The plugin does not become a planner loop.
+final user interaction. The plugin does not become an autonomous agent.
 
 ## Skill Surface (Superpowers-compatible)
 
@@ -360,7 +360,7 @@ the `opencode.plugin.js` file are not used by any other harness.
   plugin-invoked).
 - ❌ OpenCode cannot yet **fetch** NAV, news, or sentiment. The host
   must own those calls.
-- ❌ The plugin does not implement a planner loop. OpenCode owns that.
+- ❌ The plugin does not implement an autonomous agent loop. OpenCode owns orchestration and planning.
 
 The OpenCode install is therefore a discoverability + docs layer, not
 a runtime bridge. The runtime bridge CLI

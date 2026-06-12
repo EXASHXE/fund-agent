@@ -25,7 +25,7 @@ or fund profiles directly. The host provides data in `SkillInput.payload`. See
 - `fund-agent`: callable skills, pure tools, evidence contracts, graph helpers,
   decision support, deterministic ledger snapshot, and audit-friendly outputs.
 
-Host integrations do not need to call `src.core.research_os`.
+Host integrations do not need to call `src.core.research_os` (historical; removed from current runtime).
 
 ## Install Paths
 
@@ -46,7 +46,7 @@ manual flow; Codex has a manual / light install. See:
 - Other harnesses: [`docs/host-compatibility.md`](./host-compatibility.md)
 
 The OpenCode install does **not** turn `fund-agent` into an autonomous
-ResearchOS / planner loop. The plugin exposes three metadata + doc
+agent. The plugin exposes three metadata + doc
 reader tools (`fund_agent_skills`, `fund_agent_skill_doc`,
 `fund_agent_runtime_hint`) and leaves the actual skill invocation to
 the manual host integration path.
@@ -291,4 +291,4 @@ External agents can:
 
 `fund-agent` does not own the agent loop.
 
-ResearchOS is optional reference only, not required for host integrations.
+ResearchOS is a historical reference workflow (see `v0.1.0-skillpack-alpha` tag), not required for host integrations.

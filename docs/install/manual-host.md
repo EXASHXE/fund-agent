@@ -39,7 +39,7 @@ The five manifest runtime skills are:
 
 You will **not** get:
 
-- An autonomous planner loop. The host owns that.
+- An autonomous agent loop. The host owns orchestration and planning.
 - Provider SDKs. The host injects provider implementations through
   `MCPHostAdapter`.
 - An installed console entry point. Source checkouts include the

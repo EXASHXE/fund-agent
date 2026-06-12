@@ -647,7 +647,7 @@ updated with full report composer output shape.
   split is intentional and is documented in
   `.opencode/INSTALL.md` and `docs/install/opencode.md`.
 - No provider SDKs, no LLM clients, no autonomous loop, no
-  planner loop, no runtime bridge, no database, no server, no
+  autonomous agent loop, no runtime bridge, no database, no server, no
   autonomous agent runtime.
 - All v0.4.5 install-hardening items (Mode A vs Mode B vs Mode C
   docs, plugin startup log primary / supporting distinction,
@@ -731,7 +731,7 @@ updated with full report composer output shape.
   only state it writes outside the copied skill files.
 - Mode C is **design only**, not implemented in v0.4.5.
 - No provider SDKs, no LLM clients, no autonomous loop, no
-  planner loop, no new fund metrics, no new schemas, no new
+  autonomous agent loop, no new fund metrics, no new schemas, no new
   portfolio tools, no new providers, no runtime bridge, no
   database, no server, no autonomous agent runtime.
 - No runtime / domain feature changes. The v0.4.5 milestone is
@@ -801,7 +801,7 @@ updated with full report composer output shape.
 ### Honesty
 
 - No provider SDKs, no LLM clients, no autonomous loop, no
-  subprocess spawn, no planner loop. The host-agnostic architecture
+  subprocess spawn, no autonomous agent loop. The host-agnostic architecture
   constraints are preserved.
 - No runtime / domain feature changes. The new milestone is purely
   about the agent-facing skill surface and the install surface.
