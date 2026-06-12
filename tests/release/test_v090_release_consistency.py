@@ -25,7 +25,7 @@ PLUGIN_PATH = ROOT / "opencode.plugin.js"
 CHANGELOG_PATH = ROOT / "CHANGELOG.md"
 README_PATH = ROOT / "README.md"
 CHECKLIST_PATH = ROOT / "docs" / "release" / "v0.9.0-readiness-checklist.md"
-PROVIDERS_EXAMPLE_PATH = ROOT / "examples" / "host_data_adapters" / "providers.example.yaml"
+PROVIDERS_EXAMPLE_PATH = ROOT / "config" / "providers.example.yaml"
 
 
 class TestVersionConsistency:
@@ -156,8 +156,9 @@ class TestReadinessChecklist:
 
 class TestProvidersExampleNoSecrets:
     def test_providers_example_has_no_real_secrets(self):
-        if not PROVIDERS_EXAMPLE_PATH.exists():
-            return
+        assert PROVIDERS_EXAMPLE_PATH.exists(), (
+            f"providers.example.yaml not found at {PROVIDERS_EXAMPLE_PATH}"
+        )
         text = PROVIDERS_EXAMPLE_PATH.read_text(encoding="utf-8")
         forbidden_patterns = [
             r'api_key:\s*[A-Za-z0-9]{20,}',
@@ -169,6 +170,23 @@ class TestProvidersExampleNoSecrets:
         for pat in forbidden_patterns:
             assert not re.search(pat, text, re.IGNORECASE), (
                 f"providers.example.yaml may contain real secrets (matched {pat})"
+            )
+
+    def test_providers_example_includes_expected_env_placeholders(self):
+        text = PROVIDERS_EXAMPLE_PATH.read_text(encoding="utf-8")
+        expected_placeholders = [
+            "NEWS_API_KEY",
+            "TAVILY_API_KEY",
+            "EXA_API_KEY",
+            "SERPAPI_API_KEY",
+            "CUSTOM_NEWS_MCP_TOKEN",
+            "XUEQIU_COOKIE",
+            "XUEQIU_TOKEN",
+            "EASTMONEY_COOKIE",
+        ]
+        for placeholder in expected_placeholders:
+            assert placeholder in text, (
+                f"providers.example.yaml missing expected env placeholder: {placeholder}"
             )
 
 
