@@ -1,5 +1,78 @@
 # Changelog
 
+## [0.9.0] — 2026-06-13
+
+### Added
+
+- **Public `fund_agent.*` facade** — top-level package with stable import paths
+  for workflow, regression, quality, providers, reporting, runtime, version, and
+  cli. `fund_agent.*` is the preferred public API.
+- **Unified `fund-agent` CLI** — single entry point with subcommands: `doctor`,
+  `run-skill`, `regressions`, `provider-smoke`, `audit`. Old console scripts
+  (`fund-agent-run-skill`, `fund-agent-doctor`) remain compatible.
+- **Personal portfolio regression pack** — scenario-based regression fixtures
+  covering report-only, formal decision, mixed portfolio, and zh-CN flows.
+- **Advisory quality gate** — deterministic evaluation of advisory outputs,
+  including forbidden execution field checks and SOFT_ACTION_ADVICE boundary.
+- **Deterministic workflow trace** — `WorkflowTrace` for recording and
+  reproducing advisory workflow steps.
+- **Provider contract layer** — `ProviderCredentialSpec`, `ProviderCredentials`,
+  `ProviderRegistry`, `ProviderConfig`, `ProviderResult`, `ProviderCapability`,
+  credential resolution from config/env, and `providers.example.yaml`.
+- **Optional AkShare / Eastmoney / Xueqiu host adapter prototypes** — under
+  `examples/host_data_adapters/` as reference implementations only.
+- **News MCP/API key policy** — keys are host-owned; core never handles them.
+- **Audit scripts** — `audit_project_structure.py`, `audit_dead_code.py`,
+  `audit_public_api.py`, `audit_docs_links.py`, `run_all_audits.py`.
+- **v0.9.0 readiness checklist** — `docs/release/v0.9.0-readiness-checklist.md`.
+- **KnowledgeGraph enum-safe queries** — `KGEdgeType` comparison in graph layer.
+- **`knowledge_graph_summary` artifact** — optional fund_analysis enrichment
+  when holdings data supports KnowledgeGraph construction.
+- **`evidence_anchor_diagnostics` artifact** — decision_support explainability.
+- **`risk_constraint_conflicts` artifact** — decision_support constraint
+  blocking details with cap/downgrade reasons.
+- **`ledger_summary` field in ExecutionLedger** — deterministic summary of
+  decisions, execution amounts, and action counts.
+- **Expanded MCP harness** — dev-only fake MCP responses for all 6 capability
+  types. No network, no API keys, no provider SDKs.
+
+### Changed
+
+- **README rewritten for pre-0.9 clarity** — removed ResearchOS/autonomous-agent-loop/LangGraph references.
+- **Docs aligned around host-owned live data and no-core-network boundary** —
+  17 overclaims fixed across install, design, and contract docs.
+- **Report-only vs formal decision boundary clarified** — `SOFT_ACTION_ADVICE`
+  alone does not force `decision_support`.
+- **`src.fund_agent.*` kept as compatibility/internal path** — `fund_agent.*`
+  documented as preferred public API.
+- **Install docs updated to v0.9.0** — version pinning and clone examples
+  reference v0.9.0.
+
+### Safety / Boundaries
+
+- Core runtime remains **no-network** — no provider SDK imports, no API calls.
+- **No broker/order execution** — no trade placement, no order fields in
+  workflow outputs.
+- `fund_analysis` remains **analysis/report only** — never emits formal
+  `Decision` or `ExecutionLedger`.
+- `decision_support` remains the **only formal Decision / ExecutionLedger
+  runtime**.
+- `suggested_rebalance_plan` remains **analysis-only** — not a trade
+  instruction.
+- Provider adapters remain **optional host examples** — not core dependencies.
+- Credentials loaded from **config/env only** — no secrets committed.
+- News MCP/API keys are **host-owned** — core never handles them.
+
+### Known Limitations
+
+- Eastmoney adapter is **prototype**, not a production connector.
+- Xueqiu adapter is **prototype**, not a production connector.
+- AkShare adapter coverage is **partial**.
+- **No live data fetching** in core runtime.
+- **No autonomous trading**.
+- **No broker execution**.
+- **Not v1.0.0 stable API** yet — pre-launch baseline.
+
 ## [1.1.0] — 2026-06-11
 
 ### Added

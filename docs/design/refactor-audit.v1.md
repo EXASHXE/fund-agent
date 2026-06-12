@@ -73,7 +73,7 @@ require manual review before any removal.
 
 ## What Was Intentionally Not Changed
 
-- No version bump (remains 1.1.0, pending v0.9.0 tag)
+- Version bumped to 0.9.0 (pre-launch baseline)
 - No file moves or renames
 - No behavior changes
 - No new product features

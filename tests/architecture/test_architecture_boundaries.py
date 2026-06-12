@@ -356,8 +356,8 @@ def test_skillpack_examples_do_not_reference_research_os_required_path():
 def test_readme_positions_skillpack_as_primary_product():
     content = _read("README.md")
 
-    assert "Host-Agnostic AI Financial Research Skill Pack" in content
-    assert "Host-Agnostic AI Financial Research Skill Pack / Agent Plugin" in content
+    assert "Host-Agnostic Mutual Fund Advisory Skill Pack" in content
+    assert "Host-Agnostic Mutual Fund Advisory Skill Pack / Agent Plugin" in content
     assert "skillpack/fund-agent.skillpack.yaml" in content
     assert "fund_agent.*" in content or "fund_agent.workflow" in content
     assert "Research OS Path (New)" not in content

@@ -1,6 +1,6 @@
-# fund-agent: Host-Agnostic Financial Research Skill Pack
+# fund-agent: Host-Agnostic Mutual Fund Advisory Skill Pack
 
-> Host-Agnostic AI Financial Research Skill Pack / Agent Plugin.
+> Host-Agnostic Mutual Fund Advisory Skill Pack / Agent Plugin.
 
 `fund-agent` is a discoverable skill pack for external agent hosts such as
 OpenCode, Claude Code, Codex, OpenClaw, Hermes, and similar runtimes. The host
@@ -117,9 +117,9 @@ fund-agent audit [--pretty] [--json]            # run project audit scripts
 
 Old commands remain compatible: `fund-agent-run-skill`, `fund-agent-doctor`.
 
-## Pre-0.9 Status
+## v0.9.0 Pre-launch Baseline
 
-This project is approaching a **v0.9.0 pre-launch baseline**. Provider adapters
+This is **fund-agent v0.9.0**, the first pre-launch baseline. Provider adapters
 (AkShare, Eastmoney, Xueqiu) are prototypes unless smoke-tested with real
 credentials. The v0.9.0 tag has not been created yet.
 
@@ -272,7 +272,7 @@ Core runtime is deterministic, local-only, and provider-agnostic:
 
 The external host owns credentials, live data providers, MCP implementations, and final UX.
 
-## v1.1 Reliability and Explainability
+## Reliability and Explainability
 
 v1.1 hardens the decision pipeline with improved diagnostics, KnowledgeGraph
 integration, and explainability artifacts:

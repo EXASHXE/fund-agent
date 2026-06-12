@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fund-agent"
-version = "1.1.0"
+version = "0.9.0"
 description = "Host-agnostic AI financial research skill pack / agent plugin"
 requires-python = ">=3.11"
 
@@ -32,6 +32,7 @@ testpaths = [
     "tests/workflow",
     "tests/host_data",
     "tests/public_api",
+    "tests/release",
 ]
 pythonpath = ["."]
 addopts = "--import-mode=importlib"
