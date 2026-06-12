@@ -84,3 +84,28 @@ class TestOldScriptsStillWork:
     def test_regressions_script_importable(self):
         from scripts.run_personal_regressions import main
         assert callable(main)
+
+
+class TestTopLevelCLIImports:
+    def test_import_from_fund_agent_cli(self):
+        from fund_agent.cli import build_parser, main
+        assert callable(build_parser)
+        assert callable(main)
+
+    def test_top_level_parser_works(self):
+        from fund_agent.cli import build_parser
+        parser = build_parser()
+        args = parser.parse_args(["doctor", "--pretty"])
+        assert args.command == "doctor"
+
+    def test_src_fund_agent_cli_still_works(self):
+        from src.fund_agent.cli import build_parser, main
+        assert callable(build_parser)
+        assert callable(main)
+
+
+class TestPyprojectConsoleScript:
+    def test_console_script_points_to_fund_agent_cli(self):
+        pyproject = ROOT / "pyproject.toml"
+        content = pyproject.read_text(encoding="utf-8")
+        assert 'fund-agent = "fund_agent.cli:main"' in content

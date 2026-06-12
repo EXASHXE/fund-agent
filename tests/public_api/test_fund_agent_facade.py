@@ -161,3 +161,78 @@ class TestOldDeepImportsStillWork:
     def test_old_provider_config_import(self):
         from src.host_data.provider_config import ProviderCredentialSpec
         assert ProviderCredentialSpec is not None
+
+
+class TestTopLevelFundAgentImports:
+    def test_import_package(self):
+        from fund_agent import __version__
+        assert isinstance(__version__, str)
+        assert __version__ != "0.0.0"
+
+    def test_import_workflow(self):
+        from fund_agent.workflow import WorkflowTrace
+        trace = WorkflowTrace(scenario_id="shim-test")
+        assert trace.to_dict()["scenario_id"] == "shim-test"
+
+    def test_import_regression(self):
+        from fund_agent.regression import (
+            PersonalRegressionResult,
+            list_personal_regression_fixtures,
+        )
+        assert callable(list_personal_regression_fixtures)
+
+    def test_import_quality(self):
+        from fund_agent.quality import FORBIDDEN_EXECUTION_FIELDS
+        assert isinstance(FORBIDDEN_EXECUTION_FIELDS, frozenset)
+
+    def test_import_providers(self):
+        from fund_agent.providers import ProviderRegistry
+        assert ProviderRegistry is not None
+
+    def test_import_reporting(self):
+        from fund_agent.reporting import compute_report_status
+        assert callable(compute_report_status)
+
+    def test_import_runtime(self):
+        from fund_agent.runtime import FundAnalysisSkill, SkillInput
+        assert FundAnalysisSkill is not None
+
+    def test_import_version(self):
+        from fund_agent.version import __version__
+        assert isinstance(__version__, str)
+
+    def test_import_cli(self):
+        from fund_agent.cli import build_parser, main
+        assert callable(build_parser)
+        assert callable(main)
+
+
+class TestRegressionNoTestsDependency:
+    def test_regression_source_no_tests_helpers(self):
+        import src.fund_agent.regression as mod
+        source = Path(mod.__file__).read_text(encoding="utf-8")
+        assert "tests.helpers" not in source
+        assert "tests.end_to_end" not in source
+
+    def test_production_regression_source_no_tests_helpers(self):
+        import src.skills_runtime.workflow.personal_regression as mod
+        source = Path(mod.__file__).read_text(encoding="utf-8")
+        assert "tests.helpers" not in source
+        assert "tests.end_to_end" not in source
+
+
+class TestProvidersNoNetworkOrAdapterImports:
+    def test_no_provider_sdk_imports_in_facade(self):
+        import fund_agent.providers as mod
+        source = Path(mod.__file__).read_text(encoding="utf-8")
+        forbidden = ("tavily", "finnhub", "firecrawl",
+                      "reddit", "openai", "anthropic", "langchain")
+        for name in forbidden:
+            assert name not in source.lower(), f"providers facade imports {name}"
+
+    def test_no_network_imports_in_facade(self):
+        import fund_agent.providers as mod
+        source = Path(mod.__file__).read_text(encoding="utf-8")
+        assert "import requests" not in source
+        assert "import httpx" not in source
+        assert "import urllib3" not in source

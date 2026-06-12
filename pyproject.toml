@@ -9,7 +9,7 @@ description = "Host-agnostic AI financial research skill pack / agent plugin"
 requires-python = ">=3.11"
 
 [project.scripts]
-fund-agent = "src.fund_agent.cli:main"
+fund-agent = "fund_agent.cli:main"
 fund-agent-run-skill = "src.skillpack.run_skill:main"
 fund-agent-doctor = "src.skillpack.doctor:main"
 
@@ -54,4 +54,4 @@ markers = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["src*"]
+include = ["src*", "fund_agent*"]

@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from tests.helpers.personal_regression_runner import (
+from src.skills_runtime.workflow.personal_regression import (
     FIXTURES_DIR,
     PersonalRegressionResult,
     flatten_report_text,
