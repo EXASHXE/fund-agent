@@ -3,10 +3,12 @@
 May import akshare inside this example adapter only.
 Must not be imported by core runtime.
 Handles ImportError gracefully with MISSING_DEPENDENCY.
+No credentials required by default for basic public endpoints.
 """
 
 from __future__ import annotations
 
+from datetime import date
 from typing import Any
 
 from src.host_data.provider_config import ProviderConfig, ProviderCredentials
@@ -44,6 +46,26 @@ class AkShareAdapter:
         except ImportError:
             return None
 
+    def assess_credentials_requirement(self) -> ProviderResult:
+        return ProviderResult(
+            ok=True,
+            provider=self.name,
+            capability="CREDENTIAL_ASSESSMENT",
+            confidence="high",
+            freshness="fresh",
+            data={
+                "works_without_credentials": True,
+                "requires_credentials": False,
+                "auth_type": "none",
+                "note": "AkShare basic public endpoints generally do not require credentials",
+            },
+            provenance={
+                "source": "akshare",
+                "function_name": "assess_credentials_requirement",
+                "as_of": date.today().isoformat(),
+            },
+        )
+
     def health_check(self) -> ProviderResult:
         ak = self._ensure_akshare()
         if ak is None:
@@ -54,6 +76,11 @@ class AkShareAdapter:
             capability="HEALTH_CHECK",
             confidence="high",
             freshness="fresh",
+            provenance={
+                "source": "akshare",
+                "function_name": "health_check",
+                "as_of": date.today().isoformat(),
+            },
         )
 
     def get_fund_nav_history(self, fund_code: str, start: str, end: str) -> ProviderResult:
@@ -62,6 +89,27 @@ class AkShareAdapter:
             return ProviderResult.missing_dependency(self.name, ProviderCapability.FUND_NAV_HISTORY)
         try:
             df = ak.fund_open_fund_info_em(symbol=fund_code, indicator="单位净值走势")
+            expected_cols = {"净值日期", "单位净值", "日增长率"}
+            if hasattr(df, "columns"):
+                actual_cols = set(str(c) for c in df.columns)
+                if not expected_cols.intersection(actual_cols):
+                    return ProviderResult(
+                        ok=False,
+                        provider=self.name,
+                        capability=ProviderCapability.FUND_NAV_HISTORY,
+                        fund_code=fund_code,
+                        as_of=end,
+                        errors=["UNEXPECTED_COLUMNS"],
+                        confidence="low",
+                        freshness="unknown",
+                        warnings=[f"Expected columns including {expected_cols}, got {actual_cols}"],
+                        provenance={
+                            "source": "akshare",
+                            "function_name": "fund_open_fund_info_em",
+                            "as_of": end,
+                            "input_params": {"fund_code": fund_code, "indicator": "单位净值走势"},
+                        },
+                    )
             records = df.to_dict("records") if hasattr(df, "to_dict") else []
             return ProviderResult(
                 ok=True,
@@ -76,7 +124,7 @@ class AkShareAdapter:
                     "source": "akshare",
                     "function_name": "fund_open_fund_info_em",
                     "as_of": end,
-                    "input_params": {"fund_code": fund_code, "start": start, "end": end},
+                    "input_params": {"fund_code": fund_code, "indicator": "单位净值走势"},
                 },
             )
         except Exception as exc:
@@ -85,9 +133,16 @@ class AkShareAdapter:
                 provider=self.name,
                 capability=ProviderCapability.FUND_NAV_HISTORY,
                 fund_code=fund_code,
+                as_of=end,
                 errors=[str(exc)],
                 confidence="low",
                 freshness="unknown",
+                provenance={
+                    "source": "akshare",
+                    "function_name": "fund_open_fund_info_em",
+                    "as_of": end,
+                    "input_params": {"fund_code": fund_code, "start": start, "end": end},
+                },
             )
 
     def get_fund_profile(self, fund_code: str) -> ProviderResult:
@@ -103,6 +158,12 @@ class AkShareAdapter:
             confidence="low",
             freshness="unknown",
             warnings=["get_fund_profile is not yet implemented for akshare adapter"],
+            provenance={
+                "source": "akshare",
+                "function_name": "get_fund_profile",
+                "as_of": date.today().isoformat(),
+                "input_params": {"fund_code": fund_code},
+            },
         )
 
     def get_fund_holdings(self, fund_code: str, as_of: str | None = None) -> ProviderResult:
@@ -114,10 +175,61 @@ class AkShareAdapter:
             provider=self.name,
             capability=ProviderCapability.FUND_HOLDINGS,
             fund_code=fund_code,
+            as_of=as_of,
             errors=["NOT_IMPLEMENTED"],
             confidence="low",
             freshness="unknown",
             warnings=["get_fund_holdings is not yet implemented for akshare adapter"],
+            provenance={
+                "source": "akshare",
+                "function_name": "get_fund_holdings",
+                "as_of": as_of or date.today().isoformat(),
+                "input_params": {"fund_code": fund_code, "as_of": as_of},
+            },
+        )
+
+    def get_index_history(self, symbol: str, start: str, end: str) -> ProviderResult:
+        ak = self._ensure_akshare()
+        if ak is None:
+            return ProviderResult.missing_dependency(self.name, ProviderCapability.INDEX_HISTORY)
+        return ProviderResult(
+            ok=False,
+            provider=self.name,
+            capability=ProviderCapability.INDEX_HISTORY,
+            symbol=symbol,
+            as_of=end,
+            errors=["NOT_IMPLEMENTED"],
+            confidence="low",
+            freshness="unknown",
+            warnings=["get_index_history is not yet implemented for akshare adapter"],
+            provenance={
+                "source": "akshare",
+                "function_name": "get_index_history",
+                "as_of": end,
+                "input_params": {"symbol": symbol, "start": start, "end": end},
+            },
+        )
+
+    def get_stock_history(self, symbol: str, start: str, end: str) -> ProviderResult:
+        ak = self._ensure_akshare()
+        if ak is None:
+            return ProviderResult.missing_dependency(self.name, ProviderCapability.STOCK_HISTORY)
+        return ProviderResult(
+            ok=False,
+            provider=self.name,
+            capability=ProviderCapability.STOCK_HISTORY,
+            symbol=symbol,
+            as_of=end,
+            errors=["NOT_IMPLEMENTED"],
+            confidence="low",
+            freshness="unknown",
+            warnings=["get_stock_history is not yet implemented for akshare adapter"],
+            provenance={
+                "source": "akshare",
+                "function_name": "get_stock_history",
+                "as_of": end,
+                "input_params": {"symbol": symbol, "start": start, "end": end},
+            },
         )
 
     def get_fee_schedule(self, fund_code: str) -> ProviderResult:
@@ -146,6 +258,17 @@ class AkShareAdapter:
 def smoke_test() -> dict[str, Any]:
     adapter = AkShareAdapter()
     health = adapter.health_check()
+    cred = adapter.assess_credentials_requirement()
     if not health.ok:
-        return {"provider": "akshare", "status": "SKIPPED", "reason": "akshare not installed"}
-    return {"provider": "akshare", "status": "OK", "health": health.to_dict()}
+        return {
+            "provider": "akshare",
+            "status": "SKIPPED",
+            "reason": "akshare not installed",
+            "credential_assessment": cred.data,
+        }
+    return {
+        "provider": "akshare",
+        "status": "OK",
+        "health": health.to_dict(),
+        "credential_assessment": cred.data,
+    }

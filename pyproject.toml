@@ -32,6 +32,8 @@ testpaths = [
     "tests/host_data",
 ]
 pythonpath = ["."]
+addopts = "--import-mode=importlib"
+
 markers = [
     "plugin: host-agnostic plugin core tests",
     "contract: schema and runtime contract tests",

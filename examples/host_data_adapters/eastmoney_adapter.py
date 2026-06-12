@@ -5,11 +5,11 @@ endpoints; if the endpoint returns auth/captcha/blocked/empty due to
 missing cookie, returns ok=False with MISSING_CREDENTIALS or PROVIDER_BLOCKED.
 
 Must not be imported by core runtime. No provider SDK imports.
+Disabled by default. Credential requirements unknown until live smoke.
 """
 
 from __future__ import annotations
 
-import os
 from datetime import date
 from typing import Any
 from urllib.parse import urlparse
@@ -62,6 +62,18 @@ _BLOCKED_INDICATORS = [
     "请先登录",
 ]
 
+_RATE_LIMIT_INDICATORS = [
+    "rate limit",
+    "too many requests",
+    "请求过于频繁",
+    "429",
+]
+
+
+def _redact_url(url: str) -> str:
+    parsed = urlparse(url)
+    return f"{parsed.scheme}://{parsed.hostname}{parsed.path}"
+
 
 class EastmoneyAdapter:
     name: str = "eastmoney"
@@ -82,10 +94,12 @@ class EastmoneyAdapter:
             require_credentials=False,
             capabilities=[c.value for c in self.capabilities],
         )
-        self._cookie = os.environ.get("EASTMONEY_COOKIE")
-        self._user_agent = os.environ.get(
-            "FUND_AGENT_USER_AGENT",
-            "Mozilla/5.0 (compatible; FundAgent/1.0)",
+        creds = self._config.credentials
+        self._cookie = creds.cookie if creds and creds.cookie else None
+        self._user_agent = (
+            creds.user_agent
+            if creds and creds.user_agent
+            else "Mozilla/5.0 (compatible; FundAgent/1.0)"
         )
 
     def _build_provenance(
@@ -111,6 +125,13 @@ class EastmoneyAdapter:
                 return indicator
         return None
 
+    def _detect_rate_limited(self, text: str) -> str | None:
+        lower = text.lower()
+        for indicator in _RATE_LIMIT_INDICATORS:
+            if indicator in lower:
+                return indicator
+        return None
+
     def _make_headers(self) -> dict[str, str]:
         headers: dict[str, str] = {
             "User-Agent": self._user_agent,
@@ -119,6 +140,35 @@ class EastmoneyAdapter:
         if self._cookie:
             headers["Cookie"] = self._cookie
         return headers
+
+    def _credential_trace(self) -> dict[str, str]:
+        return {
+            "cookie": "<redacted>" if self._cookie else "<empty>",
+            "user_agent": self._user_agent,
+        }
+
+    def assess_credentials_requirement(self) -> ProviderResult:
+        return ProviderResult(
+            ok=True,
+            provider=self.name,
+            capability="CREDENTIAL_ASSESSMENT",
+            confidence="medium",
+            freshness="fresh",
+            data={
+                "works_without_credentials": "unknown",
+                "requires_credentials": "unknown",
+                "cookie_env": "EASTMONEY_COOKIE",
+                "user_agent_env": "FUND_AGENT_USER_AGENT",
+                "cookie_present": bool(self._cookie),
+                "note": "Credential requirements unknown until live smoke test. "
+                "Some endpoints may work without cookie; others may return PROVIDER_BLOCKED.",
+            },
+            provenance={
+                "source": "eastmoney",
+                "function_name": "assess_credentials_requirement",
+                "as_of": date.today().isoformat(),
+            },
+        )
 
     def health_check(self) -> ProviderResult:
         ep = ENDPOINTS["fund_profile"]
@@ -134,6 +184,8 @@ class EastmoneyAdapter:
 
     def get_fund_nav_history(self, fund_code: str, start: str, end: str) -> ProviderResult:
         ep = ENDPOINTS["fund_nav_history"]
+        if self._config.require_credentials and not self._cookie:
+            return ProviderResult.missing_credentials(self.name, ProviderCapability.FUND_NAV_HISTORY)
         return ProviderResult(
             ok=False,
             provider=self.name,
@@ -154,6 +206,8 @@ class EastmoneyAdapter:
 
     def get_fund_profile(self, fund_code: str) -> ProviderResult:
         ep = ENDPOINTS["fund_profile"]
+        if self._config.require_credentials and not self._cookie:
+            return ProviderResult.missing_credentials(self.name, ProviderCapability.FUND_PROFILE)
         return ProviderResult(
             ok=False,
             provider=self.name,
@@ -172,6 +226,8 @@ class EastmoneyAdapter:
 
     def get_fund_holdings(self, fund_code: str, as_of: str | None = None) -> ProviderResult:
         ep = ENDPOINTS["fund_holdings"]
+        if self._config.require_credentials and not self._cookie:
+            return ProviderResult.missing_credentials(self.name, ProviderCapability.FUND_HOLDINGS)
         return ProviderResult(
             ok=False,
             provider=self.name,
@@ -214,6 +270,8 @@ class EastmoneyAdapter:
 
     def get_stock_quote(self, symbol: str) -> ProviderResult:
         ep = ENDPOINTS["stock_quote"]
+        if self._config.require_credentials and not self._cookie:
+            return ProviderResult.missing_credentials(self.name, ProviderCapability.STOCK_QUOTE)
         return ProviderResult(
             ok=False,
             provider=self.name,
@@ -232,6 +290,8 @@ class EastmoneyAdapter:
 
     def get_fund_ranking(self, fund_type: str = "all") -> ProviderResult:
         ep = ENDPOINTS["fund_ranking"]
+        if self._config.require_credentials and not self._cookie:
+            return ProviderResult.missing_credentials(self.name, ProviderCapability.FUND_RANKING)
         return ProviderResult(
             ok=False,
             provider=self.name,
@@ -251,15 +311,13 @@ class EastmoneyAdapter:
 def smoke_test() -> dict[str, Any]:
     adapter = EastmoneyAdapter()
     health = adapter.health_check()
+    cred = adapter.assess_credentials_requirement()
     has_cookie = bool(adapter._cookie)
     status = "OK" if health.ok else "FAILED"
     return {
         "provider": "eastmoney",
         "status": status,
         "health": health.to_dict(),
-        "credential_assessment": {
-            "cookie_present": has_cookie,
-            "cookie_required_by_default": False,
-            "note": "Some endpoints may work without cookie; others may return PROVIDER_BLOCKED",
-        },
+        "credential_assessment": cred.data,
+        "credential_trace": adapter._credential_trace(),
     }

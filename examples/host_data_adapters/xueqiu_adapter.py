@@ -5,11 +5,11 @@ Requires cookie and token; disabled by default.
 Never commits cookies/tokens; redacts credentials in trace and errors.
 
 Must not be imported by core runtime. No provider SDK imports.
+Do not claim stable no-cookie access unless smoke test proves it.
 """
 
 from __future__ import annotations
 
-import os
 from datetime import date
 from typing import Any
 from urllib.parse import urlparse
@@ -69,6 +69,11 @@ def _redact_credential(value: str | None) -> str:
     return value[:3] + "***redacted***" + value[-3:]
 
 
+def _redact_url(url: str) -> str:
+    parsed = urlparse(url)
+    return f"{parsed.scheme}://{parsed.hostname}{parsed.path}"
+
+
 class XueqiuAdapter:
     name: str = "xueqiu"
     capabilities: set[ProviderCapability] = {
@@ -85,18 +90,23 @@ class XueqiuAdapter:
             require_credentials=True,
             capabilities=[c.value for c in self.capabilities],
         )
-        self._cookie = os.environ.get("XUEQIU_COOKIE")
-        self._token = os.environ.get("XUEQIU_TOKEN")
-        self._user_agent = os.environ.get(
-            "FUND_AGENT_USER_AGENT",
-            "Mozilla/5.0 (compatible; FundAgent/1.0)",
+        creds = self._config.credentials
+        self._cookie = creds.cookie if creds and creds.cookie else None
+        self._token = creds.token if creds and creds.token else None
+        self._user_agent = (
+            creds.user_agent
+            if creds and creds.user_agent
+            else "Mozilla/5.0 (compatible; FundAgent/1.0)"
         )
 
     def _has_credentials(self) -> bool:
-        return bool(self._cookie and self._token)
+        return bool(
+            (self._cookie and self._cookie.strip())
+            and (self._token and self._token.strip())
+        )
 
     def _require_credentials(self, capability: str) -> ProviderResult | None:
-        if not self._cookie or not self._token:
+        if not self._has_credentials():
             return ProviderResult.missing_credentials(self.name, capability)
         return None
 
@@ -147,6 +157,32 @@ class XueqiuAdapter:
             "token": _redact_credential(self._token),
             "user_agent": self._user_agent,
         }
+
+    def assess_credentials_requirement(self) -> ProviderResult:
+        return ProviderResult(
+            ok=True,
+            provider=self.name,
+            capability="CREDENTIAL_ASSESSMENT",
+            confidence="medium",
+            freshness="fresh",
+            data={
+                "works_without_credentials": "unknown",
+                "requires_credentials": "likely",
+                "cookie_env": "XUEQIU_COOKIE",
+                "token_env": "XUEQIU_TOKEN",
+                "user_agent_env": "FUND_AGENT_USER_AGENT",
+                "cookie_present": bool(self._cookie),
+                "token_present": bool(self._token),
+                "enabled_by_default": False,
+                "note": "Do not assume public no-cookie access. "
+                "Likely requires cookie/token for most endpoints.",
+            },
+            provenance={
+                "source": "xueqiu",
+                "function_name": "assess_credentials_requirement",
+                "as_of": date.today().isoformat(),
+            },
+        )
 
     def health_check(self) -> ProviderResult:
         if not self._has_credentials():
@@ -229,6 +265,7 @@ class XueqiuAdapter:
 def smoke_test() -> dict[str, Any]:
     adapter = XueqiuAdapter()
     health = adapter.health_check()
+    cred = adapter.assess_credentials_requirement()
     has_cookie = bool(adapter._cookie)
     has_token = bool(adapter._token)
     if not has_cookie or not has_token:
@@ -249,13 +286,7 @@ def smoke_test() -> dict[str, Any]:
         "provider": "xueqiu",
         "status": status,
         "health": health.to_dict(),
-        "credential_assessment": {
-            "cookie_present": has_cookie,
-            "token_present": has_token,
-            "cookie_required": True,
-            "token_required": True,
-            "enabled_by_default": False,
-            "reason": reason,
-        },
+        "credential_assessment": cred.data,
         "credential_trace": adapter._credential_trace(),
+        "reason": reason,
     }

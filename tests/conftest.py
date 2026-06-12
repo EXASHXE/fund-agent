@@ -6,6 +6,9 @@ import subprocess
 import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_examples_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "examples")
+if _examples_dir not in sys.path:
+    sys.path.insert(0, _examples_dir)
 
 
 def _has_node() -> bool:

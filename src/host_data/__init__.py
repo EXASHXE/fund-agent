@@ -14,7 +14,7 @@ from .provider_contracts import (
     ProviderCapability,
     StockDataProvider,
 )
-from .provider_config import ProviderConfig, ProviderCredentials
+from .provider_config import ProviderConfig, ProviderCredentialSpec, ProviderCredentials
 from .provider_result import ProviderResult
 from .provider_registry import ProviderRegistry
 
@@ -23,6 +23,7 @@ __all__ = [
     "NewsDataProvider",
     "ProviderCapability",
     "ProviderConfig",
+    "ProviderCredentialSpec",
     "ProviderCredentials",
     "ProviderRegistry",
     "ProviderResult",
