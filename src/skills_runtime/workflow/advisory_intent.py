@@ -35,11 +35,12 @@ INTENT_KEYWORD_RULES: dict[AdvisoryIntent, list[str]] = {
     AdvisoryIntent.FORMAL_TRADE_DECISION: [
         "买入", "卖出", "减仓", "加仓", "正式决策",
         "给我决策", "正式操作", "今天卖出", "今天买入",
-        "执行", "下单",
+        "执行", "下单", "清仓",
     ],
     AdvisoryIntent.SOFT_ACTION_ADVICE: [
         "操作建议", "怎么操作", "怎么处理", "该怎么办",
         "要不要动", "如何应对", "怎么调整", "怎么应对",
+        "追回", "追高", "补仓", "要不要换",
     ],
     AdvisoryIntent.PROFIT_PROTECTION: [
         "盈利很多", "止盈", "落袋", "本金回收",
@@ -49,12 +50,13 @@ INTENT_KEYWORD_RULES: dict[AdvisoryIntent, list[str]] = {
     AdvisoryIntent.DRAWDOWN_RESPONSE: [
         "跌了", "回撤", "要不要补", "要不要割",
         "亏损", "跌穿", "大幅下跌", "暴跌",
-        "要不要跑", "深度套牢",
+        "要不要跑", "深度套牢", "大跌", "亏了",
+        "跌没", "收益快跌",
     ],
     AdvisoryIntent.RIGHT_SIDE_CONFIRMATION: [
         "右侧", "企稳", "反弹确认", "是否见底",
         "止跌", "底部", "反转确认",
-        "能不能抄底",
+        "能不能抄底", "追回", "追高", "连续两天上涨",
     ],
     AdvisoryIntent.SHORT_HOLDING_FEE_CHECK: [
         "7天", "手续费", "赎回费", "不足7天",

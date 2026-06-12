@@ -26,6 +26,8 @@ testpaths = [
     "tests/golden",
     "tests/install",
     "tests/runtime_bridge",
+    "tests/personal_regression",
+    "tests/scripts",
 ]
 pythonpath = ["."]
 markers = [

@@ -126,9 +126,11 @@ def build_chinese_summary(
     decision_status: str,
     eg: dict[str, Any],
     md: dict[str, Any],
+    intents: list[str] | None = None,
 ) -> dict[str, Any]:
     """Build a natural Chinese summary suitable for direct user display."""
     bullets: list[str] = []
+    intent_set = set(intents or [])
 
     # Portfolio overview
     portfolio_summary = fa_artifacts.get("portfolio_summary", {})
@@ -214,6 +216,8 @@ def build_chinese_summary(
             if deployable and float(deployable) > 0:
                 bullets.append(f"可部署资金：约 {deployable}。当前部署准备状态：{readiness}。建议先确认流动性储备需求后再部署。")
 
+    bullets.extend(_build_intent_summary_bullets(intent_set, fa_artifacts))
+
     # Next steps
     if decision_status in ("BLOCKED", "DOWNGRADED"):
         bullets.append("建议补充缺失数据后重新评估正式决策。在阻断项清除之前，不建议执行主动操作。")
@@ -228,8 +232,39 @@ def build_chinese_summary(
 
     return {
         "language": "zh-CN",
-        "bullets": bullets,
+        "bullets": _dedupe_preserve_order(bullets),
     }
+
+
+def _build_intent_summary_bullets(
+    intent_set: set[str],
+    fa_artifacts: dict[str, Any],
+) -> list[str]:
+    bullets: list[str] = []
+    theme_text = _theme_text(fa_artifacts)
+
+    if "PROFIT_PROTECTION" in intent_set:
+        bullets.append("盈利保护：优先考虑部分减仓、回收本金或保护剩余利润，不建议把分析建议直接当成下单。")
+    if "DRAWDOWN_RESPONSE" in intent_set or "RIGHT_SIDE_CONFIRMATION" in intent_set:
+        bullets.append("回撤应对：不宜急着补仓，等待右侧确认；利好不涨反跌说明短期情绪偏弱。")
+    if "SHORT_HOLDING_FEE_CHECK" in intent_set:
+        bullets.append("短持有期检查：未满7天时应先看赎回费，不建议今天直接卖出。")
+    if "OVERLAP_CONCENTRATION_CHECK" in intent_set:
+        bullets.append("重合度检查：新增标普500的边际分散可能有限，与已有AI/QDII持仓存在重合。")
+    if "CASH_DEPLOYMENT" in intent_set:
+        bullets.append("资金部署：先保留安全垫，再区分可动用资金、短线战术预算和长期配置预算，不要把现金全部打满。")
+    if "PORTFOLIO_REBALANCE" in intent_set:
+        bullets.append("预算纪律：短线资金不超过10%，单一主题/消费电子不超过5%，现金和债券安全垫优先。")
+    if "RISK_REDUCTION" in intent_set and any(term in theme_text for term in ("oil", "gas", "energy", "油气")):
+        bullets.append("油气亏损仓位：不建议只因亏损直接清仓，可考虑降低风险暴露并确认主题趋势。")
+    if any(term in theme_text for term in ("battery", "新能源", "电池")):
+        bullets.append("电池/新能源仓位：收益回吐时先保护剩余利润，不一定一次性清仓。")
+    if any(term in theme_text for term in ("short_bond", "money_market", "短债", "货币")):
+        bullets.append("短债/现金替代：不要只看一天收益，应比较7日/30日表现并先看赎回成本。")
+    if any(term in theme_text for term in ("dividend", "low_vol", "红利", "低波")):
+        bullets.append("红利低波：不要因为低波就忽视短期追高，分批比一次性更稳。")
+
+    return bullets
 
 
 def localize_section_titles(sections: list[dict[str, Any]], language: str) -> list[dict[str, Any]]:
@@ -259,3 +294,22 @@ def _get_fund_names(fund_codes: list[str], fa_artifacts: dict[str, Any]) -> list
             name = profile.get("name") or profile.get("fund_name", str(code))
             names.append(str(name))
     return names or [str(c) for c in fund_codes]
+
+
+def _theme_text(fa_artifacts: dict[str, Any]) -> str:
+    parts: list[str] = []
+    for key in ("fund_profiles", "portfolio_summary", "position_summary", "exposure_summary", "fund_analysis_report"):
+        value = fa_artifacts.get(key)
+        if isinstance(value, dict):
+            parts.append(str(value))
+    return " ".join(parts).lower()
+
+
+def _dedupe_preserve_order(values: list[str]) -> list[str]:
+    result: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        if value not in seen:
+            result.append(value)
+            seen.add(value)
+    return result

@@ -111,6 +111,7 @@ def compose_advisory_workflow_report(
             decision_status=decision_status,
             eg=eg,
             md=md,
+            intents=intents,
         )
         result["chinese_summary"] = chinese
 
@@ -306,6 +307,9 @@ def _build_direct_answer_section(
         else:
             bullets.append("Profit protection diagnostics are active — review partial trim options before adding to positions.")
 
+    if is_zh:
+        bullets.extend(_build_zh_direct_answer_intent_bullets(intents, fa_artifacts))
+
     if not bullets:
         if is_zh:
             bullets.append("分析已生成。请查看报告各节获取详细结果。")
@@ -321,6 +325,53 @@ def _build_direct_answer_section(
         "title": "Direct Answer",
         "bullets": bullets,
     }
+
+
+def _build_zh_direct_answer_intent_bullets(
+    intents: list[str],
+    fa_artifacts: dict[str, Any],
+) -> list[str]:
+    bullets: list[str] = []
+    intent_set = set(intents)
+    themes = _theme_text(fa_artifacts)
+    has_fee_blocker = _has_fee_blocker(fa_artifacts)
+    has_right_side_unconfirmed = _has_right_side_unconfirmed(fa_artifacts)
+    has_profit_concern = _has_profit_concern(fa_artifacts)
+
+    if "PROFIT_PROTECTION" in intent_set and has_profit_concern:
+        bullets.append(
+            "优先考虑部分减仓来回收本金，利润是真实的，但不等于必须一次性清仓；不要把分析建议直接当成下单。"
+        )
+
+    if "SHORT_HOLDING_FEE_CHECK" in intent_set or has_fee_blocker:
+        bullets.append("未满7天等短持有期会触发赎回费，不建议今天直接卖出。")
+
+    if "DRAWDOWN_RESPONSE" in intent_set or "RIGHT_SIDE_CONFIRMATION" in intent_set:
+        bullets.append("不宜急着补仓，也不建议因为两天反弹直接追回；先等待右侧确认和风险预算匹配。")
+        bullets.append("利好不涨反跌说明短期情绪偏弱，剩余仓位可继续观察。")
+
+    if "OVERLAP_CONCENTRATION_CHECK" in intent_set:
+        bullets.append("新增标普500的边际分散可能有限，与已有AI/QDII持仓存在重合；不等于不能买，但收益弹性可能被已有持仓覆盖。")
+
+    if "CASH_DEPLOYMENT" in intent_set:
+        bullets.append("先区分安全垫和可动用资金，不要把现金全部打满；避免追高涨幅过大的AI方向。")
+
+    if "RISK_REDUCTION" in intent_set and any(term in themes for term in ("oil", "gas", "energy", "油气")):
+        bullets.append("不建议只因亏损直接清仓，可以考虑降低风险暴露；需要确认油气主题基本面/趋势。")
+
+    if "PROFIT_PROTECTION" in intent_set and any(term in themes for term in ("battery", "新能源", "电池")):
+        bullets.append("这是收益回吐问题，重点是保护剩余利润，不一定一次性清仓。")
+
+    if "PORTFOLIO_REBALANCE" in intent_set:
+        bullets.append("短线资金不超过10%，单一主题/消费电子不超过5%，先保留现金和债券安全垫。")
+
+    if any(term in themes for term in ("short_bond", "money_market", "cash", "短债", "货币")):
+        bullets.append("不要只看一天收益，先比较7日/30日表现，并检查赎回成本。")
+
+    if any(term in themes for term in ("dividend", "low_vol", "红利", "低波")):
+        bullets.append("不要因为低波就忽视短期追高，分批比一次性更稳。")
+
+    return _dedupe_preserve_order(bullets)
 
 
 # ── Section: evidence_status ─────────────────────────────────────────────────
@@ -928,6 +979,25 @@ def _has_profit_concern(fa_artifacts: dict[str, Any]) -> bool:
                 if isinstance(item, dict) and str(item.get("profit_level", "")) in ("high", "very_high"):
                     return True
     return False
+
+
+def _theme_text(fa_artifacts: dict[str, Any]) -> str:
+    parts: list[str] = []
+    for key in ("fund_profiles", "portfolio_summary", "position_summary", "exposure_summary", "fund_analysis_report"):
+        value = fa_artifacts.get(key)
+        if isinstance(value, dict):
+            parts.append(str(value))
+    return " ".join(parts).lower()
+
+
+def _dedupe_preserve_order(values: list[str]) -> list[str]:
+    result: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        if value not in seen:
+            result.append(value)
+            seen.add(value)
+    return result
 
 
 def _collect_blocked_reasons(
