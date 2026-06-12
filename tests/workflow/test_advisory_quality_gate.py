@@ -115,20 +115,20 @@ class TestFormalSourceBoundary:
 
 class TestReportOnlyNoDecisionSupport:
     def test_pass_when_report_only(self):
-        eb = {"decision_support_called": True}
+        eb = {"decision_support_called": False}
         result = _gate(expected_behavior=eb)
         check = _find_check(result, "report_only_no_decision_support")
         assert check["status"] == "PASS"
 
     def test_fail_when_ds_output_present(self):
-        eb = {"decision_support_called": True}
+        eb = {"decision_support_called": False}
         ds = {"artifacts": {"decision": {"action": "HOLD"}}}
         result = _gate(decision_support_output=ds, expected_behavior=eb)
         check = _find_check(result, "report_only_no_decision_support")
         assert check["status"] == "FAIL"
 
     def test_fail_when_decision_status_not_no_formal(self):
-        eb = {"decision_support_called": True}
+        eb = {"decision_support_called": False}
         report = _make_passing_report()
         report["workflow_summary"]["decision_status"] = "BLOCKED"
         result = _gate(final_report=report, expected_behavior=eb)
@@ -136,12 +136,28 @@ class TestReportOnlyNoDecisionSupport:
         assert check["status"] == "FAIL"
 
     def test_fail_when_formal_source_not_none(self):
-        eb = {"decision_support_called": True}
+        eb = {"decision_support_called": False}
         report = _make_passing_report()
         report["safety_boundary"]["formal_decision_source"] = "decision_support"
         result = _gate(final_report=report, expected_behavior=eb)
         check = _find_check(result, "report_only_no_decision_support")
         assert check["status"] == "FAIL"
+
+    def test_not_applicable_when_ds_called_true(self):
+        eb = {"decision_support_called": True}
+        result = _gate(expected_behavior=eb)
+        check = _find_check(result, "report_only_no_decision_support")
+        assert check["status"] == "PASS"
+
+    def test_not_applicable_when_expected_behavior_missing(self):
+        result = _gate(expected_behavior=None)
+        check = _find_check(result, "report_only_no_decision_support")
+        assert check["status"] == "PASS"
+
+    def test_not_applicable_when_key_missing(self):
+        result = _gate(expected_behavior={})
+        check = _find_check(result, "report_only_no_decision_support")
+        assert check["status"] == "PASS"
 
 
 class TestDecisionSupportRequiredArtifacts:

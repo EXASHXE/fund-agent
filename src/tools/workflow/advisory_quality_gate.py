@@ -128,11 +128,11 @@ def _check_formal_source_boundary(fr: dict, ds: dict | None) -> dict:
 
 def _check_report_only_no_decision_support(fr: dict, ds: dict | None, eb: dict) -> dict:
     ds_called = eb.get("decision_support_called")
-    if ds_called is not True:
+    if ds_called is not False:
         return _make_check(
             "report_only_no_decision_support",
             "PASS",
-            "expected_behavior does not require report-only check or decision_support_called is not explicitly false",
+            "expected_behavior.decision_support_called is not False, check not applicable",
         )
     summary = fr.get("workflow_summary", {}) if isinstance(fr, dict) else {}
     safety = fr.get("safety_boundary", {}) if isinstance(fr, dict) else {}
