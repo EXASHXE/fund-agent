@@ -1,0 +1,93 @@
+{
+  "scenario_id": "cash_deployment_partial_buy_allowed_with_budget_zh",
+  "user_question": "我现金比较多，想正式拿一小部分分批买入红利低波，控制风险，可以吗？",
+  "user_context": {"locale": "zh-CN", "style": "deployment_framework", "notes": ["现金和债券较多", "明确要求正式买入", "分批控制风险"]},
+  "user_intent_hint": "cash_deployment",
+  "as_of_date": "2026-06-10",
+  "language": "zh-CN",
+  "portfolio": {
+    "as_of_date": "2026-06-10",
+    "total_value": 600000,
+    "cash_available": 280000,
+    "positions": [
+      {"fund_code": "FAKE-MM-CB", "fund_name": "日日盈货币C", "current_value": 60000, "shares": 59800, "target_weight": 0.10, "tags": ["money_market"]},
+      {"fund_code": "FAKE-BD-CB", "fund_name": "稳健短债C", "current_value": 65000, "shares": 63800, "target_weight": 0.11, "tags": ["short_bond"]},
+      {"fund_code": "FAKE-SC-CB", "fund_name": "半导体AI硬件C", "current_value": 55000, "shares": 42000, "target_weight": 0.09, "tags": ["semiconductor"]},
+      {"fund_code": "FAKE-DV-CB", "fund_name": "中证红利低波精选C", "current_value": 70000, "shares": 67000, "target_weight": 0.12, "tags": ["dividend", "low_vol"]},
+      {"fund_code": "FAKE-IF-CB", "fund_name": "全球通胀保护债券C", "current_value": 70000, "shares": 68000, "target_weight": 0.12, "tags": ["inflation_bond"]}
+    ]
+  },
+  "transactions": [
+    {"fund_code": "FAKE-DV-CB", "action": "BUY", "date": "2025-09-10", "amount": 68000, "shares": 67000}
+  ],
+  "nav_history": {
+    "FAKE-DV-CB": [{"date": "2026-03-10", "nav": 1.06}, {"date": "2026-06-10", "nav": 1.10}],
+    "FAKE-SC-CB": [{"date": "2026-05-10", "nav": 1.20}, {"date": "2026-06-10", "nav": 1.45}],
+    "FAKE-BD-CB": [{"date": "2026-05-10", "nav": 1.01}, {"date": "2026-06-10", "nav": 1.012}],
+    "FAKE-MM-CB": [{"date": "2026-05-10", "nav": 1.001}, {"date": "2026-06-10", "nav": 1.0015}],
+    "FAKE-IF-CB": [{"date": "2026-05-10", "nav": 1.03}, {"date": "2026-06-10", "nav": 1.035}]
+  },
+  "fund_profiles": {
+    "FAKE-MM-CB": {"fund_code": "FAKE-MM-CB", "name": "日日盈货币C", "fund_type": "money_market", "benchmark": "SYN-CASH", "theme": "cash"},
+    "FAKE-BD-CB": {"fund_code": "FAKE-BD-CB", "name": "稳健短债C", "fund_type": "short_bond", "benchmark": "SYN-SHORT-BOND", "theme": "cash"},
+    "FAKE-SC-CB": {"fund_code": "FAKE-SC-CB", "name": "半导体AI硬件C", "fund_type": "equity", "benchmark": "CS-SYN-SEMI", "theme": "AI"},
+    "FAKE-DV-CB": {"fund_code": "FAKE-DV-CB", "name": "中证红利低波精选C", "fund_type": "mixed_asset", "benchmark": "SYN-DIV-LOWVOL", "theme": "dividend_low_vol"},
+    "FAKE-IF-CB": {"fund_code": "FAKE-IF-CB", "name": "全球通胀保护债券C", "fund_type": "bond", "benchmark": "SYN-INFL-BOND", "theme": "inflation"}
+  },
+  "holdings": {
+    "FAKE-DV-CB": [{"stock_code": "SYN-DIV-A", "stock_name": "合成高股息A", "weight": 0.08, "sector": "financials"}],
+    "FAKE-MM-CB": [{"stock_code": "SYN-CASH-A", "stock_name": "合成货币A", "weight": 0.50, "sector": "financials", "industry": "money_market"}],
+    "FAKE-BD-CB": [{"stock_code": "SYN-BOND-A", "stock_name": "合成短债A", "weight": 0.30, "sector": "financials", "industry": "fixed_income"}],
+    "FAKE-SC-CB": [{"stock_code": "SYN-CHIP-A", "stock_name": "合成芯片设备A", "weight": 0.12, "sector": "technology", "industry": "semiconductors"}],
+    "FAKE-IF-CB": [{"stock_code": "SYN-INFL-A", "stock_name": "合成通胀债A", "weight": 0.25, "sector": "financials", "industry": "inflation_linked"}]
+  },
+  "fee_schedules": {
+    "FAKE-DV-CB": {"redemption_fee_pct": 0.0, "subscription_fee_pct": 0.0},
+    "FAKE-MM-CB": {"redemption_fee_pct": 0.0, "management_fee": 0.001},
+    "FAKE-BD-CB": {"redemption_fee_pct": 0.0, "management_fee": 0.003},
+    "FAKE-SC-CB": {"redemption_fee_pct": 0.0, "management_fee": 0.012},
+    "FAKE-IF-CB": {"redemption_fee_pct": 0.0, "management_fee": 0.004}
+  },
+  "redemption_rules": {
+    "FAKE-DV-CB": {"holding_period_days": 0, "redemption_fee_pct": 0.0},
+    "FAKE-MM-CB": {"holding_period_days": 0, "redemption_fee_pct": 0.0},
+    "FAKE-BD-CB": {"holding_period_days": 0, "redemption_fee_pct": 0.0},
+    "FAKE-SC-CB": {"holding_period_days": 180, "redemption_fee_pct": 0.0},
+    "FAKE-IF-CB": {"holding_period_days": 0, "redemption_fee_pct": 0.0}
+  },
+  "benchmark_history": {"FAKE-DV-CB": [{"date": "2026-03-10", "nav": 8200}, {"date": "2026-06-10", "nav": 8450}]},
+  "news_evidence": [{"title": "红利低波策略在震荡市中表现稳健", "entities": ["FAKE-DV-CB"], "direction": "positive", "confidence": 0.65, "source": "synthetic_host_news"}],
+  "sentiment_evidence": [{"entity": "FAKE-DV-CB", "score": 0.35, "claim": "红利低波情绪中性偏正", "confidence": 0.58, "source": "synthetic_sentiment"}],
+  "risk_profile": {"risk_level": "balanced", "liquidity_reserve_pct": 0.15, "max_trade_pct": 0.08, "max_single_fund_weight": 0.35, "max_theme_weight": 0.50},
+  "constraints": {"max_buy_amount": 25000, "minimum_cash_reserve": 90000, "liquidity_reserve_pct": 0.15, "min_trade_amount": 1000},
+  "requested_action": "BUY",
+  "target_trade_amount": 20000,
+  "time_horizon": "long_term",
+  "expected_behavior": {
+    "expected_advisory_intents": ["CASH_DEPLOYMENT", "FORMAL_TRADE_DECISION"],
+    "decision_support_called": true,
+    "expected_report_status": "OK",
+    "expected_decision_status": "FORMAL_DECISION",
+    "expected_formal_source": "decision_support",
+    "expected_active_decision_count": 1,
+    "expected_passive_decision_count": 0,
+    "expected_blocked_decision_count": 0,
+    "expected_downgraded_decision_count": 0,
+    "expected_reason_code_contains": ["ACTIVE_ACTION_ALLOWED"],
+    "expected_risk_conflict_kinds": [],
+    "expected_required_report_sections": ["direct_answer", "evidence_status", "portfolio_diagnosis", "summary", "decision_explanation", "action_boundary", "recommended_next_steps", "limitations"],
+    "expected_chinese_summary_contains": ["不执行券商下单"],
+    "expected_direct_answer_contains": ["安全垫", "可动用资金"],
+    "expected_action_boundary_contains": ["decision_support", "不执行券商下单"],
+    "expected_missing_data_contains": [],
+    "expected_no_fabrication_fields": ["provider_recommendation", "live_opportunity", "broker_order_id"],
+    "expected_no_broker_execution": true,
+    "expected_action_outcome": "allowed",
+    "expected_final_actions": ["BUY"],
+    "expected_requested_actions": ["BUY"],
+    "expected_min_final_execution_amount": 1000,
+    "expected_max_final_execution_amount": 20000,
+    "expected_preserve_requested_action": true,
+    "expected_preserve_requested_amount": true
+  }
+}

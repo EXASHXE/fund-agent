@@ -46,7 +46,7 @@ def load_e2e_fixture(name: str) -> dict[str, Any]:
     path = E2E_FIXTURES_DIR / f"{name}.json"
     if not path.exists():
         raise FileNotFoundError(f"E2E fixture not found: {path}")
-    with open(path, "r") as f:
+    with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
 

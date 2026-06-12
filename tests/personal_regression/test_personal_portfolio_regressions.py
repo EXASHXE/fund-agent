@@ -16,76 +16,39 @@ from typing import Any
 import pytest
 
 from src.schemas.skill import SkillInput, SkillOutput
-from src.skills_runtime.decision_support import DecisionSupportSkill
 from src.skills_runtime.fund_analysis import FundAnalysisSkill
-from src.skills_runtime.workflow.advisory_intent import classify_advisory_intent
-from src.skills_runtime.workflow.evidence_bridge import (
-    WorkflowEvidenceGraphResult,
-    build_evidence_graph_from_workflow,
-    resolve_evidence_source_refs,
-)
-from src.tools.workflow.final_report import compose_advisory_workflow_report
 from tests.end_to_end.helpers import (
     assert_no_execution_fields,
     assert_no_formal_decision_in_output,
 )
-
-
-FIXTURES_DIR = (
-    Path(__file__).resolve().parents[2]
-    / "examples"
-    / "personal_portfolio_regressions"
+from tests.helpers.personal_regression_runner import (
+    FIXTURES_DIR,
+    REQUIRED_EXPECTED_KEYS,
+    REQUIRED_FIXTURE_FIELDS,
+    PersonalRegressionResult,
+    flatten_report_text,
+    list_personal_regression_fixtures,
+    load_personal_regression_fixture,
+    run_personal_regression_fixture,
+    section_text,
+    validate_personal_regression_result,
 )
-
-REQUIRED_EXPECTED_KEYS = {
-    "expected_advisory_intents",
-    "decision_support_called",
-    "expected_report_status",
-    "expected_decision_status",
-    "expected_formal_source",
-    "expected_active_decision_count",
-    "expected_passive_decision_count",
-    "expected_blocked_decision_count",
-    "expected_downgraded_decision_count",
-    "expected_reason_code_contains",
-    "expected_risk_conflict_kinds",
-    "expected_required_report_sections",
-    "expected_chinese_summary_contains",
-    "expected_direct_answer_contains",
-    "expected_action_boundary_contains",
-    "expected_missing_data_contains",
-    "expected_no_fabrication_fields",
-    "expected_no_broker_execution",
-}
-
-REQUIRED_FIXTURE_FIELDS = {
-    "scenario_id",
-    "user_question",
-    "user_context",
-    "portfolio",
-    "nav_history",
-    "fund_profiles",
-    "risk_profile",
-    "constraints",
-    "expected_behavior",
-}
 
 
 def _fixture_paths() -> list[Path]:
-    return sorted(FIXTURES_DIR.glob("*.json"))
-
-
-def _load_fixture(path: Path) -> dict[str, Any]:
-    with path.open("r", encoding="utf-8") as handle:
-        return json.load(handle)
+    return list_personal_regression_fixtures()
 
 
 def _scenario_ids() -> list[str]:
     return [path.stem for path in _fixture_paths()]
 
 
-def _run_fund_analysis(fixture: dict[str, Any]) -> SkillOutput:
-    return FundAnalysisSkill().run(
+def _run_workflow(scenario_id: str) -> tuple[dict, PersonalRegressionResult, SkillOutput]:
+    path = FIXTURES_DIR / f"{scenario_id}.json"
+    fixture = load_personal_regression_fixture(path)
+    result = run_personal_regression_fixture(fixture, fixture_path=path)
+    validate_personal_regression_result(result, fixture["expected_behavior"])
+    fa_output = FundAnalysisSkill().run(
         SkillInput(
             task_id=fixture["scenario_id"],
             step_id="personal-fa",
@@ -93,146 +56,12 @@ def _run_fund_analysis(fixture: dict[str, Any]) -> SkillOutput:
             payload=fixture,
         )
     )
-
-
-def _build_evidence(
-    fixture: dict[str, Any],
-    fund_analysis_output: SkillOutput,
-) -> WorkflowEvidenceGraphResult:
-    return build_evidence_graph_from_workflow(
-        fund_analysis_output=fund_analysis_output.to_dict(),
-        host_news_evidence=fixture.get("news_evidence", []),
-        host_sentiment_evidence=fixture.get("sentiment_evidence", []),
-        host_benchmark_evidence=fixture.get("benchmark_history", {}),
-        host_fee_evidence=fixture.get("fee_schedules", {}),
-        host_redemption_evidence=fixture.get("redemption_rules", {}),
-        include_diagnostics=True,
-    )
-
-
-def _run_decision_support(
-    fixture: dict[str, Any],
-    fund_analysis_output: SkillOutput,
-    evidence_result: WorkflowEvidenceGraphResult,
-) -> SkillOutput:
-    fa_artifacts = fund_analysis_output.to_dict().get("artifacts", {})
-    payload: dict[str, Any] = {
-        "evidence_graph": evidence_result.graph.to_dict(),
-        "requested_amount": fixture.get("target_trade_amount")
-        or fixture.get("requested_amount", 0),
-        "portfolio_context": fixture.get("portfolio", {}),
-        "risk_profile": fixture.get("risk_profile", {}),
-        "constraints": fixture.get("constraints", {}),
-        "time_horizon": fixture.get("time_horizon", "medium_term"),
-        "objective": fixture.get("user_question", ""),
-        "deterministic": True,
-    }
-    if fixture.get("requested_action"):
-        payload["requested_action"] = fixture["requested_action"]
-
-    trade_plan = fixture.get("requested_trade_plan") or fixture.get("trade_plan")
-    if trade_plan:
-        resolved_plan, _ = resolve_evidence_source_refs(
-            trade_plan,
-            evidence_result.graph,
-        )
-        payload["trade_plan"] = resolved_plan
-        payload["selected_trade_ids"] = fixture.get("selected_trade_ids", [])
-
-    for key in (
-        "analysis_plan",
-        "evidence_gap_diagnostics",
-        "profit_protection_diagnostics",
-        "benchmark_divergence_diagnostics",
-        "right_side_confirmation_diagnostics",
-        "event_hype_failure_diagnostics",
-        "cash_deployment_diagnostics",
-        "redemption_fee_risk",
-        "position_contribution",
-    ):
-        value = fa_artifacts.get(key)
-        if value:
-            payload[key] = value
-
-    return DecisionSupportSkill().run(
-        SkillInput(
-            task_id=fixture["scenario_id"],
-            step_id="personal-ds",
-            skill_name="decision_support",
-            payload=payload,
-        )
-    )
-
-
-def _classify_intents(fixture: dict[str, Any]) -> list[str]:
-    return classify_advisory_intent(
-        host_intent_hint=fixture.get("user_intent_hint")
-        or fixture.get("user_intent"),
-        user_question=fixture.get("user_question"),
-        requested_action=fixture.get("requested_action"),
-    )
-
-
-def _compose_report(
-    fixture: dict[str, Any],
-    fund_analysis_output: SkillOutput,
-    decision_support_output: SkillOutput | None,
-    evidence_result: WorkflowEvidenceGraphResult,
-    advisory_intents: list[str],
-) -> dict[str, Any]:
-    fa_dict = fund_analysis_output.to_dict()
-    fa_artifacts = fa_dict.get("artifacts", {})
-    missing_data = {}
-    if isinstance(fa_artifacts, dict):
-        missing_data = fa_artifacts.get("evidence_gap_diagnostics", {})
-    return compose_advisory_workflow_report(
-        scenario_id=fixture["scenario_id"],
-        fund_analysis_output=fa_dict,
-        decision_support_output=(
-            decision_support_output.to_dict() if decision_support_output else None
-        ),
-        evidence_graph_diagnostics=evidence_result.to_dict(),
-        missing_data_diagnostics=missing_data,
-        language=fixture.get("language", "zh-CN"),
-        advisory_intents=advisory_intents,
-    )
-
-
-def _run_workflow(scenario_id: str):
-    fixture = _load_fixture(FIXTURES_DIR / f"{scenario_id}.json")
-    intents = _classify_intents(fixture)
-    fund_analysis_output = _run_fund_analysis(fixture)
-    evidence_result = _build_evidence(fixture, fund_analysis_output)
-    eb = fixture["expected_behavior"]
-    decision_support_output = (
-        _run_decision_support(fixture, fund_analysis_output, evidence_result)
-        if eb["decision_support_called"]
-        else None
-    )
-    report = _compose_report(
-        fixture,
-        fund_analysis_output,
-        decision_support_output,
-        evidence_result,
-        intents,
-    )
-    return fixture, intents, fund_analysis_output, evidence_result, decision_support_output, report
-
-
-def _section_text(report: dict[str, Any], section_id: str) -> str:
-    for section in report.get("user_facing_sections", []):
-        if isinstance(section, dict) and section.get("id") == section_id:
-            return " ".join(str(item) for item in section.get("bullets", []))
-    return ""
-
-
-def _serialized_output_text(*values: Any) -> str:
-    return json.dumps(values, ensure_ascii=False, sort_keys=True, default=str)
+    return fixture, result, fa_output
 
 
 @pytest.mark.parametrize("path", _fixture_paths(), ids=lambda p: p.stem)
 def test_fixture_shape_and_expected_behavior_contract(path: Path):
-    fixture = _load_fixture(path)
+    fixture = load_personal_regression_fixture(path)
     missing_fields = REQUIRED_FIXTURE_FIELDS - set(fixture)
     assert not missing_fields, f"{path.name} missing fields: {sorted(missing_fields)}"
     assert fixture["scenario_id"] == path.stem
@@ -245,26 +74,26 @@ def test_fixture_shape_and_expected_behavior_contract(path: Path):
     assert eb["expected_no_broker_execution"] is True
 
 
-def test_personal_regression_pack_has_at_least_twelve_scenarios():
-    assert len(_fixture_paths()) >= 12
+def test_personal_regression_pack_has_at_least_fourteen_scenarios():
+    assert len(_fixture_paths()) >= 14
 
 
 @pytest.mark.parametrize("scenario_id", _scenario_ids())
 def test_personal_portfolio_regression_matches_expected_behavior(scenario_id: str):
-    fixture, intents, fa_output, evidence_result, ds_output, report = _run_workflow(scenario_id)
+    fixture, result, fa_output = _run_workflow(scenario_id)
     eb = fixture["expected_behavior"]
 
     assert_no_formal_decision_in_output(fa_output)
     assert_no_execution_fields(fixture, f"fixture:{scenario_id}")
-    assert_no_execution_fields(fa_output.to_dict(), f"fund_analysis:{scenario_id}")
-    assert_no_execution_fields(evidence_result.to_dict(), f"evidence:{scenario_id}")
-    assert_no_execution_fields(report, f"report:{scenario_id}")
+    assert_no_execution_fields(result.fund_analysis_output, f"fund_analysis:{scenario_id}")
+    assert_no_execution_fields(result.evidence_graph, f"evidence:{scenario_id}")
+    assert_no_execution_fields(result.final_report, f"report:{scenario_id}")
 
     for expected_intent in eb["expected_advisory_intents"]:
-        assert expected_intent in intents
+        assert expected_intent in result.advisory_intents
 
-    summary = report["workflow_summary"]
-    safety = report["safety_boundary"]
+    summary = result.final_report["workflow_summary"]
+    safety = result.final_report["safety_boundary"]
     assert summary["report_status"] == eb["expected_report_status"]
     assert summary["decision_status"] == eb["expected_decision_status"]
     assert safety["formal_decision_source"] == eb["expected_formal_source"]
@@ -272,40 +101,44 @@ def test_personal_portfolio_regression_matches_expected_behavior(scenario_id: st
 
     section_ids = {
         section.get("id")
-        for section in report.get("user_facing_sections", [])
+        for section in result.final_report.get("user_facing_sections", [])
         if isinstance(section, dict)
     }
     for section_id in eb["expected_required_report_sections"]:
         assert section_id in section_ids
 
-    chinese_summary = " ".join(report.get("chinese_summary", {}).get("bullets", []))
+    chinese_summary = " ".join(result.final_report.get("chinese_summary", {}).get("bullets", []))
     for phrase in eb["expected_chinese_summary_contains"]:
-        assert phrase in chinese_summary
+        assert phrase in chinese_summary, f"chinese_summary missing phrase: {phrase}"
 
-    direct_answer = _section_text(report, "direct_answer")
+    direct_answer = section_text(result.final_report, "direct_answer")
     for phrase in eb["expected_direct_answer_contains"]:
-        assert phrase in direct_answer
+        assert phrase in direct_answer, f"direct_answer missing phrase: {phrase}"
 
-    action_boundary = _section_text(report, "action_boundary")
+    action_boundary = section_text(result.final_report, "action_boundary")
     for phrase in eb["expected_action_boundary_contains"]:
-        assert phrase in action_boundary
+        assert phrase in action_boundary, f"action_boundary missing phrase: {phrase}"
 
     missing_text = (
-        _section_text(report, "evidence_status")
+        section_text(result.final_report, "evidence_status")
         + " "
-        + _section_text(report, "limitations")
+        + section_text(result.final_report, "limitations")
     )
     for phrase in eb["expected_missing_data_contains"]:
         assert phrase in missing_text
 
-    full_text = _serialized_output_text(fa_output.to_dict(), evidence_result.to_dict(), ds_output.to_dict() if ds_output else None, report)
+    full_text = json.dumps(
+        [result.fund_analysis_output, result.evidence_graph,
+         result.decision_support_output, result.final_report],
+        ensure_ascii=False, sort_keys=True, default=str,
+    )
     for forbidden in eb["expected_no_fabrication_fields"]:
         assert forbidden not in full_text
 
     if eb["decision_support_called"]:
-        assert ds_output is not None
-        assert_no_execution_fields(ds_output.to_dict(), f"decision_support:{scenario_id}")
-        artifacts = ds_output.artifacts or {}
+        assert result.decision_support_output is not None
+        assert_no_execution_fields(result.decision_support_output, f"decision_support:{scenario_id}")
+        artifacts = result.decision_support_output.get("artifacts", {})
         ledger = artifacts.get("execution_ledger")
         assert isinstance(ledger, dict)
         ledger_summary = ledger.get("ledger_summary", {})
@@ -314,20 +147,144 @@ def test_personal_portfolio_regression_matches_expected_behavior(scenario_id: st
         assert ledger_summary.get("blocked_decision_count") == eb["expected_blocked_decision_count"]
         assert ledger_summary.get("downgraded_decision_count") == eb["expected_downgraded_decision_count"]
 
-        reason_text = _serialized_output_text(
-            artifacts.get("decision"),
-            artifacts.get("decisions"),
-            ledger,
+        reason_text = json.dumps(
+            [artifacts.get("decision"), artifacts.get("decisions"), ledger],
+            ensure_ascii=False, sort_keys=True, default=str,
         )
         for fragment in eb["expected_reason_code_contains"]:
             assert fragment in reason_text
 
         conflicts = artifacts.get("risk_constraint_conflicts", {})
         assert artifacts.get("evidence_anchor_diagnostics")
-        conflict_text = _serialized_output_text(conflicts)
+        conflict_text = json.dumps(conflicts, ensure_ascii=False, sort_keys=True, default=str)
         for kind in eb["expected_risk_conflict_kinds"]:
             assert kind in conflict_text
+
+        if eb.get("expected_action_outcome") == "allowed":
+            decision = artifacts.get("decision", {})
+            action = decision.get("action", "")
+            assert action in {"BUY", "SELL", "INCREASE", "REDUCE"}, (
+                f"expected active action, got {action}"
+            )
+            amount = decision.get("execution_amount", 0)
+            assert amount >= eb.get("expected_min_final_execution_amount", 0)
+            assert amount <= eb.get("expected_max_final_execution_amount", float("inf"))
+            if eb.get("expected_preserve_requested_action"):
+                requested = fixture.get("requested_action", "")
+                if requested:
+                    assert action == requested, (
+                        f"requested_action {requested} not preserved, got {action}"
+                    )
     else:
-        assert ds_output is None
+        assert result.decision_support_output is None
         assert summary["decision_status"] == "NO_FORMAL_DECISION"
         assert safety["formal_decision_source"] == "none"
+
+
+def test_semiconductor_partial_reduce_allowed():
+    fixture, result, _ = _run_workflow("semiconductor_profit_recovery_partial_reduce_allowed_zh")
+    eb = fixture["expected_behavior"]
+
+    assert eb["decision_support_called"] is True
+    assert result.decision_support_output is not None
+
+    ds_artifacts = result.decision_support_output.get("artifacts", {})
+    decision = ds_artifacts.get("decision", {})
+    action = decision.get("action", "")
+    assert action in {"REDUCE", "SELL"}, f"expected REDUCE/SELL, got {action}"
+
+    amount = decision.get("execution_amount", 0)
+    assert amount > 0, f"expected positive execution_amount, got {amount}"
+    assert amount <= fixture.get("target_trade_amount", float("inf"))
+
+    ledger = ds_artifacts.get("execution_ledger", {})
+    ledger_summary = ledger.get("ledger_summary", {}) if isinstance(ledger, dict) else {}
+    assert ledger_summary.get("active_decision_count", 0) >= 1
+    assert ledger_summary.get("blocked_decision_count", 0) == 0
+
+    assert ds_artifacts.get("evidence_anchor_diagnostics") is not None
+
+    flat = flatten_report_text(result.final_report)
+    assert any(kw in flat for kw in ("回收本金", "部分减仓", "盈利保护"))
+
+    assert "broker_order_id" not in json.dumps(result.final_report, ensure_ascii=False)
+
+
+def test_cash_deployment_partial_buy_allowed():
+    fixture, result, _ = _run_workflow("cash_deployment_partial_buy_allowed_with_budget_zh")
+    eb = fixture["expected_behavior"]
+
+    assert eb["decision_support_called"] is True
+    assert result.decision_support_output is not None
+
+    ds_artifacts = result.decision_support_output.get("artifacts", {})
+    decision = ds_artifacts.get("decision", {})
+    action = decision.get("action", "")
+    assert action in {"BUY", "INCREASE"}, f"expected BUY/INCREASE, got {action}"
+
+    amount = decision.get("execution_amount", 0)
+    assert amount > 0, f"expected positive execution_amount, got {amount}"
+    assert amount <= fixture.get("target_trade_amount", float("inf"))
+
+    ledger = ds_artifacts.get("execution_ledger", {})
+    ledger_summary = ledger.get("ledger_summary", {}) if isinstance(ledger, dict) else {}
+    assert ledger_summary.get("active_decision_count", 0) >= 1
+    assert ledger_summary.get("blocked_decision_count", 0) == 0
+
+    flat = flatten_report_text(result.final_report)
+    assert any(kw in flat for kw in ("安全垫", "可动用资金", "可部署"))
+
+    assert "broker_order_id" not in json.dumps(result.final_report, ensure_ascii=False)
+
+
+def test_blocked_scenarios_remain_blocked():
+    blocked_scenarios = [
+        "short_holding_7day_fee_sell_zh",
+        "oil_gas_loss_position_rebalance_zh",
+    ]
+    for scenario_id in blocked_scenarios:
+        fixture, result, _ = _run_workflow(scenario_id)
+        eb = fixture["expected_behavior"]
+        assert eb["expected_action_outcome"] in ("blocked", "downgraded"), (
+            f"{scenario_id} should be blocked/downgraded"
+        )
+        summary = result.final_report["workflow_summary"]
+        assert summary["decision_status"] in ("BLOCKED", "DOWNGRADED"), (
+            f"{scenario_id} decision_status should be BLOCKED/DOWNGRADED, got {summary['decision_status']}"
+        )
+        if result.decision_support_output is not None:
+            ds_artifacts = result.decision_support_output.get("artifacts", {})
+            ledger = ds_artifacts.get("execution_ledger", {})
+            ledger_summary = ledger.get("ledger_summary", {}) if isinstance(ledger, dict) else {}
+            assert ledger_summary.get("active_decision_count", 0) == 0, (
+                f"{scenario_id} should have no active decisions"
+            )
+
+
+def test_mixed_portfolio_report_only_rich():
+    fixture, result, _ = _run_workflow("mixed_portfolio_report_only_zh")
+    eb = fixture["expected_behavior"]
+
+    assert eb["decision_support_called"] is False
+    assert result.decision_support_output is None
+
+    summary = result.final_report["workflow_summary"]
+    assert summary["decision_status"] == "NO_FORMAL_DECISION"
+
+    positions = fixture.get("portfolio", {}).get("positions", [])
+    assert len(positions) >= 5, "mixed portfolio should have at least 5 positions"
+
+    section_ids = {
+        section.get("id")
+        for section in result.final_report.get("user_facing_sections", [])
+        if isinstance(section, dict)
+    }
+    for required in ("direct_answer", "portfolio_diagnosis", "evidence_status",
+                     "action_boundary", "recommended_next_steps"):
+        assert required in section_ids
+
+    flat = flatten_report_text(result.final_report)
+    for kw in ("组合", "风险", "现金", "不执行券商下单"):
+        assert kw in flat, f"mixed portfolio report missing keyword: {kw}"
+
+    assert "broker_order_id" not in flat

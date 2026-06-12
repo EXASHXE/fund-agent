@@ -49,6 +49,13 @@
     "expected_action_boundary_contains": ["未产生正式决策", "纯分析输出"],
     "expected_missing_data_contains": [],
     "expected_no_fabrication_fields": ["valuation_percentile", "live_price", "broker_order_id"],
-    "expected_no_broker_execution": true
+    "expected_no_broker_execution": true,
+    "expected_action_outcome": "passive",
+    "expected_final_actions": [],
+    "expected_requested_actions": [],
+    "expected_min_final_execution_amount": 0,
+    "expected_max_final_execution_amount": 0,
+    "expected_preserve_requested_action": true,
+    "expected_preserve_requested_amount": true
   }
 }

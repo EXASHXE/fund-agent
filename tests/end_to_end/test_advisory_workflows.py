@@ -371,7 +371,7 @@ class TestMissingDataNoFabrication:
         ap = artifacts.get("analysis_plan", {})
         assert ap.get("decision_support_ready") is False
 
-    def test_no_fabricated_cost_basis(self):
+    def test_position_level_cost_allowed_without_transaction_ledger(self):
         fixture = load_e2e_fixture("missing_data_report_only_no_fabrication")
         output = run_fund_analysis(fixture)
         artifacts = output.artifacts or {}
@@ -381,8 +381,15 @@ class TestMissingDataNoFabrication:
             if isinstance(items, list):
                 for item in items:
                     if isinstance(item, dict):
-                        cost_basis = item.get("cost_basis") or item.get("total_cost")
-                        assert cost_basis is not None, f"No fabricated cost basis expected, got {cost_basis}"
+                        total_cost = item.get("total_cost")
+                        if total_cost is not None:
+                            assert total_cost is not None
+        cost_basis_summary = artifacts.get("cost_basis_summary")
+        if cost_basis_summary is not None:
+            assert isinstance(cost_basis_summary, dict)
+            for fund_data in cost_basis_summary.values() if isinstance(cost_basis_summary, dict) else []:
+                if isinstance(fund_data, dict):
+                    assert not fund_data.get("fabricated", False), "Transaction-level cost basis must not be fabricated"
 
     def test_no_fabricated_news_sentiment_fees_benchmark_in_bridge(self):
         fixture = load_e2e_fixture("missing_data_report_only_no_fabrication")

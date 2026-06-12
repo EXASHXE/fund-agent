@@ -17,11 +17,12 @@ def test_personal_regression_runner_json_outputs_summary():
         [sys.executable, str(SCRIPT), "--json"],
         cwd=ROOT,
         text=True,
+        encoding="utf-8",
         capture_output=True,
         check=True,
     )
     payload = json.loads(result.stdout)
-    assert payload["summary"]["scenario_count"] >= 12
+    assert payload["summary"]["scenario_count"] >= 14
     assert payload["summary"]["failed_count"] == 0
     assert payload["summary"]["no_broker_execution"] is True
     assert payload["results"]
@@ -38,6 +39,7 @@ def test_personal_regression_runner_can_filter_one_scenario():
         ],
         cwd=ROOT,
         text=True,
+        encoding="utf-8",
         capture_output=True,
         check=True,
     )

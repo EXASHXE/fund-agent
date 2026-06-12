@@ -61,6 +61,13 @@
     "expected_action_boundary_contains": ["decision_support", "不执行券商下单"],
     "expected_missing_data_contains": [],
     "expected_no_fabrication_fields": ["live_price", "latest_news", "broker_order_id"],
-    "expected_no_broker_execution": true
+    "expected_no_broker_execution": true,
+    "expected_action_outcome": "downgraded",
+    "expected_final_actions": ["HOLD"],
+    "expected_requested_actions": ["REDUCE"],
+    "expected_min_final_execution_amount": 0,
+    "expected_max_final_execution_amount": 0,
+    "expected_preserve_requested_action": false,
+    "expected_preserve_requested_amount": false
   }
 }

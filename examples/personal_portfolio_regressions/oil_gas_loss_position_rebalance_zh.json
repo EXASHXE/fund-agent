@@ -50,6 +50,13 @@
     "expected_action_boundary_contains": ["正式决策", "已被阻断"],
     "expected_missing_data_contains": [],
     "expected_no_fabrication_fields": ["commodity_forecast", "live_oil_price", "broker_order_id"],
-    "expected_no_broker_execution": true
+    "expected_no_broker_execution": true,
+    "expected_action_outcome": "blocked",
+    "expected_final_actions": ["HOLD"],
+    "expected_requested_actions": ["SELL"],
+    "expected_min_final_execution_amount": 0,
+    "expected_max_final_execution_amount": 0,
+    "expected_preserve_requested_action": false,
+    "expected_preserve_requested_amount": false
   }
 }

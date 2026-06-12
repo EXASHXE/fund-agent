@@ -1,30 +1,39 @@
 {
   "scenario_id": "mixed_portfolio_report_only_zh",
   "user_question": "帮我整体看一下现在基金组合，哪些风险最大，下一步重点看什么？",
-  "user_context": {"locale": "zh-CN", "style": "portfolio_review", "notes": ["整体报告", "不要求下单"]},
+  "user_context": {"locale": "zh-CN", "style": "portfolio_review", "notes": ["整体报告", "不要求下单", "关注风险和下一步"]},
   "user_intent_hint": "report_only",
   "as_of_date": "2026-06-10",
   "language": "zh-CN",
   "portfolio": {
     "as_of_date": "2026-06-10",
-    "total_value": 520000,
-    "cash_available": 70000,
+    "total_value": 680000,
+    "cash_available": 95000,
     "positions": [
-      {"fund_code": "FAKE-SC-MIX", "fund_name": "半导体AI硬件C", "current_value": 82000, "total_cost": 60000, "shares": 70000, "target_weight": 0.16, "tags": ["semiconductor", "AI"]},
-      {"fund_code": "FAKE-HC-MIX", "fund_name": "创新药精选C", "current_value": 58000, "total_cost": 70000, "shares": 56000, "target_weight": 0.11, "tags": ["healthcare", "innovation_drug"]},
-      {"fund_code": "FAKE-QDII-MIX", "fund_name": "全球AI科技QDII", "current_value": 96000, "total_cost": 82000, "shares": 76000, "target_weight": 0.18, "tags": ["QDII", "AI", "US_tech"]},
-      {"fund_code": "FAKE-BAT-MIX", "fund_name": "新能源电池产业C", "current_value": 42000, "total_cost": 50000, "shares": 41000, "target_weight": 0.08, "tags": ["battery", "new_energy"]},
-      {"fund_code": "FAKE-DV-MIX", "fund_name": "红利低波精选C", "current_value": 78000, "total_cost": 76000, "shares": 74000, "target_weight": 0.15, "tags": ["dividend", "low_vol"]},
-      {"fund_code": "FAKE-BD-MIX", "fund_name": "稳健短债C", "current_value": 120000, "total_cost": 120000, "shares": 118000, "target_weight": 0.23, "tags": ["short_bond"]}
+      {"fund_code": "FAKE-SC-MIX", "fund_name": "半导体AI硬件C", "current_value": 115000, "total_cost": 72000, "shares": 95000, "target_weight": 0.14, "tags": ["semiconductor", "AI"]},
+      {"fund_code": "FAKE-HC-MIX", "fund_name": "创新药精选C", "current_value": 52000, "total_cost": 70000, "shares": 50000, "target_weight": 0.08, "tags": ["healthcare", "innovation_drug"]},
+      {"fund_code": "FAKE-QDII-MIX", "fund_name": "全球AI科技QDII", "current_value": 128000, "total_cost": 98000, "shares": 96000, "target_weight": 0.17, "tags": ["QDII", "AI", "US_tech"]},
+      {"fund_code": "FAKE-BAT-MIX", "fund_name": "新能源电池产业C", "current_value": 38000, "total_cost": 52000, "shares": 37000, "target_weight": 0.06, "tags": ["battery", "new_energy"]},
+      {"fund_code": "FAKE-DV-MIX", "fund_name": "红利低波精选C", "current_value": 95000, "total_cost": 92000, "shares": 90000, "target_weight": 0.14, "tags": ["dividend", "low_vol"]},
+      {"fund_code": "FAKE-OIL-MIX", "fund_name": "合成油气资源C", "current_value": 42000, "total_cost": 55000, "shares": 40000, "target_weight": 0.06, "tags": ["energy", "oil_gas"]},
+      {"fund_code": "FAKE-BD-MIX", "fund_name": "稳健短债C", "current_value": 115000, "total_cost": 115000, "shares": 113000, "target_weight": 0.17, "tags": ["short_bond"]}
     ]
   },
-  "transactions": [{"fund_code": "FAKE-SC-MIX", "action": "BUY", "date": "2025-05-12", "amount": 60000, "shares": 62000}, {"fund_code": "FAKE-HC-MIX", "action": "BUY", "date": "2025-10-08", "amount": 70000, "shares": 64000}],
+  "transactions": [
+    {"fund_code": "FAKE-SC-MIX", "action": "BUY", "date": "2025-03-12", "amount": 72000, "shares": 74000},
+    {"fund_code": "FAKE-HC-MIX", "action": "BUY", "date": "2025-06-08", "amount": 70000, "shares": 64000},
+    {"fund_code": "FAKE-QDII-MIX", "action": "BUY", "date": "2025-04-15", "amount": 98000, "shares": 92000},
+    {"fund_code": "FAKE-BAT-MIX", "action": "BUY", "date": "2025-09-20", "amount": 52000, "shares": 50000},
+    {"fund_code": "FAKE-OIL-MIX", "action": "BUY", "date": "2025-11-10", "amount": 55000, "shares": 52000}
+  ],
   "nav_history": {
-    "FAKE-SC-MIX": [{"date": "2026-05-10", "nav": 1.35}, {"date": "2026-06-10", "nav": 1.52}],
-    "FAKE-HC-MIX": [{"date": "2026-05-10", "nav": 1.05}, {"date": "2026-06-10", "nav": 0.91}],
-    "FAKE-QDII-MIX": [{"date": "2026-05-10", "nav": 1.26}, {"date": "2026-06-10", "nav": 1.37}],
-    "FAKE-BAT-MIX": [{"date": "2026-03-10", "nav": 1.2}, {"date": "2026-06-10", "nav": 0.94}],
-    "FAKE-DV-MIX": [{"date": "2026-05-10", "nav": 1.04}, {"date": "2026-06-10", "nav": 1.07}]
+    "FAKE-SC-MIX": [{"date": "2025-06-30", "nav": 1.15}, {"date": "2025-12-15", "nav": 1.72}, {"date": "2026-03-10", "nav": 1.55}, {"date": "2026-06-10", "nav": 1.62}],
+    "FAKE-HC-MIX": [{"date": "2025-09-10", "nav": 1.12}, {"date": "2026-03-10", "nav": 1.05}, {"date": "2026-06-10", "nav": 0.91}],
+    "FAKE-QDII-MIX": [{"date": "2025-06-30", "nav": 1.18}, {"date": "2025-12-15", "nav": 1.42}, {"date": "2026-06-10", "nav": 1.53}],
+    "FAKE-BAT-MIX": [{"date": "2025-12-20", "nav": 1.25}, {"date": "2026-03-10", "nav": 1.08}, {"date": "2026-06-10", "nav": 0.88}],
+    "FAKE-DV-MIX": [{"date": "2026-03-10", "nav": 1.05}, {"date": "2026-06-10", "nav": 1.08}],
+    "FAKE-OIL-MIX": [{"date": "2025-12-10", "nav": 1.15}, {"date": "2026-03-10", "nav": 1.02}, {"date": "2026-06-10", "nav": 0.95}],
+    "FAKE-BD-MIX": [{"date": "2026-03-10", "nav": 1.01}, {"date": "2026-06-10", "nav": 1.015}]
   },
   "fund_profiles": {
     "FAKE-SC-MIX": {"fund_code": "FAKE-SC-MIX", "name": "半导体AI硬件C", "fund_type": "equity", "benchmark": "CS-SYN-SEMI", "theme": "semiconductor"},
@@ -32,20 +41,42 @@
     "FAKE-QDII-MIX": {"fund_code": "FAKE-QDII-MIX", "name": "全球AI科技QDII", "fund_type": "QDII", "benchmark": "SYN-NASDAQ-AI", "theme": "US_tech"},
     "FAKE-BAT-MIX": {"fund_code": "FAKE-BAT-MIX", "name": "新能源电池产业C", "fund_type": "equity", "benchmark": "SYN-BATTERY", "theme": "battery"},
     "FAKE-DV-MIX": {"fund_code": "FAKE-DV-MIX", "name": "红利低波精选C", "fund_type": "index", "benchmark": "SYN-DIV-LOWVOL", "theme": "dividend_low_vol"},
+    "FAKE-OIL-MIX": {"fund_code": "FAKE-OIL-MIX", "name": "合成油气资源C", "fund_type": "equity", "benchmark": "SYN-OIL-GAS", "theme": "oil_gas"},
     "FAKE-BD-MIX": {"fund_code": "FAKE-BD-MIX", "name": "稳健短债C", "fund_type": "short_bond", "benchmark": "SYN-SHORT-BOND", "theme": "cash"}
   },
   "holdings": {
-    "FAKE-SC-MIX": [{"stock_code": "SYN-NVDA", "stock_name": "Synthetic Nvidia", "weight": 0.11, "sector": "technology"}],
-    "FAKE-QDII-MIX": [{"stock_code": "SYN-NVDA", "stock_name": "Synthetic Nvidia", "weight": 0.12, "sector": "technology"}]
+    "FAKE-SC-MIX": [{"stock_code": "SYN-NVDA", "stock_name": "Synthetic Nvidia", "weight": 0.11, "sector": "technology"}, {"stock_code": "SYN-CHIP-A", "stock_name": "合成芯片设备A", "weight": 0.08, "sector": "technology", "industry": "semiconductors"}],
+    "FAKE-QDII-MIX": [{"stock_code": "SYN-NVDA", "stock_name": "Synthetic Nvidia", "weight": 0.12, "sector": "technology"}, {"stock_code": "SYN-MSFT", "stock_name": "Synthetic Microsoft", "weight": 0.09, "sector": "technology"}],
+    "FAKE-OIL-MIX": [{"stock_code": "SYN-OIL-A", "stock_name": "合成油气A", "weight": 0.15, "sector": "energy"}]
   },
-  "fee_schedules": {},
-  "redemption_rules": {},
-  "benchmark_history": {},
-  "news_evidence": [],
-  "sentiment_evidence": [],
-  "market_scenario": {"review_scope": "portfolio_level"},
-  "risk_profile": {"risk_level": "balanced", "liquidity_reserve_pct": 0.15},
-  "constraints": {"max_trade_pct": 0.1},
+  "fee_schedules": {
+    "FAKE-SC-MIX": {"redemption_fee_pct": 0.0, "management_fee": 0.012},
+    "FAKE-QDII-MIX": {"redemption_fee_pct": 0.005, "management_fee": 0.015},
+    "FAKE-BAT-MIX": {"redemption_fee_pct": 0.0, "management_fee": 0.01}
+  },
+  "redemption_rules": {
+    "FAKE-QDII-MIX": {"holding_period_days": 30, "redemption_fee_pct": 0.005},
+    "FAKE-BAT-MIX": {"holding_period_days": 180, "redemption_fee_pct": 0.0}
+  },
+  "benchmark_history": {
+    "FAKE-SC-MIX": [{"date": "2026-03-10", "nav": 4200}, {"date": "2026-06-10", "nav": 4560}],
+    "FAKE-QDII-MIX": [{"date": "2026-03-10", "nav": 8900}, {"date": "2026-06-10", "nav": 9350}],
+    "FAKE-BAT-MIX": [{"date": "2026-03-10", "nav": 3000}, {"date": "2026-06-10", "nav": 2550}],
+    "FAKE-OIL-MIX": [{"date": "2026-03-10", "nav": 1800}, {"date": "2026-06-10", "nav": 1650}]
+  },
+  "news_evidence": [
+    {"title": "合成半导体产业链订单回暖但估值分位偏高", "entities": ["FAKE-SC-MIX"], "direction": "positive", "confidence": 0.65, "source": "synthetic_host_news"},
+    {"title": "AI硬件海外需求持续但短期过热风险上升", "entities": ["FAKE-QDII-MIX"], "direction": "neutral", "confidence": 0.58, "source": "synthetic_host_news"},
+    {"title": "新能源电池产业链价格压力仍在", "entities": ["FAKE-BAT-MIX"], "direction": "negative", "confidence": 0.62, "source": "synthetic_host_news"}
+  ],
+  "sentiment_evidence": [
+    {"entity": "FAKE-SC-MIX", "score": 0.55, "claim": "AI硬件主题短线情绪偏热", "confidence": 0.60, "source": "synthetic_sentiment"},
+    {"entity": "FAKE-BAT-MIX", "score": -0.40, "claim": "新能源讨论情绪偏弱", "confidence": 0.55, "source": "synthetic_sentiment"},
+    {"entity": "FAKE-OIL-MIX", "score": -0.25, "claim": "油气主题情绪中性偏弱", "confidence": 0.50, "source": "synthetic_sentiment"}
+  ],
+  "market_scenario": {"review_scope": "portfolio_level", "ai_overweight": true, "loss_positions_present": true},
+  "risk_profile": {"risk_level": "balanced", "liquidity_reserve_pct": 0.15, "max_trade_pct": 0.1},
+  "constraints": {"max_trade_pct": 0.1, "liquidity_reserve_pct": 0.15, "tactical_budget_pct": 0.1},
   "requested_action": "",
   "time_horizon": "long_term",
   "expected_behavior": {
@@ -60,12 +91,19 @@
     "expected_downgraded_decision_count": 0,
     "expected_reason_code_contains": [],
     "expected_risk_conflict_kinds": [],
-    "expected_required_report_sections": ["direct_answer", "evidence_status", "portfolio_diagnosis", "summary", "decision_explanation", "action_boundary", "recommended_next_steps", "limitations"],
-    "expected_chinese_summary_contains": ["分析报告", "不包含正式交易决策", "不执行券商下单"],
-    "expected_direct_answer_contains": ["分析/报告场景", "未评估正式交易决策"],
+    "expected_required_report_sections": ["direct_answer", "evidence_status", "portfolio_diagnosis", "action_boundary", "recommended_next_steps"],
+    "expected_chinese_summary_contains": ["组合", "不执行券商下单", "证据"],
+    "expected_direct_answer_contains": ["分析/报告场景"],
     "expected_action_boundary_contains": ["未产生正式决策", "suggested_rebalance_plan"],
     "expected_missing_data_contains": [],
     "expected_no_fabrication_fields": ["broker_order_id", "latest_news", "live_price"],
-    "expected_no_broker_execution": true
+    "expected_no_broker_execution": true,
+    "expected_action_outcome": "passive",
+    "expected_final_actions": [],
+    "expected_requested_actions": [],
+    "expected_min_final_execution_amount": 0,
+    "expected_max_final_execution_amount": 0,
+    "expected_preserve_requested_action": true,
+    "expected_preserve_requested_amount": true
   }
 }
