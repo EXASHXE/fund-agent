@@ -59,6 +59,100 @@ provider implementations, and how to use the returned evidence.
 - provider rate limits and network access
 - final user interaction and UX
 
+## What fund-agent Is
+
+A **host-agnostic skill pack for personal mutual fund analysis**. It provides:
+- Deterministic runtime for fund analysis, decision support, and evidence graph
+- Typed contracts, evidence tools, KnowledgeGraph helpers
+- External agent/host owns orchestration and live data
+
+## What fund-agent Is Not
+
+- **Not a broker** — no order execution, no trade placement
+- **Not an autonomous trader** — no agent loops, no self-directed trading
+- **Not a live-data provider in core** — no network calls, no provider SDKs in runtime
+- **Not an LLM report generator** — deterministic composition only
+- **Not a stock-picking social persona agent** — no social features, no recommendations without evidence
+
+## 30-Second Start
+
+```bash
+# Check readiness
+fund-agent doctor --pretty
+
+# Run a sample skill
+fund-agent run-skill --skill fund_analysis --input examples/runtime_bridge_fund_analysis_input.json --pretty
+
+# Run personal regressions
+fund-agent regressions --pretty
+
+# Run project audit
+fund-agent audit --pretty
+```
+
+If using OpenCode with the plugin installed, see [`.opencode/INSTALL.md`](.opencode/INSTALL.md).
+
+## Core Workflow
+
+```
+fund_analysis → EvidenceGraph bridge → optional decision_support → final report → quality gate / workflow trace
+```
+
+- **Report-only** flows use `fund_analysis` alone and do **not** call `decision_support`
+- **Formal trade** requests may call `decision_support` which creates audit artifacts only
+- `suggested_rebalance_plan` remains analysis-only and is not a trade instruction
+
+## Report-Only vs Formal Decision
+
+| Flow | Calls decision_support? | Produces |
+|------|------------------------|----------|
+| Report-only (`REPORT_ONLY`, `SOFT_ACTION_ADVICE`) | No | `report_sections`, `report_outline`, `report_quality_gate` |
+| Formal trade (`FORMAL_TRADE_DECISION`) | Yes | `Decision`, `ExecutionLedger`, `audit_trail` |
+
+SOFT_ACTION_ADVICE alone must not force decision_support.
+
+## Provider Boundary
+
+- **Core runtime is no-network** — no provider SDK imports, no API calls
+- **Host adapter examples** live under `examples/host_data_adapters/`
+- **AkShare / Eastmoney / Xueqiu** are optional host adapter prototypes (not core)
+- **Credentials** via config/env only — no secrets committed
+- **News MCP/API keys** are host-owned — core never handles them
+
+## Public API
+
+Stable import paths for external consumers:
+
+```python
+from fund_agent.workflow import WorkflowTrace, classify_advisory_intent, compose_advisory_workflow_report
+from fund_agent.regression import list_personal_regression_fixtures, run_personal_regression_fixture
+from fund_agent.quality import evaluate_advisory_quality_gate, FORBIDDEN_EXECUTION_FIELDS
+from fund_agent.providers import ProviderCapability, ProviderConfig, ProviderRegistry, ProviderResult
+from fund_agent.reporting import compose_advisory_workflow_report, compute_report_status
+from fund_agent.runtime import FundAnalysisSkill, DecisionSupportSkill, SkillInput, SkillOutput
+from fund_agent.version import __version__
+```
+
+Old deep import paths (`src.skills_runtime.workflow`, `src.host_data`, etc.) remain functional.
+
+## CLI
+
+```bash
+fund-agent doctor [--pretty] [--json]           # deterministic readiness check
+fund-agent run-skill --skill ID --input PATH    # run a manifest skill
+fund-agent regressions [--pretty] [--scenario]  # run personal regression fixtures
+fund-agent provider-smoke [--provider NAME]     # optional adapter smoke test
+fund-agent audit [--pretty] [--json]            # run project audit scripts
+```
+
+Old commands remain compatible: `fund-agent-run-skill`, `fund-agent-doctor`.
+
+## Pre-0.9 Status
+
+This project is approaching a **v0.9.0 pre-launch baseline**. Provider adapters
+(AkShare, Eastmoney, Xueqiu) are prototypes unless smoke-tested with real
+credentials. See [`docs/release/v0.9.0-readiness-checklist.md`](docs/release/v0.9.0-readiness-checklist.md).
+
 ## Not The Main Product
 
 - internal ResearchOS
@@ -232,13 +326,23 @@ skills/                     # host-readable Skill instructions and references
   fund-analysis/            # canonical docs for runtime ID fund_analysis
   decision-support/         # canonical docs for runtime ID decision_support
 src/
+  fund_agent/               # stable public facade (workflow, regression, quality, providers, reporting, runtime, cli)
   skills_runtime/           # host-callable runtime skill handlers
   skillpack/                # manifest loader, resolver, validator
   schemas/                  # typed contracts
   tools/                    # pure tools and MCP adapter boundary
   graph/                    # KnowledgeGraph implementation
+  host_data/                # provider contracts and registry (no adapters, no network)
+scripts/
+  audit/                    # project audit scripts
+  run_skill.py              # thin wrapper around runtime bridge
+  run_personal_regressions.py
+  fund_agent_doctor.py
+examples/
+  host_data_adapters/       # optional host adapter prototypes (AkShare, Eastmoney, Xueqiu)
+  personal_portfolio_regressions/
+  scenarios/
 legacy/README.md            # pointer to v0.1.0-skillpack-alpha legacy archive
-examples/reference_workflows/
 docs/
 ```
 

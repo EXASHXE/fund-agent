@@ -9,6 +9,7 @@ description = "Host-agnostic AI financial research skill pack / agent plugin"
 requires-python = ">=3.11"
 
 [project.scripts]
+fund-agent = "src.fund_agent.cli:main"
 fund-agent-run-skill = "src.skillpack.run_skill:main"
 fund-agent-doctor = "src.skillpack.doctor:main"
 
@@ -30,6 +31,7 @@ testpaths = [
     "tests/scripts",
     "tests/workflow",
     "tests/host_data",
+    "tests/public_api",
 ]
 pythonpath = ["."]
 addopts = "--import-mode=importlib"
@@ -46,6 +48,9 @@ markers = [
     "smoke: broad external-host smoke tests",
     "filesystem: tests that scan many files",
     "windows_slow: tests known to be slower on Windows",
+    "live_provider: tests requiring live provider access (skipped by default)",
+    "adapter: adapter-specific tests",
+    "regression: personal regression tests",
 ]
 
 [tool.setuptools.packages.find]
