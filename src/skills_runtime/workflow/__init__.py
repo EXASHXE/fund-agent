@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from .advisory_markdown_adapter import adapt_personal_fund_report_to_advisory_markdown_report
 from .advisory_intent import (
     AdvisoryIntent,
     classify_advisory_intent,
@@ -22,6 +23,7 @@ from .markdown_report import render_advisory_report_markdown
 from .workflow_trace import WorkflowTrace
 
 __all__ = [
+    "adapt_personal_fund_report_to_advisory_markdown_report",
     "AdvisoryIntent",
     "bridge_portfolio_input",
     "build_evidence_graph_from_workflow",

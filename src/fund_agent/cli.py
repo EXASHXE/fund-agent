@@ -138,15 +138,17 @@ def _cmd_analyze_portfolio(args: argparse.Namespace) -> int:
 
     fmt = getattr(args, "format", "json")
     if fmt == "markdown":
+        from src.skills_runtime.workflow.advisory_markdown_adapter import (
+            adapt_personal_fund_report_to_advisory_markdown_report,
+        )
         from src.skills_runtime.workflow.markdown_report import render_advisory_report_markdown
-        report_data = {
-            "report_sections": final_report.get("report_sections", []),
-            "analysis_mode": bridge_result["payload"].get("analysis_mode", "report_only"),
-            "quality_gate": final_report.get("quality_gate", {}),
-            "decision": None,
-            "execution_ledger": None,
-        }
-        md = render_advisory_report_markdown(report_data)
+        adapted_report = adapt_personal_fund_report_to_advisory_markdown_report(
+            final_report,
+            analysis_mode=bridge_result["payload"].get("analysis_mode", "report_only"),
+            decision=None,
+            execution_ledger=None,
+        )
+        md = render_advisory_report_markdown(adapted_report)
         output_path = getattr(args, "output", None)
         if output_path:
             Path(output_path).write_text(md, encoding="utf-8")

@@ -63,7 +63,31 @@ class TestAnalyzePortfolioMarkdownOutput:
         assert rc == 0
         content = Path(output_path).read_text(encoding="utf-8")
         assert "基金组合分析报告" in content
-        assert "组合概览" in content or "直接回答" in content
+        assert "直接回答" in content or "组合概览" in content
+
+    def test_markdown_has_real_content_not_only_headings(self, tmp_path):
+        input_path = _write_temp_json(_minimal_portfolio(), tmp_path)
+        output_path = str(tmp_path / "report.md")
+        rc = cli_main(["analyze-portfolio", "--input", input_path, "--format", "markdown", "--output", output_path])
+        assert rc == 0
+        content = Path(output_path).read_text(encoding="utf-8")
+        non_empty_bullets = [
+            line for line in content.splitlines()
+            if line.strip().startswith("- ") and len(line.strip()) > 3
+        ]
+        assert len(non_empty_bullets) >= 3, "markdown has fewer than 3 real bullet lines"
+
+    def test_no_default_placeholders_only(self, tmp_path):
+        input_path = _write_temp_json(_minimal_portfolio(), tmp_path)
+        output_path = str(tmp_path / "report.md")
+        rc = cli_main(["analyze-portfolio", "--input", input_path, "--format", "markdown", "--output", output_path])
+        assert rc == 0
+        content = Path(output_path).read_text(encoding="utf-8")
+        placeholders = ["组合数据待补充", "风险评估待补充", "持仓诊断待补充", "数据缺口待补充"]
+        placeholder_count = sum(1 for p in placeholders if p in content)
+        assert placeholder_count <= 1, (
+            f"found {placeholder_count} default placeholders: {[p for p in placeholders if p in content]}"
+        )
 
     def test_report_only_states_decision_support_not_called(self, tmp_path):
         portfolio = _minimal_portfolio(analysis_mode="report_only")
@@ -88,7 +112,7 @@ class TestAnalyzePortfolioMarkdownOutput:
         output_path = str(tmp_path / "report.md")
         cli_main(["analyze-portfolio", "--input", input_path, "--format", "markdown", "--output", output_path])
         content = Path(output_path).read_text(encoding="utf-8")
-        assert "基金组合分析报告" in content
+        assert "成本基础" in content or "cost_basis" in content.lower() or "cost" in content.lower()
 
     def test_json_output_includes_final_report(self, tmp_path, capsys):
         input_path = _write_temp_json(_minimal_portfolio(), tmp_path)
@@ -100,6 +124,36 @@ class TestAnalyzePortfolioMarkdownOutput:
         report = output["final_report"]
         assert "report_sections" in report
         assert "quality_gate" in report
+
+    def test_json_output_includes_warnings(self, tmp_path, capsys):
+        input_path = _write_temp_json(_minimal_portfolio(), tmp_path)
+        rc = cli_main(["analyze-portfolio", "--input", input_path, "--pretty"])
+        assert rc == 0
+        captured = capsys.readouterr()
+        output = json.loads(captured.out)
+        assert "warnings" in output
+        assert isinstance(output["warnings"], list)
+
+    def test_json_output_includes_raw_final_report_sections(self, tmp_path, capsys):
+        input_path = _write_temp_json(_minimal_portfolio(), tmp_path)
+        rc = cli_main(["analyze-portfolio", "--input", input_path, "--pretty"])
+        assert rc == 0
+        captured = capsys.readouterr()
+        output = json.loads(captured.out)
+        sections = output.get("final_report", {}).get("report_sections", [])
+        assert len(sections) > 0
+        section_ids = {s["id"] for s in sections if isinstance(s, dict)}
+        assert "executive_summary" in section_ids or "portfolio_snapshot" in section_ids
+
+    def test_no_broker_execution_instruction(self, tmp_path):
+        input_path = _write_temp_json(_minimal_portfolio(), tmp_path)
+        output_path = str(tmp_path / "report.md")
+        cli_main(["analyze-portfolio", "--input", input_path, "--format", "markdown", "--output", output_path])
+        content = Path(output_path).read_text(encoding="utf-8")
+        lower = content.lower()
+        for forbidden in ["买入指令", "卖出指令", "下单", "执行交易", "订单", "委托下单", "限价单"]:
+            assert forbidden not in lower, f"forbidden broker instruction: {forbidden}"
+        assert "不包含经纪执行" in content or "不执行" in content
 
 
 class TestRenderReportCLI:
