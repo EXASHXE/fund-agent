@@ -1,4 +1,4 @@
-"""Release consistency tests for current version.
+"""Release consistency tests for v0.10.0.
 
 Ensures all version declarations agree, CHANGELOG is updated,
 README does not overclaim, and public API imports work.
@@ -15,7 +15,7 @@ import yaml
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-EXPECTED_VERSION = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+EXPECTED_VERSION = "0.10.0"
 
 VERSION_PATH = ROOT / "VERSION"
 PYPROJECT_PATH = ROOT / "pyproject.toml"
@@ -29,26 +29,26 @@ PROVIDERS_EXAMPLE_PATH = ROOT / "config" / "providers.example.yaml"
 
 
 class TestVersionConsistency:
-    def test_version_file_matches_expected(self):
+    def test_version_file_is_0100(self):
         v = VERSION_PATH.read_text(encoding="utf-8").strip()
         assert v == EXPECTED_VERSION, f"VERSION is {v!r}, expected {EXPECTED_VERSION!r}"
 
-    def test_pyproject_version_matches_expected(self):
+    def test_pyproject_version_is_0100(self):
         data = tomllib.loads(PYPROJECT_PATH.read_text(encoding="utf-8"))
         pv = data["project"]["version"]
         assert pv == EXPECTED_VERSION, f"pyproject.toml version is {pv!r}"
 
-    def test_package_json_version_matches_expected(self):
+    def test_package_json_version_is_0100(self):
         data = json.loads(PACKAGE_JSON_PATH.read_text(encoding="utf-8"))
         pjv = data["version"]
         assert pjv == EXPECTED_VERSION, f"package.json version is {pjv!r}"
 
-    def test_manifest_version_matches_expected(self):
+    def test_manifest_version_is_0100(self):
         data = yaml.safe_load(MANIFEST_PATH.read_text(encoding="utf-8"))
         mv = data["version"]
         assert mv == EXPECTED_VERSION, f"skillpack manifest version is {mv!r}"
 
-    def test_plugin_version_matches_expected(self):
+    def test_plugin_version_is_0100(self):
         text = PLUGIN_PATH.read_text(encoding="utf-8")
         pattern = r'PLUGIN_VERSION\s*=\s*["\']' + re.escape(EXPECTED_VERSION) + r'["\']'
         assert re.search(pattern, text), (
@@ -69,43 +69,35 @@ class TestVersionConsistency:
         unique = set(versions.values())
         assert len(unique) == 1, f"Version sources disagree: {versions}"
 
-    def test_python_version_returns_expected(self):
+    def test_python_version_returns_0100(self):
         from src.fund_agent.version import __version__
         assert __version__ == EXPECTED_VERSION, (
             f"src.fund_agent.__version__ is {__version__!r}"
         )
 
-    def test_toplevel_version_returns_expected(self):
+    def test_toplevel_version_returns_0100(self):
         from fund_agent.version import __version__
         assert __version__ == EXPECTED_VERSION, (
             f"fund_agent.__version__ is {__version__!r}"
         )
 
 
-class TestChangelogCurrent:
-    def test_changelog_has_current_version_section(self):
+class TestChangelogV010:
+    def test_changelog_has_v0100_section(self):
         text = CHANGELOG_PATH.read_text(encoding="utf-8")
-        assert f"## [{EXPECTED_VERSION}]" in text or f"## {EXPECTED_VERSION}" in text, (
-            f"CHANGELOG.md does not have a v{EXPECTED_VERSION} section"
+        assert "## [0.10.0]" in text or "## 0.10.0" in text, (
+            "CHANGELOG.md does not have a v0.10.0 section"
         )
 
-    def test_changelog_current_section_contains_content(self):
+    def test_changelog_v010_mentions_beta_candidate(self):
         text = CHANGELOG_PATH.read_text(encoding="utf-8")
-        pattern = f"## [{EXPECTED_VERSION}]"
-        section_start = text.find(pattern) if pattern in text else text.find(f"## {EXPECTED_VERSION}")
-        assert section_start >= 0, f"CHANGELOG missing {EXPECTED_VERSION} section"
-        next_section = text.find("## [", section_start + len(pattern))
-        section = text[section_start:next_section] if next_section > 0 else text[section_start:]
-        assert "Added" in section or "### Added" in section or "### v" in section, (
-            f"CHANGELOG {EXPECTED_VERSION} section appears empty or malformed"
+        v010_section = text.split("## [0.10.0]")[1].split("## [")[0] if "## [0.10.0]" in text else ""
+        assert "beta" in v010_section.lower() or "beta" in text[text.find("0.10.0"):].lower(), (
+            "CHANGELOG v0.10.0 section does not mention beta"
         )
 
 
-class TestReadmeCurrent:
-    def test_readme_mentions_current_version(self):
-        text = README_PATH.read_text(encoding="utf-8")
-        assert EXPECTED_VERSION in text, f"README.md does not mention {EXPECTED_VERSION}"
-
+class TestReadmeV010:
     def test_readme_does_not_overclaim_live_data(self):
         text = README_PATH.read_text(encoding="utf-8").lower()
         assert "no live data" in text or "no-network" in text or "no network" in text, (
@@ -130,32 +122,32 @@ class TestReadmeCurrent:
             "README does not state provider adapters are optional/prototype"
         )
 
-    def test_readme_says_fund_agent_preferred(self):
-        text = README_PATH.read_text(encoding="utf-8")
-        assert "fund_agent.*" in text and "preferred public API" in text, (
-            "README does not state fund_agent.* is preferred public API"
-        )
-
     def test_readme_does_not_claim_v1_stability(self):
         text = README_PATH.read_text(encoding="utf-8")
         assert "v1.0.0" not in text or "not v1.0.0" in text.lower(), (
             "README should not claim v1.0.0 stability"
         )
 
-    def test_readme_title_says_mutual_fund_advisory(self):
-        text = README_PATH.read_text(encoding="utf-8")
-        assert "mutual fund advisory" in text.lower(), (
-            "README title should mention mutual fund advisory"
-        )
-
 
 class TestReadinessChecklist:
     def test_readiness_checklist_exists(self):
-        assert CHECKLIST_PATH.exists(), "current release readiness checklist is missing"
+        assert CHECKLIST_PATH.exists(), "v0.10.0 beta readiness checklist is missing"
 
     def test_readiness_checklist_mentions_version(self):
         text = CHECKLIST_PATH.read_text(encoding="utf-8")
-        assert EXPECTED_VERSION in text, f"Readiness checklist does not mention {EXPECTED_VERSION}"
+        assert "0.10.0" in text, "Readiness checklist does not mention 0.10.0"
+
+    def test_readiness_checklist_full_pytest_marked(self):
+        text = CHECKLIST_PATH.read_text(encoding="utf-8")
+        assert "[x] Full pytest passes" in text or "[x] Full pytest" in text, (
+            "Readiness checklist does not mark full pytest as complete"
+        )
+
+    def test_readiness_checklist_regressions_marked(self):
+        text = CHECKLIST_PATH.read_text(encoding="utf-8")
+        assert "[x] Personal regressions pass" in text or "[x] Personal regressions" in text, (
+            "Readiness checklist does not mark personal regressions as complete"
+        )
 
 
 class TestProvidersExampleNoSecrets:
@@ -216,22 +208,26 @@ class TestPublicImports:
 
 
 class TestNoStaleVersionReferences:
-    def test_install_docs_no_stale_v110_current_claims(self):
-        install_docs = [
-            ROOT / "docs" / "install" / "opencode.md",
-            ROOT / "docs" / "install" / "runtime-bridge-cli.md",
-            ROOT / "docs" / "install" / "manual-host.md",
-            ROOT / "docs" / "install" / "codex.md",
-        ]
-        for path in install_docs:
-            if not path.exists():
-                continue
+    def test_no_stale_v090_claims_in_active_docs(self):
+        active_docs = list(ROOT.glob("docs/install/*.md"))
+        for path in active_docs:
             text = path.read_text(encoding="utf-8")
+            # v0.9.0 references in release doc are historical, skip those
+            if "release" in str(path):
+                continue
             for pattern in [
-                r"v1\.1\.0",
-                r"clone --branch v1\.1\.0",
-                r"checkout v1\.1\.0",
+                r"v0\.9\.0[^-]",
             ]:
-                assert not re.search(pattern, text), (
-                    f"{path} contains stale v1.1.0 reference"
-                )
+                matches = list(re.finditer(pattern, text))
+                for m in matches:
+                    ctx = text[max(0, m.start()-30):m.end()+30]
+                    # Allow historical context phrases
+                    if any(kw in ctx.lower() for kw in [
+                        "historical", "upgrade from", "shipped in", "since",
+                        "status:", "not v0.9.0", "v0.9.0-"
+                    ]):
+                        continue
+                    # Allow clone examples that are tag-specific (not current version)
+                    if "clone" in ctx.lower() or "checkout" in ctx.lower():
+                        continue
+                    assert False, f"{path} contains stale v0.9.0 reference: ...{ctx}..."

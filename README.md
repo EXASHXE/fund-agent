@@ -117,13 +117,13 @@ fund-agent audit [--pretty] [--json]            # run project audit scripts
 
 Old commands remain compatible: `fund-agent-run-skill`, `fund-agent-doctor`.
 
-## v0.9.0 Pre-launch Baseline
+## v0.10.0 Beta Candidate
 
-This is **fund-agent v0.9.0**, the first pre-launch baseline. Provider adapters
+This is **fund-agent v0.10.0**, the v0.10 beta candidate. Provider adapters
 (AkShare, Eastmoney, Xueqiu) are prototypes unless smoke-tested with real
-credentials. The v0.9.0 tag has not been created yet.
+credentials. See the v0.9.0 tag for the first pre-launch baseline.
 
-See [`docs/release/v0.9.0-readiness-checklist.md`](docs/release/v0.9.0-readiness-checklist.md).
+See [`docs/release/v0.10.0-beta-readiness-checklist.md`](docs/release/v0.10.0-beta-readiness-checklist.md).
 
 ## Skill Pack Manifest
 

@@ -24,7 +24,7 @@ runtime bridge examples. To use the bridge, hosts must work from a
 Python source checkout:
 
 ```bash
-git clone --branch v0.9.0 https://github.com/EXASHXE/fund-agent.git
+git clone --branch v0.10.0 https://github.com/EXASHXE/fund-agent.git
 cd fund-agent
 pip install -e .        # editable install into your Python environment
 ```
