@@ -1,0 +1,4 @@
+date,asset_type,fund_code,fund_name,action,amount,units,nav,fee,source,notes
+2024-01-15,fund,000001,华夏成长混合,buy,45000,32700,1.376,0,host_manual,
+2024-07-01,fund,110011,易方达中小盘混合,buy,35000,10560,3.314,0,host_manual,
+2024-10-01,fund,003003,华夏现金增利货币,buy,20000,20000,1.000,0,host_manual,

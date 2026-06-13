@@ -1,0 +1,120 @@
+{
+  "schema_version": "provider_data_snapshot.v1",
+  "as_of_date": "2024-12-31",
+  "captured_at": "2024-12-31T12:00:00Z",
+  "fund_nav_history": {
+    "000001": {
+      "provider": "akshare",
+      "fund_code": "000001",
+      "records": [
+        {"date": "2024-12-30", "nav": 1.5230, "acc_nav": 2.1010, "daily_return": 0.005},
+        {"date": "2024-12-31", "nav": 1.5305, "acc_nav": 2.1085, "daily_return": 0.005}
+      ],
+      "provenance": {"source": "akshare", "function_name": "fund_open_fund_info_em"},
+      "warnings": [],
+      "limitations": ["synthetic demo data"]
+    },
+    "110011": {
+      "provider": "akshare",
+      "fund_code": "110011",
+      "records": [
+        {"date": "2024-12-30", "nav": 2.8500, "acc_nav": 3.2100, "daily_return": -0.003},
+        {"date": "2024-12-31", "nav": 2.8415, "acc_nav": 3.2015, "daily_return": -0.003}
+      ],
+      "provenance": {"source": "akshare", "function_name": "fund_open_fund_info_em"},
+      "warnings": [],
+      "limitations": ["synthetic demo data"]
+    }
+  },
+  "benchmark_index_history": {
+    "HS300": {
+      "provider": "akshare",
+      "symbol": "000300",
+      "records": [
+        {"date": "2024-12-30", "close": 3940.5, "change_pct": 0.008},
+        {"date": "2024-12-31", "close": 3952.1, "change_pct": 0.003}
+      ],
+      "provenance": {"source": "akshare"},
+      "warnings": []
+    }
+  },
+  "fund_profiles": {
+    "000001": {
+      "provider": "akshare",
+      "fund_code": "000001",
+      "fund_name": "华夏成长混合",
+      "fund_type": "混合型",
+      "inception_date": "2004-12-01",
+      "manager": "示例经理A",
+      "provenance": {"source": "akshare"},
+      "warnings": []
+    },
+    "110011": {
+      "provider": "akshare",
+      "fund_code": "110011",
+      "fund_name": "易方达中小盘混合",
+      "fund_type": "混合型",
+      "inception_date": "2008-06-19",
+      "manager": "示例经理B",
+      "provenance": {"source": "akshare"},
+      "warnings": []
+    }
+  },
+  "fund_holdings": {
+    "000001": {
+      "provider": "akshare",
+      "fund_code": "000001",
+      "as_of": "2024-09-30",
+      "holdings": [
+        {"name": "贵州茅台", "weight": 8.5, "code": "600519", "asset_type": "stock", "industry": "白酒"},
+        {"name": "宁德时代", "weight": 6.2, "code": "300750", "asset_type": "stock", "industry": "新能源"}
+      ],
+      "provenance": {"source": "akshare"},
+      "warnings": ["holdings data may be stale; as_of is 2024-09-30"]
+    }
+  },
+  "peer_ranking": {},
+  "fee_schedules": {
+    "000001": {
+      "provider": "host_manual",
+      "fund_code": "000001",
+      "purchase_fee": 0.0015,
+      "redemption_fee_tiers": [
+        {"holding_days_min": 0, "holding_days_max": 7, "fee_rate": 0.015},
+        {"holding_days_min": 7, "holding_days_max": 30, "fee_rate": 0.0075},
+        {"holding_days_min": 30, "holding_days_max": 365, "fee_rate": 0.005},
+        {"holding_days_min": 365, "holding_days_max": null, "fee_rate": 0.0}
+      ],
+      "provenance": {"source": "host_manual"},
+      "warnings": ["fee schedule is synthetic demo data"]
+    }
+  },
+  "redemption_rules": {
+    "000001": {
+      "provider": "host_manual",
+      "fund_code": "000001",
+      "min_holding_days": 0,
+      "short_term_penalty_rate": 0.015,
+      "provenance": {"source": "host_manual"},
+      "warnings": ["redemption rules are synthetic demo data"]
+    }
+  },
+  "news_evidence_refs": [],
+  "sentiment_evidence_refs": [],
+  "provider_provenance": {
+    "akshare": {
+      "provider": "akshare",
+      "capabilities_fetched": ["FUND_NAV_HISTORY"],
+      "capabilities_skipped": ["FUND_PROFILE", "FUND_HOLDINGS", "INDEX_HISTORY"],
+      "fetch_errors": []
+    }
+  },
+  "limitations": [
+    "synthetic demo data — not real market data",
+    "fund_holdings as_of may be stale",
+    "no news or sentiment evidence in this demo snapshot"
+  ],
+  "warnings": [
+    "this is a synthetic demo snapshot — do not use for real investment decisions"
+  ]
+}

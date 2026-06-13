@@ -1,0 +1,17 @@
+{
+  "schema_version": "provider_data_snapshot.v1",
+  "as_of_date": "",
+  "captured_at": "",
+  "fund_nav_history": {},
+  "benchmark_index_history": {},
+  "fund_profiles": {},
+  "fund_holdings": {},
+  "peer_ranking": {},
+  "fee_schedules": {},
+  "redemption_rules": {},
+  "news_evidence_refs": [],
+  "sentiment_evidence_refs": [],
+  "provider_provenance": {},
+  "limitations": [],
+  "warnings": []
+}

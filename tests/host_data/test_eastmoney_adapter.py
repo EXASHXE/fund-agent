@@ -119,6 +119,16 @@ class TestEastmoneyBlockedDetection:
         indicator = adapter._detect_blocked("normal response data")
         assert indicator is None
 
+    def test_detect_rate_limited(self):
+        adapter = _make_adapter_with_cookie()
+        indicator = adapter._detect_rate_limited("请求过于频繁")
+        assert indicator is not None
+
+    def test_no_rate_limit_detected(self):
+        adapter = _make_adapter_with_cookie()
+        indicator = adapter._detect_rate_limited("normal response data")
+        assert indicator is None
+
 
 class TestEastmoneyProvenance:
     def test_provenance_present(self):

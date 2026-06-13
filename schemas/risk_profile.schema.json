@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RiskProfile",
+  "description": "Investor risk profile for fund-agent workflow. All demo data must be synthetic.",
+  "type": "object",
+  "required": ["schema_version", "investor_type"],
+  "properties": {
+    "schema_version": {"type": "string", "const": "risk_profile.v1"},
+    "investor_type": {"type": "string", "enum": ["conservative", "balanced", "aggressive"]},
+    "max_single_theme_weight": {"type": ["number", "null"]},
+    "max_single_fund_weight": {"type": ["number", "null"]},
+    "max_drawdown_tolerance": {"type": ["number", "null"]},
+    "liquidity_need": {"type": "string", "enum": ["high", "medium", "low"]},
+    "time_horizon": {"type": "string", "enum": ["short", "medium", "long"]},
+    "tactical_budget_limit": {"type": ["number", "null"]},
+    "forbidden_actions": {"type": "array", "items": {"type": "string"}},
+    "preferred_actions": {"type": "array", "items": {"type": "string"}},
+    "language": {"type": "string", "default": "zh-CN"},
+    "report_style": {"type": "string", "enum": ["detailed", "summary", "minimal"], "default": "detailed"}
+  }
+}

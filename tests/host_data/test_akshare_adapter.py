@@ -72,7 +72,7 @@ class TestAkShareFundNavHistory:
         adapter = _make_adapter_with_mock_akshare(df_mock=mock_df)
         result = adapter.get_fund_nav_history("000001", "20240101", "20241231")
         assert not result.ok
-        assert "UNEXPECTED_COLUMNS" in result.errors
+        assert "UNEXPECTED_SCHEMA" in result.errors
 
     def test_exception_returns_error(self):
         mock_ak = MagicMock()
@@ -84,7 +84,28 @@ class TestAkShareFundNavHistory:
         adapter._akshare = mock_ak
         result = adapter.get_fund_nav_history("000001", "20240101", "20241231")
         assert not result.ok
-        assert "network error" in str(result.errors)
+        assert "NETWORK_ERROR" in result.errors
+
+    def test_empty_data(self):
+        mock_df = MagicMock()
+        mock_df.columns = ["净值日期", "单位净值", "日增长率"]
+        mock_df.to_dict.return_value = []
+
+        adapter = _make_adapter_with_mock_akshare(df_mock=mock_df)
+        result = adapter.get_fund_nav_history("000001", "20240101", "20241231")
+        assert not result.ok
+        assert "EMPTY_RESULT" in result.errors
+
+    def test_provenance_fields(self):
+        mock_df = MagicMock()
+        mock_df.columns = ["净值日期", "单位净值", "日增长率"]
+        mock_df.to_dict.return_value = [{"净值日期": "2024-01-01", "单位净值": 1.5}]
+
+        adapter = _make_adapter_with_mock_akshare(df_mock=mock_df)
+        result = adapter.get_fund_nav_history("000001", "20240101", "20241231")
+        assert result.provenance.get("source") == "akshare"
+        assert result.provenance.get("function_name") == "fund_open_fund_info_em"
+        assert "input_params" in result.provenance
 
 
 class TestAkShareNotImplemented:

@@ -2,6 +2,51 @@
 
 ## Unreleased
 
+### v0.9.2 — Provider Adapter Usability
+
+- Provider adapter usability hardening: AkShare, Eastmoney, Xueqiu adapters use normalized factory methods
+- `ProviderResult` new factory methods: `network_error`, `unexpected_schema`, `not_implemented`, `error`
+- `ProviderResult` new fields: `fetched_at`, `limitations`, `credential_requirement`
+- `ProviderResult._with()` helper for fluent field overrides
+- Provider snapshot schema (`schemas/provider_data_snapshot.schema.json`)
+- Provider snapshot templates and synthetic demo in `examples/user_portfolio_templates/`
+- Live smoke documentation clarified in adapter README and data-provider-contract docs
+- Default provider tests are no-network; AkShare empty data and network error tests added
+- Eastmoney rate-limit detection tests added
+- Schema validation tests for provider data snapshot
+
+### v0.9.3 — Real Portfolio Input Pack
+
+- Portfolio input schemas: `fund_portfolio_input`, `transaction_history`, `risk_profile`, `investment_constraints`
+- Portfolio input templates and synthetic demo in `examples/user_portfolio_templates/`
+- Transaction history CSV template
+- Risk profile YAML template
+- Investment constraints YAML template
+- Portfolio input bridge (`src/skills_runtime/workflow/portfolio_input_bridge.py`)
+- Private data handling docs and gitignore protections
+- `.gitignore` updated with `local_data/`, `private_data/`, `local_reports/`, `*.private.*`
+- No real private data committed
+
+### v0.9.4 — Markdown / zh-CN Human Report Export
+
+- Deterministic markdown zh-CN report renderer (`src/skills_runtime/workflow/markdown_report.py`)
+- `render_advisory_report_markdown()` with 10 required zh-CN sections
+- CLI `render-report` subcommand for markdown report output
+- CLI `analyze-portfolio` subcommand for portfolio analysis
+- Synthetic demo markdown report in `examples/report_outputs/`
+- Report-only mode states no formal decision generated
+- Blocked decision explains blockers
+- Formal decision includes action table and evidence anchors
+- No LLM generation — fully deterministic
+
+### v0.9.5 — External Agent Integration Polish
+
+- Agent integration docs: 6 flow documents in `docs/agent-integration/`
+- Prompt snippets: 5 zh-CN prompt templates in `docs/agent-integration/prompts/`
+- Integration examples: 4 synthetic examples in `examples/agent_integration/`
+- Forbidden behaviors checklist
+- Doc consistency tests for agent integration
+
 ### Fixed
 
 - Stabilized provider adapter tests so default pytest does not require live AkShare/network/env.

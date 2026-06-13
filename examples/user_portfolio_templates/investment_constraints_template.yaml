@@ -1,0 +1,10 @@
+schema_version: investment_constraints.v1
+no_sell_within_7_days_unless_exception: true
+min_holding_days_by_fund: {}
+redemption_fee_rules: {}
+max_active_trade_count: null
+max_daily_turnover_pct: 0.10
+require_evidence_for_active_trade: true
+require_fee_check_before_sell: true
+require_overlap_check_before_new_buy: true
+no_broker_execution: true

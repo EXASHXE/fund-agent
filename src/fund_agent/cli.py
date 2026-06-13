@@ -6,6 +6,8 @@ Subcommands:
     regressions     -- run personal portfolio regression fixtures
     provider-smoke  -- optional host adapter smoke test
     audit           -- run project audit scripts
+    analyze-portfolio -- analyze portfolio from JSON input
+    render-report   -- render final report to markdown
 
 Old console scripts (fund-agent-run-skill, fund-agent-doctor) remain
 compatible via their existing entry points.
@@ -88,6 +90,94 @@ def _cmd_audit(args: argparse.Namespace) -> int:
     return audit_main()
 
 
+def _cmd_analyze_portfolio(args: argparse.Namespace) -> int:
+    input_path = args.input_file
+    if not input_path:
+        print("Error: --input is required", file=sys.stderr)
+        return 1
+
+    path = Path(input_path)
+    if not path.exists():
+        print(f"Error: input file not found: {input_path}", file=sys.stderr)
+        return 1
+
+    try:
+        portfolio_input = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        print(f"Error reading input: {exc}", file=sys.stderr)
+        return 1
+
+    from src.skills_runtime.workflow.portfolio_input_bridge import bridge_portfolio_input
+    bridge_result = bridge_portfolio_input(portfolio_input)
+
+    from src.skills_runtime.fund_analysis import FundAnalysisSkill
+    from src.schemas.skill import SkillInput
+
+    skill = FundAnalysisSkill()
+    skill_input = SkillInput(
+        task_id="cli-analyze-portfolio",
+        step_id="1",
+        skill_name="fund_analysis",
+        payload=bridge_result["payload"],
+    )
+    skill_result = skill.run(skill_input)
+
+    output: dict[str, Any] = {
+        "status": skill_result.status,
+        "artifacts": {k: v for k, v in skill_result.artifacts.items()},
+        "warnings": bridge_result.get("warnings", []),
+    }
+
+    fmt = getattr(args, "format", "json")
+    if fmt == "markdown":
+        from src.skills_runtime.workflow.markdown_report import render_advisory_report_markdown
+        report_data = output.get("artifacts", {})
+        md = render_advisory_report_markdown(report_data)
+        output_path = getattr(args, "output", None)
+        if output_path:
+            Path(output_path).write_text(md, encoding="utf-8")
+            print(f"Report written to {output_path}")
+        else:
+            print(md)
+    else:
+        if getattr(args, "pretty", False):
+            print(json.dumps(output, indent=2, ensure_ascii=False, default=str))
+        else:
+            print(json.dumps(output, ensure_ascii=False, default=str))
+
+    return 0
+
+
+def _cmd_render_report(args: argparse.Namespace) -> int:
+    input_path = args.input_file
+    if not input_path:
+        print("Error: --input is required", file=sys.stderr)
+        return 1
+
+    path = Path(input_path)
+    if not path.exists():
+        print(f"Error: input file not found: {input_path}", file=sys.stderr)
+        return 1
+
+    try:
+        report = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        print(f"Error reading input: {exc}", file=sys.stderr)
+        return 1
+
+    from src.skills_runtime.workflow.markdown_report import render_advisory_report_markdown
+    md = render_advisory_report_markdown(report)
+
+    output_path = getattr(args, "output", None)
+    if output_path:
+        Path(output_path).write_text(md, encoding="utf-8")
+        print(f"Report written to {output_path}")
+    else:
+        print(md)
+
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="fund-agent",
@@ -121,6 +211,17 @@ def build_parser() -> argparse.ArgumentParser:
     p_audit.add_argument("--pretty", action="store_true")
     p_audit.add_argument("--json", dest="json_output", action="store_true")
 
+    p_analyze = sub.add_parser("analyze-portfolio", help="Analyze portfolio from JSON input")
+    p_analyze.add_argument("--input", dest="input_file", required=True, help="Portfolio input JSON path")
+    p_analyze.add_argument("--format", dest="format", choices=["json", "markdown"], default="json", help="Output format")
+    p_analyze.add_argument("--output", help="Output file path (for markdown)")
+    p_analyze.add_argument("--pretty", action="store_true")
+
+    p_render = sub.add_parser("render-report", help="Render final report to markdown")
+    p_render.add_argument("--input", dest="input_file", required=True, help="Report JSON path")
+    p_render.add_argument("--format", dest="format", choices=["markdown"], default="markdown", help="Output format")
+    p_render.add_argument("--output", help="Output file path")
+
     return parser
 
 
@@ -138,6 +239,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         "regressions": _cmd_regressions,
         "provider-smoke": _cmd_provider_smoke,
         "audit": _cmd_audit,
+        "analyze-portfolio": _cmd_analyze_portfolio,
+        "render-report": _cmd_render_report,
     }
 
     handler = dispatch.get(args.command)

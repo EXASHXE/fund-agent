@@ -1,0 +1,397 @@
+{
+  "top_level_directories": [
+    {
+      "name": "src",
+      "exists": true,
+      "is_dir": true
+    },
+    {
+      "name": "examples",
+      "exists": true,
+      "is_dir": true
+    },
+    {
+      "name": "tests",
+      "exists": true,
+      "is_dir": true
+    },
+    {
+      "name": "docs",
+      "exists": true,
+      "is_dir": true
+    },
+    {
+      "name": "scripts",
+      "exists": true,
+      "is_dir": true
+    },
+    {
+      "name": "config",
+      "exists": true,
+      "is_dir": true
+    },
+    {
+      "name": "skillpack",
+      "exists": true,
+      "is_dir": true
+    },
+    {
+      "name": "skills",
+      "exists": true,
+      "is_dir": true
+    },
+    {
+      "name": "tools",
+      "exists": true,
+      "is_dir": true
+    },
+    {
+      "name": "legacy",
+      "exists": true,
+      "is_dir": true
+    }
+  ],
+  "src_package_areas": [
+    {
+      "name": "src/graph",
+      "exists": true,
+      "python_files": 11,
+      "total_lines": 1610
+    },
+    {
+      "name": "src/host_data",
+      "exists": true,
+      "python_files": 9,
+      "total_lines": 694
+    },
+    {
+      "name": "src/schemas",
+      "exists": true,
+      "python_files": 9,
+      "total_lines": 1409
+    },
+    {
+      "name": "src/skillpack",
+      "exists": true,
+      "python_files": 12,
+      "total_lines": 3044
+    },
+    {
+      "name": "src/skills_runtime",
+      "exists": true,
+      "python_files": 50,
+      "total_lines": 10300
+    },
+    {
+      "name": "src/tools",
+      "exists": true,
+      "python_files": 42,
+      "total_lines": 9467
+    }
+  ],
+  "examples_areas": [
+    {
+      "name": "examples/host_data_adapters",
+      "exists": true,
+      "file_count": 13
+    },
+    {
+      "name": "examples/host_integration",
+      "exists": true,
+      "file_count": 8
+    },
+    {
+      "name": "examples/personal_portfolio_regressions",
+      "exists": true,
+      "file_count": 15
+    },
+    {
+      "name": "examples/scenarios",
+      "exists": true,
+      "file_count": 6
+    },
+    {
+      "name": "examples/decision_support",
+      "exists": true,
+      "file_count": 7
+    },
+    {
+      "name": "examples/e2e_advisory_workflows",
+      "exists": true,
+      "file_count": 15
+    },
+    {
+      "name": "examples/thesis_generation",
+      "exists": true,
+      "file_count": 7
+    },
+    {
+      "name": "examples/user_flows",
+      "exists": true,
+      "file_count": 14
+    },
+    {
+      "name": "examples/reference_workflows",
+      "exists": true,
+      "file_count": 2
+    }
+  ],
+  "tests_areas": [
+    {
+      "name": "tests/architecture",
+      "exists": true,
+      "test_files": 15
+    },
+    {
+      "name": "tests/contracts",
+      "exists": true,
+      "test_files": 11
+    },
+    {
+      "name": "tests/docs",
+      "exists": true,
+      "test_files": 39
+    },
+    {
+      "name": "tests/end_to_end",
+      "exists": true,
+      "test_files": 2
+    },
+    {
+      "name": "tests/evidence",
+      "exists": true,
+      "test_files": 1
+    },
+    {
+      "name": "tests/golden",
+      "exists": true,
+      "test_files": 9
+    },
+    {
+      "name": "tests/host_data",
+      "exists": true,
+      "test_files": 11
+    },
+    {
+      "name": "tests/install",
+      "exists": true,
+      "test_files": 28
+    },
+    {
+      "name": "tests/integration",
+      "exists": true,
+      "test_files": 17
+    },
+    {
+      "name": "tests/personal_regression",
+      "exists": true,
+      "test_files": 1
+    },
+    {
+      "name": "tests/reporting",
+      "exists": true,
+      "test_files": 3
+    },
+    {
+      "name": "tests/runtime_bridge",
+      "exists": true,
+      "test_files": 22
+    },
+    {
+      "name": "tests/scripts",
+      "exists": true,
+      "test_files": 6
+    },
+    {
+      "name": "tests/skillpack",
+      "exists": true,
+      "test_files": 10
+    },
+    {
+      "name": "tests/skills_runtime",
+      "exists": true,
+      "test_files": 19
+    },
+    {
+      "name": "tests/workflow",
+      "exists": true,
+      "test_files": 4
+    }
+  ],
+  "docs_areas": [
+    {
+      "name": "docs/contracts",
+      "exists": true,
+      "doc_files": 8
+    },
+    {
+      "name": "docs/design",
+      "exists": true,
+      "doc_files": 7
+    },
+    {
+      "name": "docs/host-integrations",
+      "exists": true,
+      "doc_files": 7
+    },
+    {
+      "name": "docs/install",
+      "exists": true,
+      "doc_files": 5
+    },
+    {
+      "name": "docs/archive",
+      "exists": true,
+      "doc_files": 19
+    },
+    {
+      "name": "docs/workflows",
+      "exists": true,
+      "doc_files": 1
+    }
+  ],
+  "scripts_area": {
+    "python_files": 15,
+    "files": [
+      "scripts\\audit\\audit_dead_code.py",
+      "scripts\\audit\\audit_docs_links.py",
+      "scripts\\audit\\audit_project_structure.py",
+      "scripts\\audit\\audit_public_api.py",
+      "scripts\\audit\\run_all_audits.py",
+      "scripts\\check_examples.py",
+      "scripts\\fund_agent_doctor.py",
+      "scripts\\install_opencode_skills.py",
+      "scripts\\run_personal_regressions.py",
+      "scripts\\run_skill.py",
+      "scripts\\smoke_host_install.py",
+      "scripts\\update_decision_support_golden.py",
+      "scripts\\update_fund_analysis_golden.py",
+      "scripts\\update_thesis_generation_golden.py",
+      "scripts\\verify_install_discovery.py"
+    ]
+  },
+  "large_files": [
+    {
+      "path": "src\\tools\\portfolio\\report_composer.py",
+      "lines": 1362
+    },
+    {
+      "path": "src\\tools\\workflow\\final_report.py",
+      "lines": 1035
+    },
+    {
+      "path": "src\\skillpack\\run_skill.py",
+      "lines": 1029
+    },
+    {
+      "path": "src\\graph\\builder.py",
+      "lines": 969
+    },
+    {
+      "path": "src\\skillpack\\input_contracts.py",
+      "lines": 951
+    },
+    {
+      "path": "src\\tools\\portfolio\\ledger_snapshot.py",
+      "lines": 867
+    },
+    {
+      "path": "src\\tools\\portfolio\\analysis.py",
+      "lines": 823
+    },
+    {
+      "path": "src\\skills_runtime\\workflow\\evidence_bridge.py",
+      "lines": 759
+    },
+    {
+      "path": "src\\skills_runtime\\fund_analysis\\professional_rules.py",
+      "lines": 668
+    },
+    {
+      "path": "src\\tools\\workflow\\advisory_quality_gate.py",
+      "lines": 599
+    },
+    {
+      "path": "src\\tools\\portfolio\\transaction.py",
+      "lines": 592
+    },
+    {
+      "path": "src\\skills_runtime\\fund_analysis\\planning_stage.py",
+      "lines": 526
+    },
+    {
+      "path": "src\\skills_runtime\\decision_support\\gatekeeper.py",
+      "lines": 504
+    }
+  ],
+  "files_with_many_responsibilities": [
+    {
+      "path": "src\\tools\\portfolio\\report_composer.py",
+      "lines": 1362,
+      "recommendation": "consider splitting into focused modules"
+    },
+    {
+      "path": "src\\tools\\workflow\\final_report.py",
+      "lines": 1035,
+      "recommendation": "consider splitting into focused modules"
+    },
+    {
+      "path": "src\\skillpack\\run_skill.py",
+      "lines": 1029,
+      "recommendation": "consider splitting into focused modules"
+    },
+    {
+      "path": "src\\graph\\builder.py",
+      "lines": 969,
+      "recommendation": "consider splitting into focused modules"
+    },
+    {
+      "path": "src\\skillpack\\input_contracts.py",
+      "lines": 951,
+      "recommendation": "consider splitting into focused modules"
+    },
+    {
+      "path": "src\\tools\\portfolio\\ledger_snapshot.py",
+      "lines": 867,
+      "recommendation": "consider splitting into focused modules"
+    },
+    {
+      "path": "src\\tools\\portfolio\\analysis.py",
+      "lines": 823,
+      "recommendation": "consider splitting into focused modules"
+    }
+  ],
+  "directories_missing_readme": [
+    "src/graph",
+    "src/host_data",
+    "src/schemas",
+    "src/skillpack",
+    "src/skills_runtime",
+    "src/tools",
+    "examples/host_integration",
+    "examples/e2e_advisory_workflows",
+    "examples/user_flows",
+    "examples/reference_workflows",
+    "tests/architecture",
+    "tests/contracts",
+    "tests/docs",
+    "tests/end_to_end",
+    "tests/evidence",
+    "tests/host_data",
+    "tests/install",
+    "tests/integration",
+    "tests/personal_regression",
+    "tests/reporting",
+    "tests/runtime_bridge",
+    "tests/scripts",
+    "tests/skillpack",
+    "tests/skills_runtime",
+    "tests/workflow"
+  ],
+  "ambiguous_file_names": [
+    {
+      "path": "src\\tools\\scoring\\helpers.py",
+      "reason": "ambiguous name 'helpers'"
+    }
+  ]
+}

@@ -25,6 +25,9 @@ class ProviderResult:
     errors: list[str] = field(default_factory=list)
     provenance: dict[str, Any] = field(default_factory=dict)
     raw_sample: dict | list | str | None = None
+    fetched_at: str | None = None
+    limitations: list[str] = field(default_factory=list)
+    credential_requirement: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -41,6 +44,9 @@ class ProviderResult:
             "errors": self.errors,
             "provenance": self.provenance,
             "raw_sample": self.raw_sample,
+            "fetched_at": self.fetched_at,
+            "limitations": self.limitations,
+            "credential_requirement": self.credential_requirement,
         }
 
     @classmethod
@@ -120,3 +126,69 @@ class ProviderResult:
             confidence="low",
             freshness="unknown",
         )
+
+    @classmethod
+    def network_error(cls, provider: str, capability: str, reason: str = "") -> ProviderResult:
+        return cls(
+            ok=False,
+            provider=provider,
+            capability=capability,
+            errors=["NETWORK_ERROR", reason] if reason else ["NETWORK_ERROR"],
+            confidence="low",
+            freshness="unknown",
+        )
+
+    @classmethod
+    def unexpected_schema(
+        cls,
+        provider: str,
+        capability: str,
+        expected: set[str] | None = None,
+        actual: set[str] | None = None,
+    ) -> ProviderResult:
+        warnings: list[str] = []
+        if expected and actual:
+            missing = expected - actual
+            extra = actual - expected
+            if missing:
+                warnings.append(f"missing columns: {sorted(missing)}")
+            if extra:
+                warnings.append(f"extra columns: {sorted(extra)}")
+        return cls(
+            ok=False,
+            provider=provider,
+            capability=capability,
+            errors=["UNEXPECTED_SCHEMA"],
+            warnings=warnings,
+            confidence="low",
+            freshness="unknown",
+        )
+
+    @classmethod
+    def not_implemented(cls, provider: str, capability: str) -> ProviderResult:
+        return cls(
+            ok=False,
+            provider=provider,
+            capability=capability,
+            errors=["NOT_IMPLEMENTED"],
+            confidence="low",
+            freshness="unknown",
+        )
+
+    @classmethod
+    def error(cls, provider: str, capability: str, reason: str = "") -> ProviderResult:
+        return cls(
+            ok=False,
+            provider=provider,
+            capability=capability,
+            errors=["ERROR", reason] if reason else ["ERROR"],
+            confidence="low",
+            freshness="unknown",
+        )
+
+    def _with(self, **overrides: Any) -> ProviderResult:
+        d = self.to_dict()
+        for k, v in overrides.items():
+            if v is not None:
+                d[k] = v
+        return ProviderResult(**{k: v for k, v in d.items() if k in self.__dataclass_fields__})

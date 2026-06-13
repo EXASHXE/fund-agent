@@ -1,0 +1,73 @@
+{
+  "schema_version": "fund_portfolio_input.v1",
+  "user_question": "帮我分析一下基金组合，看看风险如何",
+  "analysis_mode": "report_only",
+  "as_of_date": "2024-12-31",
+  "base_currency": "CNY",
+  "holdings": [
+    {
+      "fund_code": "000001",
+      "fund_name": "华夏成长混合",
+      "current_value": 50000,
+      "units": 32700,
+      "cost_basis": 45000,
+      "cost_basis_confidence": "exact",
+      "holding_days": 365,
+      "unrealized_pnl": 5000,
+      "unrealized_pnl_pct": 11.1,
+      "principal_recovered": false,
+      "source": "host_manual"
+    },
+    {
+      "fund_code": "110011",
+      "fund_name": "易方达中小盘混合",
+      "current_value": 30000,
+      "units": 10560,
+      "cost_basis": 35000,
+      "cost_basis_confidence": "exact",
+      "holding_days": 180,
+      "unrealized_pnl": -5000,
+      "unrealized_pnl_pct": -14.3,
+      "principal_recovered": false,
+      "source": "host_manual"
+    },
+    {
+      "fund_code": "003003",
+      "fund_name": "华夏现金增利货币",
+      "current_value": 20000,
+      "units": 20000,
+      "cost_basis": null,
+      "cost_basis_confidence": "unknown",
+      "holding_days": 90,
+      "unrealized_pnl": null,
+      "unrealized_pnl_pct": null,
+      "principal_recovered": null,
+      "source": "host_manual"
+    }
+  ],
+  "cash_allocation": {
+    "money_market_value": 20000,
+    "bond_allocation_value": 0,
+    "cash_available": 5000
+  },
+  "transaction_history_ref": "transaction_history_template.csv",
+  "provider_data_snapshot_ref": "provider_data_snapshot_demo.json",
+  "risk_profile_ref": "risk_profile_template.yaml",
+  "constraints_ref": "investment_constraints_template.yaml",
+  "user_preferences": {
+    "language": "zh-CN",
+    "report_style": "detailed",
+    "include_fee_analysis": true,
+    "include_redemption_check": true
+  },
+  "data_quality": {
+    "missing_fields": ["003003.cost_basis"],
+    "estimated_fields": [],
+    "data_source_notes": ["synthetic demo data — not real portfolio"]
+  },
+  "privacy_mode": "full",
+  "output_preferences": {
+    "format": "json",
+    "output_path": ""
+  }
+}

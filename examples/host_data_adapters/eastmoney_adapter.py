@@ -186,15 +186,9 @@ class EastmoneyAdapter:
         ep = ENDPOINTS["fund_nav_history"]
         if self._config.require_credentials and not self._cookie:
             return ProviderResult.missing_credentials(self.name, ProviderCapability.FUND_NAV_HISTORY)
-        return ProviderResult(
-            ok=False,
-            provider=self.name,
-            capability=ProviderCapability.FUND_NAV_HISTORY,
+        return ProviderResult.not_implemented(self.name, ProviderCapability.FUND_NAV_HISTORY)._with(
             fund_code=fund_code,
             as_of=end,
-            errors=["NOT_IMPLEMENTED"],
-            confidence="low",
-            freshness="unknown",
             provenance=self._build_provenance(
                 "fund_nav_history",
                 ep["url"],
@@ -208,14 +202,8 @@ class EastmoneyAdapter:
         ep = ENDPOINTS["fund_profile"]
         if self._config.require_credentials and not self._cookie:
             return ProviderResult.missing_credentials(self.name, ProviderCapability.FUND_PROFILE)
-        return ProviderResult(
-            ok=False,
-            provider=self.name,
-            capability=ProviderCapability.FUND_PROFILE,
+        return ProviderResult.not_implemented(self.name, ProviderCapability.FUND_PROFILE)._with(
             fund_code=fund_code,
-            errors=["NOT_IMPLEMENTED"],
-            confidence="low",
-            freshness="unknown",
             provenance=self._build_provenance(
                 "fund_profile",
                 ep["url"],
@@ -228,15 +216,9 @@ class EastmoneyAdapter:
         ep = ENDPOINTS["fund_holdings"]
         if self._config.require_credentials and not self._cookie:
             return ProviderResult.missing_credentials(self.name, ProviderCapability.FUND_HOLDINGS)
-        return ProviderResult(
-            ok=False,
-            provider=self.name,
-            capability=ProviderCapability.FUND_HOLDINGS,
+        return ProviderResult.not_implemented(self.name, ProviderCapability.FUND_HOLDINGS)._with(
             fund_code=fund_code,
             as_of=as_of,
-            errors=["NOT_IMPLEMENTED"],
-            confidence="low",
-            freshness="unknown",
             provenance=self._build_provenance(
                 "fund_holdings",
                 ep["url"],
@@ -272,14 +254,8 @@ class EastmoneyAdapter:
         ep = ENDPOINTS["stock_quote"]
         if self._config.require_credentials and not self._cookie:
             return ProviderResult.missing_credentials(self.name, ProviderCapability.STOCK_QUOTE)
-        return ProviderResult(
-            ok=False,
-            provider=self.name,
-            capability=ProviderCapability.STOCK_QUOTE,
+        return ProviderResult.not_implemented(self.name, ProviderCapability.STOCK_QUOTE)._with(
             symbol=symbol,
-            errors=["NOT_IMPLEMENTED"],
-            confidence="low",
-            freshness="unknown",
             provenance=self._build_provenance(
                 "stock_quote",
                 ep["url"],
@@ -292,13 +268,7 @@ class EastmoneyAdapter:
         ep = ENDPOINTS["fund_ranking"]
         if self._config.require_credentials and not self._cookie:
             return ProviderResult.missing_credentials(self.name, ProviderCapability.FUND_RANKING)
-        return ProviderResult(
-            ok=False,
-            provider=self.name,
-            capability=ProviderCapability.FUND_RANKING,
-            errors=["NOT_IMPLEMENTED"],
-            confidence="low",
-            freshness="unknown",
+        return ProviderResult.not_implemented(self.name, ProviderCapability.FUND_RANKING)._with(
             provenance=self._build_provenance(
                 "fund_ranking",
                 ep["url"],

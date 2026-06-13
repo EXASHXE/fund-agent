@@ -202,14 +202,8 @@ class XueqiuAdapter:
         if missing:
             return missing
         ep = ENDPOINTS["stock_quote"]
-        return ProviderResult(
-            ok=False,
-            provider=self.name,
-            capability=ProviderCapability.STOCK_QUOTE,
+        return ProviderResult.not_implemented(self.name, ProviderCapability.STOCK_QUOTE)._with(
             symbol=symbol,
-            errors=["NOT_IMPLEMENTED"],
-            confidence="low",
-            freshness="unknown",
             provenance=self._build_provenance(
                 "stock_quote",
                 ep["url"],
@@ -223,15 +217,9 @@ class XueqiuAdapter:
         if missing:
             return missing
         ep = ENDPOINTS["stock_history"]
-        return ProviderResult(
-            ok=False,
-            provider=self.name,
-            capability=ProviderCapability.STOCK_HISTORY,
+        return ProviderResult.not_implemented(self.name, ProviderCapability.STOCK_HISTORY)._with(
             symbol=symbol,
             as_of=end,
-            errors=["NOT_IMPLEMENTED"],
-            confidence="low",
-            freshness="unknown",
             provenance=self._build_provenance(
                 "stock_history",
                 ep["url"],
@@ -246,13 +234,7 @@ class XueqiuAdapter:
         if missing:
             return missing
         ep = ENDPOINTS["social_sentiment"]
-        return ProviderResult(
-            ok=False,
-            provider=self.name,
-            capability=ProviderCapability.SOCIAL_SENTIMENT,
-            errors=["NOT_IMPLEMENTED"],
-            confidence="low",
-            freshness="unknown",
+        return ProviderResult.not_implemented(self.name, ProviderCapability.SOCIAL_SENTIMENT)._with(
             provenance=self._build_provenance(
                 "social_sentiment",
                 ep["url"],

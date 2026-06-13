@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TransactionHistory",
+  "description": "Transaction history schema for fund portfolio analysis. All demo data must be synthetic.",
+  "type": "object",
+  "required": ["schema_version", "transactions"],
+  "properties": {
+    "schema_version": {"type": "string", "const": "transaction_history.v1"},
+    "fund_code": {"type": "string"},
+    "transactions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["date", "action", "amount"],
+        "properties": {
+          "date": {"type": "string", "description": "Transaction date (YYYY-MM-DD)"},
+          "asset_type": {"type": "string", "enum": ["fund", "stock", "cash", "bond"]},
+          "fund_code": {"type": "string"},
+          "fund_name": {"type": "string"},
+          "action": {"type": "string", "enum": ["buy", "sell", "dividend", "fee", "transfer_in", "transfer_out"]},
+          "amount": {"type": "number"},
+          "units": {"type": ["number", "null"]},
+          "nav": {"type": ["number", "null"]},
+          "fee": {"type": "number", "default": 0},
+          "source": {"type": "string"},
+          "notes": {"type": "string"}
+        }
+      }
+    }
+  }
+}

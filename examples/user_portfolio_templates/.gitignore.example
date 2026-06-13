@@ -1,0 +1,6 @@
+local_data/
+private_data/
+local_reports/
+*.private.json
+*.private.yaml
+*.private.csv

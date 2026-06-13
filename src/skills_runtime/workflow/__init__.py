@@ -17,10 +17,13 @@ from .evidence_bridge import (
     convert_host_sentiment_to_soft_evidence,
     WorkflowEvidenceGraphResult,
 )
+from .portfolio_input_bridge import bridge_portfolio_input
+from .markdown_report import render_advisory_report_markdown
 from .workflow_trace import WorkflowTrace
 
 __all__ = [
     "AdvisoryIntent",
+    "bridge_portfolio_input",
     "build_evidence_graph_from_workflow",
     "classify_advisory_intent",
     "convert_host_news_to_soft_evidence",
@@ -30,6 +33,7 @@ __all__ = [
     "is_formal_decision_requested",
     "is_report_only",
     "is_soft_advice_only",
+    "render_advisory_report_markdown",
     "WorkflowEvidenceGraphResult",
     "WorkflowTrace",
 ]

@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "InvestmentConstraints",
+  "description": "Investment constraints for fund-agent workflow. All demo data must be synthetic.",
+  "type": "object",
+  "required": ["schema_version"],
+  "properties": {
+    "schema_version": {"type": "string", "const": "investment_constraints.v1"},
+    "no_sell_within_7_days_unless_exception": {"type": "boolean", "default": true},
+    "min_holding_days_by_fund": {"type": "object", "additionalProperties": {"type": "integer"}},
+    "redemption_fee_rules": {"type": "object", "additionalProperties": {"type": "object", "properties": {"short_term_rate": {"type": "number"}, "holding_days_threshold": {"type": "integer"}}}},
+    "max_active_trade_count": {"type": ["integer", "null"]},
+    "max_daily_turnover_pct": {"type": ["number", "null"]},
+    "require_evidence_for_active_trade": {"type": "boolean", "default": true},
+    "require_fee_check_before_sell": {"type": "boolean", "default": true},
+    "require_overlap_check_before_new_buy": {"type": "boolean", "default": true},
+    "no_broker_execution": {"type": "boolean", "default": true}
+  }
+}

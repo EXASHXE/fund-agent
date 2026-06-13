@@ -1,0 +1,227 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ProviderDataSnapshot",
+  "description": "Host-owned provider data snapshot for fund-agent workflow consumption. This is a snapshot contract, not a live fetcher. fund-agent core consumes host-provided snapshots. No real private data. All data must be synthetic in demo fixtures.",
+  "type": "object",
+  "required": ["schema_version", "as_of_date"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "provider_data_snapshot.v1"
+    },
+    "as_of_date": {
+      "type": "string",
+      "description": "Date this snapshot was captured (YYYY-MM-DD)"
+    },
+    "captured_at": {
+      "type": "string",
+      "description": "ISO 8601 timestamp when snapshot was captured"
+    },
+    "fund_nav_history": {
+      "type": "object",
+      "description": "NAV history by fund code",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["provider", "records"],
+        "properties": {
+          "provider": {"type": "string"},
+          "fund_code": {"type": "string"},
+          "records": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {"type": "string"},
+                "nav": {"type": "number"},
+                "acc_nav": {"type": ["number", "null"]},
+                "daily_return": {"type": ["number", "null"]}
+              }
+            }
+          },
+          "provenance": {"type": "object"},
+          "warnings": {"type": "array", "items": {"type": "string"}},
+          "limitations": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "benchmark_index_history": {
+      "type": "object",
+      "description": "Benchmark/index history by symbol",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["provider", "records"],
+        "properties": {
+          "provider": {"type": "string"},
+          "symbol": {"type": "string"},
+          "records": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {"type": "string"},
+                "close": {"type": "number"},
+                "change_pct": {"type": ["number", "null"]}
+              }
+            }
+          },
+          "provenance": {"type": "object"},
+          "warnings": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "fund_profiles": {
+      "type": "object",
+      "description": "Fund profile by fund code",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "provider": {"type": "string"},
+          "fund_code": {"type": "string"},
+          "fund_name": {"type": "string"},
+          "fund_type": {"type": "string"},
+          "inception_date": {"type": "string"},
+          "manager": {"type": "string"},
+          "benchmark": {"type": "string"},
+          "provenance": {"type": "object"},
+          "warnings": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "fund_holdings": {
+      "type": "object",
+      "description": "Fund holdings by fund code",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "provider": {"type": "string"},
+          "fund_code": {"type": "string"},
+          "as_of": {"type": "string"},
+          "holdings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "weight": {"type": "number"},
+                "code": {"type": ["string", "null"]},
+                "asset_type": {"type": ["string", "null"]},
+                "industry": {"type": ["string", "null"]}
+              }
+            }
+          },
+          "provenance": {"type": "object"},
+          "warnings": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "peer_ranking": {
+      "type": "object",
+      "description": "Peer ranking data by fund code",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "provider": {"type": "string"},
+          "fund_code": {"type": "string"},
+          "rank": {"type": ["integer", "null"]},
+          "total_peers": {"type": ["integer", "null"]},
+          "percentile": {"type": ["number", "null"]},
+          "provenance": {"type": "object"},
+          "warnings": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "fee_schedules": {
+      "type": "object",
+      "description": "Fee schedule by fund code",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "provider": {"type": "string"},
+          "fund_code": {"type": "string"},
+          "purchase_fee": {"type": ["number", "null"]},
+          "redemption_fee_tiers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "holding_days_min": {"type": ["integer", "null"]},
+                "holding_days_max": {"type": ["integer", "null"]},
+                "fee_rate": {"type": "number"}
+              }
+            }
+          },
+          "provenance": {"type": "object"},
+          "warnings": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "redemption_rules": {
+      "type": "object",
+      "description": "Redemption rules by fund code",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "provider": {"type": "string"},
+          "fund_code": {"type": "string"},
+          "min_holding_days": {"type": ["integer", "null"]},
+          "short_term_penalty_rate": {"type": ["number", "null"]},
+          "provenance": {"type": "object"},
+          "warnings": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "news_evidence_refs": {
+      "type": "array",
+      "description": "News evidence references",
+      "items": {
+        "type": "object",
+        "properties": {
+          "source": {"type": "string"},
+          "query": {"type": "string"},
+          "count": {"type": "integer"},
+          "as_of": {"type": "string"},
+          "provenance": {"type": "object"},
+          "warnings": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "sentiment_evidence_refs": {
+      "type": "array",
+      "description": "Sentiment evidence references",
+      "items": {
+        "type": "object",
+        "properties": {
+          "source": {"type": "string"},
+          "keyword": {"type": "string"},
+          "sentiment_score": {"type": ["number", "null"]},
+          "as_of": {"type": "string"},
+          "provenance": {"type": "object"},
+          "warnings": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "provider_provenance": {
+      "type": "object",
+      "description": "Overall provider provenance metadata",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "provider": {"type": "string"},
+          "capabilities_fetched": {"type": "array", "items": {"type": "string"}},
+          "capabilities_skipped": {"type": "array", "items": {"type": "string"}},
+          "fetch_errors": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "description": "Overall snapshot limitations",
+      "items": {"type": "string"}
+    },
+    "warnings": {
+      "type": "array",
+      "description": "Overall snapshot warnings",
+      "items": {"type": "string"}
+    }
+  }
+}

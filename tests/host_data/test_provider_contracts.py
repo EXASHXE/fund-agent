@@ -107,6 +107,58 @@ class TestProviderResult:
         assert "PARTIAL" in r.errors
         assert "incomplete data" in r.warnings
 
+    def test_network_error(self):
+        r = ProviderResult.network_error("test", "FUND_NAV_HISTORY", "timeout")
+        assert r.ok is False
+        assert "NETWORK_ERROR" in r.errors
+        assert "timeout" in r.errors
+
+    def test_unexpected_schema(self):
+        r = ProviderResult.unexpected_schema(
+            "test", "FUND_NAV_HISTORY",
+            expected={"date", "nav"}, actual={"date", "price"},
+        )
+        assert r.ok is False
+        assert "UNEXPECTED_SCHEMA" in r.errors
+        assert any("missing" in w for w in r.warnings)
+        assert any("extra" in w for w in r.warnings)
+
+    def test_not_implemented(self):
+        r = ProviderResult.not_implemented("test", "FUND_NAV_HISTORY")
+        assert r.ok is False
+        assert "NOT_IMPLEMENTED" in r.errors
+
+    def test_error(self):
+        r = ProviderResult.error("test", "FUND_NAV_HISTORY", "something broke")
+        assert r.ok is False
+        assert "ERROR" in r.errors
+        assert "something broke" in r.errors
+
+    def test_with_override(self):
+        r = ProviderResult.not_implemented("test", "FUND_NAV_HISTORY")
+        r2 = r._with(fund_code="000001", as_of="2024-01-01")
+        assert r2.fund_code == "000001"
+        assert r2.as_of == "2024-01-01"
+        assert "NOT_IMPLEMENTED" in r2.errors
+
+    def test_new_fields_default(self):
+        r = ProviderResult(ok=True, provider="test", capability="FUND_NAV_HISTORY")
+        assert r.fetched_at is None
+        assert r.limitations == []
+        assert r.credential_requirement is None
+
+    def test_to_dict_includes_new_fields(self):
+        r = ProviderResult(
+            ok=True, provider="test", capability="FUND_NAV_HISTORY",
+            fetched_at="2024-01-01T00:00:00Z",
+            limitations=["partial data"],
+            credential_requirement={"requires_credentials": False},
+        )
+        d = r.to_dict()
+        assert d["fetched_at"] == "2024-01-01T00:00:00Z"
+        assert d["limitations"] == ["partial data"]
+        assert d["credential_requirement"]["requires_credentials"] is False
+
 
 class TestProviderRegistry:
     def test_register_and_list(self):

@@ -4,6 +4,14 @@ fund-info.txt
 report.md
 新建 文本文档.txt
 
+# 私有数据目录
+local_data/
+private_data/
+local_reports/
+*.private.json
+*.private.yaml
+*.private.csv
+
 # 本地 Agent 配置
 CLAUDE.md
 SUPERPOWERS.md
@@ -52,3 +60,4 @@ mock.py
 .coverage
 1.txt
 plan.txt
+nul

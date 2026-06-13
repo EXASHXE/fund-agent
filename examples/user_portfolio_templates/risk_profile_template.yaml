@@ -1,0 +1,12 @@
+schema_version: risk_profile.v1
+investor_type: balanced
+max_single_theme_weight: 0.35
+max_single_fund_weight: 0.20
+max_drawdown_tolerance: 0.15
+liquidity_need: medium
+time_horizon: medium
+tactical_budget_limit: 0.10
+forbidden_actions: []
+preferred_actions: []
+language: zh-CN
+report_style: detailed

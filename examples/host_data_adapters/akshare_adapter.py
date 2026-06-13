@@ -93,24 +93,27 @@ class AkShareAdapter:
             if hasattr(df, "columns"):
                 actual_cols = set(str(c) for c in df.columns)
                 if not expected_cols.intersection(actual_cols):
-                    return ProviderResult(
-                        ok=False,
-                        provider=self.name,
-                        capability=ProviderCapability.FUND_NAV_HISTORY,
-                        fund_code=fund_code,
-                        as_of=end,
-                        errors=["UNEXPECTED_COLUMNS"],
-                        confidence="low",
-                        freshness="unknown",
-                        warnings=[f"Expected columns including {expected_cols}, got {actual_cols}"],
-                        provenance={
-                            "source": "akshare",
-                            "function_name": "fund_open_fund_info_em",
-                            "as_of": end,
-                            "input_params": {"fund_code": fund_code, "indicator": "单位净值走势"},
-                        },
-                    )
+                    return ProviderResult.unexpected_schema(
+                        self.name,
+                        ProviderCapability.FUND_NAV_HISTORY,
+                        expected=expected_cols,
+                        actual=actual_cols,
+                    )._with(fund_code=fund_code, as_of=end, provenance={
+                        "source": "akshare",
+                        "function_name": "fund_open_fund_info_em",
+                        "as_of": end,
+                        "input_params": {"fund_code": fund_code, "indicator": "单位净值走势"},
+                    })
             records = df.to_dict("records") if hasattr(df, "to_dict") else []
+            if not records:
+                return ProviderResult.empty_result(self.name, ProviderCapability.FUND_NAV_HISTORY)._with(
+                    fund_code=fund_code, as_of=end, provenance={
+                        "source": "akshare",
+                        "function_name": "fund_open_fund_info_em",
+                        "as_of": end,
+                        "input_params": {"fund_code": fund_code, "indicator": "单位净值走势"},
+                    },
+                )
             return ProviderResult(
                 ok=True,
                 provider=self.name,
@@ -128,35 +131,21 @@ class AkShareAdapter:
                 },
             )
         except Exception as exc:
-            return ProviderResult(
-                ok=False,
-                provider=self.name,
-                capability=ProviderCapability.FUND_NAV_HISTORY,
-                fund_code=fund_code,
-                as_of=end,
-                errors=[str(exc)],
-                confidence="low",
-                freshness="unknown",
-                provenance={
-                    "source": "akshare",
-                    "function_name": "fund_open_fund_info_em",
-                    "as_of": end,
-                    "input_params": {"fund_code": fund_code, "start": start, "end": end},
-                },
-            )
+            return ProviderResult.network_error(
+                self.name, ProviderCapability.FUND_NAV_HISTORY, reason=str(exc)
+            )._with(fund_code=fund_code, as_of=end, provenance={
+                "source": "akshare",
+                "function_name": "fund_open_fund_info_em",
+                "as_of": end,
+                "input_params": {"fund_code": fund_code, "start": start, "end": end},
+            })
 
     def get_fund_profile(self, fund_code: str) -> ProviderResult:
         ak = self._ensure_akshare()
         if ak is None:
             return ProviderResult.missing_dependency(self.name, ProviderCapability.FUND_PROFILE)
-        return ProviderResult(
-            ok=False,
-            provider=self.name,
-            capability=ProviderCapability.FUND_PROFILE,
+        return ProviderResult.not_implemented(self.name, ProviderCapability.FUND_PROFILE)._with(
             fund_code=fund_code,
-            errors=["NOT_IMPLEMENTED"],
-            confidence="low",
-            freshness="unknown",
             warnings=["get_fund_profile is not yet implemented for akshare adapter"],
             provenance={
                 "source": "akshare",
@@ -170,15 +159,9 @@ class AkShareAdapter:
         ak = self._ensure_akshare()
         if ak is None:
             return ProviderResult.missing_dependency(self.name, ProviderCapability.FUND_HOLDINGS)
-        return ProviderResult(
-            ok=False,
-            provider=self.name,
-            capability=ProviderCapability.FUND_HOLDINGS,
+        return ProviderResult.not_implemented(self.name, ProviderCapability.FUND_HOLDINGS)._with(
             fund_code=fund_code,
             as_of=as_of,
-            errors=["NOT_IMPLEMENTED"],
-            confidence="low",
-            freshness="unknown",
             warnings=["get_fund_holdings is not yet implemented for akshare adapter"],
             provenance={
                 "source": "akshare",
@@ -192,15 +175,9 @@ class AkShareAdapter:
         ak = self._ensure_akshare()
         if ak is None:
             return ProviderResult.missing_dependency(self.name, ProviderCapability.INDEX_HISTORY)
-        return ProviderResult(
-            ok=False,
-            provider=self.name,
-            capability=ProviderCapability.INDEX_HISTORY,
+        return ProviderResult.not_implemented(self.name, ProviderCapability.INDEX_HISTORY)._with(
             symbol=symbol,
             as_of=end,
-            errors=["NOT_IMPLEMENTED"],
-            confidence="low",
-            freshness="unknown",
             warnings=["get_index_history is not yet implemented for akshare adapter"],
             provenance={
                 "source": "akshare",
@@ -214,15 +191,9 @@ class AkShareAdapter:
         ak = self._ensure_akshare()
         if ak is None:
             return ProviderResult.missing_dependency(self.name, ProviderCapability.STOCK_HISTORY)
-        return ProviderResult(
-            ok=False,
-            provider=self.name,
-            capability=ProviderCapability.STOCK_HISTORY,
+        return ProviderResult.not_implemented(self.name, ProviderCapability.STOCK_HISTORY)._with(
             symbol=symbol,
             as_of=end,
-            errors=["NOT_IMPLEMENTED"],
-            confidence="low",
-            freshness="unknown",
             warnings=["get_stock_history is not yet implemented for akshare adapter"],
             provenance={
                 "source": "akshare",

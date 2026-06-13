@@ -1,0 +1,33 @@
+{
+  "schema_version": "fund_portfolio_input.v1",
+  "user_question": "",
+  "analysis_mode": "report_only",
+  "as_of_date": "",
+  "base_currency": "CNY",
+  "holdings": [],
+  "cash_allocation": {
+    "money_market_value": null,
+    "bond_allocation_value": null,
+    "cash_available": null
+  },
+  "transaction_history_ref": "",
+  "provider_data_snapshot_ref": "",
+  "risk_profile_ref": "",
+  "constraints_ref": "",
+  "user_preferences": {
+    "language": "zh-CN",
+    "report_style": "detailed",
+    "include_fee_analysis": true,
+    "include_redemption_check": true
+  },
+  "data_quality": {
+    "missing_fields": [],
+    "estimated_fields": [],
+    "data_source_notes": []
+  },
+  "privacy_mode": "full",
+  "output_preferences": {
+    "format": "json",
+    "output_path": ""
+  }
+}

@@ -1,0 +1,104 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FundPortfolioInput",
+  "description": "Real-data-ready portfolio input format for fund-agent workflows. All demo data must be synthetic. No real private data.",
+  "type": "object",
+  "required": ["schema_version", "as_of_date", "holdings"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "fund_portfolio_input.v1"
+    },
+    "user_question": {
+      "type": "string",
+      "description": "User's natural language question"
+    },
+    "analysis_mode": {
+      "type": "string",
+      "enum": ["report_only", "soft_action_advice", "formal_trade_decision"],
+      "default": "report_only"
+    },
+    "as_of_date": {
+      "type": "string",
+      "description": "Portfolio as-of date (YYYY-MM-DD)"
+    },
+    "base_currency": {
+      "type": "string",
+      "default": "CNY"
+    },
+    "holdings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["fund_code", "current_value"],
+        "properties": {
+          "fund_code": {"type": "string"},
+          "fund_name": {"type": "string"},
+          "share_class": {"type": "string"},
+          "current_value": {"type": "number"},
+          "units": {"type": ["number", "null"]},
+          "cost_basis": {"type": ["number", "null"]},
+          "cost_basis_confidence": {"type": "string", "enum": ["exact", "estimated", "unknown"], "default": "unknown"},
+          "holding_days": {"type": ["integer", "null"]},
+          "unrealized_pnl": {"type": ["number", "null"]},
+          "unrealized_pnl_pct": {"type": ["number", "null"]},
+          "principal_recovered": {"type": ["boolean", "null"]},
+          "source": {"type": "string"}
+        }
+      }
+    },
+    "cash_allocation": {
+      "type": "object",
+      "properties": {
+        "money_market_value": {"type": ["number", "null"]},
+        "bond_allocation_value": {"type": ["number", "null"]},
+        "cash_available": {"type": ["number", "null"]}
+      }
+    },
+    "transaction_history_ref": {
+      "type": "string",
+      "description": "Reference to transaction history file path"
+    },
+    "provider_data_snapshot_ref": {
+      "type": "string",
+      "description": "Reference to provider data snapshot file path"
+    },
+    "risk_profile_ref": {
+      "type": "string",
+      "description": "Reference to risk profile file path"
+    },
+    "constraints_ref": {
+      "type": "string",
+      "description": "Reference to constraints file path"
+    },
+    "user_preferences": {
+      "type": "object",
+      "properties": {
+        "language": {"type": "string", "default": "zh-CN"},
+        "report_style": {"type": "string", "enum": ["detailed", "summary", "minimal"], "default": "detailed"},
+        "include_fee_analysis": {"type": "boolean", "default": true},
+        "include_redemption_check": {"type": "boolean", "default": true}
+      }
+    },
+    "data_quality": {
+      "type": "object",
+      "properties": {
+        "missing_fields": {"type": "array", "items": {"type": "string"}},
+        "estimated_fields": {"type": "array", "items": {"type": "string"}},
+        "data_source_notes": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "privacy_mode": {
+      "type": "string",
+      "enum": ["full", "amounts_redacted", "anonymous"],
+      "default": "full"
+    },
+    "output_preferences": {
+      "type": "object",
+      "properties": {
+        "format": {"type": "string", "enum": ["json", "markdown"], "default": "json"},
+        "output_path": {"type": "string"}
+      }
+    }
+  }
+}
