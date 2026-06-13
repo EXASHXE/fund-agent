@@ -32,6 +32,10 @@ python examples/host_data_adapters/provider_smoke.py --all --resolve-env --json
 
 All smoke tests are opt-in and skip by default if credentials or dependencies are missing.
 
+> **Warning:** Do not run live provider smoke in CI unless credentials/network are
+> intentionally configured. Provider smoke may perform network calls and requires
+> real provider dependencies. It is outside core runtime and opt-in only.
+
 ## Architecture
 
 - Adapters may import provider SDKs (e.g., akshare) inside the adapter module only.

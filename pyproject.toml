@@ -50,6 +50,7 @@ markers = [
     "filesystem: tests that scan many files",
     "windows_slow: tests known to be slower on Windows",
     "live_provider: tests requiring live provider access (skipped by default)",
+    "adapter_live: tests requiring real adapter dependency and/or network (skipped by default)",
     "adapter: adapter-specific tests",
     "regression: personal regression tests",
 ]

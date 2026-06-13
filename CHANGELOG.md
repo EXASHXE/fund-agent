@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Stabilized provider adapter tests so default pytest does not require live AkShare/network/env.
+- Added `live_provider` / `adapter_live` test markers with explicit opt-in via `FUND_AGENT_RUN_LIVE_PROVIDER_TESTS` env var.
+- Added live provider adapter test file (`tests/host_data/test_live_provider_adapters.py`) — skipped by default.
+- Clarified live provider smoke tests as opt-in with CI warning in adapter README.
+
+### Safety
+
+- Core runtime remains no-network and no-provider-SDK.
+- Live provider smoke remains outside core runtime and opt-in.
+- No broker/order execution behavior added.
+
 ## [0.9.0] — 2026-06-13
 
 ### Added
