@@ -33,8 +33,13 @@ def bridge_portfolio_input(portfolio_input: dict[str, Any]) -> dict[str, Any]:
             "fund_code": h.get("fund_code", ""),
             "fund_name": h.get("fund_name", ""),
             "current_value": h.get("current_value", 0),
-            "total_cost": h.get("cost_basis", 0) or 0,
         }
+        cost_basis_val = h.get("cost_basis")
+        if cost_basis_val is not None:
+            pos["total_cost"] = cost_basis_val
+        else:
+            pos["cost_basis_missing"] = True
+            pos["cost_basis_confidence"] = "unknown"
         if h.get("units") is not None:
             pos["shares"] = h["units"]
         if h.get("unrealized_pnl") is not None:
@@ -53,7 +58,7 @@ def bridge_portfolio_input(portfolio_input: dict[str, Any]) -> dict[str, Any]:
 
     cost_basis_missing = []
     for h in holdings:
-        if isinstance(h, dict) and h.get("cost_basis") is None and h.get("cost_basis_confidence") == "unknown":
+        if isinstance(h, dict) and h.get("cost_basis") is None:
             cost_basis_missing.append(h.get("fund_code", "unknown"))
     if cost_basis_missing:
         warnings.append(f"MISSING_COST_BASIS: {', '.join(cost_basis_missing)}")

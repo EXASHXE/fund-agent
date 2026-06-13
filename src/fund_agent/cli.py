@@ -122,16 +122,30 @@ def _cmd_analyze_portfolio(args: argparse.Namespace) -> int:
     )
     skill_result = skill.run(skill_input)
 
+    from src.tools.portfolio.report_composer import compose_personal_fund_report
+
+    artifacts = {k: v for k, v in skill_result.artifacts.items()}
+    final_report = compose_personal_fund_report(
+        artifacts,
+        warnings=bridge_result.get("warnings", []),
+    )
+
     output: dict[str, Any] = {
         "status": skill_result.status,
-        "artifacts": {k: v for k, v in skill_result.artifacts.items()},
+        "final_report": final_report,
         "warnings": bridge_result.get("warnings", []),
     }
 
     fmt = getattr(args, "format", "json")
     if fmt == "markdown":
         from src.skills_runtime.workflow.markdown_report import render_advisory_report_markdown
-        report_data = output.get("artifacts", {})
+        report_data = {
+            "report_sections": final_report.get("report_sections", []),
+            "analysis_mode": bridge_result["payload"].get("analysis_mode", "report_only"),
+            "quality_gate": final_report.get("quality_gate", {}),
+            "decision": None,
+            "execution_ledger": None,
+        }
         md = render_advisory_report_markdown(report_data)
         output_path = getattr(args, "output", None)
         if output_path:

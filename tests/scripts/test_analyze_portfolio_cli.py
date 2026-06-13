@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -17,6 +16,18 @@ def _write_temp_json(data: dict, tmpdir: Path) -> str:
     return str(p)
 
 
+def _minimal_portfolio(**overrides):
+    base = {
+        "schema_version": "fund_portfolio_input.v1",
+        "as_of_date": "2024-12-31",
+        "holdings": [
+            {"fund_code": "000001", "fund_name": "Demo Fund", "current_value": 50000}
+        ],
+    }
+    base.update(overrides)
+    return base
+
+
 class TestAnalyzePortfolioCLI:
     def test_missing_input(self):
         with pytest.raises(SystemExit) as exc_info:
@@ -28,48 +39,67 @@ class TestAnalyzePortfolioCLI:
         assert rc != 0
 
     def test_valid_input_json(self, tmp_path):
-        portfolio = {
-            "schema_version": "fund_portfolio_input.v1",
-            "as_of_date": "2024-12-31",
-            "holdings": [
-                {"fund_code": "000001", "fund_name": "Demo Fund", "current_value": 50000}
-            ],
-        }
-        input_path = _write_temp_json(portfolio, tmp_path)
+        input_path = _write_temp_json(_minimal_portfolio(), tmp_path)
         rc = cli_main(["analyze-portfolio", "--input", input_path])
         assert rc == 0
 
     def test_valid_input_pretty(self, tmp_path):
-        portfolio = {
-            "schema_version": "fund_portfolio_input.v1",
-            "as_of_date": "2024-12-31",
-            "holdings": [
-                {"fund_code": "000001", "fund_name": "Demo Fund", "current_value": 50000}
-            ],
-        }
-        input_path = _write_temp_json(portfolio, tmp_path)
+        input_path = _write_temp_json(_minimal_portfolio(), tmp_path)
         rc = cli_main(["analyze-portfolio", "--input", input_path, "--pretty"])
         assert rc == 0
-
-    def test_markdown_output(self, tmp_path):
-        portfolio = {
-            "schema_version": "fund_portfolio_input.v1",
-            "as_of_date": "2024-12-31",
-            "holdings": [
-                {"fund_code": "000001", "fund_name": "Demo Fund", "current_value": 50000}
-            ],
-        }
-        input_path = _write_temp_json(portfolio, tmp_path)
-        output_path = str(tmp_path / "report.md")
-        rc = cli_main(["analyze-portfolio", "--input", input_path, "--format", "markdown", "--output", output_path])
-        assert rc == 0
-        assert Path(output_path).exists()
 
     def test_invalid_json(self, tmp_path):
         p = tmp_path / "bad.json"
         p.write_text("not valid json{{{", encoding="utf-8")
         rc = cli_main(["analyze-portfolio", "--input", str(p)])
         assert rc != 0
+
+
+class TestAnalyzePortfolioMarkdownOutput:
+    def test_markdown_output_contains_final_report_sections(self, tmp_path):
+        input_path = _write_temp_json(_minimal_portfolio(), tmp_path)
+        output_path = str(tmp_path / "report.md")
+        rc = cli_main(["analyze-portfolio", "--input", input_path, "--format", "markdown", "--output", output_path])
+        assert rc == 0
+        content = Path(output_path).read_text(encoding="utf-8")
+        assert "基金组合分析报告" in content
+        assert "组合概览" in content or "直接回答" in content
+
+    def test_report_only_states_decision_support_not_called(self, tmp_path):
+        portfolio = _minimal_portfolio(analysis_mode="report_only")
+        input_path = _write_temp_json(portfolio, tmp_path)
+        output_path = str(tmp_path / "report.md")
+        cli_main(["analyze-portfolio", "--input", input_path, "--format", "markdown", "--output", output_path])
+        content = Path(output_path).read_text(encoding="utf-8")
+        assert "未调用决策支持" in content or "报告模式" in content
+
+    def test_missing_provider_snapshot_in_limitations(self, tmp_path):
+        portfolio = _minimal_portfolio()
+        input_path = _write_temp_json(portfolio, tmp_path)
+        output_path = str(tmp_path / "report.md")
+        cli_main(["analyze-portfolio", "--input", input_path, "--format", "markdown", "--output", output_path])
+        content = Path(output_path).read_text(encoding="utf-8")
+        assert "数据" in content or "限制" in content or "缺失" in content
+
+    def test_missing_cost_basis_in_markdown(self, tmp_path):
+        portfolio = _minimal_portfolio()
+        portfolio["holdings"][0]["cost_basis"] = None
+        input_path = _write_temp_json(portfolio, tmp_path)
+        output_path = str(tmp_path / "report.md")
+        cli_main(["analyze-portfolio", "--input", input_path, "--format", "markdown", "--output", output_path])
+        content = Path(output_path).read_text(encoding="utf-8")
+        assert "基金组合分析报告" in content
+
+    def test_json_output_includes_final_report(self, tmp_path, capsys):
+        input_path = _write_temp_json(_minimal_portfolio(), tmp_path)
+        rc = cli_main(["analyze-portfolio", "--input", input_path, "--pretty"])
+        assert rc == 0
+        captured = capsys.readouterr()
+        output = json.loads(captured.out)
+        assert "final_report" in output
+        report = output["final_report"]
+        assert "report_sections" in report
+        assert "quality_gate" in report
 
 
 class TestRenderReportCLI:

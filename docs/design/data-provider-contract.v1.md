@@ -122,6 +122,7 @@ python examples/host_data_adapters/provider_smoke.py --all --resolve-env --json
 ## AkShare Role
 
 - Primary public data source for fund NAV, profile, holdings, index history, stock history
+- **Currently only FUND_NAV_HISTORY is implemented; all other capabilities return NOT_IMPLEMENTED**
 - Generally does not require API keys for basic endpoints
 - `require_credentials: false` by default
 - `works_without_credentials: true`
@@ -131,11 +132,13 @@ python examples/host_data_adapters/provider_smoke.py --all --resolve-env --json
 - FUND_NAV_HISTORY is implemented; other capabilities return NOT_IMPLEMENTED
 - Handles missing akshare dependency with MISSING_DEPENDENCY
 - Validates expected columns defensively
+- **Provider snapshot is the recommended path for real testing**
 
 ## Eastmoney Role
 
 - Supplementary fund NAV, profile, holdings, ranking, index history, stock quote
 - Unofficial/web endpoint provider — not an officially supported API
+- **Prototype scaffold only — host must implement HTTP calls or run live smoke to verify**
 - `works_without_credentials: unknown` (not verified by live smoke)
 - `requires_credentials: unknown` (not verified by live smoke)
 - Cookie requirements are unknown and must be verified by smoke tests
@@ -150,6 +153,7 @@ python examples/host_data_adapters/provider_smoke.py --all --resolve-env --json
 
 - Optional stock quote and social sentiment supplement
 - Likely requires cookie/token for most endpoints
+- **Prototype scaffold only — host must implement HTTP calls or run live smoke to verify**
 - `works_without_credentials: unknown` (not verified by live smoke)
 - `requires_credentials: likely`
 - `require_credentials: true` by default

@@ -93,3 +93,64 @@ class TestBridgePortfolioInput:
         inp = _demo_input(data_quality={"missing_fields": ["003003.cost_basis"], "estimated_fields": []})
         result = bridge_portfolio_input(inp)
         assert any("DATA_QUALITY_MISSING" in w for w in result["warnings"])
+
+
+class TestCostBasisHandling:
+    def test_missing_cost_basis_does_not_produce_zero(self):
+        inp = _demo_input()
+        inp["holdings"][0]["cost_basis"] = None
+        inp["holdings"][0]["cost_basis_confidence"] = "unknown"
+        result = bridge_portfolio_input(inp)
+        pos = result["payload"]["portfolio"]["positions"][0]
+        assert "total_cost" not in pos, "total_cost must not be set when cost_basis is missing"
+        assert pos.get("total_cost", "SENTINEL") != 0, "total_cost must not be 0 when cost_basis is unknown"
+
+    def test_missing_cost_basis_sets_explicit_marker(self):
+        inp = _demo_input()
+        inp["holdings"][0]["cost_basis"] = None
+        result = bridge_portfolio_input(inp)
+        pos = result["payload"]["portfolio"]["positions"][0]
+        assert pos.get("cost_basis_missing") is True
+        assert pos.get("cost_basis_confidence") == "unknown"
+
+    def test_known_cost_basis_maps_correctly(self):
+        result = bridge_portfolio_input(_demo_input())
+        pos = result["payload"]["portfolio"]["positions"][0]
+        assert pos["total_cost"] == 45000
+        assert "cost_basis_missing" not in pos
+
+    def test_missing_cost_basis_without_confidence_field(self):
+        inp = _demo_input()
+        del inp["holdings"][0]["cost_basis"]
+        if "cost_basis_confidence" in inp["holdings"][0]:
+            del inp["holdings"][0]["cost_basis_confidence"]
+        result = bridge_portfolio_input(inp)
+        pos = result["payload"]["portfolio"]["positions"][0]
+        assert "total_cost" not in pos
+        assert pos.get("cost_basis_missing") is True
+        assert any("MISSING_COST_BASIS" in w for w in result["warnings"])
+
+    def test_mixed_cost_basis_holdings(self):
+        inp = _demo_input()
+        inp["holdings"].append({
+            "fund_code": "003003",
+            "fund_name": "华夏现金增利货币",
+            "current_value": 20000,
+            "cost_basis": None,
+            "cost_basis_confidence": "unknown",
+        })
+        result = bridge_portfolio_input(inp)
+        positions = result["payload"]["portfolio"]["positions"]
+        assert positions[0]["total_cost"] == 45000
+        assert "total_cost" not in positions[1]
+        assert positions[1].get("cost_basis_missing") is True
+        assert any("MISSING_COST_BASIS" in w and "003003" in w for w in result["warnings"])
+
+    def test_no_broker_order_execution_fields(self):
+        inp = _demo_input()
+        inp["holdings"][0]["cost_basis"] = None
+        result = bridge_portfolio_input(inp)
+        payload_str = str(result["payload"])
+        assert "broker" not in payload_str.lower()
+        assert "order" not in payload_str.lower()
+        assert "execution" not in payload_str.lower()

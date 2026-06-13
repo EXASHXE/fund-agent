@@ -6,9 +6,9 @@ Example / optional host-owned data provider adapters. These are NOT imported by 
 
 | Provider | Default | Credentials | Current implementation | Live smoke | Notes |
 | -------- | ------: | ----------- | ---------------------- | ---------- | ----- |
-| AkShare | enabled | none required | FUND_NAV_HISTORY implemented; others NOT_IMPLEMENTED | not tested | Broad coverage fallback; optional dependency |
-| Eastmoney | disabled | unknown (cookie_env: EASTMONEY_COOKIE) | All NOT_IMPLEMENTED (endpoint map defined) | not tested | Unofficial/web endpoint; disabled by default |
-| Xueqiu | disabled | likely required (cookie_env: XUEQIU_COOKIE, token_env: XUEQIU_TOKEN) | All NOT_IMPLEMENTED | not tested | Stock quote/sentiment supplement; disabled by default |
+| AkShare | enabled | none required | **Only FUND_NAV_HISTORY implemented**; others NOT_IMPLEMENTED | not tested | Only NAV history path works; all other capabilities return NOT_IMPLEMENTED |
+| Eastmoney | disabled | unknown (cookie_env: EASTMONEY_COOKIE) | All NOT_IMPLEMENTED (endpoint map scaffold only) | not tested | **Prototype scaffold** — host must implement HTTP calls or run live smoke to verify |
+| Xueqiu | disabled | likely required (cookie_env: XUEQIU_COOKIE, token_env: XUEQIU_TOKEN) | All NOT_IMPLEMENTED | not tested | **Prototype scaffold** — host must implement HTTP calls or run live smoke to verify |
 | News MCP/API | disabled | API key by provider (NEWS_API_KEY, TAVILY_API_KEY, EXA_API_KEY, SERPAPI_API_KEY, CUSTOM_NEWS_MCP_TOKEN) | Host-owned MCP | not tested | Host owns MCP provider and credentials |
 
 ## Credential Assessment
@@ -31,6 +31,11 @@ python examples/host_data_adapters/provider_smoke.py --all --resolve-env --json
 ```
 
 All smoke tests are opt-in and skip by default if credentials or dependencies are missing.
+
+> **Note:** No live provider is required for default tests. For real testing with actual data,
+> the **provider data snapshot** flow is recommended: host collects live data via adapter,
+> builds `provider_data_snapshot` JSON, and fund-agent consumes the snapshot deterministically.
+> See `schemas/provider_data_snapshot.schema.json` and `examples/user_portfolio_templates/`.
 
 > **Warning:** Do not run live provider smoke in CI unless credentials/network are
 > intentionally configured. Provider smoke may perform network calls and requires

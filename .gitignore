@@ -54,6 +54,9 @@ scratchpad_*.py
 report.evidence.json
 mock.py
 
+# 生成审计产物
+artifacts/audit/
+
 # 会话数据
 .omo/
 .pytest_cache/
