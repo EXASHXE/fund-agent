@@ -1,15 +1,20 @@
 ---
-id: news_research
 name: news-research
-description: "Supporting skill. Calls host-injected MCP web_search and financial_news capabilities to produce SoftEvidence (news items with source, timestamp, related entities). No direct provider SDK imports."
+version: "0.10.4"
+id: news_research
 runtime: src.skills_runtime.news_research:NewsResearchSkill
+runtime_id: news_research
+runtime_class: src.skills_runtime.news_research:NewsResearchSkill
 input_schema: src.schemas.skill:SkillInput
 output_schema: src.schemas.skill:SkillOutput
-required_mcp_capabilities:
-  - web_search
-  - financial_news
-produced_evidence_type: SoftEvidence
+category: supporting
 role: supporting
+requires_mcp: [web_search, financial_news]
+required_mcp_capabilities: [web_search, financial_news]
+produces: [SoftEvidence]
+forbidden: []
+description: News-backed SoftEvidence for fund, holding, theme, manager, or macro topics
+entrypoint: skills/news-research/SKILL.md
 ---
 
 # News Research (supporting skill)

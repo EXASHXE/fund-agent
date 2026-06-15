@@ -1,17 +1,20 @@
 ---
-id: decision_support
 name: decision-support
-description: "Supporting skill. The only fund-agent skill that may produce a formal Decision and ExecutionLedger. Consumes an EvidenceGraph plus optional portfolio context, risk profile, constraints, and target trade amount. Active actions require evidence anchors."
+version: "0.10.4"
+id: decision_support
 runtime: src.skills_runtime.decision_support:DecisionSupportSkill
+runtime_id: decision_support
+runtime_class: src.skills_runtime.decision_support:DecisionSupportSkill
 input_schema: src.schemas.skill:SkillInput
 output_schema: src.schemas.skill:SkillOutput
-required_mcp_capabilities: []
-consumes:
-  - EvidenceGraph
-produces:
-  - Decision
-  - ExecutionLedger
+category: supporting
 role: supporting
+requires_mcp: []
+required_mcp_capabilities: []
+produces: [Decision, ExecutionLedger, audit_trail, evidence_anchor_diagnostics, risk_constraint_conflicts]
+forbidden: []
+description: Only skill that may produce formal Decision and ExecutionLedger artifacts
+entrypoint: skills/decision-support/SKILL.md
 ---
 
 # Decision Support (supporting skill)

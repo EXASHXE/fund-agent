@@ -1,13 +1,20 @@
 ---
-id: fund_analysis
 name: fund-analysis
-description: "Primary / default fund-agent skill. Produces HardEvidence (NAV metrics, holdings, portfolio review) from host-supplied portfolio / NAV / risk / constraints data. No network or provider calls."
+version: "0.10.4"
+id: fund_analysis
 runtime: src.skills_runtime.fund_analysis:FundAnalysisSkill
+runtime_id: fund_analysis
+runtime_class: src.skills_runtime.fund_analysis:FundAnalysisSkill
 input_schema: src.schemas.skill:SkillInput
 output_schema: src.schemas.skill:SkillOutput
-required_mcp_capabilities: []
-produced_evidence_type: HardEvidence
+category: primary
 role: primary
+requires_mcp: []
+required_mcp_capabilities: []
+produces: [HardEvidence, report_sections, report_outline, report_quality_gate, data_completeness]
+forbidden: [formal_decision_generation, execution_ledger_production]
+description: Primary portfolio and fund report entrypoint for personal fund analysis
+entrypoint: skills/fund-analysis/SKILL.md
 ---
 
 # Fund Analysis

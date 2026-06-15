@@ -484,11 +484,11 @@ def test_manifest_skill_docs_have_runtime_contract_fields_and_workflow_sections(
         "decision_support": "skills/decision-support/SKILL.md",
     }
     required = (
-        "id:",
-        "runtime:",
-        "input_schema:",
-        "output_schema:",
-        "required_mcp_capabilities",
+        "runtime_id:",
+        "runtime_class:",
+        "requires_mcp:",
+        "produces:",
+        "forbidden:",
         "## Purpose",
         "## When to use",
         "## When not to use",

@@ -1,15 +1,20 @@
 ---
-id: thesis_generation
 name: thesis-generation
-description: "Supporting skill. Produces a thesis_draft artifact from a host-supplied portfolio context. Does NOT produce formal Decision or ExecutionLedger (forbidden_behavior is formal_decision_generation)."
+version: "0.10.4"
+id: thesis_generation
 runtime: src.skills_runtime.thesis_generation:ThesisGenerationSkill
+runtime_id: thesis_generation
+runtime_class: src.skills_runtime.thesis_generation:ThesisGenerationSkill
 input_schema: src.schemas.skill:SkillInput
 output_schema: src.schemas.skill:SkillOutput
-required_mcp_capabilities: []
-produced_artifact: thesis_draft
-forbidden_behavior:
-  - formal_decision_generation
+category: supporting
 role: supporting
+requires_mcp: []
+required_mcp_capabilities: []
+produces: [ThesisDraft]
+forbidden: [formal_decision_generation]
+description: Generates thesis draft artifacts before deciding whether to escalate to formal decision
+entrypoint: skills/thesis-generation/SKILL.md
 ---
 
 # Thesis Generation (supporting skill)
