@@ -9,12 +9,29 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Ruff check
+        run: ruff check src/ tests/
+      - name: Run tests with coverage
+        run: PYTHONPATH=. pytest --cov=src -q
+      - name: Type check (non-blocking)
+        run: mypy src/
+        continue-on-error: true
       - name: Run canonical plugin gate
         run: bash scripts/check_plugin_gate.sh
+      - name: Architecture boundary tests
+        run: PYTHONPATH=. pytest tests/architecture -q
+      - name: Contract tests
+        run: PYTHONPATH=. pytest tests/contracts -q

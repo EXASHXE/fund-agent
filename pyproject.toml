@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fund-agent"
-version = "0.10.1"
+version = "0.10.4"
 description = "Host-agnostic AI financial research skill pack / agent plugin"
 requires-python = ">=3.11"
 
@@ -53,6 +53,46 @@ markers = [
     "adapter_live: tests requiring real adapter dependency and/or network (skipped by default)",
     "adapter: adapter-specific tests",
     "regression: personal regression tests",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.4.0",
+    "pytest-cov>=5.0",
+    "mypy>=1.10",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "SIM"]
+ignore = ["E501"]  # line too long — handled by line-length
+
+[tool.ruff.lint.isort]
+known-first-party = ["src", "fund_agent"]
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "tests/*",
+    "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+exclude = [
+    "legacy/",
+    "tests/",
 ]
 
 [tool.setuptools.packages.find]
