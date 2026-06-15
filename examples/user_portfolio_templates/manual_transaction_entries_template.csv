@@ -1,0 +1,3 @@
+date,fund_name,fund_code,action,amount,status,source_platform,source_ref,settlement_account,confidence,notes
+2024-06-15,示例成长混合,009999,buy,10000,confirmed,alipay,AL202406150001XX,招商银行尾号8888,high,虚构示例：首次定投买入
+2024-09-20,示例债券A,,cash_dividend,150,confirmed,alipay,AL202409200002XX,招商银行尾号8888,medium,虚构示例：分红到账；fund_code待补

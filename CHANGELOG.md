@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.10.1] — 2026-06-15
+
+### Added
+
+- Manual transaction entries CSV template (`manual_transaction_entries_template.csv`)
+- Schema extensions for manual portfolio bootstrap: `manual_transactions_ref`, `manual_transactions_format`, `source_notes`, `transaction_evidence_refs`, `pending_transaction_count`
+- Holding-level optional fields: `source_platform`, `holding_source`, `source_notes`, `transaction_evidence_refs`, `pending_transaction_count`
+- Data quality optional fields: `validated_against_manual_transactions`, `transaction_history_incomplete`, `fund_code_missing`, `units_missing`, `nav_missing`, `cost_basis_partial`
+- `docs/development/manual-portfolio-maintenance.md` — manual portfolio bootstrap and maintenance guide
+- Tests for template file, schema extensions, and documentation
+
+### Changed
+
+- Updated `docs/development/private-data-handling.md` with manual transaction bootstrap flow
+- Updated `docs/agent-integration/private-data-flow.md` with manual transaction bootstrap flow
+- Updated `examples/user_portfolio_templates/README.md` with new template and bootstrap section
+- Bumped version to 0.10.1
+
 ## [0.10.0] — 2026-06-14
 
 ### Added

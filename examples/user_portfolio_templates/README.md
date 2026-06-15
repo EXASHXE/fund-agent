@@ -11,6 +11,7 @@ Templates and synthetic demo data for fund-agent portfolio input.
 | `provider_data_snapshot_template.json` | Empty provider snapshot template |
 | `provider_data_snapshot_demo.json` | Synthetic demo provider snapshot |
 | `transaction_history_template.csv` | Transaction history CSV template |
+| `manual_transaction_entries_template.csv` | Manual transaction entries CSV template (v0.10.1 bootstrap) |
 | `risk_profile_template.yaml` | Risk profile YAML template |
 | `investment_constraints_template.yaml` | Investment constraints YAML template |
 | `private_data_gitignore_note.md` | Private data handling rules |
@@ -22,6 +23,26 @@ Templates and synthetic demo data for fund-agent portfolio input.
 2. Fill in your real portfolio data
 3. Run fund-agent with `--input local_data/your_portfolio.json`
 4. Generated reports go to `local_reports/` (outside repo)
+
+## Manual Transaction Bootstrap (v0.10.1)
+
+For users building their first portfolio from Alipay transaction records:
+
+1. Export Alipay history to `private_data/alipay_record.private.csv` (never commit)
+2. Manually curate entries into `private_data/manual_transactions.private.csv` using `manual_transaction_entries_template.csv`
+3. Build current holding snapshot as `private_data/portfolio_input.private.json`
+4. Run fund-agent with `--input private_data/portfolio_input.private.json`
+5. Reports go to `local_reports/`
+
+Key rules:
+- **Raw Alipay CSV must not be committed** — keep in `private_data/`
+- **Do not guess fund_code** — leave empty if unknown
+- **Do not fabricate units/NAV/cost_basis** — leave null if unknown
+- **Current holding snapshot is the authoritative source**
+- **pending_confirmation entries are not confirmed holdings**
+- **No Alipay importer, no auto-parsing, no auto-calculation**
+
+See `docs/development/manual-portfolio-maintenance.md` for full details.
 
 ## Safety
 

@@ -43,7 +43,12 @@
           "unrealized_pnl": {"type": ["number", "null"]},
           "unrealized_pnl_pct": {"type": ["number", "null"]},
           "principal_recovered": {"type": ["boolean", "null"]},
-          "source": {"type": "string"}
+          "source": {"type": "string"},
+          "source_platform": {"type": "string", "description": "Platform where the holding originates (e.g. alipay, tiantian, manual_snapshot)"},
+          "holding_source": {"type": "string", "enum": ["manual_snapshot", "provider_snapshot", "transaction_derived", "unknown"], "description": "How this holding entry was obtained"},
+          "source_notes": {"type": "string", "description": "Free-text notes about the source or reliability of this holding"},
+          "transaction_evidence_refs": {"type": "array", "items": {"type": "string"}, "description": "References to transaction records that support this holding"},
+          "pending_transaction_count": {"type": "integer", "description": "Number of pending (unconfirmed) transactions related to this holding"}
         }
       }
     },
@@ -71,6 +76,28 @@
       "type": "string",
       "description": "Reference to constraints file path"
     },
+    "manual_transactions_ref": {
+      "type": "string",
+      "description": "Reference to manual transaction entries file path (e.g. manual_transactions.private.csv)"
+    },
+    "manual_transactions_format": {
+      "type": "string",
+      "enum": ["manual_csv"],
+      "description": "Format of the manual transactions file referenced by manual_transactions_ref"
+    },
+    "source_notes": {
+      "type": "string",
+      "description": "Free-text notes about the source or reliability of the portfolio data"
+    },
+    "transaction_evidence_refs": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "References to transaction records that support this portfolio"
+    },
+    "pending_transaction_count": {
+      "type": "integer",
+      "description": "Number of pending (unconfirmed) transactions across the portfolio"
+    },
     "user_preferences": {
       "type": "object",
       "properties": {
@@ -85,7 +112,13 @@
       "properties": {
         "missing_fields": {"type": "array", "items": {"type": "string"}},
         "estimated_fields": {"type": "array", "items": {"type": "string"}},
-        "data_source_notes": {"type": "array", "items": {"type": "string"}}
+        "data_source_notes": {"type": "array", "items": {"type": "string"}},
+        "validated_against_manual_transactions": {"type": "boolean", "description": "Whether portfolio data has been cross-validated against manual transaction records"},
+        "transaction_history_incomplete": {"type": "boolean", "description": "Whether the transaction history is known to be incomplete"},
+        "fund_code_missing": {"type": "boolean", "description": "Whether any holding is missing a fund_code"},
+        "units_missing": {"type": "boolean", "description": "Whether any holding is missing units"},
+        "nav_missing": {"type": "boolean", "description": "Whether any holding is missing NAV data"},
+        "cost_basis_partial": {"type": "boolean", "description": "Whether cost_basis is only partially available (some null, some present)"}
       }
     },
     "privacy_mode": {
