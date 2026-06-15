@@ -10,6 +10,7 @@ import uuid
 from src.schemas.decision import Decision
 from src.schemas.evidence_graph import EvidenceGraph
 from src.schemas.skill import SkillInput
+from src.skills_runtime.common.strings import unique_strings
 
 from .action_policy import (
     ACTIVE_ACTIONS,
@@ -31,19 +32,7 @@ from .gatekeeper import GatekeeperResult, evaluate_gatekeeper
 
 
 def _dedupe_strings(*groups: Any) -> list[str]:
-    result: list[str] = []
-    seen: set[str] = set()
-    for group in groups:
-        if isinstance(group, str):
-            values = [group]
-        else:
-            values = list(group or [])
-        for value in values:
-            text = str(value)
-            if text and text not in seen:
-                result.append(text)
-                seen.add(text)
-    return result
+    return unique_strings(*groups, skip_empty=True)
 
 
 def _task_from_payload(payload: dict[str, Any]) -> SimpleNamespace:

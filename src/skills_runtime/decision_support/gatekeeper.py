@@ -11,6 +11,7 @@ from datetime import datetime
 from typing import Any
 
 from src.schemas.evidence_graph import EvidenceGraph
+from src.skills_runtime.common.strings import unique_strings
 
 from .action_policy import ACTIVE_ACTIONS, PASSIVE_ACTIONS
 from .context import _dict
@@ -494,11 +495,4 @@ def _list_dicts(value: Any) -> list[dict[str, Any]]:
 
 
 def _dedupe(values: list[Any]) -> list[str]:
-    result: list[str] = []
-    seen: set[str] = set()
-    for value in values:
-        text = str(value)
-        if text and text not in seen:
-            result.append(text)
-            seen.add(text)
-    return result
+    return unique_strings(values, skip_empty=True)

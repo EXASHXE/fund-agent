@@ -8,6 +8,7 @@ import uuid
 
 from src.schemas.decision import Decision
 from src.schemas.evidence_graph import EvidenceGraph
+from src.skills_runtime.common.strings import unique_strings
 
 from .action_policy import ACTIVE_ACTIONS, PASSIVE_ACTIONS, _normalized_action
 from .amount_policy import _calculate_risk_budget, _validate_trade_amount
@@ -109,19 +110,7 @@ def select_top_trades(
 
 
 def _dedupe_reason_codes(*groups: Any) -> list[str]:
-    reason_codes: list[str] = []
-    seen: set[str] = set()
-    for group in groups:
-        if isinstance(group, str):
-            values = [group]
-        else:
-            values = list(group or [])
-        for value in values:
-            code = str(value)
-            if code and code not in seen:
-                reason_codes.append(code)
-                seen.add(code)
-    return reason_codes
+    return unique_strings(*groups, skip_empty=True)
 
 
 def _list_strings(value: Any) -> list[str]:
