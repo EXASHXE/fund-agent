@@ -6,8 +6,8 @@ Does NOT expose unstable internals.
 from __future__ import annotations
 
 from src.schemas.skill import SkillInput, SkillOutput
-from src.skills_runtime.fund_analysis import FundAnalysisSkill
 from src.skills_runtime.decision_support import DecisionSupportSkill
+from src.skills_runtime.fund_analysis import FundAnalysisSkill
 
 __all__ = [
     "DecisionSupportSkill",

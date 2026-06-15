@@ -16,11 +16,12 @@ FORBIDDEN:
 from __future__ import annotations
 
 import argparse
+import contextlib
 import csv
 import hashlib
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -108,7 +109,7 @@ def build_kg_context(
     provider_snapshot: dict | None = None,
 ) -> dict:
     """Build the knowledge graph context snapshot dict."""
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
 
     holdings = portfolio_input.get("holdings", portfolio_input.get("positions", []))
     if not isinstance(holdings, list):
@@ -117,10 +118,8 @@ def build_kg_context(
     # Portfolio summary
     total_value = 0.0
     for h in holdings:
-        try:
+        with contextlib.suppress(TypeError, ValueError):
             total_value += float(h.get("current_value", 0))
-        except (TypeError, ValueError):
-            pass
 
     entities: list[str] = []
     fund_entities: list[dict] = []
@@ -142,10 +141,7 @@ def build_kg_context(
 
         fund_name = str(h.get("fund_name", h.get("name", "")))
         fund_code = h.get("fund_code", h.get("code", ""))
-        if fund_code:
-            fund_code = str(fund_code)
-        else:
-            fund_code = ""
+        fund_code = str(fund_code) if fund_code else ""
         sector = str(h.get("sector", h.get("industry", "")))
         theme = h.get("theme", "")
 
@@ -161,9 +157,8 @@ def build_kg_context(
         # Add theme-derived topics
         for tag in theme_tags:
             for topic in WATCH_TOPICS:
-                if tag in topic or topic in tag:
-                    if topic not in matched_topics:
-                        matched_topics.append(topic)
+                if (tag in topic or topic in tag) and topic not in matched_topics:
+                    matched_topics.append(topic)
 
         # Infer risk bucket
         risk_bucket = h.get("risk_bucket", "") or _infer_risk_bucket(fund_name, sector, matched_topics)
@@ -214,12 +209,10 @@ def build_kg_context(
                 pass  # present but may be None
             else:
                 missing_data["units_missing"].append(fund_code or fund_name or f"holding_{idx}")
-        if h.get("nav") is None:
-            if "nav" in h:
-                missing_data["nav_missing"].append(fund_code or fund_name or f"holding_{idx}")
-        if h.get("cost_basis") is None and h.get("total_cost") is None:
-            if "cost_basis" in h or "total_cost" in h:
-                missing_data["cost_basis_missing"].append(fund_code or fund_name or f"holding_{idx}")
+        if h.get("nav") is None and "nav" in h:
+            missing_data["nav_missing"].append(fund_code or fund_name or f"holding_{idx}")
+        if h.get("cost_basis") is None and h.get("total_cost") is None and ("cost_basis" in h or "total_cost" in h):
+            missing_data["cost_basis_missing"].append(fund_code or fund_name or f"holding_{idx}")
 
         # Build query plan entries
         query_id_base = fund_code or fund_name or f"holding_{idx}"
@@ -314,7 +307,7 @@ def _read_json(path: Path) -> dict | None:
     """Read JSON file, return None if missing."""
     if not path.exists():
         return None
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -323,7 +316,7 @@ def _read_csv(path: Path) -> list[dict] | None:
     if not path.exists():
         return None
     rows: list[dict] = []
-    with open(path, "r", encoding="utf-8", newline="") as f:
+    with open(path, encoding="utf-8", newline="") as f:
         reader = csv.DictReader(f)
         for row in reader:
             rows.append(dict(row))

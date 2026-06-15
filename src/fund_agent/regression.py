@@ -5,7 +5,6 @@ Exposes personal regression runner types and helpers.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 from src.skills_runtime.workflow.personal_regression import (
     PersonalRegressionResult,

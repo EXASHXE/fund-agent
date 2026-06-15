@@ -22,7 +22,7 @@ import argparse
 import json
 import sys
 from collections import Counter, defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -90,7 +90,7 @@ def build_factor_snapshot(
     kg_context: dict | None = None,
 ) -> dict:
     """Build the factor snapshot dict."""
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
 
     holdings = portfolio_input.get("holdings", portfolio_input.get("positions", []))
     if not isinstance(holdings, list):
@@ -122,7 +122,7 @@ def build_factor_snapshot(
     bond_cash_value = 0.0
     short_term_trading_value = 0.0
 
-    for idx, h in enumerate(holdings):
+    for _idx, h in enumerate(holdings):
         if not isinstance(h, dict):
             continue
 
@@ -379,9 +379,7 @@ def build_factor_snapshot(
     # Factor confidence
     missing_count = cost_basis_missing_count + units_missing_count + nav_missing_count
     total_possible = len(holding_factors) * 3  # 3 fields per holding
-    if total_possible == 0:
-        factor_confidence = "high"
-    elif missing_count == 0:
+    if total_possible == 0 or missing_count == 0:
         factor_confidence = "high"
     elif missing_count <= total_possible * 0.3:
         factor_confidence = "medium"
@@ -417,7 +415,7 @@ def build_factor_snapshot(
 def _read_json(path: Path) -> dict | None:
     if not path.exists():
         return None
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         return json.load(f)
 
 

@@ -8,15 +8,14 @@ from __future__ import annotations
 from src.host_data.fallback_policy import select_provider_order
 from src.host_data.provider_config import (
     ProviderConfig,
-    ProviderCredentialSpec,
     ProviderCredentials,
+    ProviderCredentialSpec,
     resolve_credentials_from_env,
 )
 from src.host_data.provider_contracts import (
     FundDataProvider,
     NewsDataProvider,
     ProviderCapability,
-    StockDataProvider,
 )
 from src.host_data.provider_registry import ProviderRegistry
 from src.host_data.provider_result import ProviderResult

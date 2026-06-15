@@ -10,7 +10,7 @@ that downstream consumers can use the documented import paths::
 """
 from __future__ import annotations
 
-from src.fund_agent import __version__
 from src.fund_agent import *  # noqa: F401,F403
+from src.fund_agent import __version__
 
 __all__ = ["__version__"]

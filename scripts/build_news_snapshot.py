@@ -24,7 +24,7 @@ import hashlib
 import json
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -88,7 +88,6 @@ def _build_query_plan(kg_context: dict, portfolio_input: dict | None) -> list[di
 
     # From fund_entities, add fund-specific queries
     for fe in kg_context.get("fund_entities", []):
-        fund_name = fe.get("fund_name", "")
         fund_code = fe.get("fund_code", "")
         for topic in fe.get("theme_tags", []):
             template_queries = _THEME_QUERIES.get(topic, [])
@@ -180,9 +179,9 @@ def _provider_bocha(query: str, max_results: int) -> tuple[list[dict], str | Non
     if not api_key:
         return [], "BOCHA_API_KEY not set"
     try:
-        import urllib.request
-        import urllib.parse
         import json as _json
+        import urllib.parse
+        import urllib.request
 
         params = urllib.parse.urlencode({"q": query, "count": max_results, "freshness": "day"})
         url = f"https://api.bochaai.com/v1/web-search?{params}"
@@ -337,7 +336,7 @@ def _compute_freshness_score(published_at: str, lookback_days: int) -> float:
     try:
         # Try ISO format
         pub_date = datetime.fromisoformat(published_at.replace("Z", "+00:00"))
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         age_days = (now - pub_date).days
         if age_days < 0:
             return 1.0
@@ -367,7 +366,7 @@ def build_news_snapshot(
     provider_snapshot: dict | None = None,
 ) -> dict:
     """Build the news snapshot dict."""
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
 
     # Read env configuration
     lookback_days = int(os.environ.get("FUND_AGENT_NEWS_LOOKBACK_DAYS", str(DEFAULT_LOOKBACK_DAYS)))
@@ -538,7 +537,7 @@ def build_news_snapshot(
 def _read_json(path: Path) -> dict | None:
     if not path.exists():
         return None
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         return json.load(f)
 
 

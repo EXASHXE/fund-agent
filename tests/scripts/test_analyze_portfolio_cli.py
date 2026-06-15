@@ -20,9 +20,7 @@ def _minimal_portfolio(**overrides):
     base = {
         "schema_version": "fund_portfolio_input.v1",
         "as_of_date": "2024-12-31",
-        "holdings": [
-            {"fund_code": "000001", "fund_name": "Demo Fund", "current_value": 50000}
-        ],
+        "holdings": [{"fund_code": "000001", "fund_name": "Demo Fund", "current_value": 50000}],
     }
     base.update(overrides)
     return base
@@ -72,8 +70,7 @@ class TestAnalyzePortfolioMarkdownOutput:
         assert rc == 0
         content = Path(output_path).read_text(encoding="utf-8")
         non_empty_bullets = [
-            line for line in content.splitlines()
-            if line.strip().startswith("- ") and len(line.strip()) > 3
+            line for line in content.splitlines() if line.strip().startswith("- ") and len(line.strip()) > 3
         ]
         assert len(non_empty_bullets) >= 3, "markdown has fewer than 3 real bullet lines"
 
@@ -185,3 +182,86 @@ class TestRenderReportCLI:
         assert Path(output_path).exists()
         content = Path(output_path).read_text(encoding="utf-8")
         assert "基金组合分析报告" in content
+
+
+class TestAnalyzePortfolioWithSnapshots:
+    """Tests for analyze-portfolio CLI with optional snapshot arguments."""
+
+    def test_with_provider_snapshot(self, tmp_path):
+        input_path = _write_temp_json(_minimal_portfolio(), tmp_path)
+        snapshot = {"snapshot_type": "provider_data_snapshot", "nav_data": {}}
+        snap_path = tmp_path / "provider.private.json"
+        snap_path.write_text(json.dumps(snapshot), encoding="utf-8")
+
+        rc = cli_main(
+            [
+                "analyze-portfolio",
+                "--input",
+                input_path,
+                "--provider-snapshot",
+                str(snap_path),
+            ]
+        )
+        assert rc == 0
+
+    def test_with_news_snapshot(self, tmp_path):
+        input_path = _write_temp_json(_minimal_portfolio(), tmp_path)
+        snapshot = {"snapshot_type": "news_snapshot", "items": []}
+        snap_path = tmp_path / "news.private.json"
+        snap_path.write_text(json.dumps(snapshot), encoding="utf-8")
+
+        rc = cli_main(
+            [
+                "analyze-portfolio",
+                "--input",
+                input_path,
+                "--news-snapshot",
+                str(snap_path),
+            ]
+        )
+        assert rc == 0
+
+    def test_with_all_snapshots(self, tmp_path):
+        input_path = _write_temp_json(_minimal_portfolio(), tmp_path)
+        for name, data in [
+            ("provider.private.json", {"snapshot_type": "provider_data_snapshot"}),
+            ("news.private.json", {"snapshot_type": "news_snapshot"}),
+            ("factor.private.json", {"snapshot_type": "factor_snapshot"}),
+            ("kg.private.json", {"snapshot_type": "knowledge_graph_context"}),
+        ]:
+            (tmp_path / name).write_text(json.dumps(data), encoding="utf-8")
+
+        rc = cli_main(
+            [
+                "analyze-portfolio",
+                "--input",
+                input_path,
+                "--provider-snapshot",
+                str(tmp_path / "provider.private.json"),
+                "--news-snapshot",
+                str(tmp_path / "news.private.json"),
+                "--factor-snapshot",
+                str(tmp_path / "factor.private.json"),
+                "--kg-context",
+                str(tmp_path / "kg.private.json"),
+            ]
+        )
+        assert rc == 0
+
+    def test_nonexistent_snapshot_path_still_works(self, tmp_path):
+        input_path = _write_temp_json(_minimal_portfolio(), tmp_path)
+        rc = cli_main(
+            [
+                "analyze-portfolio",
+                "--input",
+                input_path,
+                "--news-snapshot",
+                str(tmp_path / "nonexistent.json"),
+            ]
+        )
+        assert rc == 0
+
+    def test_backward_compatible_no_snapshot_args(self, tmp_path):
+        input_path = _write_temp_json(_minimal_portfolio(), tmp_path)
+        rc = cli_main(["analyze-portfolio", "--input", input_path])
+        assert rc == 0
