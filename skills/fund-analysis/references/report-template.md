@@ -27,18 +27,30 @@ Statuses are `OK`, `PARTIAL`, or `MISSING`. Missing data must appear as
 1. `executive_summary`
 2. `portfolio_snapshot`
 3. `pnl_and_cost_basis`
-4. `allocation_and_exposure`
-5. `risk_flags`
-6. `performance_and_nav`
-7. `benchmark_and_peer`
-8. `factor_and_style`
-9. `fees_and_redemption`
-10. `manager_and_fund_profile`
-11. `dca_and_trade_budget`
-12. `rebalance_plan`
-13. `research_query_plan`
-14. `data_completeness_and_limitations`
-15. `evidence_appendix`
+4. `position_contribution`
+5. `allocation_and_exposure`
+6. `risk_flags`
+7. `performance_and_nav`
+8. `benchmark_and_peer`
+9. `benchmark_divergence`
+10. `factor_and_style`
+11. `fees_and_redemption`
+12. `manager_and_fund_profile`
+13. `dca_and_trade_budget`
+14. `professional_diagnostics`
+15. `profit_protection`
+16. `right_side_confirmation`
+17. `event_hype_failure`
+18. `cash_deployment`
+19. `evidence_status`
+20. `action_watchlist`
+21. `missing_data`
+22. `suggested_next_checks`
+23. `uncertainty_note`
+24. `rebalance_plan`
+25. `research_query_plan`
+26. `data_completeness_and_limitations`
+27. `evidence_appendix`
 
 ## Section guidance
 
@@ -60,6 +72,11 @@ or values.
 Use `pnl_summary` and `cost_basis_summary`. If transaction-level cost basis is
 absent, say so; do not infer broker cost basis.
 
+### Position contribution
+
+Use `position_contribution` artifact. Shows each position's contribution to
+portfolio return and risk.
+
 ### Allocation and exposure
 
 Use `exposure_summary` and concentration metrics. If holdings are missing, keep
@@ -80,6 +97,11 @@ missing, mark the section `MISSING` or `PARTIAL`.
 Use `benchmark_summary` and `peer_summary`. Do not fabricate benchmark
 comparisons, rankings, percentiles, categories, or attribution.
 
+### Benchmark divergence
+
+Use `benchmark_divergence_diagnostics` artifact. Flags funds diverging
+significantly from their benchmarks.
+
 ### Factor and style
 
 Use `factor_summary`. Do not infer style exposure from fund names or tags when
@@ -99,6 +121,51 @@ stability, tenure, or change-risk conclusions.
 
 Use `trade_budget`, `short_term_trade_budget`, and `dca_plan_review`. If DCA
 inputs are absent, state that DCA review is unavailable.
+
+### Professional diagnostics
+
+Use `professional_diagnostics` artifact. Aggregates overlap, theme overweight,
+DCA drawdown, and cash budget diagnostics.
+
+### Profit protection
+
+Use `profit_protection_diagnostics` artifact. Identifies positions with
+significant unrealized gains that may need protection.
+
+### Right-side confirmation
+
+Use `right_side_confirmation_diagnostics` artifact. Confirms whether recent
+price action supports current positions.
+
+### Event hype failure
+
+Use `event_hype_failure_diagnostics` artifact. Flags funds where recent events
+may have created unsustainable hype.
+
+### Cash deployment
+
+Use `cash_deployment_diagnostics` artifact. Analyzes cash allocation efficiency
+and deployment opportunities.
+
+### Evidence status
+
+Summarizes evidence item coverage and quality for the analysis.
+
+### Action watchlist
+
+Lists positions or funds that may need attention based on analysis results.
+
+### Missing data
+
+Enumerates data gaps that affected the analysis.
+
+### Suggested next checks
+
+Recommends additional data or analysis the host could provide.
+
+### Uncertainty note
+
+Documents key uncertainties and assumptions in the analysis.
 
 ### Rebalance plan
 

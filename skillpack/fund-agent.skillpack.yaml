@@ -1,5 +1,5 @@
 name: fund-agent
-version: 0.10.1
+version: 0.10.4
 schema_version: skillpack.v1
 package_role: agent_plugin
 type: host-agnostic-financial-research-skill-pack
@@ -153,7 +153,6 @@ host_integration:
   required_entrypoint: skillpack/fund-agent.skillpack.yaml
   optional_reference_only: true
   optional_reference_workflows:
-    - examples/reference_workflows/research_os_example.py
     - examples/reference_workflows/simple_planner.py
 
 forbidden_behaviors:

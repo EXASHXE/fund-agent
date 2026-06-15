@@ -55,7 +55,8 @@ does NOT make network requests outside the MCP adapter boundary.
 ```
 Runtime: src.skills_runtime.fund_analysis:FundAnalysisSkill
 Requires MCP: []
-Produces: HardEvidence
+Produces: HardEvidence, report_sections, report_outline, report_quality_gate, data_completeness
+Forbidden: formal_decision_generation, execution_ledger_production
 ```
 
 **Personal portfolio payload** — `fund_analysis` accepts an expanded payload
@@ -160,7 +161,14 @@ required and no data is fetched by the skill. Formal `Decision` and
   "artifacts": {
     "fund_analysis_report": {},
     "portfolio_summary": {},
+    "position_summary": {},
+    "cost_basis_summary": {},
+    "pnl_summary": {},
     "risk_flags": [],
+    "exposure_summary": {},
+    "short_term_trade_budget": {},
+    "dca_plan_review": {},
+    "market_scenario_impact": {},
     "suggested_rebalance_plan": {},
     "data_completeness": {},
     "analysis_coverage": {},
@@ -171,12 +179,46 @@ required and no data is fetched by the skill. Formal `Decision` and
       "grade": "A",
       "can_publish_professional_report": true,
       "reason": "Data completeness grade A supports a professional report."
-    }
+    },
+    "benchmark_summary": {},
+    "peer_summary": {},
+    "fee_summary": {},
+    "redemption_summary": {},
+    "factor_summary": {},
+    "manager_summary": {},
+    "professional_diagnostics": {},
+    "analysis_plan": {},
+    "evidence_gap_diagnostics": {},
+    "position_contribution": {},
+    "profit_protection_diagnostics": {},
+    "benchmark_divergence_diagnostics": {},
+    "right_side_confirmation_diagnostics": {},
+    "event_hype_failure_diagnostics": {},
+    "cash_deployment_diagnostics": {},
+    "knowledge_graph_summary": {},
+    "research_query_plan": {},
+    "derived_portfolio_snapshot": {},
+    "ledger_cashflow_summary": {},
+    "source_of_truth": {},
+    "ledger_quality_summary": {},
+    "ledger_reconciliation_report": {}
   },
   "warnings": [],
   "errors": []
 }
 ```
+
+Artifacts not marked above are optional and present only when the host provides
+relevant data: `benchmark_summary`, `peer_summary`, `fee_summary`,
+`redemption_summary`, `factor_summary`, `manager_summary`,
+`professional_diagnostics`, `analysis_plan`, `evidence_gap_diagnostics`,
+`position_contribution`, `profit_protection_diagnostics`,
+`benchmark_divergence_diagnostics`, `right_side_confirmation_diagnostics`,
+`event_hype_failure_diagnostics`, `cash_deployment_diagnostics`,
+`knowledge_graph_summary`, `research_query_plan`. Transaction-derived artifacts
+(`derived_portfolio_snapshot`, `ledger_cashflow_summary`, `source_of_truth`,
+`ledger_quality_summary`, `ledger_reconciliation_report`) appear only in
+derived mode (transactions + current_nav provided instead of direct positions).
 
 If only `related_entities` is provided, `fund_analysis` keeps a compatibility
 fallback and returns baseline HardEvidence with an explicit warning.
@@ -236,7 +278,7 @@ MUST NOT produce a formal `Decision` or `ExecutionLedger`. Only
 Runtime: src.skills_runtime.decision_support:DecisionSupportSkill
 Requires MCP: []
 Consumes: EvidenceGraph
-Produces: Decision, ExecutionLedger
+Produces: Decision, ExecutionLedger, audit_trail, evidence_anchor_diagnostics, risk_constraint_conflicts
 ```
 
 **The ONLY skill that produces formal Decision and ExecutionLedger.**
@@ -277,7 +319,10 @@ skill downgrades to `WAIT` or `HOLD` with an audit-trail explanation.
   "status": "OK",
   "artifacts": {
     "decision": {...},
-    "execution_ledger": {...}
+    "execution_ledger": {...},
+    "audit_trail": {...},
+    "evidence_anchor_diagnostics": {...},
+    "risk_constraint_conflicts": {...}
   },
   "errors": []
 }
