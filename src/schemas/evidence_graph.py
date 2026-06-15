@@ -126,34 +126,52 @@ class EvidenceGraph:
         The item with the *lower* confidence_weight is removed. If confidence
         weights are equal, the item appearing later in iteration is removed.
 
+        Optimized with bucketed dedup: items are grouped by
+        (source_type, direction, frozenset(related_entities)) first, and
+        similarity checks only run within each bucket. This avoids O(n²)
+        full-scan comparisons across unrelated items.
+
         Returns:
             List of evidence_ids that were removed.
         """
         removed: list[str] = []
-        ids = list(self.items.keys())
+        removed_set: set[str] = set()
 
-        for i in range(len(ids)):
-            for j in range(i + 1, len(ids)):
-                id_a, id_b = ids[i], ids[j]
-                if id_a in removed or id_b in removed:
+        # Bucket items by (source_type, direction, frozenset(related_entities))
+        # Only items in the same bucket can be duplicates (they must match
+        # on source_type, direction, and related_entities).
+        buckets: dict[tuple[str, str, frozenset[str]], list[str]] = {}
+        for eid, item in self.items.items():
+            key = (item.source_type, item.direction, frozenset(item.related_entities))
+            buckets.setdefault(key, []).append(eid)
+
+        # Within each bucket, check for duplicates using similarity
+        for _key, bucket_ids in buckets.items():
+            if len(bucket_ids) < 2:
+                continue
+            for i in range(len(bucket_ids)):
+                id_a = bucket_ids[i]
+                if id_a in removed_set:
                     continue
+                for j in range(i + 1, len(bucket_ids)):
+                    id_b = bucket_ids[j]
+                    if id_b in removed_set:
+                        continue
 
-                item_a = self.items[id_a]
-                item_b = self.items[id_b]
+                    item_a = self.items[id_a]
+                    item_b = self.items[id_b]
 
-                if (
-                    set(item_a.related_entities) == set(item_b.related_entities)
-                    and item_a.source_type == item_b.source_type
-                    and item_a.direction == item_b.direction
-                ):
                     similarity = self._claim_similarity(item_a.claim, item_b.claim)
                     if similarity > 0.85:
                         if item_a.confidence_weight >= item_b.confidence_weight:
                             del self.items[id_b]
                             removed.append(id_b)
+                            removed_set.add(id_b)
                         else:
                             del self.items[id_a]
                             removed.append(id_a)
+                            removed_set.add(id_a)
+                            break  # id_a is removed, move to next i
         return removed
 
     # ── Conflict detection ───────────────────────────────────────────────
