@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 from src.schemas.skill import SkillInput, SkillOutput
+from src.skills_runtime.base import BaseSkillRuntime
 
 from .evidence_stage import (
     build_baseline_evidence,
@@ -45,11 +46,8 @@ from .status_stage import (
 )
 
 
-class FundAnalysisSkill:
+class FundAnalysisSkill(BaseSkillRuntime):
     """Local personal fund and portfolio analysis skill."""
-
-    mcp_adapter = None
-    tool_registry = None
 
     def run(self, skill_input: SkillInput) -> SkillOutput:
         payload = skill_input.payload or {}

@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from src.schemas.skill import SkillInput
+from src.skills_runtime.base import BaseSkillRuntime
 
 from .context import PortfolioInputBundle
 
@@ -136,16 +137,7 @@ def missing_data_warnings(
 
 
 def entities_from_input(skill_input: SkillInput) -> list[str]:
-    payload_entities = skill_input.payload.get("related_entities")
-    if isinstance(payload_entities, list) and payload_entities:
-        return [str(entity) for entity in payload_entities]
-    fund_codes = skill_input.kg_context.get("fund_codes", [])
-    if isinstance(fund_codes, list) and fund_codes:
-        return [
-            code if str(code).startswith("fund:") else f"fund:{code}"
-            for code in fund_codes
-        ]
-    return ["research_task"]
+    return BaseSkillRuntime.normalize_entities_from_input(skill_input)
 
 
 def has_related_entities(payload: dict[str, Any], skill_input: SkillInput) -> bool:

@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from src.schemas.skill import SkillError, SkillInput, SkillOutput
+from src.skills_runtime.base import BaseSkillRuntime
 
 from .context import AssembledArtifactsBundle, CoreMetricsBundle, PortfolioInputBundle
 from .evidence_stage import build_evidence_items, evidence_specs
@@ -16,23 +17,7 @@ def failed_output(
     message: str,
     details: dict[str, Any] | None = None,
 ) -> SkillOutput:
-    return SkillOutput(
-        step_id=skill_input.step_id,
-        skill_name=skill_input.skill_name,
-        errors=[
-            SkillError(
-                code=code,
-                message=message,
-                details={
-                    "skill_name": skill_input.skill_name,
-                    **(details or {}),
-                },
-                recoverable=code not in {"INVALID_INPUT"},
-            ).to_dict()
-        ],
-        warnings=[message],
-        status="FAILED",
-    )
+    return BaseSkillRuntime.failed_output(skill_input, code, message, details)
 
 
 def empty_evidence_output(

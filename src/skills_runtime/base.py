@@ -15,6 +15,7 @@ from __future__ import annotations
 from typing import Any
 
 from src.schemas.skill import SkillError, SkillInput, SkillOutput, make_skill_error_dict, normalize_skill_error, normalize_skill_errors
+from src.skills_runtime.common.strings import unique_strings
 
 
 class BaseSkillRuntime:
@@ -32,14 +33,18 @@ class BaseSkillRuntime:
     ) -> dict[str, Any]:
         return make_skill_error_dict(code, message, details, recoverable)
 
+    UNRECOVERABLE_CODES: frozenset[str] = frozenset({"INVALID_INPUT", "CONTRACT_VIOLATION"})
+
     @staticmethod
     def failed_output(
         skill_input: SkillInput,
         code: str,
         message: str,
         details: dict[str, Any] | None = None,
-        recoverable: bool = True,
+        recoverable: bool | None = None,
     ) -> SkillOutput:
+        if recoverable is None:
+            recoverable = code not in BaseSkillRuntime.UNRECOVERABLE_CODES
         return SkillOutput(
             step_id=skill_input.step_id,
             skill_name=skill_input.skill_name,
@@ -48,7 +53,7 @@ class BaseSkillRuntime:
                 SkillError(
                     code=code,
                     message=message,
-                    details=details or {"skill_name": skill_input.skill_name},
+                    details={"skill_name": skill_input.skill_name, **(details or {})},
                     recoverable=recoverable,
                 ).to_dict()
             ],
@@ -101,7 +106,7 @@ class BaseSkillRuntime:
     def normalize_entities_from_input(skill_input: SkillInput) -> list[str]:
         payload_entities = skill_input.payload.get("related_entities")
         if isinstance(payload_entities, list) and payload_entities:
-            return payload_entities
+            return [str(entity) for entity in payload_entities]
         fund_codes = skill_input.kg_context.get("fund_codes", [])
         if isinstance(fund_codes, list) and fund_codes:
             return [
@@ -127,10 +132,4 @@ class BaseSkillRuntime:
 
     @staticmethod
     def _unique_strings(items: list[str]) -> list[str]:
-        seen: set[str] = set()
-        result: list[str] = []
-        for item in items:
-            if item not in seen:
-                seen.add(item)
-                result.append(item)
-        return result
+        return unique_strings(items, skip_empty=False)

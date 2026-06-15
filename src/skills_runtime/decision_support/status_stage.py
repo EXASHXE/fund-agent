@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from src.schemas.skill import SkillError, SkillOutput
+from src.schemas.skill import SkillOutput
+from src.skills_runtime.base import BaseSkillRuntime
 
 
 class _SkillContractError(ValueError):
@@ -15,20 +16,6 @@ class _SkillContractError(ValueError):
 
 def build_failed_output(skill_input, exc: Exception) -> SkillOutput:
     code = getattr(exc, "code", "INTERNAL_ERROR")
-    return SkillOutput(
-        step_id=skill_input.step_id,
-        skill_name=skill_input.skill_name,
-        errors=[
-            SkillError(
-                code=code,
-                message=str(exc),
-                details={
-                    "error_type": type(exc).__name__,
-                    "skill_name": skill_input.skill_name,
-                },
-                recoverable=code != "CONTRACT_VIOLATION",
-            ).to_dict()
-        ],
-        warnings=[str(exc)],
-        status="FAILED",
+    return BaseSkillRuntime.failed_output(
+        skill_input, code, str(exc), details={"error_type": type(exc).__name__}
     )
