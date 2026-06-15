@@ -1,5 +1,68 @@
 # Changelog
 
+## [0.10.4] — 2026-06-15
+
+### Changed
+
+- `EvidenceGraph.deduplicate()` optimized from O(n²) full-scan to bucketed dedup by (source_type, direction, frozenset(related_entities)); identical output for all existing inputs
+- CI workflow hardened with Python 3.12 matrix, ruff check, pytest-cov, and non-blocking mypy step
+
+### Added
+
+- `src/skills_runtime/common/logging.py` — privacy-safe logging module with PII redaction (created but NOT wired into skills; opt-in for future use)
+- `tests/skills_runtime/test_privacy_safe_logging.py` — 9 tests for PII redaction and logger creation
+- `tests/schemas/test_evidence_graph_dedup.py` — 9 tests for bucketed dedup behavior
+- `tests/skills_runtime/test_decision_support_active_action_policy.py` — 10 tests for active/passive action policy
+- `tests/skills_runtime/test_decision_support_anchor_policy.py` — 8 tests for evidence anchor diagnostics
+- `tests/skills_runtime/test_decision_support_amount_policy.py` — 11 tests for amount calculation policies
+- `tests/skills_runtime/test_decision_support_forbidden_behavior.py` — 4 tests for forbidden Decision/ExecutionLedger production
+- `tests/skills_runtime/test_fund_analysis_metrics.py` — 16 tests for input stage helpers
+- `tests/skills_runtime/test_fund_analysis_report_contract.py` — 8 tests for report output contract
+- `[tool.ruff]`, `[tool.coverage]`, `[tool.mypy]` configuration in pyproject.toml
+- `[project.optional-dependencies]` dev group with ruff, pytest-cov, mypy
+
+## [0.10.3] — 2026-06-15
+
+### Changed
+
+- Split `report_composer.py` (1356 lines) into `report_sections/` package with 5 modules (registry, builders, render, helpers, __init__); original file is now a thin re-export shim
+- Unified SKILL.md frontmatter across all 5 skills with 12 standard fields (name, version, runtime_id, runtime_class, category, requires_mcp, produces, forbidden, description, entrypoint)
+- Simplified `skills/SKILL.md` to short index pointing to `skills/README.md`
+- Updated `docs/plugin-api.md` with complete decision_support artifacts and fund_analysis produces list
+
+### Added
+
+- `src/tools/portfolio/report_sections/` package with `SectionBuilder` dataclass and `section_registry`
+- `skills/sentiment-analysis/references/mcp-boundary.md` — MCP boundary documentation
+- `skills/news-research/references/input-contract.md` — input contract documentation
+- `skills/sentiment-analysis/references/input-contract.md` — input contract documentation
+- `skills/thesis-generation/references/input-contract.md` — input contract documentation
+- `tests/tools/test_report_sections_contract.py` — section registry and builder contract tests
+
+## [0.10.2] — 2026-06-15
+
+### Changed
+
+- `FundAnalysisSkill` and `DecisionSupportSkill` now inherit `BaseSkillRuntime` (previously standalone)
+- `BaseSkillRuntime.failed_output()` now auto-detects `recoverable` from `UNRECOVERABLE_CODES` (`INVALID_INPUT`, `CONTRACT_VIOLATION` → `recoverable=False`; others → `recoverable=True`); `recoverable` parameter defaults to `None` (auto-detect) instead of `True`
+- `BaseSkillRuntime.failed_output()` now merges `details` with `{"skill_name": ...}` instead of replacing
+- `BaseSkillRuntime.normalize_entities_from_input()` now coerces `payload_entities` to strings via `str()`
+- `fund_analysis/status_stage.failed_output()` delegates to `BaseSkillRuntime.failed_output()`
+- `decision_support/status_stage.build_failed_output()` delegates to `BaseSkillRuntime.failed_output()`
+- `fund_analysis/input_stage.entities_from_input()` delegates to `BaseSkillRuntime.normalize_entities_from_input()`
+- Extracted shared `unique_strings()` to `src/skills_runtime/common/strings.py`; 5 local dedupe functions now delegate to it
+- Removed non-existent `research_os_example.py` reference from skillpack manifest
+- Added 12 missing sections to `skills/fund-analysis/references/report-template.md`
+- Updated `docs/plugin-api.md` SkillOutput example with all current artifacts
+
+### Added
+
+- `src/skills_runtime/common/strings.py` — shared `unique_strings()` utility
+- `tests/skills_runtime/test_runtime_contract_consistency.py` — inheritance, failed_output, entity normalization, and delegation tests
+- `tests/skills_runtime/test_common_strings.py` — shared unique_strings tests
+- `tests/skillpack/test_manifest_references.py` — manifest file reference validation
+- `tests/docs/test_report_template_sync.py` — report-template/SECTION_ORDER sync validation
+
 ## [0.10.1] — 2026-06-15
 
 ### Added
