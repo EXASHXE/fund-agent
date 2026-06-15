@@ -212,10 +212,7 @@ def _determine_hype_failed(
         return False
     if price_reaction == "missing":
         return False
-    if price_reaction in ("weak", "negative"):
-        if news_reaction not in ("positive",):
-            return True
-    return False
+    return bool(price_reaction in ("weak", "negative") and news_reaction not in ("positive",))
 
 
 def _classify_risk_level(hype_failed: bool, post_event_return: float | None) -> str:

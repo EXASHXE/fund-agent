@@ -172,9 +172,9 @@ def _check_trade_plan_conflicts(
 ) -> list[dict[str, Any]]:
     items: list[dict[str, Any]] = []
     portfolio_context = _dict(payload.get("portfolio_context"))
-    risk_profile = _dict(payload.get("risk_profile"))
+    _dict(payload.get("risk_profile"))
     constraints = _dict(payload.get("constraints"))
-    total_value = _optional_float(portfolio_context.get("total_value")) or 0.0
+    _optional_float(portfolio_context.get("total_value")) or 0.0
 
     for trade in trade_plan:
         if not isinstance(trade, dict):

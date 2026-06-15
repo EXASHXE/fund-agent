@@ -9,7 +9,6 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Any, Literal
 
-
 RiskLevel = Literal["conservative", "moderate", "aggressive"]
 
 

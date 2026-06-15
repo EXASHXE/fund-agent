@@ -12,19 +12,16 @@ from typing import Any
 from src.schemas.skill import SkillInput, SkillOutput
 from src.skills_runtime.base import BaseSkillRuntime
 
-from .evidence_stage import (
-    build_baseline_evidence,
-)
+from .benchmark_rules import compute_benchmark_divergence_diagnostics
+from .cash_deployment_rules import compute_cash_deployment_diagnostics
 from .contribution_stage import compute_position_contribution
 from .diagnostics_stage import (
     compute_diagnostics,
 )
-from .profit_protection_rules import compute_profit_protection_diagnostics
-from .benchmark_rules import compute_benchmark_divergence_diagnostics
-from .right_side_rules import compute_right_side_confirmation_diagnostics
 from .event_rules import compute_event_hype_failure_diagnostics
-from .cash_deployment_rules import compute_cash_deployment_diagnostics
-from .knowledge_graph_stage import build_knowledge_graph_summary
+from .evidence_stage import (
+    build_baseline_evidence,
+)
 from .input_stage import (
     build_portfolio_input_bundle,
     collect_fund_codes,
@@ -32,6 +29,7 @@ from .input_stage import (
     entities_from_input,
     missing_data_warnings,
 )
+from .knowledge_graph_stage import build_knowledge_graph_summary
 from .ledger_stage import (
     portfolio_from_derived_snapshot,
     resolve_portfolio_context,
@@ -39,7 +37,9 @@ from .ledger_stage import (
 from .metrics_stage import compute_core_metrics
 from .optional_data_stage import build_optional_summaries
 from .planning_stage import build_analysis_plan
+from .profit_protection_rules import compute_profit_protection_diagnostics
 from .report_stage import assemble_analysis_report_and_artifacts
+from .right_side_rules import compute_right_side_confirmation_diagnostics
 from .status_stage import (
     build_final_skill_output,
     failed_output,

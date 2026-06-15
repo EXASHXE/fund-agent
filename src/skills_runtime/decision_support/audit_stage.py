@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import hashlib
 from datetime import datetime
 from typing import Any
-import hashlib
 
 from src.schemas.evidence_graph import EvidenceGraph
 from src.schemas.skill import SkillInput

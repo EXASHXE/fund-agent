@@ -99,10 +99,7 @@ def _build_direct_answer(
     elif analysis_mode == "soft_action_advice":
         mode_note = "本报告包含操作建议，但不包含正式交易决策。"
     elif analysis_mode == "formal_trade_decision":
-        if decision is not None:
-            mode_note = "本报告包含正式交易决策。"
-        else:
-            mode_note = "请求正式交易决策模式，但决策尚未生成。"
+        mode_note = "本报告包含正式交易决策。" if decision is not None else "请求正式交易决策模式，但决策尚未生成。"
     if mode_note:
         bullets.append(mode_note)
 

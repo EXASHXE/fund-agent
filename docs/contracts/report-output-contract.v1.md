@@ -29,23 +29,25 @@ Sections are ordered. The canonical order is defined by `SECTION_ORDER`:
 8. `benchmark_and_peer` — Benchmark and peer
 9. `benchmark_divergence` — Benchmark divergence
 10. `factor_and_style` — Factor and style
-11. `fees_and_redemption` — Fees and redemption
-12. `manager_and_fund_profile` — Manager and fund profile
-13. `dca_and_trade_budget` — DCA and trade budget
-14. `professional_diagnostics` — Professional diagnostics
-15. `profit_protection` — Profit protection
-16. `right_side_confirmation` — Right-side confirmation
-17. `event_hype_failure` — Event hype failure
-18. `cash_deployment` — Cash deployment
-19. `evidence_status` — Evidence status
-20. `action_watchlist` — Action watchlist
-21. `missing_data` — Missing data
-22. `suggested_next_checks` — Suggested next checks
-23. `uncertainty_note` — Uncertainty note
-24. `rebalance_plan` — Rebalance plan
-25. `research_query_plan` — Research query plan
-26. `data_completeness_and_limitations` — Data completeness and limitations
-27. `evidence_appendix` — Evidence appendix
+11. `factor_analysis` — Factor analysis (from host-layer factor snapshot)
+12. `fees_and_redemption` — Fees and redemption
+13. `manager_and_fund_profile` — Manager and fund profile
+14. `dca_and_trade_budget` — DCA and trade budget
+15. `professional_diagnostics` — Professional diagnostics
+16. `profit_protection` — Profit protection
+17. `right_side_confirmation` — Right-side confirmation
+18. `event_hype_failure` — Event hype failure
+19. `news_and_events` — News and events (from host-layer news snapshot)
+20. `cash_deployment` — Cash deployment
+21. `evidence_status` — Evidence status
+22. `action_watchlist` — Action watchlist
+23. `missing_data` — Missing data
+24. `suggested_next_checks` — Suggested next checks
+25. `uncertainty_note` — Uncertainty note
+26. `rebalance_plan` — Rebalance plan
+27. `research_query_plan` — Research query plan
+28. `data_completeness_and_limitations` — Data completeness and limitations
+29. `evidence_appendix` — Evidence appendix
 
 The ordering is stable. No section may be omitted; MISSING sections are
 represented with `status: "MISSING"` and an empty `bullets` list.

@@ -103,18 +103,14 @@ def assemble_analysis_report_and_artifacts(
         "dca_plan_review": metrics.dca_review if bundle.dca_plans else None,
         "suggested_rebalance_plan": metrics.rebalance_plan,
         "fund_analysis_report": report,
-        "warnings": warnings + list(
-            metrics.reconciliation.get("warnings", [])
-            if metrics.reconciliation else []
-        ),
+        "warnings": warnings + list(metrics.reconciliation.get("warnings", []) if metrics.reconciliation else []),
         "market_scenario_impact": bundle.market_scenario if bundle.market_scenario else None,
     }
 
     # Derived portfolio / ledger artifacts
     if source_of_truth == "derived_from_transactions" and derived_snapshot:
         warnings.append(
-            "portfolio was derived from transactions and current_nav; "
-            "accuracy depends on input completeness"
+            "portfolio was derived from transactions and current_nav; accuracy depends on input completeness"
         )
         artifacts["derived_portfolio_snapshot"] = derived_snapshot
         artifacts["ledger_cashflow_summary"] = derived_snapshot.get("cashflow_summary")
@@ -207,6 +203,13 @@ def assemble_analysis_report_and_artifacts(
     if knowledge_graph_summary:
         artifacts["knowledge_graph_summary"] = knowledge_graph_summary
         report["knowledge_graph_summary"] = knowledge_graph_summary
+
+    # Pass snapshot data from payload through to artifacts for report builders
+    payload = bundle.payload
+    for snapshot_key in ("news_snapshot", "factor_snapshot", "kg_context_snapshot"):
+        snapshot_data = payload.get(snapshot_key)
+        if snapshot_data is not None:
+            artifacts[snapshot_key] = snapshot_data
 
     data_completeness = attach_report_artifacts(
         payload=bundle.payload,

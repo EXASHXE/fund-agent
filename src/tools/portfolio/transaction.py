@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from typing import Any
 
 from src.schemas.transaction import FundTransaction, PositionCostBasis, TransactionLedgerSummary
@@ -19,7 +19,7 @@ VALID_ACTIONS = {"BUY", "SELL", "DIVIDEND", "FEE", "TRANSFER_IN", "TRANSFER_OUT"
 def _parse_date(val: str) -> date | None:
     if not val:
         return None
-    for fmt in ("%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%Y/%m/%d"):
+    for _fmt in ("%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%Y/%m/%d"):
         try:
             return datetime.strptime(val[:10], "%Y-%m-%d").date()
         except (ValueError, IndexError):

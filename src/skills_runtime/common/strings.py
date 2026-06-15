@@ -27,10 +27,7 @@ def unique_strings(
     for group in groups:
         if group is None:
             continue
-        if isinstance(group, str):
-            values = [group]
-        else:
-            values = list(group or [])
+        values = [group] if isinstance(group, str) else list(group or [])
         for value in values:
             text = str(value)
             if skip_empty and not text:

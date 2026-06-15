@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import Any
 
 from src.schemas.evidence import EvidenceItem
-from src.schemas.skill import SkillError, SkillInput, SkillOutput
+from src.schemas.skill import SkillInput, SkillOutput
 from src.skills_runtime.mcp_adapter_skill import MCPAdapterSkill
 from src.tools.evidence.builders import build_soft_evidence_from_sentiment
 

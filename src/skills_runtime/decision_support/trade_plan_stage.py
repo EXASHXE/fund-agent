@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import uuid
 from datetime import datetime
 from typing import Any
-import uuid
 
 from src.schemas.decision import Decision
 from src.schemas.evidence_graph import EvidenceGraph

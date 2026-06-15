@@ -13,7 +13,7 @@ from src.schemas.decision import ExecutionLedger
 from src.schemas.skill import SkillInput, SkillOutput
 from src.skills_runtime.base import BaseSkillRuntime
 
-from .action_policy import _normalized_action, ACTIVE_ACTIONS
+from .action_policy import _normalized_action
 from .anchor_diagnostics import build_evidence_anchor_diagnostics
 from .context import _dict, _optional_float
 from .decision_stage import (

@@ -2,10 +2,9 @@
 from __future__ import annotations
 
 import pandas as pd
-from typing import Dict, List
 
 
-def _infer_exposure_cluster(candidate: Dict) -> str:
+def _infer_exposure_cluster(candidate: dict) -> str:
     """Infer coarse exposure cluster from fund name/type/theme (pure keyword matching).
 
     Extracted from legacy.recommend.engine.infer_exposure_cluster.
@@ -29,10 +28,10 @@ def _infer_exposure_cluster(candidate: Dict) -> str:
 
 
 def build_portfolio_risk_matrix(
-    holdings_data: Dict,
-    scores: List[Dict],
+    holdings_data: dict,
+    scores: list[dict],
     correlations: pd.DataFrame = None,
-) -> Dict:
+) -> dict:
     """Build cluster exposure, high-correlation warnings and marginal risk.
 
     Pure dict aggregation with no IO/network/LLM dependencies.
@@ -101,7 +100,7 @@ def build_portfolio_risk_matrix(
     }
 
 
-def portfolio_summary(holding_analyses: List[Dict]) -> Dict:
+def portfolio_summary(holding_analyses: list[dict]) -> dict:
     """Aggregate per-fund holding analyses into a portfolio summary.
 
     Pure dict aggregation with no IO/network/LLM dependencies.

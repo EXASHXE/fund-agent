@@ -40,6 +40,8 @@ bun.lockb
 
 # 环境
 .env
+.env.*
+!.env.example
 
 # 新闻关键词缓存
 data/cache/
@@ -61,6 +63,13 @@ artifacts/audit/
 .omo/
 .pytest_cache/
 .coverage
+htmlcov/
 1.txt
 plan.txt
 nul
+
+# API key / credential files (safety net)
+api.txt
+api_keys.txt
+credentials.json
+*.secret

@@ -28,7 +28,6 @@ from src.tools.workflow.advisory_quality_gate import evaluate_advisory_quality_g
 from src.tools.workflow.final_report import compose_advisory_workflow_report
 from src.tools.workflow.report_safety import FORBIDDEN_EXECUTION_FIELDS
 
-
 FIXTURES_DIR = (
     Path(__file__).resolve().parents[3]
     / "examples"
@@ -306,22 +305,19 @@ def flatten_report_text(
             parts.append(str(bullet))
 
     chinese = report.get("chinese_summary", {})
-    if isinstance(chinese, dict):
-        if not section_ids or "chinese_summary" in section_ids:
-            for bullet in chinese.get("bullets", []):
-                parts.append(str(bullet))
+    if isinstance(chinese, dict) and (not section_ids or "chinese_summary" in section_ids):
+        for bullet in chinese.get("bullets", []):
+            parts.append(str(bullet))
 
     workflow = report.get("workflow_summary", {})
-    if isinstance(workflow, dict):
-        if not section_ids or "workflow_summary" in section_ids:
-            for key, val in workflow.items():
-                parts.append(f"{key}: {val}")
+    if isinstance(workflow, dict) and (not section_ids or "workflow_summary" in section_ids):
+        for key, val in workflow.items():
+            parts.append(f"{key}: {val}")
 
     safety = report.get("safety_boundary", {})
-    if isinstance(safety, dict):
-        if not section_ids or "safety_boundary" in section_ids:
-            for key, val in safety.items():
-                parts.append(f"{key}: {val}")
+    if isinstance(safety, dict) and (not section_ids or "safety_boundary" in section_ids):
+        for key, val in safety.items():
+            parts.append(f"{key}: {val}")
 
     return " ".join(parts)
 

@@ -1246,6 +1246,11 @@
           "title": "Factor and style"
         },
         {
+          "id": "factor_analysis",
+          "status": "MISSING",
+          "title": "Factor analysis"
+        },
+        {
           "id": "fees_and_redemption",
           "status": "OK",
           "title": "Fees and redemption"
@@ -1279,6 +1284,11 @@
           "id": "event_hype_failure",
           "status": "MISSING",
           "title": "Event hype failure"
+        },
+        {
+          "id": "news_and_events",
+          "status": "MISSING",
+          "title": "News and events"
         },
         {
           "id": "cash_deployment",
@@ -1480,6 +1490,18 @@
           "title": "Factor and style"
         },
         {
+          "bullets": [],
+          "data_sources": [
+            "factor_snapshot"
+          ],
+          "id": "factor_analysis",
+          "limitations": [
+            "Factor snapshot not provided; no factor analysis is fabricated."
+          ],
+          "status": "MISSING",
+          "title": "Factor analysis"
+        },
+        {
           "bullets": [
             "Fee schedule is available for 3 fund(s).",
             "Redemption rules are available for 3 fund(s)."
@@ -1582,6 +1604,18 @@
           ],
           "status": "MISSING",
           "title": "Event hype failure"
+        },
+        {
+          "bullets": [],
+          "data_sources": [
+            "news_snapshot"
+          ],
+          "id": "news_and_events",
+          "limitations": [
+            "News snapshot not provided; no news or events are fabricated."
+          ],
+          "status": "MISSING",
+          "title": "News and events"
         },
         {
           "bullets": [
@@ -1704,7 +1738,8 @@
           "bullets": [
             "Completeness grade B with score 0.767.",
             "Missing data groups: Benchmark History, Peer Group, Factor Exposures, Manager Profile, Fund Flow, Macro Events, User Investment Plan.",
-            "Optional gaps: Benchmark History, Peer Group, Factor Exposures, Manager Profile, Fund Flow, Macro Events, User Investment Plan."
+            "Optional gaps: Benchmark History, Peer Group, Factor Exposures, Manager Profile, Fund Flow, Macro Events, User Investment Plan.",
+            "Snapshot availability: provider_snapshot=absent, news_snapshot=absent, factor_snapshot=absent, kg_context_snapshot=absent."
           ],
           "data_sources": [
             "data_completeness",
@@ -2435,6 +2470,11 @@
         "title": "Factor and style"
       },
       {
+        "id": "factor_analysis",
+        "status": "MISSING",
+        "title": "Factor analysis"
+      },
+      {
         "id": "fees_and_redemption",
         "status": "OK",
         "title": "Fees and redemption"
@@ -2468,6 +2508,11 @@
         "id": "event_hype_failure",
         "status": "MISSING",
         "title": "Event hype failure"
+      },
+      {
+        "id": "news_and_events",
+        "status": "MISSING",
+        "title": "News and events"
       },
       {
         "id": "cash_deployment",
@@ -2669,6 +2714,18 @@
         "title": "Factor and style"
       },
       {
+        "bullets": [],
+        "data_sources": [
+          "factor_snapshot"
+        ],
+        "id": "factor_analysis",
+        "limitations": [
+          "Factor snapshot not provided; no factor analysis is fabricated."
+        ],
+        "status": "MISSING",
+        "title": "Factor analysis"
+      },
+      {
         "bullets": [
           "Fee schedule is available for 3 fund(s).",
           "Redemption rules are available for 3 fund(s)."
@@ -2771,6 +2828,18 @@
         ],
         "status": "MISSING",
         "title": "Event hype failure"
+      },
+      {
+        "bullets": [],
+        "data_sources": [
+          "news_snapshot"
+        ],
+        "id": "news_and_events",
+        "limitations": [
+          "News snapshot not provided; no news or events are fabricated."
+        ],
+        "status": "MISSING",
+        "title": "News and events"
       },
       {
         "bullets": [
@@ -2893,7 +2962,8 @@
         "bullets": [
           "Completeness grade B with score 0.767.",
           "Missing data groups: Benchmark History, Peer Group, Factor Exposures, Manager Profile, Fund Flow, Macro Events, User Investment Plan.",
-          "Optional gaps: Benchmark History, Peer Group, Factor Exposures, Manager Profile, Fund Flow, Macro Events, User Investment Plan."
+          "Optional gaps: Benchmark History, Peer Group, Factor Exposures, Manager Profile, Fund Flow, Macro Events, User Investment Plan.",
+          "Snapshot availability: provider_snapshot=absent, news_snapshot=absent, factor_snapshot=absent, kg_context_snapshot=absent."
         ],
         "data_sources": [
           "data_completeness",

@@ -23,7 +23,6 @@ from src.tools.portfolio.report_sections.helpers import (
 from src.tools.portfolio.report_sections.registry import (
     SECTION_ORDER,
     VALID_STATUSES,
-    ZH_CN_SECTION_TITLES,
 )
 
 
@@ -319,6 +318,49 @@ def _build_factor_and_style(context: dict[str, Any]) -> dict[str, Any]:
     return _section("factor_and_style", "OK" if factor else "MISSING", bullets, ["factor_summary"], limitations)
 
 
+def _build_factor_analysis(context: dict[str, Any]) -> dict[str, Any]:
+    """Build factor analysis section from optional factor_snapshot data."""
+    factor_snapshot = _as_dict(context["artifacts"].get("factor_snapshot"))
+    bullets: list[str] = []
+    limitations: list[str] = []
+
+    if factor_snapshot:
+        factors = _as_dict(factor_snapshot.get("factors"))
+        if factors:
+            bullets.append(f"Portfolio-level factor summary covers {len(factors)} factor dimension(s).")
+            for factor_name, factor_value in list(factors.items())[:5]:
+                if isinstance(factor_value, (int, float)):
+                    bullets.append(f"  {factor_name}: {_fixed(factor_value, 4)}.")
+                elif isinstance(factor_value, dict):
+                    bullets.append(f"  {factor_name}: available.")
+                else:
+                    bullets.append(f"  {factor_name}: {factor_value}.")
+        else:
+            limitations.append("Factor snapshot is present but contains no factor dimensions.")
+
+        data_quality = _as_dict(factor_snapshot.get("data_quality"))
+        if data_quality:
+            grade = data_quality.get("grade")
+            coverage = data_quality.get("coverage")
+            if grade is not None:
+                bullets.append(f"Factor data quality grade: {grade}.")
+            if coverage is not None:
+                bullets.append(f"Factor data coverage: {coverage}.")
+
+        provider_status = _as_dict(factor_snapshot.get("provider_status"))
+        if provider_status:
+            available = _string_list(provider_status.get("available_providers") or [])
+            if available:
+                bullets.append(f"Factor data providers: {', '.join(available)}.")
+
+        status = "OK" if factors else "PARTIAL"
+    else:
+        limitations.append("Factor snapshot not provided; no factor analysis is fabricated.")
+        status = "MISSING"
+
+    return _section("factor_analysis", status, bullets, ["factor_snapshot"], limitations)
+
+
 def _build_fees_and_redemption(context: dict[str, Any]) -> dict[str, Any]:
     fee = _as_dict(context["artifacts"].get("fee_summary") or context["report"].get("fee_summary"))
     redemption = _as_dict(context["artifacts"].get("redemption_summary") or context["report"].get("redemption_summary"))
@@ -397,7 +439,13 @@ def _build_dca_and_trade_budget(context: dict[str, Any]) -> dict[str, Any]:
         limitations.append("DCA plan review is absent; host did not provide DCA inputs.")
 
     status = "OK" if trade_budget and dca_review else "PARTIAL" if trade_budget or short_term_budget else "MISSING"
-    return _section("dca_and_trade_budget", status, bullets, ["trade_budget", "short_term_trade_budget", "dca_plan_review"], limitations)
+    return _section(
+        "dca_and_trade_budget",
+        status,
+        bullets,
+        ["trade_budget", "short_term_trade_budget", "dca_plan_review"],
+        limitations,
+    )
 
 
 def _build_professional_diagnostics(context: dict[str, Any]) -> dict[str, Any]:
@@ -412,8 +460,11 @@ def _build_professional_diagnostics(context: dict[str, Any]) -> dict[str, Any]:
             "fund profiles, redemption rules, risk constraints, DCA plans, or budget data."
         )
         return _section(
-            "professional_diagnostics", "MISSING", bullets,
-            ["professional_diagnostics"], limitations,
+            "professional_diagnostics",
+            "MISSING",
+            bullets,
+            ["professional_diagnostics"],
+            limitations,
         )
 
     redemption = _as_dict(prof_diag.get("redemption_fee_risk"))
@@ -423,8 +474,7 @@ def _build_professional_diagnostics(context: dict[str, Any]) -> dict[str, Any]:
             highest = redemption.get("summary", {}).get("highest_fee_pct")
             fee_str = f"highest host-supplied fee is {highest * 100:.1f}%" if highest is not None else ""
             bullets.append(
-                f"Short-holding redemption fee scan found {len(affected)} "
-                f"affected fund/transaction item(s); {fee_str}."
+                f"Short-holding redemption fee scan found {len(affected)} affected fund/transaction item(s); {fee_str}."
             )
             # List first 3 affected funds
             for item in affected[:3]:
@@ -458,7 +508,7 @@ def _build_professional_diagnostics(context: dict[str, Any]) -> dict[str, Any]:
 
     dca = _as_dict(prof_diag.get("dca_drawdown_diagnostics"))
     if dca:
-        reviewed = _as_list(dca.get("reviewed_funds"))
+        _as_list(dca.get("reviewed_funds"))
         summary = dca.get("summary", {})
         bullets.append(
             f"DCA drawdown scan reviewed {summary.get('reviewed_count', 0)} plan(s); "
@@ -487,7 +537,9 @@ def _build_professional_diagnostics(context: dict[str, Any]) -> dict[str, Any]:
 
     status = "PARTIAL" if prof_warnings else "OK"
     return _section(
-        "professional_diagnostics", status, bullets,
+        "professional_diagnostics",
+        status,
+        bullets,
         [
             "professional_diagnostics",
             "redemption_fee_risk",
@@ -510,8 +562,7 @@ def _build_profit_protection(context: dict[str, Any]) -> dict[str, Any]:
     if items:
         bullets.append(f"Profit protection reviewed {len(items)} position(s).")
         high_profit = [
-            item for item in items
-            if isinstance(item, dict) and item.get("profit_level") in {"high", "very_high"}
+            item for item in items if isinstance(item, dict) and item.get("profit_level") in {"high", "very_high"}
         ]
         if high_profit:
             bullets.append(f"High-profit watchlist contains {len(high_profit)} position(s).")
@@ -539,16 +590,11 @@ def _build_right_side_confirmation(context: dict[str, Any]) -> dict[str, Any]:
 
     if items:
         applicable = [
-            item for item in items
-            if isinstance(item, dict) and item.get("applicability") != "not_applicable"
+            item for item in items if isinstance(item, dict) and item.get("applicability") != "not_applicable"
         ]
-        confirmed = [
-            item for item in applicable
-            if isinstance(item, dict) and item.get("right_side_confirmed") is True
-        ]
+        confirmed = [item for item in applicable if isinstance(item, dict) and item.get("right_side_confirmed") is True]
         bullets.append(
-            f"Right-side confirmation applies to {len(applicable)} drawdown position(s); "
-            f"{len(confirmed)} confirmed."
+            f"Right-side confirmation applies to {len(applicable)} drawdown position(s); {len(confirmed)} confirmed."
         )
         if summary.get("needs_more_evidence"):
             bullets.append("Fresh NAV, benchmark, news, or sentiment evidence is needed before action.")
@@ -572,10 +618,7 @@ def _build_event_hype_failure(context: dict[str, Any]) -> dict[str, Any]:
     limitations: list[str] = []
 
     if items:
-        failed = [
-            item for item in items
-            if isinstance(item, dict) and item.get("hype_failed") is True
-        ]
+        failed = [item for item in items if isinstance(item, dict) and item.get("hype_failed") is True]
         bullets.append(f"Event catalyst review covers {len(items)} event(s).")
         if failed:
             bullets.append(f"Event hype failure detected for {len(failed)} event(s).")
@@ -596,6 +639,69 @@ def _build_event_hype_failure(context: dict[str, Any]) -> dict[str, Any]:
     )
 
 
+def _build_news_and_events(context: dict[str, Any]) -> dict[str, Any]:
+    """Build news and events section from optional news_snapshot data."""
+    news_snapshot = _as_dict(context["artifacts"].get("news_snapshot"))
+    bullets: list[str] = []
+    limitations: list[str] = []
+
+    if news_snapshot:
+        items = _as_list(news_snapshot.get("items"))
+        if items:
+            bullets.append(f"News snapshot covers {len(items)} news item(s).")
+            # Render summary per topic/entity (up to 5 items)
+            for item in items[:5]:
+                if isinstance(item, dict):
+                    source = item.get("source", "unknown")
+                    title = item.get("title", "")
+                    url = item.get("url", "")
+                    entity = item.get("entity", item.get("topic", ""))
+                    bullet_parts = []
+                    if entity:
+                        bullet_parts.append(f"[{entity}]")
+                    if title:
+                        bullet_parts.append(title)
+                    bullet_parts.append(f"(source: {source})")
+                    if url:
+                        bullet_parts.append(f"url: {url}")
+                    bullets.append(" ".join(bullet_parts))
+                elif isinstance(item, str):
+                    bullets.append(item)
+        else:
+            limitations.append("News snapshot is present but contains no news items.")
+
+        # Provider status summary
+        provider_status = _as_dict(news_snapshot.get("provider_status"))
+        if provider_status:
+            available = _string_list(provider_status.get("available_providers") or [])
+            if available:
+                bullets.append(f"News data providers: {', '.join(available)}.")
+            failed = _string_list(provider_status.get("failed_providers") or [])
+            if failed:
+                limitations.append(f"Failed news providers: {', '.join(failed)}.")
+
+        # Coverage gaps
+        coverage_gaps = _string_list(news_snapshot.get("coverage_gaps") or [])
+        if coverage_gaps:
+            bullets.append(f"News coverage gaps: {', '.join(coverage_gaps)}.")
+            status = "PARTIAL"
+        elif items:
+            status = "OK"
+        else:
+            status = "PARTIAL"
+    else:
+        limitations.append("News snapshot not provided; no news or events are fabricated.")
+        status = "MISSING"
+
+    return _section(
+        "news_and_events",
+        status,
+        bullets,
+        ["news_snapshot"],
+        limitations,
+    )
+
+
 def _build_cash_deployment(context: dict[str, Any]) -> dict[str, Any]:
     diagnostics = _artifact(context, "cash_deployment_diagnostics")
     summary = _as_dict(diagnostics.get("summary"))
@@ -608,9 +714,7 @@ def _build_cash_deployment(context: dict[str, Any]) -> dict[str, Any]:
             f"{_pct(summary.get('cash_like_weight'))}; deployment readiness "
             f"{summary.get('deployment_readiness', 'unknown')}."
         )
-        bullets.append(
-            f"Cash accounting basis: {summary.get('cash_accounting_basis', 'unspecified')}."
-        )
+        bullets.append(f"Cash accounting basis: {summary.get('cash_accounting_basis', 'unspecified')}.")
         deployable = summary.get("estimated_deployable_cash")
         if deployable is not None:
             bullets.append(f"Estimated deployable cash: {_money(deployable)}.")
@@ -786,7 +890,9 @@ def _build_research_query_plan(context: dict[str, Any]) -> dict[str, Any]:
     if plan:
         news = _as_list(plan.get("news_queries"))
         sentiment = _as_list(plan.get("sentiment_queries"))
-        bullets.append(f"Research query plan includes {len(news)} news query(ies) and {len(sentiment)} sentiment query(ies).")
+        bullets.append(
+            f"Research query plan includes {len(news)} news query(ies) and {len(sentiment)} sentiment query(ies)."
+        )
         status = "OK"
     else:
         research_status = coverage.get("research_plan")
@@ -806,10 +912,11 @@ def _build_data_completeness_and_limitations(context: dict[str, Any]) -> dict[st
     completeness = context["data_completeness"]
     limitations = list(context["report_limitations"])
     bullets: list[str] = []
+    artifacts = context["artifacts"]
+
     if completeness:
         bullets.append(
-            f"Completeness grade {completeness.get('grade', 'D')} "
-            f"with score {_fixed(completeness.get('score'), 3)}."
+            f"Completeness grade {completeness.get('grade', 'D')} with score {_fixed(completeness.get('score'), 3)}."
         )
         missing = _string_list(completeness.get("missing_sections") or [])
         if missing:
@@ -821,7 +928,24 @@ def _build_data_completeness_and_limitations(context: dict[str, Any]) -> dict[st
     else:
         limitations.append("Data completeness artifact is missing.")
         status = "MISSING"
-    return _section("data_completeness_and_limitations", status, bullets, ["data_completeness", "report_limitations"], limitations)
+
+    # Snapshot presence/absence reporting
+    snapshot_keys = {
+        "provider_snapshot": "provider_snapshot",
+        "news_snapshot": "news_snapshot",
+        "factor_snapshot": "factor_snapshot",
+        "kg_context_snapshot": "kg_context_snapshot",
+    }
+    snapshot_statuses: list[str] = []
+    for key, label in snapshot_keys.items():
+        present = key in artifacts and artifacts[key] is not None
+        snapshot_statuses.append(f"{label}={'present' if present else 'absent'}")
+    if snapshot_statuses:
+        bullets.append(f"Snapshot availability: {', '.join(snapshot_statuses)}.")
+
+    return _section(
+        "data_completeness_and_limitations", status, bullets, ["data_completeness", "report_limitations"], limitations
+    )
 
 
 def _build_evidence_appendix(context: dict[str, Any]) -> dict[str, Any]:

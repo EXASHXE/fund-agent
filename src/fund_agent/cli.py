@@ -12,13 +12,15 @@ Subcommands:
 Old console scripts (fund-agent-run-skill, fund-agent-doctor) remain
 compatible via their existing entry points.
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import sys
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
@@ -27,6 +29,7 @@ if str(ROOT) not in sys.path:
 
 def _cmd_doctor(args: argparse.Namespace) -> int:
     from src.skillpack.doctor import main as doctor_main
+
     argv = ["--pretty"] if args.pretty else []
     if args.json_output:
         argv.append("--json")
@@ -36,6 +39,7 @@ def _cmd_doctor(args: argparse.Namespace) -> int:
 
 def _cmd_run_skill(args: argparse.Namespace) -> int:
     from src.skillpack.run_skill import main as run_skill_main
+
     argv = []
     if args.skill:
         argv.extend(["--skill", args.skill])
@@ -49,6 +53,7 @@ def _cmd_run_skill(args: argparse.Namespace) -> int:
 
 def _cmd_regressions(args: argparse.Namespace) -> int:
     from scripts.run_personal_regressions import main as regressions_main
+
     argv = []
     if args.pretty:
         argv.append("--pretty")
@@ -62,6 +67,7 @@ def _cmd_regressions(args: argparse.Namespace) -> int:
 
 def _cmd_provider_smoke(args: argparse.Namespace) -> int:
     from examples.host_data_adapters.provider_smoke import main as smoke_main
+
     argv = []
     if args.provider:
         argv.extend(["--provider", args.provider])
@@ -81,6 +87,7 @@ def _cmd_provider_smoke(args: argparse.Namespace) -> int:
 
 def _cmd_audit(args: argparse.Namespace) -> int:
     from scripts.audit.run_all_audits import main as audit_main
+
     argv = []
     if args.pretty:
         argv.append("--pretty")
@@ -108,10 +115,21 @@ def _cmd_analyze_portfolio(args: argparse.Namespace) -> int:
         return 1
 
     from src.skills_runtime.workflow.portfolio_input_bridge import bridge_portfolio_input
-    bridge_result = bridge_portfolio_input(portfolio_input)
 
-    from src.skills_runtime.fund_analysis import FundAnalysisSkill
+    # Collect optional snapshot paths
+    snapshot_kwargs: dict[str, str | None] = {
+        "provider_snapshot_path": getattr(args, "provider_snapshot", None),
+        "news_snapshot_path": getattr(args, "news_snapshot", None),
+        "factor_snapshot_path": getattr(args, "factor_snapshot", None),
+        "kg_context_path": getattr(args, "kg_context", None),
+    }
+    # Only pass non-None paths
+    snapshot_kwargs = {k: v for k, v in snapshot_kwargs.items() if v is not None}
+
+    bridge_result = bridge_portfolio_input(portfolio_input, **snapshot_kwargs)
+
     from src.schemas.skill import SkillInput
+    from src.skills_runtime.fund_analysis import FundAnalysisSkill
 
     skill = FundAnalysisSkill()
     skill_input = SkillInput(
@@ -142,6 +160,7 @@ def _cmd_analyze_portfolio(args: argparse.Namespace) -> int:
             adapt_personal_fund_report_to_advisory_markdown_report,
         )
         from src.skills_runtime.workflow.markdown_report import render_advisory_report_markdown
+
         adapted_report = adapt_personal_fund_report_to_advisory_markdown_report(
             final_report,
             analysis_mode=bridge_result["payload"].get("analysis_mode", "report_only"),
@@ -182,6 +201,7 @@ def _cmd_render_report(args: argparse.Namespace) -> int:
         return 1
 
     from src.skills_runtime.workflow.markdown_report import render_advisory_report_markdown
+
     md = render_advisory_report_markdown(report)
 
     output_path = getattr(args, "output", None)
@@ -229,8 +249,14 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_analyze = sub.add_parser("analyze-portfolio", help="Analyze portfolio from JSON input")
     p_analyze.add_argument("--input", dest="input_file", required=True, help="Portfolio input JSON path")
-    p_analyze.add_argument("--format", dest="format", choices=["json", "markdown"], default="json", help="Output format")
+    p_analyze.add_argument(
+        "--format", dest="format", choices=["json", "markdown"], default="json", help="Output format"
+    )
     p_analyze.add_argument("--output", help="Output file path (for markdown)")
+    p_analyze.add_argument("--provider-snapshot", dest="provider_snapshot", help="Provider data snapshot JSON path")
+    p_analyze.add_argument("--news-snapshot", dest="news_snapshot", help="News snapshot JSON path")
+    p_analyze.add_argument("--factor-snapshot", dest="factor_snapshot", help="Factor snapshot JSON path")
+    p_analyze.add_argument("--kg-context", dest="kg_context", help="Knowledge graph context JSON path")
     p_analyze.add_argument("--pretty", action="store_true")
 
     p_render = sub.add_parser("render-report", help="Render final report to markdown")

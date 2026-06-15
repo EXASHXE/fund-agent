@@ -34,23 +34,25 @@ Statuses are `OK`, `PARTIAL`, or `MISSING`. Missing data must appear as
 8. `benchmark_and_peer`
 9. `benchmark_divergence`
 10. `factor_and_style`
-11. `fees_and_redemption`
-12. `manager_and_fund_profile`
-13. `dca_and_trade_budget`
-14. `professional_diagnostics`
-15. `profit_protection`
-16. `right_side_confirmation`
-17. `event_hype_failure`
-18. `cash_deployment`
-19. `evidence_status`
-20. `action_watchlist`
-21. `missing_data`
-22. `suggested_next_checks`
-23. `uncertainty_note`
-24. `rebalance_plan`
-25. `research_query_plan`
-26. `data_completeness_and_limitations`
-27. `evidence_appendix`
+11. `factor_analysis`
+12. `fees_and_redemption`
+13. `manager_and_fund_profile`
+14. `dca_and_trade_budget`
+15. `professional_diagnostics`
+16. `profit_protection`
+17. `right_side_confirmation`
+18. `event_hype_failure`
+19. `news_and_events`
+20. `cash_deployment`
+21. `evidence_status`
+22. `action_watchlist`
+23. `missing_data`
+24. `suggested_next_checks`
+25. `uncertainty_note`
+26. `rebalance_plan`
+27. `research_query_plan`
+28. `data_completeness_and_limitations`
+29. `evidence_appendix`
 
 ## Section guidance
 
@@ -107,6 +109,13 @@ significantly from their benchmarks.
 Use `factor_summary`. Do not infer style exposure from fund names or tags when
 host-provided factor data is absent.
 
+### Factor analysis
+
+Use `factor_snapshot` artifact. Renders portfolio-level factor summary when
+available. Shows data quality grade and coverage. If `factor_snapshot` is
+absent, the section status is `MISSING` and no factor analysis is fabricated.
+Never fake precision for missing factor dimensions.
+
 ### Fees and redemption
 
 Use `fee_summary` and `redemption_summary`. Do not invent fee schedules,
@@ -141,6 +150,13 @@ price action supports current positions.
 
 Use `event_hype_failure_diagnostics` artifact. Flags funds where recent events
 may have created unsustainable hype.
+
+### News and events
+
+Use `news_snapshot` artifact. Renders news coverage per topic/entity when
+available. Shows provider status and coverage gaps. If `news_snapshot` is
+absent, the section status is `MISSING` and no news or events are fabricated.
+Never fabricate news items. Never include API keys or Authorization headers.
 
 ### Cash deployment
 

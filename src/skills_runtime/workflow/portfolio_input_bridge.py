@@ -1,19 +1,44 @@
 """Portfolio input bridge — deterministic converter from portfolio input to fund_analysis payload.
 
 Reads validated portfolio input dict, produces fund_analysis input payload.
+Supports optional host-layer snapshots (provider, news, factor, KG context).
 Never fetches live data. Never executes trades.
 """
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import Any
 
 
-def bridge_portfolio_input(portfolio_input: dict[str, Any]) -> dict[str, Any]:
+def _load_optional_snapshot(path: str | None) -> dict[str, Any] | None:
+    """Load an optional JSON snapshot file. Returns None if path is None or file missing."""
+    if not path:
+        return None
+    try:
+        p = Path(path)
+        if p.exists():
+            data = json.loads(p.read_text(encoding="utf-8"))
+            return data if isinstance(data, dict) else None
+    except (json.JSONDecodeError, OSError):
+        pass
+    return None
+
+
+def bridge_portfolio_input(
+    portfolio_input: dict[str, Any],
+    *,
+    provider_snapshot_path: str | None = None,
+    news_snapshot_path: str | None = None,
+    factor_snapshot_path: str | None = None,
+    kg_context_path: str | None = None,
+) -> dict[str, Any]:
     """Convert a validated fund_portfolio_input dict into a fund_analysis SkillInput payload.
 
     Preserves user_question, analysis_mode, risk_profile, constraints.
     Attaches provider_data_snapshot as host evidence.
+    Optionally consumes host-layer snapshots (news, factor, KG context).
     Emits data_quality warnings.
     Never fetches live data. Never executes trades.
     """
@@ -105,6 +130,47 @@ def bridge_portfolio_input(portfolio_input: dict[str, Any]) -> dict[str, Any]:
     if isinstance(user_prefs, dict):
         payload["language"] = user_prefs.get("language", "zh-CN")
         payload["report_style"] = user_prefs.get("report_style", "detailed")
+
+    # --- Optional host-layer snapshot injection ---
+    provider_snapshot = _load_optional_snapshot(provider_snapshot_path)
+    if provider_snapshot:
+        payload["provider_data_snapshot"] = provider_snapshot
+        payload["provider_snapshot_present"] = True
+    elif provider_snapshot_path:
+        warnings.append("PROVIDER_SNAPSHOT_LOAD_FAILED: could not load provider snapshot")
+        payload["provider_snapshot_present"] = False
+    else:
+        payload["provider_snapshot_present"] = False
+
+    news_snapshot = _load_optional_snapshot(news_snapshot_path)
+    if news_snapshot:
+        payload["news_snapshot"] = news_snapshot
+        payload["news_snapshot_present"] = True
+    elif news_snapshot_path:
+        warnings.append("NEWS_SNAPSHOT_LOAD_FAILED: could not load news snapshot")
+        payload["news_snapshot_present"] = False
+    else:
+        payload["news_snapshot_present"] = False
+
+    factor_snapshot = _load_optional_snapshot(factor_snapshot_path)
+    if factor_snapshot:
+        payload["factor_snapshot"] = factor_snapshot
+        payload["factor_snapshot_present"] = True
+    elif factor_snapshot_path:
+        warnings.append("FACTOR_SNAPSHOT_LOAD_FAILED: could not load factor snapshot")
+        payload["factor_snapshot_present"] = False
+    else:
+        payload["factor_snapshot_present"] = False
+
+    kg_context = _load_optional_snapshot(kg_context_path)
+    if kg_context:
+        payload["kg_context_snapshot"] = kg_context
+        payload["kg_context_snapshot_present"] = True
+    elif kg_context_path:
+        warnings.append("KG_CONTEXT_LOAD_FAILED: could not load KG context snapshot")
+        payload["kg_context_snapshot_present"] = False
+    else:
+        payload["kg_context_snapshot_present"] = False
 
     return {
         "payload": payload,

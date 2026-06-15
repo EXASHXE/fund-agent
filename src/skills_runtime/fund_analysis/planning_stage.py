@@ -13,7 +13,8 @@ to consume, not an autonomous planner.
 
 from __future__ import annotations
 
-from typing import Any, Mapping, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 from .context import CoreMetricsBundle, OptionalSummariesBundle, PortfolioInputBundle
 
@@ -37,28 +38,39 @@ def build_analysis_plan(
         warnings = []
     available_inputs = _infer_available_inputs(bundle, metrics, optional)
     evidence_gap = _build_evidence_gap_diagnostics(bundle, metrics, optional)
-    missing_inputs = [
-        key for key, is_missing in evidence_gap.items()
-        if is_missing and key != "details"
-    ]
+    missing_inputs = [key for key, is_missing in evidence_gap.items() if is_missing and key != "details"]
     blockers = _infer_blockers(evidence_gap, diagnostics)
     plan_warnings = _infer_warnings(evidence_gap, diagnostics, warnings)
     _apply_phase3_blockers_and_warnings(
-        evidence_gap, benchmark_divergence, right_side_confirmation,
-        event_hype_failure, cash_deployment, blockers, plan_warnings,
+        evidence_gap,
+        benchmark_divergence,
+        right_side_confirmation,
+        event_hype_failure,
+        cash_deployment,
+        blockers,
+        plan_warnings,
         user_goal,
     )
     decision_support_ready = _compute_decision_support_ready(
-        bundle, metrics, evidence_gap, diagnostics, blockers,
+        bundle,
+        metrics,
+        evidence_gap,
+        diagnostics,
+        blockers,
     )
     recommended_skills = _infer_recommended_skills(
-        evidence_gap, user_goal, decision_support_ready,
+        evidence_gap,
+        user_goal,
+        decision_support_ready,
     )
     recommended_mcp = _infer_recommended_mcp_capabilities(evidence_gap)
     evidence_requirements = _infer_evidence_requirements(evidence_gap)
     next_data_to_fetch = _infer_next_data_to_fetch(
-        evidence_gap, benchmark_divergence, right_side_confirmation,
-        event_hype_failure, cash_deployment,
+        evidence_gap,
+        benchmark_divergence,
+        right_side_confirmation,
+        event_hype_failure,
+        cash_deployment,
     )
 
     return {
@@ -137,83 +149,101 @@ def _build_evidence_gap_diagnostics(
     raw_payload = bundle.payload or {}
     news_keys = ("news_evidence", "recent_news", "news_items")
     sentiment_keys = ("sentiment_evidence", "sentiment_snapshot")
-    missing_recent_news = not any(
-        raw_payload.get(k) for k in news_keys
-    )
-    missing_sentiment = not any(
-        raw_payload.get(k) for k in sentiment_keys
-    )
+    missing_recent_news = not any(raw_payload.get(k) for k in news_keys)
+    missing_sentiment = not any(raw_payload.get(k) for k in sentiment_keys)
     missing_holdings_detail = not bundle.holdings
     missing_user_constraints = not bundle.constraints
     missing_risk_preference = not bundle.risk_profile
 
     details: list[dict[str, Any]] = []
     if missing_holdings:
-        details.append({
-            "code": "missing_holdings",
-            "severity": "blocker",
-            "recommended_next_data": "portfolio positions or holdings list",
-        })
+        details.append(
+            {
+                "code": "missing_holdings",
+                "severity": "blocker",
+                "recommended_next_data": "portfolio positions or holdings list",
+            }
+        )
     if missing_transaction_history:
-        details.append({
-            "code": "missing_transaction_history",
-            "severity": "warning",
-            "recommended_next_data": "transaction ledger with BUY/SELL/DIVIDEND/FEE events",
-        })
+        details.append(
+            {
+                "code": "missing_transaction_history",
+                "severity": "warning",
+                "recommended_next_data": "transaction ledger with BUY/SELL/DIVIDEND/FEE events",
+            }
+        )
     if missing_fund_metadata:
-        details.append({
-            "code": "missing_fund_metadata",
-            "severity": "warning",
-            "recommended_next_data": "fund profile data (type, benchmark, manager, tags)",
-        })
+        details.append(
+            {
+                "code": "missing_fund_metadata",
+                "severity": "warning",
+                "recommended_next_data": "fund profile data (type, benchmark, manager, tags)",
+            }
+        )
     if missing_fee_schedule:
-        details.append({
-            "code": "missing_fee_schedule",
-            "severity": "warning",
-            "recommended_next_data": "fee schedule and redemption rules",
-        })
+        details.append(
+            {
+                "code": "missing_fee_schedule",
+                "severity": "warning",
+                "recommended_next_data": "fee schedule and redemption rules",
+            }
+        )
     if missing_nav_history:
-        details.append({
-            "code": "missing_nav_history",
-            "severity": "warning",
-            "recommended_next_data": "fund NAV history series",
-        })
+        details.append(
+            {
+                "code": "missing_nav_history",
+                "severity": "warning",
+                "recommended_next_data": "fund NAV history series",
+            }
+        )
     if missing_benchmark_data:
-        details.append({
-            "code": "missing_benchmark_data",
-            "severity": "warning",
-            "recommended_next_data": "benchmark price history",
-        })
+        details.append(
+            {
+                "code": "missing_benchmark_data",
+                "severity": "warning",
+                "recommended_next_data": "benchmark price history",
+            }
+        )
     if missing_recent_news:
-        details.append({
-            "code": "missing_recent_news",
-            "severity": "blocker",
-            "recommended_next_data": "recent fund or theme news",
-        })
+        details.append(
+            {
+                "code": "missing_recent_news",
+                "severity": "blocker",
+                "recommended_next_data": "recent fund or theme news",
+            }
+        )
     if missing_sentiment:
-        details.append({
-            "code": "missing_sentiment",
-            "severity": "warning",
-            "recommended_next_data": "sentiment snapshot for held funds or themes",
-        })
+        details.append(
+            {
+                "code": "missing_sentiment",
+                "severity": "warning",
+                "recommended_next_data": "sentiment snapshot for held funds or themes",
+            }
+        )
     if missing_holdings_detail:
-        details.append({
-            "code": "missing_holdings_detail",
-            "severity": "warning",
-            "recommended_next_data": "fund holdings detail (stocks, bonds, weights)",
-        })
+        details.append(
+            {
+                "code": "missing_holdings_detail",
+                "severity": "warning",
+                "recommended_next_data": "fund holdings detail (stocks, bonds, weights)",
+            }
+        )
     if missing_user_constraints:
-        details.append({
-            "code": "missing_user_constraints",
-            "severity": "warning",
-            "recommended_next_data": "user constraints (min trade, forbidden actions, planned holding period)",
-        })
+        details.append(
+            {
+                "code": "missing_user_constraints",
+                "severity": "warning",
+                "recommended_next_data": "user constraints (min trade, forbidden actions, planned holding period)",
+            }
+        )
     if missing_risk_preference:
-        details.append({
-            "code": "missing_risk_preference",
-            "severity": "warning",
-            "recommended_next_data": "user risk preference (risk level, concentration limits, liquidity reserve)",
-        })
+        details.append(
+            {
+                "code": "missing_risk_preference",
+                "severity": "warning",
+                "recommended_next_data": "user risk preference (risk level, concentration limits, liquidity reserve)",
+            }
+        )
 
     return {
         "missing_holdings": missing_holdings,
@@ -318,9 +348,23 @@ def _infer_recommended_skills(
     if evidence_gap.get("missing_sentiment"):
         goal = (user_goal or "").lower()
         action_keywords = (
-            "买", "卖", "加仓", "减仓", "止损", "止盈", "操作",
-            "buy", "sell", "action", "trim", "add", "reduce",
-            "趋势", "时机", "timing", "trend",
+            "买",
+            "卖",
+            "加仓",
+            "减仓",
+            "止损",
+            "止盈",
+            "操作",
+            "buy",
+            "sell",
+            "action",
+            "trim",
+            "add",
+            "reduce",
+            "趋势",
+            "时机",
+            "timing",
+            "trend",
         )
         if any(kw in goal for kw in action_keywords):
             skills.append("sentiment_analysis")
@@ -403,12 +447,13 @@ def _infer_next_data_to_fetch(
     if isinstance(benchmark_divergence, dict):
         for item in benchmark_divergence.get("items", []):
             if isinstance(item, dict) and item.get("evidence_state") == "missing":
-                if "missing_benchmark_history" in item.get("missing_reason", []):
-                    if "recent benchmark movement" not in items:
-                        items.append("recent benchmark movement")
-                if "missing_nav_history" in item.get("missing_reason", []):
-                    if "fund NAV history" not in items:
-                        items.append("fund NAV history")
+                if (
+                    "missing_benchmark_history" in item.get("missing_reason", [])
+                    and "recent benchmark movement" not in items
+                ):
+                    items.append("recent benchmark movement")
+                if "missing_nav_history" in item.get("missing_reason", []) and "fund NAV history" not in items:
+                    items.append("fund NAV history")
 
     if isinstance(right_side_confirmation, dict):
         for item in right_side_confirmation.get("items", []):
@@ -420,12 +465,10 @@ def _infer_next_data_to_fetch(
     if isinstance(event_hype_failure, dict):
         for item in event_hype_failure.get("items", []):
             if isinstance(item, dict) and item.get("evidence_state") in ("missing", "weak"):
-                if "missing_nav_history" in item.get("missing_reason", []):
-                    if "fund NAV history" not in items:
-                        items.append("fund NAV history")
-                if "missing_news_evidence" in item.get("missing_reason", []):
-                    if "recent fund news" not in items:
-                        items.append("recent fund news")
+                if "missing_nav_history" in item.get("missing_reason", []) and "fund NAV history" not in items:
+                    items.append("fund NAV history")
+                if "missing_news_evidence" in item.get("missing_reason", []) and "recent fund news" not in items:
+                    items.append("recent fund news")
 
     if isinstance(cash_deployment, dict):
         for nd in cash_deployment.get("recommended_next_data", []):
@@ -448,9 +491,7 @@ def _compute_decision_support_ready(
         return False
     if evidence_gap.get("missing_recent_news"):
         return False
-    if bool(blockers):
-        return False
-    return True
+    return not bool(blockers)
 
 
 def _apply_phase3_blockers_and_warnings(
@@ -469,19 +510,38 @@ def _apply_phase3_blockers_and_warnings(
             plan_warnings.append("benchmark_severe_underperformance")
         if evidence_gap.get("missing_benchmark_data"):
             for item in benchmark_divergence.get("items", []):
-                if isinstance(item, dict) and item.get("evidence_state") == "missing":
-                    if "missing_benchmark_history" in item.get("missing_reason", []):
-                        if "benchmark_data_missing" not in plan_warnings:
-                            plan_warnings.append("benchmark_data_missing")
+                if (
+                    isinstance(item, dict)
+                    and item.get("evidence_state") == "missing"
+                    and "missing_benchmark_history" in item.get("missing_reason", [])
+                    and "benchmark_data_missing" not in plan_warnings
+                ):
+                    plan_warnings.append("benchmark_data_missing")
 
     if isinstance(right_side_confirmation, dict):
         summary = right_side_confirmation.get("summary", {})
         if summary.get("needs_more_evidence"):
             goal = (user_goal or "").lower()
             action_keywords = (
-                "买", "卖", "加仓", "减仓", "止损", "止盈", "操作",
-                "buy", "sell", "action", "trim", "add", "reduce",
-                "趋势", "时机", "timing", "trend", "右侧", "反弹",
+                "买",
+                "卖",
+                "加仓",
+                "减仓",
+                "止损",
+                "止盈",
+                "操作",
+                "buy",
+                "sell",
+                "action",
+                "trim",
+                "add",
+                "reduce",
+                "趋势",
+                "时机",
+                "timing",
+                "trend",
+                "右侧",
+                "反弹",
             )
             is_action_oriented = any(kw in goal for kw in action_keywords)
             has_applicable_unconfirmed = False
@@ -518,9 +578,7 @@ def _apply_phase3_blockers_and_warnings(
     if isinstance(cash_deployment, dict):
         summary = cash_deployment.get("summary", {})
         readiness = summary.get("deployment_readiness", "unknown")
-        if readiness in ("not_ready", "unknown"):
-            if "cash_deployment_not_ready" not in plan_warnings:
-                plan_warnings.append("cash_deployment_not_ready")
-        if readiness == "not_ready":
-            if "cash_deployment_not_ready" not in blockers:
-                blockers.append("cash_deployment_not_ready")
+        if readiness in ("not_ready", "unknown") and "cash_deployment_not_ready" not in plan_warnings:
+            plan_warnings.append("cash_deployment_not_ready")
+        if readiness == "not_ready" and "cash_deployment_not_ready" not in blockers:
+            blockers.append("cash_deployment_not_ready")

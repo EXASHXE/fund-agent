@@ -10,8 +10,7 @@ from typing import Any
 
 from src.schemas.evidence_graph import EvidenceGraph
 
-from .action_policy import ACTIVE_ACTIONS, PASSIVE_ACTIONS
-from .graph_stage import _resolve_trade_evidence_anchors
+from .action_policy import ACTIVE_ACTIONS
 
 
 def build_evidence_anchor_diagnostics(

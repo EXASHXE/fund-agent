@@ -7,6 +7,7 @@ host-supplied payload fields and existing computed metrics.
 
 from __future__ import annotations
 
+import contextlib
 from typing import Any
 
 from .context import CoreMetricsBundle, PortfolioInputBundle
@@ -328,7 +329,7 @@ def compute_overlap_diagnostics(
     if not overlapping_holdings and not theme_output and not region_output:
         return None
 
-    highest_overlap = (
+    (
         theme_output[0]["theme"] if theme_output
         else overlapping_holdings[0]["holding_name"] if overlapping_holdings
         else ""
@@ -465,7 +466,7 @@ def compute_dca_drawdown_diagnostics(
     reviewed_count = 0
     funds_with_drawdown = 0
 
-    for plan_id, plan in sorted(dca_plans.items()):
+    for _plan_id, plan in sorted(dca_plans.items()):
         if not isinstance(plan, dict):
             continue
         fund_code = str(plan.get("fund_code", ""))
@@ -475,7 +476,7 @@ def compute_dca_drawdown_diagnostics(
         reviewed_count += 1
         amount = float(plan.get("monthly_amount", plan.get("amount", 0)) or 0)
         cadence = str(plan.get("schedule", plan.get("cadence", "")))
-        nav_points = nav_history.get(fund_code, [])
+        nav_history.get(fund_code, [])
 
         recent_return = None
         max_drawdown = None
@@ -553,16 +554,12 @@ def compute_cash_budget_diagnostics(
     cash_ratio = round(cash_available / total_value, 4) if total_value > 0 else 0.0
 
     liquidity_reserve_pct = None
-    try:
+    with contextlib.suppress(TypeError, ValueError):
         liquidity_reserve_pct = float(risk_profile.get("liquidity_reserve_pct", 0.1))
-    except (TypeError, ValueError):
-        pass
 
     short_term_pct = None
-    try:
+    with contextlib.suppress(TypeError, ValueError):
         short_term_pct = float(risk_profile.get("short_term_trade_budget_pct", 0.1))
-    except (TypeError, ValueError):
-        pass
 
     errors: list[str] = []
 

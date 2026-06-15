@@ -14,7 +14,14 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.schemas.skill import SkillError, SkillInput, SkillOutput, make_skill_error_dict, normalize_skill_error, normalize_skill_errors
+from src.schemas.skill import (
+    SkillError,
+    SkillInput,
+    SkillOutput,
+    make_skill_error_dict,
+    normalize_skill_error,
+    normalize_skill_errors,
+)
 from src.skills_runtime.common.strings import unique_strings
 
 

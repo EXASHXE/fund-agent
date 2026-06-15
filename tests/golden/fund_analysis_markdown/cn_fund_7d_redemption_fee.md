@@ -51,6 +51,12 @@ Limitations:
 Limitations:
 - Factor exposure data is missing; no style exposure is fabricated.
 
+## Factor analysis [MISSING]
+- No section content available from provided artifacts.
+
+Limitations:
+- Factor snapshot not provided; no factor analysis is fabricated.
+
 ## Fees and redemption [OK]
 - Fee schedule is available for 3 fund(s).
 - Redemption rules are available for 3 fund(s).
@@ -91,6 +97,12 @@ Limitations:
 
 Limitations:
 - Event hype diagnostics are missing or no host event metadata was provided.
+
+## News and events [MISSING]
+- No section content available from provided artifacts.
+
+Limitations:
+- News snapshot not provided; no news or events are fabricated.
 
 ## Cash deployment [OK]
 - Cash-like weight 6.67%; deployment readiness ready.
@@ -141,6 +153,7 @@ Limitations:
 - Completeness grade B with score 0.767.
 - Missing data groups: Benchmark History, Peer Group, Factor Exposures, Manager Profile, Fund Flow, Macro Events, User Investment Plan.
 - Optional gaps: Benchmark History, Peer Group, Factor Exposures, Manager Profile, Fund Flow, Macro Events, User Investment Plan.
+- Snapshot availability: provider_snapshot=absent, news_snapshot=absent, factor_snapshot=absent, kg_context_snapshot=absent.
 
 Limitations:
 - Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data
@@ -154,7 +167,9 @@ Limitations:
 - Benchmark and peer: Benchmark data is missing; no benchmark comparison is fabricated.
 - Benchmark and peer: Peer group data is missing; no peer ranking is fabricated.
 - Factor and style: Factor exposure data is missing; no style exposure is fabricated.
+- Factor analysis: Factor snapshot not provided; no factor analysis is fabricated.
 - Manager and fund profile: Manager tenure and manager-change analysis are unavailable.
 - Event hype failure: Event hype diagnostics are missing or no host event metadata was provided.
+- News and events: News snapshot not provided; no news or events are fabricated.
 - Uncertainty note: Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data
 - Research query plan: Research planning was not requested by the host.

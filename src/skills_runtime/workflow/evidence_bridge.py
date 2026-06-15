@@ -8,17 +8,16 @@ Timestamps are derived from host payload, not wall-clock time.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any
 import hashlib
 import json
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
+from typing import Any
 
 from src.schemas.evidence import EvidenceItem
 from src.schemas.evidence_graph import EvidenceGraph
 
-
-FROZEN_TIMESTAMP = datetime(1970, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+FROZEN_TIMESTAMP = datetime(1970, 1, 1, 0, 0, 0, tzinfo=UTC)
 
 FORBIDDEN_EXECUTION_FIELDS = frozenset({
     "broker_order_id",

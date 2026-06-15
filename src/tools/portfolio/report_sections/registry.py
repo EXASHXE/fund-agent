@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable
-
+from typing import Any
 
 SECTION_ORDER: tuple[tuple[str, str], ...] = (
     ("executive_summary", "Executive summary"),
@@ -17,6 +17,7 @@ SECTION_ORDER: tuple[tuple[str, str], ...] = (
     ("benchmark_and_peer", "Benchmark and peer"),
     ("benchmark_divergence", "Benchmark divergence"),
     ("factor_and_style", "Factor and style"),
+    ("factor_analysis", "Factor analysis"),
     ("fees_and_redemption", "Fees and redemption"),
     ("manager_and_fund_profile", "Manager and fund profile"),
     ("dca_and_trade_budget", "DCA and trade budget"),
@@ -24,6 +25,7 @@ SECTION_ORDER: tuple[tuple[str, str], ...] = (
     ("profit_protection", "Profit protection"),
     ("right_side_confirmation", "Right-side confirmation"),
     ("event_hype_failure", "Event hype failure"),
+    ("news_and_events", "News and events"),
     ("cash_deployment", "Cash deployment"),
     ("evidence_status", "Evidence status"),
     ("action_watchlist", "Action watchlist"),
@@ -47,6 +49,7 @@ ZH_CN_SECTION_TITLES: dict[str, str] = {
     "benchmark_and_peer": "基准与同类",
     "benchmark_divergence": "基准偏离",
     "factor_and_style": "风格因子",
+    "factor_analysis": "因子分析",
     "fees_and_redemption": "赎回费与持有期",
     "manager_and_fund_profile": "基金资料与经理",
     "dca_and_trade_budget": "定投与交易预算",
@@ -54,6 +57,7 @@ ZH_CN_SECTION_TITLES: dict[str, str] = {
     "profit_protection": "盈利保护",
     "right_side_confirmation": "右侧确认",
     "event_hype_failure": "事件催化检验",
+    "news_and_events": "新闻与事件",
     "cash_deployment": "现金与低风险仓位",
     "evidence_status": "证据状态",
     "action_watchlist": "操作观察清单",
@@ -72,6 +76,7 @@ VALID_STATUSES = {"OK", "PARTIAL", "MISSING"}
 @dataclass(frozen=True)
 class SectionBuilder:
     """Registry entry for a report section builder."""
+
     section_id: str
     title_en: str
     title_zh: str

@@ -29,8 +29,9 @@ class NewsResearchSkill(MCPAdapterSkill):
         )
 
     def _build_single_evidence(self, item, capability, entities, skill_input):
-        from src.tools.evidence.builders import build_soft_evidence_from_mcp_result
         from datetime import datetime
+
+        from src.tools.evidence.builders import build_soft_evidence_from_mcp_result
 
         return build_soft_evidence_from_mcp_result(
             source_type=item.get("source_type") or capability,

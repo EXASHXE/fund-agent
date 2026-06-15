@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 REQUIRED_ZH_CN_SECTIONS = [
     ("direct_answer", "直接回答"),
     ("portfolio_overview", "组合概览"),

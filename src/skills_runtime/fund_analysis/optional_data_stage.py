@@ -33,7 +33,9 @@ def build_optional_summaries(
     query_plan = None
     if bundle.research_planning:
         try:
-            themes = list(metrics.exposures.get("theme_exposure", {}).keys()) if isinstance(metrics.exposures, dict) else []
+            themes = (
+                list(metrics.exposures.get("theme_exposure", {}).keys()) if isinstance(metrics.exposures, dict) else []
+            )
             industries = list(metrics.industry_exposure.keys()) if isinstance(metrics.industry_exposure, dict) else []
             query_plan = build_research_query_plan(
                 portfolio_positions=bundle.positions,
@@ -47,27 +49,41 @@ def build_optional_summaries(
             pass
 
     # Optional data pass-through summaries
-    benchmark_summary = summarize_benchmark_gap(
-        metrics.fund_metrics,
-        bundle.benchmarks,
-        bundle.benchmark_history,
-    ) if (bundle.benchmarks or bundle.benchmark_history) else None
+    benchmark_summary = (
+        summarize_benchmark_gap(
+            metrics.fund_metrics,
+            bundle.benchmarks,
+            bundle.benchmark_history,
+        )
+        if (bundle.benchmarks or bundle.benchmark_history)
+        else None
+    )
     peer_summary = summarize_peer_data(bundle.peer_group) if bundle.peer_group else None
-    fee_summary = summarize_fee_schedule(
-        bundle.fee_schedules,
-        bundle.fund_codes,
-    ) if bundle.fee_schedules else None
-    redemption_summary = summarize_redemption_constraints(
-        bundle.redemption_rules,
-        bundle.fund_codes,
-    ) if bundle.redemption_rules else None
-    factor_summary = summarize_factor_exposures(
-        bundle.factor_exposures
-    ) if bundle.factor_exposures else None
-    manager_summary = summarize_manager_profiles(
-        bundle.manager_profiles,
-        bundle.fund_codes,
-    ) if bundle.manager_profiles else None
+    fee_summary = (
+        summarize_fee_schedule(
+            bundle.fee_schedules,
+            bundle.fund_codes,
+        )
+        if bundle.fee_schedules
+        else None
+    )
+    redemption_summary = (
+        summarize_redemption_constraints(
+            bundle.redemption_rules,
+            bundle.fund_codes,
+        )
+        if bundle.redemption_rules
+        else None
+    )
+    factor_summary = summarize_factor_exposures(bundle.factor_exposures) if bundle.factor_exposures else None
+    manager_summary = (
+        summarize_manager_profiles(
+            bundle.manager_profiles,
+            bundle.fund_codes,
+        )
+        if bundle.manager_profiles
+        else None
+    )
 
     return OptionalSummariesBundle(
         benchmark_summary=benchmark_summary,
@@ -91,19 +107,13 @@ def summarize_benchmark_gap(
     produces a simple performance comparison; otherwise pass-through only.
     """
     result: dict[str, Any] = {
-        "benchmarks_available": sorted(str(key) for key in benchmarks.keys()) if benchmarks else [],
+        "benchmarks_available": sorted(str(key) for key in benchmarks) if benchmarks else [],
     }
     if benchmarks:
-        result["benchmarks"] = {
-            str(key): benchmarks[key]
-            for key in sorted(benchmarks, key=str)
-        }
+        result["benchmarks"] = {str(key): benchmarks[key] for key in sorted(benchmarks, key=str)}
     if benchmark_history:
-        result["benchmark_history"] = {
-            str(key): benchmark_history[key]
-            for key in sorted(benchmark_history, key=str)
-        }
-        result["benchmark_history_keys"] = sorted(str(key) for key in benchmark_history.keys())
+        result["benchmark_history"] = {str(key): benchmark_history[key] for key in sorted(benchmark_history, key=str)}
+        result["benchmark_history_keys"] = sorted(str(key) for key in benchmark_history)
         # Attempt simple host-driven comparison if data shape allows
         comparison = derive_benchmark_comparison(benchmark_history, fund_metrics)
         if comparison:
@@ -160,11 +170,8 @@ def summarize_peer_data(peer_group: dict[str, Any]) -> dict[str, Any] | None:
     if not peer_group:
         return None
     result: dict[str, Any] = {
-        "funds_with_peers": sorted(str(key) for key in peer_group.keys()),
-        "peer_data": {
-            str(key): peer_group[key]
-            for key in sorted(peer_group, key=str)
-        },
+        "funds_with_peers": sorted(str(key) for key in peer_group),
+        "peer_data": {str(key): peer_group[key] for key in sorted(peer_group, key=str)},
     }
     # Extract rankings where host-provided
     rankings: list[dict[str, Any]] = []
@@ -220,10 +227,9 @@ def summarize_fee_schedule(
                     fee_totals[fc] = float(extracted["total_expense_ratio"])
                 else:
                     fee_totals[fc] = sum(
-                        float(v) for key, v in extracted.items()
-                        if key != "redemption_fee"
-                        and isinstance(v, (int, float))
-                        and v > 0
+                        float(v)
+                        for key, v in extracted.items()
+                        if key != "redemption_fee" and isinstance(v, (int, float)) and v > 0
                     )
     if not fees_found:
         return None
@@ -232,10 +238,7 @@ def summarize_fee_schedule(
         "fee_schedules": fees_found,
     }
     # Flag high-fee funds
-    high_fee_funds = [
-        fc for fc, total in fee_totals.items()
-        if isinstance(total, (int, float)) and total > 0.025
-    ]
+    high_fee_funds = [fc for fc, total in fee_totals.items() if isinstance(total, (int, float)) and total > 0.025]
     if high_fee_funds:
         result["high_fee_funds"] = high_fee_funds
         result["fee_warning"] = (
@@ -262,9 +265,15 @@ def summarize_redemption_constraints(
         rules = redemption_rules.get(fc)
         if rules and isinstance(rules, dict):
             summary: dict[str, Any] = {}
-            for key in ("lockup_days", "lockup_months", "holding_period_days",
-                        "redemption_fee_pct", "redemption_fee_schedule",
-                        "liquidity_note", "suspended"):
+            for key in (
+                "lockup_days",
+                "lockup_months",
+                "holding_period_days",
+                "redemption_fee_pct",
+                "redemption_fee_schedule",
+                "liquidity_note",
+                "suspended",
+            ):
                 val = rules.get(key)
                 if val is not None:
                     summary[key] = val
@@ -289,14 +298,12 @@ def summarize_redemption_constraints(
     if lockup_funds:
         result["lockup_funds"] = lockup_funds
         warnings.append(
-            f"Fund(s) {', '.join(lockup_funds)} have lockup or suspension "
-            f"constraints — verify redemption eligibility"
+            f"Fund(s) {', '.join(lockup_funds)} have lockup or suspension constraints — verify redemption eligibility"
         )
     if high_fee_funds:
         result["high_redemption_fee_funds"] = high_fee_funds
         warnings.append(
-            f"Fund(s) {', '.join(high_fee_funds)} charge >1% redemption fees "
-            f"— early redemption may be costly"
+            f"Fund(s) {', '.join(high_fee_funds)} charge >1% redemption fees — early redemption may be costly"
         )
     if warnings:
         result["warnings"] = warnings
@@ -313,11 +320,8 @@ def summarize_factor_exposures(
     if not factor_exposures:
         return None
     result: dict[str, Any] = {
-        "factors": sorted(str(key) for key in factor_exposures.keys()),
-        "factor_exposures": {
-            str(key): factor_exposures[key]
-            for key in sorted(factor_exposures, key=str)
-        },
+        "factors": sorted(str(key) for key in factor_exposures),
+        "factor_exposures": {str(key): factor_exposures[key] for key in sorted(factor_exposures, key=str)},
     }
     # Detect concentration in any single factor
     concentration_warnings: list[str] = []
@@ -355,8 +359,15 @@ def summarize_manager_profiles(
         profile = manager_profiles.get(fc)
         if profile and isinstance(profile, dict):
             summary: dict[str, Any] = {}
-            for key in ("manager_name", "tenure", "tenure_years", "start_date",
-                        "manager_change", "manager_change_risk", "team_size"):
+            for key in (
+                "manager_name",
+                "tenure",
+                "tenure_years",
+                "start_date",
+                "manager_change",
+                "manager_change_risk",
+                "team_size",
+            ):
                 val = profile.get(key)
                 if val is not None:
                     summary[key] = val
@@ -367,14 +378,21 @@ def summarize_manager_profiles(
                 if risk and str(risk).lower() in ("high", "true", "1", "yes", "elevated"):
                     change_risk_funds.append(fc)
                 change = summary.get("manager_change")
-                if change and str(change).lower() in ("true", "1", "yes", "changed", "recent"):
-                    if fc not in change_risk_funds:
-                        change_risk_funds.append(fc)
+                if (
+                    change
+                    and str(change).lower() in ("true", "1", "yes", "changed", "recent")
+                    and fc not in change_risk_funds
+                ):
+                    change_risk_funds.append(fc)
                 # Flag short tenure
                 tenure_yrs = summary.get("tenure_years", summary.get("tenure"))
-                if tenure_yrs and isinstance(tenure_yrs, (int, float)) and float(tenure_yrs) < 2.0:
-                    if fc not in change_risk_funds:
-                        change_risk_funds.append(fc)
+                if (
+                    tenure_yrs
+                    and isinstance(tenure_yrs, (int, float))
+                    and float(tenure_yrs) < 2.0
+                    and fc not in change_risk_funds
+                ):
+                    change_risk_funds.append(fc)
     if not profiles_found:
         return None
     result: dict[str, Any] = {
@@ -384,8 +402,7 @@ def summarize_manager_profiles(
     if change_risk_funds:
         result["manager_change_risk_funds"] = change_risk_funds
         result["manager_risk_warning"] = (
-            f"Fund(s) {', '.join(change_risk_funds)} have elevated "
-            f"manager-change risk or short manager tenure"
+            f"Fund(s) {', '.join(change_risk_funds)} have elevated manager-change risk or short manager tenure"
         )
     return result
 
@@ -406,25 +423,18 @@ def add_missing_optional_warnings(
     or only partially available for the requested fund codes."""
     # Benchmark: host provided benchmarks/history but some funds are not covered
     if benchmarks:
-        benchmark_codes = {str(code) for code in benchmarks.keys()}
+        benchmark_codes = {str(code) for code in benchmarks}
         fund_code_set = {str(code) for code in fund_codes}
-        if benchmark_codes & fund_code_set:
-            missing_bm = [fc for fc in fund_codes if fc not in benchmark_codes]
-        else:
-            missing_bm = []
+        missing_bm = [fc for fc in fund_codes if fc not in benchmark_codes] if benchmark_codes & fund_code_set else []
         if missing_bm:
             warnings.append(
-                f"Benchmark data missing for fund(s): {', '.join(missing_bm)}; "
-                f"benchmark comparison incomplete"
+                f"Benchmark data missing for fund(s): {', '.join(missing_bm)}; benchmark comparison incomplete"
             )
 
     if peer_group:
         missing_peer = [fc for fc in fund_codes if fc not in peer_group]
         if missing_peer:
-            warnings.append(
-                f"Peer group data missing for fund(s): {', '.join(missing_peer)}; "
-                f"peer comparison partial"
-            )
+            warnings.append(f"Peer group data missing for fund(s): {', '.join(missing_peer)}; peer comparison partial")
 
     if factor_exposures:
         covered_codes: set[str] = set()
@@ -433,27 +443,19 @@ def add_missing_optional_warnings(
                 covered_codes.update(exposure_data.keys())
         missing_factor = [fc for fc in fund_codes if fc not in covered_codes]
         if missing_factor and covered_codes:
-            warnings.append(
-                f"Factor exposure data missing for fund(s): {', '.join(missing_factor)}"
-            )
+            warnings.append(f"Factor exposure data missing for fund(s): {', '.join(missing_factor)}")
 
     if manager_profiles:
         missing_mgr = [fc for fc in fund_codes if fc not in manager_profiles]
         if missing_mgr:
-            warnings.append(
-                f"Manager profile missing for fund(s): {', '.join(missing_mgr)}"
-            )
+            warnings.append(f"Manager profile missing for fund(s): {', '.join(missing_mgr)}")
 
     if fee_schedules:
         missing_fee = [fc for fc in fund_codes if fc not in fee_schedules]
         if missing_fee:
-            warnings.append(
-                f"Fee schedule missing for fund(s): {', '.join(missing_fee)}"
-            )
+            warnings.append(f"Fee schedule missing for fund(s): {', '.join(missing_fee)}")
 
     if redemption_rules:
         missing_rule = [fc for fc in fund_codes if fc not in redemption_rules]
         if missing_rule:
-            warnings.append(
-                f"Redemption rules missing for fund(s): {', '.join(missing_rule)}"
-            )
+            warnings.append(f"Redemption rules missing for fund(s): {', '.join(missing_rule)}")

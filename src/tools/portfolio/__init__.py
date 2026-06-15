@@ -17,14 +17,14 @@ from src.tools.portfolio.analysis import (
     summarize_exposure,
 )
 from src.tools.portfolio.builder import build_portfolio_risk_matrix, portfolio_summary
+from src.tools.portfolio.report_composer import (
+    compose_personal_fund_report,
+    render_report_markdown,
+)
 from src.tools.portfolio.report_quality import (
     build_report_limitations,
     calculate_data_completeness,
     summarize_analysis_coverage,
-)
-from src.tools.portfolio.report_composer import (
-    compose_personal_fund_report,
-    render_report_markdown,
 )
 from src.tools.portfolio.transaction import (
     calculate_cashflow_summary,

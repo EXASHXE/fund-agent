@@ -10,7 +10,6 @@ No LLM. No network. No randomness.
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import Any
 
 
 class AdvisoryIntent(StrEnum):

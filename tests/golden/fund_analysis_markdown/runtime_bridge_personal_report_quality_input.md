@@ -48,6 +48,12 @@ Limitations:
 - Host-provided factor dimensions: momentum, quality, size, value.
 - Fund 110011 has high size exposure (0.60)
 
+## Factor analysis [MISSING]
+- No section content available from provided artifacts.
+
+Limitations:
+- Factor snapshot not provided; no factor analysis is fabricated.
+
 ## Fees and redemption [OK]
 - Fee schedule is available for 3 fund(s).
 - Redemption rules are available for 3 fund(s).
@@ -77,6 +83,12 @@ Limitations:
 
 Limitations:
 - Event hype diagnostics are missing or no host event metadata was provided.
+
+## News and events [MISSING]
+- No section content available from provided artifacts.
+
+Limitations:
+- News snapshot not provided; no news or events are fabricated.
 
 ## Cash deployment [OK]
 - Cash-like weight 10.00%; deployment readiness ready.
@@ -119,6 +131,7 @@ Limitations:
 - Completeness grade A with score 0.967.
 - Missing data groups: Fund Flow.
 - Optional gaps: Fund Flow.
+- Snapshot availability: provider_snapshot=absent, news_snapshot=absent, factor_snapshot=absent, kg_context_snapshot=absent.
 
 ## Evidence appendix [OK]
 - FundAnalysisSkill emits HardEvidence separately in SkillOutput.evidence_items.
@@ -126,5 +139,7 @@ Limitations:
 
 ## Limitations
 
+- Factor analysis: Factor snapshot not provided; no factor analysis is fabricated.
 - DCA and trade budget: DCA plan review is absent; host did not provide DCA inputs.
 - Event hype failure: Event hype diagnostics are missing or no host event metadata was provided.
+- News and events: News snapshot not provided; no news or events are fabricated.
