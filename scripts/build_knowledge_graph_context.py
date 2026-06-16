@@ -516,6 +516,7 @@ def build_kg_context(
     manual_transactions: list[dict] | None = None,
     provider_snapshot: dict | None = None,
     fund_profile_snapshot: dict | None = None,
+    confirmed_portfolio: dict | None = None,
 ) -> dict:
     """Build the knowledge graph context snapshot dict."""
     now = datetime.now(UTC).isoformat()
@@ -523,6 +524,14 @@ def build_kg_context(
     holdings = portfolio_input.get("holdings", portfolio_input.get("positions", []))
     if not isinstance(holdings, list):
         holdings = []
+
+    # Build confirmation lookup from confirmed_portfolio
+    confirmation_by_fund: dict[str, dict] = {}
+    if confirmed_portfolio and isinstance(confirmed_portfolio, dict):
+        for pos in confirmed_portfolio.get("positions", []):
+            fc = pos.get("fund_code", "")
+            if fc:
+                confirmation_by_fund[fc] = pos
 
     # Extract provider data
     fund_profiles = _extract_fund_profiles(provider_snapshot)
@@ -551,6 +560,7 @@ def build_kg_context(
         "fund_profiles_missing": len(fund_profiles) == 0,
         "fund_holdings_missing": len(fund_holdings) == 0,
         "benchmark_missing": [],
+        "portfolio_reconstructed": confirmed_portfolio is not None,
     }
 
     seen_entity_ids: set[str] = set()
@@ -790,6 +800,15 @@ def build_kg_context(
 
         fund_entities.append(fund_ent)
 
+        # Enrich with confirmation data from reconstructed portfolio
+        if fund_code in confirmation_by_fund:
+            cp = confirmation_by_fund[fund_code]
+            fund_ent["confirmation_sources"] = cp.get("confirmation_sources", [])
+            fund_ent["confidence_level"] = cp.get("confidence", "pending")
+            fund_ent["pending_amount"] = cp.get("pending_amount")
+            fund_ent["has_manual_review"] = cp.get("has_manual_review", False)
+            fund_ent["holding_source"] = cp.get("holding_source", "unknown")
+
         # Missing data tracking
         if not fund_code:
             missing_data["fund_code_missing"].append(fund_name or f"holding_{idx}")
@@ -967,8 +986,10 @@ def build_kg_context(
             "fund_holdings_available": len(fund_holdings) > 0,
             "benchmark_available": any(benchmark_map.values()),
             "data_quality_flags": data_quality_flags,
+            "portfolio_reconstructed": confirmed_portfolio is not None,
         },
         "fund_profile_snapshot_ref": fund_profile_snapshot is not None,
+        "confirmed_portfolio_ref": confirmed_portfolio is not None,
     }
 
 
@@ -1029,6 +1050,12 @@ def main(argv: list[str] | None = None) -> int:
         help="Path to fund_profile_snapshot.private.json (optional)",
     )
     parser.add_argument(
+        "--confirmed-portfolio",
+        type=Path,
+        default=None,
+        help="Path to confirmed_portfolio.private.json (optional, for reconstruction enrichment)",
+    )
+    parser.add_argument(
         "--output",
         required=True,
         type=Path,
@@ -1047,6 +1074,7 @@ def main(argv: list[str] | None = None) -> int:
     manual_transactions = _read_csv(args.manual_transactions) if args.manual_transactions else None
     provider_snapshot = _read_json(args.provider_snapshot) if args.provider_snapshot else None
     fund_profile_snapshot = _read_json(args.fund_profile_snapshot) if args.fund_profile_snapshot else None
+    confirmed_portfolio = _read_json(args.confirmed_portfolio) if args.confirmed_portfolio else None
 
     # Build snapshot
     result = build_kg_context(
@@ -1054,6 +1082,7 @@ def main(argv: list[str] | None = None) -> int:
         manual_transactions=manual_transactions,
         provider_snapshot=provider_snapshot,
         fund_profile_snapshot=fund_profile_snapshot,
+        confirmed_portfolio=confirmed_portfolio,
     )
 
     # Ensure output directory exists

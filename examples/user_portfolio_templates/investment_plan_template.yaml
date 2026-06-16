@@ -1,0 +1,135 @@
+schema_version: investment_plan.v1
+
+plans:
+  # Daily DCA example
+  - plan_id: daily_dca_017436
+    fund_code: "017436"
+    fund_name: "合成科技混合A"
+    schedule:
+      frequency: daily
+      start_date: "2025-05-01"
+    amount: 100
+    execution_policy:
+      assume_auto_execution: true
+      confirmation_rules:
+        settlement_days: 1
+        require_nav_available: true
+        require_no_contradictory_evidence: true
+        expected_confirmation_date_offset_days: 3
+      skip_non_trading_days: true
+      next_trading_day_on_skip: true
+    fee_policy:
+      subscription_fee_rate: 0.0015
+      fee_source: plan_declared
+      fee_discount_rate: 0.1
+    notes: "Daily DCA into tech fund"
+
+  # Daily DCA example 2
+  - plan_id: daily_dca_008253
+    fund_code: "008253"
+    fund_name: "合成医药混合C"
+    schedule:
+      frequency: daily
+      start_date: "2025-05-01"
+    amount: 150
+    execution_policy:
+      assume_auto_execution: true
+      confirmation_rules:
+        settlement_days: 1
+        require_nav_available: true
+        require_no_contradictory_evidence: true
+        expected_confirmation_date_offset_days: 3
+      skip_non_trading_days: true
+      next_trading_day_on_skip: true
+    fee_policy:
+      subscription_fee_rate: null
+      fee_source: unknown
+    notes: "Daily DCA into pharma fund"
+
+  # Weekly Monday example
+  - plan_id: weekly_mon_378006
+    fund_code: "378006"
+    fund_name: "合成QDII指数A"
+    schedule:
+      frequency: weekly
+      day_of_week: monday
+      start_date: "2025-05-01"
+    amount: 800
+    execution_policy:
+      assume_auto_execution: true
+      confirmation_rules:
+        settlement_days: 1
+        qdii_lag_days: 1
+        require_nav_available: true
+        require_no_contradictory_evidence: true
+        expected_confirmation_date_offset_days: 5
+      skip_non_trading_days: true
+      next_trading_day_on_skip: true
+    fee_policy:
+      subscription_fee_rate: 0.0012
+      fee_source: plan_declared
+    is_qdii: true
+    notes: "Weekly Monday QDII buy"
+
+  # Biweekly Monday example
+  - plan_id: biweekly_mon_001198
+    fund_code: "001198"
+    fund_name: "合成消费混合A"
+    schedule:
+      frequency: biweekly
+      day_of_week: monday
+      start_date: "2025-05-05"
+    amount: 1150
+    execution_policy:
+      assume_auto_execution: true
+      confirmation_rules:
+        settlement_days: 1
+        require_nav_available: true
+        require_no_contradictory_evidence: true
+        expected_confirmation_date_offset_days: 3
+      skip_non_trading_days: true
+      next_trading_day_on_skip: true
+    fee_policy:
+      subscription_fee_rate: 0.0015
+      fee_source: plan_declared
+      fee_discount_rate: 0.1
+    notes: "Biweekly Monday consumer fund buy"
+
+  # Monthly example
+  - plan_id: monthly_000001
+    fund_code: "000001"
+    fund_name: "合成成长混合"
+    schedule:
+      frequency: monthly
+      day_of_month: 15
+      start_date: "2025-05-01"
+    amount: 2000
+    execution_policy:
+      assume_auto_execution: false
+      confirmation_rules:
+        settlement_days: 1
+        require_nav_available: true
+      skip_non_trading_days: true
+      next_trading_day_on_skip: true
+    fee_policy:
+      subscription_fee_rate: 0.0015
+      fee_source: plan_declared
+    notes: "Monthly buy - NOT auto-executed, requires evidence confirmation"
+
+  # One-off example
+  - plan_id: oneoff_519001
+    fund_code: "519001"
+    fund_name: "合成价值混合A"
+    schedule:
+      frequency: one_off
+      specific_date: "2025-06-10"
+    amount: 5000
+    execution_policy:
+      assume_auto_execution: true
+      confirmation_rules:
+        settlement_days: 1
+        require_nav_available: true
+    fee_policy:
+      subscription_fee_rate: 0.0015
+      fee_source: assumed_default
+    notes: "One-off purchase"

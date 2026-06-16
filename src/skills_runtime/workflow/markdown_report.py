@@ -10,6 +10,7 @@ from typing import Any
 
 REQUIRED_ZH_CN_SECTIONS = [
     ("direct_answer", "直接回答"),
+    ("reconstruction_summary", "组合重建摘要"),
     ("portfolio_overview", "组合概览"),
     ("current_risks", "当前主要风险"),
     ("position_diagnostics", "持仓诊断"),
@@ -121,6 +122,74 @@ def _render_direct_answer(
     elif analysis_mode == "soft_action_advice":
         lines.append("")
         lines.append("> 本报告包含操作建议，但不包含正式交易决策。")
+    return lines
+
+
+def _render_reconstruction_summary(
+    section_data: dict[str, Any] | None,
+    analysis_mode: str,
+    decision: dict[str, Any] | None,
+    ledger: dict[str, Any] | None,
+) -> list[str]:
+    """Render reconstruction summary section showing evidence/rule-confirmed/pending/projected."""
+    lines: list[str] = []
+
+    # Check if report has reconstruction metadata
+    reconstruction = None
+    if section_data and isinstance(section_data, dict):
+        reconstruction = section_data.get("reconstruction")
+
+    if not reconstruction:
+        lines.append("- 组合数据来源：用户提供持仓快照")
+        return lines
+
+    # Reconstruction summary
+    summary = reconstruction.get("summary", {})
+    lines.append("- 重建方式：交易流水推导")
+    lines.append(f"- 证据确认持仓：{summary.get('evidence_confirmed_count', 0)} 个")
+    lines.append(f"- 规则确认持仓：{summary.get('rule_confirmed_count', 0)} 个")
+
+    if summary.get("has_pending"):
+        lines.append("- 存在待确认交易")
+
+    if summary.get("has_manual_review"):
+        lines.append("- 存在需要人工审核的交易")
+
+    # Per-position details
+    positions = reconstruction.get("positions", [])
+    if positions:
+        lines.append("")
+        lines.append("| 基金 | 确认来源 | 置信度 | NAV日期 | 待确认金额 |")
+        lines.append("|------|---------|--------|---------|-----------|")
+        for pos in positions:
+            fc = pos.get("fund_code", "")
+            sources = ", ".join(pos.get("confirmation_sources", []))
+            conf = pos.get("confidence", "unknown")
+            nav_date = pos.get("latest_nav_date", "缺失")
+            pending = pos.get("pending_amount")
+            pending_str = f"{pending:.2f}" if pending else "-"
+            lines.append(f"| {fc} | {sources} | {conf} | {nav_date} | {pending_str} |")
+
+    # Fee assumptions
+    fee_notes = reconstruction.get("fee_notes", [])
+    if fee_notes:
+        lines.append("")
+        lines.append("**费率假设：**")
+        for note in fee_notes:
+            lines.append(f"- {note}")
+
+    # Provider coverage
+    provider_coverage = reconstruction.get("provider_coverage", {})
+    if provider_coverage:
+        lines.append("")
+        lines.append("**数据覆盖：**")
+        nav_avail = provider_coverage.get("nav_available", 0)
+        nav_total = provider_coverage.get("nav_total", 0)
+        profile_avail = provider_coverage.get("profile_available", 0)
+        profile_total = provider_coverage.get("profile_total", 0)
+        lines.append(f"- NAV数据：{nav_avail}/{nav_total} 个基金")
+        lines.append(f"- 基金档案：{profile_avail}/{profile_total} 个基金")
+
     return lines
 
 
@@ -335,6 +404,7 @@ def _render_generic_section(
 
 _SECTION_RENDERERS: dict[str, Any] = {
     "direct_answer": _render_direct_answer,
+    "reconstruction_summary": _render_reconstruction_summary,
     "portfolio_overview": _render_portfolio_overview,
     "current_risks": _render_current_risks,
     "position_diagnostics": _render_position_diagnostics,
