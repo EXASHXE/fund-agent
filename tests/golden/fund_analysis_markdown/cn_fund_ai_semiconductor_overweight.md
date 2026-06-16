@@ -35,16 +35,12 @@
 - NAV-derived metrics are available for 4 fund(s).
 - Highest total return in provided NAV history is SYNAI001 at 40.00%.
 
-## Benchmark and peer [MISSING]
-- No section content available from provided artifacts.
-
-Limitations:
-- Benchmark data is missing; no benchmark comparison is fabricated.
-- Peer group data is missing; no peer ranking is fabricated.
-
-## Benchmark divergence [OK]
+## Benchmark divergence [PARTIAL]
 - Benchmark divergence reviewed 4 fund(s).
 - No severe benchmark divergence was detected from provided data.
+
+Limitations:
+- Benchmark divergence check completed but no divergence was found — results are limited without NAV and benchmark history.
 
 ## Factor and style [OK]
 - Host-provided factor dimensions: ai_theme, duration, semiconductor_beta.
@@ -52,12 +48,6 @@ Limitations:
 - Fund SYNAI002 has high ai_theme exposure (0.70)
 - Fund SYNAI001 has high semiconductor_beta exposure (0.82)
 - Fund SYNAI002 has high semiconductor_beta exposure (0.90)
-
-## Factor analysis [MISSING]
-- No section content available from provided artifacts.
-
-Limitations:
-- Factor snapshot not provided; no factor analysis is fabricated.
 
 ## Fees and redemption [OK]
 - Fee schedule is available for 4 fund(s).
@@ -85,24 +75,15 @@ Limitations:
 - Fund SYNAI001 has max drawdown 11.3%. DCA may benefit from buying at lower NAV, but review risk tolerance.
 - Cash 5000 is below 10% liquidity reserve (15000). Gap: 10000.
 
-## Profit protection [OK]
+## Profit protection [PARTIAL]
 - Profit protection reviewed 4 position(s).
+
+Limitations:
+- Profit protection has no detailed breakdown; profit levels and action suggestions are unavailable without current NAV data.
 
 ## Right-side confirmation [OK]
 - Right-side confirmation applies to 3 drawdown position(s); 0 confirmed.
 - Fresh NAV, benchmark, news, or sentiment evidence is needed before action.
-
-## Event hype failure [MISSING]
-- No section content available from provided artifacts.
-
-Limitations:
-- Event hype diagnostics are missing or no host event metadata was provided.
-
-## News and events [MISSING]
-- No section content available from provided artifacts.
-
-Limitations:
-- News snapshot not provided; no news or events are fabricated.
 
 ## Cash deployment [OK]
 - Cash-like weight 3.33%; deployment readiness not_ready.
@@ -110,6 +91,7 @@ Limitations:
 - Estimated deployable cash: 0.00.
 
 ## Evidence status [PARTIAL]
+- Available conclusions: portfolio has 4 identified position(s); benchmark divergence checked for 4 fund(s); profit protection reviewed for 4 position(s); right-side confirmation assessed for 4 position(s); exposure breakdown computed.
 - decision_support_ready: False.
 - Formal decision blockers: cash_deployment_not_ready, missing_recent_news.
 - Analysis warnings: benchmark_data_missing, cash_deployment_not_ready, right_side_unconfirmed, sentiment_missing, theme_overweight_warning.
@@ -122,17 +104,21 @@ Limitations:
 
 ## Missing data [PARTIAL]
 - Missing data groups: missing_benchmark_data, missing_recent_news, missing_sentiment.
-- missing_benchmark_data: next data benchmark price history.
-- missing_recent_news: next data recent fund or theme news.
-- missing_sentiment: next data sentiment snapshot for held funds or themes.
+- missing_benchmark_data [warning] (provider_could_fetch): next data benchmark price history.
+- missing_recent_news [blocker] (provider_could_fetch): next data recent fund or theme news.
+- missing_sentiment [warning] (provider_could_fetch): next data sentiment snapshot for held funds or themes.
 
 ## Suggested next checks [PARTIAL]
 - Next data to fetch: recent benchmark movement, recent fund news, sentiment snapshot, benchmark price history, recent news evidence, target asset evidence.
+- Specific data to provide:
+-   missing_benchmark_data (provider_could_fetch): benchmark price history
+-   missing_recent_news (provider_could_fetch): recent fund or theme news
+-   missing_sentiment (provider_could_fetch): sentiment snapshot for held funds or themes
 
 ## Uncertainty note [PARTIAL]
 - This conclusion is based on host-provided data and does not include live market fetching.
 - No formal decision generated; call decision-support for formal action.
-- Report limitations count: 1.
+- Report limitations count: 1. See each section for details.
 
 Limitations:
 - Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data
@@ -141,12 +127,6 @@ Limitations:
 - Rebalance simulation produced 4 trade leg(s) with total trade amount 32,500.00.
 - Synthetic max_single_theme_weight included as host context.
 - FundAnalysisSkill analysis remains artifact/report only.
-
-## Research query plan [MISSING]
-- No section content available from provided artifacts.
-
-Limitations:
-- Research planning was not requested by the host.
 
 ## Data completeness and limitations [OK]
 - Completeness grade B with score 0.800.
@@ -165,8 +145,10 @@ Limitations:
 
 - Benchmark and peer: Benchmark data is missing; no benchmark comparison is fabricated.
 - Benchmark and peer: Peer group data is missing; no peer ranking is fabricated.
+- Benchmark divergence: Benchmark divergence check completed but no divergence was found — results are limited without NAV and benchmark history.
 - Factor analysis: Factor snapshot not provided; no factor analysis is fabricated.
 - Manager and fund profile: Manager tenure and manager-change analysis are unavailable.
+- Profit protection: Profit protection has no detailed breakdown; profit levels and action suggestions are unavailable without current NAV data.
 - Event hype failure: Event hype diagnostics are missing or no host event metadata was provided.
 - News and events: News snapshot not provided; no news or events are fabricated.
 - Uncertainty note: Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data

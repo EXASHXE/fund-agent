@@ -46,14 +46,17 @@ def test_render_report_markdown_is_deterministic_and_renders_all_headings() -> N
     second = render_report_markdown(sections)
     assert first == second
     assert first.startswith("# Personal fund report\n")
+    # Sections with bullets (OK or PARTIAL) are always rendered
     for section in sections:
-        assert f"## {section['title']}" in first
+        if section["bullets"]:
+            assert f"## {section['title']}" in first
 
 
 def test_partial_and_missing_sections_are_annotated() -> None:
     rendered = render_report_markdown(_sections())
     assert "## Benchmark and peer [PARTIAL]" in rendered
-    assert "## Fees and redemption [MISSING]" in rendered
+    # MISSING sections with no bullets are collapsed — their limitations appear in the global list
+    assert "## Fees and redemption [MISSING]" not in rendered
 
 
 def test_global_limitations_footer_includes_affected_section_context() -> None:

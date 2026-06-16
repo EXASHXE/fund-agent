@@ -57,6 +57,44 @@ def _money_or_missing(value: Any, *, likely_missing: bool = False, lang: str = "
     return f"{amount:,.2f}"
 
 
+def _pct_or_missing(value: Any, *, likely_missing: bool = False, lang: str = "zh") -> str:
+    """Format percentage value, returning missing indicator when data is likely absent."""
+    missing_text = "N/A" if lang == "en" else "无法计算"
+    if value is None:
+        return missing_text
+    if likely_missing:
+        try:
+            v = float(value)
+            if abs(v) < 1e-9:
+                return missing_text
+        except (TypeError, ValueError):
+            return missing_text
+    try:
+        pct = float(value or 0.0) * 100
+    except (TypeError, ValueError):
+        return missing_text
+    return f"{pct:.2f}%"
+
+
+def _ratio_or_missing(value: Any, *, digits: int = 6, likely_missing: bool = False, lang: str = "zh") -> str:
+    """Format ratio/decimal value, returning missing indicator when data is likely absent."""
+    missing_text = "N/A" if lang == "en" else "无法计算"
+    if value is None:
+        return missing_text
+    if likely_missing:
+        try:
+            v = float(value)
+            if abs(v) < 1e-9:
+                return missing_text
+        except (TypeError, ValueError):
+            return missing_text
+    try:
+        number = float(value or 0.0)
+    except (TypeError, ValueError):
+        return missing_text
+    return f"{number:.{digits}f}"
+
+
 def _pct(value: Any) -> str:
     try:
         pct = float(value or 0.0) * 100

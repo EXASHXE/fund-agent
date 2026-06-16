@@ -287,16 +287,19 @@
       "details": [
         {
           "code": "missing_benchmark_data",
+          "reason": "provider_could_fetch",
           "recommended_next_data": "benchmark price history",
           "severity": "warning"
         },
         {
           "code": "missing_recent_news",
+          "reason": "provider_could_fetch",
           "recommended_next_data": "recent fund or theme news",
           "severity": "blocker"
         },
         {
           "code": "missing_sentiment",
+          "reason": "provider_could_fetch",
           "recommended_next_data": "sentiment snapshot for held funds or themes",
           "severity": "warning"
         }
@@ -670,16 +673,19 @@
         "details": [
           {
             "code": "missing_benchmark_data",
+            "reason": "provider_could_fetch",
             "recommended_next_data": "benchmark price history",
             "severity": "warning"
           },
           {
             "code": "missing_recent_news",
+            "reason": "provider_could_fetch",
             "recommended_next_data": "recent fund or theme news",
             "severity": "blocker"
           },
           {
             "code": "missing_sentiment",
+            "reason": "provider_could_fetch",
             "recommended_next_data": "sentiment snapshot for held funds or themes",
             "severity": "warning"
           }
@@ -1349,7 +1355,7 @@
         },
         {
           "id": "benchmark_divergence",
-          "status": "OK",
+          "status": "PARTIAL",
           "title": "Benchmark divergence"
         },
         {
@@ -1384,7 +1390,7 @@
         },
         {
           "id": "profit_protection",
-          "status": "OK",
+          "status": "PARTIAL",
           "title": "Profit protection"
         },
         {
@@ -1585,8 +1591,10 @@
             "benchmark_divergence_diagnostics"
           ],
           "id": "benchmark_divergence",
-          "limitations": [],
-          "status": "OK",
+          "limitations": [
+            "Benchmark divergence check completed but no divergence was found — results are limited without NAV and benchmark history."
+          ],
+          "status": "PARTIAL",
           "title": "Benchmark divergence"
         },
         {
@@ -1694,8 +1702,10 @@
             "profit_protection_diagnostics"
           ],
           "id": "profit_protection",
-          "limitations": [],
-          "status": "OK",
+          "limitations": [
+            "Profit protection has no detailed breakdown; profit levels and action suggestions are unavailable without current NAV data."
+          ],
+          "status": "PARTIAL",
           "title": "Profit protection"
         },
         {
@@ -1750,6 +1760,7 @@
         },
         {
           "bullets": [
+            "Available conclusions: portfolio has 3 identified position(s); benchmark divergence checked for 3 fund(s); profit protection reviewed for 3 position(s); right-side confirmation assessed for 3 position(s); exposure breakdown computed.",
             "decision_support_ready: False.",
             "Formal decision blockers: missing_recent_news.",
             "Analysis warnings: benchmark_data_missing, redemption_fee_warning, sentiment_missing, theme_overweight_warning.",
@@ -1784,9 +1795,9 @@
         {
           "bullets": [
             "Missing data groups: missing_benchmark_data, missing_recent_news, missing_sentiment.",
-            "missing_benchmark_data: next data benchmark price history.",
-            "missing_recent_news: next data recent fund or theme news.",
-            "missing_sentiment: next data sentiment snapshot for held funds or themes."
+            "missing_benchmark_data [warning] (provider_could_fetch): next data benchmark price history.",
+            "missing_recent_news [blocker] (provider_could_fetch): next data recent fund or theme news.",
+            "missing_sentiment [warning] (provider_could_fetch): next data sentiment snapshot for held funds or themes."
           ],
           "data_sources": [
             "analysis_plan",
@@ -1799,10 +1810,15 @@
         },
         {
           "bullets": [
-            "Next data to fetch: recent benchmark movement, recent fund news, sentiment snapshot."
+            "Next data to fetch: recent benchmark movement, recent fund news, sentiment snapshot.",
+            "Specific data to provide:",
+            "  missing_benchmark_data (provider_could_fetch): benchmark price history",
+            "  missing_recent_news (provider_could_fetch): recent fund or theme news",
+            "  missing_sentiment (provider_could_fetch): sentiment snapshot for held funds or themes"
           ],
           "data_sources": [
-            "analysis_plan.next_data_to_fetch"
+            "analysis_plan.next_data_to_fetch",
+            "evidence_gap_diagnostics"
           ],
           "id": "suggested_next_checks",
           "limitations": [],
@@ -1813,7 +1829,7 @@
           "bullets": [
             "This conclusion is based on host-provided data and does not include live market fetching.",
             "No formal decision generated; call decision-support for formal action.",
-            "Report limitations count: 1."
+            "Report limitations count: 1. See each section for details."
           ],
           "data_sources": [
             "report_limitations",
@@ -2602,7 +2618,7 @@
       },
       {
         "id": "benchmark_divergence",
-        "status": "OK",
+        "status": "PARTIAL",
         "title": "Benchmark divergence"
       },
       {
@@ -2637,7 +2653,7 @@
       },
       {
         "id": "profit_protection",
-        "status": "OK",
+        "status": "PARTIAL",
         "title": "Profit protection"
       },
       {
@@ -2838,8 +2854,10 @@
           "benchmark_divergence_diagnostics"
         ],
         "id": "benchmark_divergence",
-        "limitations": [],
-        "status": "OK",
+        "limitations": [
+          "Benchmark divergence check completed but no divergence was found — results are limited without NAV and benchmark history."
+        ],
+        "status": "PARTIAL",
         "title": "Benchmark divergence"
       },
       {
@@ -2947,8 +2965,10 @@
           "profit_protection_diagnostics"
         ],
         "id": "profit_protection",
-        "limitations": [],
-        "status": "OK",
+        "limitations": [
+          "Profit protection has no detailed breakdown; profit levels and action suggestions are unavailable without current NAV data."
+        ],
+        "status": "PARTIAL",
         "title": "Profit protection"
       },
       {
@@ -3003,6 +3023,7 @@
       },
       {
         "bullets": [
+          "Available conclusions: portfolio has 3 identified position(s); benchmark divergence checked for 3 fund(s); profit protection reviewed for 3 position(s); right-side confirmation assessed for 3 position(s); exposure breakdown computed.",
           "decision_support_ready: False.",
           "Formal decision blockers: missing_recent_news.",
           "Analysis warnings: benchmark_data_missing, redemption_fee_warning, sentiment_missing, theme_overweight_warning.",
@@ -3037,9 +3058,9 @@
       {
         "bullets": [
           "Missing data groups: missing_benchmark_data, missing_recent_news, missing_sentiment.",
-          "missing_benchmark_data: next data benchmark price history.",
-          "missing_recent_news: next data recent fund or theme news.",
-          "missing_sentiment: next data sentiment snapshot for held funds or themes."
+          "missing_benchmark_data [warning] (provider_could_fetch): next data benchmark price history.",
+          "missing_recent_news [blocker] (provider_could_fetch): next data recent fund or theme news.",
+          "missing_sentiment [warning] (provider_could_fetch): next data sentiment snapshot for held funds or themes."
         ],
         "data_sources": [
           "analysis_plan",
@@ -3052,10 +3073,15 @@
       },
       {
         "bullets": [
-          "Next data to fetch: recent benchmark movement, recent fund news, sentiment snapshot."
+          "Next data to fetch: recent benchmark movement, recent fund news, sentiment snapshot.",
+          "Specific data to provide:",
+          "  missing_benchmark_data (provider_could_fetch): benchmark price history",
+          "  missing_recent_news (provider_could_fetch): recent fund or theme news",
+          "  missing_sentiment (provider_could_fetch): sentiment snapshot for held funds or themes"
         ],
         "data_sources": [
-          "analysis_plan.next_data_to_fetch"
+          "analysis_plan.next_data_to_fetch",
+          "evidence_gap_diagnostics"
         ],
         "id": "suggested_next_checks",
         "limitations": [],
@@ -3066,7 +3092,7 @@
         "bullets": [
           "This conclusion is based on host-provided data and does not include live market fetching.",
           "No formal decision generated; call decision-support for formal action.",
-          "Report limitations count: 1."
+          "Report limitations count: 1. See each section for details."
         ],
         "data_sources": [
           "report_limitations",

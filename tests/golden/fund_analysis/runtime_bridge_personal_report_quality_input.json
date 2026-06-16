@@ -314,16 +314,19 @@
       "details": [
         {
           "code": "missing_transaction_history",
+          "reason": "user_must_provide",
           "recommended_next_data": "transaction ledger with BUY/SELL/DIVIDEND/FEE events",
           "severity": "warning"
         },
         {
           "code": "missing_recent_news",
+          "reason": "provider_could_fetch",
           "recommended_next_data": "recent fund or theme news",
           "severity": "blocker"
         },
         {
           "code": "missing_sentiment",
+          "reason": "provider_could_fetch",
           "recommended_next_data": "sentiment snapshot for held funds or themes",
           "severity": "warning"
         }
@@ -761,16 +764,19 @@
         "details": [
           {
             "code": "missing_transaction_history",
+            "reason": "user_must_provide",
             "recommended_next_data": "transaction ledger with BUY/SELL/DIVIDEND/FEE events",
             "severity": "warning"
           },
           {
             "code": "missing_recent_news",
+            "reason": "provider_could_fetch",
             "recommended_next_data": "recent fund or theme news",
             "severity": "blocker"
           },
           {
             "code": "missing_sentiment",
+            "reason": "provider_could_fetch",
             "recommended_next_data": "sentiment snapshot for held funds or themes",
             "severity": "warning"
           }
@@ -1296,7 +1302,7 @@
         },
         {
           "id": "benchmark_divergence",
-          "status": "OK",
+          "status": "PARTIAL",
           "title": "Benchmark divergence"
         },
         {
@@ -1331,7 +1337,7 @@
         },
         {
           "id": "profit_protection",
-          "status": "OK",
+          "status": "PARTIAL",
           "title": "Profit protection"
         },
         {
@@ -1533,8 +1539,10 @@
             "benchmark_divergence_diagnostics"
           ],
           "id": "benchmark_divergence",
-          "limitations": [],
-          "status": "OK",
+          "limitations": [
+            "Benchmark divergence check completed but no divergence was found — results are limited without NAV and benchmark history."
+          ],
+          "status": "PARTIAL",
           "title": "Benchmark divergence"
         },
         {
@@ -1632,8 +1640,10 @@
             "profit_protection_diagnostics"
           ],
           "id": "profit_protection",
-          "limitations": [],
-          "status": "OK",
+          "limitations": [
+            "Profit protection has no detailed breakdown; profit levels and action suggestions are unavailable without current NAV data."
+          ],
+          "status": "PARTIAL",
           "title": "Profit protection"
         },
         {
@@ -1688,6 +1698,7 @@
         },
         {
           "bullets": [
+            "Available conclusions: portfolio has 3 identified position(s); benchmark divergence checked for 3 fund(s); profit protection reviewed for 3 position(s); right-side confirmation assessed for 3 position(s); exposure breakdown computed.",
             "decision_support_ready: False.",
             "Formal decision blockers: missing_recent_news.",
             "Analysis warnings: sentiment_missing, transaction_history_incomplete.",
@@ -1721,9 +1732,9 @@
         {
           "bullets": [
             "Missing data groups: missing_recent_news, missing_sentiment, missing_transaction_history.",
-            "missing_transaction_history: next data transaction ledger with BUY/SELL/DIVIDEND/FEE events.",
-            "missing_recent_news: next data recent fund or theme news.",
-            "missing_sentiment: next data sentiment snapshot for held funds or themes."
+            "missing_transaction_history [warning] (user_must_provide): next data transaction ledger with BUY/SELL/DIVIDEND/FEE events.",
+            "missing_recent_news [blocker] (provider_could_fetch): next data recent fund or theme news.",
+            "missing_sentiment [warning] (provider_could_fetch): next data sentiment snapshot for held funds or themes."
           ],
           "data_sources": [
             "analysis_plan",
@@ -1736,10 +1747,15 @@
         },
         {
           "bullets": [
-            "Next data to fetch: recent fund news, sentiment snapshot, transaction history, recent benchmark movement."
+            "Next data to fetch: recent fund news, sentiment snapshot, transaction history, recent benchmark movement.",
+            "Specific data to provide:",
+            "  missing_transaction_history (user_must_provide): transaction ledger with BUY/SELL/DIVIDEND/FEE events",
+            "  missing_recent_news (provider_could_fetch): recent fund or theme news",
+            "  missing_sentiment (provider_could_fetch): sentiment snapshot for held funds or themes"
           ],
           "data_sources": [
-            "analysis_plan.next_data_to_fetch"
+            "analysis_plan.next_data_to_fetch",
+            "evidence_gap_diagnostics"
           ],
           "id": "suggested_next_checks",
           "limitations": [],
@@ -2348,7 +2364,7 @@
       },
       {
         "id": "benchmark_divergence",
-        "status": "OK",
+        "status": "PARTIAL",
         "title": "Benchmark divergence"
       },
       {
@@ -2383,7 +2399,7 @@
       },
       {
         "id": "profit_protection",
-        "status": "OK",
+        "status": "PARTIAL",
         "title": "Profit protection"
       },
       {
@@ -2585,8 +2601,10 @@
           "benchmark_divergence_diagnostics"
         ],
         "id": "benchmark_divergence",
-        "limitations": [],
-        "status": "OK",
+        "limitations": [
+          "Benchmark divergence check completed but no divergence was found — results are limited without NAV and benchmark history."
+        ],
+        "status": "PARTIAL",
         "title": "Benchmark divergence"
       },
       {
@@ -2684,8 +2702,10 @@
           "profit_protection_diagnostics"
         ],
         "id": "profit_protection",
-        "limitations": [],
-        "status": "OK",
+        "limitations": [
+          "Profit protection has no detailed breakdown; profit levels and action suggestions are unavailable without current NAV data."
+        ],
+        "status": "PARTIAL",
         "title": "Profit protection"
       },
       {
@@ -2740,6 +2760,7 @@
       },
       {
         "bullets": [
+          "Available conclusions: portfolio has 3 identified position(s); benchmark divergence checked for 3 fund(s); profit protection reviewed for 3 position(s); right-side confirmation assessed for 3 position(s); exposure breakdown computed.",
           "decision_support_ready: False.",
           "Formal decision blockers: missing_recent_news.",
           "Analysis warnings: sentiment_missing, transaction_history_incomplete.",
@@ -2773,9 +2794,9 @@
       {
         "bullets": [
           "Missing data groups: missing_recent_news, missing_sentiment, missing_transaction_history.",
-          "missing_transaction_history: next data transaction ledger with BUY/SELL/DIVIDEND/FEE events.",
-          "missing_recent_news: next data recent fund or theme news.",
-          "missing_sentiment: next data sentiment snapshot for held funds or themes."
+          "missing_transaction_history [warning] (user_must_provide): next data transaction ledger with BUY/SELL/DIVIDEND/FEE events.",
+          "missing_recent_news [blocker] (provider_could_fetch): next data recent fund or theme news.",
+          "missing_sentiment [warning] (provider_could_fetch): next data sentiment snapshot for held funds or themes."
         ],
         "data_sources": [
           "analysis_plan",
@@ -2788,10 +2809,15 @@
       },
       {
         "bullets": [
-          "Next data to fetch: recent fund news, sentiment snapshot, transaction history, recent benchmark movement."
+          "Next data to fetch: recent fund news, sentiment snapshot, transaction history, recent benchmark movement.",
+          "Specific data to provide:",
+          "  missing_transaction_history (user_must_provide): transaction ledger with BUY/SELL/DIVIDEND/FEE events",
+          "  missing_recent_news (provider_could_fetch): recent fund or theme news",
+          "  missing_sentiment (provider_could_fetch): sentiment snapshot for held funds or themes"
         ],
         "data_sources": [
-          "analysis_plan.next_data_to_fetch"
+          "analysis_plan.next_data_to_fetch",
+          "evidence_gap_diagnostics"
         ],
         "id": "suggested_next_checks",
         "limitations": [],

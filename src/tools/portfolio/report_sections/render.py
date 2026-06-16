@@ -166,14 +166,29 @@ def render_report_markdown(report_sections: list[dict[str, Any]] | dict[str, Any
             continue
         title = str(section.get("title", "Untitled section"))
         status = str(section.get("status", "MISSING"))
-        lines.append(f"## {title} [{status}]")
         bullets = _string_list(section.get("bullets") or [])
+        limitations = _string_list(section.get("limitations") or [])
+
+        # Collapse MISSING sections with no bullets — only show limitations in global list
+        if status == "MISSING" and not bullets:
+            for limitation in limitations:
+                item = f"{title}: {limitation}"
+                if item not in global_limitations:
+                    global_limitations.append(item)
+            continue
+
+        lines.append(f"## {title} [{status}]")
         if bullets:
             for bullet in bullets:
                 lines.append(f"- {bullet}")
+        elif limitations:
+            # When there are no bullets but limitations exist, show them as bullets
+            # instead of the useless "No section content available" placeholder
+            for limitation in limitations:
+                lines.append(f"- {limitation}")
+            limitations = []  # Already rendered as bullets
         else:
             lines.append("- No section content available from provided artifacts.")
-        limitations = _string_list(section.get("limitations") or [])
         if limitations:
             lines.append("")
             lines.append(f"{limitations_heading}:")

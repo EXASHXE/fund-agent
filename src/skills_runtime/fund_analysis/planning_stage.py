@@ -161,6 +161,7 @@ def _build_evidence_gap_diagnostics(
             {
                 "code": "missing_holdings",
                 "severity": "blocker",
+                "reason": "user_must_provide",
                 "recommended_next_data": "portfolio positions or holdings list",
             }
         )
@@ -169,6 +170,7 @@ def _build_evidence_gap_diagnostics(
             {
                 "code": "missing_transaction_history",
                 "severity": "warning",
+                "reason": "user_must_provide",
                 "recommended_next_data": "transaction ledger with BUY/SELL/DIVIDEND/FEE events",
             }
         )
@@ -177,6 +179,7 @@ def _build_evidence_gap_diagnostics(
             {
                 "code": "missing_fund_metadata",
                 "severity": "warning",
+                "reason": "provider_could_fetch",
                 "recommended_next_data": "fund profile data (type, benchmark, manager, tags)",
             }
         )
@@ -185,6 +188,7 @@ def _build_evidence_gap_diagnostics(
             {
                 "code": "missing_fee_schedule",
                 "severity": "warning",
+                "reason": "provider_could_fetch",
                 "recommended_next_data": "fee schedule and redemption rules",
             }
         )
@@ -193,6 +197,7 @@ def _build_evidence_gap_diagnostics(
             {
                 "code": "missing_nav_history",
                 "severity": "warning",
+                "reason": "provider_could_fetch",
                 "recommended_next_data": "fund NAV history series",
             }
         )
@@ -201,6 +206,7 @@ def _build_evidence_gap_diagnostics(
             {
                 "code": "missing_benchmark_data",
                 "severity": "warning",
+                "reason": "provider_could_fetch",
                 "recommended_next_data": "benchmark price history",
             }
         )
@@ -209,6 +215,7 @@ def _build_evidence_gap_diagnostics(
             {
                 "code": "missing_recent_news",
                 "severity": "blocker",
+                "reason": "provider_could_fetch",
                 "recommended_next_data": "recent fund or theme news",
             }
         )
@@ -217,6 +224,7 @@ def _build_evidence_gap_diagnostics(
             {
                 "code": "missing_sentiment",
                 "severity": "warning",
+                "reason": "provider_could_fetch",
                 "recommended_next_data": "sentiment snapshot for held funds or themes",
             }
         )
@@ -225,6 +233,7 @@ def _build_evidence_gap_diagnostics(
             {
                 "code": "missing_holdings_detail",
                 "severity": "warning",
+                "reason": "provider_could_fetch",
                 "recommended_next_data": "fund holdings detail (stocks, bonds, weights)",
             }
         )
@@ -233,6 +242,7 @@ def _build_evidence_gap_diagnostics(
             {
                 "code": "missing_user_constraints",
                 "severity": "warning",
+                "reason": "user_must_provide",
                 "recommended_next_data": "user constraints (min trade, forbidden actions, planned holding period)",
             }
         )
@@ -241,6 +251,7 @@ def _build_evidence_gap_diagnostics(
             {
                 "code": "missing_risk_preference",
                 "severity": "warning",
+                "reason": "user_must_provide",
                 "recommended_next_data": "user risk preference (risk level, concentration limits, liquidity reserve)",
             }
         )

@@ -34,28 +34,12 @@
 - NAV-derived metrics are available for 2 fund(s).
 - Highest total return in provided NAV history is SYNLED001 at 18.00%.
 
-## Benchmark and peer [MISSING]
-- No section content available from provided artifacts.
-
-Limitations:
-- Benchmark data is missing; no benchmark comparison is fabricated.
-- Peer group data is missing; no peer ranking is fabricated.
-
-## Benchmark divergence [OK]
+## Benchmark divergence [PARTIAL]
 - Benchmark divergence reviewed 2 fund(s).
 - No severe benchmark divergence was detected from provided data.
 
-## Factor and style [MISSING]
-- No section content available from provided artifacts.
-
 Limitations:
-- Factor exposure data is missing; no style exposure is fabricated.
-
-## Factor analysis [MISSING]
-- No section content available from provided artifacts.
-
-Limitations:
-- Factor snapshot not provided; no factor analysis is fabricated.
+- Benchmark divergence check completed but no divergence was found — results are limited without NAV and benchmark history.
 
 ## Fees and redemption [OK]
 - Fee schedule is available for 2 fund(s).
@@ -89,24 +73,13 @@ Limitations:
 ## Right-side confirmation [OK]
 - Right-side confirmation applies to 0 drawdown position(s); 0 confirmed.
 
-## Event hype failure [MISSING]
-- No section content available from provided artifacts.
-
-Limitations:
-- Event hype diagnostics are missing or no host event metadata was provided.
-
-## News and events [MISSING]
-- No section content available from provided artifacts.
-
-Limitations:
-- News snapshot not provided; no news or events are fabricated.
-
 ## Cash deployment [OK]
 - Cash-like weight 8.93%; deployment readiness ready.
 - Cash accounting basis: conservative_effective_total.
 - Estimated deployable cash: 0.00.
 
 ## Evidence status [PARTIAL]
+- Available conclusions: portfolio has 2 identified position(s); benchmark divergence checked for 2 fund(s); profit protection reviewed for 2 position(s); right-side confirmation assessed for 2 position(s); exposure breakdown computed.
 - decision_support_ready: False.
 - Formal decision blockers: missing_recent_news.
 - Analysis warnings: benchmark_data_missing, sentiment_missing, theme_overweight_warning.
@@ -120,32 +93,24 @@ Limitations:
 
 ## Missing data [PARTIAL]
 - Missing data groups: missing_benchmark_data, missing_recent_news, missing_sentiment.
-- missing_benchmark_data: next data benchmark price history.
-- missing_recent_news: next data recent fund or theme news.
-- missing_sentiment: next data sentiment snapshot for held funds or themes.
+- missing_benchmark_data [warning] (provider_could_fetch): next data benchmark price history.
+- missing_recent_news [blocker] (provider_could_fetch): next data recent fund or theme news.
+- missing_sentiment [warning] (provider_could_fetch): next data sentiment snapshot for held funds or themes.
 
 ## Suggested next checks [PARTIAL]
 - Next data to fetch: recent benchmark movement, recent fund news, sentiment snapshot.
+- Specific data to provide:
+-   missing_benchmark_data (provider_could_fetch): benchmark price history
+-   missing_recent_news (provider_could_fetch): recent fund or theme news
+-   missing_sentiment (provider_could_fetch): sentiment snapshot for held funds or themes
 
 ## Uncertainty note [PARTIAL]
 - This conclusion is based on host-provided data and does not include live market fetching.
 - No formal decision generated; call decision-support for formal action.
-- Report limitations count: 1.
+- Report limitations count: 1. See each section for details.
 
 Limitations:
 - Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data
-
-## Rebalance plan [MISSING]
-- No section content available from provided artifacts.
-
-Limitations:
-- Rebalance plan is missing; target weights or constraints may be unavailable.
-
-## Research query plan [MISSING]
-- No section content available from provided artifacts.
-
-Limitations:
-- Research planning was not requested by the host.
 
 ## Data completeness and limitations [OK]
 - Completeness grade B with score 0.767.
@@ -164,6 +129,7 @@ Limitations:
 
 - Benchmark and peer: Benchmark data is missing; no benchmark comparison is fabricated.
 - Benchmark and peer: Peer group data is missing; no peer ranking is fabricated.
+- Benchmark divergence: Benchmark divergence check completed but no divergence was found — results are limited without NAV and benchmark history.
 - Factor and style: Factor exposure data is missing; no style exposure is fabricated.
 - Factor analysis: Factor snapshot not provided; no factor analysis is fabricated.
 - Manager and fund profile: Manager tenure and manager-change analysis are unavailable.

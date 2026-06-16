@@ -136,6 +136,7 @@ def test_markdown_contains_professional_diagnostics_heading():
     artifacts = {
         "fund_analysis_report": {},
         "professional_diagnostics": {
+            "cash_budget_diagnostics": {"cash_ratio": 0.05},
             "professional_warnings": [],
         },
         "data_completeness": {"grade": "B", "score": 0.85},
