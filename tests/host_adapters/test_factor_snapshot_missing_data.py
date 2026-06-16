@@ -239,7 +239,8 @@ class TestFactorSnapshotMissingData:
         result = build_factor_snapshot(_empty_portfolio())
         assert result["snapshot_type"] == "factor_snapshot"
         assert result["holding_factors"] == []
-        assert result["portfolio_factors"]["total_current_value"] == 0
+        # Empty portfolio has no holdings, so total_current_value is None (not 0)
+        assert result["portfolio_factors"]["total_current_value"] is None
 
     def test_schema_structure(self):
         """Output must have all required top-level keys."""

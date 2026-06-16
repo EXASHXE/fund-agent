@@ -67,60 +67,131 @@ _THEME_QUERIES: dict[str, list[str]] = {
 
 
 def _build_query_plan(kg_context: dict, portfolio_input: dict | None) -> list[dict]:
-    """Build a query plan from KG entities and watch topics."""
+    """Build a query plan from KG entities and watch topics.
+
+    Uses the new prioritized query plan from KG context if available,
+    otherwise falls back to the legacy query building logic.
+    """
     queries: list[dict] = []
 
-    # From KG query_plan, extract fund-level queries
+    # Check if KG context has new-style query plan with priorities
     kg_plan = kg_context.get("query_plan", [])
-    for qp in kg_plan:
-        query_text = qp.get("query", "")
-        entities = qp.get("entities", [])
-        topic_tags = qp.get("topic_tags", [])
-        if query_text:
+    if kg_plan and any("query_type" in qp for qp in kg_plan):
+        # New format with priorities - use directly with some enhancements
+        for qp in kg_plan:
+            query_text = qp.get("query", "")
+            if not query_text:
+                continue
+
+            # Extract topic_tags from entities if not present
+            topic_tags = qp.get("topic_tags", [])
+            if not topic_tags:
+                for ent in qp.get("entities", []):
+                    if ent.startswith("macro:"):
+                        topic_tags.append(ent.replace("macro:", ""))
+                    elif ent.startswith("industry:"):
+                        topic_tags.append(ent.replace("industry:", ""))
+
             queries.append(
                 {
                     "query_id": qp.get("query_id", hashlib.sha256(query_text.encode()).hexdigest()[:12]),
                     "query": query_text,
-                    "entities": entities,
+                    "query_type": qp.get("query_type", "theme_fallback"),
+                    "priority": qp.get("priority", 5),
+                    "entities": qp.get("entities", []),
                     "topic_tags": topic_tags,
+                    "related_funds": qp.get("related_funds", []),
+                    "reason": qp.get("reason", ""),
+                    "source": qp.get("source", "unknown"),
+                    "confidence": qp.get("confidence", "low"),
+                    "fallback": qp.get("fallback", False),
                 }
             )
+    else:
+        # Legacy format - build from scratch with new structure
+        for qp in kg_plan:
+            query_text = qp.get("query", "")
+            entities = qp.get("entities", [])
+            topic_tags = qp.get("topic_tags", [])
+            if query_text:
+                # Determine query type from entities
+                query_type = "theme_fallback"
+                if any(e.startswith("holding_") for e in entities):
+                    query_type = "holding_company"
+                elif any(e.startswith("benchmark:") for e in entities):
+                    query_type = "benchmark"
+                elif any(e.startswith("fund_manager:") for e in entities):
+                    query_type = "fund_manager"
+                elif any(e.startswith("industry:") for e in entities):
+                    query_type = "sector"
+                elif any(e.startswith("macro:") for e in entities):
+                    query_type = "theme"
 
-    # From fund_entities, add fund-specific queries
-    for fe in kg_context.get("fund_entities", []):
-        fund_code = fe.get("fund_code", "")
-        for topic in fe.get("theme_tags", []):
-            template_queries = _THEME_QUERIES.get(topic, [])
-            for tq in template_queries:
-                qid = hashlib.sha256(f"{fund_code}_{tq}".encode()).hexdigest()[:12]
                 queries.append(
                     {
-                        "query_id": qid,
-                        "query": tq,
-                        "entities": [f"fund:{fund_code}"] if fund_code else [],
-                        "topic_tags": [topic],
+                        "query_id": qp.get("query_id", hashlib.sha256(query_text.encode()).hexdigest()[:12]),
+                        "query": query_text,
+                        "query_type": query_type,
+                        "priority": 5,  # Default priority
+                        "entities": entities,
+                        "topic_tags": topic_tags,
+                        "related_funds": [],
+                        "reason": "",
+                        "source": "legacy",
+                        "confidence": "low",
+                        "fallback": query_type == "theme_fallback",
                     }
                 )
 
-    # From watch_topics, add macro queries for topics not yet covered
-    covered_topics: set[str] = set()
-    for q in queries:
-        for t in q.get("topic_tags", []):
-            covered_topics.add(t)
+        # From fund_entities, add fund-specific queries
+        for fe in kg_context.get("fund_entities", []):
+            fund_code = fe.get("fund_code", "")
+            for topic in fe.get("theme_tags", []):
+                template_queries = _THEME_QUERIES.get(topic, [])
+                for tq in template_queries:
+                    qid = hashlib.sha256(f"{fund_code}_{tq}".encode()).hexdigest()[:12]
+                    queries.append(
+                        {
+                            "query_id": qid,
+                            "query": tq,
+                            "query_type": "theme",
+                            "priority": 3,
+                            "entities": [f"fund:{fund_code}"] if fund_code else [],
+                            "topic_tags": [topic],
+                            "related_funds": [fe.get("fund_name", "")] if fund_code else [],
+                            "reason": f"Theme query for {fund_code or fe.get('fund_name', '')}",
+                            "source": "theme_template",
+                            "confidence": "low",
+                            "fallback": False,
+                        }
+                    )
 
-    for topic in kg_context.get("watch_topics", []):
-        if topic not in covered_topics:
-            template_queries = _THEME_QUERIES.get(topic, [topic])
-            for tq in template_queries[:1]:  # one query per uncovered topic
-                qid = hashlib.sha256(f"macro_{topic}_{tq}".encode()).hexdigest()[:12]
-                queries.append(
-                    {
-                        "query_id": qid,
-                        "query": tq,
-                        "entities": [f"macro:{topic}"],
-                        "topic_tags": [topic],
-                    }
-                )
+        # From watch_topics, add macro queries for topics not yet covered
+        covered_topics: set[str] = set()
+        for q in queries:
+            for t in q.get("topic_tags", []):
+                covered_topics.add(t)
+
+        for topic in kg_context.get("watch_topics", []):
+            if topic not in covered_topics:
+                template_queries = _THEME_QUERIES.get(topic, [topic])
+                for tq in template_queries[:1]:  # one query per uncovered topic
+                    qid = hashlib.sha256(f"macro_{topic}_{tq}".encode()).hexdigest()[:12]
+                    queries.append(
+                        {
+                            "query_id": qid,
+                            "query": tq,
+                            "query_type": "theme_fallback",
+                            "priority": 5,
+                            "entities": [f"macro:{topic}"],
+                            "topic_tags": [topic],
+                            "related_funds": [],
+                            "reason": "Unmatched watch topic fallback",
+                            "source": "fallback",
+                            "confidence": "low",
+                            "fallback": True,
+                        }
+                    )
 
     # Deduplicate by query_id
     seen: set[str] = set()
@@ -129,6 +200,9 @@ def _build_query_plan(kg_context: dict, portfolio_input: dict | None) -> list[di
         if q["query_id"] not in seen:
             deduped.append(q)
             seen.add(q["query_id"])
+
+    # Sort by priority (lower number = higher priority)
+    deduped.sort(key=lambda x: (x.get("priority", 5), x.get("query_id", "")))
 
     # Cap at MAX_QUERIES
     return deduped[:MAX_QUERIES]
@@ -146,7 +220,11 @@ def _get_env_key(name: str) -> str | None:
 
 
 def _provider_tavily(query: str, max_results: int) -> tuple[list[dict], str | None]:
-    """Try Tavily search. Returns (items, error)."""
+    """Try Tavily search. Returns (items, error).
+
+    Note: Does NOT disable SSL verification by default.
+    If SSL fails, returns error without modifying verification settings.
+    """
     api_key = _get_env_key("TAVILY_API_KEY")
     if not api_key:
         return [], "TAVILY_API_KEY not set"
@@ -170,11 +248,18 @@ def _provider_tavily(query: str, max_results: int) -> tuple[list[dict], str | No
     except ImportError:
         return [], "tavily-python not installed"
     except Exception as exc:
-        return [], str(exc)
+        error_msg = str(exc)
+        # Check for SSL errors - do not disable verification, just report error
+        if "SSL" in error_msg or "certificate" in error_msg.lower():
+            return [], f"SSL verification failed: {error_msg}"
+        return [], error_msg
 
 
 def _provider_bocha(query: str, max_results: int) -> tuple[list[dict], str | None]:
-    """Try Bocha web search. Returns (items, error)."""
+    """Try Bocha web search. Returns (items, error).
+
+    Handles HTTP 405 errors gracefully by returning an appropriate error message.
+    """
     api_key = _get_env_key("BOCHA_API_KEY")
     if not api_key:
         return [], "BOCHA_API_KEY not set"
@@ -183,14 +268,17 @@ def _provider_bocha(query: str, max_results: int) -> tuple[list[dict], str | Non
         import urllib.parse
         import urllib.request
 
-        params = urllib.parse.urlencode({"q": query, "count": max_results, "freshness": "day"})
-        url = f"https://api.bochaai.com/v1/web-search?{params}"
+        # Use POST method which is more commonly supported for search APIs
+        params = _json.dumps({"q": query, "count": max_results, "freshness": "day"}).encode("utf-8")
+        url = "https://api.bochaai.com/v1/web-search"
         req = urllib.request.Request(
             url,
+            data=params,
             headers={
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
             },
+            method="POST",
         )
         with urllib.request.urlopen(req, timeout=15) as resp:
             data = _json.loads(resp.read().decode("utf-8"))
@@ -206,8 +294,15 @@ def _provider_bocha(query: str, max_results: int) -> tuple[list[dict], str | Non
                 }
             )
         return items, None
+    except urllib.error.HTTPError as exc:
+        if exc.code == 405:
+            return [], "HTTP 405: Method not allowed - Bocha API endpoint may require GET request"
+        return [], f"HTTP {exc.code}: {exc.reason}"
     except Exception as exc:
-        return [], str(exc)
+        error_msg = str(exc)
+        if "HTTP Error 405" in error_msg:
+            return [], "HTTP 405: Method not allowed - Bocha API endpoint may require GET request"
+        return [], error_msg
 
 
 def _provider_serpapi(query: str, max_results: int) -> tuple[list[dict], str | None]:
@@ -246,12 +341,18 @@ def _provider_serpapi(query: str, max_results: int) -> tuple[list[dict], str | N
 
 
 def _provider_finnhub(query: str, symbol: str | None = None) -> tuple[list[dict], str | None]:
-    """Try Finnhub company news. Returns (items, error)."""
+    """Try Finnhub company news. Returns (items, error).
+
+    Finnhub requires a valid stock symbol. If no symbol is provided or the query
+    doesn't contain a recognizable ticker, return 'skipped_no_symbol' status
+    instead of an error.
+    """
     api_key = _get_env_key("FINNHUB_API_KEY")
     if not api_key:
         return [], "FINNHUB_API_KEY not set"
     if not symbol:
-        return [], "no symbol provided for Finnhub"
+        # Return special status indicating skip, not error
+        return [], "skipped_no_symbol"
     try:
         import finnhub  # type: ignore[import-untyped]
 
@@ -410,8 +511,16 @@ def build_news_snapshot(
 
     for qp in query_plan:
         query = qp["query"]
+        query_id = qp.get("query_id", "")
+        query_type = qp.get("query_type", "theme_fallback")
+        priority = qp.get("priority", 5)
         topic_tags = qp.get("topic_tags", [])
         entities = qp.get("entities", [])
+        related_funds = qp.get("related_funds", [])
+        reason = qp.get("reason", "")
+        source = qp.get("source", "unknown")
+        query_confidence = qp.get("confidence", "low")
+        is_fallback = qp.get("fallback", False)
         provider_attempts: list[str] = []
         query_had_results = False
         query_error: str | None = None
@@ -427,6 +536,10 @@ def build_news_snapshot(
             try:
                 items, error = PROVIDER_FUNCS[pname](query, max_results_per_query)
                 if error:
+                    # Handle skipped_no_symbol for Finnhub - not an error, just skip
+                    if error == "skipped_no_symbol":
+                        provider_status[pname]["status"] = "skipped"
+                        continue
                     provider_status[pname]["error"] = error
                     continue
 
@@ -449,17 +562,29 @@ def build_news_snapshot(
                         continue
                     seen_title_source.add(dedup_key)
 
-                    # Build normalized item
+                    # Build normalized item with full query metadata
                     item_id = _news_item_id(title, url, source, published_at)
                     relevance = _compute_relevance_score(raw_item, query, topic_tags)
                     freshness = _compute_freshness_score(published_at, lookback_days)
                     lang = _detect_language(f"{title} {raw_item.get('summary', '')}")
 
+                    # Combine query confidence with relevance/freshness
+                    base_confidence = round(min(relevance, freshness), 4)
+                    if query_confidence == "high":
+                        final_confidence = min(base_confidence * 1.2, 1.0)
+                    elif query_confidence == "medium":
+                        final_confidence = base_confidence
+                    else:
+                        final_confidence = base_confidence * 0.8
+
                     all_items.append(
                         {
                             "id": item_id,
+                            "query_id": query_id,
                             "provider": pname,
                             "query": query,
+                            "query_type": query_type,
+                            "priority": priority,
                             "title": title,
                             "url": url,
                             "source": source,
@@ -467,10 +592,14 @@ def build_news_snapshot(
                             "summary": raw_item.get("summary", ""),
                             "language": lang,
                             "related_entities": entities,
+                            "related_funds": related_funds,
                             "topic_tags": topic_tags,
+                            "reason": reason,
+                            "source_type": source,
                             "relevance_score": relevance,
                             "freshness_score": freshness,
-                            "confidence": round(min(relevance, freshness), 4),
+                            "confidence": round(final_confidence, 4),
+                            "is_fallback_query": is_fallback,
                         }
                     )
                     query_had_results = True
@@ -486,6 +615,9 @@ def build_news_snapshot(
         elif query_error:
             qp["provider_attempts"] = provider_attempts
             qp["status"] = "failed"
+        elif "skipped_no_symbol" in str(provider_attempts):
+            qp["provider_attempts"] = provider_attempts
+            qp["status"] = "skipped_no_symbol"
         else:
             qp["provider_attempts"] = provider_attempts
             qp["status"] = "empty"

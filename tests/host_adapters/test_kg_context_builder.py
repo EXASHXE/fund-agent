@@ -115,10 +115,10 @@ class TestKGContextBuilder:
         assert any(e.startswith("fund_name:") for e in entities)
 
     def test_sector_entities(self):
-        """Entities must include sector: prefixed entries."""
+        """Entities must include industry: prefixed entries."""
         result = build_kg_context(_sample_portfolio())
         entities = result["entities"]
-        assert any(e.startswith("sector:") for e in entities)
+        assert any(e.startswith("industry:") for e in entities)
 
     def test_macro_entities_from_topics(self):
         """Entities must include macro: prefixed entries for matched topics."""
@@ -176,7 +176,9 @@ class TestKGContextBuilder:
             assert "query_id" in qp
             assert "query" in qp
             assert "entities" in qp
-            assert "topic_tags" in qp
+            # New format has query_type and priority
+            assert "query_type" in qp
+            assert "priority" in qp
 
     def test_query_plan_deduped(self):
         """query_plan entries must have unique query_ids."""
