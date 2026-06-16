@@ -140,6 +140,7 @@ def _build_portfolio_overview(index: dict[str, dict[str, Any]]) -> dict[str, Any
 def _build_current_risks(index: dict[str, dict[str, Any]]) -> dict[str, Any]:
     risk_flags = _find_section(index, "risk_flags")
     prof_diag = _find_section(index, "professional_diagnostics")
+    news_events = _find_section(index, "news_and_events")
 
     bullets: list[str] = []
     data_sources: list[str] = []
@@ -160,6 +161,16 @@ def _build_current_risks(index: dict[str, dict[str, Any]]) -> dict[str, Any]:
         data_sources.extend(_string_list(prof_diag.get("data_sources")))
         limitations.extend(_string_list(prof_diag.get("limitations")))
         statuses.append(str(prof_diag.get("status", "MISSING")))
+
+    # Include news and events in current risks section
+    if news_events:
+        bullets.extend(_string_list(news_events.get("bullets")))
+        data_sources.extend(_string_list(news_events.get("data_sources")))
+        limitations.extend(_string_list(news_events.get("limitations")))
+        statuses.append(str(news_events.get("status", "MISSING")))
+    else:
+        limitations.append("News and events section is missing.")
+        statuses.append("MISSING")
 
     status = _worst_status(statuses)
     return _adapted_section("current_risks", status, bullets, data_sources, limitations)
