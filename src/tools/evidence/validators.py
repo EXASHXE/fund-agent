@@ -168,12 +168,47 @@ def aggregate_confidence(items: list[EvidenceItem]) -> float:
     return total / len(items)
 
 
+# SoftEvidence confidence cap for fallback-only items
+_FALLBACK_SOFT_EVIDENCE_CAP = 0.3
+
+
+def _cap_fallback_soft_evidence(items: list[EvidenceItem]) -> None:
+    """Cap fallback-only SoftEvidence at confidence_weight=0.3.
+
+    When SoftEvidence comes from a fallback query (is_fallback_query=True or
+    query_type=theme_fallback), its confidence_weight is capped at 0.3.
+    This prevents fallback news from providing strong evidence for decisions.
+
+    The function mutates items in-place by adjusting confidence_weight.
+
+    Args:
+        items: List of EvidenceItem instances to check and potentially cap.
+    """
+    for item in items:
+        if item.evidence_type != "SoftEvidence":
+            continue
+
+        # Check if this is fallback evidence via provenance or value
+        provenance = item.provenance or {}
+        value = item.value if isinstance(item.value, dict) else {}
+
+        is_fallback = (
+            provenance.get("is_fallback_query") is True
+            or value.get("is_fallback_query") is True
+            or provenance.get("query_type") == "theme_fallback"
+            or value.get("query_type") == "theme_fallback"
+        )
+
+        if is_fallback and item.confidence_weight > _FALLBACK_SOFT_EVIDENCE_CAP:
+            item.confidence_weight = _FALLBACK_SOFT_EVIDENCE_CAP
+
+
 def compile_evidence_graph(items: list[EvidenceItem]) -> EvidenceGraphCompileResult:
     """Compile evidence through the full contract pipeline.
 
     Pipeline order:
-    validate → reject invalid → deduplicate → detect conflicts →
-    hybrid upgrade → confidence aggregation.
+    validate → reject invalid → cap fallback SoftEvidence → deduplicate →
+    detect conflicts → hybrid upgrade → confidence aggregation.
 
     Args:
         items: List of EvidenceItem instances.
@@ -196,6 +231,9 @@ def compile_evidence_graph(items: list[EvidenceItem]) -> EvidenceGraphCompileRes
             )
             continue
         valid_items.append(item)
+
+    # Cap fallback-only SoftEvidence at confidence_weight=0.3
+    _cap_fallback_soft_evidence(valid_items)
 
     graph = EvidenceGraph()
     for item in valid_items:

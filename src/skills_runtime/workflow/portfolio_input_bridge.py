@@ -57,8 +57,10 @@ def bridge_portfolio_input(
         pos: dict[str, Any] = {
             "fund_code": h.get("fund_code", ""),
             "fund_name": h.get("fund_name", ""),
-            "current_value": h.get("current_value", 0),
+            "current_value": h.get("current_value"),
         }
+        if h.get("current_value") is None:
+            pos["current_value_missing"] = True
         cost_basis_val = h.get("cost_basis")
         if cost_basis_val is not None:
             pos["total_cost"] = cost_basis_val
@@ -75,7 +77,7 @@ def bridge_portfolio_input(
             pos["holding_days"] = h["holding_days"]
         positions.append(pos)
 
-    total_value = sum(p.get("current_value", 0) for p in positions)
+    total_value = sum(p["current_value"] for p in positions if p.get("current_value") is not None)
     cash_available = 0.0
     cash_alloc = portfolio_input.get("cash_allocation")
     if isinstance(cash_alloc, dict):

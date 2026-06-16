@@ -21,6 +21,7 @@ def _string_list(value: Any) -> list[str]:
 
 def _unique_strings(values: list[Any]) -> list[str]:
     from src.skills_runtime.common.strings import unique_strings
+
     return unique_strings(values, skip_empty=True)
 
 
@@ -29,6 +30,30 @@ def _money(value: Any) -> str:
         amount = float(value or 0.0)
     except (TypeError, ValueError):
         amount = 0.0
+    return f"{amount:,.2f}"
+
+
+def _money_or_missing(value: Any, *, likely_missing: bool = False, lang: str = "zh") -> str:
+    """Format money value, returning N/A when value is None or likely missing.
+
+    Args:
+        value: The monetary value to format.
+        likely_missing: If True, treat the value as likely missing (e.g. current_value=0
+            when 80%+ holdings have zero). Returns N/A instead of "0.00".
+        lang: Language for the missing indicator — "zh" returns "无法计算", "en" returns "N/A".
+
+    Returns:
+        Formatted money string, or missing indicator when value is absent/likely missing.
+    """
+    missing_text = "N/A" if lang == "en" else "无法计算"
+    if value is None:
+        return missing_text
+    if likely_missing:
+        return missing_text
+    try:
+        amount = float(value)
+    except (TypeError, ValueError):
+        return missing_text
     return f"{amount:,.2f}"
 
 
@@ -109,7 +134,4 @@ def _missing_gap_codes(gap: dict[str, Any]) -> list[str]:
 
 
 def _portfolio_summary(context: dict[str, Any]) -> dict[str, Any]:
-    return _as_dict(
-        context["artifacts"].get("portfolio_summary")
-        or context["report"].get("portfolio_metrics")
-    )
+    return _as_dict(context["artifacts"].get("portfolio_summary") or context["report"].get("portfolio_metrics"))

@@ -11,13 +11,15 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from .report_safety import FORBIDDEN_EXECUTION_FIELDS, find_forbidden_execution_fields
+from .report_safety import FORBIDDEN_EXECUTION_FIELDS
 
-_EXTENDED_FORBIDDEN_FIELDS = FORBIDDEN_EXECUTION_FIELDS | frozenset({
-    "actual_fill",
-    "filled_at",
-    "trade_confirmation_id",
-})
+_EXTENDED_FORBIDDEN_FIELDS = FORBIDDEN_EXECUTION_FIELDS | frozenset(
+    {
+        "actual_fill",
+        "filled_at",
+        "trade_confirmation_id",
+    }
+)
 
 
 def evaluate_advisory_quality_gate(
@@ -104,14 +106,13 @@ def _check_formal_source_boundary(fr: dict, ds: dict | None) -> dict:
     decision_status = str(summary.get("decision_status", ""))
     formal_source = str(safety.get("formal_decision_source", ""))
 
-    if decision_status in ("FORMAL_DECISION", "BLOCKED", "DOWNGRADED"):
-        if formal_source != "decision_support":
-            return _make_check(
-                "formal_source_boundary",
-                "FAIL",
-                f"decision_status={decision_status} but formal_decision_source={formal_source}, expected decision_support",
-                {"decision_status": decision_status, "formal_decision_source": formal_source},
-            )
+    if decision_status in ("FORMAL_DECISION", "BLOCKED", "DOWNGRADED") and formal_source != "decision_support":
+        return _make_check(
+            "formal_source_boundary",
+            "FAIL",
+            f"decision_status={decision_status} but formal_decision_source={formal_source}, expected decision_support",
+            {"decision_status": decision_status, "formal_decision_source": formal_source},
+        )
     if ds is None and decision_status not in ("NO_FORMAL_DECISION", ""):
         return _make_check(
             "formal_source_boundary",
@@ -183,9 +184,8 @@ def _check_decision_support_required_artifacts(ds: dict | None) -> dict:
         missing.append("execution_ledger or decision")
 
     ledger = ds_artifacts.get("execution_ledger", {})
-    if isinstance(ledger, dict):
-        if "ledger_summary" not in ledger:
-            missing.append("ledger_summary")
+    if isinstance(ledger, dict) and "ledger_summary" not in ledger:
+        missing.append("ledger_summary")
 
     if "evidence_anchor_diagnostics" not in ds_artifacts:
         missing.append("evidence_anchor_diagnostics")
@@ -262,11 +262,92 @@ def _check_active_trade_anchor_gate(ds: dict | None, eg: dict) -> dict:
                 f"active {action} decision allowed without evidence anchors or rationale_anchor",
                 {"action": action, "rationale_anchor": None, "evidence_graph_items": 0},
             )
+
+    # Fallback-only evidence gate: active actions must not be driven solely by fallback evidence
+    fallback_only = _is_fallback_only_evidence(ds_artifacts, eg)
+    if fallback_only:
+        return _make_check(
+            "active_trade_anchor_gate",
+            "FAIL",
+            f"active {action} decision has only fallback evidence anchors; "
+            f"active actions require at least one specific (non-fallback) evidence anchor",
+            {"action": action, "fallback_only_evidence": True},
+        )
+
     return _make_check(
         "active_trade_anchor_gate",
         "PASS",
         f"active {action} decision has evidence anchors",
     )
+
+
+# Query types that represent specific (non-fallback) evidence
+_SPECIFIC_QUERY_TYPES = frozenset(
+    {
+        "holding_company",
+        "benchmark",
+        "fund_name",
+        "fund_code",
+        "fund_manager",
+    }
+)
+
+
+def _is_fallback_only_evidence(ds_artifacts: dict, eg: dict) -> bool:
+    """Check if all evidence for an active decision comes from fallback queries.
+
+    Returns True if there is evidence but ALL of it is from fallback queries
+    (is_fallback_query=True or query_type=theme_fallback). Returns False if
+    there is at least one non-fallback evidence anchor.
+    """
+    anchor_diag = ds_artifacts.get("evidence_anchor_diagnostics", {})
+    anchor_details = []
+    if isinstance(anchor_diag, dict):
+        anchor_details = anchor_diag.get("anchor_details", [])
+
+    # Check anchor_details from decision_support diagnostics
+    if anchor_details:
+        has_specific = False
+        for anchor in anchor_details:
+            if not isinstance(anchor, dict):
+                continue
+            query_type = anchor.get("query_type", "")
+            is_fallback = anchor.get("is_fallback_query", False)
+            if query_type in _SPECIFIC_QUERY_TYPES and not is_fallback:
+                has_specific = True
+                break
+        if not has_specific:
+            # All anchors are fallback — check if there are any anchors at all
+            return bool(anchor_details)
+        return False  # Has at least one specific anchor
+
+    # Fallback: check evidence_graph items directly
+    eg_items = eg.get("items", {})
+    if not eg_items:
+        return False  # No items means no fallback-only issue (handled by anchor check above)
+
+    has_any_evidence = False
+    has_specific_evidence = False
+    for item_data in eg_items.values() if isinstance(eg_items, dict) else eg_items:
+        if not isinstance(item_data, dict):
+            continue
+        has_any_evidence = True
+        query_type = item_data.get("query_type", "")
+        is_fallback = item_data.get("is_fallback_query", False)
+        provenance = item_data.get("provenance", {})
+        value = item_data.get("value", {})
+        if isinstance(provenance, dict):
+            query_type = query_type or provenance.get("query_type", "")
+            is_fallback = is_fallback or provenance.get("is_fallback_query", False)
+        if isinstance(value, dict):
+            query_type = query_type or value.get("query_type", "")
+            is_fallback = is_fallback or value.get("is_fallback_query", False)
+
+        if query_type in _SPECIFIC_QUERY_TYPES and not is_fallback:
+            has_specific_evidence = True
+            break
+
+    return has_any_evidence and not has_specific_evidence
 
 
 def _check_missing_data_disclosed(fa: dict, fr: dict) -> dict:
@@ -300,7 +381,18 @@ def _check_missing_data_disclosed(fa: dict, fr: dict) -> dict:
             if isinstance(section, dict) and section.get("id") == field:
                 has_disclosure = True
 
-    disclosure_phrases = ("missing", "incomplete", "partial", "limitation", "gap", "缺失", "不完整", "部分", "限制", "证据不足")
+    disclosure_phrases = (
+        "missing",
+        "incomplete",
+        "partial",
+        "limitation",
+        "gap",
+        "缺失",
+        "不完整",
+        "部分",
+        "限制",
+        "证据不足",
+    )
     for phrase in disclosure_phrases:
         if phrase in fr_text.lower() or phrase in fr_text:
             has_disclosure = True
@@ -369,7 +461,10 @@ def _check_action_boundary_present(fr: dict, ds: dict | None) -> dict:
     bullets = boundary_section.get("bullets", [])
     text = " ".join(str(b) for b in bullets)
 
-    has_no_broker = any(kw in text for kw in ("不执行券商下单", "does not execute broker", "no broker execution", "not execute", "不执行"))
+    has_no_broker = any(
+        kw in text
+        for kw in ("不执行券商下单", "does not execute broker", "no broker execution", "not execute", "不执行")
+    )
     if not has_no_broker:
         return _make_check(
             "action_boundary_present",
@@ -382,7 +477,9 @@ def _check_action_boundary_present(fr: dict, ds: dict | None) -> dict:
     decision_status = str(summary.get("decision_status", ""))
 
     if decision_status == "NO_FORMAL_DECISION":
-        has_no_formal = any(kw in text for kw in ("no formal decision", "未进行正式决策", "no formal", "report-only", "仅报告"))
+        has_no_formal = any(
+            kw in text for kw in ("no formal decision", "未进行正式决策", "no formal", "report-only", "仅报告")
+        )
         if not has_no_formal:
             return _make_check(
                 "action_boundary_present",
@@ -411,6 +508,7 @@ def _check_zh_direct_answer_present(fr: dict, language: str | None) -> dict:
     is_zh = False
     if effective_lang:
         from .report_status import normalize_language
+
         is_zh = normalize_language(effective_lang) == "zh-CN"
 
     if not is_zh:
@@ -497,7 +595,9 @@ def _check_suggested_rebalance_analysis_only(fa: dict, fr: dict) -> dict:
             boundary_text = " ".join(str(b) for b in section.get("bullets", []))
             break
 
-    has_analysis_only = any(kw in boundary_text for kw in ("analysis-only", "仅分析", "分析用途", "not execution", "advisory only"))
+    has_analysis_only = any(
+        kw in boundary_text for kw in ("analysis-only", "仅分析", "分析用途", "not execution", "advisory only")
+    )
     if not has_analysis_only:
         return _make_check(
             "suggested_rebalance_analysis_only",
@@ -597,3 +697,136 @@ def _flatten_report_text(fr: dict) -> str:
         for bullet in chinese.get("bullets", []):
             parts.append(str(bullet))
     return " ".join(parts)
+
+
+# ---------------------------------------------------------------------------
+# Status split functions (Task 6)
+# ---------------------------------------------------------------------------
+
+
+def compute_quality_status(
+    quality_gate_result: dict,
+    data_completeness: dict | None = None,
+    fund_analysis_output: dict | None = None,
+    final_report: dict | None = None,
+) -> dict:
+    """Compute split status from quality gate and data completeness.
+
+    Returns:
+    - pipeline_status: SUCCESS | PARTIAL | FAILED
+    - data_readiness_status: COMPLETE | INCOMPLETE | BLOCKED_BY_MISSING_CORE_DATA
+    - engineering_status: PASS | NEEDS_FIX | FAILED
+    - report_professional_status: PROFESSIONAL | LIMITED_BY_DATA | NOT_USABLE
+    - required_user_data: list of missing data fields
+    """
+    qg = quality_gate_result or {}
+    checks = qg.get("checks", [])
+    fail_count = qg.get("summary", {}).get("fail_count", 0)
+    warn_count = qg.get("summary", {}).get("warn_count", 0)
+
+    # Extract data completeness info
+    dc = data_completeness or {}
+    grade = dc.get("grade", "D")
+    score = dc.get("score", 0.0)
+    missing_sections = dc.get("missing_sections", [])
+    critical_missing = dc.get("critical_missing", [])
+
+    # Determine pipeline_status
+    pipeline_status = "PARTIAL" if fail_count > 0 or warn_count > 0 else "SUCCESS"
+
+    # Determine data_readiness_status
+    # Critical missing sections block data readiness
+    core_missing = {"Portfolio Snapshot", "Current Value Or Nav"}
+    has_core_missing = any(ms in core_missing for ms in critical_missing)
+
+    if has_core_missing:
+        data_readiness_status = "BLOCKED_BY_MISSING_CORE_DATA"
+    elif grade in ("C", "D"):
+        data_readiness_status = "INCOMPLETE"
+    else:
+        data_readiness_status = "COMPLETE"
+
+    # Determine engineering_status
+    # Hard failures: CLI crash, report not generated, fake precision, leaked secrets,
+    # missing data disclosure, active action without evidence anchors
+    hard_failure_checks = {
+        "fund_analysis_no_formal_decision",  # Decision/ExecutionLedger in fund_analysis
+        "no_broker_execution",  # Broker execution fields found
+        "active_trade_anchor_gate",  # Active action without evidence
+    }
+
+    engineering_failures = [c for c in checks if c.get("status") == "FAIL" and c.get("id") in hard_failure_checks]
+
+    if engineering_failures:
+        engineering_status = "FAILED"
+    elif fail_count > 0:
+        # Check if failures are due to missing data (not engineering issues)
+        missing_data_related = [c for c in checks if c.get("status") == "FAIL" and "missing" in c.get("id", "").lower()]
+        engineering_status = "PASS" if missing_data_related and not engineering_failures else "NEEDS_FIX"
+    else:
+        engineering_status = "PASS"
+
+    # Determine report_professional_status
+    # Grade D or critical missing = not usable
+    # Grade C or missing optional = limited by data
+    # Grade A/B with all critical = professional
+    if has_core_missing or grade == "D":
+        report_professional_status = "NOT_USABLE"
+    elif grade == "C" or missing_sections:
+        report_professional_status = "LIMITED_BY_DATA"
+    else:
+        report_professional_status = "PROFESSIONAL"
+
+    # Determine required_user_data
+    required_user_data: list[str] = []
+
+    # Check fund_analysis for missing data
+    fa = fund_analysis_output or {}
+    fa_artifacts = fa.get("artifacts", {})
+
+    # Check factor_snapshot for missing values
+    factor_snapshot = fa_artifacts.get("factor_snapshot", {})
+    if factor_snapshot:
+        dq = factor_snapshot.get("data_quality", {})
+        if dq.get("current_value_missing_count", 0) > 0:
+            required_user_data.append("current_value")
+        if dq.get("cost_basis_missing_count", 0) > 0:
+            required_user_data.append("cost_basis")
+        if dq.get("units_missing_count", 0) > 0:
+            required_user_data.append("units")
+        if dq.get("nav_missing_count", 0) > 0:
+            required_user_data.append("nav")
+
+    # Check data completeness for missing sections
+    if "Fund Profiles" in missing_sections:
+        required_user_data.append("fund_profile")
+    if "Nav History" in missing_sections:
+        required_user_data.append("NAV_history")
+    if "Holdings" in missing_sections:
+        required_user_data.append("holdings")
+    if "Risk Profile" in missing_sections:
+        required_user_data.append("risk_profile")
+
+    # Check for uncertainty_note in factor_snapshot
+    if factor_snapshot:
+        uncertainty_note = factor_snapshot.get("data_quality", {}).get("uncertainty_note")
+        if not uncertainty_note and data_readiness_status != "COMPLETE" and engineering_status == "PASS":
+            # If data is incomplete but no uncertainty note, that's an engineering issue
+            engineering_status = "NEEDS_FIX"
+
+    # Hard engineering failures override pipeline_status to FAILED
+    if engineering_status == "FAILED":
+        pipeline_status = "FAILED"
+
+    return {
+        "pipeline_status": pipeline_status,
+        "data_readiness_status": data_readiness_status,
+        "engineering_status": engineering_status,
+        "report_professional_status": report_professional_status,
+        "required_user_data": list(set(required_user_data)),  # Deduplicate
+        "data_completeness_grade": grade,
+        "data_completeness_score": score,
+        "quality_gate_passed": qg.get("passed", False),
+        "quality_gate_fail_count": fail_count,
+        "quality_gate_warn_count": warn_count,
+    }

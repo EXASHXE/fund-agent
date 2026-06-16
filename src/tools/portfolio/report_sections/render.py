@@ -121,7 +121,14 @@ def compose_personal_fund_report(
         ]
     )
     sections = _localize_sections(sections, language)
-    quality_gate = _build_quality_gate(data_completeness, sections, options)
+    quality_gate_result = _as_dict(artifacts.get("report_quality_gate"))
+    quality_gate = _build_quality_gate(
+        data_completeness,
+        sections,
+        options,
+        quality_gate_result=quality_gate_result or None,
+        fund_analysis_output=artifacts,
+    )
 
     return {
         "report_sections": sections,
@@ -195,9 +202,57 @@ def _build_quality_gate(
     data_completeness: dict[str, Any],
     sections: list[dict[str, Any]],
     options: dict[str, Any],
+    quality_gate_result: dict[str, Any] | None = None,
+    fund_analysis_output: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    """Build quality gate dict with backward-compatible fields and new status split.
+
+    When *quality_gate_result* is provided, delegates to
+    ``compute_quality_status`` and derives the legacy fields from the
+    split status.  Otherwise falls back to the original grade-based logic
+    so that existing callers continue to work.
+    """
+    from src.tools.workflow.advisory_quality_gate import compute_quality_status
+
     grade = str(data_completeness.get("grade", "D") if data_completeness else "D")
     minimal_report_mode = bool(options.get("minimal_report_mode"))
+
+    if quality_gate_result is not None:
+        status = compute_quality_status(
+            quality_gate_result,
+            data_completeness,
+            fund_analysis_output,
+        )
+        rps = status["report_professional_status"]
+
+        # Derive backward-compatible can_publish_professional_report
+        if rps == "PROFESSIONAL":
+            can_publish = True
+            reason = f"Data completeness grade {grade} supports a professional report."
+        elif rps == "LIMITED_BY_DATA":
+            can_publish = True
+            reason = "Data completeness grade C supports publication only with prominent limitations."
+        elif grade == "D" and minimal_report_mode:
+            can_publish = True
+            reason = "Minimal report mode requested; publish only as a limited snapshot."
+        else:
+            can_publish = False
+            reason = "Data completeness grade D or missing core sections block a professional report."
+
+        return {
+            # Legacy backward-compatible fields
+            "grade": grade if grade in {"A", "B", "C", "D"} else "D",
+            "can_publish_professional_report": can_publish,
+            "reason": reason,
+            # New status-split fields
+            "pipeline_status": status["pipeline_status"],
+            "data_readiness_status": status["data_readiness_status"],
+            "engineering_status": status["engineering_status"],
+            "report_professional_status": status["report_professional_status"],
+            "required_user_data": status["required_user_data"],
+        }
+
+    # --- Fallback: original logic (no quality_gate_result supplied) ---
     missing_core = {
         section["id"]
         for section in sections

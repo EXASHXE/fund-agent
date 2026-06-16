@@ -1,0 +1,95 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FundProfileSnapshot",
+  "description": "Host-owned fund profile snapshot for KG-driven entity extraction. Focused, clean source for fund_profiles, fund_holdings, and benchmark data — separate from provider_data_snapshot which mixes NAV/benchmark/peer/fee data. fund-agent core consumes host-provided snapshots. No real private data. All data must be synthetic in demo fixtures.",
+  "type": "object",
+  "required": ["schema_version", "as_of_date"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "fund_profile_snapshot.v1"
+    },
+    "as_of_date": {
+      "type": "string",
+      "description": "Date this snapshot was captured (YYYY-MM-DD)"
+    },
+    "fund_profiles": {
+      "type": "object",
+      "description": "Fund profile by fund code",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["fund_code", "fund_name"],
+        "properties": {
+          "fund_code": {"type": "string"},
+          "fund_name": {"type": "string"},
+          "fund_type": {"type": "string"},
+          "manager": {"type": "string"},
+          "benchmark": {"type": "string"},
+          "inception_date": {"type": "string"},
+          "size_category": {"type": "string"},
+          "tags": {
+            "type": "array",
+            "items": {"type": "string"}
+          }
+        }
+      }
+    },
+    "fund_holdings": {
+      "type": "object",
+      "description": "Fund holdings by fund code",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["fund_code", "as_of", "holdings"],
+        "properties": {
+          "fund_code": {"type": "string"},
+          "as_of": {"type": "string"},
+          "holdings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "weight"],
+              "properties": {
+                "name": {"type": "string"},
+                "weight": {"type": "number"},
+                "code": {"type": ["string", "null"]},
+                "asset_type": {"type": ["string", "null"]},
+                "industry": {"type": ["string", "null"]}
+              }
+            }
+          }
+        }
+      }
+    },
+    "benchmark_info": {
+      "type": "object",
+      "description": "Benchmark/index info by symbol",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["symbol", "name"],
+        "properties": {
+          "symbol": {"type": "string"},
+          "name": {"type": "string"},
+          "provider": {"type": "string"},
+          "asset_class": {"type": "string"}
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "description": "Overall snapshot provenance metadata",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "source": {"type": "string"},
+          "fetched_at": {"type": "string"},
+          "notes": {"type": "string"}
+        }
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "description": "Overall snapshot limitations",
+      "items": {"type": "string"}
+    }
+  }
+}

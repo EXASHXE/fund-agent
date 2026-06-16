@@ -57,6 +57,8 @@ QUERY_TYPE_PRIORITY = {
     "holding_ticker": 1,
     "benchmark": 1,
     "tracking_index": 1,
+    "fund_name": 2,
+    "fund_code": 2,
     "fund_profile": 2,
     "fund_manager": 2,
     "top_industry": 2,
@@ -215,6 +217,239 @@ def _extract_benchmark_index(provider_snapshot: dict | None) -> dict[str, str]:
 
 
 # ---------------------------------------------------------------------------
+# Fund profile snapshot extraction (dedicated KG source)
+# ---------------------------------------------------------------------------
+
+
+def _extract_from_fund_profile_snapshot(
+    snapshot: dict | None,
+) -> tuple[list[dict], list[dict]]:
+    """Extract entities and query plan entries from fund_profile_snapshot.
+
+    Returns (entities, query_plan_entries) for KG context merging.
+    Uses entity types from ENTITY_TYPES and priority levels from
+    QUERY_TYPE_PRIORITY.
+    """
+    if not snapshot:
+        return [], []
+
+    entities: list[dict] = []
+    query_plan_entries: list[dict] = []
+    seen_entity_ids: set[str] = set()
+
+    # --- fund_profiles ---
+    fund_profiles = snapshot.get("fund_profiles", {})
+    if not isinstance(fund_profiles, dict):
+        fund_profiles = {}
+
+    for _fund_code, profile in fund_profiles.items():
+        if not isinstance(profile, dict):
+            continue
+
+        fc = profile.get("fund_code", "")
+        fn = profile.get("fund_name", "")
+        manager = profile.get("manager", "")
+        benchmark = profile.get("benchmark", "")
+        _tags = profile.get("tags", [])  # noqa: F841 — reserved for future theme expansion
+        related_funds = [fn] if fn else []
+
+        # fund_profile entity
+        if fc or fn:
+            label = fc or fn
+            ent = _build_entity(
+                "fund_profile",
+                label,
+                source="fund_profile_snapshot",
+                confidence="high",
+                related_funds=related_funds,
+            )
+            if ent["entity_id"] not in seen_entity_ids:
+                entities.append(ent)
+                seen_entity_ids.add(ent["entity_id"])
+
+        # fund_manager entity
+        if manager:
+            ent = _build_entity(
+                "fund_manager",
+                manager,
+                source="fund_profile_snapshot",
+                confidence="high",
+                related_funds=related_funds,
+            )
+            if ent["entity_id"] not in seen_entity_ids:
+                entities.append(ent)
+                seen_entity_ids.add(ent["entity_id"])
+            query_plan_entries.append(
+                _build_query_plan_entry(
+                    query=manager,
+                    query_type="fund_manager",
+                    entities=[f"fund_manager:{manager}"],
+                    related_funds=related_funds,
+                    reason=f"Fund manager of {fn or fc}",
+                    source="fund_profile_snapshot",
+                    confidence="high",
+                )
+            )
+
+        # benchmark entity
+        if benchmark:
+            ent = _build_entity(
+                "benchmark",
+                benchmark,
+                source="fund_profile_snapshot",
+                confidence="high",
+                related_funds=related_funds,
+            )
+            if ent["entity_id"] not in seen_entity_ids:
+                entities.append(ent)
+                seen_entity_ids.add(ent["entity_id"])
+            query_plan_entries.append(
+                _build_query_plan_entry(
+                    query=benchmark,
+                    query_type="benchmark",
+                    entities=[f"benchmark:{benchmark}"],
+                    related_funds=related_funds,
+                    reason=f"Benchmark for {fn or fc}",
+                    source="fund_profile_snapshot",
+                    confidence="high",
+                )
+            )
+
+        # fund_profile query plan entry
+        if fn:
+            query_plan_entries.append(
+                _build_query_plan_entry(
+                    query=fn,
+                    query_type="fund_profile",
+                    entities=[f"fund_profile:{fc or fn}"],
+                    related_funds=related_funds,
+                    reason=f"Fund profile for {fn}",
+                    source="fund_profile_snapshot",
+                    confidence="high",
+                )
+            )
+
+    # --- fund_holdings ---
+    fund_holdings = snapshot.get("fund_holdings", {})
+    if not isinstance(fund_holdings, dict):
+        fund_holdings = {}
+
+    for _fund_code, holding_data in fund_holdings.items():
+        if not isinstance(holding_data, dict):
+            continue
+
+        fc = holding_data.get("fund_code", "")
+        holdings_list = holding_data.get("holdings", [])
+        if not isinstance(holdings_list, list):
+            continue
+
+        related_funds = [fc] if fc else []
+
+        for holding in holdings_list:
+            name = holding.get("name", "")
+            code = holding.get("code", "")
+            industry = holding.get("industry", "")
+            weight = holding.get("weight", 0)
+
+            # holding_company entity
+            if name:
+                ent = _build_entity(
+                    "holding_company",
+                    name,
+                    source="fund_profile_snapshot",
+                    confidence="high",
+                    related_funds=related_funds,
+                )
+                if ent["entity_id"] not in seen_entity_ids:
+                    entities.append(ent)
+                    seen_entity_ids.add(ent["entity_id"])
+                query_plan_entries.append(
+                    _build_query_plan_entry(
+                        query=name,
+                        query_type="holding_company",
+                        entities=[f"holding_company:{name}"],
+                        related_funds=related_funds,
+                        reason=f"Top holding of {fc} (weight={weight}%)",
+                        source="fund_profile_snapshot",
+                        confidence="high",
+                    )
+                )
+
+            # holding_ticker entity
+            if code:
+                ent = _build_entity(
+                    "holding_ticker",
+                    code,
+                    source="fund_profile_snapshot",
+                    confidence="high",
+                    related_funds=related_funds,
+                )
+                if ent["entity_id"] not in seen_entity_ids:
+                    entities.append(ent)
+                    seen_entity_ids.add(ent["entity_id"])
+                query_plan_entries.append(
+                    _build_query_plan_entry(
+                        query=code,
+                        query_type="holding_ticker",
+                        entities=[f"holding_ticker:{code}"],
+                        related_funds=related_funds,
+                        reason=f"Ticker for {name or code} in {fc}",
+                        source="fund_profile_snapshot",
+                        confidence="high",
+                    )
+                )
+
+            # industry entity from holding
+            if industry:
+                ent = _build_entity(
+                    "industry",
+                    industry,
+                    source="fund_profile_snapshot",
+                    confidence="medium",
+                    related_funds=related_funds,
+                )
+                if ent["entity_id"] not in seen_entity_ids:
+                    entities.append(ent)
+                    seen_entity_ids.add(ent["entity_id"])
+
+    # --- benchmark_info ---
+    benchmark_info = snapshot.get("benchmark_info", {})
+    if not isinstance(benchmark_info, dict):
+        benchmark_info = {}
+
+    for _symbol, bdata in benchmark_info.items():
+        if not isinstance(bdata, dict):
+            continue
+
+        symbol = bdata.get("symbol", "")
+        name = bdata.get("name", "")
+
+        if symbol:
+            ent = _build_entity(
+                "benchmark",
+                symbol,
+                source="fund_profile_snapshot",
+                confidence="high",
+            )
+            if ent["entity_id"] not in seen_entity_ids:
+                entities.append(ent)
+                seen_entity_ids.add(ent["entity_id"])
+
+        if name and name != symbol:
+            ent = _build_entity(
+                "benchmark",
+                name,
+                source="fund_profile_snapshot",
+                confidence="medium",
+            )
+            if ent["entity_id"] not in seen_entity_ids:
+                entities.append(ent)
+                seen_entity_ids.add(ent["entity_id"])
+
+    return entities, query_plan_entries
+
+
+# ---------------------------------------------------------------------------
 # Entity and query plan building
 # ---------------------------------------------------------------------------
 
@@ -280,6 +515,7 @@ def build_kg_context(
     portfolio_input: dict,
     manual_transactions: list[dict] | None = None,
     provider_snapshot: dict | None = None,
+    fund_profile_snapshot: dict | None = None,
 ) -> dict:
     """Build the knowledge graph context snapshot dict."""
     now = datetime.now(UTC).isoformat()
@@ -292,6 +528,9 @@ def build_kg_context(
     fund_profiles = _extract_fund_profiles(provider_snapshot)
     fund_holdings = _extract_fund_holdings(provider_snapshot)
     benchmark_map = _extract_benchmark_index(provider_snapshot)
+
+    # Extract fund_profile_snapshot entities and query plan entries
+    fps_entities, fps_query_plan = _extract_from_fund_profile_snapshot(fund_profile_snapshot)
 
     # Portfolio summary
     total_value = 0.0
@@ -391,6 +630,33 @@ def build_kg_context(
             if ent["entity_id"] not in seen_entity_ids:
                 entities.append(ent)
                 seen_entity_ids.add(ent["entity_id"])
+
+        # Priority 2: fund_name and fund_code query plan entries (always from portfolio_input)
+        if fund_name:
+            query_plan.append(
+                _build_query_plan_entry(
+                    query=fund_name,
+                    query_type="fund_name",
+                    entities=[f"fund_name:{fund_name}"],
+                    related_funds=related_funds,
+                    reason=f"Fund name from portfolio: {fund_name}",
+                    source="portfolio_input",
+                    confidence="medium",
+                )
+            )
+        if fund_code:
+            query_plan.append(
+                _build_query_plan_entry(
+                    query=fund_code,
+                    query_type="fund_code",
+                    entities=[f"fund:{fund_code}"],
+                    related_funds=related_funds,
+                    reason=f"Fund code from portfolio: {fund_code}",
+                    source="portfolio_input",
+                    confidence="medium",
+                )
+            )
+
         if sector:
             ent = _build_entity("industry", sector, confidence="medium", related_funds=related_funds)
             if ent["entity_id"] not in seen_entity_ids:
@@ -644,6 +910,18 @@ def build_kg_context(
             deduped_plan.append(q)
             seen_qids.add(q["query_id"])
 
+    # Merge fund_profile_snapshot entities and query plan entries
+    # fund_profile_snapshot takes precedence for profile/holdings data
+    for ent in fps_entities:
+        if ent["entity_id"] not in seen_entity_ids:
+            entities.append(ent)
+            seen_entity_ids.add(ent["entity_id"])
+
+    for qp in fps_query_plan:
+        if qp["query_id"] not in seen_qids:
+            deduped_plan.append(qp)
+            seen_qids.add(qp["query_id"])
+
     # Add macro-level queries for unmatched watch topics (Priority 5 - fallback)
     matched_topic_set: set[str] = set()
     for fe in fund_entities:
@@ -684,11 +962,13 @@ def build_kg_context(
         "missing_data": missing_data,
         "data_quality": {
             "provider_snapshot_available": provider_snapshot is not None,
+            "fund_profile_snapshot_available": fund_profile_snapshot is not None,
             "fund_profiles_available": len(fund_profiles) > 0,
             "fund_holdings_available": len(fund_holdings) > 0,
             "benchmark_available": any(benchmark_map.values()),
             "data_quality_flags": data_quality_flags,
         },
+        "fund_profile_snapshot_ref": fund_profile_snapshot is not None,
     }
 
 
@@ -743,6 +1023,12 @@ def main(argv: list[str] | None = None) -> int:
         help="Path to provider_data_snapshot.private.json (optional)",
     )
     parser.add_argument(
+        "--fund-profile-snapshot",
+        type=Path,
+        default=None,
+        help="Path to fund_profile_snapshot.private.json (optional)",
+    )
+    parser.add_argument(
         "--output",
         required=True,
         type=Path,
@@ -760,12 +1046,14 @@ def main(argv: list[str] | None = None) -> int:
     # Read optional inputs
     manual_transactions = _read_csv(args.manual_transactions) if args.manual_transactions else None
     provider_snapshot = _read_json(args.provider_snapshot) if args.provider_snapshot else None
+    fund_profile_snapshot = _read_json(args.fund_profile_snapshot) if args.fund_profile_snapshot else None
 
     # Build snapshot
     result = build_kg_context(
         portfolio_input=portfolio_input,
         manual_transactions=manual_transactions,
         provider_snapshot=provider_snapshot,
+        fund_profile_snapshot=fund_profile_snapshot,
     )
 
     # Ensure output directory exists

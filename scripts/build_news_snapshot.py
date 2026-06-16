@@ -65,6 +65,22 @@ _THEME_QUERIES: dict[str, list[str]] = {
     "现金/余额宝/稳健理财": ["货币基金 收益", "余额宝 利率", "稳健理财 收益率"],
 }
 
+# Topic → keywords for detecting fund-name/topic overlap (used for theme deprecation)
+_TOPIC_KEYWORDS: dict[str, list[str]] = {
+    "半导体": ["半导体", "芯片", "集成电路", "晶圆", "封测", "光刻"],
+    "CPO": ["CPO", "光模块", "光通信", "光电"],
+    "创新药": ["创新药", "医药", "生物", "药", "医疗", "临床"],
+    "ASCO": ["ASCO", "肿瘤", "抗癌", "oncology"],
+    "QDII": ["QDII", "海外", "全球", "国际", "美元"],
+    "纳斯达克": ["纳斯达克", "NASDAQ", "纳指", "美股", "科技股"],
+    "红利低波": ["红利", "低波", "高股息", "分红", "价值"],
+    "短债": ["短债", "债券", "纯债", "利率债", "信用债"],
+    "标普500": ["标普", "S&P", "SP500", "500"],
+    "油气": ["油气", "石油", "原油", "OPEC", "能源", "天然气"],
+    "电池": ["电池", "锂电", "储能", "钠电", "固态电池", "新能源车"],
+    "现金/余额宝/稳健理财": ["现金", "余额宝", "货币", "理财", "稳健"],
+}
+
 
 def _build_query_plan(kg_context: dict, portfolio_input: dict | None) -> list[dict]:
     """Build a query plan from KG entities and watch topics.
@@ -76,12 +92,17 @@ def _build_query_plan(kg_context: dict, portfolio_input: dict | None) -> list[di
 
     # Check if KG context has new-style query plan with priorities
     kg_plan = kg_context.get("query_plan", [])
+    # Track topics covered by fund_name/fund_code queries for theme deprecation
+    fund_covered_topics: set[str] = set()
+
     if kg_plan and any("query_type" in qp for qp in kg_plan):
-        # New format with priorities - use directly with some enhancements
+        # New format with priorities - use directly with query expansion
         for qp in kg_plan:
             query_text = qp.get("query", "")
             if not query_text:
                 continue
+
+            query_type = qp.get("query_type", "theme_fallback")
 
             # Extract topic_tags from entities if not present
             topic_tags = qp.get("topic_tags", [])
@@ -92,11 +113,24 @@ def _build_query_plan(kg_context: dict, portfolio_input: dict | None) -> list[di
                     elif ent.startswith("industry:"):
                         topic_tags.append(ent.replace("industry:", ""))
 
+            # Query expansion for fund_name and fund_code types
+            expanded_query = query_text
+            if query_type == "fund_name":
+                expanded_query = f"{query_text} 基金 行情"
+                # Track which watch topics this fund_name covers
+                for topic, keywords in _TOPIC_KEYWORDS.items():
+                    for kw in keywords:
+                        if kw.lower() in query_text.lower():
+                            fund_covered_topics.add(topic)
+                            break
+            elif query_type == "fund_code":
+                expanded_query = f"{query_text} 基金 净值"
+
             queries.append(
                 {
                     "query_id": qp.get("query_id", hashlib.sha256(query_text.encode()).hexdigest()[:12]),
-                    "query": query_text,
-                    "query_type": qp.get("query_type", "theme_fallback"),
+                    "query": expanded_query,
+                    "query_type": query_type,
                     "priority": qp.get("priority", 5),
                     "entities": qp.get("entities", []),
                     "topic_tags": topic_tags,
@@ -122,15 +156,32 @@ def _build_query_plan(kg_context: dict, portfolio_input: dict | None) -> list[di
                     query_type = "benchmark"
                 elif any(e.startswith("fund_manager:") for e in entities):
                     query_type = "fund_manager"
+                elif any(e.startswith("fund_name:") for e in entities):
+                    query_type = "fund_name"
+                elif any(e.startswith("fund:") for e in entities):
+                    query_type = "fund_code"
                 elif any(e.startswith("industry:") for e in entities):
                     query_type = "sector"
                 elif any(e.startswith("macro:") for e in entities):
                     query_type = "theme"
 
+                # Query expansion for fund_name and fund_code types
+                expanded_query = query_text
+                if query_type == "fund_name":
+                    expanded_query = f"{query_text} 基金 行情"
+                    # Track which watch topics this fund_name covers
+                    for topic, keywords in _TOPIC_KEYWORDS.items():
+                        for kw in keywords:
+                            if kw.lower() in query_text.lower():
+                                fund_covered_topics.add(topic)
+                                break
+                elif query_type == "fund_code":
+                    expanded_query = f"{query_text} 基金 净值"
+
                 queries.append(
                     {
                         "query_id": qp.get("query_id", hashlib.sha256(query_text.encode()).hexdigest()[:12]),
-                        "query": query_text,
+                        "query": expanded_query,
                         "query_type": query_type,
                         "priority": 5,  # Default priority
                         "entities": entities,
@@ -146,7 +197,56 @@ def _build_query_plan(kg_context: dict, portfolio_input: dict | None) -> list[di
         # From fund_entities, add fund-specific queries
         for fe in kg_context.get("fund_entities", []):
             fund_code = fe.get("fund_code", "")
+            fund_name = fe.get("fund_name", "")
+
+            # Add fund_name query if not already present
+            if fund_name:
+                qid = hashlib.sha256(f"fund_name_{fund_name}".encode()).hexdigest()[:12]
+                queries.append(
+                    {
+                        "query_id": qid,
+                        "query": f"{fund_name} 基金 行情",
+                        "query_type": "fund_name",
+                        "priority": 2,
+                        "entities": [f"fund_name:{fund_name}"],
+                        "topic_tags": [],
+                        "related_funds": [fund_name],
+                        "reason": f"Fund name from portfolio: {fund_name}",
+                        "source": "portfolio_input",
+                        "confidence": "medium",
+                        "fallback": False,
+                    }
+                )
+                # Track which watch topics this fund_name covers
+                for topic, keywords in _TOPIC_KEYWORDS.items():
+                    for kw in keywords:
+                        if kw.lower() in fund_name.lower():
+                            fund_covered_topics.add(topic)
+                            break
+
+            # Add fund_code query if not already present
+            if fund_code:
+                qid = hashlib.sha256(f"fund_code_{fund_code}".encode()).hexdigest()[:12]
+                queries.append(
+                    {
+                        "query_id": qid,
+                        "query": f"{fund_code} 基金 净值",
+                        "query_type": "fund_code",
+                        "priority": 2,
+                        "entities": [f"fund:{fund_code}"],
+                        "topic_tags": [],
+                        "related_funds": [fund_name] if fund_name else [],
+                        "reason": f"Fund code from portfolio: {fund_code}",
+                        "source": "portfolio_input",
+                        "confidence": "medium",
+                        "fallback": False,
+                    }
+                )
+
+            # Theme queries: skip _THEME_QUERIES for topics already covered by fund_name/fund_code
             for topic in fe.get("theme_tags", []):
+                if topic in fund_covered_topics:
+                    continue  # Already covered by fund-specific query
                 template_queries = _THEME_QUERIES.get(topic, [])
                 for tq in template_queries:
                     qid = hashlib.sha256(f"{fund_code}_{tq}".encode()).hexdigest()[:12]
@@ -171,6 +271,8 @@ def _build_query_plan(kg_context: dict, portfolio_input: dict | None) -> list[di
         for q in queries:
             for t in q.get("topic_tags", []):
                 covered_topics.add(t)
+        # Also consider fund_covered_topics as covered
+        covered_topics.update(fund_covered_topics)
 
         for topic in kg_context.get("watch_topics", []):
             if topic not in covered_topics:
@@ -382,6 +484,33 @@ def _provider_finnhub(query: str, symbol: str | None = None) -> tuple[list[dict]
         return [], str(exc)
 
 
+def _extract_ticker_from_entities(entities: list[str]) -> str | None:
+    """Extract a valid stock ticker symbol from the entities list.
+
+    Looks for ``holding_ticker:XXX`` entries and validates that XXX is a
+    plausible US stock ticker (1-5 uppercase ASCII letters).  Returns the
+    first valid ticker found, or None when no ticker is available.
+
+    Chinese fund codes (e.g. ``fund:000001``) are deliberately excluded —
+    they are not Finnhub symbols.
+    """
+    import re
+
+    ticker_re = re.compile(r"^[A-Z]{1,5}$")
+
+    for ent in entities:
+        if not ent.startswith("holding_ticker:"):
+            continue
+        candidate = ent[len("holding_ticker:") :]
+        if not candidate:
+            continue
+        # Normalise to uppercase for validation
+        candidate_upper = candidate.upper()
+        if ticker_re.match(candidate_upper):
+            return candidate_upper
+    return None
+
+
 PROVIDER_FUNCS = {
     "tavily": lambda q, n: _provider_tavily(q, n),
     "bocha": lambda q, n: _provider_bocha(q, n),
@@ -446,6 +575,57 @@ def _compute_freshness_score(published_at: str, lookback_days: int) -> float:
         return 0.1
     except (ValueError, TypeError):
         return 0.3
+
+
+# Fallback confidence penalty constants
+_FALLBACK_CONFIDENCE_MULTIPLIER = 0.5
+_FALLBACK_RELEVANCE_MULTIPLIER = 0.5
+
+# Confidence level demotion map for fallback items
+_CONFIDENCE_LEVEL_DEMOTION: dict[str, str] = {
+    "high": "medium",
+    "medium": "low",
+    "low": "very_low",
+    "very_low": "very_low",
+}
+
+
+def _apply_fallback_confidence_penalty(item: dict) -> dict:
+    """Apply confidence penalty to news items from fallback queries.
+
+    When a query has fallback=True or query_type=theme_fallback, the resulting
+    news items get a 0.5x penalty on relevance_score and confidence, and the
+    confidence level is demoted. This prevents broad theme-level news from
+    dominating the evidence base.
+
+    Args:
+        item: A news item dict with relevance_score, confidence, and
+              is_fallback_query / query_type fields.
+
+    Returns:
+        The same item dict with penalized scores and fallback_confidence_applied flag.
+    """
+    is_fallback = item.get("is_fallback_query", False)
+    query_type = item.get("query_type", "")
+
+    if not is_fallback and query_type != "theme_fallback":
+        return item
+
+    # Apply 0.5x penalty to relevance_score
+    item["relevance_score"] = round(item.get("relevance_score", 0.0) * _FALLBACK_RELEVANCE_MULTIPLIER, 4)
+
+    # Apply 0.5x penalty to confidence (numeric)
+    item["confidence"] = round(item.get("confidence", 0.0) * _FALLBACK_CONFIDENCE_MULTIPLIER, 4)
+
+    # Demote confidence level if present
+    confidence_level = item.get("confidence_level", "")
+    if confidence_level in _CONFIDENCE_LEVEL_DEMOTION:
+        item["confidence_level"] = _CONFIDENCE_LEVEL_DEMOTION[confidence_level]
+
+    # Set flag indicating penalty was applied
+    item["fallback_confidence_applied"] = True
+
+    return item
 
 
 def _detect_language(text: str) -> str:
@@ -534,7 +714,13 @@ def build_news_snapshot(
 
             provider_attempts.append(pname)
             try:
-                items, error = PROVIDER_FUNCS[pname](query, max_results_per_query)
+                # Finnhub requires a valid stock ticker extracted from entities,
+                # not the generic query text.
+                if pname == "finnhub":
+                    ticker = _extract_ticker_from_entities(entities)
+                    items, error = _provider_finnhub(query, symbol=ticker)
+                else:
+                    items, error = PROVIDER_FUNCS[pname](query, max_results_per_query)
                 if error:
                     # Handle skipped_no_symbol for Finnhub - not an error, just skip
                     if error == "skipped_no_symbol":
@@ -577,31 +763,34 @@ def build_news_snapshot(
                     else:
                         final_confidence = base_confidence * 0.8
 
-                    all_items.append(
-                        {
-                            "id": item_id,
-                            "query_id": query_id,
-                            "provider": pname,
-                            "query": query,
-                            "query_type": query_type,
-                            "priority": priority,
-                            "title": title,
-                            "url": url,
-                            "source": source,
-                            "published_at": published_at,
-                            "summary": raw_item.get("summary", ""),
-                            "language": lang,
-                            "related_entities": entities,
-                            "related_funds": related_funds,
-                            "topic_tags": topic_tags,
-                            "reason": reason,
-                            "source_type": source,
-                            "relevance_score": relevance,
-                            "freshness_score": freshness,
-                            "confidence": round(final_confidence, 4),
-                            "is_fallback_query": is_fallback,
-                        }
-                    )
+                    news_item = {
+                        "id": item_id,
+                        "query_id": query_id,
+                        "provider": pname,
+                        "query": query,
+                        "query_type": query_type,
+                        "priority": priority,
+                        "title": title,
+                        "url": url,
+                        "source": source,
+                        "published_at": published_at,
+                        "summary": raw_item.get("summary", ""),
+                        "language": lang,
+                        "related_entities": entities,
+                        "related_funds": related_funds,
+                        "topic_tags": topic_tags,
+                        "reason": reason,
+                        "source_type": source,
+                        "relevance_score": relevance,
+                        "freshness_score": freshness,
+                        "confidence": round(final_confidence, 4),
+                        "is_fallback_query": is_fallback,
+                    }
+
+                    # Apply fallback confidence penalty for fallback queries
+                    news_item = _apply_fallback_confidence_penalty(news_item)
+
+                    all_items.append(news_item)
                     query_had_results = True
 
             except Exception as exc:
@@ -699,6 +888,12 @@ def main(argv: list[str] | None = None) -> int:
         help="Path to provider_data_snapshot.private.json (optional)",
     )
     parser.add_argument(
+        "--fund-profile-snapshot",
+        type=Path,
+        default=None,
+        help="Path to fund_profile_snapshot.private.json (optional, for query enrichment)",
+    )
+    parser.add_argument(
         "--output",
         required=True,
         type=Path,
@@ -716,6 +911,9 @@ def main(argv: list[str] | None = None) -> int:
     # Read optional inputs
     portfolio_input = _read_json(args.portfolio_input) if args.portfolio_input else None
     provider_snapshot = _read_json(args.provider_snapshot) if args.provider_snapshot else None
+    # fund_profile_snapshot read for future query enrichment (passthrough)
+    if args.fund_profile_snapshot:
+        _read_json(args.fund_profile_snapshot)  # noqa: F841 — passthrough placeholder
 
     # Build snapshot
     result = build_news_snapshot(

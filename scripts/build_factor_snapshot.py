@@ -112,6 +112,7 @@ def build_factor_snapshot(
     units_missing_count = 0
     nav_missing_count = 0
     current_value_missing_count = 0
+    zero_value_count = 0  # Holdings with current_value explicitly 0
 
     # Build a map from fund_code → kg_context fund_entity for theme tags
     kg_fund_map: dict[str, dict] = {}
@@ -149,6 +150,8 @@ def build_factor_snapshot(
             current_value = _safe_float(current_value_raw, 0.0)
             if current_value > 0:
                 holdings_with_value.append((_idx, h))
+            elif current_value == 0.0:
+                zero_value_count += 1
 
         sector = str(h.get("sector", h.get("industry", "")))
         source_platform = str(h.get("source_platform", h.get("platform", "")))
@@ -197,12 +200,7 @@ def build_factor_snapshot(
         # Unrealized gain/loss - only computable if we have both current_value and cost_basis
         unrealized_gain_loss_amount: float | None = None
         unrealized_gain_loss_pct: float | None = None
-        if (
-            current_value is not None
-            and known_cost_basis is not None
-            and known_cost_basis != 0
-            and current_value > 0
-        ):
+        if current_value is not None and known_cost_basis is not None and known_cost_basis != 0 and current_value > 0:
             unrealized_gain_loss_amount = round(current_value - known_cost_basis, 2)
             unrealized_gain_loss_pct = round((current_value - known_cost_basis) / known_cost_basis, 6)
 
@@ -270,6 +268,18 @@ def build_factor_snapshot(
         total_current_value = round(total_current_value, 2)
     else:
         total_current_value = None  # Unknown, not 0
+
+    # ------------------------------------------------------------------
+    # 80% heuristic: if most holdings have current_value=0 or None,
+    # treat the zeros as "likely missing" rather than "known to be zero"
+    # ------------------------------------------------------------------
+    current_value_likely_missing = False
+    total_holdings = len(holding_factors)
+    if total_holdings > 0:
+        likely_missing_count = zero_value_count + current_value_missing_count
+        if likely_missing_count / total_holdings >= 0.8:
+            current_value_likely_missing = True
+            total_current_value = None  # Override: treat as unknown
 
     # ------------------------------------------------------------------
     # Normalize weights and concentrations
@@ -486,6 +496,8 @@ def build_factor_snapshot(
         "units_missing_count": units_missing_count,
         "nav_missing_count": nav_missing_count,
         "current_value_missing_count": current_value_missing_count,
+        "zero_value_count": zero_value_count,
+        "current_value_likely_missing": current_value_likely_missing,
         "news_snapshot_missing": news_snapshot_missing,
         "provider_snapshot_missing": provider_snapshot_missing,
         "factor_confidence": factor_confidence,
@@ -554,6 +566,12 @@ def main(argv: list[str] | None = None) -> int:
         help="Path to knowledge_graph_context.private.json (optional)",
     )
     parser.add_argument(
+        "--fund-profile-snapshot",
+        type=Path,
+        default=None,
+        help="Path to fund_profile_snapshot.private.json (optional, read-only for profile enrichment)",
+    )
+    parser.add_argument(
         "--output",
         required=True,
         type=Path,
@@ -572,6 +590,9 @@ def main(argv: list[str] | None = None) -> int:
     provider_snapshot = _read_json(args.provider_snapshot) if args.provider_snapshot else None
     news_snapshot = _read_json(args.news_snapshot) if args.news_snapshot else None
     kg_context = _read_json(args.kg_context) if args.kg_context else None
+    # fund_profile_snapshot read for future profile enrichment (passthrough)
+    if args.fund_profile_snapshot:
+        _read_json(args.fund_profile_snapshot)  # noqa: F841 — passthrough placeholder
 
     # Build snapshot
     result = build_factor_snapshot(
