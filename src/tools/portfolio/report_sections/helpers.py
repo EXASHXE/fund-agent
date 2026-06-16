@@ -135,3 +135,13 @@ def _missing_gap_codes(gap: dict[str, Any]) -> list[str]:
 
 def _portfolio_summary(context: dict[str, Any]) -> dict[str, Any]:
     return _as_dict(context["artifacts"].get("portfolio_summary") or context["report"].get("portfolio_metrics"))
+
+
+def _current_value_likely_missing(context: dict[str, Any]) -> bool:
+    """Check if current_value is likely missing from the portfolio data."""
+    ps = _portfolio_summary(context)
+    if ps.get("current_value_likely_missing"):
+        return True
+    # Also check factor_snapshot data_quality if available
+    fs = _as_dict(context["artifacts"].get("factor_snapshot"))
+    return bool(fs.get("data_quality", {}).get("current_value_likely_missing"))

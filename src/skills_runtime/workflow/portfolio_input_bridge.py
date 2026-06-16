@@ -77,8 +77,19 @@ def bridge_portfolio_input(
             pos["holding_days"] = h["holding_days"]
         positions.append(pos)
 
-    total_value = sum(p["current_value"] for p in positions if p.get("current_value") is not None)
+    non_none_values = [p["current_value"] for p in positions if p.get("current_value") is not None]
+    total_value: float | None = sum(non_none_values) if non_none_values else None
     cash_available = 0.0
+
+    # Apply 80% heuristic: if most current_values are 0 or None, treat total as missing
+    total_positions = len(positions)
+    if total_positions > 0:
+        zero_or_none_count = sum(1 for p in positions if p.get("current_value") is None or p.get("current_value") == 0)
+        if zero_or_none_count / total_positions >= 0.8:
+            total_value = None
+            for p in positions:
+                if p.get("current_value") == 0:
+                    p["current_value_missing"] = True
     cash_alloc = portfolio_input.get("cash_allocation")
     if isinstance(cash_alloc, dict):
         cash_available = cash_alloc.get("cash_available", 0) or 0
@@ -110,6 +121,9 @@ def bridge_portfolio_input(
         "user_question": user_question,
         "analysis_mode": analysis_mode,
     }
+
+    if total_value is None:
+        payload["portfolio"]["current_value_likely_missing"] = True
 
     if portfolio_input.get("risk_profile_ref"):
         payload["risk_profile_ref"] = portfolio_input["risk_profile_ref"]

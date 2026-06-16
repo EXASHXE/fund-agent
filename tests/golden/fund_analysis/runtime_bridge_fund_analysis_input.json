@@ -929,7 +929,7 @@
         },
         {
           "bullets": [
-            "Trade budget: max buy 0.00, max sell 0.00, liquidity reserve 20,000.00."
+            "Trade budget: max buy 无法计算, max sell 无法计算, liquidity reserve 20,000.00."
           ],
           "data_sources": [
             "trade_budget",
@@ -1689,7 +1689,7 @@
       },
       {
         "bullets": [
-          "Trade budget: max buy 0.00, max sell 0.00, liquidity reserve 20,000.00."
+          "Trade budget: max buy 无法计算, max sell 无法计算, liquidity reserve 20,000.00."
         ],
         "data_sources": [
           "trade_budget",

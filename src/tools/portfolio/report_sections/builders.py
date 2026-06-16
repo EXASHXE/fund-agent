@@ -9,11 +9,12 @@ from src.tools.portfolio.report_sections.helpers import (
     _as_dict,
     _as_list,
     _best_total_return,
+    _current_value_likely_missing,
     _fixed,
     _format_counts,
     _largest_weight,
     _missing_gap_codes,
-    _money,
+    _money_or_missing,
     _pct,
     _portfolio_summary,
     _risk_counts_by_severity,
@@ -48,14 +49,15 @@ def _section(
 def _build_executive_summary(context: dict[str, Any]) -> dict[str, Any]:
     portfolio = _portfolio_summary(context)
     completeness = context["data_completeness"]
-    limitations = []
+    likely_missing = _current_value_likely_missing(context)
+    limitations: list[str] = []
     bullets: list[str] = []
     if portfolio:
         bullets.append(
             "Portfolio value "
-            f"{_money(portfolio.get('total_value'))} across "
+            f"{_money_or_missing(portfolio.get('total_value'), likely_missing=likely_missing)} across "
             f"{int(portfolio.get('position_count') or 0)} position(s); "
-            f"cash {_money(portfolio.get('cash_available'))}."
+            f"cash {_money_or_missing(portfolio.get('cash_available'), likely_missing=likely_missing)}."
         )
     else:
         limitations.append("Portfolio summary artifact is missing.")
@@ -90,14 +92,15 @@ def _build_executive_summary(context: dict[str, Any]) -> dict[str, Any]:
 def _build_portfolio_snapshot(context: dict[str, Any]) -> dict[str, Any]:
     portfolio = _portfolio_summary(context)
     positions = _as_dict(context["artifacts"].get("position_summary"))
+    likely_missing = _current_value_likely_missing(context)
     bullets: list[str] = []
     limitations: list[str] = []
 
     if portfolio:
         as_of = portfolio.get("as_of_date") or "unspecified date"
         bullets.append(
-            f"As of {as_of}, total value is {_money(portfolio.get('total_value'))} "
-            f"with {_money(portfolio.get('cash_available'))} cash."
+            f"As of {as_of}, total value is {_money_or_missing(portfolio.get('total_value'), likely_missing=likely_missing)} "
+            f"with {_money_or_missing(portfolio.get('cash_available'), likely_missing=likely_missing)} cash."
         )
         weights = _as_dict(portfolio.get("position_weights"))
         if weights:
@@ -122,10 +125,11 @@ def _build_pnl_and_cost_basis(context: dict[str, Any]) -> dict[str, Any]:
     limitations: list[str] = []
 
     if pnl:
+        likely_missing = _current_value_likely_missing(context)
         bullets.append(
             "Unrealized PnL is "
-            f"{_money(pnl.get('unrealized_pnl'))} "
-            f"({_pct(pnl.get('unrealized_pnl_pct'))}) on total cost {_money(pnl.get('total_cost'))}."
+            f"{_money_or_missing(pnl.get('unrealized_pnl'), likely_missing=likely_missing)} "
+            f"({_pct(pnl.get('unrealized_pnl_pct'))}) on total cost {_money_or_missing(pnl.get('total_cost'), likely_missing=likely_missing)}."
         )
         positions = _as_dict(pnl.get("positions"))
         if positions:
@@ -421,11 +425,12 @@ def _build_dca_and_trade_budget(context: dict[str, Any]) -> dict[str, Any]:
     limitations: list[str] = []
 
     if trade_budget:
+        likely_missing = _current_value_likely_missing(context)
         bullets.append(
             "Trade budget: max buy "
-            f"{_money(trade_budget.get('max_buy_amount'))}, max sell "
-            f"{_money(trade_budget.get('max_sell_amount'))}, liquidity reserve "
-            f"{_money(trade_budget.get('liquidity_reserve'))}."
+            f"{_money_or_missing(trade_budget.get('max_buy_amount'), likely_missing=likely_missing)}, max sell "
+            f"{_money_or_missing(trade_budget.get('max_sell_amount'), likely_missing=likely_missing)}, liquidity reserve "
+            f"{_money_or_missing(trade_budget.get('liquidity_reserve'), likely_missing=likely_missing)}."
         )
     else:
         limitations.append("Trade budget artifact is missing.")
@@ -717,7 +722,10 @@ def _build_cash_deployment(context: dict[str, Any]) -> dict[str, Any]:
         bullets.append(f"Cash accounting basis: {summary.get('cash_accounting_basis', 'unspecified')}.")
         deployable = summary.get("estimated_deployable_cash")
         if deployable is not None:
-            bullets.append(f"Estimated deployable cash: {_money(deployable)}.")
+            likely_missing = _current_value_likely_missing(context)
+            bullets.append(
+                f"Estimated deployable cash: {_money_or_missing(deployable, likely_missing=likely_missing)}."
+            )
     else:
         limitations.append("Cash deployment diagnostics are missing.")
 
@@ -870,9 +878,10 @@ def _build_rebalance_plan(context: dict[str, Any]) -> dict[str, Any]:
     limitations: list[str] = []
     if plan:
         trades = _as_list(plan.get("suggested_trade_plan"))
+        likely_missing = _current_value_likely_missing(context)
         bullets.append(
             f"Rebalance simulation produced {len(trades)} trade leg(s) "
-            f"with total trade amount {_money(plan.get('total_trade_amount'))}."
+            f"with total trade amount {_money_or_missing(plan.get('total_trade_amount'), likely_missing=likely_missing)}."
         )
         bullets.extend(_string_list(plan.get("warnings") or []))
         status = "OK"
