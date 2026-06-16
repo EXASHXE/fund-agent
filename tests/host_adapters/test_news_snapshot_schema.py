@@ -9,20 +9,16 @@ Uses mock provider responses — no real API keys needed.
 
 from __future__ import annotations
 
-import json
 import os
 import sys
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-
 ROOT = Path(__file__).resolve().parent.parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.build_news_snapshot import build_news_snapshot
-
+from scripts.build_news_snapshot import build_news_snapshot  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -141,29 +137,31 @@ class TestNewsSnapshotSchema:
 
     def test_items_structure_with_mock(self):
         """When providers return items, each item must have all required fields."""
-        with patch.dict(os.environ, {"TAVILY_API_KEY": "fake-key"}, clear=False):
-            with patch("scripts.build_news_snapshot._provider_tavily", side_effect=_mock_tavily_success):
-                result = build_news_snapshot(_sample_kg_context())
-                if result["items"]:
-                    item = result["items"][0]
-                    required_fields = [
-                        "id",
-                        "provider",
-                        "query",
-                        "title",
-                        "url",
-                        "source",
-                        "published_at",
-                        "summary",
-                        "language",
-                        "related_entities",
-                        "topic_tags",
-                        "relevance_score",
-                        "freshness_score",
-                        "confidence",
-                    ]
-                    for field in required_fields:
-                        assert field in item, f"Missing field: {field}"
+        with (
+            patch.dict(os.environ, {"TAVILY_API_KEY": "fake-key"}, clear=False),
+            patch("scripts.build_news_snapshot._provider_tavily", side_effect=_mock_tavily_success),
+        ):
+            result = build_news_snapshot(_sample_kg_context())
+            if result["items"]:
+                item = result["items"][0]
+                required_fields = [
+                    "id",
+                    "provider",
+                    "query",
+                    "title",
+                    "url",
+                    "source",
+                    "published_at",
+                    "summary",
+                    "language",
+                    "related_entities",
+                    "topic_tags",
+                    "relevance_score",
+                    "freshness_score",
+                    "confidence",
+                ]
+                for field in required_fields:
+                    assert field in item, f"Missing field: {field}"
 
     def test_data_quality_structure(self):
         """data_quality must have all required markers."""
@@ -195,16 +193,20 @@ class TestNewsSnapshotSchema:
 
     def test_item_relevance_score_range(self):
         """relevance_score must be between 0 and 1."""
-        with patch.dict(os.environ, {"TAVILY_API_KEY": "fake-key"}, clear=False):
-            with patch("scripts.build_news_snapshot._provider_tavily", side_effect=_mock_tavily_success):
-                result = build_news_snapshot(_sample_kg_context())
-                for item in result["items"]:
-                    assert 0.0 <= item["relevance_score"] <= 1.0
+        with (
+            patch.dict(os.environ, {"TAVILY_API_KEY": "fake-key"}, clear=False),
+            patch("scripts.build_news_snapshot._provider_tavily", side_effect=_mock_tavily_success),
+        ):
+            result = build_news_snapshot(_sample_kg_context())
+            for item in result["items"]:
+                assert 0.0 <= item["relevance_score"] <= 1.0
 
     def test_item_freshness_score_range(self):
         """freshness_score must be between 0 and 1."""
-        with patch.dict(os.environ, {"TAVILY_API_KEY": "fake-key"}, clear=False):
-            with patch("scripts.build_news_snapshot._provider_tavily", side_effect=_mock_tavily_success):
-                result = build_news_snapshot(_sample_kg_context())
-                for item in result["items"]:
-                    assert 0.0 <= item["freshness_score"] <= 1.0
+        with (
+            patch.dict(os.environ, {"TAVILY_API_KEY": "fake-key"}, clear=False),
+            patch("scripts.build_news_snapshot._provider_tavily", side_effect=_mock_tavily_success),
+        ):
+            result = build_news_snapshot(_sample_kg_context())
+            for item in result["items"]:
+                assert 0.0 <= item["freshness_score"] <= 1.0

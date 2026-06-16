@@ -12,13 +12,11 @@ import sys
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-
 ROOT = Path(__file__).resolve().parent.parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.build_news_snapshot import build_news_snapshot
+from scripts.build_news_snapshot import build_news_snapshot  # noqa: E402
 
 
 def _sample_kg_context() -> dict:
@@ -146,9 +144,11 @@ class TestNewsSnapshotNoKeyDegrades:
     def test_single_provider_failure_does_not_block_others(self):
         """If one provider fails, others should still be attempted."""
         # Set only Tavily key but mock it to fail
-        with patch.dict(os.environ, {"TAVILY_API_KEY": "fake-key"}, clear=False):
-            with patch("scripts.build_news_snapshot._provider_tavily", return_value=([], "mock error")):
-                result = build_news_snapshot(_sample_kg_context())
+        with (
+            patch.dict(os.environ, {"TAVILY_API_KEY": "fake-key"}, clear=False),
+            patch("scripts.build_news_snapshot._provider_tavily", return_value=([], "mock error")),
+        ):
+            result = build_news_snapshot(_sample_kg_context())
         # Tavily should report error
         assert result["provider_status"]["tavily"]["error"] is not None
         # Other providers should still be checked

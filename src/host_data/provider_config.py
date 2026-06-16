@@ -10,8 +10,9 @@ ProviderCredentials stores resolved secret values (never logged/committed).
 from __future__ import annotations
 
 import os
+from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Any, Mapping
+from typing import Any
 
 
 @dataclass
@@ -144,8 +145,7 @@ def credentials_missing(config: ProviderConfig) -> list[str]:
     if spec.cookie_env and not (creds.cookie and creds.cookie.strip()):
         missing.append(f"cookie (env: {spec.cookie_env})")
 
-    if not missing and not creds.has_any():
-        if not spec.api_key_env and not spec.token_env and not spec.cookie_env:
-            missing.append("no credential spec defined but require_credentials is true")
+    if not missing and not creds.has_any() and not spec.api_key_env and not spec.token_env and not spec.cookie_env:
+        missing.append("no credential spec defined but require_credentials is true")
 
     return missing

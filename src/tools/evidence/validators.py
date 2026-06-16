@@ -104,15 +104,9 @@ def validate_evidence(item: EvidenceItem) -> list[str]:
     if not item.related_entities:
         errors.append("Missing related_entities")
     if item.evidence_type == "HardEvidence" and item.confidence_weight != 1.0:
-        errors.append(
-            f"HardEvidence confidence must be 1.0, got {item.confidence_weight}"
-        )
-    if item.evidence_type in ("SoftEvidence", "HybridEvidence"):
-        if not (0.1 <= item.confidence_weight <= 1.0):
-            errors.append(
-                f"Soft/Hybrid confidence must be [0.1, 1.0], "
-                f"got {item.confidence_weight}"
-            )
+        errors.append(f"HardEvidence confidence must be 1.0, got {item.confidence_weight}")
+    if item.evidence_type in ("SoftEvidence", "HybridEvidence") and not (0.1 <= item.confidence_weight <= 1.0):
+        errors.append(f"Soft/Hybrid confidence must be [0.1, 1.0], got {item.confidence_weight}")
     return errors
 
 
@@ -221,9 +215,7 @@ def compile_evidence_graph(items: list[EvidenceItem]) -> EvidenceGraphCompileRes
         hybrid_upgraded_ids=hybrid_upgraded_ids,
         confidence_by_entity=confidence_by_entity,
         average_confidence=aggregate_confidence(list(graph.items.values())),
-        warnings=[
-            f"Rejected {len(rejected_items)} invalid evidence item(s)"
-        ] if rejected_items else [],
+        warnings=[f"Rejected {len(rejected_items)} invalid evidence item(s)"] if rejected_items else [],
     )
     return EvidenceGraphCompileResult(graph=graph, report=report)
 
@@ -243,11 +235,7 @@ def _upgrade_corroborated_soft_evidence(graph: EvidenceGraph) -> list[str]:
         if len(distinct_sources) < 2:
             continue
         target = group[0]
-        supporting_ids = [
-            item.evidence_id
-            for item in group[1:]
-            if item.evidence_id in graph.items
-        ]
+        supporting_ids = [item.evidence_id for item in group[1:] if item.evidence_id in graph.items]
         if not supporting_ids:
             continue
         result = graph.upgrade_to_hybrid(target.evidence_id, supporting_ids)
@@ -257,12 +245,5 @@ def _upgrade_corroborated_soft_evidence(graph: EvidenceGraph) -> list[str]:
 
 
 def _aggregate_confidence_by_entity(graph: EvidenceGraph) -> dict[str, float]:
-    entities = {
-        entity
-        for item in graph.items.values()
-        for entity in item.related_entities
-    }
-    return {
-        entity: graph.aggregate_confidence(entity)
-        for entity in sorted(entities)
-    }
+    entities = {entity for item in graph.items.values() for entity in item.related_entities}
+    return {entity: graph.aggregate_confidence(entity) for entity in sorted(entities)}

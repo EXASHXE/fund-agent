@@ -11,14 +11,11 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-import pytest
-
 ROOT = Path(__file__).resolve().parent.parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.build_factor_snapshot import build_factor_snapshot
-
+from scripts.build_factor_snapshot import build_factor_snapshot  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Fixtures

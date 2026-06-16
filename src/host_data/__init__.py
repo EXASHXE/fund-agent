@@ -8,15 +8,15 @@ examples/host_data_adapters/ or optional host-specific packages.
 
 from __future__ import annotations
 
+from .provider_config import ProviderConfig, ProviderCredentials, ProviderCredentialSpec
 from .provider_contracts import (
     FundDataProvider,
     NewsDataProvider,
     ProviderCapability,
     StockDataProvider,
 )
-from .provider_config import ProviderConfig, ProviderCredentialSpec, ProviderCredentials
-from .provider_result import ProviderResult
 from .provider_registry import ProviderRegistry
+from .provider_result import ProviderResult
 
 __all__ = [
     "FundDataProvider",
@@ -27,4 +27,5 @@ __all__ = [
     "ProviderCredentials",
     "ProviderRegistry",
     "ProviderResult",
+    "StockDataProvider",
 ]

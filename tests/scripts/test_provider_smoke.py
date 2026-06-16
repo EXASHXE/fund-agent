@@ -4,9 +4,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
-from src.host_data.provider_config import ProviderConfig, ProviderCredentialSpec, ProviderCredentials
 from src.host_data.provider_result import ProviderResult
 
 
@@ -39,7 +36,6 @@ class TestProviderSmokeRedaction:
 
 class TestProviderSmokeAkShare:
     def test_akshare_missing_dependency(self):
-        from examples.host_data_adapters.provider_smoke import _run_provider_smoke
 
         with patch.dict("sys.modules", {"akshare_adapter": MagicMock(
             AkShareAdapter=MagicMock(return_value=MagicMock(
@@ -47,6 +43,7 @@ class TestProviderSmokeAkShare:
             )),
         )}):
             import importlib
+
             import examples.host_data_adapters.provider_smoke as mod
             importlib.reload(mod)
             result = mod._run_provider_smoke("akshare", "HEALTH_CHECK")
@@ -70,7 +67,6 @@ class TestProviderSmokeEastmoney:
         assert status["cookie_env"] == "EASTMONEY_COOKIE"
 
     def test_eastmoney_skipped_without_resolve_env(self):
-        from examples.host_data_adapters.provider_smoke import _run_provider_smoke
 
         with patch.dict("sys.modules", {"eastmoney_adapter": MagicMock(
             EastmoneyAdapter=MagicMock(return_value=MagicMock(
@@ -81,6 +77,7 @@ class TestProviderSmokeEastmoney:
             )),
         )}):
             import importlib
+
             import examples.host_data_adapters.provider_smoke as mod
             importlib.reload(mod)
             result = mod._run_provider_smoke("eastmoney", "HEALTH_CHECK", resolve_env=False)
@@ -98,7 +95,6 @@ class TestProviderSmokeXueqiu:
         assert status["token_env"] == "XUEQIU_TOKEN"
 
     def test_xueqiu_skipped_without_credentials(self):
-        from examples.host_data_adapters.provider_smoke import _run_provider_smoke
 
         with patch.dict("sys.modules", {"xueqiu_adapter": MagicMock(
             XueqiuAdapter=MagicMock(return_value=MagicMock(
@@ -106,6 +102,7 @@ class TestProviderSmokeXueqiu:
             )),
         )}):
             import importlib
+
             import examples.host_data_adapters.provider_smoke as mod
             importlib.reload(mod)
             result = mod._run_provider_smoke("xueqiu", "HEALTH_CHECK", resolve_env=False)

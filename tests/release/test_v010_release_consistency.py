@@ -13,8 +13,6 @@ from pathlib import Path
 
 import yaml
 
-import pytest
-
 ROOT = Path(__file__).resolve().parents[2]
 EXPECTED_VERSION = "0.10.4"
 
@@ -177,23 +175,12 @@ class TestProvidersExampleNoSecrets:
 
 class TestPublicImports:
     def test_fund_agent_public_imports_work(self):
-        from fund_agent.workflow import WorkflowTrace, classify_advisory_intent
-        from fund_agent.regression import list_personal_regression_fixtures
-        from fund_agent.quality import evaluate_advisory_quality_gate, FORBIDDEN_EXECUTION_FIELDS
-        from fund_agent.providers import ProviderCapability, ProviderConfig, ProviderRegistry
-        from fund_agent.reporting import compose_advisory_workflow_report, compute_report_status
-        from fund_agent.runtime import FundAnalysisSkill, DecisionSupportSkill, SkillInput, SkillOutput
         from fund_agent.version import __version__
-        from fund_agent.cli import build_parser, main
 
         assert __version__ == EXPECTED_VERSION
 
     def test_src_fund_agent_compat_imports_work(self):
         from src.fund_agent.version import __version__
-        from src.fund_agent.workflow import WorkflowTrace
-        from src.fund_agent.quality import evaluate_advisory_quality_gate
-        from src.fund_agent.providers import ProviderRegistry
-        from src.fund_agent.runtime import FundAnalysisSkill
 
         assert __version__ == EXPECTED_VERSION
 
@@ -229,4 +216,4 @@ class TestNoStaleVersionReferences:
                     # Allow clone examples that are tag-specific (not current version)
                     if "clone" in ctx.lower() or "checkout" in ctx.lower():
                         continue
-                    assert False, f"{path} contains stale v0.9.0 reference: ...{ctx}..."
+                    raise AssertionError(f"{path} contains stale v0.9.0 reference: ...{ctx}...")

@@ -14,16 +14,13 @@ import sys
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-
 ROOT = Path(__file__).resolve().parent.parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.build_knowledge_graph_context import build_kg_context
-from scripts.build_news_snapshot import build_news_snapshot
-from scripts.build_factor_snapshot import build_factor_snapshot
-
+from scripts.build_factor_snapshot import build_factor_snapshot  # noqa: E402
+from scripts.build_knowledge_graph_context import build_kg_context  # noqa: E402
+from scripts.build_news_snapshot import build_news_snapshot  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Helpers

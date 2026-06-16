@@ -5,11 +5,16 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
-
 SCHEMA_PATH = Path(__file__).resolve().parents[2] / "schemas" / "provider_data_snapshot.schema.json"
-TEMPLATE_PATH = Path(__file__).resolve().parents[2] / "examples" / "user_portfolio_templates" / "provider_data_snapshot_template.json"
-DEMO_PATH = Path(__file__).resolve().parents[2] / "examples" / "user_portfolio_templates" / "provider_data_snapshot_demo.json"
+TEMPLATE_PATH = (
+    Path(__file__).resolve().parents[2]
+    / "examples"
+    / "user_portfolio_templates"
+    / "provider_data_snapshot_template.json"
+)
+DEMO_PATH = (
+    Path(__file__).resolve().parents[2] / "examples" / "user_portfolio_templates" / "provider_data_snapshot_demo.json"
+)
 
 
 class TestProviderDataSnapshotSchema:
@@ -31,10 +36,18 @@ class TestProviderDataSnapshotSchema:
         data = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
         props = data.get("properties", {})
         expected_sections = [
-            "fund_nav_history", "benchmark_index_history", "fund_profiles",
-            "fund_holdings", "peer_ranking", "fee_schedules",
-            "redemption_rules", "news_evidence_refs", "sentiment_evidence_refs",
-            "provider_provenance", "limitations", "warnings",
+            "fund_nav_history",
+            "benchmark_index_history",
+            "fund_profiles",
+            "fund_holdings",
+            "peer_ranking",
+            "fee_schedules",
+            "redemption_rules",
+            "news_evidence_refs",
+            "sentiment_evidence_refs",
+            "provider_provenance",
+            "limitations",
+            "warnings",
         ]
         for section in expected_sections:
             assert section in props, f"missing section: {section}"
@@ -52,10 +65,18 @@ class TestProviderDataSnapshotTemplate:
     def test_template_has_all_sections(self):
         data = json.loads(TEMPLATE_PATH.read_text(encoding="utf-8"))
         expected_sections = [
-            "fund_nav_history", "benchmark_index_history", "fund_profiles",
-            "fund_holdings", "peer_ranking", "fee_schedules",
-            "redemption_rules", "news_evidence_refs", "sentiment_evidence_refs",
-            "provider_provenance", "limitations", "warnings",
+            "fund_nav_history",
+            "benchmark_index_history",
+            "fund_profiles",
+            "fund_holdings",
+            "peer_ranking",
+            "fee_schedules",
+            "redemption_rules",
+            "news_evidence_refs",
+            "sentiment_evidence_refs",
+            "provider_provenance",
+            "limitations",
+            "warnings",
         ]
         for section in expected_sections:
             assert section in data, f"missing section: {section}"
@@ -78,13 +99,13 @@ class TestProviderDataSnapshotDemo:
     def test_demo_marks_synthetic_limitations(self):
         data = json.loads(DEMO_PATH.read_text(encoding="utf-8"))
         limitations = data.get("limitations", [])
-        assert any("synthetic" in l.lower() or "demo" in l.lower() for l in limitations)
+        assert any("synthetic" in lim.lower() or "demo" in lim.lower() for lim in limitations)
 
     def test_demo_has_provider_provenance(self):
         data = json.loads(DEMO_PATH.read_text(encoding="utf-8"))
         prov = data.get("provider_provenance", {})
         assert len(prov) > 0
-        for provider_name, prov_data in prov.items():
+        for _provider_name, prov_data in prov.items():
             assert "provider" in prov_data
             assert "capabilities_fetched" in prov_data
 

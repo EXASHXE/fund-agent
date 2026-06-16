@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from src.skills_runtime.workflow.portfolio_input_bridge import bridge_portfolio_input
 
 
