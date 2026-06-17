@@ -222,7 +222,7 @@ class TestActiveTradeAnchorGate:
                 "evidence_anchor_diagnostics": {"has_evidence_anchors": True},
             },
         }
-        eg = {"items": {"ev1": {}}}
+        eg = {"items": {"ev1": {"query_type": "fund_name"}}}
         result = _gate(decision_support_output=ds, evidence_graph=eg)
         check = _find_check(result, "active_trade_anchor_gate")
         assert check["status"] == "PASS"
