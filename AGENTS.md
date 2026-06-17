@@ -14,6 +14,8 @@ under `src/` is deterministic runtime, schema, and tool implementation support.
 
 Primary entrypoints and resources:
 
+- `bin/fund-agent-e2e` — shared E2E pipeline runner (use for portfolio reconstruction)
+- `bin/fund-agent-privacy-check` — privacy audit before commits
 - `skillpack/fund-agent.skillpack.yaml` — plugin manifest (start here)
 - `skills/README.md` — Markdown skill directory policy
 - `skills/<slug>/SKILL.md` — primary agent-facing skill instructions
@@ -22,16 +24,31 @@ Primary entrypoints and resources:
 - `docs/host-integration.md` — detailed integration guide
 - `docs/plugin-api.md` — full API reference
 - `docs/contracts/report-output-contract.v1.md` — report output shape contract
-- `docs/install/opencode.md` — OpenCode plugin install (first native target)
+- `docs/install/claude-code.md` — Claude Code plugin install
+- `docs/install/opencode.md` — OpenCode plugin install
+- `docs/install/codex.md` — Codex install
+- `docs/install/multi-harness.md` — multi-harness distribution overview
 - `docs/install/manual-host.md` — manual / Python host install
-- `docs/install/codex.md` — Codex install (manual / light)
-- `docs/design/runtime-bridge.md` — runtime bridge design (thin CLI shipped; deeper bridge future)
+- `docs/design/runtime-bridge.md` — runtime bridge design
 - `src/skills_runtime/` — host-callable skill handlers
 - `src/schemas/` — typed contracts
 - `src/tools/` — pure tools and MCP adapter boundary
 - `src/tools/portfolio/report_composer.py` — deterministic report sections
 - `src/graph/` — KnowledgeGraph helpers
 - `src/tools/adapters/mcp.py` — MCP adapter abstraction
+
+### Harness Installation
+
+```bash
+# Install all harnesses
+python install/fund-agent-agent-install.py --target all --mode symlink
+
+# Doctor check
+python install/fund-agent-agent-doctor.py --target all
+
+# Uninstall
+python install/fund-agent-agent-uninstall.py --target all --dry-run
+```
 
 ## What Agents Must NOT Use As Primary Path
 

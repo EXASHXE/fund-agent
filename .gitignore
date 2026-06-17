@@ -8,12 +8,12 @@ report.md
 local_data/
 private_data/
 local_reports/
+eval_workspace/
 *.private.json
 *.private.yaml
 *.private.csv
 
 # 本地 Agent 配置
-CLAUDE.md
 SUPERPOWERS.md
 .claude/
 
@@ -73,3 +73,6 @@ api.txt
 api_keys.txt
 credentials.json
 *.secret
+
+# Old scaffold (replaced by .claude-plugin)
+claude-plugin/

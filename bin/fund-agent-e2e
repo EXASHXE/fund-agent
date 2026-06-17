@@ -1,0 +1,266 @@
+#!/usr/bin/env bash
+# fund-agent-e2e — Shared deterministic E2E pipeline runner.
+#
+# Runs the v0.10.5 pipeline:
+#   import_alipay_transactions → generate_planned_transactions →
+#   build_transaction_ledger → resolve_fund_identities →
+#   build_fund_data_snapshot → reconstruct_portfolio_from_ledger →
+#   build_knowledge_graph_context → build_news_snapshot →
+#   build_factor_snapshot → analyze-portfolio markdown
+#
+# Writes:
+#   local_reports/real_portfolio_report.md
+#   eval_workspace/runs/<run_id>/e2e_summary.json
+#
+# Never prints private file contents or API key values.
+# Degrades gracefully if provider/news keys are absent.
+# Never uses stale round3 envelopes.
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+SCRIPTS="$REPO_ROOT/scripts"
+
+# --- defaults ---
+AS_OF=""
+USE_LIVE_PROVIDER=false
+SKIP_NEWS=false
+SKIP_AKSHARE=false
+DRY_RUN=false
+OUTPUT_REPORT=""
+RUN_ID=""
+
+# --- parse args ---
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --as-of)        AS_OF="$2"; shift 2 ;;
+    --use-live-provider) USE_LIVE_PROVIDER=true; shift ;;
+    --skip-news)    SKIP_NEWS=true; shift ;;
+    --skip-akshare) SKIP_AKSHARE=true; shift ;;
+    --dry-run)      DRY_RUN=true; shift ;;
+    --output-report) OUTPUT_REPORT="$2"; shift 2 ;;
+    --run-id)       RUN_ID="$2"; shift 2 ;;
+    --help|-h)
+      echo "Usage: fund-agent-e2e [options]"
+      echo ""
+      echo "Options:"
+      echo "  --as-of YYYY-MM-DD         Portfolio reconstruction date"
+      echo "  --use-live-provider        Enable live provider data fetch"
+      echo "  --skip-news                Skip news snapshot step"
+      echo "  --skip-akshare             Skip AkShare-dependent steps"
+      echo "  --dry-run                  Print pipeline steps without executing"
+      echo "  --output-report PATH       Output report path (default: local_reports/real_portfolio_report.md)"
+      echo "  --run-id ID                Run identifier for eval_workspace"
+      echo "  --help                     Show this help"
+      exit 0
+      ;;
+    *) echo "Unknown option: $1" >&2; exit 1 ;;
+  esac
+done
+
+# --- resolve defaults ---
+if [[ -z "$AS_OF" ]]; then
+  AS_OF="$(date +%Y-%m-%d)"
+fi
+if [[ -z "$OUTPUT_REPORT" ]]; then
+  OUTPUT_REPORT="$REPO_ROOT/local_reports/real_portfolio_report.md"
+fi
+if [[ -z "$RUN_ID" ]]; then
+  RUN_ID="e2e-$(date +%Y%m%d-%H%M%S)"
+fi
+
+RUN_DIR="$REPO_ROOT/eval_workspace/runs/$RUN_ID"
+PRIVATE_DATA="$REPO_ROOT/private_data"
+
+# --- helpers ---
+step() {
+  local num="$1" name="$2"; shift 2
+  echo "[step $num] $name"
+  if [[ "$DRY_RUN" == "true" ]]; then
+    echo "  (dry-run) would run: $*"
+    return 0
+  fi
+  "$@" 2>&1 | sed 's/\(api[_-]\?key\|token\|secret\|authorization\|cookie\)=\S*/\1=***REDACTED***/gi'
+}
+
+die() { echo "ERROR: $*" >&2; exit 1; }
+
+# --- pre-flight ---
+mkdir -p "$RUN_DIR" "$(dirname "$OUTPUT_REPORT")"
+
+# --- detect input ---
+PORTFOLIO_INPUT=""
+ALIPAY_CSV=""
+INVESTMENT_PLAN=""
+
+if [[ -f "$PRIVATE_DATA/alipay_record_20260614_2352_1.csv" ]]; then
+  ALIPAY_CSV="$PRIVATE_DATA/alipay_record_20260614_2352_1.csv"
+fi
+# Find most recent alipay CSV
+for f in "$PRIVATE_DATA"/alipay_record_*.csv; do
+  if [[ -f "$f" ]]; then ALIPAY_CSV="$f"; fi
+done
+if [[ -f "$PRIVATE_DATA/investment_plan.private.yaml" ]]; then
+  INVESTMENT_PLAN="$PRIVATE_DATA/investment_plan.private.yaml"
+fi
+if [[ -f "$PRIVATE_DATA/portfolio_input.private.json" ]]; then
+  PORTFOLIO_INPUT="$PRIVATE_DATA/portfolio_input.private.json"
+fi
+
+# --- Step 0: Portfolio Reconstruction ---
+NORMALIZED_TX="$RUN_DIR/normalized_transactions.json"
+PLANNED_TX="$RUN_DIR/planned_transactions.json"
+LEDGER="$RUN_DIR/transaction_ledger.json"
+FUND_IDENTITY="$RUN_DIR/fund_identity_resolution.json"
+FUND_SNAPSHOT_DIR="$RUN_DIR/fund_data_snapshot"
+PORTFOLIO_DIR="$RUN_DIR/portfolio"
+
+if [[ -n "$ALIPAY_CSV" ]]; then
+  step 0a "Import Alipay transactions" \
+    python "$SCRIPTS/import_alipay_transactions.py" \
+      --input "$ALIPAY_CSV" --output "$NORMALIZED_TX"
+fi
+
+if [[ -n "$INVESTMENT_PLAN" ]]; then
+  step 0b "Generate planned transactions" \
+    python "$SCRIPTS/generate_planned_transactions.py" \
+      --plan "$INVESTMENT_PLAN" --as-of-date "$AS_OF" --output "$PLANNED_TX"
+fi
+
+LEDGER_ARGS=(--output "$LEDGER")
+if [[ -f "$NORMALIZED_TX" ]]; then LEDGER_ARGS+=(--alipay "$NORMALIZED_TX"); fi
+if [[ -f "$PLANNED_TX" ]]; then LEDGER_ARGS+=(--planned "$PLANNED_TX"); fi
+if [[ ${#LEDGER_ARGS[@]} -gt 2 ]]; then
+  step 0c "Build transaction ledger" \
+    python "$SCRIPTS/build_transaction_ledger.py" "${LEDGER_ARGS[@]}"
+fi
+
+if [[ -f "$LEDGER" ]]; then
+  step 0d "Resolve fund identities" \
+    python "$SCRIPTS/resolve_fund_identities.py" \
+      --ledger "$LEDGER" --output "$FUND_IDENTITY"
+
+  if [[ "$SKIP_AKSHARE" != "true" ]]; then
+    FUND_CODES=$(python -c "
+import json, sys
+d = json.load(open('$FUND_IDENTITY'))
+codes = [f.get('resolved_code','') for f in d.get('funds',[]) if f.get('resolved_code')]
+print(' '.join(codes))
+" 2>/dev/null || echo "")
+    if [[ -n "$FUND_CODES" ]]; then
+      step 0e "Build fund data snapshot" \
+        python "$SCRIPTS/build_fund_data_snapshot.py" \
+          --fund-codes $FUND_CODES --as-of-date "$AS_OF" --output-dir "$FUND_SNAPSHOT_DIR"
+    fi
+  fi
+
+  NAV_SNAPSHOT="$FUND_SNAPSHOT_DIR/nav_snapshot.json"
+  FEE_SNAPSHOT="$FUND_SNAPSHOT_DIR/fee_snapshot.json"
+  if [[ -f "$NAV_SNAPSHOT" ]]; then
+    step 0f "Reconstruct portfolio from ledger" \
+      python "$SCRIPTS/reconstruct_portfolio_from_ledger.py" \
+        --ledger "$LEDGER" --nav-snapshot "$NAV_SNAPSHOT" \
+        --fee-snapshot "$FEE_SNAPSHOT" --as-of-date "$AS_OF" \
+        --output-dir "$PORTFOLIO_DIR"
+  fi
+
+  # Update portfolio input from reconstruction if available
+  if [[ -f "$PORTFOLIO_DIR/portfolio_input.private.json" ]]; then
+    PORTFOLIO_INPUT="$PORTFOLIO_DIR/portfolio_input.private.json"
+  fi
+fi
+
+# --- Step 1: Build KG Context ---
+KG_CONTEXT="$RUN_DIR/kg_context_snapshot.json"
+if [[ -n "$PORTFOLIO_INPUT" && -f "$PORTFOLIO_INPUT" ]]; then
+  step 1 "Build knowledge graph context" \
+    python "$SCRIPTS/build_knowledge_graph_context.py" \
+      --portfolio-input "$PORTFOLIO_INPUT" --output "$KG_CONTEXT"
+else
+  echo "[step 1] SKIP: no portfolio input available"
+fi
+
+# --- Step 2: Build News Snapshot ---
+NEWS_SNAPSHOT="$RUN_DIR/news_snapshot.json"
+if [[ "$SKIP_NEWS" == "true" ]]; then
+  echo "[step 2] SKIP: --skip-news flag set"
+elif [[ -f "$KG_CONTEXT" ]]; then
+  step 2 "Build news snapshot" \
+    python "$SCRIPTS/build_news_snapshot.py" \
+      --kg-context "$KG_CONTEXT" --output "$NEWS_SNAPSHOT" || {
+    echo "[step 2] WARNING: news snapshot failed (provider keys may be absent); continuing"
+  }
+else
+  echo "[step 2] SKIP: no KG context available"
+fi
+
+# --- Step 3: Build Factor Snapshot ---
+FACTOR_SNAPSHOT="$RUN_DIR/factor_snapshot.json"
+if [[ -n "$PORTFOLIO_INPUT" && -f "$PORTFOLIO_INPUT" ]]; then
+  FACTOR_ARGS=(--portfolio-input "$PORTFOLIO_INPUT" --output "$FACTOR_SNAPSHOT")
+  if [[ -f "$KG_CONTEXT" ]]; then FACTOR_ARGS+=(--kg-context "$KG_CONTEXT"); fi
+  if [[ -f "$NEWS_SNAPSHOT" ]]; then FACTOR_ARGS+=(--news-snapshot "$NEWS_SNAPSHOT"); fi
+  step 3 "Build factor snapshot" \
+    python "$SCRIPTS/build_factor_snapshot.py" "${FACTOR_ARGS[@]}"
+else
+  echo "[step 3] SKIP: no portfolio input available"
+fi
+
+# --- Step 4: Analyze Portfolio ---
+ANALYSIS_OUTPUT="$RUN_DIR/analysis_output.json"
+if [[ -n "$PORTFOLIO_INPUT" && -f "$PORTFOLIO_INPUT" ]]; then
+  ANALYSIS_ARGS=(
+    analyze-portfolio
+    --input "$PORTFOLIO_INPUT"
+    --format markdown
+    --output "$OUTPUT_REPORT"
+  )
+  if [[ -f "$FUND_SNAPSHOT_DIR/provider_data_snapshot.json" ]]; then
+    ANALYSIS_ARGS+=(--provider-snapshot "$FUND_SNAPSHOT_DIR/provider_data_snapshot.json")
+  fi
+  if [[ -f "$NEWS_SNAPSHOT" ]]; then
+    ANALYSIS_ARGS+=(--news-snapshot "$NEWS_SNAPSHOT")
+  fi
+  if [[ -f "$FACTOR_SNAPSHOT" ]]; then
+    ANALYSIS_ARGS+=(--factor-snapshot "$FACTOR_SNAPSHOT")
+  fi
+  if [[ -f "$KG_CONTEXT" ]]; then
+    ANALYSIS_ARGS+=(--kg-context "$KG_CONTEXT")
+  fi
+  step 4 "Analyze portfolio (markdown report)" \
+    python -m fund_agent.cli "${ANYSIS_ARGS[@]}"
+fi
+
+# --- Write e2e_summary.json ---
+if [[ "$DRY_RUN" != "true" ]]; then
+  python -c "
+import json, os, datetime
+summary = {
+    'run_id': '$RUN_ID',
+    'as_of': '$AS_OF',
+    'completed_at': datetime.datetime.now().isoformat(),
+    'steps_completed': [],
+    'output_report': '$OUTPUT_REPORT',
+    'pipeline_version': '0.10.5',
+}
+steps = []
+if os.path.exists('$NORMALIZED_TX'): steps.append('import_alipay_transactions')
+if os.path.exists('$PLANNED_TX'): steps.append('generate_planned_transactions')
+if os.path.exists('$LEDGER'): steps.append('build_transaction_ledger')
+if os.path.exists('$FUND_IDENTITY'): steps.append('resolve_fund_identities')
+if os.path.isdir('$FUND_SNAPSHOT_DIR'): steps.append('build_fund_data_snapshot')
+if os.path.isdir('$PORTFOLIO_DIR'): steps.append('reconstruct_portfolio_from_ledger')
+if os.path.exists('$KG_CONTEXT'): steps.append('build_knowledge_graph_context')
+if os.path.exists('$NEWS_SNAPSHOT'): steps.append('build_news_snapshot')
+if os.path.exists('$FACTOR_SNAPSHOT'): steps.append('build_factor_snapshot')
+if os.path.exists('$OUTPUT_REPORT'): steps.append('analyze-portfolio')
+summary['steps_completed'] = steps
+with open('$RUN_DIR/e2e_summary.json', 'w') as f:
+    json.dump(summary, f, indent=2)
+print(json.dumps(summary, indent=2))
+"
+fi
+
+echo ""
+echo "E2E pipeline complete. Run ID: $RUN_ID"
+echo "Summary: $RUN_DIR/e2e_summary.json"
+echo "Report:  $OUTPUT_REPORT"
