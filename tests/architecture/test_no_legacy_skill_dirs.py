@@ -157,15 +157,19 @@ def test_no_underscore_skill_dir_contains_skill_md():
 
 def test_only_canonical_hyphenated_skill_dirs_under_skills():
     """The only top-level skill directories under `skills/` are the
-    five canonical hyphenated slugs: `fund-analysis`,
-    `decision-support`, `news-research`, `sentiment-analysis`,
-    `thesis-generation`."""
+    five canonical hyphenated slugs plus the three Claude Code wrapper
+    skills: `fund-analysis`, `decision-support`, `news-research`,
+    `sentiment-analysis`, `thesis-generation`, `e2e-report`,
+    `setup-private-data`, `audit-privacy`."""
     expected = {
         "fund-analysis",
         "decision-support",
         "news-research",
         "sentiment-analysis",
         "thesis-generation",
+        "e2e-report",
+        "setup-private-data",
+        "audit-privacy",
     }
     actual = {entry.name for entry in _list_skill_dirs()}
     unexpected = actual - expected

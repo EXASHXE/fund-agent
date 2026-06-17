@@ -8,14 +8,17 @@
 claude --plugin-dir /path/to/fund-agent
 ```
 
-This loads the `.claude-plugin/` directory which contains:
+Claude Code expects the official plugin layout at the repo root:
 
-- `plugin.json` — plugin metadata (name, version, description, author)
+- `.claude-plugin/plugin.json` — plugin metadata (name, version, description, author)
 - `skills/e2e-report/SKILL.md` — E2E portfolio report generation
 - `skills/setup-private-data/SKILL.md` — private data file setup
 - `skills/audit-privacy/SKILL.md` — privacy audit before commits
 - `agents/fund-report-e2e.md` — E2E report agent
 - `agents/fund-data-auditor.md` — privacy auditor agent
+- `bin/fund-agent-e2e` — shared E2E pipeline runner
+
+Skills and agents live beside `.claude-plugin/`, not inside it.
 
 ## Invocation
 

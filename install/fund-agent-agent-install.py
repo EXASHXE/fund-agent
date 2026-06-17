@@ -11,10 +11,8 @@ Supports:
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import shutil
-import sys
 from pathlib import Path
 
 VERSION = "0.10.5"
@@ -69,9 +67,7 @@ def _install_file(src: Path, dst: Path, mode: str, dry_run: bool, force: bool) -
         return True
     dst.parent.mkdir(parents=True, exist_ok=True)
     if mode == "symlink":
-        if dst.is_symlink():
-            dst.unlink()
-        elif dst.exists():
+        if dst.is_symlink() or dst.exists():
             dst.unlink()
         os.symlink(str(src.resolve()), str(dst))
     else:

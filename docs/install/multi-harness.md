@@ -8,10 +8,15 @@ delegate to shared deterministic runners.
 
 ```
 fund-agent/
+  .claude-plugin/plugin.json      # Claude Code plugin root marker
+  skills/e2e-report/SKILL.md      # Claude Code wrapper skills (beside .claude-plugin/)
+  skills/audit-privacy/SKILL.md
+  skills/setup-private-data/SKILL.md
+  agents/fund-report-e2e.md       # Claude Code agents (beside .claude-plugin/)
+  agents/fund-data-auditor.md
   bin/fund-agent-e2e              # shared E2E pipeline runner
   bin/fund-agent-privacy-check    # shared privacy audit runner
-  .claude-plugin/                 # Claude Code plugin
-  .codex-plugin/                  # Codex plugin manifest
+  .codex-plugin/                  # Codex plugin manifest (experimental)
   .agents/skills/                 # Codex Agent Skills
   .opencode/                      # OpenCode skills/agents/plugins
   install/                        # installer/doctor/uninstall scripts
@@ -24,7 +29,7 @@ All harness skills delegate to `bin/fund-agent-e2e` and
 
 | Harness | Plugin root | Skills | Install |
 |---|---|---|---|
-| Claude Code | `.claude-plugin/` | `skills/e2e-report/`, `audit-privacy/`, `setup-private-data/` | `claude --plugin-dir <repo>` |
+| Claude Code | `.claude-plugin/plugin.json` (skills/agents at repo root) | `skills/e2e-report/`, `audit-privacy/`, `setup-private-data/` | `claude --plugin-dir <repo>` |
 | Codex | `.codex-plugin/` + `.agents/skills/` | `fund-agent-e2e/`, `fund-agent-privacy-audit/`, `fund-agent-setup-private-data/` | copy/symlink to `~/.agents/skills/` |
 | OpenCode | `.opencode/` | `fund-agent-e2e/`, `fund-agent-privacy-audit/`, `fund-agent-setup-private-data/` | copy/symlink to `~/.config/opencode/` |
 

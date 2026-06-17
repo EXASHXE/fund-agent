@@ -2,10 +2,7 @@
 from __future__ import annotations
 
 import subprocess
-import sys
 from pathlib import Path
-
-import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
@@ -27,7 +24,7 @@ class TestPrivacyGuard:
 
     def test_skill_files_no_real_api_keys(self):
         skill_dirs = [
-            REPO_ROOT / ".claude-plugin" / "skills",
+            REPO_ROOT / "skills",
             REPO_ROOT / ".agents" / "skills",
             REPO_ROOT / ".opencode" / "skills",
         ]

@@ -8,8 +8,6 @@ Supports --dry-run.
 from __future__ import annotations
 
 import argparse
-import os
-import sys
 from pathlib import Path
 
 # fund-agent-owned skill/agent/plugin names
@@ -82,9 +80,8 @@ def uninstall_claude_code(dry_run: bool) -> list[str]:
     _log(dry_run, "Uninstalling Claude Code...")
     removed: list[str] = []
     target = CLAUDE_USER_PLUGIN_DIR / "fund-agent"
-    if target.exists() or target.is_symlink():
-        if _remove_path(target, dry_run):
-            removed.append(str(target))
+    if (target.exists() or target.is_symlink()) and _remove_path(target, dry_run):
+        removed.append(str(target))
     return removed
 
 

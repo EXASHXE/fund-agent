@@ -16,7 +16,7 @@ REAL_KEY_PATTERNS = [
 ]
 
 SKILL_DIRS = [
-    REPO_ROOT / ".claude-plugin" / "skills",
+    REPO_ROOT / "skills",
     REPO_ROOT / ".agents" / "skills",
     REPO_ROOT / ".opencode" / "skills",
 ]

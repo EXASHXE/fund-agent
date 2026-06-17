@@ -28,8 +28,8 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 CLAUDE_PLUGIN_DIR = REPO_ROOT / ".claude-plugin"
-CLAUDE_SKILLS_DIR = CLAUDE_PLUGIN_DIR / "skills"
-CLAUDE_AGENTS_DIR = CLAUDE_PLUGIN_DIR / "agents"
+CLAUDE_SKILLS_DIR = REPO_ROOT / "skills"
+CLAUDE_AGENTS_DIR = REPO_ROOT / "agents"
 
 CODEX_PLUGIN_DIR = REPO_ROOT / ".codex-plugin"
 CODEX_SKILLS_DIR = REPO_ROOT / ".agents" / "skills"
@@ -91,7 +91,7 @@ def _git_ls_files(patterns: list[str]) -> list[str]:
             capture_output=True, text=True, cwd=str(REPO_ROOT),
         )
         if result.returncode == 0 and result.stdout.strip():
-            return [l for l in result.stdout.strip().splitlines() if l]
+            return [line for line in result.stdout.strip().splitlines() if line]
     except Exception:
         pass
     return []

@@ -5,7 +5,6 @@ have consistent operation content for equivalent skills.
 """
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
 import pytest
@@ -38,7 +37,7 @@ class TestHarnessSkillConsistency:
     """The e2e-report / fund-agent-e2e skill should reference bin/fund-agent-e2e across all harnesses."""
 
     @pytest.mark.parametrize("skill_path", [
-        ".claude-plugin/skills/e2e-report/SKILL.md",
+        "skills/e2e-report/SKILL.md",
         ".agents/skills/fund-agent-e2e/SKILL.md",
         ".opencode/skills/fund-agent-e2e/SKILL.md",
     ])
@@ -48,7 +47,7 @@ class TestHarnessSkillConsistency:
         assert "bin/fund-agent-e2e" in content, f"{skill_path} does not reference bin/fund-agent-e2e"
 
     @pytest.mark.parametrize("skill_path", [
-        ".claude-plugin/skills/audit-privacy/SKILL.md",
+        "skills/audit-privacy/SKILL.md",
         ".agents/skills/fund-agent-privacy-audit/SKILL.md",
         ".opencode/skills/fund-agent-privacy-audit/SKILL.md",
     ])
@@ -59,7 +58,7 @@ class TestHarnessSkillConsistency:
             f"{skill_path} does not reference privacy runner"
 
     @pytest.mark.parametrize("skill_path", [
-        ".claude-plugin/skills/e2e-report/SKILL.md",
+        "skills/e2e-report/SKILL.md",
         ".agents/skills/fund-agent-e2e/SKILL.md",
         ".opencode/skills/fund-agent-e2e/SKILL.md",
     ])
