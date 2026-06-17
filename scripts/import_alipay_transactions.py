@@ -220,6 +220,10 @@ def import_alipay_csv(
             "confirmation_source": "alipay",
             "confidence": "evidence_confirmed",
         }
+        # Conversion/refund are evidenced as transactions but their portfolio
+        # effect is ambiguous — flag for manual review downstream
+        if action in ("conversion", "refund"):
+            txn["ambiguous_portfolio_effect"] = True
         transactions.append(txn)
 
     output = {

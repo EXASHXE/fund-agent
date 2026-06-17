@@ -304,7 +304,7 @@ def reconstruct_portfolio(
     for pos in confirmed_positions:
         holding = {
             "fund_code": pos["fund_code"],
-            "current_value": pos["current_value"] if pos["current_value"] is not None else 0,
+            "current_value": pos["current_value"],
             "units": pos["units"],
             "cost_basis": pos["cost_basis"],
             "cost_basis_confidence": pos["confidence"] if pos["confidence"] in ("evidence_confirmed", "rule_confirmed_estimated") else "unknown",

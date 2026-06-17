@@ -868,6 +868,21 @@ def build_kg_context(
                 )
             )
 
+        # Priority 1: Tracking index queries
+        tracking_index = profile.get("tracking_index", "") if profile else ""
+        if tracking_index:
+            query_plan.append(
+                _build_query_plan_entry(
+                    query=tracking_index,
+                    query_type="tracking_index",
+                    entities=[f"benchmark:{tracking_index}"],
+                    related_funds=related_funds,
+                    reason=f"Tracking index for {fund_name}",
+                    source="provider_snapshot",
+                    confidence="high",
+                )
+            )
+
         # Priority 2: Fund profile queries
         if profile:
             if fund_manager:
