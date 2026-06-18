@@ -17,8 +17,6 @@ from scripts.build_news_snapshot import (
     build_news_snapshot,
 )
 from src.schemas.evidence import EvidenceItem
-from src.tools.evidence.builders import build_soft_evidence_from_mcp_result
-from src.tools.evidence.validators import compile_evidence_graph
 
 
 class TestFallbackConfidencePenalty:
@@ -177,7 +175,7 @@ def _cap_fallback_soft_evidence_confidence(item: EvidenceItem) -> float:
     If the evidence comes from a fallback query (is_fallback_query=True or
     query_type=theme_fallback), cap the confidence_weight at 0.3.
     """
-    FALLBACK_SOFT_EVIDENCE_CAP = 0.3
+    fallback_soft_evidence_cap = 0.3
 
     # Check if this is fallback evidence
     provenance = item.provenance or {}
@@ -191,6 +189,6 @@ def _cap_fallback_soft_evidence_confidence(item: EvidenceItem) -> float:
     )
 
     if is_fallback and item.evidence_type == "SoftEvidence":
-        return min(item.confidence_weight, FALLBACK_SOFT_EVIDENCE_CAP)
+        return min(item.confidence_weight, fallback_soft_evidence_cap)
 
     return item.confidence_weight

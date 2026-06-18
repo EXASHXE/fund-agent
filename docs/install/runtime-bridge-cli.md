@@ -1,6 +1,6 @@
 # Runtime Bridge CLI
 
-> Status: **shipped in v0.9.0**, updated in v0.10.4. The runtime bridge CLI is a
+> Status: **shipped in v0.9.0**, updated in v0.10.5. The runtime bridge CLI is a
 > thin local JSON-in / JSON-out Python shim over the existing
 > manifest runtime skills. It is independent of the OpenCode
 > plugin; the plugin still does not call Python.

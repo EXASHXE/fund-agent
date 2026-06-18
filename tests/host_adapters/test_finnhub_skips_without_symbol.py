@@ -9,15 +9,12 @@ from __future__ import annotations
 import os
 from unittest.mock import patch
 
-import pytest
-
 # Import from the build_news_snapshot module
 from scripts.build_news_snapshot import (
     _extract_ticker_from_entities,
     _provider_finnhub,
     build_news_snapshot,
 )
-
 
 # ---------------------------------------------------------------------------
 # _extract_ticker_from_entities unit tests
@@ -122,14 +119,14 @@ class TestProviderFinnhubSkipWithoutSymbol:
     def test_finnhub_with_symbol_calls_api(self):
         """With a valid symbol, _provider_finnhub should attempt the API call."""
         # Patch the API key so it's "available"
-        with patch.dict(os.environ, {"FINNHUB_API_KEY": "test-key"}):
-            # Patch finnhub import to avoid real API call
-            with patch("scripts.build_news_snapshot._provider_finnhub") as mock_finnhub:
-                mock_finnhub.return_value = ([{"title": "test"}], None)
-                # This just verifies the mock wiring works
-                items, error = mock_finnhub("NVDA news", symbol="NVDA")
-                assert items == [{"title": "test"}]
-                assert error is None
+        with (
+            patch.dict(os.environ, {"FINNHUB_API_KEY": "test-key"}),
+            patch("scripts.build_news_snapshot._provider_finnhub") as mock_finnhub,
+        ):
+            mock_finnhub.return_value = ([{"title": "test"}], None)
+            items, error = mock_finnhub("NVDA news", symbol="NVDA")
+            assert items == [{"title": "test"}]
+            assert error is None
 
 
 # ---------------------------------------------------------------------------
@@ -204,58 +201,63 @@ class TestFinnhubTickerExtractionInSnapshot:
         """Finnhub should be skipped for queries without holding_ticker entities."""
         kg_context = self._make_kg_context_without_ticker()
 
-        with patch.dict(os.environ, {"FINNHUB_API_KEY": "test-key"}, clear=False):
-            # Patch _provider_finnhub to track calls
-            with patch("scripts.build_news_snapshot._provider_finnhub") as mock_finnhub:
-                mock_finnhub.return_value = ([], "skipped_no_symbol")
-                result = build_news_snapshot(kg_context)
+        with (
+            patch.dict(os.environ, {"FINNHUB_API_KEY": "test-key"}, clear=False),
+            patch("scripts.build_news_snapshot._provider_finnhub") as mock_finnhub,
+        ):
+            mock_finnhub.return_value = ([], "skipped_no_symbol")
+            build_news_snapshot(kg_context)
 
-                # Finnhub should have been called with symbol=None
-                # (extracted from entities which have no holding_ticker)
-                finnhub_calls = [c for c in mock_finnhub.call_args_list]
-                if finnhub_calls:
-                    # If called, symbol should be None
-                    call_kwargs = finnhub_calls[0].kwargs
-                    assert call_kwargs.get("symbol") is None
+            # Finnhub should have been called with symbol=None
+            # (extracted from entities which have no holding_ticker)
+            finnhub_calls = [c for c in mock_finnhub.call_args_list]
+            if finnhub_calls:
+                # If called, symbol should be None
+                call_kwargs = finnhub_calls[0].kwargs
+                assert call_kwargs.get("symbol") is None
 
     def test_finnhub_called_with_ticker_from_entities(self):
         """Finnhub should be called with extracted ticker when entities have holding_ticker."""
         kg_context = self._make_kg_context_with_holding_ticker()
 
-        with patch.dict(os.environ, {"FINNHUB_API_KEY": "test-key"}, clear=False):
-            with patch("scripts.build_news_snapshot._provider_finnhub") as mock_finnhub:
-                mock_finnhub.return_value = (
-                    [
-                        {
-                            "title": "NVIDIA News",
-                            "url": "https://example.com/nvda",
-                            "source": "Reuters",
-                            "published_at": "2025-01-01",
-                            "summary": "NVIDIA earnings",
-                        }
-                    ],
-                    None,
-                )
-                result = build_news_snapshot(kg_context)
+        with (
+            patch.dict(os.environ, {"FINNHUB_API_KEY": "test-key"}, clear=False),
+            patch("scripts.build_news_snapshot._provider_finnhub") as mock_finnhub,
+        ):
+            mock_finnhub.return_value = (
+                [
+                    {
+                        "title": "NVIDIA News",
+                        "url": "https://example.com/nvda",
+                        "source": "Reuters",
+                        "published_at": "2025-01-01",
+                        "summary": "NVIDIA earnings",
+                    }
+                ],
+                None,
+            )
+            build_news_snapshot(kg_context)
 
-                # Finnhub should have been called with symbol="NVDA"
-                finnhub_calls = mock_finnhub.call_args_list
-                assert len(finnhub_calls) >= 1
-                call_kwargs = finnhub_calls[0].kwargs
-                assert call_kwargs.get("symbol") == "NVDA"
+            # Finnhub should have been called with symbol="NVDA"
+            finnhub_calls = mock_finnhub.call_args_list
+            assert len(finnhub_calls) >= 1
+            call_kwargs = finnhub_calls[0].kwargs
+            assert call_kwargs.get("symbol") == "NVDA"
 
     def test_finnhub_skipped_for_fund_code_entities(self):
         """Finnhub should be skipped for fund code entities (Chinese mutual funds)."""
         kg_context = self._make_kg_context_with_fund_code()
 
-        with patch.dict(os.environ, {"FINNHUB_API_KEY": "test-key"}, clear=False):
-            with patch("scripts.build_news_snapshot._provider_finnhub") as mock_finnhub:
-                mock_finnhub.return_value = ([], "skipped_no_symbol")
-                result = build_news_snapshot(kg_context)
+        with (
+            patch.dict(os.environ, {"FINNHUB_API_KEY": "test-key"}, clear=False),
+            patch("scripts.build_news_snapshot._provider_finnhub") as mock_finnhub,
+        ):
+            mock_finnhub.return_value = ([], "skipped_no_symbol")
+            build_news_snapshot(kg_context)
 
-                # Finnhub should have been called with symbol=None
-                # because fund:000001 is not a stock ticker
-                finnhub_calls = mock_finnhub.call_args_list
-                if finnhub_calls:
-                    call_kwargs = finnhub_calls[0].kwargs
-                    assert call_kwargs.get("symbol") is None
+            # Finnhub should have been called with symbol=None
+            # because fund:000001 is not a stock ticker
+            finnhub_calls = mock_finnhub.call_args_list
+            if finnhub_calls:
+                call_kwargs = finnhub_calls[0].kwargs
+                assert call_kwargs.get("symbol") is None

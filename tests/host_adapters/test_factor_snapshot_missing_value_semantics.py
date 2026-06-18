@@ -17,7 +17,6 @@ if str(ROOT) not in sys.path:
 
 from scripts.build_factor_snapshot import build_factor_snapshot  # noqa: E402
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------

@@ -28,7 +28,8 @@ class TestBinRunners:
     def test_e2e_script_syntax_valid(self):
         content = (BIN_DIR / "fund-agent-e2e").read_text(encoding="utf-8")
         assert "set -euo pipefail" in content
-        assert "fund-agent-e2e" in content
+        assert "scripts/fund_agent_e2e.py" in content
+        assert "build_transaction_ledger.py" not in content
 
     def test_privacy_check_script_syntax_valid(self):
         content = (BIN_DIR / "fund-agent-privacy-check").read_text(encoding="utf-8")

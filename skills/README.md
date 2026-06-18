@@ -6,11 +6,11 @@ then call the deterministic Python runtime declared by the manifest.
 
 ## Skill Surface (Superpowers-compatible)
 
-`fund-agent` exposes a **composable collection of Markdown skills**,
-Superpowers-style: one hyphenated `skills/<slug>/SKILL.md` directory per
-skill, with the directory name matching the skill's frontmatter `name`
-field. The agent-facing skill name is the hyphenated slug; the
-underscore name is the Python runtime ID only.
+`fund-agent` exposes a **composable collection of Markdown skills**.
+The five business skills below map to manifest runtime IDs. Claude Code also
+requires three root-level plugin-operation skills (`e2e-report`,
+`setup-private-data`, and `audit-privacy`); those delegate to repository
+wrappers and are not runtime skillpack entries.
 
 ### Primary / default skill
 
@@ -50,11 +50,13 @@ only after `fund-analysis` (or equivalent evidence) is in scope:
 
 ## Directory Policy
 
-- Hyphenated directories such as `fund-analysis/` are the canonical
-  Markdown skill documentation slugs and the only agent-facing skill
-  directories. Each one has a `SKILL.md` file (the primary
+- Hyphenated business directories such as `fund-analysis/` are the canonical
+  Markdown runtime skill documentation slugs. Each one has a `SKILL.md` file (the primary
   agent-facing instruction file) and optional `references/*.md` files
   (longer policy, examples, templates, and method documents).
+- `audit-privacy/`, `e2e-report/`, and `setup-private-data/` are Claude Code
+  plugin-operation skills. They must not be inferred as runtime IDs or added
+  to `skillpack/fund-agent.skillpack.yaml`.
 - Underscore `skills/` directories (e.g. `skills/fund_analysis/`) are
   **not** part of the v0.4.4+ skill surface. They have been removed
   from this milestone. Older clones that still ship them are

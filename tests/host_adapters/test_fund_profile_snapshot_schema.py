@@ -266,7 +266,7 @@ class TestFundProfileSnapshotTemplateAndDemo:
         """Demo manager names must be synthetic (contain 示例)."""
         with open(DEMO_PATH, encoding="utf-8") as f:
             data = json.load(f)
-        for fc, profile in data["fund_profiles"].items():
+        for _fc, profile in data["fund_profiles"].items():
             manager = profile.get("manager", "")
             if manager:
                 assert "示例" in manager, f"Non-synthetic manager name: {manager}"

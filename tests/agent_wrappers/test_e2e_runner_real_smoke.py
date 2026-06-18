@@ -105,6 +105,14 @@ def _setup_synthetic_workspace(tmp_dir: Path) -> Path:
         SYNTHETIC_INVESTMENT_PLAN_YAML, encoding="utf-8"
     )
 
+    # A direct synthetic portfolio keeps the report path available when the
+    # provider/NAV reconstruction branch is intentionally skipped.
+    (private_data / "portfolio_input.private.json").write_text(
+        (REPO_ROOT / "examples" / "user_portfolio_templates" / "fund_portfolio_input_demo.json")
+        .read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+
     # Write NAV/profile/fee overrides for build_fund_data_snapshot
     overrides_dir = tmp_dir / "overrides"
     overrides_dir.mkdir(parents=True, exist_ok=True)
@@ -166,7 +174,13 @@ class TestE2ERunnerRealSmoke:
 
         summary = json.loads(summary_path.read_text(encoding="utf-8"))
         assert summary["run_id"] == "test-smoke-001"
+        assert summary["status"] in {"success", "partial"}
+        assert summary["warnings"]
+        assert summary["errors"] == []
         assert "steps_completed" in summary
+        assert summary["outputs"]["report"] == str(report_path)
+        assert summary["outputs"]["summary"] == str(summary_path)
+        assert report_path.exists()
 
         # Output should not contain raw private row content or API keys
         combined = result.stdout + result.stderr
@@ -303,3 +317,26 @@ class TestE2ERunnerRealSmoke:
         )
         assert result.returncode == 0
         assert "dry-run" in result.stdout.lower() or "would run" in result.stdout.lower()
+
+    def test_no_usable_input_fails_with_summary(self, tmp_path):
+        private_data = tmp_path / "empty-private-data"
+        private_data.mkdir()
+        output_dir = tmp_path / "output"
+        result = subprocess.run(
+            [
+                sys.executable, str(E2E_PY),
+                "--private-data-dir", str(private_data),
+                "--output-dir", str(output_dir),
+                "--output-report", str(output_dir / "report.md"),
+            ],
+            capture_output=True, text=True, timeout=30, cwd=str(REPO_ROOT),
+        )
+        assert result.returncode != 0
+        summary = json.loads((output_dir / "e2e_summary.json").read_text(encoding="utf-8"))
+        assert summary["status"] == "failed"
+        assert summary["errors"]
+        assert summary["outputs"]["report"] is None
+
+    def test_live_provider_flag_is_forwarded_to_snapshot_subprocess(self):
+        content = E2E_PY.read_text(encoding="utf-8")
+        assert '{"RUN_LIVE_PROVIDER_TESTS": "1"}' in content

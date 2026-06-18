@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.build_knowledge_graph_context import build_kg_context, QUERY_TYPE_PRIORITY  # noqa: E402
+from scripts.build_knowledge_graph_context import QUERY_TYPE_PRIORITY, build_kg_context  # noqa: E402
 
 
 def _portfolio_two_holdings() -> dict:

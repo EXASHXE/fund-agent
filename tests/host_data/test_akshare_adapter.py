@@ -4,11 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
-from src.host_data.provider_config import ProviderConfig, ProviderCredentials
 from src.host_data.provider_contracts import ProviderCapability
-from src.host_data.provider_result import ProviderResult
 
 
 def _make_adapter_with_mock_akshare(df_mock=None):
@@ -34,8 +30,8 @@ class TestAkShareHealthCheck:
         from examples.host_data_adapters.akshare_adapter import AkShareAdapter
 
         adapter = AkShareAdapter()
-        adapter._akshare = None
-        result = adapter.health_check()
+        with patch.object(adapter, "_ensure_akshare", return_value=None):
+            result = adapter.health_check()
         assert not result.ok
         assert "MISSING_DEPENDENCY" in result.errors
 
@@ -59,8 +55,8 @@ class TestAkShareFundNavHistory:
         from examples.host_data_adapters.akshare_adapter import AkShareAdapter
 
         adapter = AkShareAdapter()
-        adapter._akshare = None
-        result = adapter.get_fund_nav_history("000001", "20240101", "20241231")
+        with patch.object(adapter, "_ensure_akshare", return_value=None):
+            result = adapter.get_fund_nav_history("000001", "20240101", "20241231")
         assert not result.ok
         assert "MISSING_DEPENDENCY" in result.errors
 

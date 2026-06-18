@@ -15,7 +15,6 @@ if str(ROOT) not in sys.path:
 
 from src.tools.portfolio.report_sections.helpers import _money, _money_or_missing  # noqa: E402
 
-
 # ---------------------------------------------------------------------------
 # Tests: _money_or_missing
 # ---------------------------------------------------------------------------

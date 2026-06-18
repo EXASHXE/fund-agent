@@ -1,4 +1,4 @@
-"""Release consistency tests for v0.10.0.
+"""Release consistency tests for the current v0.10.x candidate.
 
 Ensures all version declarations agree, CHANGELOG is updated,
 README does not overclaim, and public API imports work.
@@ -14,7 +14,7 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
-EXPECTED_VERSION = "0.10.4"
+EXPECTED_VERSION = "0.10.5"
 
 VERSION_PATH = ROOT / "VERSION"
 PYPROJECT_PATH = ROOT / "pyproject.toml"
@@ -126,7 +126,9 @@ class TestReadinessChecklist:
 
     def test_readiness_checklist_mentions_version(self):
         text = CHECKLIST_PATH.read_text(encoding="utf-8")
-        assert "0.10.0" in text, "Readiness checklist does not mention 0.10.0"
+        assert EXPECTED_VERSION in text, (
+            f"Readiness checklist does not mention {EXPECTED_VERSION}"
+        )
 
     def test_readiness_checklist_full_pytest_marked(self):
         text = CHECKLIST_PATH.read_text(encoding="utf-8")
