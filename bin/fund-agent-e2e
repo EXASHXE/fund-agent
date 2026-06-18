@@ -2,9 +2,11 @@
 # fund-agent-e2e — Shared deterministic E2E pipeline runner.
 #
 # Runs the v0.10.5 pipeline:
-#   import_alipay_transactions → generate_planned_transactions →
+#   import_alipay_transactions → generate_planned_transactions (pre-NAV) →
 #   build_transaction_ledger → resolve_fund_identities →
-#   build_fund_data_snapshot → reconstruct_portfolio_from_ledger →
+#   build_fund_data_snapshot → generate_planned_transactions (with NAV) →
+#   rebuild ledger with NAV-aware planned transactions →
+#   reconstruct_portfolio_from_ledger →
 #   build_knowledge_graph_context → build_news_snapshot →
 #   build_factor_snapshot → analyze-portfolio markdown
 #
@@ -28,6 +30,8 @@ SKIP_AKSHARE=false
 DRY_RUN=false
 OUTPUT_REPORT=""
 RUN_ID=""
+PRIVATE_DATA_DIR=""
+OUTPUT_DIR=""
 
 # --- parse args ---
 while [[ $# -gt 0 ]]; do
@@ -39,6 +43,8 @@ while [[ $# -gt 0 ]]; do
     --dry-run)      DRY_RUN=true; shift ;;
     --output-report) OUTPUT_REPORT="$2"; shift 2 ;;
     --run-id)       RUN_ID="$2"; shift 2 ;;
+    --private-data-dir) PRIVATE_DATA_DIR="$2"; shift 2 ;;
+    --output-dir)   OUTPUT_DIR="$2"; shift 2 ;;
     --help|-h)
       echo "Usage: fund-agent-e2e [options]"
       echo ""
@@ -50,6 +56,8 @@ while [[ $# -gt 0 ]]; do
       echo "  --dry-run                  Print pipeline steps without executing"
       echo "  --output-report PATH       Output report path (default: local_reports/real_portfolio_report.md)"
       echo "  --run-id ID                Run identifier for eval_workspace"
+      echo "  --private-data-dir PATH    Private data directory (default: private_data/)"
+      echo "  --output-dir PATH          Output/workspace directory (default: eval_workspace/runs/<run_id>/)"
       echo "  --help                     Show this help"
       exit 0
       ;;
@@ -61,15 +69,21 @@ done
 if [[ -z "$AS_OF" ]]; then
   AS_OF="$(date +%Y-%m-%d)"
 fi
-if [[ -z "$OUTPUT_REPORT" ]]; then
-  OUTPUT_REPORT="$REPO_ROOT/local_reports/real_portfolio_report.md"
+if [[ -z "$PRIVATE_DATA_DIR" ]]; then
+  PRIVATE_DATA_DIR="$REPO_ROOT/private_data"
 fi
 if [[ -z "$RUN_ID" ]]; then
   RUN_ID="e2e-$(date +%Y%m%d-%H%M%S)"
 fi
+if [[ -z "$OUTPUT_DIR" ]]; then
+  OUTPUT_DIR="$REPO_ROOT/eval_workspace/runs/$RUN_ID"
+fi
+if [[ -z "$OUTPUT_REPORT" ]]; then
+  OUTPUT_REPORT="$REPO_ROOT/local_reports/real_portfolio_report.md"
+fi
 
-RUN_DIR="$REPO_ROOT/eval_workspace/runs/$RUN_ID"
-PRIVATE_DATA="$REPO_ROOT/private_data"
+RUN_DIR="$OUTPUT_DIR"
+PRIVATE_DATA="$PRIVATE_DATA_DIR"
 
 # --- helpers ---
 step() {
@@ -92,9 +106,6 @@ PORTFOLIO_INPUT=""
 ALIPAY_CSV=""
 INVESTMENT_PLAN=""
 
-if [[ -f "$PRIVATE_DATA/alipay_record_20260614_2352_1.csv" ]]; then
-  ALIPAY_CSV="$PRIVATE_DATA/alipay_record_20260614_2352_1.csv"
-fi
 # Find most recent alipay CSV
 for f in "$PRIVATE_DATA"/alipay_record_*.csv; do
   if [[ -f "$f" ]]; then ALIPAY_CSV="$f"; fi
@@ -113,6 +124,10 @@ LEDGER="$RUN_DIR/transaction_ledger.json"
 FUND_IDENTITY="$RUN_DIR/fund_identity_resolution.json"
 FUND_SNAPSHOT_DIR="$RUN_DIR/fund_data_snapshot"
 PORTFOLIO_DIR="$RUN_DIR/portfolio"
+NAV_SNAPSHOT=""
+FEE_SNAPSHOT=""
+FUND_PROFILE_SNAPSHOT=""
+CONFIRMED_PORTFOLIO=""
 
 if [[ -n "$ALIPAY_CSV" ]]; then
   step 0a "Import Alipay transactions" \
@@ -120,8 +135,9 @@ if [[ -n "$ALIPAY_CSV" ]]; then
       --input "$ALIPAY_CSV" --output "$NORMALIZED_TX"
 fi
 
+# Phase 1: Generate planned transactions without NAV (to collect fund codes)
 if [[ -n "$INVESTMENT_PLAN" ]]; then
-  step 0b "Generate planned transactions" \
+  step 0b "Generate planned transactions (pre-NAV)" \
     python "$SCRIPTS/generate_planned_transactions.py" \
       --plan "$INVESTMENT_PLAN" --as-of-date "$AS_OF" --output "$PLANNED_TX"
 fi
@@ -153,14 +169,30 @@ print(' '.join(codes))
     fi
   fi
 
-  NAV_SNAPSHOT="$FUND_SNAPSHOT_DIR/nav_snapshot.json"
-  FEE_SNAPSHOT="$FUND_SNAPSHOT_DIR/fee_snapshot.json"
+  NAV_SNAPSHOT="$FUND_SNAPSHOT_DIR/nav_snapshot.private.json"
+  FEE_SNAPSHOT="$FUND_SNAPSHOT_DIR/fee_schedule_snapshot.private.json"
+  FUND_PROFILE_SNAPSHOT="$FUND_SNAPSHOT_DIR/fund_profile_snapshot.private.json"
+
+  # Phase 2: Regenerate planned transactions with NAV snapshot for rule_confirmed
+  if [[ -n "$INVESTMENT_PLAN" && -f "$NAV_SNAPSHOT" ]]; then
+    step 0e2 "Regenerate planned transactions (with NAV)" \
+      python "$SCRIPTS/generate_planned_transactions.py" \
+        --plan "$INVESTMENT_PLAN" --as-of-date "$AS_OF" \
+        --nav-snapshot "$NAV_SNAPSHOT" --output "$PLANNED_TX"
+
+    # Rebuild ledger with NAV-aware planned transactions
+    LEDGER_ARGS=(--output "$LEDGER")
+    if [[ -f "$NORMALIZED_TX" ]]; then LEDGER_ARGS+=(--alipay "$NORMALIZED_TX"); fi
+    if [[ -f "$PLANNED_TX" ]]; then LEDGER_ARGS+=(--planned "$PLANNED_TX"); fi
+    step 0c2 "Rebuild transaction ledger (NAV-aware)" \
+      python "$SCRIPTS/build_transaction_ledger.py" "${LEDGER_ARGS[@]}"
+  fi
+
   if [[ -f "$NAV_SNAPSHOT" ]]; then
+    RECONSTRUCT_ARGS=(--ledger "$LEDGER" --nav-snapshot "$NAV_SNAPSHOT" --as-of-date "$AS_OF" --output-dir "$PORTFOLIO_DIR")
+    if [[ -f "$FEE_SNAPSHOT" ]]; then RECONSTRUCT_ARGS+=(--fee-snapshot "$FEE_SNAPSHOT"); fi
     step 0f "Reconstruct portfolio from ledger" \
-      python "$SCRIPTS/reconstruct_portfolio_from_ledger.py" \
-        --ledger "$LEDGER" --nav-snapshot "$NAV_SNAPSHOT" \
-        --fee-snapshot "$FEE_SNAPSHOT" --as-of-date "$AS_OF" \
-        --output-dir "$PORTFOLIO_DIR"
+      python "$SCRIPTS/reconstruct_portfolio_from_ledger.py" "${RECONSTRUCT_ARGS[@]}"
   fi
 
   # Update portfolio input from reconstruction if available
@@ -172,9 +204,16 @@ fi
 # --- Step 1: Build KG Context ---
 KG_CONTEXT="$RUN_DIR/kg_context_snapshot.json"
 if [[ -n "$PORTFOLIO_INPUT" && -f "$PORTFOLIO_INPUT" ]]; then
+  KG_ARGS=(--portfolio-input "$PORTFOLIO_INPUT" --output "$KG_CONTEXT")
+  if [[ -f "$FUND_PROFILE_SNAPSHOT" ]]; then
+    KG_ARGS+=(--fund-profile-snapshot "$FUND_PROFILE_SNAPSHOT")
+  fi
+  CONFIRMED_PORTFOLIO="$PORTFOLIO_DIR/confirmed_portfolio.private.json"
+  if [[ -f "$CONFIRMED_PORTFOLIO" ]]; then
+    KG_ARGS+=(--confirmed-portfolio "$CONFIRMED_PORTFOLIO")
+  fi
   step 1 "Build knowledge graph context" \
-    python "$SCRIPTS/build_knowledge_graph_context.py" \
-      --portfolio-input "$PORTFOLIO_INPUT" --output "$KG_CONTEXT"
+    python "$SCRIPTS/build_knowledge_graph_context.py" "${KG_ARGS[@]}"
 else
   echo "[step 1] SKIP: no portfolio input available"
 fi
@@ -227,7 +266,7 @@ if [[ -n "$PORTFOLIO_INPUT" && -f "$PORTFOLIO_INPUT" ]]; then
     ANALYSIS_ARGS+=(--kg-context "$KG_CONTEXT")
   fi
   step 4 "Analyze portfolio (markdown report)" \
-    python -m fund_agent.cli "${ANYSIS_ARGS[@]}"
+    python -m fund_agent.cli "${ANALYSIS_ARGS[@]}"
 fi
 
 # --- Write e2e_summary.json ---
