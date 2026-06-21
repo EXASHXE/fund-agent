@@ -9,9 +9,16 @@ import json
 import os
 import subprocess
 import sys
+from datetime import date
 from pathlib import Path
 
 import pytest
+
+from scripts.build_fund_data_snapshot import (
+    build_fee_schedule_snapshot,
+    build_fund_profile_snapshot,
+    build_nav_snapshot,
+)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 SCRIPTS_DIR = REPO_ROOT / "scripts"
@@ -20,8 +27,8 @@ E2E_PY = SCRIPTS_DIR / "fund_agent_e2e.py"
 # Synthetic Alipay CSV (minimal valid structure)
 SYNTHETIC_ALIPAY_CSV = """\
 交易号,商户订单号,交易创建时间,付款时间,交易来源地,类型,交易对方,商品名称,金额（元）,收/支,交易状态,服务费（元）,成功退款（元）,备注
-202606170001,ORDER001,2026-06-17 10:00:00,2026-06-17 10:00:05,其他,即时到账交易,天弘基金管理有限公司,天弘余额宝-20260617,1000.00,支出,交易成功,0.00,0.00,余额宝申购
-202606170002,ORDER002,2026-06-17 11:00:00,2026-06-17 11:00:05,其他,即时到账交易,华夏基金管理有限公司,华夏半导体ETF联接A-20260617,500.00,支出,交易成功,0.00,0.00,基金申购
+SYNTH-TRADE-001,SYNTH-ORDER-001,2026-06-17 10:00:00,2026-06-17 10:00:05,其他,即时到账交易,华夏基金管理有限公司,000001 华夏成长混合基金申购,1000.00,支出,交易成功,0.00,0.00,合成基金申购
+SYNTH-TRADE-002,SYNTH-ORDER-002,2026-06-17 11:00:00,2026-06-17 11:00:05,其他,即时到账交易,华夏基金管理有限公司,000001 华夏成长混合基金申购,500.00,支出,交易成功,0.00,0.00,合成基金申购
 """
 
 # Synthetic investment plan
@@ -105,14 +112,6 @@ def _setup_synthetic_workspace(tmp_dir: Path) -> Path:
         SYNTHETIC_INVESTMENT_PLAN_YAML, encoding="utf-8"
     )
 
-    # A direct synthetic portfolio keeps the report path available when the
-    # provider/NAV reconstruction branch is intentionally skipped.
-    (private_data / "portfolio_input.private.json").write_text(
-        (REPO_ROOT / "examples" / "user_portfolio_templates" / "fund_portfolio_input_demo.json")
-        .read_text(encoding="utf-8"),
-        encoding="utf-8",
-    )
-
     # Write NAV/profile/fee overrides for build_fund_data_snapshot
     overrides_dir = tmp_dir / "overrides"
     overrides_dir.mkdir(parents=True, exist_ok=True)
@@ -125,6 +124,27 @@ def _setup_synthetic_workspace(tmp_dir: Path) -> Path:
     (overrides_dir / "fee_overrides.json").write_text(
         json.dumps(SYNTHETIC_FEE_OVERRIDES, ensure_ascii=False, indent=2), encoding="utf-8"
     )
+
+    # Seed the runner's snapshot directory so --skip-akshare remains fully
+    # offline while the real ledger-to-portfolio reconstruction path runs.
+    snapshot_dir = tmp_dir / "output" / "fund_data_snapshot"
+    snapshot_dir.mkdir(parents=True, exist_ok=True)
+    as_of = date(2026, 6, 17)
+    snapshots = {
+        "nav_snapshot.private.json": build_nav_snapshot(
+            ["000001"], as_of, SYNTHETIC_NAV_OVERRIDES
+        ),
+        "fund_profile_snapshot.private.json": build_fund_profile_snapshot(
+            ["000001"], as_of, SYNTHETIC_PROFILE_OVERRIDES
+        ),
+        "fee_schedule_snapshot.private.json": build_fee_schedule_snapshot(
+            ["000001"], as_of, SYNTHETIC_FEE_OVERRIDES
+        ),
+    }
+    for filename, payload in snapshots.items():
+        (snapshot_dir / filename).write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
 
     return private_data
 
@@ -181,6 +201,16 @@ class TestE2ERunnerRealSmoke:
         assert summary["outputs"]["report"] == str(report_path)
         assert summary["outputs"]["summary"] == str(summary_path)
         assert report_path.exists()
+
+        normalized = json.loads(
+            (output_dir / "normalized_transactions.json").read_text(encoding="utf-8")
+        )
+        assert normalized["transaction_count"] == 2
+        ledger = json.loads(
+            (output_dir / "transaction_ledger.json").read_text(encoding="utf-8")
+        )
+        assert ledger["summary"]["evidence_confirmed"] == 2
+        assert (output_dir / "portfolio" / "portfolio_input.private.json").exists()
 
         # Output should not contain raw private row content or API keys
         combined = result.stdout + result.stderr
