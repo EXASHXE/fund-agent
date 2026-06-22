@@ -22,15 +22,12 @@ ROOT = Path(__file__).resolve().parent.parent.parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-import pytest
-
-from src.tools.portfolio.ledger_snapshot import compute_transaction_cashflow_summary
-from src.tools.portfolio.report_quality import (
-    calculate_data_completeness,
+from src.tools.portfolio.ledger_snapshot import compute_transaction_cashflow_summary  # noqa: E402
+from src.tools.portfolio.report_quality import (  # noqa: E402
     _compute_field_coverage,
+    calculate_data_completeness,
 )
-from src.tools.portfolio.report_sections.render import compose_personal_fund_report
-
+from src.tools.portfolio.report_sections.render import compose_personal_fund_report  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Synthetic fixture: transactions_only portfolio_input
