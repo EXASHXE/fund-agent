@@ -349,6 +349,55 @@ def run_pipeline(args: argparse.Namespace) -> int:
         return 0
 
     status = "failed" if errors else "partial" if warnings else "success"
+
+    # Determine portfolio_input_source and transaction_reconstruction_status
+    portfolio_input_source = "none"
+    transaction_reconstruction_status = "skipped"
+    alipay_import_stats: dict[str, Any] = {}
+
+    if portfolio_input and portfolio_input.exists():
+        # Check if this was reconstructed from ledger or is an existing private input
+        if str(portfolio_input).startswith(str(portfolio_dir)):
+            portfolio_input_source = "reconstructed_from_ledger"
+        else:
+            portfolio_input_source = "existing_private_portfolio_input"
+
+    if alipay_csv is not None:
+        if normalized_tx.exists():
+            transaction_reconstruction_status = "parsed_from_alipay"
+            try:
+                tx_data = json.loads(normalized_tx.read_text(encoding="utf-8"))
+                if isinstance(tx_data, list):
+                    alipay_import_stats["total_transactions"] = len(tx_data)
+                    fund_txns = [t for t in tx_data if isinstance(t, dict) and t.get("fund_code")]
+                    alipay_import_stats["fund_transactions"] = len(fund_txns)
+                    # Count by classification
+                    classification_counts: dict[str, int] = {}
+                    for t in fund_txns:
+                        cls = str(t.get("classification", t.get("action", "unknown")))
+                        classification_counts[cls] = classification_counts.get(cls, 0) + 1
+                    alipay_import_stats["classification_counts"] = classification_counts
+                elif isinstance(tx_data, dict):
+                    alipay_import_stats["total_transactions"] = len(tx_data.get("transactions", []))
+                    fund_txns = [t for t in tx_data.get("transactions", []) if isinstance(t, dict) and t.get("fund_code")]
+                    alipay_import_stats["fund_transactions"] = len(fund_txns)
+            except (OSError, json.JSONDecodeError):
+                pass
+        else:
+            transaction_reconstruction_status = "not_reconstructed_from_alipay"
+
+    # Warn if Alipay CSV found but no fund transactions parsed
+    if alipay_csv is not None and alipay_import_stats.get("fund_transactions", 0) == 0 and not dry_run:
+        warnings.append("Alipay CSV was found but no fund transactions were parsed")
+
+    # If portfolio_input fallback is used, status should be partial
+    if portfolio_input_source == "existing_private_portfolio_input" and not dry_run:
+        if transaction_reconstruction_status in ("parsed_from_alipay",):
+            # Alipay was parsed but portfolio_input is the fallback
+            pass  # This is expected when NAV is unavailable
+        if status == "success":
+            status = "partial"
+
     summary: dict[str, Any] = {
         "run_id": run_id,
         "as_of": as_of,
@@ -363,7 +412,10 @@ def run_pipeline(args: argparse.Namespace) -> int:
         },
         "output_report": str(output_report) if output_report.exists() else None,
         "coverage": _collect_coverage(factor_snapshot, news_snapshot),
-        "pipeline_version": "0.10.5",
+        "portfolio_input_source": portfolio_input_source,
+        "transaction_reconstruction_status": transaction_reconstruction_status,
+        "alipay_import": alipay_import_stats,
+        "pipeline_version": "0.10.6",
     }
     try:
         summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")

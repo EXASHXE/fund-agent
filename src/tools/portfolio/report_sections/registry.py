@@ -8,7 +8,9 @@ from typing import Any
 
 SECTION_ORDER: tuple[tuple[str, str], ...] = (
     ("executive_summary", "Executive summary"),
+    ("transaction_cashflow", "Transaction cashflow"),
     ("portfolio_snapshot", "Portfolio snapshot"),
+    ("reconstruction_status", "Reconstruction status"),
     ("pnl_and_cost_basis", "PnL and cost basis"),
     ("position_contribution", "Position contribution"),
     ("allocation_and_exposure", "Allocation and exposure"),
@@ -40,7 +42,9 @@ SECTION_ORDER: tuple[tuple[str, str], ...] = (
 
 ZH_CN_SECTION_TITLES: dict[str, str] = {
     "executive_summary": "组合概览",
+    "transaction_cashflow": "流水口径",
     "portfolio_snapshot": "持仓快照",
+    "reconstruction_status": "重建状态",
     "pnl_and_cost_basis": "收益与成本",
     "position_contribution": "仓位贡献",
     "allocation_and_exposure": "配置与暴露",

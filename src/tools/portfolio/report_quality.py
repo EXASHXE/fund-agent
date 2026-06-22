@@ -76,9 +76,13 @@ def calculate_data_completeness(
     direct_positions = _positions_from_portfolio(portfolio)
     has_direct_portfolio = bool(direct_positions)
     has_derived_portfolio = _has_derived_portfolio_inputs(payload) or _has_derived_snapshot(payload)
-    has_portfolio = has_direct_portfolio or has_derived_portfolio
+    has_transactions_only = _has_transactions_only(payload)
+    has_portfolio = has_direct_portfolio or has_derived_portfolio or has_transactions_only
 
     has_nav = _has_position_valuation(portfolio, direct_positions) or _has_current_nav(payload)
+    # For transactions_only, NAV is unavailable by definition
+    if has_transactions_only and not has_nav:
+        has_nav = False
 
     checks: dict[str, bool] = {
         "portfolio_snapshot": has_portfolio,
@@ -178,6 +182,15 @@ def calculate_data_completeness(
             "or invalid events lower report completeness"
         )
 
+    # Per-field coverage for holdings
+    field_coverage = _compute_field_coverage(portfolio, direct_positions)
+
+    # Warn about current_value=0 treated as unknown
+    if field_coverage.get("current_value_zero_treated_as_unknown"):
+        limitations.append(
+            "current_value=0 treated as unknown due to missing valuation data"
+        )
+
     return {
         "score": score,
         "grade": grade,
@@ -190,6 +203,7 @@ def calculate_data_completeness(
         "critical_missing": [_section_label(key) for key in critical_missing],
         "optional_missing": [_section_label(key) for key in missing_optional],
         "limitations": limitations,
+        "field_coverage": field_coverage,
     }
 
 
@@ -220,6 +234,14 @@ def _has_derived_snapshot(payload: dict[str, Any]) -> bool:
     return bool(_positions_from_portfolio(snapshot))
 
 
+def _has_transactions_only(payload: dict[str, Any]) -> bool:
+    """Check if payload has transactions but no current_nav (transactions_only mode)."""
+    has_txns = isinstance(payload.get("transactions"), list) and len(payload["transactions"]) > 0
+    has_nav = _has_current_nav(payload)
+    has_positions = bool(_positions_from_portfolio(payload.get("portfolio") or {}))
+    return has_txns and not has_nav and not has_positions
+
+
 def _has_current_nav(payload: dict[str, Any]) -> bool:
     current_nav = payload.get("current_nav")
     if not isinstance(current_nav, dict):
@@ -240,11 +262,124 @@ def _has_position_valuation(
         return False
     if _is_positive_number(portfolio.get("total_value")):
         return True
-    return any(_is_positive_number(position.get("current_value")) for position in positions)
+    # Check if data_quality indicates current_value is missing
+    data_quality = portfolio.get("data_quality") if isinstance(portfolio, dict) else None
+    missing_fields = []
+    if isinstance(data_quality, dict):
+        missing_fields = [str(f) for f in (data_quality.get("missing_fields") or [])]
+    current_value_declared_missing = "current_value" in missing_fields
+
+    for position in positions:
+        cv = position.get("current_value")
+        if cv is None:
+            continue
+        # If data_quality says current_value is missing, treat 0 as unknown
+        if current_value_declared_missing and float(cv) == 0.0:
+            continue
+        if _is_positive_number(cv):
+            return True
+    return False
 
 
 def _has_non_empty_dict(value: Any) -> bool:
     return isinstance(value, dict) and len(value) > 0
+
+
+def _compute_field_coverage(
+    portfolio: Any,
+    positions: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Compute per-field coverage for holdings positions.
+
+    Returns counts that satisfy:
+    - holdings_with_current_value + holdings_without_current_value == holdings_count
+    - units_complete_count + units_missing_count == holdings_count
+    - nav_complete_count + nav_missing_count == holdings_count
+    - cost_basis_complete_count + cost_basis_missing_count == holdings_count
+    """
+    if not isinstance(positions, list) or not positions:
+        return {
+            "holdings_count": 0,
+            "holdings_with_current_value": 0,
+            "holdings_without_current_value": 0,
+            "units_complete_count": 0,
+            "units_missing_count": 0,
+            "nav_complete_count": 0,
+            "nav_missing_count": 0,
+            "cost_basis_complete_count": 0,
+            "cost_basis_missing_count": 0,
+            "current_value_zero_treated_as_unknown": False,
+        }
+
+    # Check if data_quality says current_value is missing
+    data_quality = portfolio.get("data_quality") if isinstance(portfolio, dict) else None
+    missing_fields = []
+    if isinstance(data_quality, dict):
+        missing_fields = [str(f) for f in (data_quality.get("missing_fields") or [])]
+    current_value_declared_missing = "current_value" in missing_fields
+
+    holdings_count = len(positions)
+    cv_complete = 0
+    cv_missing = 0
+    units_complete = 0
+    units_missing = 0
+    nav_complete = 0
+    nav_missing = 0
+    cost_basis_complete = 0
+    cost_basis_missing = 0
+    cv_zero_treated_as_unknown = False
+
+    for pos in positions:
+        if not isinstance(pos, dict):
+            continue
+
+        # current_value
+        cv = pos.get("current_value")
+        if cv is not None and _is_positive_number(cv):
+            cv_complete += 1
+        elif cv is not None and float(cv) == 0.0 and current_value_declared_missing:
+            # 0 treated as unknown when data_quality says current_value is missing
+            cv_missing += 1
+            cv_zero_treated_as_unknown = True
+        elif cv is None:
+            cv_missing += 1
+        else:
+            # Real zero (e.g. fully sold position)
+            cv_complete += 1
+
+        # units/shares
+        shares = pos.get("shares")
+        if shares is not None and _is_positive_number(shares):
+            units_complete += 1
+        else:
+            units_missing += 1
+
+        # nav
+        nav = pos.get("current_nav") or pos.get("nav")
+        if nav is not None and _is_positive_number(nav):
+            nav_complete += 1
+        else:
+            nav_missing += 1
+
+        # cost_basis / total_cost
+        cost = pos.get("cost_basis") or pos.get("total_cost")
+        if cost is not None and _is_positive_number(cost):
+            cost_basis_complete += 1
+        else:
+            cost_basis_missing += 1
+
+    return {
+        "holdings_count": holdings_count,
+        "holdings_with_current_value": cv_complete,
+        "holdings_without_current_value": cv_missing,
+        "units_complete_count": units_complete,
+        "units_missing_count": units_missing,
+        "nav_complete_count": nav_complete,
+        "nav_missing_count": nav_missing,
+        "cost_basis_complete_count": cost_basis_complete,
+        "cost_basis_missing_count": cost_basis_missing,
+        "current_value_zero_treated_as_unknown": cv_zero_treated_as_unknown,
+    }
 
 
 def _has_non_empty_series_map(value: Any) -> bool:

@@ -11,6 +11,13 @@
 - Largest position is SYNAI001 at 46.67% of portfolio value.
 - Position detail is available for 4 fund(s).
 
+## Reconstruction status [PARTIAL]
+- Report source: unknown.
+- Transactions parsed: no.
+- Ledger built: not applicable (host portfolio provided).
+- NAV snapshot available: no.
+- Confirmed portfolio with valuation: yes.
+
 ## PnL and cost basis [OK]
 - Unrealized PnL is 7,000.00 (5.07%) on total cost 138,000.00.
 - Position-level PnL is available for 4 fund(s).
@@ -143,6 +150,7 @@ Limitations:
 
 ## Limitations
 
+- Transaction cashflow: Transaction cashflow data is not available.
 - Benchmark and peer: Benchmark data is missing; no benchmark comparison is fabricated.
 - Benchmark and peer: Peer group data is missing; no peer ranking is fabricated.
 - Benchmark divergence: Benchmark divergence check completed but no divergence was found — results are limited without NAV and benchmark history.

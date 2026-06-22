@@ -6,10 +6,23 @@
 - Risk scan surfaced 5 flag(s) from available inputs.
 - No formal decision generated; call decision-support for formal action.
 
+## Transaction cashflow [OK]
+- Total inflows: 5,300.00, total outflows: 67,030.00.
+- Net cashflow: -61,730.00.
+- Dividend income: 300.00.
+
 ## Portfolio snapshot [OK]
 - As of 2026-03-31, total value is 71,350.00 with 7,000.00 cash.
 - Largest position is SYNLED001 at 66.15% of portfolio value.
 - Position detail is available for 2 fund(s).
+
+## Reconstruction status [OK]
+- Report source: reconstructed_from_ledger.
+- Transactions parsed: no.
+- Ledger built from transactions + current_nav: yes.
+- Ledger complete: yes.
+- NAV snapshot available: no.
+- Confirmed portfolio with valuation: yes.
 
 ## PnL and cost basis [OK]
 - Unrealized PnL is 8,350.00 (13.25%) on total cost 63,000.00.

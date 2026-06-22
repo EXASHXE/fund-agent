@@ -11,6 +11,7 @@ from typing import Any
 
 from src.schemas.skill import SkillInput, SkillOutput
 from src.skills_runtime.base import BaseSkillRuntime
+from src.tools.portfolio.ledger_snapshot import compute_transaction_cashflow_summary
 
 from .benchmark_rules import compute_benchmark_divergence_diagnostics
 from .cash_deployment_rules import compute_cash_deployment_diagnostics
@@ -31,6 +32,7 @@ from .input_stage import (
 )
 from .knowledge_graph_stage import build_knowledge_graph_summary
 from .ledger_stage import (
+    build_transactions_only_portfolio,
     portfolio_from_derived_snapshot,
     resolve_portfolio_context,
 )
@@ -94,18 +96,33 @@ class FundAnalysisSkill(BaseSkillRuntime):
         if source_of_truth == "derived_from_transactions" and derived_snapshot:
             positions = derived_snapshot.get("positions", [])
             portfolio = portfolio_from_derived_snapshot(payload, derived_snapshot)
+        elif source_of_truth == "transactions_only":
+            # Transactions exist but no current_nav — cashflow-only mode
+            as_of_date = portfolio.get("as_of_date", payload.get("as_of_date", ""))
+            cashflow_summary = compute_transaction_cashflow_summary(
+                transactions=payload.get("transactions", []),
+                as_of_date=as_of_date,
+                options=payload.get("settlement_options"),
+            )
+            portfolio = build_transactions_only_portfolio(payload, cashflow_summary)
+            positions = portfolio.get("positions", [])
         else:
             positions = portfolio.get("positions")
 
         if not isinstance(positions, list) or not positions:
-            return failed_output(
-                skill_input,
-                "INVALID_INPUT",
-                "payload.portfolio.positions must be a non-empty list",
-            )
+            if source_of_truth == "transactions_only":
+                # transactions_only may produce no positions if all transactions are invalid
+                # but we still want to produce a cashflow-only report
+                pass
+            else:
+                return failed_output(
+                    skill_input,
+                    "INVALID_INPUT",
+                    "payload.portfolio.positions must be a non-empty list",
+                )
 
         fund_codes = collect_fund_codes(positions)
-        if not fund_codes:
+        if not fund_codes and source_of_truth != "transactions_only":
             return failed_output(
                 skill_input,
                 "INVALID_INPUT",

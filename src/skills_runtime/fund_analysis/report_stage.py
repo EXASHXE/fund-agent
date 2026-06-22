@@ -121,6 +121,23 @@ def assemble_analysis_report_and_artifacts(
             warnings,
         )
 
+    # Transactions-only mode: cashflow evidence without valuation
+    if source_of_truth == "transactions_only":
+        artifacts["source_of_truth"] = "transactions_only"
+        warnings.append(
+            "source_of_truth is transactions_only: report shows cashflow data, not current market value; "
+            "流水口径净投入，不是当前市值"
+        )
+        # Compute cashflow summary from transactions
+        from src.tools.portfolio.ledger_snapshot import compute_transaction_cashflow_summary
+        as_of_date = bundle.portfolio.get("as_of_date", bundle.as_of_date or "")
+        cashflow_summary = compute_transaction_cashflow_summary(
+            transactions=bundle.transactions,
+            as_of_date=as_of_date,
+            options=bundle.payload.get("settlement_options"),
+        )
+        artifacts["transaction_cashflow_summary"] = cashflow_summary
+
     if reconciliation_report:
         artifacts["ledger_reconciliation_report"] = reconciliation_report
         # Add reconciliation warnings

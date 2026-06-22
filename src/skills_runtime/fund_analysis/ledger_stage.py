@@ -60,6 +60,9 @@ def resolve_portfolio_context(
                     details={"error_type": type(exc).__name__},
                 )
             )
+    elif has_transactions and not has_current_nav:
+        # Transactions exist but no current_nav — cashflow-only mode
+        source_of_truth = "transactions_only"
     elif not has_host_positions:
         if has_related_entities(payload, skill_input):
             return StageResult(context=FundAnalysisContext(payload, baseline_only=True))
@@ -104,12 +107,15 @@ def portfolio_from_derived_snapshot(
     positions = derived_snapshot.get("positions", [])
     # Build portfolio dict from snapshot positions
     total_value = 0.0
+    has_any_valuation = False
     for pos in positions:
-        cv = pos.get("current_value") or 0.0
-        total_value += cv
+        cv = pos.get("current_value")
+        if cv is not None:
+            total_value += cv
+            has_any_valuation = True
     return {
         "as_of_date": derived_snapshot.get("as_of_date", payload.get("as_of_date", "")),
-        "total_value": total_value,
+        "total_value": total_value if has_any_valuation else None,
         "cash_available": payload.get("current_nav", {}).get("_cash_available",
                             derived_snapshot.get("cashflow_summary", {}).get("implied_cash", 0.0)),
         "positions": [
@@ -158,3 +164,60 @@ def build_ledger_quality_summary(
             f"event(s); shares and cost basis may be incomplete"
         )
     return ledger_quality
+
+
+def build_transactions_only_portfolio(
+    payload: dict[str, Any],
+    cashflow_summary: dict[str, Any],
+) -> dict[str, Any]:
+    """Build a minimal portfolio dict for transactions_only mode.
+
+    Positions are identified from transactions but have no valuation data.
+    current_value is set to None (not 0) to indicate unknown.
+    """
+    portfolio = dict_or_empty(payload.get("portfolio"))
+    existing_positions = portfolio.get("positions", [])
+
+    # Build position map from existing positions (for fund_name etc.)
+    existing_map: dict[str, dict[str, Any]] = {}
+    if isinstance(existing_positions, list):
+        for pos in existing_positions:
+            if isinstance(pos, dict) and pos.get("fund_code"):
+                existing_map[str(pos["fund_code"])] = pos
+
+    # Build positions from cashflow_summary by_fund
+    by_fund = cashflow_summary.get("by_fund", {})
+    positions: list[dict[str, Any]] = []
+    for fund_code, fund_cf in by_fund.items():
+        existing = existing_map.get(fund_code, {})
+        positions.append({
+            "fund_code": fund_code,
+            "fund_name": existing.get("fund_name", fund_code),
+            "current_value": None,  # Unknown — not 0
+            "total_cost": None,
+            "shares": None,
+            "nav": None,
+            "pending_amount": fund_cf.get("pending_amount", 0.0),
+            "tags": existing.get("tags", []),
+        })
+
+    # Include any existing positions not in by_fund (identified but no transactions)
+    for fund_code, existing in existing_map.items():
+        if fund_code not in by_fund:
+            positions.append({
+                "fund_code": fund_code,
+                "fund_name": existing.get("fund_name", fund_code),
+                "current_value": None,
+                "total_cost": None,
+                "shares": None,
+                "nav": None,
+                "pending_amount": 0.0,
+                "tags": existing.get("tags", []),
+            })
+
+    return {
+        "as_of_date": portfolio.get("as_of_date", payload.get("as_of_date", "")),
+        "total_value": None,  # Unknown
+        "cash_available": None,
+        "positions": positions,
+    }

@@ -11,6 +11,13 @@
 - Largest position is SYNQD001 at 33.33% of portfolio value.
 - Position detail is available for 4 fund(s).
 
+## Reconstruction status [PARTIAL]
+- Report source: unknown.
+- Transactions parsed: no.
+- Ledger built: not applicable (host portfolio provided).
+- NAV snapshot available: no.
+- Confirmed portfolio with valuation: yes.
+
 ## PnL and cost basis [OK]
 - Unrealized PnL is 5,000.00 (3.03%) on total cost 165,000.00.
 - Position-level PnL is available for 4 fund(s).
@@ -147,6 +154,7 @@ Limitations:
 
 ## Limitations
 
+- Transaction cashflow: Transaction cashflow data is not available.
 - Benchmark and peer: Peer group data is missing; no peer ranking is fabricated.
 - Benchmark divergence: Benchmark divergence check completed but no divergence was found — results are limited without NAV and benchmark history.
 - Factor analysis: Factor snapshot not provided; no factor analysis is fabricated.

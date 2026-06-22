@@ -218,6 +218,18 @@
         "Redemption Rules"
       ],
       "critical_missing": [],
+      "field_coverage": {
+        "cost_basis_complete_count": 3,
+        "cost_basis_missing_count": 0,
+        "current_value_zero_treated_as_unknown": false,
+        "holdings_count": 3,
+        "holdings_with_current_value": 3,
+        "holdings_without_current_value": 0,
+        "nav_complete_count": 3,
+        "nav_missing_count": 0,
+        "units_complete_count": 3,
+        "units_missing_count": 0
+      },
       "grade": "B",
       "limitations": [],
       "missing_sections": [
@@ -604,6 +616,18 @@
           "Redemption Rules"
         ],
         "critical_missing": [],
+        "field_coverage": {
+          "cost_basis_complete_count": 3,
+          "cost_basis_missing_count": 0,
+          "current_value_zero_treated_as_unknown": false,
+          "holdings_count": 3,
+          "holdings_with_current_value": 3,
+          "holdings_without_current_value": 0,
+          "nav_complete_count": 3,
+          "nav_missing_count": 0,
+          "units_complete_count": 3,
+          "units_missing_count": 0
+        },
         "grade": "B",
         "limitations": [],
         "missing_sections": [
@@ -905,6 +929,7 @@
       "portfolio_metrics": {
         "as_of_date": "2026-03-31",
         "cash_available": 8000.0,
+        "current_value_likely_missing": false,
         "position_count": 3,
         "position_weights": {
           "SYN7D001": 0.35,
@@ -1319,9 +1344,19 @@
           "title": "Executive summary"
         },
         {
+          "id": "transaction_cashflow",
+          "status": "MISSING",
+          "title": "Transaction cashflow"
+        },
+        {
           "id": "portfolio_snapshot",
           "status": "OK",
           "title": "Portfolio snapshot"
+        },
+        {
+          "id": "reconstruction_status",
+          "status": "PARTIAL",
+          "title": "Reconstruction status"
         },
         {
           "id": "pnl_and_cost_basis",
@@ -1483,6 +1518,19 @@
           "title": "Executive summary"
         },
         {
+          "bullets": [],
+          "data_sources": [
+            "transaction_cashflow_summary",
+            "ledger_cashflow_summary"
+          ],
+          "id": "transaction_cashflow",
+          "limitations": [
+            "Transaction cashflow data is not available."
+          ],
+          "status": "MISSING",
+          "title": "Transaction cashflow"
+        },
+        {
           "bullets": [
             "As of 2026-03-31, total value is 120,000.00 with 8,000.00 cash.",
             "Largest position is SYN7D002 at 41.67% of portfolio value.",
@@ -1496,6 +1544,24 @@
           "limitations": [],
           "status": "OK",
           "title": "Portfolio snapshot"
+        },
+        {
+          "bullets": [
+            "Report source: unknown.",
+            "Transactions parsed: no.",
+            "Ledger built: not applicable (host portfolio provided).",
+            "NAV snapshot available: no.",
+            "Confirmed portfolio with valuation: yes."
+          ],
+          "data_sources": [
+            "source_of_truth",
+            "ledger_quality_summary",
+            "transaction_cashflow_summary"
+          ],
+          "id": "reconstruction_status",
+          "limitations": [],
+          "status": "PARTIAL",
+          "title": "Reconstruction status"
         },
         {
           "bullets": [
@@ -2228,6 +2294,7 @@
     "portfolio_summary": {
       "as_of_date": "2026-03-31",
       "cash_available": 8000.0,
+      "current_value_likely_missing": false,
       "position_count": 3,
       "position_weights": {
         "SYN7D001": 0.35,
@@ -2582,9 +2649,19 @@
         "title": "Executive summary"
       },
       {
+        "id": "transaction_cashflow",
+        "status": "MISSING",
+        "title": "Transaction cashflow"
+      },
+      {
         "id": "portfolio_snapshot",
         "status": "OK",
         "title": "Portfolio snapshot"
+      },
+      {
+        "id": "reconstruction_status",
+        "status": "PARTIAL",
+        "title": "Reconstruction status"
       },
       {
         "id": "pnl_and_cost_basis",
@@ -2746,6 +2823,19 @@
         "title": "Executive summary"
       },
       {
+        "bullets": [],
+        "data_sources": [
+          "transaction_cashflow_summary",
+          "ledger_cashflow_summary"
+        ],
+        "id": "transaction_cashflow",
+        "limitations": [
+          "Transaction cashflow data is not available."
+        ],
+        "status": "MISSING",
+        "title": "Transaction cashflow"
+      },
+      {
         "bullets": [
           "As of 2026-03-31, total value is 120,000.00 with 8,000.00 cash.",
           "Largest position is SYN7D002 at 41.67% of portfolio value.",
@@ -2759,6 +2849,24 @@
         "limitations": [],
         "status": "OK",
         "title": "Portfolio snapshot"
+      },
+      {
+        "bullets": [
+          "Report source: unknown.",
+          "Transactions parsed: no.",
+          "Ledger built: not applicable (host portfolio provided).",
+          "NAV snapshot available: no.",
+          "Confirmed portfolio with valuation: yes."
+        ],
+        "data_sources": [
+          "source_of_truth",
+          "ledger_quality_summary",
+          "transaction_cashflow_summary"
+        ],
+        "id": "reconstruction_status",
+        "limitations": [],
+        "status": "PARTIAL",
+        "title": "Reconstruction status"
       },
       {
         "bullets": [
@@ -3393,6 +3501,7 @@
         "portfolio_summary": {
           "as_of_date": "2026-03-31",
           "cash_available": 8000.0,
+          "current_value_likely_missing": false,
           "position_count": 3,
           "position_weights": {
             "SYN7D001": 0.35,

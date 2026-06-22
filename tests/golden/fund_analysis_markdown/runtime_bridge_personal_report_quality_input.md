@@ -11,6 +11,13 @@
 - Largest position is 110011 at 40.00% of portfolio value.
 - Position detail is available for 3 fund(s).
 
+## Reconstruction status [PARTIAL]
+- Report source: unknown.
+- Transactions parsed: no.
+- Ledger built: not applicable (host portfolio provided).
+- NAV snapshot available: no.
+- Confirmed portfolio with valuation: yes.
+
 ## PnL and cost basis [OK]
 - Unrealized PnL is 30,000.00 (7.14%) on total cost 420,000.00.
 - Position-level PnL is available for 3 fund(s).
@@ -132,6 +139,7 @@ Limitations:
 
 ## Limitations
 
+- Transaction cashflow: Transaction cashflow data is not available.
 - Benchmark divergence: Benchmark divergence check completed but no divergence was found — results are limited without NAV and benchmark history.
 - Factor analysis: Factor snapshot not provided; no factor analysis is fabricated.
 - DCA and trade budget: DCA plan review is absent; host did not provide DCA inputs.

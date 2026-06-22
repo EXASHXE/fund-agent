@@ -247,12 +247,21 @@ def build_portfolio_summary(
     fund_codes: list[str],
     position_weights: dict[str, Any],
 ) -> dict[str, Any]:
+    total_value = portfolio.get("total_value")
+    cash_available = portfolio.get("cash_available")
+    # Determine if current_value is likely missing (all positions have None/0 current_value)
+    positions = portfolio.get("positions", [])
+    has_valuation = any(
+        isinstance(p, dict) and p.get("current_value") is not None and float(p["current_value"]) > 0
+        for p in positions
+    ) if positions else False
     return {
         "as_of_date": portfolio.get("as_of_date", ""),
-        "total_value": float(portfolio.get("total_value", 0.0) or 0.0),
-        "cash_available": float(portfolio.get("cash_available", 0.0) or 0.0),
+        "total_value": float(total_value) if total_value is not None else None,
+        "cash_available": float(cash_available) if cash_available is not None else None,
         "position_count": len(fund_codes),
         "position_weights": position_weights,
+        "current_value_likely_missing": not has_valuation,
     }
 
 
@@ -261,7 +270,7 @@ def build_position_summary(positions: list[dict[str, Any]]) -> dict[str, Any]:
         p["fund_code"]: {
             "fund_code": p.get("fund_code"),
             "fund_name": p.get("fund_name", p.get("name", "")),
-            "current_value": p.get("current_value", 0.0),
+            "current_value": p.get("current_value"),  # None means unknown, not 0
             "total_cost": p.get("total_cost"),
             "shares": p.get("shares"),
             "target_weight": p.get("target_weight"),

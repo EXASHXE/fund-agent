@@ -25,34 +25,36 @@ Statuses are `OK`, `PARTIAL`, or `MISSING`. Missing data must appear as
 ## Canonical sections
 
 1. `executive_summary`
-2. `portfolio_snapshot`
-3. `pnl_and_cost_basis`
+2. `transaction_cashflow`
+3. `portfolio_snapshot`
+4. `reconstruction_status`
+5. `pnl_and_cost_basis`
 4. `position_contribution`
-5. `allocation_and_exposure`
-6. `risk_flags`
-7. `performance_and_nav`
-8. `benchmark_and_peer`
-9. `benchmark_divergence`
-10. `factor_and_style`
-11. `factor_analysis`
-12. `fees_and_redemption`
-13. `manager_and_fund_profile`
-14. `dca_and_trade_budget`
-15. `professional_diagnostics`
-16. `profit_protection`
-17. `right_side_confirmation`
-18. `event_hype_failure`
-19. `news_and_events`
-20. `cash_deployment`
-21. `evidence_status`
-22. `action_watchlist`
-23. `missing_data`
-24. `suggested_next_checks`
-25. `uncertainty_note`
-26. `rebalance_plan`
-27. `research_query_plan`
-28. `data_completeness_and_limitations`
-29. `evidence_appendix`
+6. `allocation_and_exposure`
+7. `risk_flags`
+8. `performance_and_nav`
+9. `benchmark_and_peer`
+10. `benchmark_divergence`
+11. `factor_and_style`
+12. `factor_analysis`
+13. `fees_and_redemption`
+14. `manager_and_fund_profile`
+15. `dca_and_trade_budget`
+16. `professional_diagnostics`
+17. `profit_protection`
+18. `right_side_confirmation`
+19. `event_hype_failure`
+20. `news_and_events`
+21. `cash_deployment`
+22. `evidence_status`
+23. `action_watchlist`
+24. `missing_data`
+25. `suggested_next_checks`
+26. `uncertainty_note`
+27. `rebalance_plan`
+28. `research_query_plan`
+29. `data_completeness_and_limitations`
+30. `evidence_appendix`
 
 ## Section guidance
 
@@ -61,9 +63,32 @@ Statuses are `OK`, `PARTIAL`, or `MISSING`. Missing data must appear as
 Summarize portfolio value, position count, major risk flags, data completeness
 grade, and whether a formal decision was generated. For report-only output,
 state that no formal decision was generated and the host must call
-`decision_support` for formal action.
+`decision_support` for formal action. When `source_of_truth="transactions_only"`,
+show transaction-based net cashflow instead of portfolio value, and note that
+cashflow is not current market value (流水口径净投入，不是当前市值).
+
+### Transaction cashflow
+
+Use `transaction_cashflow_summary` or `ledger_cashflow_summary`. Shows cashflow
+data aggregated from transactions: total transactions, completed buy/sell,
+dividend, pending amount, net cashflow, and top funds by net cashflow. This is
+labeled as cashflow data, NOT current market value. When
+`source_of_truth="transactions_only"`, this section is the primary financial
+summary.
 
 ### Portfolio snapshot
+
+Use `portfolio_summary` and `position_summary`. Show as-of date, total value,
+cash, position count, and largest position. Do not infer missing position names
+or values. When `source_of_truth="transactions_only"`, show identified funds
+only and state that valuation is unavailable.
+
+### Reconstruction status
+
+Shows how the report was produced: report source (existing_private_portfolio_input,
+reconstructed_from_ledger, manual_snapshot, synthetic_fixture), whether
+transactions were parsed, whether the ledger was built, whether NAV snapshot
+is available, and whether a confirmed portfolio with valuation exists.
 
 Use `portfolio_summary` and `position_summary`. Show as-of date, total value,
 cash, position count, and largest position. Do not infer missing position names

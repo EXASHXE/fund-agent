@@ -14,6 +14,7 @@ from src.tools.portfolio.report_sections.helpers import (
     _format_counts,
     _largest_weight,
     _missing_gap_codes,
+    _money,
     _money_or_missing,
     _pct,
     _pct_or_missing,
@@ -52,15 +53,33 @@ def _build_executive_summary(context: dict[str, Any]) -> dict[str, Any]:
     portfolio = _portfolio_summary(context)
     completeness = context["data_completeness"]
     likely_missing = _current_value_likely_missing(context)
+    source_of_truth = context["artifacts"].get("source_of_truth")
     limitations: list[str] = []
     bullets: list[str] = []
     if portfolio:
-        bullets.append(
-            "Portfolio value "
-            f"{_money_or_missing(portfolio.get('total_value'), likely_missing=likely_missing)} across "
-            f"{int(portfolio.get('position_count') or 0)} position(s); "
-            f"cash {_money_or_missing(portfolio.get('cash_available'), likely_missing=likely_missing)}."
-        )
+        if source_of_truth == "transactions_only":
+            # Show transaction-based summary, not valuation
+            cf_summary = _as_dict(context["artifacts"].get("transaction_cashflow_summary"))
+            portfolio_level = _as_dict(cf_summary.get("portfolio_level")) if cf_summary else {}
+            pos_count = int(portfolio.get("position_count") or 0)
+            net_cf = portfolio_level.get("net_cashflow_amount")
+            if net_cf is not None:
+                bullets.append(
+                    f"Transaction-based analysis across {pos_count} identified fund(s); "
+                    f"net cashflow {_money(net_cf)} (流水口径净投入，不是当前市值)."
+                )
+            else:
+                bullets.append(
+                    f"Transaction-based analysis across {pos_count} identified fund(s); "
+                    f"valuation unavailable."
+                )
+        else:
+            bullets.append(
+                "Portfolio value "
+                f"{_money_or_missing(portfolio.get('total_value'), likely_missing=likely_missing)} across "
+                f"{int(portfolio.get('position_count') or 0)} position(s); "
+                f"cash {_money_or_missing(portfolio.get('cash_available'), likely_missing=likely_missing)}."
+            )
     else:
         limitations.append("Portfolio summary artifact is missing.")
 
@@ -95,8 +114,25 @@ def _build_portfolio_snapshot(context: dict[str, Any]) -> dict[str, Any]:
     portfolio = _portfolio_summary(context)
     positions = _as_dict(context["artifacts"].get("position_summary"))
     likely_missing = _current_value_likely_missing(context)
+    source_of_truth = context["artifacts"].get("source_of_truth")
     bullets: list[str] = []
     limitations: list[str] = []
+
+    if source_of_truth == "transactions_only":
+        # Valuation is unavailable — show identified funds only
+        if positions:
+            bullets.append(
+                f"Identified {len(positions)} fund(s) from transaction records. "
+                f"Valuation is unavailable (current_value/units/NAV are unknown)."
+            )
+            limitations.append(
+                "Valuation data is unavailable — current_value, units, NAV, and cost_basis "
+                "cannot be determined from transactions alone without current_nav."
+            )
+        else:
+            limitations.append("No identified positions from transaction records.")
+        status = "PARTIAL" if positions else "MISSING"
+        return _section("portfolio_snapshot", status, bullets, ["portfolio_summary", "position_summary"], limitations)
 
     if portfolio:
         as_of = portfolio.get("as_of_date") or "unspecified date"
@@ -118,6 +154,137 @@ def _build_portfolio_snapshot(context: dict[str, Any]) -> dict[str, Any]:
 
     status = "OK" if portfolio and positions else "PARTIAL" if portfolio else "MISSING"
     return _section("portfolio_snapshot", status, bullets, ["portfolio_summary", "position_summary"], limitations)
+
+
+def _build_transaction_cashflow(context: dict[str, Any]) -> dict[str, Any]:
+    """Build transaction cashflow section — shows cashflow data, not market value."""
+    cf_summary = _as_dict(context["artifacts"].get("transaction_cashflow_summary"))
+    ledger_cf = _as_dict(context["artifacts"].get("ledger_cashflow_summary"))
+    source_of_truth = context["artifacts"].get("source_of_truth")
+    bullets: list[str] = []
+    limitations: list[str] = []
+
+    # Use transaction_cashflow_summary (transactions_only) or ledger_cashflow_summary (derived)
+    cf_data = cf_summary or ledger_cf
+    if not cf_data and source_of_truth != "transactions_only":
+        # No cashflow data available
+        limitations.append("Transaction cashflow data is not available.")
+        return _section("transaction_cashflow", "MISSING", bullets, ["transaction_cashflow_summary", "ledger_cashflow_summary"], limitations)
+
+    if cf_data:
+        # Portfolio-level summary
+        portfolio_level = _as_dict(cf_data.get("portfolio_level"))
+        if portfolio_level:
+            total_txn = cf_data.get("total_transactions", 0)
+            fund_count = portfolio_level.get("transaction_fund_count", 0)
+            completed = cf_data.get("completed_count", 0)
+            pending = cf_data.get("pending_count", 0)
+
+            bullets.append(
+                f"Total transactions: {total_txn} (confirmed: {completed}, pending: {pending}) "
+                f"across {fund_count} fund(s)."
+            )
+
+            gross_buy = portfolio_level.get("gross_buy_amount")
+            gross_sell = portfolio_level.get("gross_sell_amount")
+            dividend = portfolio_level.get("dividend_amount")
+            net_cf = portfolio_level.get("net_cashflow_amount")
+            pending_amt = portfolio_level.get("pending_amount")
+
+            if gross_buy is not None:
+                bullets.append(f"Completed buy: {_money(gross_buy)}.")
+            if gross_sell is not None:
+                bullets.append(f"Completed sell: {_money(gross_sell)}.")
+            if dividend is not None and dividend > 0:
+                bullets.append(f"Dividend income: {_money(dividend)}.")
+            if pending_amt is not None and pending_amt > 0:
+                bullets.append(f"Pending amount: {_money(pending_amt)}.")
+            if net_cf is not None:
+                bullets.append(f"Net cashflow: {_money(net_cf)}.")
+        else:
+            # Legacy ledger_cashflow_summary format
+            total_in = cf_data.get("total_inflows", 0.0)
+            total_out = cf_data.get("total_outflows", 0.0)
+            net = cf_data.get("net_cashflow", 0.0)
+            dividend = cf_data.get("dividend_income", 0.0)
+            bullets.append(f"Total inflows: {_money(total_in)}, total outflows: {_money(total_out)}.")
+            bullets.append(f"Net cashflow: {_money(net)}.")
+            if dividend > 0:
+                bullets.append(f"Dividend income: {_money(dividend)}.")
+
+        # Top funds by net cashflow
+        by_fund = _as_dict(cf_data.get("by_fund"))
+        if by_fund:
+            sorted_funds = sorted(
+                by_fund.items(),
+                key=lambda x: abs(float(x[1].get("net_cashflow_amount", 0.0) or 0.0)),
+                reverse=True,
+            )
+            top_n = 3
+            for fund_code, fund_data in sorted_funds[:top_n]:
+                net = fund_data.get("net_cashflow_amount", 0.0)
+                bullets.append(f"  {fund_code}: net cashflow {_money(net)}.")
+
+    if source_of_truth == "transactions_only":
+        limitations.append(
+            "Cashflow data is based on transaction records (流水口径净投入，不是当前市值). "
+            "This does not represent current market value."
+        )
+
+    status = "OK" if cf_data else "MISSING"
+    return _section("transaction_cashflow", status, bullets, ["transaction_cashflow_summary", "ledger_cashflow_summary"], limitations)
+
+
+def _build_reconstruction_status(context: dict[str, Any]) -> dict[str, Any]:
+    """Build reconstruction status section — shows how the report was produced."""
+    source_of_truth = context["artifacts"].get("source_of_truth")
+    artifacts = context["artifacts"]
+    bullets: list[str] = []
+    limitations: list[str] = []
+
+    # Report source
+    source_labels = {
+        "host_portfolio": "existing_private_portfolio_input",
+        "derived_from_transactions": "reconstructed_from_ledger",
+        "transactions_only": "existing_private_portfolio_input",
+    }
+    report_source = source_labels.get(source_of_truth, "unknown")
+
+    # Transaction parsing status
+    has_transactions = bool(artifacts.get("transaction_summary") or artifacts.get("transaction_cashflow_summary"))
+    ledger_quality = _as_dict(artifacts.get("ledger_quality_summary"))
+
+    bullets.append(f"Report source: {report_source}.")
+    bullets.append(f"Transactions parsed: {'yes' if has_transactions else 'no'}.")
+
+    if source_of_truth == "derived_from_transactions":
+        bullets.append("Ledger built from transactions + current_nav: yes.")
+        if ledger_quality:
+            is_complete = ledger_quality.get("is_complete", False)
+            bullets.append(f"Ledger complete: {'yes' if is_complete else 'no'}.")
+    elif source_of_truth == "transactions_only":
+        bullets.append("Ledger built from transactions: partial (no current_nav for valuation).")
+        limitations.append("NAV snapshot is not available — portfolio cannot be valued from transactions alone.")
+    else:
+        bullets.append("Ledger built: not applicable (host portfolio provided).")
+
+    # NAV snapshot
+    has_nav = bool(artifacts.get("factor_snapshot") and _as_dict(artifacts["factor_snapshot"]).get("data_quality"))
+    bullets.append(f"NAV snapshot available: {'yes' if has_nav else 'no'}.")
+
+    # Confirmed portfolio
+    portfolio = _portfolio_summary(context)
+    has_valuation = portfolio and portfolio.get("total_value") is not None and float(portfolio.get("total_value", 0) or 0) > 0
+    bullets.append(f"Confirmed portfolio with valuation: {'yes' if has_valuation else 'no'}.")
+
+    # as_of date comparison
+    report_run_as_of = context.get("report", {}).get("report_options", {}).get("as_of_date", "")
+    input_snapshot_as_of = portfolio.get("as_of_date", "") if portfolio else ""
+    if report_run_as_of and input_snapshot_as_of and report_run_as_of != input_snapshot_as_of:
+        bullets.append(f"Report run as-of: {report_run_as_of}; input snapshot as-of: {input_snapshot_as_of}.")
+
+    status = "OK" if source_of_truth else "PARTIAL"
+    return _section("reconstruction_status", status, bullets, ["source_of_truth", "ledger_quality_summary", "transaction_cashflow_summary"], limitations)
 
 
 def _build_pnl_and_cost_basis(context: dict[str, Any]) -> dict[str, Any]:

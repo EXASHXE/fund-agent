@@ -289,6 +289,18 @@
         "User Investment Plan"
       ],
       "critical_missing": [],
+      "field_coverage": {
+        "cost_basis_complete_count": 3,
+        "cost_basis_missing_count": 0,
+        "current_value_zero_treated_as_unknown": false,
+        "holdings_count": 3,
+        "holdings_with_current_value": 3,
+        "holdings_without_current_value": 0,
+        "nav_complete_count": 0,
+        "nav_missing_count": 3,
+        "units_complete_count": 3,
+        "units_missing_count": 0
+      },
       "grade": "A",
       "limitations": [],
       "missing_sections": [
@@ -739,6 +751,18 @@
           "User Investment Plan"
         ],
         "critical_missing": [],
+        "field_coverage": {
+          "cost_basis_complete_count": 3,
+          "cost_basis_missing_count": 0,
+          "current_value_zero_treated_as_unknown": false,
+          "holdings_count": 3,
+          "holdings_with_current_value": 3,
+          "holdings_without_current_value": 0,
+          "nav_complete_count": 0,
+          "nav_missing_count": 3,
+          "units_complete_count": 3,
+          "units_missing_count": 0
+        },
         "grade": "A",
         "limitations": [],
         "missing_sections": [
@@ -1100,6 +1124,7 @@
       "portfolio_metrics": {
         "as_of_date": "2026-06-01",
         "cash_available": 50000.0,
+        "current_value_likely_missing": false,
         "position_count": 3,
         "position_weights": {
           "110011": 0.4,
@@ -1266,9 +1291,19 @@
           "title": "Executive summary"
         },
         {
+          "id": "transaction_cashflow",
+          "status": "MISSING",
+          "title": "Transaction cashflow"
+        },
+        {
           "id": "portfolio_snapshot",
           "status": "OK",
           "title": "Portfolio snapshot"
+        },
+        {
+          "id": "reconstruction_status",
+          "status": "PARTIAL",
+          "title": "Reconstruction status"
         },
         {
           "id": "pnl_and_cost_basis",
@@ -1430,6 +1465,19 @@
           "title": "Executive summary"
         },
         {
+          "bullets": [],
+          "data_sources": [
+            "transaction_cashflow_summary",
+            "ledger_cashflow_summary"
+          ],
+          "id": "transaction_cashflow",
+          "limitations": [
+            "Transaction cashflow data is not available."
+          ],
+          "status": "MISSING",
+          "title": "Transaction cashflow"
+        },
+        {
           "bullets": [
             "As of 2026-06-01, total value is 500,000.00 with 50,000.00 cash.",
             "Largest position is 110011 at 40.00% of portfolio value.",
@@ -1443,6 +1491,24 @@
           "limitations": [],
           "status": "OK",
           "title": "Portfolio snapshot"
+        },
+        {
+          "bullets": [
+            "Report source: unknown.",
+            "Transactions parsed: no.",
+            "Ledger built: not applicable (host portfolio provided).",
+            "NAV snapshot available: no.",
+            "Confirmed portfolio with valuation: yes."
+          ],
+          "data_sources": [
+            "source_of_truth",
+            "ledger_quality_summary",
+            "transaction_cashflow_summary"
+          ],
+          "id": "reconstruction_status",
+          "limitations": [],
+          "status": "PARTIAL",
+          "title": "Reconstruction status"
         },
         {
           "bullets": [
@@ -2120,6 +2186,7 @@
     "portfolio_summary": {
       "as_of_date": "2026-06-01",
       "cash_available": 50000.0,
+      "current_value_likely_missing": false,
       "position_count": 3,
       "position_weights": {
         "110011": 0.4,
@@ -2328,9 +2395,19 @@
         "title": "Executive summary"
       },
       {
+        "id": "transaction_cashflow",
+        "status": "MISSING",
+        "title": "Transaction cashflow"
+      },
+      {
         "id": "portfolio_snapshot",
         "status": "OK",
         "title": "Portfolio snapshot"
+      },
+      {
+        "id": "reconstruction_status",
+        "status": "PARTIAL",
+        "title": "Reconstruction status"
       },
       {
         "id": "pnl_and_cost_basis",
@@ -2492,6 +2569,19 @@
         "title": "Executive summary"
       },
       {
+        "bullets": [],
+        "data_sources": [
+          "transaction_cashflow_summary",
+          "ledger_cashflow_summary"
+        ],
+        "id": "transaction_cashflow",
+        "limitations": [
+          "Transaction cashflow data is not available."
+        ],
+        "status": "MISSING",
+        "title": "Transaction cashflow"
+      },
+      {
         "bullets": [
           "As of 2026-06-01, total value is 500,000.00 with 50,000.00 cash.",
           "Largest position is 110011 at 40.00% of portfolio value.",
@@ -2505,6 +2595,24 @@
         "limitations": [],
         "status": "OK",
         "title": "Portfolio snapshot"
+      },
+      {
+        "bullets": [
+          "Report source: unknown.",
+          "Transactions parsed: no.",
+          "Ledger built: not applicable (host portfolio provided).",
+          "NAV snapshot available: no.",
+          "Confirmed portfolio with valuation: yes."
+        ],
+        "data_sources": [
+          "source_of_truth",
+          "ledger_quality_summary",
+          "transaction_cashflow_summary"
+        ],
+        "id": "reconstruction_status",
+        "limitations": [],
+        "status": "PARTIAL",
+        "title": "Reconstruction status"
       },
       {
         "bullets": [
@@ -3080,6 +3188,7 @@
         "portfolio_summary": {
           "as_of_date": "2026-06-01",
           "cash_available": 50000.0,
+          "current_value_likely_missing": false,
           "position_count": 3,
           "position_weights": {
             "110011": 0.4,

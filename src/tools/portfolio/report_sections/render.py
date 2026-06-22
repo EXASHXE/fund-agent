@@ -29,10 +29,12 @@ from src.tools.portfolio.report_sections.builders import (
     _build_professional_diagnostics,
     _build_profit_protection,
     _build_rebalance_plan,
+    _build_reconstruction_status,
     _build_research_query_plan,
     _build_right_side_confirmation,
     _build_risk_flags,
     _build_suggested_next_checks,
+    _build_transaction_cashflow,
     _build_uncertainty_note,
 )
 from src.tools.portfolio.report_sections.helpers import (
@@ -72,7 +74,9 @@ def compose_personal_fund_report(
 
     sections = [
         _build_executive_summary(context),
+        _build_transaction_cashflow(context),
         _build_portfolio_snapshot(context),
+        _build_reconstruction_status(context),
         _build_pnl_and_cost_basis(context),
     ]
     if include_v1_sections:
@@ -332,6 +336,34 @@ def _localize_bullet(text: str) -> str:
         if sep and " position(s); cash " in tail:
             count, _, cash = tail.partition(" position(s); cash ")
             return f"组合总市值：{value}；持仓数量：{count}；现金：{cash.rstrip('.')}。"
+    if text.startswith("Total transactions: "):
+        return "交易统计：" + text[len("Total transactions: "):]
+    if text.startswith("Completed buy: "):
+        return "确认买入：" + text[len("Completed buy: "):]
+    if text.startswith("Completed sell: "):
+        return "确认卖出：" + text[len("Completed sell: "):]
+    if text.startswith("Dividend income: "):
+        return "分红收入：" + text[len("Dividend income: "):]
+    if text.startswith("Pending amount: "):
+        return "待确认金额：" + text[len("Pending amount: "):]
+    if text.startswith("Net cashflow: "):
+        return "净现金流：" + text[len("Net cashflow: "):]
+    if text.startswith("Report source: "):
+        return "报告来源：" + text[len("Report source: "):]
+    if text.startswith("Transactions parsed: "):
+        return "交易解析：" + text[len("Transactions parsed: "):]
+    if text.startswith("Ledger built from transactions + current_nav: "):
+        return "基于交易+净值构建账本：是。"
+    if text.startswith("Ledger built from transactions: "):
+        return "基于交易构建账本：" + text[len("Ledger built from transactions: "):]
+    if text.startswith("Ledger complete: "):
+        return "账本完整性：" + text[len("Ledger complete: "):]
+    if text.startswith("NAV snapshot available: "):
+        return "净值快照：" + text[len("NAV snapshot available: "):]
+    if text.startswith("Confirmed portfolio with valuation: "):
+        return "已确认的估值组合：" + text[len("Confirmed portfolio with valuation: "):]
+    if text.startswith("Identified "):
+        return "已识别" + text[len("Identified "):]
     if text.startswith("Data completeness grade "):
         rest = text[len("Data completeness grade ") :].rstrip(".")
         return f"数据完整度：{rest}。"
