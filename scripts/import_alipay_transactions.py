@@ -48,9 +48,17 @@ _CONVERSION_KEYWORDS = ["转换", "转入", "转出"]
 _REFUND_KEYWORDS = ["退款", "退回"]
 _FEE_KEYWORDS = ["手续费", "管理费", "托管费"]
 
+# Fund-related keywords in product name (even without fund_code)
+_FUND_NAME_KEYWORDS = ["基金", "蚂蚁财富", "余额宝", "天弘"]
+
 
 def _try_read_csv(path: Path) -> list[dict[str, str]]:
-    """Read CSV trying multiple encodings."""
+    """Read CSV trying multiple encodings.
+
+    Normalizes padded header cells by stripping whitespace from both
+    keys and values — real Alipay exports may have padded headers like
+    ``"商品名称                "``.
+    """
     for encoding in ("gb18030", "gbk", "utf-8-sig", "utf-8"):
         try:
             with open(path, encoding=encoding, newline="") as f:
@@ -63,7 +71,12 @@ def _try_read_csv(path: Path) -> list[dict[str, str]]:
             rows = []
             for row in reader:
                 if row:
-                    rows.append(dict(row))
+                    # Normalize padded header cells and values
+                    clean_row = {
+                        (k or "").strip(): (v or "").strip()
+                        for k, v in row.items()
+                    }
+                    rows.append(clean_row)
             return rows
         except (UnicodeDecodeError, UnicodeError):
             continue
@@ -115,11 +128,16 @@ def _parse_datetime(val: str) -> str | None:
     return None
 
 
-def _classify_action(product_name: str, trade_type: str, amount: float | None) -> str:
+def _classify_action(
+    product_name: str,
+    trade_type: str,
+    amount: float | None,
+    income_expense: str = "",
+) -> str:
     """Classify a transaction into buy/sell/dividend/conversion/refund/fee/unknown."""
     text = f"{product_name} {trade_type}"
 
-    # Check refund first (can co-occur with buy keywords)
+    # Check refund first (can co-occur with buy keywords, e.g. "买入退款")
     for kw in _REFUND_KEYWORDS:
         if kw in text:
             return "refund"
@@ -134,12 +152,12 @@ def _classify_action(product_name: str, trade_type: str, amount: float | None) -
         if kw in text:
             return "conversion"
 
-    # Check dividend
+    # Check dividend (e.g. "现金分红至余额宝")
     for kw in _DIVIDEND_KEYWORDS:
         if kw in text:
             return "dividend"
 
-    # Check sell
+    # Check sell (e.g. "卖出至余额宝")
     for kw in _SELL_KEYWORDS:
         if kw in text:
             return "sell"
@@ -152,6 +170,13 @@ def _classify_action(product_name: str, trade_type: str, amount: float | None) -
     # Negative amount might indicate sell/refund
     if amount is not None and amount < 0:
         return "sell"
+
+    # Use 收/支 field as fallback signal
+    if income_expense:
+        if "支" in income_expense and "收入" not in income_expense:
+            return "buy"
+        if "收" in income_expense and "支出" not in income_expense:
+            return "sell"
 
     return "unknown"
 
@@ -179,28 +204,46 @@ def import_alipay_csv(
     classification_counts = {"buy": 0, "sell": 0, "dividend": 0, "conversion": 0, "refund": 0, "fee": 0, "unknown": 0}
 
     for row in rows:
-        # Map Chinese column names to values
-        product_name = row.get("商品名称", row.get("商品名称 ", ""))
-        trade_type = row.get("类型", row.get("类型 ", ""))
-        counterparty = row.get("交易对方", row.get("交易对方 ", ""))
+        # Map Chinese column names to values (headers already stripped by _try_read_csv)
+        product_name = row.get("商品名称", "")
+        trade_type = row.get("类型", "")
+        counterparty = row.get("交易对方", "")
         raw_amount = row.get("金额（元）", row.get("金额(元)", row.get("金额", "")))
         trade_time_raw = row.get("交易创建时间", row.get("付款时间", row.get("交易时间", "")))
-        raw_trade_no = row.get("交易号", row.get("商户订单号", ""))
+        raw_trade_no = row.get("交易号", row.get("商户订单号", row.get("商家订单号", "")))
         status = row.get("交易状态", row.get("状态", ""))
         remark = row.get("备注", "")
+        income_expense = row.get("收/支", "")
+        fund_status = row.get("资金状态", "")
 
-        # Skip non-fund rows or empty rows
+        # Skip empty rows
         if not product_name and not trade_type:
             continue
 
         amount = _parse_amount(raw_amount)
         trade_date = _parse_datetime(trade_time_raw)
-        action = _classify_action(product_name, trade_type, amount)
+        action = _classify_action(product_name, trade_type, amount, income_expense)
         fund_code = _extract_fund_code(product_name, counterparty)
 
-        # Only keep fund-related transactions
-        if action == "unknown" and not fund_code:
+        # Determine if this is a fund-related transaction
+        is_fund_by_name = any(kw in product_name for kw in _FUND_NAME_KEYWORDS)
+        is_fund_by_counterparty = any(kw in counterparty for kw in _FUND_NAME_KEYWORDS)
+        is_fund = fund_code or is_fund_by_name or is_fund_by_counterparty
+
+        # Keep fund-related transactions even if fund_code is missing
+        # (downstream identity resolution can resolve by fund_name)
+        if action == "unknown" and not is_fund:
             continue
+
+        # Detect pending status (份额确认中 / 付款成功，份额确认中)
+        is_pending = "确认中" in product_name or "确认中" in status
+
+        # Handle 不计收支 with 资金状态 — only override unknown classification
+        if action == "unknown" and "不计收支" in income_expense:
+            if "已支出" in fund_status:
+                action = "buy"
+            elif "已收入" in fund_status:
+                action = "sell"
 
         classification_counts[action] += 1
 
@@ -220,6 +263,9 @@ def import_alipay_csv(
             "confirmation_source": "alipay",
             "confidence": "evidence_confirmed",
         }
+        if is_pending:
+            txn["pending"] = True
+            txn["confirmation_type"] = "pending_confirmation"
         # Conversion/refund are evidenced as transactions but their portfolio
         # effect is ambiguous — flag for manual review downstream
         if action in ("conversion", "refund"):

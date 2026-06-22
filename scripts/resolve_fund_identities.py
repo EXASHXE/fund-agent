@@ -67,53 +67,65 @@ def resolve_fund_identities(
         for txn in ledger_data.get("transactions", []):
             fc = txn.get("fund_code")
             fn = txn.get("fund_name")
-            if fc and fc not in fund_refs:
-                fund_refs[fc] = {
+            # Use fund_code as key when available, otherwise use fund_name
+            ref_key = fc or fn
+            if ref_key and ref_key not in fund_refs:
+                fund_refs[ref_key] = {
                     "fund_code": fc,
                     "fund_name": fn,
                     "source": "transaction_ledger",
                     "seen_in_alipay": txn.get("source") == "alipay",
                     "seen_in_plan": txn.get("source") == "investment_plan",
+                    "resolved_by_name": fc is None and fn is not None,
                 }
 
     # Resolve each fund
     resolutions = []
     all_fund_codes = set(fund_refs.keys()) | set(plan_funds.keys())
 
-    for fund_code in sorted(all_fund_codes):
-        plan_info = plan_funds.get(fund_code, {})
-        ref_info = fund_refs.get(fund_code, {})
-        override_code = overrides.get(fund_code) or overrides.get(ref_info.get("fund_name", ""))
+    for fund_key in sorted(all_fund_codes):
+        plan_info = plan_funds.get(fund_key, {})
+        ref_info = fund_refs.get(fund_key, {})
+        override_code = overrides.get(fund_key) or overrides.get(ref_info.get("fund_name", ""))
 
         candidates = []
-        resolved_code = fund_code
+        resolved_code = ref_info.get("fund_code") or fund_key
         resolution_source = "transaction_ledger"
         confidence = "high"
         audit_steps = []
 
         # Step 1: Plan fund_code
         if plan_info:
-            candidates.append({"code": fund_code, "name": plan_info.get("fund_name"), "source": "investment_plan"})
+            candidates.append({"code": fund_key, "name": plan_info.get("fund_name"), "source": "investment_plan"})
             resolution_source = "investment_plan"
-            audit_steps.append({"step": "plan_fund_code", "code": fund_code, "source": "plan_id=" + str(plan_info.get("plan_id", ""))})
+            audit_steps.append({"step": "plan_fund_code", "code": fund_key, "source": "plan_id=" + str(plan_info.get("plan_id", ""))})
 
         # Step 2: Manual override
-        if override_code and override_code != fund_code:
+        if override_code and override_code != resolved_code:
             candidates.append({"code": override_code, "source": "manual_override"})
             resolved_code = override_code
             resolution_source = "manual_override"
             confidence = "high"
-            audit_steps.append({"step": "manual_override", "from": fund_code, "to": override_code})
+            audit_steps.append({"step": "manual_override", "from": fund_key, "to": override_code})
 
         # Step 3: Transaction ledger
         if ref_info:
-            candidates.append({"code": fund_code, "name": ref_info.get("fund_name"), "source": "transaction_ledger"})
+            candidates.append({"code": resolved_code, "name": ref_info.get("fund_name"), "source": "transaction_ledger"})
             if not plan_info and not override_code:
                 resolution_source = "transaction_ledger"
-                confidence = "medium" if ref_info.get("seen_in_alipay") else "low"
+                # Name-only resolution is lower confidence
+                if ref_info.get("resolved_by_name"):
+                    confidence = "low"
+                    audit_steps.append({
+                        "step": "ledger_reference_by_name",
+                        "fund_name": ref_info.get("fund_name"),
+                        "note": "fund_code absent; resolved by fund_name only",
+                    })
+                else:
+                    confidence = "medium" if ref_info.get("seen_in_alipay") else "low"
             audit_steps.append({
                 "step": "ledger_reference",
-                "code": fund_code,
+                "code": resolved_code,
                 "alipay": ref_info.get("seen_in_alipay", False),
                 "plan": ref_info.get("seen_in_plan", False),
             })

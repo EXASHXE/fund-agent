@@ -309,11 +309,16 @@ class TestE2ERunnerRealSmoke:
 
         # Check for stale references in actual pipeline output files, not temp paths
         combined = result.stdout + result.stderr
-        # Remove temp paths that may coincidentally contain "round3" in directory names
+        # Remove temp paths that may coincidentally contain "round3" in directory names.
+        # Must handle native, JSON-escaped (\\), and forward-slash path variants.
+        def _path_variants(p: str) -> list[str]:
+            return [p, p.replace("\\", "\\\\"), p.replace("\\", "/")]
+
+        filter_paths = [str(tmp_path), str(output_dir)]
         lines = combined.splitlines()
         non_path_lines = [
             line for line in lines
-            if not any(p in line for p in [str(tmp_path), str(output_dir)])
+            if not any(v in line for p in filter_paths for v in _path_variants(p))
         ]
         filtered = "\n".join(non_path_lines)
         assert "round3_" not in filtered
@@ -366,6 +371,34 @@ class TestE2ERunnerRealSmoke:
         assert summary["status"] == "failed"
         assert summary["errors"]
         assert summary["outputs"]["report"] is None
+
+    def test_path_filter_normalizes_json_escaped_and_forward_slash(self):
+        """Regression: _path_variants must filter JSON-escaped and forward-slash paths."""
+        def _path_variants(p: str) -> list[str]:
+            return [p, p.replace("\\", "\\\\"), p.replace("\\", "/")]
+
+        # Simulate a Windows tmp_path that contains "round3_" in the directory name
+        fake_tmp = r"C:\temp\test_no_stale_round3_in_output0"
+        fake_output = r"C:\temp\test_no_stale_round3_in_output0\output"
+        variants = [v for p in [fake_tmp, fake_output] for v in _path_variants(p)]
+
+        # JSON-escaped path line (the actual failure case)
+        json_line = f'"summary": "{fake_tmp}\\\\output\\\\e2e_summary.json"'
+        assert any(v in json_line for v in variants), (
+            f"JSON-escaped path not filtered: {json_line}"
+        )
+
+        # Forward-slash path line
+        fwd_line = fake_tmp.replace("\\", "/") + "/output/e2e_summary.json"
+        assert any(v in fwd_line for v in variants), (
+            f"Forward-slash path not filtered: {fwd_line}"
+        )
+
+        # A line with actual stale round3_ content (not a path) should NOT be filtered
+        runtime_line = "round3_envelope_path = /opt/data/round3_input.json"
+        assert not any(v in runtime_line for v in variants), (
+            f"Runtime line incorrectly filtered: {runtime_line}"
+        )
 
     def test_live_provider_flag_is_forwarded_to_snapshot_subprocess(self):
         content = E2E_PY.read_text(encoding="utf-8")

@@ -20,6 +20,12 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS_DIR = REPO_ROOT / "scripts"
+VERSION_FILE = REPO_ROOT / "VERSION"
+
+
+def _read_version() -> str:
+    """Read the project version from the VERSION file."""
+    return VERSION_FILE.read_text(encoding="utf-8").strip()
 
 _REDACT_PATTERN = re.compile(
     r"(api[_-]?key|token|secret|authorization|cookie)=\S+",
@@ -379,7 +385,7 @@ def run_pipeline(args: argparse.Namespace) -> int:
                     alipay_import_stats["classification_counts"] = classification_counts
                 elif isinstance(tx_data, dict):
                     alipay_import_stats["total_transactions"] = len(tx_data.get("transactions", []))
-                    fund_txns = [t for t in tx_data.get("transactions", []) if isinstance(t, dict) and t.get("fund_code")]
+                    fund_txns = [t for t in tx_data.get("transactions", []) if isinstance(t, dict) and (t.get("fund_code") or t.get("fund_name"))]
                     alipay_import_stats["fund_transactions"] = len(fund_txns)
             except (OSError, json.JSONDecodeError):
                 pass
@@ -415,7 +421,7 @@ def run_pipeline(args: argparse.Namespace) -> int:
         "portfolio_input_source": portfolio_input_source,
         "transaction_reconstruction_status": transaction_reconstruction_status,
         "alipay_import": alipay_import_stats,
-        "pipeline_version": "0.10.6",
+        "pipeline_version": _read_version(),
     }
     try:
         summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
