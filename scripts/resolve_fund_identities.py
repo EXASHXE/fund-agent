@@ -25,35 +25,46 @@ except ImportError:
     yaml = None
 
 
-def _load_overrides(overrides_path: Path) -> dict[str, dict[str, Any]]:
+def _load_overrides(overrides_path: Path) -> tuple[dict[str, dict[str, Any]], list[str]]:
     """Load manual fund identity overrides from a YAML file.
 
-    Returns a dict mapping various lookup keys to override records:
-    {raw_name_or_alias: {"fund_code": str, "fund_name": str}}
+    Returns a tuple of:
+    - lookup dict mapping various lookup keys to override records
+    - list of validation warnings for invalid override entries
     """
+    import re as _re
+    _six_digit_re = _re.compile(r"^\d{6}$")
+
     if yaml is None:
         print("Warning: PyYAML not installed, skipping overrides", file=__import__("sys").stderr)
-        return {}
+        return {}, []
     try:
         with open(overrides_path, encoding="utf-8") as f:
             data = yaml.safe_load(f)
     except (OSError, ValueError) as exc:
         print(f"Warning: cannot read overrides file: {exc}", file=__import__("sys").stderr)
-        return {}
+        return {}, []
 
     if not data or not isinstance(data, dict):
-        return {}
+        return {}, []
 
     lookup: dict[str, dict[str, Any]] = {}
+    validation_warnings: list[str] = []
 
     # Process funds list
     for entry in data.get("funds", []):
         if not isinstance(entry, dict):
             continue
         raw_name = entry.get("raw_name", "")
-        fund_code = entry.get("fund_code", "")
+        fund_code = str(entry.get("fund_code", ""))
         fund_name = entry.get("fund_name", "")
         if not raw_name or not fund_code:
+            continue
+        # Validate fund_code is six digits
+        if not _six_digit_re.match(fund_code):
+            validation_warnings.append(
+                f"Override fund_code '{fund_code}' for raw_name '{raw_name}' is not a valid six-digit code; skipped"
+            )
             continue
         record = {"fund_code": fund_code, "fund_name": fund_name or raw_name}
         # Index by raw_name and normalized variants
@@ -64,11 +75,18 @@ def _load_overrides(overrides_path: Path) -> dict[str, dict[str, Any]]:
     for alias, fund_code in data.get("aliases", {}).items():
         if not alias or not fund_code:
             continue
-        record = {"fund_code": str(fund_code), "fund_name": alias}
+        fund_code_str = str(fund_code)
+        # Validate alias fund_code is six digits
+        if not _six_digit_re.match(fund_code_str):
+            validation_warnings.append(
+                f"Override alias '{alias}' fund_code '{fund_code_str}' is not a valid six-digit code; skipped"
+            )
+            continue
+        record = {"fund_code": fund_code_str, "fund_name": alias}
         lookup[alias] = record
         lookup[_normalize_name(alias)] = record
 
-    return lookup
+    return lookup, validation_warnings
 
 
 def _normalize_name(name: str) -> str:
@@ -214,8 +232,8 @@ def resolve_fund_identities(
         "name_only_count": sum(1 for r in resolutions if r.get("resolved_fund_code") and not six_digit_re.match(r["resolved_fund_code"])),
         "high_confidence": sum(1 for r in resolutions if r["confidence"] == "high"),
         "medium_confidence": sum(1 for r in resolutions if r["confidence"] == "medium"),
-        "low_confidence": sum(1 for r in resolutions if r["confidence"] == "low"),
-        "unresolved": sum(1 for r in resolutions if r["resolution_source"] == "none"),
+        "low_confidence_count": sum(1 for r in resolutions if r["confidence"] == "low"),
+        "unresolved_count": sum(1 for r in resolutions if r["resolution_source"] == "none"),
         "manual_overrides_used": bool(ov_lookup or overrides),
         "manual_override_matches_count": sum(1 for r in resolutions if r["resolution_source"] == "manual_override"),
     }
@@ -250,14 +268,21 @@ def main():
                 plan_data = yaml.safe_load(f)
 
     override_lookup = {}
+    override_warnings: list[str] = []
     if args.overrides:
-        override_lookup = _load_overrides(Path(args.overrides))
+        override_lookup, override_warnings = _load_overrides(Path(args.overrides))
+        for w in override_warnings:
+            print(f"Warning: {w}", file=__import__("sys").stderr)
 
     result = resolve_fund_identities(
         ledger_data=ledger_data,
         plan_data=plan_data,
         override_lookup=override_lookup,
     )
+
+    # Include override validation warnings in summary
+    if override_warnings:
+        result["summary"]["override_validation_warnings"] = override_warnings
 
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)

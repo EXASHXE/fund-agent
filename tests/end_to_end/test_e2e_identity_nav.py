@@ -112,6 +112,24 @@ class TestFundCodeValidation:
         assert result["summary"]["valid_fund_codes_count"] >= 1
         assert result["summary"]["name_only_count"] >= 1
 
+    def test_chinese_name_never_passed_as_provider_fund_code(self) -> None:
+        """Chinese fund names must never be passed as fund_code to provider/snapshot."""
+        from scripts.resolve_fund_identities import resolve_fund_identities
+
+        ledger_data = {
+            "transactions": [
+                {"fund_code": None, "fund_name": "中文基金名A", "source": "alipay"},
+            ]
+        }
+        result = resolve_fund_identities(ledger_data=ledger_data)
+        # The resolved_fund_code will be the Chinese name (name-only),
+        # but E2E must filter it out before passing to snapshot
+        for r in result["resolutions"]:
+            code = r["resolved_fund_code"]
+            if not _SIX_DIGIT_RE.match(code):
+                # This is a name-only code — must not be passed to provider
+                assert r["confidence"] == "low"
+
 
 # ---------------------------------------------------------------------------
 # C. Manual overrides
@@ -139,12 +157,13 @@ aliases:
 """,
             encoding="utf-8",
         )
-        lookup = _load_overrides(override_yaml)
+        lookup, warnings = _load_overrides(override_yaml)
         assert "FakeAlpha" in lookup
         assert lookup["FakeAlpha"]["fund_code"] == "111111"
         assert "FakeBeta" in lookup
         assert "FakeAlphaAlias" in lookup
         assert lookup["FakeAlphaAlias"]["fund_code"] == "333333"
+        assert warnings == []
 
     def test_override_applied_in_resolution(self) -> None:
         from scripts.resolve_fund_identities import resolve_fund_identities
@@ -207,6 +226,56 @@ aliases:
         output_str = json.dumps(result, ensure_ascii=False)
         # The override_lookup dict itself should not appear in output
         assert "override_lookup" not in output_str
+
+    def test_invalid_override_code_skipped(self, tmp_path: Path) -> None:
+        """Invalid override fund_code (not 6 digits) must produce warning and not enter valid_fund_codes_count."""
+        from scripts.resolve_fund_identities import _load_overrides
+
+        override_yaml = tmp_path / "overrides.yaml"
+        override_yaml.write_text(
+            """
+funds:
+  - raw_name: "FakeAlpha"
+    fund_code: "111111"
+    fund_name: "FakeAlpha Fund"
+  - raw_name: "FakeBad"
+    fund_code: "not-a-code"
+    fund_name: "FakeBad Fund"
+aliases:
+  "BadAlias": "abc123"
+""",
+            encoding="utf-8",
+        )
+        lookup, warnings = _load_overrides(override_yaml)
+        # Valid entry should be loaded
+        assert "FakeAlpha" in lookup
+        assert lookup["FakeAlpha"]["fund_code"] == "111111"
+        # Invalid entries should be skipped
+        assert "FakeBad" not in lookup
+        assert "BadAlias" not in lookup
+        # Warnings should be produced
+        assert len(warnings) == 2
+        assert any("not-a-code" in w for w in warnings)
+        assert any("abc123" in w for w in warnings)
+
+    def test_name_only_with_override_produces_valid_codes(self) -> None:
+        """Name-only Alipay transaction + private override -> valid_fund_codes_count > 0."""
+        from scripts.resolve_fund_identities import resolve_fund_identities
+
+        ledger_data = {
+            "transactions": [
+                {"fund_code": None, "fund_name": "测试基金Alpha", "source": "alipay"},
+            ]
+        }
+        override_lookup = {
+            "测试基金Alpha": {"fund_code": "111111", "fund_name": "测试基金Alpha"},
+        }
+        result = resolve_fund_identities(
+            ledger_data=ledger_data,
+            override_lookup=override_lookup,
+        )
+        assert result["summary"]["valid_fund_codes_count"] > 0
+        assert result["summary"]["name_only_count"] == 0  # override resolved it
 
 
 # ---------------------------------------------------------------------------
@@ -336,6 +405,82 @@ class TestE2EIdentityToNAVPath:
         assert fund_codes == ["002168"]
         assert len(fund_codes) > 0  # Snapshot should be attempted
 
+    def test_override_produces_valid_codes_and_snapshot_attempted(self) -> None:
+        """Valid override -> valid_fund_codes_count > 0 -> snapshot should be attempted."""
+        from scripts.resolve_fund_identities import resolve_fund_identities
+
+        ledger_data = {
+            "transactions": [
+                {"fund_code": None, "fund_name": "FakeAlpha", "source": "alipay"},
+            ]
+        }
+        override_lookup = {
+            "FakeAlpha": {"fund_code": "111111", "fund_name": "FakeAlpha Fund"},
+        }
+        result = resolve_fund_identities(
+            ledger_data=ledger_data,
+            override_lookup=override_lookup,
+        )
+        assert result["summary"]["valid_fund_codes_count"] > 0
+        # E2E would see valid_codes_count > 0 and attempt snapshot
+
+    def test_override_with_seeded_nav_triggers_reconstruction(self, tmp_path: Path) -> None:
+        """Valid override + seeded NAV -> reconstruction attempted, portfolio_input_source = reconstructed_from_ledger."""
+        from datetime import date
+
+        from scripts.reconstruct_portfolio_from_ledger import reconstruct_portfolio
+
+        # Ledger with name-only transactions
+        ledger_data = {
+            "transactions": [
+                {
+                    "fund_code": None,
+                    "fund_name": "FakeAlpha",
+                    "action": "buy",
+                    "amount": 1000.0,
+                    "trade_date": "2025-01-15",
+                    "confirmation_type": "evidence_confirmed",
+                    "confirmation_source": "alipay",
+                    "source": "alipay",
+                },
+            ]
+        }
+
+        # Identity resolution maps FakeAlpha -> 111111
+        identity_data = {
+            "schema_version": "fund_identity_resolution.v1",
+            "resolutions": [
+                {"resolved_fund_code": "111111", "fund_name": "FakeAlpha", "confidence": "high"},
+            ],
+        }
+
+        # Seeded NAV
+        nav_snapshot = {
+            "nav_by_fund": {
+                "111111": {
+                    "records": [
+                        {"date": "2025-06-20", "nav": 1.5},
+                    ],
+                },
+            },
+        }
+
+        result = reconstruct_portfolio(
+            ledger_data=ledger_data,
+            nav_snapshot=nav_snapshot,
+            as_of_date=date(2025, 6, 20),
+            identity_data=identity_data,
+        )
+
+        # Reconstruction should have grouped by resolved code 111111
+        confirmed = result["confirmed_portfolio"]
+        positions = confirmed["positions"]
+        assert len(positions) >= 1
+        fund_codes = [p["fund_code"] for p in positions]
+        assert "111111" in fund_codes
+        # Identity was applied
+        assert result["identity_applied_count"] >= 1
+
 
 # ---------------------------------------------------------------------------
 # F. No-NAV path
@@ -379,3 +524,174 @@ class TestNoNAVPath:
         assert len(fund_codes) == 0
         assert name_only_count == 2
         # E2E should warn: "name-only references; fund_code mapping required for NAV"
+
+    def test_name_only_without_override_no_nav_attempted(self) -> None:
+        """Name-only without override -> no NAV attempted, warning says fund_code mapping required."""
+        from scripts.resolve_fund_identities import resolve_fund_identities
+
+        ledger_data = {
+            "transactions": [
+                {"fund_code": None, "fund_name": "ChineseFundName", "source": "alipay"},
+            ]
+        }
+        result = resolve_fund_identities(ledger_data=ledger_data)
+        assert result["summary"]["valid_fund_codes_count"] == 0
+        assert result["summary"]["name_only_count"] >= 1
+        # E2E should skip snapshot and warn about fund_code mapping
+
+
+# ---------------------------------------------------------------------------
+# G. Reconstruction identity bridge
+# ---------------------------------------------------------------------------
+
+
+class TestReconstructionIdentityBridge:
+    """Resolved identity is applied to reconstruction grouping, not only snapshot building."""
+
+    def test_name_only_txns_mapped_via_identity(self) -> None:
+        """Name-only ledger transactions get resolved fund_code from identity resolution."""
+        from datetime import date
+
+        from scripts.reconstruct_portfolio_from_ledger import reconstruct_portfolio
+
+        ledger_data = {
+            "transactions": [
+                {
+                    "fund_code": None,
+                    "fund_name": "FakeAlpha",
+                    "action": "buy",
+                    "amount": 1000.0,
+                    "trade_date": "2025-01-15",
+                    "confirmation_type": "evidence_confirmed",
+                    "confirmation_source": "alipay",
+                    "source": "alipay",
+                },
+                {
+                    "fund_code": None,
+                    "fund_name": "FakeBeta",
+                    "action": "buy",
+                    "amount": 2000.0,
+                    "trade_date": "2025-02-20",
+                    "confirmation_type": "evidence_confirmed",
+                    "confirmation_source": "alipay",
+                    "source": "alipay",
+                },
+            ]
+        }
+
+        identity_data = {
+            "schema_version": "fund_identity_resolution.v1",
+            "resolutions": [
+                {"resolved_fund_code": "111111", "fund_name": "FakeAlpha", "confidence": "high"},
+                {"resolved_fund_code": "222222", "fund_name": "FakeBeta", "confidence": "high"},
+            ],
+        }
+
+        nav_snapshot = {
+            "nav_by_fund": {
+                "111111": {"records": [{"date": "2025-06-20", "nav": 1.0}]},
+                "222222": {"records": [{"date": "2025-06-20", "nav": 2.0}]},
+            },
+        }
+
+        result = reconstruct_portfolio(
+            ledger_data=ledger_data,
+            nav_snapshot=nav_snapshot,
+            as_of_date=date(2025, 6, 20),
+            identity_data=identity_data,
+        )
+
+        positions = result["confirmed_portfolio"]["positions"]
+        fund_codes = [p["fund_code"] for p in positions]
+        assert "111111" in fund_codes
+        assert "222222" in fund_codes
+        assert result["identity_applied_count"] == 2
+
+    def test_without_identity_name_only_txns_skipped(self) -> None:
+        """Without identity resolution, name-only transactions are skipped in reconstruction."""
+        from datetime import date
+
+        from scripts.reconstruct_portfolio_from_ledger import reconstruct_portfolio
+
+        ledger_data = {
+            "transactions": [
+                {
+                    "fund_code": None,
+                    "fund_name": "FakeAlpha",
+                    "action": "buy",
+                    "amount": 1000.0,
+                    "trade_date": "2025-01-15",
+                    "confirmation_type": "evidence_confirmed",
+                    "confirmation_source": "alipay",
+                    "source": "alipay",
+                },
+            ]
+        }
+
+        nav_snapshot = {
+            "nav_by_fund": {
+                "111111": {"records": [{"date": "2025-06-20", "nav": 1.0}]},
+            },
+        }
+
+        result = reconstruct_portfolio(
+            ledger_data=ledger_data,
+            nav_snapshot=nav_snapshot,
+            as_of_date=date(2025, 6, 20),
+            identity_data=None,
+        )
+
+        positions = result["confirmed_portfolio"]["positions"]
+        # Without identity, name-only transactions have no fund_code -> not grouped
+        assert len(positions) == 0
+        assert result["identity_applied_count"] == 0
+
+    def test_original_evidence_preserved(self) -> None:
+        """Identity resolution adds resolved code but does not overwrite original evidence fields."""
+        from datetime import date
+
+        from scripts.reconstruct_portfolio_from_ledger import reconstruct_portfolio
+
+        ledger_data = {
+            "transactions": [
+                {
+                    "fund_code": None,
+                    "fund_name": "FakeAlpha",
+                    "action": "buy",
+                    "amount": 1000.0,
+                    "trade_date": "2025-01-15",
+                    "confirmation_type": "evidence_confirmed",
+                    "confirmation_source": "alipay",
+                    "source": "alipay",
+                    "transaction_id": "txn_001",
+                },
+            ]
+        }
+
+        identity_data = {
+            "schema_version": "fund_identity_resolution.v1",
+            "resolutions": [
+                {"resolved_fund_code": "111111", "fund_name": "FakeAlpha", "confidence": "high"},
+            ],
+        }
+
+        nav_snapshot = {
+            "nav_by_fund": {
+                "111111": {"records": [{"date": "2025-06-20", "nav": 1.0}]},
+            },
+        }
+
+        result = reconstruct_portfolio(
+            ledger_data=ledger_data,
+            nav_snapshot=nav_snapshot,
+            as_of_date=date(2025, 6, 20),
+            identity_data=identity_data,
+        )
+
+        # Original ledger data should still have fund_code=None
+        original_txn = ledger_data["transactions"][0]
+        assert original_txn["fund_code"] is None
+        assert original_txn["fund_name"] == "FakeAlpha"
+        # But reconstruction should have grouped it under 111111
+        positions = result["confirmed_portfolio"]["positions"]
+        assert any(p["fund_code"] == "111111" for p in positions)

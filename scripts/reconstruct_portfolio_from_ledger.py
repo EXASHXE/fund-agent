@@ -77,11 +77,32 @@ def _calculate_units(net_amount: float | None, nav: float | None) -> float | Non
     return net_amount / nav
 
 
+def _build_identity_map(identity_data: dict[str, Any] | None) -> dict[str, str]:
+    """Build a mapping from fund_name to resolved_fund_code from identity resolution.
+
+    Only includes entries where resolved_fund_code is a valid six-digit code.
+    """
+    if not identity_data:
+        return {}
+    entries = identity_data.get("resolutions", identity_data.get("funds", []))
+    code_field = "resolved_fund_code" if "resolutions" in identity_data else "resolved_code"
+    import re as _re
+    six_digit_re = _re.compile(r"^\d{6}$")
+    name_to_code: dict[str, str] = {}
+    for entry in entries:
+        code = entry.get(code_field, "")
+        name = entry.get("fund_name", "")
+        if code and six_digit_re.match(code) and name:
+            name_to_code[name] = code
+    return name_to_code
+
+
 def reconstruct_portfolio(
     ledger_data: dict[str, Any],
     nav_snapshot: dict[str, Any] | None = None,
     fee_snapshot: dict[str, Any] | None = None,
     as_of_date: date | None = None,
+    identity_data: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Reconstruct portfolio positions from transaction ledger.
 
@@ -90,10 +111,20 @@ def reconstruct_portfolio(
     as_of = as_of_date or date.today()
     nav_by_fund = nav_snapshot.get("nav_by_fund", {}) if nav_snapshot else {}
 
-    # Group transactions by fund_code
+    # Build identity map: fund_name -> resolved six-digit fund_code
+    identity_map = _build_identity_map(identity_data)
+
+    # Group transactions by canonical fund_code
+    # If txn has no fund_code but has fund_name that resolves via identity, use resolved code
     fund_txns: dict[str, list[dict[str, Any]]] = {}
+    identity_applied_count = 0
     for txn in ledger_data.get("transactions", []):
         fc = txn.get("fund_code")
+        fn = txn.get("fund_name")
+        # Apply identity resolution for name-only transactions
+        if not fc and fn and fn in identity_map:
+            fc = identity_map[fn]
+            identity_applied_count += 1
         if fc:
             fund_txns.setdefault(fc, []).append(txn)
 
@@ -382,6 +413,7 @@ def reconstruct_portfolio(
         "projected_portfolio": projected_portfolio,
         "portfolio_input": portfolio_input,
         "reconstruction_notes": reconstruction_notes,
+        "identity_applied_count": identity_applied_count,
     }
 
 
@@ -390,6 +422,7 @@ def main():
     parser.add_argument("--ledger", required=True, help="Path to transaction ledger JSON")
     parser.add_argument("--nav-snapshot", default=None, help="Path to NAV snapshot JSON")
     parser.add_argument("--fee-snapshot", default=None, help="Path to fee schedule snapshot JSON")
+    parser.add_argument("--fund-identity-resolution", default=None, help="Path to fund identity resolution JSON")
     parser.add_argument("--as-of-date", required=True, help="As-of date (YYYY-MM-DD)")
     parser.add_argument("--output-dir", required=True, help="Output directory for portfolio files")
     args = parser.parse_args()
@@ -407,6 +440,11 @@ def main():
         with open(args.fee_snapshot, encoding="utf-8") as f:
             fee_snapshot = json.load(f)
 
+    identity_data = None
+    if args.fund_identity_resolution:
+        with open(args.fund_identity_resolution, encoding="utf-8") as f:
+            identity_data = json.load(f)
+
     as_of_date = date.fromisoformat(args.as_of_date)
 
     result = reconstruct_portfolio(
@@ -414,6 +452,7 @@ def main():
         nav_snapshot=nav_snapshot,
         fee_snapshot=fee_snapshot,
         as_of_date=as_of_date,
+        identity_data=identity_data,
     )
 
     output_dir = Path(args.output_dir)

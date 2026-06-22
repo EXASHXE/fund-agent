@@ -476,7 +476,7 @@ def compute_dca_drawdown_diagnostics(
         reviewed_count += 1
         amount = float(plan.get("monthly_amount", plan.get("amount", 0)) or 0)
         cadence = str(plan.get("schedule", plan.get("cadence", "")))
-        nav_history.get(fund_code, [])
+        _nav_points = nav_history.get(fund_code, [])  # noqa: F841 — reserved for future NAV-based drawdown
 
         recent_return = None
         max_drawdown = None

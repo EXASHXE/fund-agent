@@ -30,7 +30,7 @@ class ThesisGenerationSkill(BaseSkillRuntime):
         evidence_items_raw = self._collect_evidence_items(payload, skill_input)
         fund_analysis_report = payload.get("fund_analysis_report")
         artifacts_payload = payload.get("artifacts")
-        payload.get("constraints", {})
+        _constraints = payload.get("constraints", {})  # noqa: F841 — reserved for future constraint-aware thesis logic
         risk_profile = payload.get("risk_profile", {})
         research_focus = payload.get("research_focus")
 
@@ -157,7 +157,7 @@ class ThesisGenerationSkill(BaseSkillRuntime):
         for item in items:
             direction = str(item.get("direction", "neutral")).lower()
             category = str(item.get("category", "")).lower()
-            item.get("claim", "")
+            _claim = item.get("claim", "")  # noqa: F841 — reserved for claim-based classification
 
             if category in ("missing", "gap", "absent"):
                 missing.append(self._evidence_summary(item))
@@ -211,7 +211,7 @@ class ThesisGenerationSkill(BaseSkillRuntime):
 
         support_weight = len(supporting)
         counter_weight = len(counter)
-        support_weight - counter_weight if total > 0 else 0
+        net_direction = support_weight - counter_weight if total > 0 else 0  # noqa: F841
 
         base_score = 0.5
         if total > 0:

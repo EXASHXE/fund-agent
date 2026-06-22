@@ -253,11 +253,23 @@ def run_pipeline(args: argparse.Namespace) -> int:
 
                 if valid_codes_count > 0:
                     live_env = {"RUN_LIVE_PROVIDER_TESTS": "1"} if args.use_live_provider else None
+                    snapshot_cmd = _python("build_fund_data_snapshot.py") + [
+                        "--fund-codes", *fund_codes, "--as-of-date", as_of,
+                        "--output-dir", str(fund_snapshot_dir),
+                    ]
+                    # Wire private NAV/profile/fee overrides if they exist
+                    nav_overrides = private_data / "nav_overrides.private.json"
+                    profile_overrides = private_data / "fund_profile_overrides.private.json"
+                    fee_overrides = private_data / "fee_overrides.private.json"
+                    if nav_overrides.exists():
+                        snapshot_cmd += ["--nav-overrides", str(nav_overrides)]
+                    if profile_overrides.exists():
+                        snapshot_cmd += ["--profile-overrides", str(profile_overrides)]
+                    if fee_overrides.exists():
+                        snapshot_cmd += ["--fee-overrides", str(fee_overrides)]
                     snapshot_ok = run_step(
                         "0e", "build_fund_data_snapshot", "Build fund data snapshot",
-                        _python("build_fund_data_snapshot.py")
-                        + ["--fund-codes", *fund_codes, "--as-of-date", as_of,
-                           "--output-dir", str(fund_snapshot_dir)],
+                        snapshot_cmd,
                         critical=False, expected_output=nav_snapshot,
                         env_overrides=live_env,
                     )
@@ -313,12 +325,28 @@ def run_pipeline(args: argparse.Namespace) -> int:
             ]
             if fee_snapshot.exists():
                 reconstruct_args += ["--fee-snapshot", str(fee_snapshot)]
-            run_step(
+            if fund_identity.exists():
+                reconstruct_args += ["--fund-identity-resolution", str(fund_identity)]
+            reconstruct_ok = run_step(
                 "0f", "reconstruct_portfolio_from_ledger",
                 "Reconstruct portfolio from ledger",
                 _python("reconstruct_portfolio_from_ledger.py") + reconstruct_args,
                 critical=True, expected_output=reconstructed_input,
             )
+            # Record reconstruction status in identity summary
+            if fund_identity.exists():
+                try:
+                    id_data_r = json.loads(fund_identity.read_text(encoding="utf-8"))
+                    id_summary_r = id_data_r.get("summary", {})
+                    id_summary_r["reconstruction_attempted"] = True
+                    if reconstruct_ok and reconstructed_input.exists():
+                        id_summary_r["reconstruction_status"] = "reconstructed_from_ledger"
+                    else:
+                        id_summary_r["reconstruction_status"] = "reconstruction_failed"
+                    id_data_r["summary"] = id_summary_r
+                    fund_identity.write_text(json.dumps(id_data_r, indent=2, ensure_ascii=False), encoding="utf-8")
+                except (OSError, json.JSONDecodeError):
+                    pass
             if reconstructed_input.exists():
                 portfolio_input = reconstructed_input
         else:
@@ -337,6 +365,17 @@ def run_pipeline(args: argparse.Namespace) -> int:
                 nav_reason = "NAV snapshot not generated"
             warnings.append(f"Portfolio valuation unavailable: {nav_reason}; reconstruction skipped")
             print(f"[step 0f] SKIP: NAV unavailable ({nav_reason})")
+            # Record that reconstruction was not attempted
+            if fund_identity.exists():
+                try:
+                    id_data_nr = json.loads(fund_identity.read_text(encoding="utf-8"))
+                    id_summary_nr = id_data_nr.get("summary", {})
+                    id_summary_nr["reconstruction_attempted"] = False
+                    id_summary_nr["reconstruction_status"] = "nav_unavailable"
+                    id_data_nr["summary"] = id_summary_nr
+                    fund_identity.write_text(json.dumps(id_data_nr, indent=2, ensure_ascii=False), encoding="utf-8")
+                except (OSError, json.JSONDecodeError):
+                    pass
 
     if portfolio_input and portfolio_input.exists():
         kg_args = ["--portfolio-input", str(portfolio_input), "--output", str(kg_context)]
