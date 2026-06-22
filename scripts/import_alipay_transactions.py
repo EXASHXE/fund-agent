@@ -18,6 +18,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -183,11 +184,56 @@ def _classify_action(
 
 def _extract_fund_code(product_name: str, counterparty: str) -> str | None:
     """Try to extract a fund code (6 digits) from product name or counterparty."""
-    import re
-
     text = f"{product_name} {counterparty}"
     matches = re.findall(r"\b(\d{6})\b", text)
     return matches[0] if matches else None
+
+
+# Action suffixes to strip from Alipay product names (longest first for greedy match)
+_ALIPAY_ACTION_SUFFIXES = [
+    "卖出至余额宝",
+    "现金分红至余额宝",
+    "确认成功退款",
+    "转换退款",
+    "买入退款",
+    "份额确认中",
+    "活动赠送",
+    "买入",
+    "卖出",
+    "转换",
+    "分红",
+    "赎回",
+]
+
+_ALIPAY_PREFIX = "蚂蚁财富-"
+
+
+def _clean_fund_name(product_name: str) -> str:
+    """Extract clean fund name from Alipay product string.
+
+    Strips leading "蚂蚁财富-" prefix and trailing action suffixes like
+    "-买入", "-卖出至余额宝", "-现金分红至余额宝", "-转换", etc.
+    Preserves conversion target if present (e.g. "转换至XXX").
+
+    For conversion entries like "基金A-[转换至]基金B-确认成功退款",
+    extracts the source fund "基金A" (conversion target is preserved in remark).
+    """
+    name = product_name.strip()
+    # Strip leading prefix
+    if name.startswith(_ALIPAY_PREFIX):
+        name = name[len(_ALIPAY_PREFIX):]
+    # Handle conversion patterns: "FundA-[转换至]FundB-suffix" or "FundA[转换至]FundB"
+    # Extract source fund only (conversion target preserved in remark field)
+    conv_match = re.match(r"^(.+?)(?:-?\[转换至\].+)$", name)
+    if conv_match:
+        name = conv_match.group(1).strip()
+        # Still strip any remaining trailing suffix
+    # Strip trailing action suffix (longest match first)
+    for suffix in _ALIPAY_ACTION_SUFFIXES:
+        if name.endswith("-" + suffix):
+            name = name[: -(len(suffix) + 1)]
+            break
+    return name.strip()
 
 
 def import_alipay_csv(
@@ -255,7 +301,7 @@ def import_alipay_csv(
             "action": action,
             "amount": abs(amount) if amount is not None else None,
             "fund_code": fund_code,
-            "fund_name": product_name if product_name else None,
+            "fund_name": _clean_fund_name(product_name) if product_name else None,
             "counterparty": counterparty if counterparty else None,
             "status": status,
             "remark": remark if remark else None,

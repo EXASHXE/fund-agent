@@ -9,6 +9,7 @@ as warnings in ``e2e_summary.json``.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import os
 import re
@@ -209,10 +210,16 @@ def run_pipeline(args: argparse.Namespace) -> int:
         )
 
     if ledger.exists():
+        # Check for manual override file
+        overrides_path = private_data / "fund_identity_overrides.private.yaml"
+        identity_cmd = _python("resolve_fund_identities.py") + [
+            "--ledger", str(ledger), "--output", str(fund_identity),
+        ]
+        if overrides_path.exists():
+            identity_cmd += ["--overrides", str(overrides_path)]
         identity_ok = run_step(
             "0d", "resolve_fund_identities", "Resolve fund identities",
-            _python("resolve_fund_identities.py")
-            + ["--ledger", str(ledger), "--output", str(fund_identity)],
+            identity_cmd,
             critical=False, expected_output=fund_identity,
         )
         if args.skip_akshare:
@@ -221,14 +228,32 @@ def run_pipeline(args: argparse.Namespace) -> int:
         elif identity_ok and fund_identity.exists():
             try:
                 identity_data = json.loads(fund_identity.read_text(encoding="utf-8"))
-                fund_codes = [
-                    fund.get("resolved_code", "")
-                    for fund in identity_data.get("funds", [])
-                    if fund.get("resolved_code")
+                # Support current schema: resolutions[].resolved_fund_code
+                # Backward compat: funds[].resolved_code
+                entries = identity_data.get("resolutions", identity_data.get("funds", []))
+                code_field = "resolved_fund_code" if "resolutions" in identity_data else "resolved_code"
+                raw_codes = [
+                    entry.get(code_field, "")
+                    for entry in entries
+                    if entry.get(code_field)
                 ]
-                if fund_codes:
+                # Validate: only six-digit codes are valid fund codes
+                six_digit_re = re.compile(r"^\d{6}$")
+                fund_codes = [c for c in raw_codes if six_digit_re.match(c)]
+                name_only_count = sum(1 for c in raw_codes if not six_digit_re.match(c))
+                valid_codes_count = len(fund_codes)
+
+                # Identity resolution summary fields
+                id_summary = identity_data.get("summary", {})
+                id_summary["valid_fund_codes_count"] = valid_codes_count
+                id_summary["name_only_count"] = name_only_count
+                identity_data["summary"] = id_summary
+                # Write back updated summary
+                fund_identity.write_text(json.dumps(identity_data, indent=2, ensure_ascii=False), encoding="utf-8")
+
+                if valid_codes_count > 0:
                     live_env = {"RUN_LIVE_PROVIDER_TESTS": "1"} if args.use_live_provider else None
-                    run_step(
+                    snapshot_ok = run_step(
                         "0e", "build_fund_data_snapshot", "Build fund data snapshot",
                         _python("build_fund_data_snapshot.py")
                         + ["--fund-codes", *fund_codes, "--as-of-date", as_of,
@@ -236,8 +261,23 @@ def run_pipeline(args: argparse.Namespace) -> int:
                         critical=False, expected_output=nav_snapshot,
                         env_overrides=live_env,
                     )
+                    # Record that snapshot was attempted
+                    id_summary["fund_data_snapshot_attempted"] = True
+                    if not snapshot_ok:
+                        id_summary["fund_data_snapshot_status"] = "provider_unavailable"
+                        warnings.append("build_fund_data_snapshot: provider/NAV failed or unavailable")
+                    else:
+                        id_summary["fund_data_snapshot_status"] = "attempted"
+                    identity_data["summary"] = id_summary
+                    fund_identity.write_text(json.dumps(identity_data, indent=2, ensure_ascii=False), encoding="utf-8")
                 else:
-                    warnings.append("build_fund_data_snapshot skipped: no resolved fund codes")
+                    if name_only_count > 0:
+                        warnings.append(
+                            f"build_fund_data_snapshot skipped: {name_only_count} name-only references; "
+                            "fund_code mapping required for NAV"
+                        )
+                    else:
+                        warnings.append("build_fund_data_snapshot skipped: no resolved fund codes")
             except (OSError, json.JSONDecodeError, TypeError) as exc:
                 warnings.append(
                     f"build_fund_data_snapshot skipped: invalid identity output ({type(exc).__name__})"
@@ -282,8 +322,21 @@ def run_pipeline(args: argparse.Namespace) -> int:
             if reconstructed_input.exists():
                 portfolio_input = reconstructed_input
         else:
-            warnings.append("Portfolio valuation unavailable: no usable NAV data; reconstruction skipped")
-            print("[step 0f] SKIP: NAV unavailable; portfolio valuation unavailable")
+            # Distinguish why NAV is unavailable
+            id_data: dict[str, Any] = {}
+            with contextlib.suppress(OSError, json.JSONDecodeError):
+                id_data = json.loads(fund_identity.read_text(encoding="utf-8"))
+            id_summary = id_data.get("summary", {})
+            valid_codes = id_summary.get("valid_fund_codes_count", 0)
+            snapshot_attempted = id_summary.get("fund_data_snapshot_attempted", False)
+            if valid_codes == 0:
+                nav_reason = "no valid six-digit fund codes"
+            elif snapshot_attempted:
+                nav_reason = "NAV provider failed or returned no usable data"
+            else:
+                nav_reason = "NAV snapshot not generated"
+            warnings.append(f"Portfolio valuation unavailable: {nav_reason}; reconstruction skipped")
+            print(f"[step 0f] SKIP: NAV unavailable ({nav_reason})")
 
     if portfolio_input and portfolio_input.exists():
         kg_args = ["--portfolio-input", str(portfolio_input), "--output", str(kg_context)]
@@ -404,6 +457,15 @@ def run_pipeline(args: argparse.Namespace) -> int:
         if status == "success":
             status = "partial"
 
+    # Collect identity resolution summary
+    identity_resolution_summary: dict[str, Any] = {}
+    if fund_identity.exists():
+        try:
+            id_data = json.loads(fund_identity.read_text(encoding="utf-8"))
+            identity_resolution_summary = id_data.get("summary", {})
+        except (OSError, json.JSONDecodeError):
+            pass
+
     summary: dict[str, Any] = {
         "run_id": run_id,
         "as_of": as_of,
@@ -421,6 +483,7 @@ def run_pipeline(args: argparse.Namespace) -> int:
         "portfolio_input_source": portfolio_input_source,
         "transaction_reconstruction_status": transaction_reconstruction_status,
         "alipay_import": alipay_import_stats,
+        "identity_resolution": identity_resolution_summary,
         "pipeline_version": _read_version(),
     }
     try:

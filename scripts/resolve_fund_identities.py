@@ -25,16 +25,70 @@ except ImportError:
     yaml = None
 
 
+def _load_overrides(overrides_path: Path) -> dict[str, dict[str, Any]]:
+    """Load manual fund identity overrides from a YAML file.
+
+    Returns a dict mapping various lookup keys to override records:
+    {raw_name_or_alias: {"fund_code": str, "fund_name": str}}
+    """
+    if yaml is None:
+        print("Warning: PyYAML not installed, skipping overrides", file=__import__("sys").stderr)
+        return {}
+    try:
+        with open(overrides_path, encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+    except (OSError, ValueError) as exc:
+        print(f"Warning: cannot read overrides file: {exc}", file=__import__("sys").stderr)
+        return {}
+
+    if not data or not isinstance(data, dict):
+        return {}
+
+    lookup: dict[str, dict[str, Any]] = {}
+
+    # Process funds list
+    for entry in data.get("funds", []):
+        if not isinstance(entry, dict):
+            continue
+        raw_name = entry.get("raw_name", "")
+        fund_code = entry.get("fund_code", "")
+        fund_name = entry.get("fund_name", "")
+        if not raw_name or not fund_code:
+            continue
+        record = {"fund_code": fund_code, "fund_name": fund_name or raw_name}
+        # Index by raw_name and normalized variants
+        lookup[raw_name] = record
+        lookup[_normalize_name(raw_name)] = record
+
+    # Process aliases
+    for alias, fund_code in data.get("aliases", {}).items():
+        if not alias or not fund_code:
+            continue
+        record = {"fund_code": str(fund_code), "fund_name": alias}
+        lookup[alias] = record
+        lookup[_normalize_name(alias)] = record
+
+    return lookup
+
+
+def _normalize_name(name: str) -> str:
+    """Normalize a fund name for matching: strip punctuation, spaces, parens."""
+    import re
+    # Remove spaces, parentheses, punctuation commonly varying
+    return re.sub(r"[\s\(\)（）\-\.\,，、]", "", name)
+
+
 def resolve_fund_identities(
     ledger_data: dict[str, Any] | None = None,
     plan_data: dict[str, Any] | None = None,
     manual_overrides: dict[str, str] | None = None,
+    override_lookup: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Resolve fund identities from available sources.
 
     Priority:
     1. Plan fund_code (from investment plan)
-    2. Manual override
+    2. Manual override (from override file or dict)
     3. Alipay fund_code (from transaction)
     4. Unresolved (no guessing)
 
@@ -42,11 +96,13 @@ def resolve_fund_identities(
         ledger_data: Transaction ledger with fund_code fields.
         plan_data: Investment plan with known fund_codes.
         manual_overrides: Manual fund_code mappings {raw_name: resolved_code}.
+        override_lookup: Pre-processed override lookup from YAML file.
 
     Returns:
         Fund identity resolution with audit trail.
     """
     overrides = manual_overrides or {}
+    ov_lookup = override_lookup or {}
     plan_funds: dict[str, dict[str, Any]] = {}
 
     # Index plan funds
@@ -87,6 +143,16 @@ def resolve_fund_identities(
         plan_info = plan_funds.get(fund_key, {})
         ref_info = fund_refs.get(fund_key, {})
         override_code = overrides.get(fund_key) or overrides.get(ref_info.get("fund_name", ""))
+
+        # Check override_lookup (from YAML file) by fund_key, fund_name, and normalized variants
+        ov_record = None
+        fund_name = ref_info.get("fund_name") or plan_info.get("fund_name") or ""
+        for lookup_key in (fund_key, fund_name, _normalize_name(fund_key), _normalize_name(fund_name)):
+            if lookup_key and lookup_key in ov_lookup:
+                ov_record = ov_lookup[lookup_key]
+                break
+        if ov_record and ov_record.get("fund_code"):
+            override_code = ov_record["fund_code"]
 
         candidates = []
         resolved_code = ref_info.get("fund_code") or fund_key
@@ -139,12 +205,19 @@ def resolve_fund_identities(
             "audit_trail": audit_steps,
         })
 
+    import re as _re
+    six_digit_re = _re.compile(r"^\d{6}$")
+
     summary = {
         "total_funds": len(resolutions),
+        "valid_fund_codes_count": sum(1 for r in resolutions if six_digit_re.match(r.get("resolved_fund_code", ""))),
+        "name_only_count": sum(1 for r in resolutions if r.get("resolved_fund_code") and not six_digit_re.match(r["resolved_fund_code"])),
         "high_confidence": sum(1 for r in resolutions if r["confidence"] == "high"),
         "medium_confidence": sum(1 for r in resolutions if r["confidence"] == "medium"),
         "low_confidence": sum(1 for r in resolutions if r["confidence"] == "low"),
         "unresolved": sum(1 for r in resolutions if r["resolution_source"] == "none"),
+        "manual_overrides_used": bool(ov_lookup or overrides),
+        "manual_override_matches_count": sum(1 for r in resolutions if r["resolution_source"] == "manual_override"),
     }
 
     return {
@@ -159,6 +232,7 @@ def main():
     parser = argparse.ArgumentParser(description="Resolve fund identities")
     parser.add_argument("--ledger", default=None, help="Path to transaction ledger JSON")
     parser.add_argument("--plan", default=None, help="Path to investment plan YAML")
+    parser.add_argument("--overrides", default=None, help="Path to fund identity overrides YAML")
     parser.add_argument("--output", required=True, help="Output path for fund identity resolution JSON")
     args = parser.parse_args()
 
@@ -175,9 +249,14 @@ def main():
             with open(args.plan, encoding="utf-8") as f:
                 plan_data = yaml.safe_load(f)
 
+    override_lookup = {}
+    if args.overrides:
+        override_lookup = _load_overrides(Path(args.overrides))
+
     result = resolve_fund_identities(
         ledger_data=ledger_data,
         plan_data=plan_data,
+        override_lookup=override_lookup,
     )
 
     output_path = Path(args.output)

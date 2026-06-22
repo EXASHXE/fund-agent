@@ -1,0 +1,15 @@
+# Example fund identity overrides file.
+# Copy to private_data/fund_identity_overrides.private.yaml and fill in real codes.
+# DO NOT commit this file with real fund codes.
+#
+# Format:
+#   funds:
+#     - raw_name: "exact fund name from Alipay"
+#       fund_code: "six-digit code"
+#       fund_name: "official fund name"
+#   aliases:
+#     "alias name": "six-digit code"
+
+funds: []
+
+aliases: {}
