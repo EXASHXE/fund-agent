@@ -1598,7 +1598,7 @@ class TestFallbackSourceSemantics:
         assert str(reconstructed).startswith(str(portfolio_dir))
 
 
-class TestReportSemantics:
+class TestReportValuationSemantics:
     """Report semantics: no fake 0.00, estimated properly labeled."""
 
     def test_cashflow_only_no_fake_zero(self) -> None:

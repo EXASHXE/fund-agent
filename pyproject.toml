@@ -35,6 +35,7 @@ testpaths = [
     "tests/release",
     "tests/agent_wrappers",
     "tests/privacy",
+    "tests/end_to_end",
 ]
 pythonpath = ["."]
 addopts = "--import-mode=importlib"
@@ -55,6 +56,12 @@ markers = [
     "adapter_live: tests requiring real adapter dependency and/or network (skipped by default)",
     "adapter: adapter-specific tests",
     "regression: personal regression tests",
+    "unit: pure fast unit tests",
+    "integration: multi-module integration tests",
+    "e2e: synthetic end-to-end tests",
+    "release: release-freeze gate tests",
+    "real_e2e: requires private local data, never run in CI by default",
+    "privacy: privacy / artifact safety checks",
 ]
 
 [project.optional-dependencies]
@@ -62,6 +69,7 @@ dev = [
     "ruff>=0.4.0",
     "pytest-cov>=5.0",
     "mypy>=1.10",
+    "pytest-xdist>=3.5",
 ]
 
 [tool.ruff]
