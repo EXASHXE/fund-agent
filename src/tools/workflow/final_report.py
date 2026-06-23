@@ -16,22 +16,17 @@ from __future__ import annotations
 
 from typing import Any
 
+from .report_safety import (
+    build_safety_boundary,
+)
 from .report_status import (
     compute_decision_status,
     compute_report_status,
     data_completeness_grade,
     normalize_language,
 )
-from .report_safety import (
-    FORBIDDEN_EXECUTION_FIELDS,
-    build_safety_boundary,
-    find_forbidden_execution_fields,
-)
 from .report_zh import (
-    ZH_CN_SECTION_TITLES,
     build_chinese_summary,
-    build_zh_blocked_reason,
-    build_zh_downgraded_reason,
     localize_section_titles,
 )
 
@@ -136,7 +131,6 @@ def _build_user_facing_sections(
     language: str = "en",
 ) -> list[dict[str, Any]]:
     sections: list[dict[str, Any]] = []
-    is_zh = language == "zh-CN"
 
     # 1. Direct Answer — always first
     sections.append(_build_direct_answer_section(
@@ -335,7 +329,6 @@ def _build_zh_direct_answer_intent_bullets(
     intent_set = set(intents)
     themes = _theme_text(fa_artifacts)
     has_fee_blocker = _has_fee_blocker(fa_artifacts)
-    has_right_side_unconfirmed = _has_right_side_unconfirmed(fa_artifacts)
     has_profit_concern = _has_profit_concern(fa_artifacts)
 
     if "PROFIT_PROTECTION" in intent_set and has_profit_concern:
@@ -959,9 +952,8 @@ def _has_right_side_unconfirmed(fa_artifacts: dict[str, Any]) -> bool:
         items = right_side.get("items", [])
         if isinstance(items, list):
             for item in items:
-                if isinstance(item, dict) and item.get("right_side_confirmed") is False:
-                    if item.get("applicability") != "not_applicable":
-                        return True
+                if isinstance(item, dict) and item.get("right_side_confirmed") is False and item.get("applicability") != "not_applicable":
+                    return True
     analysis_plan = fa_artifacts.get("analysis_plan", {})
     if isinstance(analysis_plan, dict):
         blockers = analysis_plan.get("blockers", [])

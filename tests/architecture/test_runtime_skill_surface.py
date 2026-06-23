@@ -18,12 +18,12 @@ from pathlib import Path
 
 import pytest
 
+from src.schemas.skill import SkillInput
 from src.skills_runtime.base import BaseSkillRuntime
 from src.skills_runtime.mcp_adapter_skill import MCPAdapterSkill
 from src.skills_runtime.news_research import NewsResearchSkill
 from src.skills_runtime.sentiment_analysis import SentimentAnalysisSkill
 from src.skills_runtime.thesis_generation import ThesisGenerationSkill
-from src.schemas.skill import SkillInput, SkillOutput
 
 ROOT = Path(__file__).resolve().parents[2]
 

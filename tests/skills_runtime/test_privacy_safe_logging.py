@@ -1,6 +1,6 @@
 """Tests for privacy-safe logging utilities."""
 
-from src.skills_runtime.common.logging import redact_pii, PrivacySafeFormatter, get_skill_logger
+from src.skills_runtime.common.logging import get_skill_logger, redact_pii
 
 
 class TestRedactPii:

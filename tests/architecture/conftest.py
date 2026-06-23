@@ -7,9 +7,9 @@ redundant directory walks and AST parses across architecture tests.
 from __future__ import annotations
 
 import ast
+import contextlib
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
 
 import pytest
 
@@ -143,8 +143,6 @@ def runtime_source_texts() -> dict[str, str]:
         for py_file in sorted(dirpath.rglob("*.py")):
             if "__pycache__" in str(py_file):
                 continue
-            try:
+            with contextlib.suppress(Exception):
                 texts[str(py_file.relative_to(ROOT))] = py_file.read_text(encoding="utf-8")
-            except Exception:
-                pass
     return texts

@@ -1,7 +1,7 @@
 """Tests for src/skills_runtime/common/strings.unique_strings."""
 
-from src.skills_runtime.common.strings import unique_strings
 from src.skills_runtime.base import BaseSkillRuntime
+from src.skills_runtime.common.strings import unique_strings
 
 
 def test_single_list():

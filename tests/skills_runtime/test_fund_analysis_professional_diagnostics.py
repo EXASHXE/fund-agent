@@ -7,6 +7,20 @@ from pathlib import Path
 
 from src.schemas.skill import SkillInput
 from src.skills_runtime.fund_analysis import FundAnalysisSkill
+from src.skills_runtime.fund_analysis.input_stage import (
+    build_portfolio_input_bundle,
+    collect_fund_codes,
+    dict_or_empty,
+)
+from src.skills_runtime.fund_analysis.metrics_stage import compute_core_metrics
+from src.skills_runtime.fund_analysis.professional_rules import (
+    compute_cash_budget_diagnostics,
+    compute_dca_drawdown_diagnostics,
+    compute_overlap_diagnostics,
+    compute_redemption_fee_risk,
+    compute_theme_overweight_diagnostics,
+    run_professional_diagnostics,
+)
 
 
 def _make_skill_input() -> SkillInput:
@@ -14,20 +28,7 @@ def _make_skill_input() -> SkillInput:
         task_id="test-diag", step_id="fa-diag",
         skill_name="fund_analysis", payload={},
     )
-from src.skills_runtime.fund_analysis.professional_rules import (
-    compute_redemption_fee_risk,
-    compute_overlap_diagnostics,
-    compute_theme_overweight_diagnostics,
-    compute_dca_drawdown_diagnostics,
-    compute_cash_budget_diagnostics,
-    run_professional_diagnostics,
-)
-from src.skills_runtime.fund_analysis.input_stage import (
-    build_portfolio_input_bundle,
-    collect_fund_codes,
-    dict_or_empty,
-)
-from src.skills_runtime.fund_analysis.metrics_stage import compute_core_metrics
+
 
 ROOT = Path(__file__).resolve().parents[2]
 

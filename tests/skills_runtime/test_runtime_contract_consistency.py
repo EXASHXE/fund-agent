@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from src.schemas.skill import SkillInput, SkillOutput
 from src.skills_runtime.base import BaseSkillRuntime
-from src.skills_runtime.fund_analysis.skill import FundAnalysisSkill
 from src.skills_runtime.decision_support.skill import DecisionSupportSkill
-from src.skills_runtime.fund_analysis.status_stage import failed_output as fa_failed_output
-from src.skills_runtime.fund_analysis.input_stage import entities_from_input as fa_entities_from_input
 from src.skills_runtime.decision_support.status_stage import build_failed_output as ds_build_failed_output
+from src.skills_runtime.fund_analysis.input_stage import entities_from_input as fa_entities_from_input
+from src.skills_runtime.fund_analysis.skill import FundAnalysisSkill
+from src.skills_runtime.fund_analysis.status_stage import failed_output as fa_failed_output
 
 
 def _skill_input(**overrides):
@@ -171,16 +171,16 @@ class TestDecisionSupportStatusStageDelegation:
     def test_build_failed_output_delegates_to_base(self):
         si = _skill_input(skill_name="decision_support")
 
-        class ContractErr(ValueError):
+        class ContractError(ValueError):
             code = "CONTRACT_VIOLATION"
 
-        exc = ContractErr("missing evidence graph")
+        exc = ContractError("missing evidence graph")
         out = ds_build_failed_output(si, exc)
         assert out.status == "FAILED"
         assert out.errors[0]["code"] == "CONTRACT_VIOLATION"
         assert out.errors[0]["recoverable"] is False
         assert out.errors[0]["details"]["skill_name"] == "decision_support"
-        assert out.errors[0]["details"]["error_type"] == "ContractErr"
+        assert out.errors[0]["details"]["error_type"] == "ContractError"
 
     def test_build_failed_output_internal_error(self):
         si = _skill_input(skill_name="decision_support")

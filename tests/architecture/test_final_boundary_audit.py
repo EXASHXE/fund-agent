@@ -6,14 +6,9 @@ execution machinery, or deprecated surfaces exist in runtime plugin core.
 
 from __future__ import annotations
 
-from pathlib import Path
-
-import pytest
-
 from .conftest import (
     BROKER_KEYWORDS,
     DEPRECATED_SRC_MODULES,
-    DEPRECATED_SRC_PATHS,
     NETWORK_CLIENTS,
     PLUGIN_CORE_DIRS,
     PROVIDER_SDKS,

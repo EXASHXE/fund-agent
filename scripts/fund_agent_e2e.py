@@ -416,7 +416,14 @@ def run_pipeline(args: argparse.Namespace) -> int:
     else:
         print("[step 1] SKIP: no portfolio input available")
         if not dry_run and any((alipay_csv, investment_plan)):
-            pipeline.errors.append("No portfolio input available for required analysis")
+            # If identity resolved fund codes but NAV was unavailable, this is
+            # a partial result (nav_unavailable), not a hard failure.
+            if pipeline.reconstruction_status == "nav_unavailable" and pipeline.valid_fund_codes_count > 0:
+                pipeline.warnings.append(
+                    "Portfolio analysis unavailable: identity resolved but NAV data missing"
+                )
+            else:
+                pipeline.errors.append("No portfolio input available for required analysis")
 
     if args.skip_news:
         print("[step 2] SKIP: --skip-news flag set")
@@ -474,7 +481,7 @@ def run_pipeline(args: argparse.Namespace) -> int:
     status = "failed" if pipeline.errors else "partial" if pipeline.warnings else "success"
 
     # Determine portfolio_input_source and transaction_reconstruction_status
-    portfolio_input_source = "none"
+    portfolio_input_source = "unavailable" if pipeline.reconstruction_status == "nav_unavailable" else "none"
     transaction_reconstruction_status = "skipped"
     alipay_import_stats: dict[str, Any] = {}
 
@@ -523,10 +530,12 @@ def run_pipeline(args: argparse.Namespace) -> int:
 
     # Collect identity resolution summary (read-only, never write back)
     identity_resolution_summary: dict[str, Any] = {}
+    identity_schema_version: str = "unknown"
     if fund_identity.exists():
         try:
             id_data = json.loads(fund_identity.read_text(encoding="utf-8"))
             identity_resolution_summary = id_data.get("summary", {})
+            identity_schema_version = id_data.get("schema_version", "unknown")
         except (OSError, json.JSONDecodeError):
             pass
 
@@ -566,6 +575,7 @@ def run_pipeline(args: argparse.Namespace) -> int:
         "transaction_reconstruction_status": transaction_reconstruction_status,
         "alipay_import": alipay_import_stats,
         "identity_resolution": identity_resolution_summary,
+        "identity_schema_version": identity_schema_version,
         "valuation_summary": valuation_type_counts,
         "pipeline_version": _read_version(),
     }

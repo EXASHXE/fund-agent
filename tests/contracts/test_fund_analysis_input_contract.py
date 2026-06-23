@@ -14,7 +14,6 @@ from src.skillpack.input_contract_catalog import (
     recommended_fields_for_skill,
 )
 
-
 ROOT = Path(__file__).resolve().parents[2]
 CONTRACT_PATH = ROOT / "skillpack" / "input-contracts.yaml"
 DOC_PATH = ROOT / "docs" / "contracts" / "fund-analysis-input-contract.v1.md"
@@ -126,13 +125,13 @@ def test_related_entities_baseline_is_degraded() -> None:
 
 
 def test_recommended_and_optional_fields_are_declared() -> None:
-    assert RECOMMENDED_FIELDS <= _field_keys("recommended_fields")
-    assert OPTIONAL_FIELDS <= _field_keys("optional_fields")
+    assert _field_keys("recommended_fields") >= RECOMMENDED_FIELDS
+    assert _field_keys("optional_fields") >= OPTIONAL_FIELDS
 
 
 def test_host_data_capability_mapping_is_declared() -> None:
     mapping = _fund_contract()["host_data_capability_fields"]
-    assert CAPABILITY_KEYS <= set(mapping)
+    assert set(mapping) >= CAPABILITY_KEYS
     assert mapping["portfolio_snapshot"]["payload_fields"] == ["portfolio"]
     assert mapping["fund_profile"]["payload_fields"] == ["fund_profiles", "fund_profile"]
     assert mapping["macro_events"]["payload_fields"] == ["macro_events", "market_scenario"]

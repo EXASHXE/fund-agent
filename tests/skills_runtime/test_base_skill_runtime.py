@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-import pytest
-
 from src.schemas.skill import SkillInput, SkillOutput
 from src.skills_runtime.base import BaseSkillRuntime
-
 
 _BASE = BaseSkillRuntime()
 

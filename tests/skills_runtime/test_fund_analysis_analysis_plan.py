@@ -133,8 +133,8 @@ def test_missing_holdings_blocks_decision_support() -> None:
     del payload["portfolio"]["positions"]
     payload["portfolio"]["positions"] = []
 
-    from src.skills_runtime.fund_analysis.planning_stage import _build_evidence_gap_diagnostics
     from src.skills_runtime.fund_analysis.context import PortfolioInputBundle
+    from src.skills_runtime.fund_analysis.planning_stage import _build_evidence_gap_diagnostics
 
     empty_bundle = PortfolioInputBundle(
         payload=payload,

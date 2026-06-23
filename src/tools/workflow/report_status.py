@@ -25,9 +25,8 @@ def compute_report_status(
     if fa_status == "FAILED":
         return "FAILED"
     quality_gate = fa_artifacts.get("report_quality_gate", {})
-    if isinstance(quality_gate, dict):
-        if quality_gate.get("can_publish_professional_report") is False:
-            return "PARTIAL"
+    if isinstance(quality_gate, dict) and quality_gate.get("can_publish_professional_report") is False:
+        return "PARTIAL"
     if md.get("critical_missing") or md.get("blockers"):
         return "PARTIAL"
     if md.get("missing_user_constraints") or md.get("missing_risk_preference"):

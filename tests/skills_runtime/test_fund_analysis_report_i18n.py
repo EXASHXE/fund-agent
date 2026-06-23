@@ -10,7 +10,6 @@ from src.schemas.skill import SkillInput
 from src.skills_runtime.fund_analysis.skill import FundAnalysisSkill
 from src.tools.portfolio.report_composer import render_report_markdown
 
-
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE = ROOT / "examples" / "user_flows" / "semiconductor_profit_protection.json"
 FORMAL_DECISION_ARTIFACTS = {"decision", "decisions", "execution_ledger", "execution_ledgers"}

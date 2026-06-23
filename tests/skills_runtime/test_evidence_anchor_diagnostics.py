@@ -1,8 +1,6 @@
 """Tests for evidence_anchor_diagnostics in decision_support."""
 from __future__ import annotations
 
-import pytest
-
 from src.schemas.evidence import EvidenceItem
 from src.schemas.evidence_graph import EvidenceGraph
 from src.skills_runtime.decision_support.anchor_diagnostics import build_evidence_anchor_diagnostics

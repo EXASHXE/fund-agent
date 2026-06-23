@@ -13,7 +13,6 @@ from tests.support.formal_boundary import (
     extract_formal_decisions,
 )
 
-
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE_DIR = ROOT / "examples" / "decision_support"
 

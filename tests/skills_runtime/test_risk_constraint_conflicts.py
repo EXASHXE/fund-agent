@@ -1,8 +1,6 @@
 """Tests for risk_constraint_conflicts in decision_support."""
 from __future__ import annotations
 
-import pytest
-
 from src.skills_runtime.decision_support.risk_constraint_conflicts import build_risk_constraint_conflicts
 
 

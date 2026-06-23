@@ -6,9 +6,8 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
-echo "=== ruff check (full project) ==="
-python -m ruff check .
-echo "  OK"
+echo "=== ruff check (canonical release scope) ==="
+bash scripts/lint_release_scope.sh
 
 echo "=== compileall ==="
 PYTHONPATH=. python -m compileall src tests scripts -q 2>/dev/null

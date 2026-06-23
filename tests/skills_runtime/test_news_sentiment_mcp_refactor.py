@@ -8,12 +8,10 @@ from __future__ import annotations
 
 from datetime import datetime
 
-import pytest
-
-from src.schemas.skill import SkillInput, SkillOutput
+from src.schemas.skill import SkillInput
+from src.skills_runtime.mcp_adapter_skill import MCPAdapterSkill
 from src.skills_runtime.news_research import NewsResearchSkill
 from src.skills_runtime.sentiment_analysis import SentimentAnalysisSkill
-from src.skills_runtime.mcp_adapter_skill import MCPAdapterSkill
 from src.tools.adapters.mcp import InMemoryMCPHostAdapter, MCPCapability
 
 
@@ -246,8 +244,9 @@ class TestNoProviderNetworkImports:
     def test_news_research_no_provider_imports(self):
         import importlib
         mod = importlib.import_module("src.skills_runtime.news_research")
-        source = open(mod.__file__, encoding="utf-8").read()
-        import_lines = [l for l in source.splitlines() if l.strip().startswith(("import ", "from "))]
+        with open(mod.__file__, encoding="utf-8") as f:
+            source = f.read()
+        import_lines = [line for line in source.splitlines() if line.strip().startswith(("import ", "from "))]
         banned = ["tavily", "finnhub", "exa", "firecrawl", "akshare", "openai", "anthropic", "langchain", "requests", "httpx", "aiohttp", "urllib3", "socket"]
         for line in import_lines:
             for word in banned:
@@ -256,8 +255,9 @@ class TestNoProviderNetworkImports:
     def test_sentiment_analysis_no_provider_imports(self):
         import importlib
         mod = importlib.import_module("src.skills_runtime.sentiment_analysis")
-        source = open(mod.__file__, encoding="utf-8").read()
-        import_lines = [l for l in source.splitlines() if l.strip().startswith(("import ", "from "))]
+        with open(mod.__file__, encoding="utf-8") as f:
+            source = f.read()
+        import_lines = [line for line in source.splitlines() if line.strip().startswith(("import ", "from "))]
         banned = ["tavily", "finnhub", "exa", "firecrawl", "akshare", "openai", "anthropic", "langchain", "requests", "httpx", "aiohttp", "urllib3", "socket"]
         for line in import_lines:
             for word in banned:
@@ -266,8 +266,9 @@ class TestNoProviderNetworkImports:
     def test_mcp_adapter_skill_no_provider_imports(self):
         import importlib
         mod = importlib.import_module("src.skills_runtime.mcp_adapter_skill")
-        source = open(mod.__file__, encoding="utf-8").read()
-        import_lines = [l for l in source.splitlines() if l.strip().startswith(("import ", "from "))]
+        with open(mod.__file__, encoding="utf-8") as f:
+            source = f.read()
+        import_lines = [line for line in source.splitlines() if line.strip().startswith(("import ", "from "))]
         banned = ["tavily", "finnhub", "exa", "firecrawl", "akshare", "openai", "anthropic", "langchain", "requests", "httpx", "aiohttp", "urllib3", "socket"]
         for line in import_lines:
             for word in banned:

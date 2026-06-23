@@ -7,8 +7,6 @@ comes exclusively from fallback queries (theme_fallback, priority 5).
 
 from __future__ import annotations
 
-import pytest
-
 from src.tools.workflow.advisory_quality_gate import evaluate_advisory_quality_gate
 
 

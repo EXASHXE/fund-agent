@@ -18,9 +18,7 @@ These tests guard the directory structure:
 """
 from __future__ import annotations
 
-import os
 from pathlib import Path
-
 
 ROOT = Path(__file__).resolve().parents[2]
 SKILLS_DIR = ROOT / "skills"
@@ -92,7 +90,7 @@ def test_legacy_dir_is_pointer_only():
         if entry.name in allowed:
             continue
         # Anything else is unexpected.
-        assert False, (
+        raise AssertionError(
             f"{entry} is not allowed under legacy/; legacy/ must be "
             f"pointer-only. Allowed: {sorted(allowed)}"
         )

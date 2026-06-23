@@ -89,9 +89,9 @@ class TestNoRuntimeSkillImportsProviderSDKs:
 class TestDecisionBoundary:
     def test_only_decision_support_produces_decision(self):
         from src.skills_runtime.fund_analysis.skill import FundAnalysisSkill
-        from src.skills_runtime.thesis_generation import ThesisGenerationSkill
         from src.skills_runtime.news_research import NewsResearchSkill
         from src.skills_runtime.sentiment_analysis import SentimentAnalysisSkill
+        from src.skills_runtime.thesis_generation import ThesisGenerationSkill
 
         for cls in [FundAnalysisSkill, ThesisGenerationSkill, NewsResearchSkill, SentimentAnalysisSkill]:
             source = Path(cls.__module__.replace(".", "/") + ".py")

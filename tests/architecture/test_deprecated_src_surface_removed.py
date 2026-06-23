@@ -2,19 +2,13 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
-import pytest
-
 from .conftest import (
+    DEPRECATED_SRC_MODULES,
     DEPRECATED_SRC_PATHS,
     PLUGIN_CORE_DIRS,
-    DEPRECATED_SRC_MODULES,
     ROOT,
     SRC,
-    imports_from_dir,
 )
-
 
 ALLOWED_RETAINED_PATHS: dict[str, str] = {}
 

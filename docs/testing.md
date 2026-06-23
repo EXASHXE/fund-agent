@@ -9,7 +9,8 @@
 | Fast gate | `bash scripts/test_fast.sh` | Before push, every few edits | 30–90s | Fast unit/smoke/critical paths |
 | Plugin smoke | `bash scripts/test_plugin_smoke.sh` | After wrapper/skill changes | <30s | Skillpack, contracts, architecture |
 | Privacy | `bash bin/fund-agent-privacy-check` | Before push | <5s | Privacy/artifact safety |
-| Release gate | `bash scripts/test_release_gate.sh` | Before release-freeze only | 4–5 min | Full pytest + plugin gate + privacy |
+| Release gate | `bash scripts/test_release_gate.sh` | Before release-freeze only | 4–5 min | Canonical lint + full pytest + plugin gate + privacy |
+| Release lint | `bash scripts/lint_release_scope.sh` | Standalone lint check | <5s | Canonical v0.10.5 release scope only |
 | Profile | `bash scripts/profile_tests.sh` | When optimizing | varies | Durations report |
 
 ## Daily Workflow
@@ -54,6 +55,22 @@ bash scripts/test_release_gate.sh
 - **Full pytest must still pass** before release-freeze. Run `test_release_gate.sh` for full coverage.
 - **real_e2e tests never run by default** and never read `private_data/`.
 - **test_changed.sh** is a convenience script; it does not replace test_fast.sh.
+
+## Release Lint Scope (v0.10.5)
+
+The release gate uses `scripts/lint_release_scope.sh` which checks only the canonical runtime path:
+
+```
+scripts/fund_agent_e2e.py, import_alipay_transactions.py, resolve_fund_identities.py,
+reconstruct_portfolio_from_ledger.py, fund_identity_utils.py, build_fund_data_snapshot.py,
+build_factor_snapshot.py, privacy_audit.py,
+src/skills_runtime/, src/schemas/, src/tools/portfolio/, src/tools/workflow/,
+src/tools/adapters/, src/tools/evidence/, src/fund_agent/,
+tests/end_to_end/test_e2e_identity_nav.py, tests/tools/portfolio/,
+tests/scripts/, tests/schemas/, tests/contracts/, tests/skills_runtime/, tests/architecture/
+```
+
+**Why not `ruff check .`?** The repo has ~590 historical lint issues in `examples/`, `src/graph/`, and other non-critical paths. These are not regressions from v0.10.5 changes. Full-project lint cleanup is tracked for v0.10.6. New/modified files in the canonical scope MUST be ruff-clean.
 
 ## What test_fast.sh Covers
 

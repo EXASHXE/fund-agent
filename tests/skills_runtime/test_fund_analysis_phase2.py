@@ -4,9 +4,8 @@ and redemption fee blocker/warning classification.
 
 from __future__ import annotations
 
-from typing import Any
-
 from src.schemas.skill import SkillInput
+from src.skills_runtime.fund_analysis.context import PortfolioInputBundle
 from src.skills_runtime.fund_analysis.contribution_stage import compute_position_contribution
 from src.skills_runtime.fund_analysis.input_stage import (
     build_portfolio_input_bundle,
@@ -17,13 +16,10 @@ from src.skills_runtime.fund_analysis.metrics_stage import compute_core_metrics
 from src.skills_runtime.fund_analysis.planning_stage import build_analysis_plan
 from src.skills_runtime.fund_analysis.professional_rules import (
     compute_redemption_fee_risk,
-    _classify_fee_items,
 )
 from src.skills_runtime.fund_analysis.profit_protection_rules import (
     compute_profit_protection_diagnostics,
 )
-from src.skills_runtime.fund_analysis.context import PortfolioInputBundle
-
 
 FORMAL_DECISION_ARTIFACTS = {"decision", "decisions", "execution_ledger", "execution_ledgers"}
 

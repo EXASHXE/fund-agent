@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 ZH_CN_SECTION_TITLES: dict[str, str] = {
     "direct_answer": "直接回答",
     "evidence_status": "证据状态",

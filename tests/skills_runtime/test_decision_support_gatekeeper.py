@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime
 from typing import Any
 
 from src.schemas.evidence import EvidenceItem
 from src.schemas.evidence_graph import EvidenceGraph
 from src.schemas.skill import SkillInput
 from src.skills_runtime.decision_support import DecisionSupportSkill
-
-from datetime import datetime
 
 
 def _evidence_graph() -> dict[str, Any]:

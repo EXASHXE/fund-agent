@@ -7,11 +7,8 @@ have evidence anchors.
 
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Any
 
-from src.schemas.evidence import EvidenceItem
-from src.schemas.evidence_graph import EvidenceGraph
 from src.schemas.skill import SkillInput
 from src.skills_runtime.decision_support.skill import DecisionSupportSkill
 
