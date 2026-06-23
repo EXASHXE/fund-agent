@@ -262,10 +262,9 @@ def run_pipeline(args: argparse.Namespace) -> int:
             identity_cmd,
             critical=False, expected_output=fund_identity,
         )
-        if args.skip_akshare:
-            pipeline.warnings.append("build_fund_data_snapshot skipped by --skip-akshare")
-            print("[step 0e] SKIP: --skip-akshare flag set")
-        elif identity_ok and fund_identity.exists():
+        # Extract fund codes from identity resolution (always, even with --skip-akshare)
+        fund_codes: list[str] = []
+        if identity_ok and fund_identity.exists():
             try:
                 identity_data = json.loads(fund_identity.read_text(encoding="utf-8"))
                 # Support current schema: resolutions[].resolved_fund_code
@@ -277,53 +276,69 @@ def run_pipeline(args: argparse.Namespace) -> int:
                     for entry in entries
                     if entry.get(code_field)
                 ]
+                # Count name-only: entries where resolved_fund_code is None
+                name_only_count = sum(
+                    1 for entry in entries
+                    if entry.get(code_field) is None
+                )
                 # Validate: only six-digit codes are valid fund codes
                 fund_codes = [c for c in raw_codes if is_valid_fund_code(c)]
-                name_only_count = sum(1 for c in raw_codes if not is_valid_fund_code(c))
                 pipeline.valid_fund_codes_count = len(fund_codes)
                 pipeline.name_only_count = name_only_count
+            except (OSError, json.JSONDecodeError, TypeError) as exc:
+                pipeline.warnings.append(
+                    f"Identity output unreadable ({type(exc).__name__})"
+                )
 
-                if pipeline.valid_fund_codes_count > 0:
-                    live_env = {"RUN_LIVE_PROVIDER_TESTS": "1"} if args.use_live_provider else None
-                    snapshot_cmd = _python("build_fund_data_snapshot.py") + [
-                        "--fund-codes", *fund_codes, "--as-of-date", as_of,
-                        "--output-dir", str(fund_snapshot_dir),
-                    ]
-                    # Wire private NAV/profile/fee overrides if they exist
-                    nav_overrides = private_data / "nav_overrides.private.json"
-                    profile_overrides = private_data / "fund_profile_overrides.private.json"
-                    fee_overrides = private_data / "fee_overrides.private.json"
-                    if nav_overrides.exists():
-                        snapshot_cmd += ["--nav-overrides", str(nav_overrides)]
-                    if profile_overrides.exists():
-                        snapshot_cmd += ["--profile-overrides", str(profile_overrides)]
-                    if fee_overrides.exists():
-                        snapshot_cmd += ["--fee-overrides", str(fee_overrides)]
-                    snapshot_ok = run_step(
-                        "0e", "build_fund_data_snapshot", "Build fund data snapshot",
-                        snapshot_cmd,
-                        critical=False, expected_output=nav_snapshot,
-                        env_overrides=live_env,
-                    )
-                    # Record snapshot status in PipelineState, NOT in identity JSON
-                    pipeline.fund_data_snapshot_attempted = True
-                    if not snapshot_ok:
-                        pipeline.fund_data_snapshot_status = "provider_unavailable"
-                        pipeline.warnings.append("build_fund_data_snapshot: provider/NAV failed or unavailable")
-                    else:
-                        pipeline.fund_data_snapshot_status = "attempted"
+        # When --skip-akshare is set but NAV overrides exist, still run snapshot
+        # (overrides provide all NAV data without needing live AkShare provider)
+        nav_overrides = private_data / "nav_overrides.private.json"
+        skip_snapshot = args.skip_akshare and not nav_overrides.exists()
+        if skip_snapshot:
+            pipeline.warnings.append("build_fund_data_snapshot skipped by --skip-akshare (no NAV overrides)")
+            print("[step 0e] SKIP: --skip-akshare flag set and no NAV overrides")
+        elif fund_codes:
+            try:
+                live_env = {"RUN_LIVE_PROVIDER_TESTS": "1"} if args.use_live_provider else None
+                snapshot_cmd = _python("build_fund_data_snapshot.py") + [
+                    "--fund-codes", *fund_codes, "--as-of-date", as_of,
+                    "--output-dir", str(fund_snapshot_dir),
+                ]
+                # Wire private NAV/profile/fee overrides if they exist
+                nav_overrides = private_data / "nav_overrides.private.json"
+                profile_overrides = private_data / "fund_profile_overrides.private.json"
+                fee_overrides = private_data / "fee_overrides.private.json"
+                if nav_overrides.exists():
+                    snapshot_cmd += ["--nav-overrides", str(nav_overrides)]
+                if profile_overrides.exists():
+                    snapshot_cmd += ["--profile-overrides", str(profile_overrides)]
+                if fee_overrides.exists():
+                    snapshot_cmd += ["--fee-overrides", str(fee_overrides)]
+                snapshot_ok = run_step(
+                    "0e", "build_fund_data_snapshot", "Build fund data snapshot",
+                    snapshot_cmd,
+                    critical=False, expected_output=nav_snapshot,
+                    env_overrides=live_env,
+                )
+                # Record snapshot status in PipelineState, NOT in identity JSON
+                pipeline.fund_data_snapshot_attempted = True
+                if not snapshot_ok:
+                    pipeline.fund_data_snapshot_status = "provider_unavailable"
+                    pipeline.warnings.append("build_fund_data_snapshot: provider/NAV failed or unavailable")
                 else:
-                    if name_only_count > 0:
-                        pipeline.warnings.append(
-                            f"build_fund_data_snapshot skipped: {name_only_count} name-only references; "
-                            "fund_code mapping required for NAV"
-                        )
-                    else:
-                        pipeline.warnings.append("build_fund_data_snapshot skipped: no resolved fund codes")
+                    pipeline.fund_data_snapshot_status = "attempted"
             except (OSError, json.JSONDecodeError, TypeError) as exc:
                 pipeline.warnings.append(
                     f"build_fund_data_snapshot skipped: invalid identity output ({type(exc).__name__})"
                 )
+        else:
+            if pipeline.name_only_count > 0:
+                pipeline.warnings.append(
+                    f"build_fund_data_snapshot skipped: {pipeline.name_only_count} name-only references; "
+                    "fund_code mapping required for NAV"
+                )
+            else:
+                pipeline.warnings.append("build_fund_data_snapshot skipped: no resolved fund codes")
 
         usable_nav = _has_usable_nav(nav_snapshot)
         if investment_plan and usable_nav:
