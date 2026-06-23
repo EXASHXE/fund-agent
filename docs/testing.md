@@ -9,7 +9,8 @@
 | Fast gate | `bash scripts/test_fast.sh` | Before push, every few edits | 30–90s | Fast unit/smoke/critical paths |
 | Plugin smoke | `bash scripts/test_plugin_smoke.sh` | After wrapper/skill changes | <30s | Skillpack, contracts, architecture |
 | Privacy | `bash bin/fund-agent-privacy-check` | Before push | <5s | Privacy/artifact safety |
-| Release gate | `bash scripts/test_release_gate.sh` | Before release-freeze only | 4–5 min | Canonical lint + full pytest + plugin gate + privacy |
+| CI gate | `bash scripts/test_ci.sh` | Reproduce GitHub CI locally | 4–5 min | Lint scope + `pytest --cov=src` |
+| Release gate | `bash scripts/test_release_gate.sh` | Before release-freeze only | 5–6 min | CI gate + plugin gate + privacy + examples |
 | Release lint | `bash scripts/lint_release_scope.sh` | Standalone lint check | <5s | Canonical v0.10.5 release scope only |
 | Profile | `bash scripts/profile_tests.sh` | When optimizing | varies | Durations report |
 
@@ -48,6 +49,17 @@ bash bin/fund-agent-privacy-check
 bash scripts/test_release_gate.sh
 # Plus manual A/B/C/C2/D2 scenario review with desensitized output
 ```
+
+## CI Workflow Mapping
+
+| GitHub Workflow | Script Entry | Environment |
+|-----------------|-------------|-------------|
+| `ci.yml` | `bash scripts/test_ci.sh` | Full dev deps (`pip install -e ".[dev]"`) |
+| `plugin-ci.yml` | `bash scripts/check_plugin_gate_fast.sh` | Minimal deps (`requirements.txt` + pytest + pyyaml) |
+
+- **ci.yml** runs lint scope + `pytest --cov=src` via `test_ci.sh`. It does NOT duplicate ruff commands or run redundant architecture/contract steps (those are already covered by the full pytest).
+- **plugin-ci.yml** uses `check_plugin_gate_fast.sh` (architecture + contracts + skillpack + skills + tools), NOT the full `check_plugin_gate.sh`. The full canonical gate is reserved for release-level validation.
+- **check_plugin_gate.sh** is the full/canonical/release-level plugin gate. It is NOT suitable as the default entry for minimal plugin-ci because it runs integration, install, and full pytest which require dev extras.
 
 ## Important Notes
 

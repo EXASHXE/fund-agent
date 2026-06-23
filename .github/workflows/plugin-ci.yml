@@ -22,5 +22,5 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pyyaml
 
-      - name: Run canonical plugin gate
-        run: bash scripts/check_plugin_gate.sh
+      - name: Run fast plugin gate
+        run: bash scripts/check_plugin_gate_fast.sh
