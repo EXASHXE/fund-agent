@@ -181,6 +181,12 @@ def reconstruct_portfolio(
         fee_unknown = False
         nav_missing_dates = []
 
+        # Units estimation tracking
+        units_from_transaction = 0  # count of txns with explicit units field
+        units_from_trade_nav = 0    # count of txns where units derived from trade-date NAV
+        total_confirmed_txns = 0    # count of buy/sell confirmed txns (excl dividend/fee/conversion/refund)
+        manual_review_txn_count = 0
+
         for txn in sorted(txns, key=lambda t: t.get("trade_date") or "9999-99-99"):
             conf_type = txn.get("confirmation_type", "pending_confirmation")
             action = txn.get("action", "buy")
@@ -190,6 +196,7 @@ def reconstruct_portfolio(
 
             if conf_type == "manual_review_required":
                 has_manual_review = True
+                manual_review_txn_count += 1
                 continue
 
             # Track confirmation sources for confirmed positions
@@ -203,18 +210,30 @@ def reconstruct_portfolio(
                     if net_amount is None:
                         continue
 
-                    # Get NAV for this date
-                    txn_date = _parse_date(trade_date)
-                    txn_nav = _get_nav_on_date(nav_records, txn_date) if txn_date else None
+                    total_confirmed_txns += 1
 
-                    # Calculate units
-                    if txn_nav and net_amount:
-                        units = net_amount / txn_nav
+                    # Check for explicit units/share field in transaction
+                    explicit_units = txn.get("units") or txn.get("shares") or txn.get("confirmed_units")
+                    if explicit_units is not None:
+                        try:
+                            units = float(explicit_units)
+                            units_from_transaction += 1
+                        except (ValueError, TypeError):
+                            units = None
                     else:
-                        # Try to use latest_nav as fallback for cost tracking
-                        units = None
-                        if txn_date:
-                            nav_missing_dates.append(trade_date)
+                        # Get NAV for this date
+                        txn_date = _parse_date(trade_date)
+                        txn_nav = _get_nav_on_date(nav_records, txn_date) if txn_date else None
+
+                        # Calculate units
+                        if txn_nav and net_amount:
+                            units = net_amount / txn_nav
+                            units_from_trade_nav += 1
+                        else:
+                            # Do NOT use latest_nav to back-compute historical units
+                            units = None
+                            if txn_date:
+                                nav_missing_dates.append(trade_date)
 
                     if units is not None:
                         confirmed_units += units
@@ -241,10 +260,23 @@ def reconstruct_portfolio(
                     if net_amount is None:
                         continue
 
-                    txn_date = _parse_date(trade_date)
-                    txn_nav = _get_nav_on_date(nav_records, txn_date) if txn_date else None
+                    total_confirmed_txns += 1
 
-                    units_sold = net_amount / txn_nav if txn_nav and net_amount else None
+                    # Check for explicit units
+                    explicit_units = txn.get("units") or txn.get("shares") or txn.get("confirmed_units")
+                    if explicit_units is not None:
+                        try:
+                            units_sold = abs(float(explicit_units))
+                            units_from_transaction += 1
+                        except (ValueError, TypeError):
+                            units_sold = None
+                    else:
+                        txn_date = _parse_date(trade_date)
+                        txn_nav = _get_nav_on_date(nav_records, txn_date) if txn_date else None
+
+                        units_sold = abs(net_amount) / txn_nav if txn_nav and net_amount else None
+                        if units_sold is not None:
+                            units_from_trade_nav += 1
 
                     if units_sold is not None and confirmed_units > 0:
                         # Pro-rata cost reduction
@@ -263,6 +295,7 @@ def reconstruct_portfolio(
                         fees_paid += fee_amount
 
                 elif action == "dividend":
+                    # Dividends do not change units, only record cashflow
                     if amount is not None:
                         dividends += amount
 
@@ -271,8 +304,9 @@ def reconstruct_portfolio(
                         fees_paid += amount
 
                 elif action == "conversion":
-                    # Conversion is ambiguous -> manual review
+                    # Conversion is ambiguous -> manual review, exclude from units
                     has_manual_review = True
+                    manual_review_txn_count += 1
                     reconstruction_notes.append({
                         "fund_code": fund_code,
                         "note": "conversion transaction requires manual review",
@@ -280,8 +314,9 @@ def reconstruct_portfolio(
                     })
 
                 elif action == "refund":
-                    # Refund is ambiguous -> manual review
+                    # Refund is ambiguous -> manual review, exclude from units
                     has_manual_review = True
+                    manual_review_txn_count += 1
                     reconstruction_notes.append({
                         "fund_code": fund_code,
                         "note": "refund transaction requires manual review",
@@ -313,30 +348,76 @@ def reconstruct_portfolio(
                         projected_cost += net_amount
                         projected_buy_count += 1
 
-        # Build confirmed position
-        confirmed_current_value = _safe_round(confirmed_units * latest_nav) if latest_nav and confirmed_units > 0 else None
+        # Compute units estimation metadata
+        nav_coverage_count = units_from_trade_nav
+        nav_missing_count = total_confirmed_txns - units_from_trade_nav - units_from_transaction
+        trade_nav_coverage_ratio = (
+            round(nav_coverage_count / total_confirmed_txns, 4)
+            if total_confirmed_txns > 0 else 0.0
+        )
+
+        # Determine units_source
+        if units_from_transaction > 0 and nav_missing_count == 0:
+            units_source = "transaction_units"
+        elif units_from_trade_nav > 0 and nav_missing_count == 0:
+            units_source = "trade_date_nav"
+        elif units_from_trade_nav > 0 and nav_missing_count > 0:
+            units_source = "partial_trade_date_nav"
+        else:
+            units_source = "unavailable"
+
+        # Determine valuation_type per the state machine:
+        #   none: no transactions, no cost, no NAV, no valuation
+        #   cashflow_only: has cost_basis but no units or current_value
+        #   estimated: has units + latest_nav → current_value = units * latest_nav
+        #   valuation: only when broker/confirmed source exists (not in v0.10.5)
+        has_units = confirmed_units > 0
+        has_cost = confirmed_cost > 0
+
+        if not has_cost and not has_units:
+            valuation_type = "none"
+            valuation_source = "none"
+        elif has_units and latest_nav is not None:
+            valuation_type = "estimated"
+            valuation_source = "estimated_from_transactions_and_nav"
+        elif has_cost:
+            valuation_type = "cashflow_only"
+            valuation_source = "cashflow_only"
+        else:
+            # has_units but no latest_nav — can't compute current_value
+            valuation_type = "cashflow_only"
+            valuation_source = "cashflow_only"
+
+        # Compute current_value ONLY for estimated positions
+        confirmed_current_value = _safe_round(confirmed_units * latest_nav) if valuation_type == "estimated" else None
+
+        # Data quality flags for partial coverage
+        partial_units_estimated = units_source == "partial_trade_date_nav"
+        data_quality_flags = []
+        if partial_units_estimated:
+            data_quality_flags.append("partial_trade_nav_coverage")
+        if has_manual_review:
+            data_quality_flags.append("has_manual_review_transactions")
+
         confirmed_avg_cost = _safe_round(confirmed_cost / confirmed_units) if confirmed_units > 0 else None
         confirmed_cost_basis = _safe_round(confirmed_cost)
-
-        # Determine valuation_type
-        if confirmed_current_value is not None and latest_nav is not None:
-            valuation_type = "valuation"
-        elif confirmed_cost_basis is not None:
-            valuation_type = "cashflow_only"
-        elif confirmed_units > 0:
-            valuation_type = "estimated"
-        else:
-            valuation_type = "none"
 
         confirmed_pos = {
             "fund_code": fund_code,
             "units": _safe_round(confirmed_units, 4) if confirmed_units > 0 else None,
+            "units_estimated": _safe_round(confirmed_units, 4) if units_source in ("trade_date_nav", "partial_trade_date_nav") else None,
+            "units_source": units_source,
             "current_value": confirmed_current_value,
             "cost_basis": confirmed_cost_basis,
             "average_cost_per_unit": confirmed_avg_cost,
             "latest_nav": latest_nav,
             "latest_nav_date": latest_nav_date,
             "valuation_type": valuation_type,
+            "valuation_source": valuation_source,
+            "trade_nav_coverage_ratio": trade_nav_coverage_ratio,
+            "trade_nav_missing_count": nav_missing_count,
+            "manual_review_transaction_count": manual_review_txn_count,
+            "data_quality": data_quality_flags,
             "buy_count": confirmed_buy_count,
             "sell_count": confirmed_sell_count,
             "dividends_received": _safe_round(dividends) if dividends > 0 else None,
@@ -352,7 +433,10 @@ def reconstruct_portfolio(
         confirmed_positions.append(confirmed_pos)
 
         # Build projected position (confirmed + projected additions)
-        projected_current_value = _safe_round(projected_units * latest_nav) if latest_nav and projected_units > 0 else None
+        if valuation_type == "estimated" and latest_nav is not None:
+            projected_current_value = _safe_round(projected_units * latest_nav)
+        else:
+            projected_current_value = None
         projected_cost_basis = _safe_round(projected_cost)
 
         projected_pos = {
@@ -363,6 +447,7 @@ def reconstruct_portfolio(
             "latest_nav": latest_nav,
             "latest_nav_date": latest_nav_date,
             "valuation_type": valuation_type,
+            "valuation_source": valuation_source,
             "pending_amount": _safe_round(pending_amount) if pending_amount > 0 else None,
             "projected_buy_count": projected_buy_count,
             "confidence": "projected",
@@ -377,11 +462,19 @@ def reconstruct_portfolio(
             "fund_code": pos["fund_code"],
             "current_value": pos["current_value"],
             "units": pos["units"],
+            "units_estimated": pos.get("units_estimated"),
+            "units_source": pos.get("units_source"),
             "cost_basis": pos["cost_basis"],
             "cost_basis_confidence": pos["confidence"] if pos["confidence"] in ("evidence_confirmed", "rule_confirmed_estimated") else "unknown",
+            "valuation_type": pos["valuation_type"],
+            "valuation_source": pos.get("valuation_source"),
             "holding_source": "transaction_derived",
             "source_notes": f"Reconstructed from {len(pos.get('confirmation_sources', []))} confirmation source(s)",
         }
+        if pos.get("trade_nav_coverage_ratio"):
+            holding["trade_nav_coverage_ratio"] = pos["trade_nav_coverage_ratio"]
+        if pos.get("data_quality"):
+            holding["data_quality"] = pos["data_quality"]
         if pos.get("pending_amount"):
             holding["pending_transaction_count"] = 1
         portfolio_input_holdings.append(holding)
@@ -402,6 +495,8 @@ def reconstruct_portfolio(
             estimated_fields.append(f"{pos['fund_code']}.fee")
         if pos.get("has_manual_review"):
             estimated_fields.append(f"{pos['fund_code']}.manual_review_items")
+        if pos.get("units_source") == "partial_trade_date_nav":
+            estimated_fields.append(f"{pos['fund_code']}.units_partial_nav")
 
     portfolio_input = {
         "schema_version": "fund_portfolio_input.v1",
@@ -416,6 +511,13 @@ def reconstruct_portfolio(
             "cost_basis_partial": any(h["cost_basis"] is None for h in portfolio_input_holdings if h["cost_basis_confidence"] != "evidence_confirmed"),
             "transaction_history_incomplete": len(pending_transactions) > 0,
             "data_source_notes": ["Portfolio reconstructed from transaction ledger"],
+            "valuation_summary": {
+                "estimated_count": sum(1 for p in confirmed_positions if p["valuation_type"] == "estimated"),
+                "cashflow_only_count": sum(1 for p in confirmed_positions if p["valuation_type"] == "cashflow_only"),
+                "none_count": sum(1 for p in confirmed_positions if p["valuation_type"] == "none"),
+                "units_estimated_count": sum(1 for p in confirmed_positions if p.get("units_estimated") is not None),
+                "partial_nav_coverage_count": sum(1 for p in confirmed_positions if p.get("units_source") == "partial_trade_date_nav"),
+            },
         },
         "source_notes": "Auto-reconstructed from Alipay evidence and investment plan schedule rules",
         "transaction_evidence_refs": [t.get("transaction_id") for t in ledger_data.get("transactions", [])[:10]],
@@ -433,6 +535,11 @@ def reconstruct_portfolio(
             "rule_confirmed_count": sum(1 for p in confirmed_positions if "schedule_rule" in p.get("confirmation_sources", []) and "alipay" not in p.get("confirmation_sources", [])),
             "has_pending": any(p.get("pending_amount") for p in confirmed_positions),
             "has_manual_review": any(p.get("has_manual_review") for p in confirmed_positions),
+            "valuation_type_counts": {
+                "estimated": sum(1 for p in confirmed_positions if p["valuation_type"] == "estimated"),
+                "cashflow_only": sum(1 for p in confirmed_positions if p["valuation_type"] == "cashflow_only"),
+                "none": sum(1 for p in confirmed_positions if p["valuation_type"] == "none"),
+            },
         },
     }
 

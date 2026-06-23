@@ -480,7 +480,7 @@ def run_pipeline(args: argparse.Namespace) -> int:
 
     if portfolio_input and portfolio_input.exists():
         # Check if this was reconstructed from ledger or is an existing private input
-        if str(portfolio_input).startswith(str(portfolio_dir)):
+        if pipeline.reconstruction_status == "reconstructed_from_ledger" and str(portfolio_input).startswith(str(portfolio_dir)):
             portfolio_input_source = "reconstructed_from_ledger"
         else:
             portfolio_input_source = "existing_private_portfolio_input"
@@ -530,6 +530,16 @@ def run_pipeline(args: argparse.Namespace) -> int:
         except (OSError, json.JSONDecodeError):
             pass
 
+    # Collect valuation_type_counts from portfolio_input if available
+    valuation_type_counts: dict[str, int] = {}
+    if portfolio_input and portfolio_input.exists():
+        try:
+            pi_data = json.loads(portfolio_input.read_text(encoding="utf-8"))
+            dq = pi_data.get("data_quality", {})
+            valuation_type_counts = dq.get("valuation_summary", {})
+        except (OSError, json.JSONDecodeError):
+            pass
+
     summary: dict[str, Any] = {
         "run_id": run_id,
         "as_of": as_of,
@@ -556,6 +566,7 @@ def run_pipeline(args: argparse.Namespace) -> int:
         "transaction_reconstruction_status": transaction_reconstruction_status,
         "alipay_import": alipay_import_stats,
         "identity_resolution": identity_resolution_summary,
+        "valuation_summary": valuation_type_counts,
         "pipeline_version": _read_version(),
     }
     try:

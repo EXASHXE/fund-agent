@@ -351,6 +351,15 @@ def build_factor_snapshot(
     # ------------------------------------------------------------------
     # Data completeness factors (always computed, even without current_value)
     # ------------------------------------------------------------------
+    valuation_type_counts: dict[str, int] = {"estimated": 0, "cashflow_only": 0, "none": 0}
+    for h in holdings:
+        if isinstance(h, dict):
+            vt = str(h.get("valuation_type", "none"))
+            if vt in valuation_type_counts:
+                valuation_type_counts[vt] += 1
+            else:
+                valuation_type_counts[vt] = valuation_type_counts.get(vt, 0) + 1
+
     data_completeness_factors: dict[str, Any] = {
         "holdings_count": len(holdings),
         "holdings_with_current_value": len(holdings_with_value),
@@ -361,6 +370,7 @@ def build_factor_snapshot(
         "units_missing_count": units_missing_count,
         "nav_complete_count": len(holdings) - nav_missing_count,
         "nav_missing_count": nav_missing_count,
+        "valuation_type_counts": valuation_type_counts,
     }
 
     # Profile coverage from kg_context

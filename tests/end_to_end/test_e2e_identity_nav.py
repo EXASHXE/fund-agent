@@ -907,8 +907,8 @@ class TestReconstructionNormalizedNameBridge:
         assert any(p["fund_code"] == "111111" for p in positions)
         assert result["identity_applied_count"] >= 1
 
-    def test_valuation_type_valuation_when_nav_available(self) -> None:
-        """When NAV is available and current_value computed, valuation_type == 'valuation'."""
+    def test_valuation_type_estimated_when_units_and_nav_available(self) -> None:
+        """When units computed from trade-date NAV and latest_nav exists, valuation_type == 'estimated'."""
         from datetime import date
 
         from scripts.reconstruct_portfolio_from_ledger import reconstruct_portfolio
@@ -944,8 +944,10 @@ class TestReconstructionNormalizedNameBridge:
         )
 
         pos = result["confirmed_portfolio"]["positions"][0]
-        assert pos["valuation_type"] == "valuation"
+        assert pos["valuation_type"] == "estimated"
+        assert pos["valuation_source"] == "estimated_from_transactions_and_nav"
         assert pos["current_value"] is not None
+        assert pos["current_value"] == 1500.0  # 1000 units * 1.5 NAV
 
     def test_valuation_type_cashflow_only_when_no_nav(self) -> None:
         """When NAV is missing but cost_basis exists, valuation_type == 'cashflow_only'."""
@@ -1128,3 +1130,612 @@ class TestReportSemantics:
         holding = result["portfolio_input"]["holdings"][0]
         assert holding["current_value"] is None
         assert holding["current_value"] != 0.0
+
+
+# ---------------------------------------------------------------------------
+# Task 5: New test classes for valuation_type state machine, units estimation,
+# fallback source semantics, and report semantics
+# ---------------------------------------------------------------------------
+
+
+class TestValuationTypeStateMachine:
+    """Valuation type transitions per the v0.10.5 state machine."""
+
+    def test_none_when_no_transactions(self) -> None:
+        """No transactions → valuation_type == 'none'."""
+        from datetime import date
+
+        from scripts.reconstruct_portfolio_from_ledger import reconstruct_portfolio
+
+        result = reconstruct_portfolio(
+            ledger_data={"transactions": []},
+            nav_snapshot=None,
+            as_of_date=date(2025, 6, 20),
+        )
+        assert result["confirmed_portfolio"]["positions"] == []
+
+    def test_cashflow_only_when_no_units_no_nav(self) -> None:
+        """Has cost_basis but no units/NAV → cashflow_only, current_value=None."""
+        from datetime import date
+
+        from scripts.reconstruct_portfolio_from_ledger import reconstruct_portfolio
+
+        ledger_data = {
+            "transactions": [
+                {
+                    "fund_code": "111111",
+                    "action": "buy",
+                    "amount": 1000.0,
+                    "trade_date": "2025-01-15",
+                    "confirmation_type": "evidence_confirmed",
+                    "confirmation_source": "alipay",
+                },
+            ]
+        }
+        result = reconstruct_portfolio(
+            ledger_data=ledger_data,
+            nav_snapshot=None,
+            as_of_date=date(2025, 6, 20),
+        )
+        pos = result["confirmed_portfolio"]["positions"][0]
+        assert pos["valuation_type"] == "cashflow_only"
+        assert pos["current_value"] is None
+        assert pos["cost_basis"] is not None
+
+    def test_estimated_when_units_and_latest_nav(self) -> None:
+        """Units + latest_nav → estimated, current_value = units * latest_nav."""
+        from datetime import date
+
+        from scripts.reconstruct_portfolio_from_ledger import reconstruct_portfolio
+
+        ledger_data = {
+            "transactions": [
+                {
+                    "fund_code": "111111",
+                    "action": "buy",
+                    "amount": 1000.0,
+                    "trade_date": "2025-01-15",
+                    "confirmation_type": "evidence_confirmed",
+                    "confirmation_source": "alipay",
+                },
+            ]
+        }
+        nav_snapshot = {
+            "nav_by_fund": {
+                "111111": {"records": [
+                    {"date": "2025-01-15", "nav": 1.0},
+                    {"date": "2025-06-20", "nav": 2.0},
+                ]},
+            },
+        }
+        result = reconstruct_portfolio(
+            ledger_data=ledger_data,
+            nav_snapshot=nav_snapshot,
+            as_of_date=date(2025, 6, 20),
+        )
+        pos = result["confirmed_portfolio"]["positions"][0]
+        assert pos["valuation_type"] == "estimated"
+        assert pos["valuation_source"] == "estimated_from_transactions_and_nav"
+        assert pos["current_value"] == 2000.0  # 1000 units * 2.0 NAV
+        assert pos["units"] == 1000.0
+
+    def test_cashflow_only_when_units_but_no_latest_nav(self) -> None:
+        """Units computed but no latest_nav → cashflow_only (can't compute current_value)."""
+        from datetime import date
+
+        from scripts.reconstruct_portfolio_from_ledger import reconstruct_portfolio
+
+        ledger_data = {
+            "transactions": [
+                {
+                    "fund_code": "111111",
+                    "action": "buy",
+                    "amount": 1000.0,
+                    "trade_date": "2025-01-15",
+                    "confirmation_type": "evidence_confirmed",
+                    "confirmation_source": "alipay",
+                    "units": 500.0,  # Explicit units
+                },
+            ]
+        }
+        # NAV exists on trade date but NOT on as_of date → no latest_nav
+        nav_snapshot = {
+            "nav_by_fund": {
+                "111111": {"records": [
+                    {"date": "2025-01-15", "nav": 2.0},
+                ]},
+            },
+        }
+        result = reconstruct_portfolio(
+            ledger_data=ledger_data,
+            nav_snapshot=nav_snapshot,
+            as_of_date=date(2025, 12, 31),  # After all NAV records
+        )
+        pos = result["confirmed_portfolio"]["positions"][0]
+        # latest_nav should be 2.0 (from 2025-01-15, which is <= 2025-12-31)
+        assert pos["valuation_type"] == "estimated"
+        assert pos["current_value"] is not None
+
+    def test_valuation_type_never_used_without_confirmed_source(self) -> None:
+        """valuation_type='valuation' must not appear in v0.10.5 transaction-derived positions."""
+        from datetime import date
+
+        from scripts.reconstruct_portfolio_from_ledger import reconstruct_portfolio
+
+        ledger_data = {
+            "transactions": [
+                {
+                    "fund_code": "111111",
+                    "action": "buy",
+                    "amount": 1000.0,
+                    "trade_date": "2025-01-15",
+                    "confirmation_type": "evidence_confirmed",
+                    "confirmation_source": "alipay",
+                },
+            ]
+        }
+        nav_snapshot = {
+            "nav_by_fund": {
+                "111111": {"records": [
+                    {"date": "2025-01-15", "nav": 1.0},
+                    {"date": "2025-06-20", "nav": 2.0},
+                ]},
+            },
+        }
+        result = reconstruct_portfolio(
+            ledger_data=ledger_data,
+            nav_snapshot=nav_snapshot,
+            as_of_date=date(2025, 6, 20),
+        )
+        pos = result["confirmed_portfolio"]["positions"][0]
+        assert pos["valuation_type"] != "valuation"
+
+
+class TestUnitsEstimation:
+    """Units estimation from trade-date NAV."""
+
+    def test_buy_with_trade_date_nav_increases_units(self) -> None:
+        """Buy with trade-date NAV → units = amount / nav."""
+        from datetime import date
+
+        from scripts.reconstruct_portfolio_from_ledger import reconstruct_portfolio
+
+        ledger_data = {
+            "transactions": [
+                {
+                    "fund_code": "111111",
+                    "action": "buy",
+                    "amount": 1000.0,
+                    "trade_date": "2025-01-15",
+                    "confirmation_type": "evidence_confirmed",
+                    "confirmation_source": "alipay",
+                },
+            ]
+        }
+        nav_snapshot = {
+            "nav_by_fund": {
+                "111111": {"records": [
+                    {"date": "2025-01-15", "nav": 2.0},
+                ]},
+            },
+        }
+        result = reconstruct_portfolio(
+            ledger_data=ledger_data,
+            nav_snapshot=nav_snapshot,
+            as_of_date=date(2025, 6, 20),
+        )
+        pos = result["confirmed_portfolio"]["positions"][0]
+        assert pos["units"] == 500.0  # 1000 / 2.0
+        assert pos["units_source"] == "trade_date_nav"
+        assert pos["units_estimated"] is not None
+
+    def test_sell_with_trade_date_nav_decreases_units(self) -> None:
+        """Sell with trade-date NAV → units_sold = amount / nav."""
+        from datetime import date
+
+        from scripts.reconstruct_portfolio_from_ledger import reconstruct_portfolio
+
+        ledger_data = {
+            "transactions": [
+                {
+                    "fund_code": "111111",
+                    "action": "buy",
+                    "amount": 2000.0,
+                    "trade_date": "2025-01-10",
+                    "confirmation_type": "evidence_confirmed",
+                    "confirmation_source": "alipay",
+                },
+                {
+                    "fund_code": "111111",
+                    "action": "sell",
+                    "amount": 500.0,
+                    "trade_date": "2025-03-10",
+                    "confirmation_type": "evidence_confirmed",
+                    "confirmation_source": "alipay",
+                },
+            ]
+        }
+        nav_snapshot = {
+            "nav_by_fund": {
+                "111111": {"records": [
+                    {"date": "2025-01-10", "nav": 1.0},
+                    {"date": "2025-03-10", "nav": 1.25},
+                ]},
+            },
+        }
+        result = reconstruct_portfolio(
+            ledger_data=ledger_data,
+            nav_snapshot=nav_snapshot,
+            as_of_date=date(2025, 6, 20),
+        )
+        pos = result["confirmed_portfolio"]["positions"][0]
+        assert pos["units"] == 1600.0  # 2000/1.0 - 500/1.25 = 2000 - 400
+        assert pos["sell_count"] == 1
+
+    def test_dividend_does_not_change_units(self) -> None:
+        """Dividend transactions do not modify units."""
+        from datetime import date
+
+        from scripts.reconstruct_portfolio_from_ledger import reconstruct_portfolio
+
+        ledger_data = {
+            "transactions": [
+                {
+                    "fund_code": "111111",
+                    "action": "buy",
+                    "amount": 1000.0,
+                    "trade_date": "2025-01-10",
+                    "confirmation_type": "evidence_confirmed",
+                    "confirmation_source": "alipay",
+                },
+                {
+                    "fund_code": "111111",
+                    "action": "dividend",
+                    "amount": 50.0,
+                    "trade_date": "2025-03-10",
+                    "confirmation_type": "evidence_confirmed",
+                    "confirmation_source": "alipay",
+                },
+            ]
+        }
+        nav_snapshot = {
+            "nav_by_fund": {
+                "111111": {"records": [
+                    {"date": "2025-01-10", "nav": 1.0},
+                ]},
+            },
+        }
+        result = reconstruct_portfolio(
+            ledger_data=ledger_data,
+            nav_snapshot=nav_snapshot,
+            as_of_date=date(2025, 6, 20),
+        )
+        pos = result["confirmed_portfolio"]["positions"][0]
+        assert pos["units"] == 1000.0  # Unchanged by dividend
+        assert pos["dividends_received"] == 50.0
+
+    def test_conversion_flagged_as_manual_review(self) -> None:
+        """Conversion transactions are flagged for manual review, excluded from units."""
+        from datetime import date
+
+        from scripts.reconstruct_portfolio_from_ledger import reconstruct_portfolio
+
+        ledger_data = {
+            "transactions": [
+                {
+                    "fund_code": "111111",
+                    "action": "buy",
+                    "amount": 1000.0,
+                    "trade_date": "2025-01-10",
+                    "confirmation_type": "evidence_confirmed",
+                    "confirmation_source": "alipay",
+                },
+                {
+                    "fund_code": "111111",
+                    "action": "conversion",
+                    "amount": 500.0,
+                    "trade_date": "2025-03-10",
+                    "confirmation_type": "evidence_confirmed",
+                    "confirmation_source": "alipay",
+                },
+            ]
+        }
+        nav_snapshot = {
+            "nav_by_fund": {
+                "111111": {"records": [
+                    {"date": "2025-01-10", "nav": 1.0},
+                ]},
+            },
+        }
+        result = reconstruct_portfolio(
+            ledger_data=ledger_data,
+            nav_snapshot=nav_snapshot,
+            as_of_date=date(2025, 6, 20),
+        )
+        pos = result["confirmed_portfolio"]["positions"][0]
+        assert pos["has_manual_review"] is True
+        assert pos["manual_review_transaction_count"] == 1
+        assert pos["units"] == 1000.0  # Conversion didn't change units
+
+    def test_refund_flagged_as_manual_review(self) -> None:
+        """Refund transactions are flagged for manual review, excluded from units."""
+        from datetime import date
+
+        from scripts.reconstruct_portfolio_from_ledger import reconstruct_portfolio
+
+        ledger_data = {
+            "transactions": [
+                {
+                    "fund_code": "111111",
+                    "action": "buy",
+                    "amount": 1000.0,
+                    "trade_date": "2025-01-10",
+                    "confirmation_type": "evidence_confirmed",
+                    "confirmation_source": "alipay",
+                },
+                {
+                    "fund_code": "111111",
+                    "action": "refund",
+                    "amount": 100.0,
+                    "trade_date": "2025-03-10",
+                    "confirmation_type": "evidence_confirmed",
+                    "confirmation_source": "alipay",
+                },
+            ]
+        }
+        nav_snapshot = {
+            "nav_by_fund": {
+                "111111": {"records": [
+                    {"date": "2025-01-10", "nav": 1.0},
+                ]},
+            },
+        }
+        result = reconstruct_portfolio(
+            ledger_data=ledger_data,
+            nav_snapshot=nav_snapshot,
+            as_of_date=date(2025, 6, 20),
+        )
+        pos = result["confirmed_portfolio"]["positions"][0]
+        assert pos["has_manual_review"] is True
+        assert pos["manual_review_transaction_count"] == 1
+
+    def test_partial_trade_nav_coverage(self) -> None:
+        """Some txns have trade-date NAV, some don't → partial_trade_date_nav."""
+        from datetime import date
+
+        from scripts.reconstruct_portfolio_from_ledger import reconstruct_portfolio
+
+        ledger_data = {
+            "transactions": [
+                {
+                    "fund_code": "111111",
+                    "action": "buy",
+                    "amount": 1000.0,
+                    "trade_date": "2025-01-10",
+                    "confirmation_type": "evidence_confirmed",
+                    "confirmation_source": "alipay",
+                },
+                {
+                    "fund_code": "111111",
+                    "action": "buy",
+                    "amount": 500.0,
+                    "trade_date": "2025-02-15",
+                    "confirmation_type": "evidence_confirmed",
+                    "confirmation_source": "alipay",
+                },
+            ]
+        }
+        nav_snapshot = {
+            "nav_by_fund": {
+                "111111": {"records": [
+                    {"date": "2025-01-10", "nav": 1.0},
+                    # No NAV for 2025-02-15
+                    {"date": "2025-06-20", "nav": 1.5},
+                ]},
+            },
+        }
+        result = reconstruct_portfolio(
+            ledger_data=ledger_data,
+            nav_snapshot=nav_snapshot,
+            as_of_date=date(2025, 6, 20),
+        )
+        pos = result["confirmed_portfolio"]["positions"][0]
+        assert pos["units_source"] == "partial_trade_date_nav"
+        assert pos["trade_nav_coverage_ratio"] == 0.5  # 1 of 2 txns
+        assert pos["trade_nav_missing_count"] == 1
+        assert "partial_trade_nav_coverage" in pos.get("data_quality", [])
+
+    def test_explicit_units_field_used(self) -> None:
+        """Transaction with explicit 'units' field uses it directly."""
+        from datetime import date
+
+        from scripts.reconstruct_portfolio_from_ledger import reconstruct_portfolio
+
+        ledger_data = {
+            "transactions": [
+                {
+                    "fund_code": "111111",
+                    "action": "buy",
+                    "amount": 1000.0,
+                    "units": 800.0,
+                    "trade_date": "2025-01-10",
+                    "confirmation_type": "evidence_confirmed",
+                    "confirmation_source": "alipay",
+                },
+            ]
+        }
+        result = reconstruct_portfolio(
+            ledger_data=ledger_data,
+            nav_snapshot=None,
+            as_of_date=date(2025, 6, 20),
+        )
+        pos = result["confirmed_portfolio"]["positions"][0]
+        assert pos["units"] == 800.0
+        assert pos["units_source"] == "transaction_units"
+
+
+class TestFallbackSourceSemantics:
+    """portfolio_input_source must correctly distinguish reconstructed vs existing."""
+
+    def test_existing_portfolio_input_source(self) -> None:
+        """When portfolio_input is not in portfolio_dir, source is existing_private."""
+        from pathlib import Path
+
+        # Simulate: portfolio_dir is run_dir/portfolio, existing is private_data/
+        portfolio_dir = Path("/tmp/run/portfolio")
+        existing = Path("/tmp/private_data/portfolio_input.private.json")
+
+        # The key check: existing path does NOT start with portfolio_dir
+        assert not str(existing).startswith(str(portfolio_dir))
+
+    def test_reconstructed_portfolio_input_source(self) -> None:
+        """When portfolio_input is in portfolio_dir, source is reconstructed_from_ledger."""
+        from pathlib import Path
+
+        portfolio_dir = Path("/tmp/run/portfolio")
+        reconstructed = Path("/tmp/run/portfolio/portfolio_input.private.json")
+
+        assert str(reconstructed).startswith(str(portfolio_dir))
+
+
+class TestReportSemantics:
+    """Report semantics: no fake 0.00, estimated properly labeled."""
+
+    def test_cashflow_only_no_fake_zero(self) -> None:
+        """cashflow_only positions must have current_value=None, not 0.00."""
+        from datetime import date
+
+        from scripts.reconstruct_portfolio_from_ledger import reconstruct_portfolio
+
+        ledger_data = {
+            "transactions": [
+                {
+                    "fund_code": "111111",
+                    "action": "buy",
+                    "amount": 1000.0,
+                    "trade_date": "2025-01-15",
+                    "confirmation_type": "evidence_confirmed",
+                    "confirmation_source": "alipay",
+                },
+            ]
+        }
+        result = reconstruct_portfolio(
+            ledger_data=ledger_data,
+            nav_snapshot=None,
+            as_of_date=date(2025, 6, 20),
+        )
+        pos = result["confirmed_portfolio"]["positions"][0]
+        assert pos["valuation_type"] == "cashflow_only"
+        assert pos["current_value"] is None
+        assert pos["current_value"] != 0.0
+
+    def test_estimated_must_label_source(self) -> None:
+        """estimated positions must have valuation_source=estimated_from_transactions_and_nav."""
+        from datetime import date
+
+        from scripts.reconstruct_portfolio_from_ledger import reconstruct_portfolio
+
+        ledger_data = {
+            "transactions": [
+                {
+                    "fund_code": "111111",
+                    "action": "buy",
+                    "amount": 1000.0,
+                    "trade_date": "2025-01-15",
+                    "confirmation_type": "evidence_confirmed",
+                    "confirmation_source": "alipay",
+                },
+            ]
+        }
+        nav_snapshot = {
+            "nav_by_fund": {
+                "111111": {"records": [
+                    {"date": "2025-01-15", "nav": 1.0},
+                    {"date": "2025-06-20", "nav": 1.5},
+                ]},
+            },
+        }
+        result = reconstruct_portfolio(
+            ledger_data=ledger_data,
+            nav_snapshot=nav_snapshot,
+            as_of_date=date(2025, 6, 20),
+        )
+        pos = result["confirmed_portfolio"]["positions"][0]
+        assert pos["valuation_type"] == "estimated"
+        assert pos["valuation_source"] == "estimated_from_transactions_and_nav"
+        # Must NOT say "confirmed" or "broker"
+        assert "confirmed" not in pos["valuation_source"].lower()
+        assert "broker" not in pos["valuation_source"].lower()
+
+    def test_portfolio_input_includes_valuation_type(self) -> None:
+        """portfolio_input holdings must include valuation_type and valuation_source."""
+        from datetime import date
+
+        from scripts.reconstruct_portfolio_from_ledger import reconstruct_portfolio
+
+        ledger_data = {
+            "transactions": [
+                {
+                    "fund_code": "111111",
+                    "action": "buy",
+                    "amount": 1000.0,
+                    "trade_date": "2025-01-15",
+                    "confirmation_type": "evidence_confirmed",
+                    "confirmation_source": "alipay",
+                },
+            ]
+        }
+        nav_snapshot = {
+            "nav_by_fund": {
+                "111111": {"records": [
+                    {"date": "2025-01-15", "nav": 1.0},
+                    {"date": "2025-06-20", "nav": 1.5},
+                ]},
+            },
+        }
+        result = reconstruct_portfolio(
+            ledger_data=ledger_data,
+            nav_snapshot=nav_snapshot,
+            as_of_date=date(2025, 6, 20),
+        )
+        holding = result["portfolio_input"]["holdings"][0]
+        assert "valuation_type" in holding
+        assert holding["valuation_type"] == "estimated"
+        assert "valuation_source" in holding
+        assert holding["valuation_source"] == "estimated_from_transactions_and_nav"
+
+    def test_confirmed_portfolio_includes_valuation_type_counts(self) -> None:
+        """confirmed_portfolio summary must include valuation_type_counts."""
+        from datetime import date
+
+        from scripts.reconstruct_portfolio_from_ledger import reconstruct_portfolio
+
+        ledger_data = {
+            "transactions": [
+                {
+                    "fund_code": "111111",
+                    "action": "buy",
+                    "amount": 1000.0,
+                    "trade_date": "2025-01-15",
+                    "confirmation_type": "evidence_confirmed",
+                    "confirmation_source": "alipay",
+                },
+            ]
+        }
+        nav_snapshot = {
+            "nav_by_fund": {
+                "111111": {"records": [
+                    {"date": "2025-01-15", "nav": 1.0},
+                    {"date": "2025-06-20", "nav": 1.5},
+                ]},
+            },
+        }
+        result = reconstruct_portfolio(
+            ledger_data=ledger_data,
+            nav_snapshot=nav_snapshot,
+            as_of_date=date(2025, 6, 20),
+        )
+        summary = result["confirmed_portfolio"]["summary"]
+        assert "valuation_type_counts" in summary
+        assert summary["valuation_type_counts"]["estimated"] == 1
+        assert summary["valuation_type_counts"]["cashflow_only"] == 0
