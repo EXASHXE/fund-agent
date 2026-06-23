@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from .report_helpers import dedupe_preserve_order, theme_text
+
 ZH_CN_SECTION_TITLES: dict[str, str] = {
     "direct_answer": "直接回答",
     "evidence_status": "证据状态",
@@ -231,7 +233,7 @@ def build_chinese_summary(
 
     return {
         "language": "zh-CN",
-        "bullets": _dedupe_preserve_order(bullets),
+        "bullets": dedupe_preserve_order(bullets),
     }
 
 
@@ -240,7 +242,7 @@ def _build_intent_summary_bullets(
     fa_artifacts: dict[str, Any],
 ) -> list[str]:
     bullets: list[str] = []
-    theme_text = _theme_text(fa_artifacts)
+    theme_blob = theme_text(fa_artifacts)
 
     if "PROFIT_PROTECTION" in intent_set:
         bullets.append("盈利保护：优先考虑部分减仓、回收本金或保护剩余利润，不建议把分析建议直接当成下单。")
@@ -254,13 +256,13 @@ def _build_intent_summary_bullets(
         bullets.append("资金部署：先保留安全垫，再区分可动用资金、短线战术预算和长期配置预算，不要把现金全部打满。")
     if "PORTFOLIO_REBALANCE" in intent_set:
         bullets.append("预算纪律：短线资金不超过10%，单一主题/消费电子不超过5%，现金和债券安全垫优先。")
-    if "RISK_REDUCTION" in intent_set and any(term in theme_text for term in ("oil", "gas", "energy", "油气")):
+    if "RISK_REDUCTION" in intent_set and any(term in theme_blob for term in ("oil", "gas", "energy", "油气")):
         bullets.append("油气亏损仓位：不建议只因亏损直接清仓，可考虑降低风险暴露并确认主题趋势。")
-    if any(term in theme_text for term in ("battery", "新能源", "电池")):
+    if any(term in theme_blob for term in ("battery", "新能源", "电池")):
         bullets.append("电池/新能源仓位：收益回吐时先保护剩余利润，不一定一次性清仓。")
-    if any(term in theme_text for term in ("short_bond", "money_market", "短债", "货币")):
+    if any(term in theme_blob for term in ("short_bond", "money_market", "短债", "货币")):
         bullets.append("短债/现金替代：不要只看一天收益，应比较7日/30日表现并先看赎回成本。")
-    if any(term in theme_text for term in ("dividend", "low_vol", "红利", "低波")):
+    if any(term in theme_blob for term in ("dividend", "low_vol", "红利", "低波")):
         bullets.append("红利低波：不要因为低波就忽视短期追高，分批比一次性更稳。")
 
     return bullets
@@ -293,22 +295,3 @@ def _get_fund_names(fund_codes: list[str], fa_artifacts: dict[str, Any]) -> list
             name = profile.get("name") or profile.get("fund_name", str(code))
             names.append(str(name))
     return names or [str(c) for c in fund_codes]
-
-
-def _theme_text(fa_artifacts: dict[str, Any]) -> str:
-    parts: list[str] = []
-    for key in ("fund_profiles", "portfolio_summary", "position_summary", "exposure_summary", "fund_analysis_report"):
-        value = fa_artifacts.get(key)
-        if isinstance(value, dict):
-            parts.append(str(value))
-    return " ".join(parts).lower()
-
-
-def _dedupe_preserve_order(values: list[str]) -> list[str]:
-    result: list[str] = []
-    seen: set[str] = set()
-    for value in values:
-        if value not in seen:
-            result.append(value)
-            seen.add(value)
-    return result

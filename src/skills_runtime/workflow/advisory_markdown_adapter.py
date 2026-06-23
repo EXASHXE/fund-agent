@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from src.skills_runtime.common.strings import unique_strings
+
 
 def adapt_personal_fund_report_to_advisory_markdown_report(
     final_report: dict[str, Any],
@@ -403,9 +405,9 @@ def _adapted_section(
         "id": section_id,
         "title": section_id,
         "status": clean_status,
-        "bullets": _unique_strings(bullets),
-        "data_sources": _unique_strings(data_sources),
-        "limitations": _unique_strings(limitations),
+        "bullets": unique_strings(bullets),
+        "data_sources": unique_strings(data_sources),
+        "limitations": unique_strings(limitations),
     }
 
 
@@ -446,13 +448,3 @@ def _string_list(value: Any) -> list[str]:
     if isinstance(value, list):
         return [str(item) for item in value if item is not None]
     return [str(value)]
-
-
-def _unique_strings(items: list[str]) -> list[str]:
-    seen: set[str] = set()
-    result: list[str] = []
-    for item in items:
-        if item not in seen:
-            seen.add(item)
-            result.append(item)
-    return result

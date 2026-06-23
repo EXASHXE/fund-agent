@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from .report_helpers import dedupe_preserve_order, theme_text
 from .report_safety import (
     build_safety_boundary,
 )
@@ -327,7 +328,7 @@ def _build_zh_direct_answer_intent_bullets(
 ) -> list[str]:
     bullets: list[str] = []
     intent_set = set(intents)
-    themes = _theme_text(fa_artifacts)
+    themes = theme_text(fa_artifacts)
     has_fee_blocker = _has_fee_blocker(fa_artifacts)
     has_profit_concern = _has_profit_concern(fa_artifacts)
 
@@ -364,7 +365,7 @@ def _build_zh_direct_answer_intent_bullets(
     if any(term in themes for term in ("dividend", "low_vol", "红利", "低波")):
         bullets.append("不要因为低波就忽视短期追高，分批比一次性更稳。")
 
-    return _dedupe_preserve_order(bullets)
+    return dedupe_preserve_order(bullets)
 
 
 # ── Section: evidence_status ─────────────────────────────────────────────────
@@ -971,25 +972,6 @@ def _has_profit_concern(fa_artifacts: dict[str, Any]) -> bool:
                 if isinstance(item, dict) and str(item.get("profit_level", "")) in ("high", "very_high"):
                     return True
     return False
-
-
-def _theme_text(fa_artifacts: dict[str, Any]) -> str:
-    parts: list[str] = []
-    for key in ("fund_profiles", "portfolio_summary", "position_summary", "exposure_summary", "fund_analysis_report"):
-        value = fa_artifacts.get(key)
-        if isinstance(value, dict):
-            parts.append(str(value))
-    return " ".join(parts).lower()
-
-
-def _dedupe_preserve_order(values: list[str]) -> list[str]:
-    result: list[str] = []
-    seen: set[str] = set()
-    for value in values:
-        if value not in seen:
-            result.append(value)
-            seen.add(value)
-    return result
 
 
 def _collect_blocked_reasons(

@@ -11,7 +11,10 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from .quality_status import compute_quality_status
 from .report_safety import FORBIDDEN_EXECUTION_FIELDS
+
+__all__ = ["evaluate_advisory_quality_gate", "compute_quality_status"]
 
 _EXTENDED_FORBIDDEN_FIELDS = FORBIDDEN_EXECUTION_FIELDS | frozenset(
     {
@@ -699,134 +702,6 @@ def _flatten_report_text(fr: dict) -> str:
     return " ".join(parts)
 
 
-# ---------------------------------------------------------------------------
-# Status split functions (Task 6)
-# ---------------------------------------------------------------------------
+# compute_quality_status has been extracted to quality_status.py.
+# It is re-exported here for backward-compatible imports.
 
-
-def compute_quality_status(
-    quality_gate_result: dict,
-    data_completeness: dict | None = None,
-    fund_analysis_output: dict | None = None,
-    final_report: dict | None = None,
-) -> dict:
-    """Compute split status from quality gate and data completeness.
-
-    Returns:
-    - pipeline_status: SUCCESS | PARTIAL | FAILED
-    - data_readiness_status: COMPLETE | INCOMPLETE | BLOCKED_BY_MISSING_CORE_DATA
-    - engineering_status: PASS | NEEDS_FIX | FAILED
-    - report_professional_status: PROFESSIONAL | LIMITED_BY_DATA | NOT_USABLE
-    - required_user_data: list of missing data fields
-    """
-    qg = quality_gate_result or {}
-    checks = qg.get("checks", [])
-    fail_count = qg.get("summary", {}).get("fail_count", 0)
-    warn_count = qg.get("summary", {}).get("warn_count", 0)
-
-    # Extract data completeness info
-    dc = data_completeness or {}
-    grade = dc.get("grade", "D")
-    score = dc.get("score", 0.0)
-    missing_sections = dc.get("missing_sections", [])
-    critical_missing = dc.get("critical_missing", [])
-
-    # Determine pipeline_status
-    pipeline_status = "PARTIAL" if fail_count > 0 or warn_count > 0 else "SUCCESS"
-
-    # Determine data_readiness_status
-    # Critical missing sections block data readiness
-    core_missing = {"Portfolio Snapshot", "Current Value Or Nav"}
-    has_core_missing = any(ms in core_missing for ms in critical_missing)
-
-    if has_core_missing:
-        data_readiness_status = "BLOCKED_BY_MISSING_CORE_DATA"
-    elif grade in ("C", "D"):
-        data_readiness_status = "INCOMPLETE"
-    else:
-        data_readiness_status = "COMPLETE"
-
-    # Determine engineering_status
-    # Hard failures: CLI crash, report not generated, fake precision, leaked secrets,
-    # missing data disclosure, active action without evidence anchors
-    hard_failure_checks = {
-        "fund_analysis_no_formal_decision",  # Decision/ExecutionLedger in fund_analysis
-        "no_broker_execution",  # Broker execution fields found
-        "active_trade_anchor_gate",  # Active action without evidence
-    }
-
-    engineering_failures = [c for c in checks if c.get("status") == "FAIL" and c.get("id") in hard_failure_checks]
-
-    if engineering_failures:
-        engineering_status = "FAILED"
-    elif fail_count > 0:
-        # Check if failures are due to missing data (not engineering issues)
-        missing_data_related = [c for c in checks if c.get("status") == "FAIL" and "missing" in c.get("id", "").lower()]
-        engineering_status = "PASS" if missing_data_related and not engineering_failures else "NEEDS_FIX"
-    else:
-        engineering_status = "PASS"
-
-    # Determine report_professional_status
-    # Grade D or critical missing = not usable
-    # Grade C or missing optional = limited by data
-    # Grade A/B with all critical = professional
-    if has_core_missing or grade == "D":
-        report_professional_status = "NOT_USABLE"
-    elif grade == "C" or missing_sections:
-        report_professional_status = "LIMITED_BY_DATA"
-    else:
-        report_professional_status = "PROFESSIONAL"
-
-    # Determine required_user_data
-    required_user_data: list[str] = []
-
-    # Check fund_analysis for missing data
-    fa = fund_analysis_output or {}
-    fa_artifacts = fa.get("artifacts", {})
-
-    # Check factor_snapshot for missing values
-    factor_snapshot = fa_artifacts.get("factor_snapshot", {})
-    if factor_snapshot:
-        dq = factor_snapshot.get("data_quality", {})
-        if dq.get("current_value_missing_count", 0) > 0:
-            required_user_data.append("current_value")
-        if dq.get("cost_basis_missing_count", 0) > 0:
-            required_user_data.append("cost_basis")
-        if dq.get("units_missing_count", 0) > 0:
-            required_user_data.append("units")
-        if dq.get("nav_missing_count", 0) > 0:
-            required_user_data.append("nav")
-
-    # Check data completeness for missing sections
-    if "Fund Profiles" in missing_sections:
-        required_user_data.append("fund_profile")
-    if "Nav History" in missing_sections:
-        required_user_data.append("NAV_history")
-    if "Holdings" in missing_sections:
-        required_user_data.append("holdings")
-    if "Risk Profile" in missing_sections:
-        required_user_data.append("risk_profile")
-
-    # Check for uncertainty_note in factor_snapshot
-    if factor_snapshot:
-        uncertainty_note = factor_snapshot.get("data_quality", {}).get("uncertainty_note")
-        if not uncertainty_note and data_readiness_status != "COMPLETE" and engineering_status == "PASS":
-            # If data is incomplete but no uncertainty note, that's an engineering issue
-            engineering_status = "NEEDS_FIX"
-
-    # Hard engineering failures override pipeline_status to FAILED
-    if engineering_status == "FAILED":
-        pipeline_status = "FAILED"
-
-    return {
-        "pipeline_status": pipeline_status,
-        "data_readiness_status": data_readiness_status,
-        "engineering_status": engineering_status,
-        "report_professional_status": report_professional_status,
-        "required_user_data": list(set(required_user_data)),  # Deduplicate
-        "data_completeness_grade": grade,
-        "data_completeness_score": score,
-        "quality_gate_passed": qg.get("passed", False),
-        "quality_gate_fail_count": fail_count,
-        "quality_gate_warn_count": warn_count,
-    }
