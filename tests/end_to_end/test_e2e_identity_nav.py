@@ -6,10 +6,9 @@ These tests use only fake/synthetic data — no real user holdings or private da
 from __future__ import annotations
 
 import json
-import re
 from pathlib import Path
 
-_SIX_DIGIT_RE = re.compile(r"^\d{6}$")
+from scripts.fund_identity_utils import is_valid_fund_code, normalize_fund_name
 
 # ---------------------------------------------------------------------------
 # A. Identity schema wiring
@@ -30,7 +29,7 @@ class TestIdentitySchemaWiring:
             ]
         }
         result = resolve_fund_identities(ledger_data=ledger_data)
-        assert result["schema_version"] == "fund_identity_resolution.v1"
+        assert result["schema_version"] == "fund_identity_resolution.v2"
         assert "resolutions" in result
         codes = [r["resolved_fund_code"] for r in result["resolutions"]]
         assert "002168" in codes
@@ -39,7 +38,7 @@ class TestIdentitySchemaWiring:
     def test_e2e_reads_resolutions_not_funds(self, tmp_path: Path) -> None:
         """E2E fund_agent_e2e.py must extract codes from 'resolutions' key."""
         identity_data = {
-            "schema_version": "fund_identity_resolution.v1",
+            "schema_version": "fund_identity_resolution.v2",
             "summary": {"total_funds": 2},
             "resolutions": [
                 {"resolved_fund_code": "002168", "fund_name": "FakeA", "confidence": "high"},
@@ -54,7 +53,7 @@ class TestIdentitySchemaWiring:
         entries = loaded.get("resolutions", loaded.get("funds", []))
         code_field = "resolved_fund_code" if "resolutions" in loaded else "resolved_code"
         raw_codes = [e.get(code_field, "") for e in entries if e.get(code_field)]
-        fund_codes = [c for c in raw_codes if _SIX_DIGIT_RE.match(c)]
+        fund_codes = [c for c in raw_codes if is_valid_fund_code(c)]
 
         assert fund_codes == ["002168", "007467"]
 
@@ -82,20 +81,20 @@ class TestFundCodeValidation:
     """Six-digit codes pass; Chinese names are rejected as fund codes."""
 
     def test_six_digit_codes_are_valid(self) -> None:
-        assert _SIX_DIGIT_RE.match("002168")
-        assert _SIX_DIGIT_RE.match("007467")
-        assert _SIX_DIGIT_RE.match("017436")
+        assert is_valid_fund_code("002168")
+        assert is_valid_fund_code("007467")
+        assert is_valid_fund_code("017436")
 
     def test_chinese_names_rejected_as_fund_codes(self) -> None:
-        assert not _SIX_DIGIT_RE.match("东方惠新灵活配置混合A")
-        assert not _SIX_DIGIT_RE.match("华宝纳斯达克精选股票QDIIA")
-        assert not _SIX_DIGIT_RE.match("蚂蚁财富-某基金-买入")
+        assert not is_valid_fund_code("东方惠新灵活配置混合A")
+        assert not is_valid_fund_code("华宝纳斯达克精选股票QDIIA")
+        assert not is_valid_fund_code("蚂蚁财富-某基金-买入")
 
     def test_e2e_filters_name_only_codes(self) -> None:
         """E2E must count name-only references separately from valid codes."""
         raw_codes = ["002168", "东方惠新灵活配置混合A", "007467", "华宝纳斯达克精选股票QDIIA"]
-        fund_codes = [c for c in raw_codes if _SIX_DIGIT_RE.match(c)]
-        name_only_count = sum(1 for c in raw_codes if not _SIX_DIGIT_RE.match(c))
+        fund_codes = [c for c in raw_codes if is_valid_fund_code(c)]
+        name_only_count = sum(1 for c in raw_codes if not is_valid_fund_code(c))
         assert fund_codes == ["002168", "007467"]
         assert name_only_count == 2
 
@@ -113,7 +112,7 @@ class TestFundCodeValidation:
         assert result["summary"]["name_only_count"] >= 1
 
     def test_chinese_name_never_passed_as_provider_fund_code(self) -> None:
-        """Chinese fund names must never be passed as fund_code to provider/snapshot."""
+        """Chinese fund names must never appear as resolved_fund_code."""
         from scripts.resolve_fund_identities import resolve_fund_identities
 
         ledger_data = {
@@ -122,13 +121,10 @@ class TestFundCodeValidation:
             ]
         }
         result = resolve_fund_identities(ledger_data=ledger_data)
-        # The resolved_fund_code will be the Chinese name (name-only),
-        # but E2E must filter it out before passing to snapshot
-        for r in result["resolutions"]:
-            code = r["resolved_fund_code"]
-            if not _SIX_DIGIT_RE.match(code):
-                # This is a name-only code — must not be passed to provider
-                assert r["confidence"] == "low"
+        # resolved_fund_code must be None for name-only, never the Chinese name
+        r = result["resolutions"][0]
+        assert r["resolved_fund_code"] is None
+        assert r["resolution_status"] == "name_only"
 
 
 # ---------------------------------------------------------------------------
@@ -400,7 +396,7 @@ class TestE2EIdentityToNAVPath:
         entries = loaded.get("resolutions", loaded.get("funds", []))
         code_field = "resolved_fund_code" if "resolutions" in loaded else "resolved_code"
         raw_codes = [e.get(code_field, "") for e in entries if e.get(code_field)]
-        fund_codes = [c for c in raw_codes if _SIX_DIGIT_RE.match(c)]
+        fund_codes = [c for c in raw_codes if is_valid_fund_code(c)]
 
         assert fund_codes == ["002168"]
         assert len(fund_codes) > 0  # Snapshot should be attempted
@@ -518,8 +514,8 @@ class TestNoNAVPath:
     def test_name_only_warning_is_specific(self) -> None:
         """When only name-only references exist, warning must say fund_code mapping required."""
         raw_codes = ["ChineseFundName", "AnotherChineseName"]
-        fund_codes = [c for c in raw_codes if _SIX_DIGIT_RE.match(c)]
-        name_only_count = sum(1 for c in raw_codes if not _SIX_DIGIT_RE.match(c))
+        fund_codes = [c for c in raw_codes if is_valid_fund_code(c)]
+        name_only_count = sum(1 for c in raw_codes if not is_valid_fund_code(c))
 
         assert len(fund_codes) == 0
         assert name_only_count == 2
@@ -695,3 +691,440 @@ class TestReconstructionIdentityBridge:
         # But reconstruction should have grouped it under 111111
         positions = result["confirmed_portfolio"]["positions"]
         assert any(p["fund_code"] == "111111" for p in positions)
+
+
+# ---------------------------------------------------------------------------
+# H. Identity schema v2 fields
+# ---------------------------------------------------------------------------
+
+
+class TestIdentitySchemaV2:
+    """Verify new v2 schema fields: raw_reference, raw_fund_code, raw_fund_name,
+    normalized_name, resolution_status, resolution_status_counts."""
+
+    def test_name_only_resolved_fund_code_is_none(self) -> None:
+        """Name-only resolution: resolved_fund_code must be None, not the Chinese name."""
+        from scripts.resolve_fund_identities import resolve_fund_identities
+
+        ledger_data = {
+            "transactions": [
+                {"fund_code": None, "fund_name": "中文基金名A", "source": "alipay"},
+            ]
+        }
+        result = resolve_fund_identities(ledger_data=ledger_data)
+        r = result["resolutions"][0]
+        assert r["resolved_fund_code"] is None
+        assert r["resolution_status"] == "name_only"
+        assert r["raw_reference"] == "中文基金名A"
+        assert r["raw_fund_code"] is None
+        assert r["raw_fund_name"] == "中文基金名A"
+
+    def test_valid_code_fields(self) -> None:
+        """Valid six-digit code: resolution_status == valid_code."""
+        from scripts.resolve_fund_identities import resolve_fund_identities
+
+        ledger_data = {
+            "transactions": [
+                {"fund_code": "002168", "fund_name": "FakeA", "source": "alipay"},
+            ]
+        }
+        result = resolve_fund_identities(ledger_data=ledger_data)
+        r = result["resolutions"][0]
+        assert r["resolved_fund_code"] == "002168"
+        assert r["resolution_status"] == "valid_code"
+        assert r["raw_fund_code"] == "002168"
+        assert r["normalized_name"] is not None
+
+    def test_manual_override_status(self) -> None:
+        """Manual override: resolution_status == manual_override."""
+        from scripts.resolve_fund_identities import resolve_fund_identities
+
+        ledger_data = {
+            "transactions": [
+                {"fund_code": None, "fund_name": "FakeAlpha", "source": "alipay"},
+            ]
+        }
+        result = resolve_fund_identities(
+            ledger_data=ledger_data,
+            override_lookup={"FakeAlpha": {"fund_code": "111111", "fund_name": "FakeAlpha"}},
+        )
+        r = result["resolutions"][0]
+        assert r["resolved_fund_code"] == "111111"
+        assert r["resolution_status"] == "manual_override"
+
+    def test_resolution_status_counts(self) -> None:
+        """Summary includes resolution_status_counts with correct taxonomy."""
+        from scripts.resolve_fund_identities import resolve_fund_identities
+
+        ledger_data = {
+            "transactions": [
+                {"fund_code": "002168", "fund_name": "FakeA", "source": "alipay"},
+                {"fund_code": None, "fund_name": "ChineseName", "source": "alipay"},
+            ]
+        }
+        result = resolve_fund_identities(ledger_data=ledger_data)
+        counts = result["summary"]["resolution_status_counts"]
+        assert counts["valid_code"] == 1
+        assert counts["name_only"] == 1
+        assert counts["manual_override"] == 0
+        assert counts["invalid_code"] == 0
+        assert counts["unresolved"] == 0
+
+    def test_normalized_name_field(self) -> None:
+        """normalized_name strips punctuation and whitespace."""
+        from scripts.resolve_fund_identities import resolve_fund_identities
+
+        ledger_data = {
+            "transactions": [
+                {"fund_code": "002168", "fund_name": "Fake Fund (A)", "source": "alipay"},
+            ]
+        }
+        result = resolve_fund_identities(ledger_data=ledger_data)
+        r = result["resolutions"][0]
+        assert r["normalized_name"] == "FakeFundA"
+
+
+# ---------------------------------------------------------------------------
+# I. Normalization consistency across scripts
+# ---------------------------------------------------------------------------
+
+
+class TestNormalizationConsistency:
+    """Same name variant produces same normalized_name across scripts."""
+
+    def test_normalize_fund_name_strips_punctuation(self) -> None:
+        from scripts.fund_identity_utils import normalize_fund_name
+
+        assert normalize_fund_name("Fake Fund (A)") == "FakeFundA"
+        assert normalize_fund_name("华宝纳斯达克精选股票（QDII）A") == "华宝纳斯达克精选股票QDIIA"
+        assert normalize_fund_name("某基金-混合型") == "某基金混合型"
+
+    def test_import_produces_normalized_name(self, tmp_path: Path) -> None:
+        """import_alipay_transactions adds normalized_name to each transaction."""
+        from scripts.import_alipay_transactions import import_alipay_csv
+
+        csv_content = (
+            "交易号,交易创建时间,商品名称,金额（元）,交易状态,类型,收/支,资金状态\n"
+            "FAKE001,2025-01-15 10:00:00,蚂蚁财富-测试基金（QDII）A-买入,100.00,交易成功,即时到账,支出,已支出\n"
+        )
+        csv_file = tmp_path / "alipay_test.csv"
+        csv_file.write_text(csv_content, encoding="utf-8")
+
+        output_file = tmp_path / "normalized.json"
+        import_alipay_csv(csv_file, output_file, redact_ids=False)
+
+        data = json.loads(output_file.read_text(encoding="utf-8"))
+        txn = data["transactions"][0]
+        assert txn["normalized_name"] is not None
+        # normalized_name should strip parens and match normalize_fund_name output
+        assert txn["normalized_name"] == normalize_fund_name("测试基金（QDII）A")
+
+    def test_resolver_and_import_produce_same_normalized_name(self, tmp_path: Path) -> None:
+        """Identity resolver and import script agree on normalized_name for the same fund."""
+        from scripts.import_alipay_transactions import import_alipay_csv
+        from scripts.resolve_fund_identities import resolve_fund_identities
+
+        csv_content = (
+            "交易号,交易创建时间,商品名称,金额（元）,交易状态,类型,收/支,资金状态\n"
+            "FAKE001,2025-01-15 10:00:00,蚂蚁财富-测试基金（QDII）A-买入,100.00,交易成功,即时到账,支出,已支出\n"
+        )
+        csv_file = tmp_path / "alipay_test.csv"
+        csv_file.write_text(csv_content, encoding="utf-8")
+
+        output_file = tmp_path / "normalized.json"
+        import_alipay_csv(csv_file, output_file, redact_ids=False)
+
+        data = json.loads(output_file.read_text(encoding="utf-8"))
+        import_nn = data["transactions"][0]["normalized_name"]
+
+        # Resolver processes the cleaned name
+        result = resolve_fund_identities(
+            ledger_data={"transactions": [
+                {"fund_code": None, "fund_name": "测试基金（QDII）A", "source": "alipay"},
+            ]},
+        )
+        resolver_nn = result["resolutions"][0]["normalized_name"]
+
+        assert import_nn == resolver_nn
+
+
+# ---------------------------------------------------------------------------
+# J. Reconstruction bridge with normalized_name matching
+# ---------------------------------------------------------------------------
+
+
+class TestReconstructionNormalizedNameBridge:
+    """Reconstruction matches by normalized_name when exact name fails."""
+
+    def test_normalized_name_matching_works(self) -> None:
+        """Half-width vs full-width parens: normalized_name matching resolves identity."""
+        from datetime import date
+
+        from scripts.reconstruct_portfolio_from_ledger import reconstruct_portfolio
+
+        ledger_data = {
+            "transactions": [
+                {
+                    "fund_code": None,
+                    "fund_name": "测试基金(QDII)A",  # half-width parens
+                    "normalized_name": "测试基金QDIIA",
+                    "action": "buy",
+                    "amount": 1000.0,
+                    "trade_date": "2025-01-15",
+                    "confirmation_type": "evidence_confirmed",
+                    "confirmation_source": "alipay",
+                    "source": "alipay",
+                },
+            ]
+        }
+
+        # Identity resolution with full-width parens
+        identity_data = {
+            "schema_version": "fund_identity_resolution.v2",
+            "resolutions": [
+                {
+                    "resolved_fund_code": "111111",
+                    "fund_name": "测试基金（QDII）A",  # full-width parens
+                    "normalized_name": "测试基金QDIIA",
+                },
+            ],
+        }
+
+        nav_snapshot = {
+            "nav_by_fund": {
+                "111111": {"records": [{"date": "2025-06-20", "nav": 1.0}]},
+            },
+        }
+
+        result = reconstruct_portfolio(
+            ledger_data=ledger_data,
+            nav_snapshot=nav_snapshot,
+            as_of_date=date(2025, 6, 20),
+            identity_data=identity_data,
+        )
+
+        positions = result["confirmed_portfolio"]["positions"]
+        assert any(p["fund_code"] == "111111" for p in positions)
+        assert result["identity_applied_count"] >= 1
+
+    def test_valuation_type_valuation_when_nav_available(self) -> None:
+        """When NAV is available and current_value computed, valuation_type == 'valuation'."""
+        from datetime import date
+
+        from scripts.reconstruct_portfolio_from_ledger import reconstruct_portfolio
+
+        ledger_data = {
+            "transactions": [
+                {
+                    "fund_code": "111111",
+                    "fund_name": "FakeA",
+                    "action": "buy",
+                    "amount": 1000.0,
+                    "trade_date": "2025-01-15",
+                    "confirmation_type": "evidence_confirmed",
+                    "confirmation_source": "alipay",
+                    "source": "alipay",
+                },
+            ]
+        }
+
+        nav_snapshot = {
+            "nav_by_fund": {
+                "111111": {"records": [
+                    {"date": "2025-01-15", "nav": 1.0},  # NAV on trade date for unit calculation
+                    {"date": "2025-06-20", "nav": 1.5},  # Latest NAV for valuation
+                ]},
+            },
+        }
+
+        result = reconstruct_portfolio(
+            ledger_data=ledger_data,
+            nav_snapshot=nav_snapshot,
+            as_of_date=date(2025, 6, 20),
+        )
+
+        pos = result["confirmed_portfolio"]["positions"][0]
+        assert pos["valuation_type"] == "valuation"
+        assert pos["current_value"] is not None
+
+    def test_valuation_type_cashflow_only_when_no_nav(self) -> None:
+        """When NAV is missing but cost_basis exists, valuation_type == 'cashflow_only'."""
+        from datetime import date
+
+        from scripts.reconstruct_portfolio_from_ledger import reconstruct_portfolio
+
+        ledger_data = {
+            "transactions": [
+                {
+                    "fund_code": "111111",
+                    "fund_name": "FakeA",
+                    "action": "buy",
+                    "amount": 1000.0,
+                    "trade_date": "2025-01-15",
+                    "confirmation_type": "evidence_confirmed",
+                    "confirmation_source": "alipay",
+                    "source": "alipay",
+                },
+            ]
+        }
+
+        # No NAV snapshot
+        result = reconstruct_portfolio(
+            ledger_data=ledger_data,
+            nav_snapshot=None,
+            as_of_date=date(2025, 6, 20),
+        )
+
+        pos = result["confirmed_portfolio"]["positions"][0]
+        assert pos["valuation_type"] == "cashflow_only"
+        assert pos["current_value"] is None
+        assert pos["cost_basis"] is not None
+
+    def test_identity_provenance_tracked(self) -> None:
+        """Positions resolved via identity show identity_provenance."""
+        from datetime import date
+
+        from scripts.reconstruct_portfolio_from_ledger import reconstruct_portfolio
+
+        ledger_data = {
+            "transactions": [
+                {
+                    "fund_code": None,
+                    "fund_name": "FakeAlpha",
+                    "action": "buy",
+                    "amount": 1000.0,
+                    "trade_date": "2025-01-15",
+                    "confirmation_type": "evidence_confirmed",
+                    "confirmation_source": "alipay",
+                    "source": "alipay",
+                },
+            ]
+        }
+
+        identity_data = {
+            "schema_version": "fund_identity_resolution.v2",
+            "resolutions": [
+                {"resolved_fund_code": "111111", "fund_name": "FakeAlpha"},
+            ],
+        }
+
+        nav_snapshot = {
+            "nav_by_fund": {
+                "111111": {"records": [{"date": "2025-06-20", "nav": 1.0}]},
+            },
+        }
+
+        result = reconstruct_portfolio(
+            ledger_data=ledger_data,
+            nav_snapshot=nav_snapshot,
+            as_of_date=date(2025, 6, 20),
+            identity_data=identity_data,
+        )
+
+        pos = result["confirmed_portfolio"]["positions"][0]
+        assert pos["identity_provenance"] == "identity_resolution"
+
+
+# ---------------------------------------------------------------------------
+# K. E2E summary fund_transactions count
+# ---------------------------------------------------------------------------
+
+
+class TestE2ESummaryFundTransactionsCount:
+    """E2E summary counts name-only transactions in fund_transactions."""
+
+    def test_list_branch_counts_name_only_transactions(self) -> None:
+        """In list-branch, fund_transactions includes txns with fund_name but no fund_code."""
+        tx_data = [
+            {"fund_code": "002168", "fund_name": "FakeA", "action": "buy"},
+            {"fund_code": None, "fund_name": "ChineseName", "action": "buy"},
+            {"fund_code": None, "fund_name": None, "action": "unknown"},
+        ]
+        fund_txns = [t for t in tx_data if isinstance(t, dict) and (t.get("fund_code") or t.get("fund_name"))]
+        assert len(fund_txns) == 2  # Both FakeA and ChineseName
+
+    def test_dict_branch_counts_name_only_transactions(self) -> None:
+        """In dict-branch, fund_transactions includes txns with fund_name but no fund_code."""
+        tx_data = {
+            "transactions": [
+                {"fund_code": "002168", "fund_name": "FakeA", "action": "buy"},
+                {"fund_code": None, "fund_name": "ChineseName", "action": "buy"},
+                {"fund_code": None, "fund_name": None, "action": "unknown"},
+            ]
+        }
+        fund_txns = [t for t in tx_data.get("transactions", []) if isinstance(t, dict) and (t.get("fund_code") or t.get("fund_name"))]
+        assert len(fund_txns) == 2
+
+
+# ---------------------------------------------------------------------------
+# L. Report semantics — valuation_type and no fake 0.00
+# ---------------------------------------------------------------------------
+
+
+class TestReportSemantics:
+    """valuation_type == cashflow_only when NAV missing; no fake 0.00 current_value."""
+
+    def test_cashflow_only_no_fake_zero(self) -> None:
+        """When valuation_type == cashflow_only, current_value must be None, not 0.00."""
+        from datetime import date
+
+        from scripts.reconstruct_portfolio_from_ledger import reconstruct_portfolio
+
+        ledger_data = {
+            "transactions": [
+                {
+                    "fund_code": "111111",
+                    "fund_name": "FakeA",
+                    "action": "buy",
+                    "amount": 1000.0,
+                    "trade_date": "2025-01-15",
+                    "confirmation_type": "evidence_confirmed",
+                    "confirmation_source": "alipay",
+                    "source": "alipay",
+                },
+            ]
+        }
+
+        # No NAV -> cashflow_only
+        result = reconstruct_portfolio(
+            ledger_data=ledger_data,
+            nav_snapshot=None,
+            as_of_date=date(2025, 6, 20),
+        )
+
+        pos = result["confirmed_portfolio"]["positions"][0]
+        assert pos["valuation_type"] == "cashflow_only"
+        assert pos["current_value"] is None
+        # Must not be 0.0 or 0.00
+        assert pos["current_value"] != 0.0
+
+    def test_portfolio_input_no_fake_zero(self) -> None:
+        """portfolio_input holdings must not have 0.00 for unknown current_value."""
+        from datetime import date
+
+        from scripts.reconstruct_portfolio_from_ledger import reconstruct_portfolio
+
+        ledger_data = {
+            "transactions": [
+                {
+                    "fund_code": "111111",
+                    "fund_name": "FakeA",
+                    "action": "buy",
+                    "amount": 1000.0,
+                    "trade_date": "2025-01-15",
+                    "confirmation_type": "evidence_confirmed",
+                    "confirmation_source": "alipay",
+                    "source": "alipay",
+                },
+            ]
+        }
+
+        result = reconstruct_portfolio(
+            ledger_data=ledger_data,
+            nav_snapshot=None,
+            as_of_date=date(2025, 6, 20),
+        )
+
+        holding = result["portfolio_input"]["holdings"][0]
+        assert holding["current_value"] is None
+        assert holding["current_value"] != 0.0

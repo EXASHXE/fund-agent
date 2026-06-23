@@ -23,6 +23,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from scripts.fund_identity_utils import normalize_fund_name
+
 # Alipay CSV column names (Chinese)
 _ALIPAY_COLUMNS = {
     "trade_no": "交易号",
@@ -302,6 +304,7 @@ def import_alipay_csv(
             "amount": abs(amount) if amount is not None else None,
             "fund_code": fund_code,
             "fund_name": _clean_fund_name(product_name) if product_name else None,
+            "normalized_name": normalize_fund_name(_clean_fund_name(product_name)) if product_name else None,
             "counterparty": counterparty if counterparty else None,
             "status": status,
             "remark": remark if remark else None,

@@ -19,6 +19,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from scripts.fund_identity_utils import coerce_fund_code, is_valid_fund_code, normalize_fund_name
+
 try:
     import yaml
 except ImportError:
@@ -32,9 +34,6 @@ def _load_overrides(overrides_path: Path) -> tuple[dict[str, dict[str, Any]], li
     - lookup dict mapping various lookup keys to override records
     - list of validation warnings for invalid override entries
     """
-    import re as _re
-    _six_digit_re = _re.compile(r"^\d{6}$")
-
     if yaml is None:
         print("Warning: PyYAML not installed, skipping overrides", file=__import__("sys").stderr)
         return {}, []
@@ -60,8 +59,7 @@ def _load_overrides(overrides_path: Path) -> tuple[dict[str, dict[str, Any]], li
         fund_name = entry.get("fund_name", "")
         if not raw_name or not fund_code:
             continue
-        # Validate fund_code is six digits
-        if not _six_digit_re.match(fund_code):
+        if not is_valid_fund_code(fund_code):
             validation_warnings.append(
                 f"Override fund_code '{fund_code}' for raw_name '{raw_name}' is not a valid six-digit code; skipped"
             )
@@ -69,31 +67,46 @@ def _load_overrides(overrides_path: Path) -> tuple[dict[str, dict[str, Any]], li
         record = {"fund_code": fund_code, "fund_name": fund_name or raw_name}
         # Index by raw_name and normalized variants
         lookup[raw_name] = record
-        lookup[_normalize_name(raw_name)] = record
+        lookup[normalize_fund_name(raw_name)] = record
 
     # Process aliases
     for alias, fund_code in data.get("aliases", {}).items():
         if not alias or not fund_code:
             continue
         fund_code_str = str(fund_code)
-        # Validate alias fund_code is six digits
-        if not _six_digit_re.match(fund_code_str):
+        if not is_valid_fund_code(fund_code_str):
             validation_warnings.append(
                 f"Override alias '{alias}' fund_code '{fund_code_str}' is not a valid six-digit code; skipped"
             )
             continue
         record = {"fund_code": fund_code_str, "fund_name": alias}
         lookup[alias] = record
-        lookup[_normalize_name(alias)] = record
+        lookup[normalize_fund_name(alias)] = record
 
     return lookup, validation_warnings
 
 
-def _normalize_name(name: str) -> str:
-    """Normalize a fund name for matching: strip punctuation, spaces, parens."""
-    import re
-    # Remove spaces, parentheses, punctuation commonly varying
-    return re.sub(r"[\s\(\)（）\-\.\,，、]", "", name)
+
+def _compute_resolution_status(
+    resolved_code: str | None,
+    resolution_source: str,
+    ref_info: dict[str, Any],
+) -> str:
+    """Compute resolution_status for a fund resolution entry.
+
+    Returns one of: valid_code, manual_override, name_only, invalid_code, unresolved.
+    """
+    if resolution_source == "manual_override":
+        return "manual_override"
+    if resolved_code is not None:
+        return "valid_code"
+    # resolved_code is None — check why
+    if ref_info.get("resolved_by_name"):
+        return "name_only"
+    raw_fc = ref_info.get("fund_code")
+    if raw_fc is not None and not is_valid_fund_code(raw_fc):
+        return "invalid_code"
+    return "unresolved"
 
 
 def resolve_fund_identities(
@@ -165,7 +178,7 @@ def resolve_fund_identities(
         # Check override_lookup (from YAML file) by fund_key, fund_name, and normalized variants
         ov_record = None
         fund_name = ref_info.get("fund_name") or plan_info.get("fund_name") or ""
-        for lookup_key in (fund_key, fund_name, _normalize_name(fund_key), _normalize_name(fund_name)):
+        for lookup_key in (fund_key, fund_name, normalize_fund_name(fund_key), normalize_fund_name(fund_name)):
             if lookup_key and lookup_key in ov_lookup:
                 ov_record = ov_lookup[lookup_key]
                 break
@@ -173,7 +186,11 @@ def resolve_fund_identities(
             override_code = ov_record["fund_code"]
 
         candidates = []
-        resolved_code = ref_info.get("fund_code") or fund_key
+        # CRITICAL: resolved_fund_code must be a valid six-digit code or None.
+        # Never let a Chinese name or other non-code value leak in.
+        raw_fund_code = ref_info.get("fund_code")
+        raw_fund_name = ref_info.get("fund_name") or plan_info.get("fund_name")
+        resolved_code = coerce_fund_code(raw_fund_code) or coerce_fund_code(fund_key)
         resolution_source = "transaction_ledger"
         confidence = "high"
         audit_steps = []
@@ -214,32 +231,44 @@ def resolve_fund_identities(
                 "plan": ref_info.get("seen_in_plan", False),
             })
 
+        # Compute resolution_status
+        resolution_status = _compute_resolution_status(resolved_code, resolution_source, ref_info)
+
         resolutions.append({
             "resolved_fund_code": resolved_code,
-            "fund_name": ref_info.get("fund_name") or plan_info.get("fund_name"),
+            "raw_reference": fund_key,
+            "raw_fund_code": raw_fund_code,
+            "raw_fund_name": raw_fund_name,
+            "normalized_name": normalize_fund_name(raw_fund_name) if raw_fund_name else None,
+            "fund_name": raw_fund_name,
             "resolution_source": resolution_source,
+            "resolution_status": resolution_status,
             "confidence": confidence,
             "candidates": candidates,
             "audit_trail": audit_steps,
         })
 
-    import re as _re
-    six_digit_re = _re.compile(r"^\d{6}$")
-
     summary = {
         "total_funds": len(resolutions),
-        "valid_fund_codes_count": sum(1 for r in resolutions if six_digit_re.match(r.get("resolved_fund_code", ""))),
-        "name_only_count": sum(1 for r in resolutions if r.get("resolved_fund_code") and not six_digit_re.match(r["resolved_fund_code"])),
+        "valid_fund_codes_count": sum(1 for r in resolutions if r["resolved_fund_code"] is not None),
+        "name_only_count": sum(1 for r in resolutions if r["resolution_status"] == "name_only"),
         "high_confidence": sum(1 for r in resolutions if r["confidence"] == "high"),
         "medium_confidence": sum(1 for r in resolutions if r["confidence"] == "medium"),
         "low_confidence_count": sum(1 for r in resolutions if r["confidence"] == "low"),
         "unresolved_count": sum(1 for r in resolutions if r["resolution_source"] == "none"),
         "manual_overrides_used": bool(ov_lookup or overrides),
         "manual_override_matches_count": sum(1 for r in resolutions if r["resolution_source"] == "manual_override"),
+        "resolution_status_counts": {
+            "valid_code": sum(1 for r in resolutions if r["resolution_status"] == "valid_code"),
+            "manual_override": sum(1 for r in resolutions if r["resolution_status"] == "manual_override"),
+            "name_only": sum(1 for r in resolutions if r["resolution_status"] == "name_only"),
+            "invalid_code": sum(1 for r in resolutions if r["resolution_status"] == "invalid_code"),
+            "unresolved": sum(1 for r in resolutions if r["resolution_status"] == "unresolved"),
+        },
     }
 
     return {
-        "schema_version": "fund_identity_resolution.v1",
+        "schema_version": "fund_identity_resolution.v2",
         "generated_at": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
         "summary": summary,
         "resolutions": resolutions,

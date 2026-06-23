@@ -28,6 +28,8 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
+from scripts.fund_identity_utils import is_valid_fund_code, normalize_fund_name
+
 
 def _parse_date(val) -> date | None:
     if not val:
@@ -78,22 +80,33 @@ def _calculate_units(net_amount: float | None, nav: float | None) -> float | Non
 
 
 def _build_identity_map(identity_data: dict[str, Any] | None) -> dict[str, str]:
-    """Build a mapping from fund_name to resolved_fund_code from identity resolution.
+    """Build a multi-key mapping from fund_name variants to resolved_fund_code.
 
-    Only includes entries where resolved_fund_code is a valid six-digit code.
+    Indexes by fund_name, normalized_name, raw_fund_name, and normalized
+    variants.  Only includes entries where resolved_fund_code is a valid
+    six-digit code.
     """
     if not identity_data:
         return {}
     entries = identity_data.get("resolutions", identity_data.get("funds", []))
     code_field = "resolved_fund_code" if "resolutions" in identity_data else "resolved_code"
-    import re as _re
-    six_digit_re = _re.compile(r"^\d{6}$")
     name_to_code: dict[str, str] = {}
     for entry in entries:
         code = entry.get(code_field, "")
-        name = entry.get("fund_name", "")
-        if code and six_digit_re.match(code) and name:
-            name_to_code[name] = code
+        if not is_valid_fund_code(code):
+            continue
+        # Index by all available name variants
+        for name in (
+            entry.get("fund_name"),
+            entry.get("normalized_name"),
+            entry.get("raw_fund_name"),
+            entry.get("raw_reference"),
+        ):
+            if name:
+                name_to_code[name] = code
+                norm = normalize_fund_name(name)
+                if norm and norm != name:
+                    name_to_code[norm] = code
     return name_to_code
 
 
@@ -118,13 +131,27 @@ def reconstruct_portfolio(
     # If txn has no fund_code but has fund_name that resolves via identity, use resolved code
     fund_txns: dict[str, list[dict[str, Any]]] = {}
     identity_applied_count = 0
+    identity_provenance: dict[str, str] = {}  # fund_code -> how it was resolved
     for txn in ledger_data.get("transactions", []):
         fc = txn.get("fund_code")
         fn = txn.get("fund_name")
+        nn = txn.get("normalized_name")
         # Apply identity resolution for name-only transactions
-        if not fc and fn and fn in identity_map:
-            fc = identity_map[fn]
-            identity_applied_count += 1
+        # Try exact fund_name, then normalized_name, then normalized fund_name
+        if not fc:
+            resolved = None
+            if fn and fn in identity_map:
+                resolved = identity_map[fn]
+            elif nn and nn in identity_map:
+                resolved = identity_map[nn]
+            elif fn:
+                norm = normalize_fund_name(fn)
+                if norm and norm in identity_map:
+                    resolved = identity_map[norm]
+            if resolved:
+                fc = resolved
+                identity_applied_count += 1
+                identity_provenance[fc] = "identity_resolution"
         if fc:
             fund_txns.setdefault(fc, []).append(txn)
 
@@ -291,6 +318,16 @@ def reconstruct_portfolio(
         confirmed_avg_cost = _safe_round(confirmed_cost / confirmed_units) if confirmed_units > 0 else None
         confirmed_cost_basis = _safe_round(confirmed_cost)
 
+        # Determine valuation_type
+        if confirmed_current_value is not None and latest_nav is not None:
+            valuation_type = "valuation"
+        elif confirmed_cost_basis is not None:
+            valuation_type = "cashflow_only"
+        elif confirmed_units > 0:
+            valuation_type = "estimated"
+        else:
+            valuation_type = "none"
+
         confirmed_pos = {
             "fund_code": fund_code,
             "units": _safe_round(confirmed_units, 4) if confirmed_units > 0 else None,
@@ -299,6 +336,7 @@ def reconstruct_portfolio(
             "average_cost_per_unit": confirmed_avg_cost,
             "latest_nav": latest_nav,
             "latest_nav_date": latest_nav_date,
+            "valuation_type": valuation_type,
             "buy_count": confirmed_buy_count,
             "sell_count": confirmed_sell_count,
             "dividends_received": _safe_round(dividends) if dividends > 0 else None,
@@ -307,6 +345,7 @@ def reconstruct_portfolio(
             "pending_amount": _safe_round(pending_amount) if pending_amount > 0 else None,
             "has_manual_review": has_manual_review,
             "confirmation_sources": sorted(confirmation_sources),
+            "identity_provenance": identity_provenance.get(fund_code),
             "confidence": "evidence_confirmed" if "alipay" in confirmation_sources or "provider" in confirmation_sources else ("rule_confirmed_estimated" if "schedule_rule" in confirmation_sources else "pending"),
             "holding_source": "transaction_derived",
         }
@@ -323,6 +362,7 @@ def reconstruct_portfolio(
             "cost_basis": projected_cost_basis,
             "latest_nav": latest_nav,
             "latest_nav_date": latest_nav_date,
+            "valuation_type": valuation_type,
             "pending_amount": _safe_round(pending_amount) if pending_amount > 0 else None,
             "projected_buy_count": projected_buy_count,
             "confidence": "projected",
