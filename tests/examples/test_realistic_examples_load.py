@@ -20,6 +20,7 @@ def _example_json_files():
         p for p in EXAMPLES_DIR.glob("*.json")
         if p.name != "fundle_payload.json"
         and not p.name.startswith("runtime_bridge_")
+        and not p.name.endswith("_overrides.example.json")
     )
 
 
