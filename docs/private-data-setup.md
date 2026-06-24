@@ -69,9 +69,13 @@ in `portfolio_input.private.json`. This is useful for:
 - `confirmation_type` is `user_provided_private_input` (not `evidence_confirmed`)
 - `latest_nav` alone does NOT create historical units
 
-**Source precedence** (auto mode):
-1. Alipay CSV — used if present
-2. portfolio_input.transactions — fallback if no Alipay CSV
+**Source precedence** (`--transaction-source` flag):
+
+| Mode | Behavior |
+|------|----------|
+| `auto` (default) | Alipay CSV preferred; falls back to portfolio_input.transactions if no CSV |
+| `alipay` | Only use Alipay CSV; error if missing; no fallback |
+| `portfolio_input` | Only use portfolio_input.transactions; error if missing; ignores Alipay CSV |
 
 To explicitly choose a source:
 ```bash

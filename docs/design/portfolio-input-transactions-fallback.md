@@ -51,9 +51,22 @@ Adapter maps each portfolio_input transaction to the standard ledger format:
 
 ## Source Precedence
 
-1. **Alipay CSV** (default when present): `transaction_source = alipay`
-2. **portfolio_input.transactions** (fallback): `transaction_source = portfolio_input.transactions`
-3. **Auto mode** (default): Alipay CSV takes precedence if both exist
+Controlled by `--transaction-source` flag and `decide_transaction_source()`:
+
+| Mode | Alipay CSV exists | portfolio_input.transactions exists | Result |
+|------|-------------------|-------------------------------------|--------|
+| `auto` | yes | yes | alipay (precedence) |
+| `auto` | yes | no | alipay |
+| `auto` | no | yes | portfolio_input.transactions |
+| `auto` | no | no | none (error) |
+| `alipay` | yes | any | alipay |
+| `alipay` | no | yes | none (error: no fallback) |
+| `alipay` | no | no | none (error) |
+| `portfolio_input` | any | yes | portfolio_input.transactions (ignores Alipay) |
+| `portfolio_input` | yes | no | none (error: no fallback) |
+| `portfolio_input` | no | no | none (error) |
+
+Explicit modes are strict — they never silently fall back to the other source.
 
 ## Valuation Semantics
 

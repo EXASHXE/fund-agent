@@ -30,6 +30,87 @@ SCRIPTS_DIR = REPO_ROOT / "scripts"
 VERSION_FILE = REPO_ROOT / "VERSION"
 
 
+# ── Transaction source routing ────────────────────────────────────────
+
+
+@dataclass
+class TransactionSourceDecision:
+    """Result of transaction source selection logic."""
+
+    source: str  # "alipay" | "portfolio_input.transactions" | "none"
+    reason: str
+    use_alipay: bool = False
+    use_portfolio_input_transactions: bool = False
+    error: str | None = None
+    warning: str | None = None
+
+
+def decide_transaction_source(
+    requested: str,
+    alipay_csv_exists: bool,
+    portfolio_input_exists: bool,
+    portfolio_input_transactions_count: int,
+) -> TransactionSourceDecision:
+    """Decide which transaction source to use based on request and availability.
+
+    Semantics:
+      - auto: Alipay CSV preferred, then portfolio_input.transactions fallback
+      - alipay: Only use Alipay; error if missing; no fallback
+      - portfolio_input: Only use portfolio_input.transactions; error if missing; no fallback
+    """
+    if requested == "auto":
+        if alipay_csv_exists:
+            return TransactionSourceDecision(
+                source="alipay",
+                reason="auto: Alipay CSV available and takes precedence",
+                use_alipay=True,
+            )
+        if portfolio_input_exists and portfolio_input_transactions_count > 0:
+            return TransactionSourceDecision(
+                source="portfolio_input.transactions",
+                reason="auto: no Alipay CSV, falling back to portfolio_input.transactions",
+                use_portfolio_input_transactions=True,
+            )
+        return TransactionSourceDecision(
+            source="none",
+            reason="auto: no Alipay CSV and no portfolio_input.transactions available",
+            error="No usable transaction source found",
+        )
+
+    if requested == "alipay":
+        if alipay_csv_exists:
+            return TransactionSourceDecision(
+                source="alipay",
+                reason="explicit: Alipay CSV available",
+                use_alipay=True,
+            )
+        return TransactionSourceDecision(
+            source="none",
+            reason="explicit: requested alipay but no Alipay CSV found",
+            error="Requested alipay transaction source but no Alipay CSV found",
+        )
+
+    if requested == "portfolio_input":
+        if portfolio_input_exists and portfolio_input_transactions_count > 0:
+            return TransactionSourceDecision(
+                source="portfolio_input.transactions",
+                reason="explicit: portfolio_input.transactions available",
+                use_portfolio_input_transactions=True,
+            )
+        return TransactionSourceDecision(
+            source="none",
+            reason="explicit: requested portfolio_input but no portfolio_input.transactions found",
+            error="Requested portfolio_input transaction source but no portfolio_input.transactions found",
+        )
+
+    # Unknown requested value — should not reach here due to argparse choices
+    return TransactionSourceDecision(
+        source="none",
+        reason=f"unknown transaction source: {requested}",
+        error=f"Unknown transaction source: {requested}",
+    )
+
+
 @dataclass
 class StepResult:
     """Result of a single pipeline step."""
@@ -225,31 +306,33 @@ def run_pipeline(args: argparse.Namespace) -> int:
     news_snapshot = run_dir / "news_snapshot.json"
     factor_snapshot = run_dir / "factor_snapshot.json"
 
-    if alipay_csv:
+    # ── Transaction source selection ──────────────────────────────────
+    # Probe available sources, then decide based on --transaction-source flag.
+    pi_txns = load_portfolio_input_transactions(input_path) if input_path.exists() else []
+    txn_decision = decide_transaction_source(
+        requested=args.transaction_source,
+        alipay_csv_exists=alipay_csv is not None,
+        portfolio_input_exists=input_path.exists(),
+        portfolio_input_transactions_count=len(pi_txns),
+    )
+    transaction_source_used = txn_decision.source
+    portfolio_input_txn_stats: dict[str, Any] = {}
+
+    if txn_decision.error:
+        pipeline.errors.append(txn_decision.error)
+        print(f"[step 0a] SKIP: {txn_decision.reason}")
+    elif txn_decision.warning:
+        pipeline.warnings.append(txn_decision.warning)
+
+    # Execute the chosen source
+    if txn_decision.use_alipay:
         run_step(
             "0a", "import_alipay_transactions", "Import Alipay transactions",
             _python("import_alipay_transactions.py")
             + ["--input", str(alipay_csv), "--output", str(normalized_tx)],
             critical=True, expected_output=normalized_tx,
         )
-
-    # Transaction source fallback: if no Alipay CSV, try portfolio_input.transactions
-    transaction_source_used = "none"
-    portfolio_input_txn_stats: dict[str, Any] = {}
-    use_portfolio_input_transactions = False
-
-    if not alipay_csv and input_path.exists():
-        pi_txns = load_portfolio_input_transactions(input_path)
-        if pi_txns:
-            use_portfolio_input_transactions = True
-            transaction_source_used = "portfolio_input.transactions"
-    elif alipay_csv and args.transaction_source == "portfolio_input" and input_path.exists():
-        pi_txns = load_portfolio_input_transactions(input_path)
-        if pi_txns:
-            use_portfolio_input_transactions = True
-            transaction_source_used = "portfolio_input.transactions"
-
-    if use_portfolio_input_transactions and not normalized_tx.exists():
+    elif txn_decision.use_portfolio_input_transactions:
         pi_ledger = build_ledger_from_portfolio_input_transactions(pi_txns)
         if not dry_run:
             try:
@@ -262,8 +345,6 @@ def run_pipeline(args: argparse.Namespace) -> int:
                 print(f"ERROR: failed to write portfolio_input transactions: {_redact(str(exc))}", file=sys.stderr)
         portfolio_input_txn_stats = pi_ledger.get("summary", {})
         print(f"[step 0a-alt] portfolio_input.transactions: {pi_ledger['summary'].get('total_transactions', 0)} transaction(s)")
-    elif alipay_csv:
-        transaction_source_used = "alipay"
 
     if investment_plan:
         run_step(
@@ -528,7 +609,8 @@ def run_pipeline(args: argparse.Namespace) -> int:
         else:
             portfolio_input_source = "existing_private_portfolio_input"
 
-    if alipay_csv is not None:
+    # Derive transaction_reconstruction_status from the actual source decision
+    if txn_decision.use_alipay:
         if normalized_tx.exists():
             transaction_reconstruction_status = "parsed_from_alipay"
             try:
@@ -537,7 +619,6 @@ def run_pipeline(args: argparse.Namespace) -> int:
                     alipay_import_stats["total_transactions"] = len(tx_data)
                     fund_txns = [t for t in tx_data if isinstance(t, dict) and (t.get("fund_code") or t.get("fund_name"))]
                     alipay_import_stats["fund_transactions"] = len(fund_txns)
-                    # Count by classification
                     classification_counts: dict[str, int] = {}
                     for t in fund_txns:
                         cls = str(t.get("classification", t.get("action", "unknown")))
@@ -551,11 +632,13 @@ def run_pipeline(args: argparse.Namespace) -> int:
                 pass
         else:
             transaction_reconstruction_status = "not_reconstructed_from_alipay"
-    elif use_portfolio_input_transactions:
+    elif txn_decision.use_portfolio_input_transactions:
         transaction_reconstruction_status = "parsed_from_portfolio_input_transactions"
+    elif txn_decision.error:
+        transaction_reconstruction_status = "requested_source_missing"
 
-    # Warn if Alipay CSV found but no fund transactions parsed
-    if alipay_csv is not None and alipay_import_stats.get("fund_transactions", 0) == 0 and not dry_run:
+    # Warn if Alipay was used but no fund transactions parsed
+    if txn_decision.use_alipay and alipay_import_stats.get("fund_transactions", 0) == 0 and not dry_run:
         pipeline.warnings.append("Alipay CSV was found but no fund transactions were parsed")
 
     # If portfolio_input fallback is used, status should be partial
