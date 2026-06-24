@@ -10,13 +10,73 @@ portfolio E2E pipeline, and interpret the reconstruction scenarios
 private_data/
   alipay_record.private.csv          # Raw Alipay export (never committed)
   manual_transactions.private.csv    # Curated transaction entries
-  portfolio_input.private.json       # Current holding snapshot (authoritative)
+  portfolio_input.private.json       # Holdings snapshot + optional transactions
   fund_identity_overrides.private.yaml  # Manual fund code → identity mappings
   nav_overrides.private.json         # Trade-date NAV overrides for reconstruction
 ```
 
 All files matching `*.private.*` and the `private_data/` directory are
 in `.gitignore`. **Never commit real portfolio data.**
+
+## Transaction Sources
+
+The pipeline supports two transaction sources:
+
+### Alipay CSV (default)
+
+When an Alipay CSV file exists in `private_data/`, the pipeline imports
+transactions from it automatically. This is the default and preferred source.
+
+### portfolio_input.transactions (fallback)
+
+When no Alipay CSV is available, the pipeline can use transactions embedded
+in `portfolio_input.private.json`. This is useful for:
+
+- Manual transaction entry without Alipay
+- Curated transaction lists from other sources
+- Testing with synthetic data
+
+**Transaction schema** (inside `portfolio_input.private.json`):
+
+```json
+{
+  "transactions": [
+    {
+      "trade_date": "2026-06-01",
+      "fund_code": "000001",
+      "fund_name": "示例基金A",
+      "transaction_type": "buy",
+      "amount": 100.00,
+      "units": 81.00,
+      "nav": 1.2345
+    }
+  ]
+}
+```
+
+**Field rules**:
+- `trade_date` (required): `YYYY-MM-DD` format
+- `fund_code` (optional): If present, must be 6 digits
+- `fund_name` (optional): Chinese names are OK here
+- `transaction_type` (required): `buy`, `sell`, `dividend`, `fee`, `conversion_in`, `conversion_out`, `refund`, `unknown`
+- `amount` (required): Numeric
+- `units` (optional): Explicit share count
+- `nav` (optional): Trade-date NAV
+
+**Key differences from Alipay CSV**:
+- `fund_code` is optional (name-only entries allowed)
+- `units` and `nav` can be provided directly
+- `confirmation_type` is `user_provided_private_input` (not `evidence_confirmed`)
+- `latest_nav` alone does NOT create historical units
+
+**Source precedence** (auto mode):
+1. Alipay CSV — used if present
+2. portfolio_input.transactions — fallback if no Alipay CSV
+
+To explicitly choose a source:
+```bash
+bin/fund-agent-e2e --transaction-source portfolio_input --skip-akshare --skip-news
+```
 
 ## Override Files
 

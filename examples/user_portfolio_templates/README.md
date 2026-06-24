@@ -8,6 +8,7 @@ Templates and synthetic demo data for fund-agent portfolio input.
 |------|---------|
 | `fund_portfolio_input_template.json` | Empty portfolio input template |
 | `fund_portfolio_input_demo.json` | Synthetic demo portfolio (3 funds) |
+| `portfolio_input_with_transactions.example.json` | Portfolio input with transactions (v0.10.6+) |
 | `provider_data_snapshot_template.json` | Empty provider snapshot template |
 | `provider_data_snapshot_demo.json` | Synthetic demo provider snapshot |
 | `transaction_history_template.csv` | Transaction history CSV template |
@@ -15,7 +16,7 @@ Templates and synthetic demo data for fund-agent portfolio input.
 | `risk_profile_template.yaml` | Risk profile YAML template |
 | `investment_constraints_template.yaml` | Investment constraints YAML template |
 | `private_data_gitignore_note.md` | Private data handling rules |
-| `.gitignore.example` | Example gitignore for private data |
+| `.gitignore_example` | Example gitignore for private data |
 
 ## Usage
 
