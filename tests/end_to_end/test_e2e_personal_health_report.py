@@ -15,6 +15,7 @@ from src.tools.portfolio.personal_health_report import (
     REASON_NAV_MISSING,
     REASON_NO_VALID_FUND_CODES,
     REASON_PARTIAL_NAV_COVERAGE,
+    REASON_QDII_NAV_LAG,
     REASON_STALE_NAV,
     build_personal_health_summary,
 )
@@ -209,3 +210,102 @@ class TestE2EV0105Regression:
         assert "confidence_level" in result
         # The original e2e_summary data should not be modified
         assert artifacts["e2e_summary"]["pipeline_steps"]["valid_fund_codes_count"] == 3
+
+
+class TestE2EHealthReportUsesNavCoverageSummary:
+    """Verify NAV coverage summary from reconstruction feeds into health report."""
+
+    def test_nav_coverage_partial_from_reconstruction(self):
+        """Reconstruction output with partial NAV → partial_nav_coverage in health report."""
+        artifacts = {
+            "e2e_summary": _e2e_summary(),
+            "nav_coverage_summary": _nav_coverage(full=1, partial=2),
+            "portfolio_input_transactions_summary": {},
+            "identity_summary": {},
+            "valuation_summary": {},
+        }
+        result = build_personal_health_summary(artifacts)
+        assert REASON_PARTIAL_NAV_COVERAGE in result["reason_codes"]
+        assert result["nav_coverage"]["partial"] == 2
+        assert result["nav_coverage"]["full"] == 1
+
+    def test_stale_qdii_nav_from_reconstruction(self):
+        """Reconstruction output with stale+QDII → stale_nav and qdii_nav_lag."""
+        artifacts = {
+            "e2e_summary": _e2e_summary(),
+            "nav_coverage_summary": _nav_coverage(stale_count=2, qdii_like_count=1),
+            "portfolio_input_transactions_summary": {},
+            "identity_summary": {},
+            "valuation_summary": {},
+        }
+        result = build_personal_health_summary(artifacts)
+        assert REASON_STALE_NAV in result["reason_codes"]
+        assert REASON_QDII_NAV_LAG in result["reason_codes"]
+
+
+class TestE2ENameOnlyZeroValidCodes:
+    """Name-only funds with zero valid codes → both no_valid_fund_codes and name_only_funds."""
+
+    def test_name_only_zero_valid_codes(self):
+        artifacts = {
+            "e2e_summary": _e2e_summary(
+                valid_fund_codes_count=0,
+                name_only_count=3,
+                reconstruction_status="nav_unavailable",
+                portfolio_input_source="unavailable",
+            ),
+            "nav_coverage_summary": _nav_coverage(positions_total=0, full=0),
+            "portfolio_input_transactions_summary": {},
+            "identity_summary": {"name_only_count": 3},
+            "valuation_summary": {},
+        }
+        result = build_personal_health_summary(artifacts)
+        assert REASON_NO_VALID_FUND_CODES in result["reason_codes"]
+        assert REASON_NAME_ONLY_FUNDS in result["reason_codes"]
+        assert result["overall_status"] == "needs_data"
+        checklist_text = " ".join(result["fix_it_checklist"])
+        assert "identity_overrides" in checklist_text
+
+
+class TestE2EFallbackHoldingsNotReconstructed:
+    """D2 fallback holdings → fallback_holdings_used, no reconstructed_from_ledger."""
+
+    def test_fallback_holdings_not_reconstructed(self):
+        artifacts = {
+            "e2e_summary": _e2e_summary(
+                portfolio_input_source="existing_private_portfolio_input",
+            ),
+            "nav_coverage_summary": _nav_coverage(),
+            "portfolio_input_transactions_summary": {},
+            "identity_summary": {},
+            "valuation_summary": {},
+        }
+        result = build_personal_health_summary(artifacts)
+        assert REASON_FALLBACK_HOLDINGS_USED in result["reason_codes"]
+        # Must NOT contain reconstructed_from_ledger wording
+        all_text = " ".join(result["reason_codes"] + result["fix_it_checklist"])
+        assert "reconstructed_from_ledger" not in all_text
+
+
+class TestE2EHealthReportNoLeakPositionDetails:
+    """Health report must not leak fund names, amounts, or paths even if
+    nav_coverage_summary accidentally contains them."""
+
+    def test_no_private_data_leaked(self):
+        artifacts = {
+            "e2e_summary": _e2e_summary(),
+            "nav_coverage_summary": {
+                **_nav_coverage(),
+                "fund_name": "某真实基金",
+                "amount": 99999.99,
+                "path": "private_data/secret.json",
+            },
+            "portfolio_input_transactions_summary": {},
+            "identity_summary": {},
+            "valuation_summary": {},
+        }
+        result = build_personal_health_summary(artifacts)
+        output_str = str(result)
+        assert "某真实基金" not in output_str
+        assert "99999" not in output_str
+        assert "private_data" not in output_str

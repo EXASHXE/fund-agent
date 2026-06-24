@@ -95,7 +95,7 @@ def build_personal_health_summary(artifacts: Mapping[str, Any]) -> dict[str, Any
     if identity.get("name_only_count"):
         name_only_count = max(name_only_count, int(identity["name_only_count"]))
 
-    if valid_fund_codes_count == 0 and name_only_count == 0:
+    if valid_fund_codes_count == 0:
         reason_codes.append(REASON_NO_VALID_FUND_CODES)
 
     if name_only_count > 0:
@@ -293,13 +293,10 @@ def _determine_overall_status(
     if manual_review_count > 0:
         return "needs_manual_review"
 
-    if valid_fund_codes_count == 0 and name_only_count == 0:
+    if valid_fund_codes_count == 0:
         return "needs_data"
 
     if REASON_NAV_MISSING in reason_codes:
-        return "needs_data"
-
-    if name_only_count > 0 and valid_fund_codes_count == 0:
         return "needs_data"
 
     # Has some data but not complete

@@ -261,6 +261,24 @@ class TestHealthReportNameOnlyFunds:
         checklist_text = " ".join(result["fix_it_checklist"])
         assert "identity_overrides" in checklist_text
 
+    def test_name_only_zero_valid_codes_includes_no_valid_fund_codes(self):
+        """When valid_fund_codes_count=0 and name_only_count>0, both
+        no_valid_fund_codes AND name_only_funds should appear."""
+        artifacts = _base_artifacts()
+        artifacts["e2e_summary"]["pipeline_steps"]["valid_fund_codes_count"] = 0
+        artifacts["e2e_summary"]["pipeline_steps"]["name_only_count"] = 3
+        artifacts["identity_summary"]["name_only_count"] = 3
+        artifacts["nav_coverage_summary"]["positions_total"] = 0
+        artifacts["nav_coverage_summary"]["nav_coverage_full_count"] = 0
+
+        result = build_personal_health_summary(artifacts)
+        assert REASON_NO_VALID_FUND_CODES in result["reason_codes"]
+        assert REASON_NAME_ONLY_FUNDS in result["reason_codes"]
+        assert result["overall_status"] == "needs_data"
+        # Checklist should ask for identity overrides
+        checklist_text = " ".join(result["fix_it_checklist"])
+        assert "identity_overrides" in checklist_text
+
 
 class TestHealthReportUnavailable:
     """No transaction source, no portfolio input → unavailable."""
@@ -373,3 +391,100 @@ class TestHealthReportReasonCodeStability:
         artifacts["nav_coverage_summary"]["qdii_like_count"] = 1
         result = build_personal_health_summary(artifacts)
         assert len(result["reason_codes"]) == len(set(result["reason_codes"]))
+
+
+class TestHealthReportNavCoverageWiring:
+    """Verify NAV coverage summary from reconstruction feeds into health report."""
+
+    def test_nav_coverage_partial_from_summary(self):
+        """nav_coverage_summary with partial count → partial_nav_coverage reason code."""
+        artifacts = _base_artifacts()
+        artifacts["nav_coverage_summary"]["nav_coverage_full_count"] = 1
+        artifacts["nav_coverage_summary"]["nav_coverage_partial_count"] = 2
+        artifacts["nav_coverage_summary"]["positions_total"] = 3
+        artifacts["nav_coverage_summary"]["positions_estimated"] = 3
+
+        result = build_personal_health_summary(artifacts)
+        assert REASON_PARTIAL_NAV_COVERAGE in result["reason_codes"]
+        assert result["nav_coverage"]["partial"] == 2
+        assert result["nav_coverage"]["full"] == 1
+
+    def test_stale_qdii_nav_from_summary(self):
+        """nav_coverage_summary with stale+QDII → stale_nav and qdii_nav_lag."""
+        artifacts = _base_artifacts()
+        artifacts["nav_coverage_summary"]["latest_nav_stale_count"] = 2
+        artifacts["nav_coverage_summary"]["qdii_like_count"] = 1
+
+        result = build_personal_health_summary(artifacts)
+        assert REASON_STALE_NAV in result["reason_codes"]
+        assert REASON_QDII_NAV_LAG in result["reason_codes"]
+        assert result["nav_coverage"]["stale_count"] == 2
+        assert result["nav_coverage"]["qdii_like_count"] == 1
+
+    def test_cashflow_only_from_summary(self):
+        """nav_coverage_summary with positions_cashflow_only → cashflow_only reason."""
+        artifacts = _base_artifacts()
+        artifacts["nav_coverage_summary"]["nav_coverage_full_count"] = 1
+        artifacts["nav_coverage_summary"]["positions_cashflow_only"] = 2
+
+        result = build_personal_health_summary(artifacts)
+        assert REASON_CASHFLOW_ONLY in result["reason_codes"]
+        assert result["valuation_quality"]["cashflow_only_count"] == 2
+
+    def test_manual_review_positions_from_summary(self):
+        """nav_coverage_summary with positions_manual_review_required → counted."""
+        artifacts = _base_artifacts()
+        artifacts["nav_coverage_summary"]["positions_manual_review_required"] = 1
+
+        result = build_personal_health_summary(artifacts)
+        assert result["valuation_quality"]["manual_review_count"] == 1
+
+    def test_empty_nav_coverage_summary_still_works(self):
+        """Empty or missing nav_coverage_summary should not crash."""
+        artifacts = _base_artifacts()
+        artifacts["nav_coverage_summary"] = {}
+
+        result = build_personal_health_summary(artifacts)
+        assert result["schema_version"] == SCHEMA_VERSION
+        assert result["nav_coverage"]["full"] == 0
+        assert result["nav_coverage"]["partial"] == 0
+
+    def test_latest_only_from_summary(self):
+        """nav_coverage_summary with latest_only → counted in nav_coverage."""
+        artifacts = _base_artifacts()
+        artifacts["nav_coverage_summary"]["nav_coverage_full_count"] = 2
+        artifacts["nav_coverage_summary"]["nav_coverage_latest_only_count"] = 1
+
+        result = build_personal_health_summary(artifacts)
+        assert result["nav_coverage"]["latest_only"] == 1
+
+
+class TestHealthReportDoesNotLeakPositionDetails:
+    """Even if nav_coverage_summary or portfolio_summary contain private fields,
+    the health report must not output them."""
+
+    def test_no_fund_names_in_output(self):
+        artifacts = _base_artifacts()
+        # Simulate a nav_coverage_summary that accidentally includes private fields
+        artifacts["nav_coverage_summary"]["fund_name"] = "某真实基金名称"
+        artifacts["nav_coverage_summary"]["amount"] = 12345.67
+        artifacts["nav_coverage_summary"]["note"] = "private note"
+        artifacts["nav_coverage_summary"]["path"] = "private_data/something"
+
+        result = build_personal_health_summary(artifacts)
+        output_str = str(result)
+        assert "某真实基金名称" not in output_str
+        assert "12345.67" not in output_str
+        assert "private note" not in output_str
+        assert "private_data" not in output_str
+
+    def test_no_real_amounts_in_output(self):
+        """estimated_current_value_total should not appear in reason_codes or checklist."""
+        artifacts = _base_artifacts()
+        artifacts["nav_coverage_summary"]["estimated_current_value_total"] = 999999.99
+
+        result = build_personal_health_summary(artifacts)
+        for code in result["reason_codes"]:
+            assert "999999" not in str(code)
+        for item in result["fix_it_checklist"]:
+            assert "999999" not in str(item)

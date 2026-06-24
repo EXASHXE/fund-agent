@@ -20,7 +20,10 @@ existing E2E pipeline outputs into a single structured view. It answers:
 ## Accessing the Health Report
 
 The health report is automatically included in `e2e_summary.json` under the
-`personal_health_report` key whenever you run the E2E pipeline:
+`personal_health_report` key whenever you run the E2E pipeline. It consumes
+NAV coverage diagnostics from the reconstruction summary
+(`confirmed_portfolio.private.json` → `summary.nav_coverage_summary`) to
+populate coverage counts, stale NAV, and QDII-like detection:
 
 ```bash
 bin/fund-agent-e2e --skip-akshare --skip-news
@@ -58,7 +61,7 @@ calculations — it only affects console output.
 
 | Code | Meaning |
 |------|---------|
-| `no_valid_fund_codes` | No six-digit fund codes resolved from transactions |
+| `no_valid_fund_codes` | No six-digit fund codes resolved — identity data needed |
 | `nav_missing` | NAV snapshot is unavailable |
 | `partial_nav_coverage` | Some trades lack trade-date NAV |
 | `manual_review_transactions` | Conversion/refund/unknown transactions present |
@@ -68,6 +71,12 @@ calculations — it only affects console output.
 | `cashflow_only` | Some positions are cashflow-only (no valuation) |
 | `estimated_only` | All positions are estimated (no confirmed valuation) |
 | `name_only_funds` | Some funds resolved by name only (no fund code) |
+
+**`no_valid_fund_codes` vs `name_only_funds`:** When no valid six-digit
+fund codes exist at all, `no_valid_fund_codes` fires. If some funds were
+resolved by name only (but still lack a valid code), `name_only_funds`
+fires additionally. Both can appear together — this means identity
+overrides are needed to map fund names to codes.
 
 ## Fix-it Checklist
 

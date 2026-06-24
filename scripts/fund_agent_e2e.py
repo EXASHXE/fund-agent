@@ -243,6 +243,37 @@ def _collect_coverage(factor_snapshot: Path, news_snapshot: Path) -> dict[str, A
     return coverage
 
 
+def _load_nav_coverage_summary(portfolio_dir: Path) -> dict[str, Any]:
+    """Load NAV coverage summary from reconstruction output.
+
+    Reads only the summary counts — never copies holdings, fund names,
+    amounts, or transaction details. Returns {} if unavailable.
+    """
+    confirmed = portfolio_dir / "confirmed_portfolio.private.json"
+    if not confirmed.exists():
+        return {}
+    try:
+        data = json.loads(confirmed.read_text(encoding="utf-8"))
+        # nav_coverage_summary is nested under summary.nav_coverage_summary
+        summary = data.get("summary", {})
+        nav_cs = summary.get("nav_coverage_summary")
+        if isinstance(nav_cs, dict):
+            # Return only counts — strip any private fields if present
+            safe_keys = {
+                "positions_total", "positions_estimated", "positions_cashflow_only",
+                "positions_unavailable", "positions_manual_review_required",
+                "nav_coverage_full_count", "nav_coverage_partial_count",
+                "nav_coverage_none_count", "nav_coverage_latest_only_count",
+                "latest_nav_stale_count", "qdii_like_count",
+                "estimated_current_value_total", "estimated_current_value_coverage_count",
+                "estimated_current_value_total_is_partial",
+            }
+            return {k: v for k, v in nav_cs.items() if k in safe_keys}
+    except (OSError, json.JSONDecodeError, TypeError):
+        pass
+    return {}
+
+
 def _build_personal_health_report(
     *,
     pipeline: PipelineState,
@@ -251,6 +282,7 @@ def _build_personal_health_report(
     portfolio_input_txn_stats: dict[str, Any],
     identity_resolution_summary: dict[str, Any],
     valuation_type_counts: dict[str, int],
+    nav_coverage_summary: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build personal health report from collected pipeline state.
 
@@ -275,6 +307,7 @@ def _build_personal_health_report(
             "portfolio_input_transactions_summary": portfolio_input_txn_stats,
             "identity_summary": identity_resolution_summary,
             "valuation_summary": valuation_type_counts,
+            "nav_coverage_summary": nav_coverage_summary or {},
         }
         return build_personal_health_summary(artifacts)
     except Exception as exc:
@@ -783,6 +816,7 @@ def run_pipeline(args: argparse.Namespace) -> int:
             portfolio_input_txn_stats=portfolio_input_txn_stats,
             identity_resolution_summary=identity_resolution_summary,
             valuation_type_counts=valuation_type_counts,
+            nav_coverage_summary=_load_nav_coverage_summary(portfolio_dir),
         ),
         "pipeline_version": _read_version(),
     }
