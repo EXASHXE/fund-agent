@@ -70,6 +70,20 @@ and surfaces warnings in the E2E summary and report:
 - The report mentions when manual review is needed
 - Warning output is counts-only — no real fund names, amounts, or IDs
 
+### NAV Coverage Quality (v0.10.6+)
+
+The pipeline tracks trade-date NAV coverage for each position:
+
+- `full`: All buy/sell have trade-date NAV or explicit units
+- `partial`: Some trades missing NAV — estimated value is approximate
+- `none`: No trade-date NAV available
+- `latest_only`: Only latest NAV — cannot infer historical units
+
+Key rules:
+- `latest_nav` alone does NOT create historical units
+- Stale NAV (>7 days domestic, >10 days QDII) triggers a warning
+- Conversion/refund/unknown transactions require manual review
+
 ## Safety
 
 - **Never commit real portfolio data** — use `local_data/` or `private_data/`

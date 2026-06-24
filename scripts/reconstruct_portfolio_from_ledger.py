@@ -29,6 +29,12 @@ from pathlib import Path
 from typing import Any
 
 from scripts.fund_identity_utils import is_valid_fund_code, normalize_fund_name
+from src.tools.portfolio.nav_coverage import (
+    DOMESTIC_STALE_THRESHOLD_DAYS,
+    QDII_STALE_THRESHOLD_DAYS,
+    compute_nav_coverage,
+    compute_portfolio_nav_coverage,
+)
 
 
 def _parse_date(val) -> date | None:
@@ -399,6 +405,41 @@ def reconstruct_portfolio(
         if has_manual_review:
             data_quality_flags.append("has_manual_review_transactions")
 
+        # NAV coverage diagnostics
+        nav_cov = compute_nav_coverage(
+            fund_code=fund_code,
+            transactions=txns,
+            nav_records=nav_records,
+            as_of_date=as_of,
+            is_qdii_like=False,  # default; enriched below if profile available
+        )
+        valuation_quality = nav_cov["valuation_quality"]
+        nav_coverage_status = nav_cov["coverage_status"]
+        latest_nav_stale_days = nav_cov.get("latest_nav_stale_days")
+        is_qdii_like = nav_cov.get("is_qdii_like", False)
+
+        # If latest_nav_stale_days not set by nav_coverage but we have a date, compute it
+        if latest_nav_stale_days is None and latest_nav_date:
+            nav_date = date.fromisoformat(latest_nav_date)
+            stale = (as_of - nav_date).days
+            threshold = QDII_STALE_THRESHOLD_DAYS if is_qdii_like else DOMESTIC_STALE_THRESHOLD_DAYS
+            if stale > threshold:
+                latest_nav_stale_days = stale
+                data_quality_flags.append("latest_nav_stale")
+
+        # Manual review reasons
+        manual_review_required = has_manual_review
+        manual_review_reasons: list[str] = []
+        if has_manual_review:
+            manual_review_reasons.append("has_manual_review_transactions")
+        if nav_cov.get("warnings"):
+            for w in nav_cov["warnings"]:
+                if "conversion/refund/unknown" in w:
+                    manual_review_reasons.append("conversion_refund_unknown_transactions")
+                    manual_review_required = True
+        if valuation_quality == "manual_review_required":
+            manual_review_required = True
+
         confirmed_avg_cost = _safe_round(confirmed_cost / confirmed_units) if confirmed_units > 0 else None
         confirmed_cost_basis = _safe_round(confirmed_cost)
 
@@ -412,10 +453,17 @@ def reconstruct_portfolio(
             "average_cost_per_unit": confirmed_avg_cost,
             "latest_nav": latest_nav,
             "latest_nav_date": latest_nav_date,
+            "latest_nav_stale_days": latest_nav_stale_days,
             "valuation_type": valuation_type,
             "valuation_source": valuation_source,
+            "valuation_quality": valuation_quality,
+            "nav_coverage_status": nav_coverage_status,
             "trade_nav_coverage_ratio": trade_nav_coverage_ratio,
             "trade_nav_missing_count": nav_missing_count,
+            "trades_missing_trade_date_nav": nav_cov.get("trades_missing_trade_date_nav", 0),
+            "is_qdii_like": is_qdii_like,
+            "manual_review_required": manual_review_required,
+            "manual_review_reasons": manual_review_reasons,
             "manual_review_transaction_count": manual_review_txn_count,
             "data_quality": data_quality_flags,
             "buy_count": confirmed_buy_count,
@@ -524,6 +572,11 @@ def reconstruct_portfolio(
         "pending_transaction_count": len(pending_transactions),
     }
 
+    # Portfolio-level NAV coverage summary
+    nav_coverage_summary = compute_portfolio_nav_coverage(
+        confirmed_positions, as_of_date=as_of,
+    )
+
     confirmed_portfolio = {
         "schema_version": "confirmed_portfolio.v1",
         "as_of_date": as_of.isoformat(),
@@ -540,6 +593,7 @@ def reconstruct_portfolio(
                 "cashflow_only": sum(1 for p in confirmed_positions if p["valuation_type"] == "cashflow_only"),
                 "none": sum(1 for p in confirmed_positions if p["valuation_type"] == "none"),
             },
+            "nav_coverage_summary": nav_coverage_summary,
         },
     }
 

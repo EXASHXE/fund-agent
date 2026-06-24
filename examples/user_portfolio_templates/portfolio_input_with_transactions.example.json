@@ -69,6 +69,22 @@
       "amount": 300.00,
       "source": "manual_private_input",
       "note": "synthetic example — name-only, no fund_code"
+    },
+    {
+      "trade_date": "2026-06-22",
+      "fund_code": "000001",
+      "fund_name": "示例基金A",
+      "transaction_type": "fee",
+      "amount": 1.50,
+      "note": "synthetic example — fee does not change units"
+    },
+    {
+      "trade_date": "2026-06-18",
+      "fund_code": "000002",
+      "fund_name": "示例基金B",
+      "transaction_type": "conversion_out",
+      "amount": 50.00,
+      "note": "synthetic example — conversion requires manual review"
     }
   ]
 }

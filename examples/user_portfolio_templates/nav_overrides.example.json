@@ -1,0 +1,15 @@
+{
+  "schema_version": "nav_overrides.v1",
+  "description": "Synthetic example — trade-date NAV overrides for unit estimation. Never commit real data.",
+  "overrides": {
+    "000001": {
+      "2026-06-01": 1.2345,
+      "2026-06-10": 1.2350,
+      "2026-06-15": 1.2400
+    },
+    "000002": {
+      "2026-06-15": 2.1000,
+      "2026-06-20": 2.1100
+    }
+  }
+}

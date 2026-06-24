@@ -117,9 +117,23 @@ def normalize_portfolio_input_transaction(
     if nav is not None and isinstance(nav, (int, float)):
         entry["nav"] = float(nav)
 
-    # Mark ambiguous portfolio effects
+    # Mark ambiguous portfolio effects and manual review
+    manual_review_reasons: list[str] = []
     if action in ("conversion", "refund"):
         entry["ambiguous_portfolio_effect"] = True
+        manual_review_reasons.append(f"ambiguous_portfolio_effect: {action}")
+    if action == "unknown":
+        manual_review_reasons.append("unknown_transaction_type")
+
+    # Fee/dividend do not change units — mark for clarity
+    if action == "fee":
+        entry["fee_transaction"] = True
+    if action == "dividend":
+        entry["dividend_transaction"] = True
+
+    entry["manual_review_required"] = bool(manual_review_reasons) or bool(warnings)
+    if manual_review_reasons:
+        entry["manual_review_reasons"] = manual_review_reasons
 
     if warnings:
         entry["warnings"] = warnings
@@ -172,6 +186,7 @@ def build_ledger_from_portfolio_input_transactions(
     normalized.sort(key=lambda t: t.get("trade_date") or "9999-99-99")
 
     manual_review_count = sum(1 for t in normalized if t.get("needs_manual_review"))
+    manual_review_required_count = sum(1 for t in normalized if t.get("manual_review_required"))
 
     summary = {
         "total_transactions": len(normalized),
@@ -179,6 +194,7 @@ def build_ledger_from_portfolio_input_transactions(
         "invalid_count": invalid_count,
         "warning_count": len(all_warnings),
         "manual_review_count": manual_review_count,
+        "manual_review_required_count": manual_review_required_count,
         "user_provided_private_input": sum(
             1 for t in normalized if t.get("confirmation_type") == "user_provided_private_input"
         ),
@@ -189,6 +205,11 @@ def build_ledger_from_portfolio_input_transactions(
         "ambiguous_portfolio_effect": sum(
             1 for t in normalized if t.get("ambiguous_portfolio_effect")
         ),
+        "fee_transaction_count": sum(1 for t in normalized if t.get("fee_transaction")),
+        "dividend_transaction_count": sum(1 for t in normalized if t.get("dividend_transaction")),
+        "conversion_count": sum(1 for t in normalized if t.get("action") == "conversion"),
+        "refund_count": sum(1 for t in normalized if t.get("action") == "refund"),
+        "unknown_count": sum(1 for t in normalized if t.get("action") == "unknown"),
         "invalid_fund_code_count": invalid_fund_code_count,
         "invalid_date_count": invalid_date_count,
         "invalid_amount_count": invalid_amount_count,

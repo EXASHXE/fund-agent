@@ -202,6 +202,47 @@ The pipeline distinguishes four valuation types for positions:
 | `cashflow_only` | Only transaction cashflow known, no NAV | No fake `0.00` value shown |
 | `none` | No valuation data at all | Marked as missing |
 
+### Valuation Quality (v0.10.6+)
+
+Each position also has a `valuation_quality` label:
+
+| Quality | Meaning |
+|---------|---------|
+| `estimated_full_coverage` | All buy/sell have trade-date NAV or explicit units |
+| `estimated_partial_coverage` | Some trades missing NAV — value is approximate |
+| `cashflow_only` | No units or current_value — cashflow only |
+| `unavailable` | No data at all |
+| `manual_review_required` | Conversion/refund/unknown present, or validation warnings |
+
+### NAV Coverage (v0.10.6+)
+
+Each position has a `nav_coverage_status`:
+
+| Status | Meaning |
+|--------|---------|
+| `full` | All buy/sell have trade-date NAV or explicit units |
+| `partial` | Some trades have NAV, but not all |
+| `none` | No trade-date NAV available |
+| `latest_only` | Only latest NAV available (cannot infer historical units) |
+
+Key rules:
+- `latest_nav` alone does NOT create historical units
+- Explicit `units` from user input satisfy coverage without requiring NAV
+- Stale NAV (>7 days domestic, >10 days QDII) triggers a warning
+- QDII-like detection requires `is_qdii` from fund profile — no guessing
+
+### Special Transaction Semantics (v0.10.6+)
+
+| Type | Units Effect | Manual Review |
+|------|-------------|---------------|
+| buy/sell | Change units | No |
+| dividend | No change | No |
+| fee | No change | No |
+| conversion_in/out | Ambiguous | Yes |
+| refund | Ambiguous | Yes |
+| unknown | Unknown | Yes |
+| `none` | No valuation data at all | Marked as missing |
+
 ### Key Rules
 
 - **cashflow_only** positions must **not** display fake `0.00` as current value.

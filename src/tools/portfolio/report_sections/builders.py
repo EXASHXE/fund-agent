@@ -271,6 +271,54 @@ def _build_reconstruction_status(context: dict[str, Any]) -> dict[str, Any]:
             limitations.append(
                 "Some user-provided transactions need manual review before relying on reconstructed valuation."
             )
+        # Special transaction type counts
+        conv_count = pi_txn_summary.get("conversion_count", 0)
+        refund_count = pi_txn_summary.get("refund_count", 0)
+        fee_count = pi_txn_summary.get("fee_transaction_count", 0)
+        div_count = pi_txn_summary.get("dividend_transaction_count", 0)
+        unknown_count = pi_txn_summary.get("unknown_count", 0)
+        special_parts = []
+        if conv_count > 0:
+            special_parts.append(f"conversion={conv_count}")
+        if refund_count > 0:
+            special_parts.append(f"refund={refund_count}")
+        if fee_count > 0:
+            special_parts.append(f"fee={fee_count}")
+        if div_count > 0:
+            special_parts.append(f"dividend={div_count}")
+        if unknown_count > 0:
+            special_parts.append(f"unknown={unknown_count}")
+        if special_parts:
+            bullets.append(f"Special transactions: {', '.join(special_parts)}.")
+        if conv_count > 0 or refund_count > 0 or unknown_count > 0:
+            limitations.append(
+                "Conversion/refund/unknown transactions require manual review; they are not included in estimated valuation."
+            )
+
+    # NAV coverage diagnostics
+    nav_cov = _as_dict(artifacts.get("nav_coverage_summary"))
+    if nav_cov:
+        full = nav_cov.get("nav_coverage_full_count", 0)
+        partial = nav_cov.get("nav_coverage_partial_count", 0)
+        none_count = nav_cov.get("nav_coverage_none_count", 0)
+        stale = nav_cov.get("latest_nav_stale_count", 0)
+        qdii = nav_cov.get("qdii_like_count", 0)
+        bullets.append(f"NAV coverage: full={full}, partial={partial}, none={none_count}.")
+        if stale > 0:
+            bullets.append(f"Stale latest NAV: {stale} fund(s).")
+            limitations.append("Some positions have stale NAV — estimated values may not reflect current market.")
+        if qdii > 0:
+            bullets.append(f"QDII-like positions: {qdii} fund(s), latest NAV may lag.")
+        # Valuation quality
+        mr_count = nav_cov.get("positions_manual_review_required", 0)
+        est_partial = nav_cov.get("estimated_current_value_total_is_partial", False)
+        if mr_count > 0:
+            bullets.append(f"Manual review required: {mr_count} position(s).")
+        if est_partial:
+            limitations.append(
+                "Estimated current value is partial — not all positions have valuation data. "
+                "Do not treat this as complete portfolio market value."
+            )
 
     if source_of_truth == "derived_from_transactions":
         bullets.append("Ledger built from transactions + current_nav: yes.")
