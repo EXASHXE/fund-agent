@@ -216,14 +216,12 @@ class TestNavOverrideSchema:
 
 
 class TestDoctorOutputRedaction:
-    def test_doctor_no_real_fund_names_in_output(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    def test_doctor_no_real_fund_names_in_output(self, tmp_path: Path):
         """Doctor output must not contain real fund names from overrides."""
-        import scripts.fund_agent_private_data_doctor as doctor_mod
+        from scripts.fund_agent_private_data_doctor import run_doctor
 
-        # Point to tmp private_data with fake data
         fake_private = tmp_path / "private_data"
         fake_private.mkdir()
-        monkeypatch.setattr(doctor_mod, "PRIVATE_DATA_DIR", fake_private)
 
         # Write identity overrides with fake names
         yaml_content = textwrap.dedent("""\
@@ -234,7 +232,7 @@ class TestDoctorOutputRedaction:
         """)
         (fake_private / "fund_identity_overrides.private.yaml").write_text(yaml_content, encoding="utf-8")
 
-        result = doctor_mod.run_doctor()
+        result = run_doctor(fake_private)
         output = json.dumps(result, default=str)
 
         # The fake name should appear only in the YAML file, not in doctor output
@@ -243,38 +241,71 @@ class TestDoctorOutputRedaction:
             # No raw_name or fund_name values in details
             assert "Fake Test Fund Alpha" not in json.dumps(check.get("details", {}), default=str)
 
-    def test_doctor_no_amounts_in_output(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    def test_doctor_no_amounts_in_output(self, tmp_path: Path):
         """Doctor output must not contain NAV values."""
-        import scripts.fund_agent_private_data_doctor as doctor_mod
+        from scripts.fund_agent_private_data_doctor import run_doctor
 
         fake_private = tmp_path / "private_data"
         fake_private.mkdir()
-        monkeypatch.setattr(doctor_mod, "PRIVATE_DATA_DIR", fake_private)
 
         nav_data = {"000001": {"2026-01-15": 1.2345}}
         (fake_private / "nav_overrides.private.json").write_text(
             json.dumps(nav_data), encoding="utf-8"
         )
 
-        result = doctor_mod.run_doctor()
+        result = run_doctor(fake_private)
         output = json.dumps(result, default=str)
 
         # NAV values should not appear in output
         assert "1.2345" not in output
 
-    def test_doctor_reports_csv_count_only(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    def test_doctor_reports_csv_count_only(self, tmp_path: Path):
         """Doctor should report CSV file count, not content."""
-        import scripts.fund_agent_private_data_doctor as doctor_mod
+        from scripts.fund_agent_private_data_doctor import run_doctor
 
         fake_private = tmp_path / "private_data"
         fake_private.mkdir()
-        monkeypatch.setattr(doctor_mod, "PRIVATE_DATA_DIR", fake_private)
 
         (fake_private / "test_export.csv").write_text("header\nrow1\n", encoding="utf-8")
         (fake_private / "test_export2.csv").write_text("header\nrow1\n", encoding="utf-8")
 
-        result = doctor_mod.run_doctor()
+        result = run_doctor(fake_private)
         csv_check = next(c for c in result["checks"] if c["id"] == "alipay_csv.exists")
         assert csv_check["details"]["count"] == 2
         # No CSV content in output
         assert "header" not in json.dumps(result, default=str)
+
+    def test_doctor_respects_custom_private_data_dir(self, tmp_path: Path):
+        """run_doctor(private_data_dir=custom) checks custom dir."""
+        from scripts.fund_agent_private_data_doctor import run_doctor
+
+        custom_pd = tmp_path / "custom_private"
+        custom_pd.mkdir()
+
+        # Place portfolio_input in custom dir
+        pi = {"schema_version": "portfolio_input.v1", "holdings": []}
+        (custom_pd / "portfolio_input.private.json").write_text(
+            json.dumps(pi), encoding="utf-8"
+        )
+
+        result = run_doctor(custom_pd)
+
+        # Should find the directory
+        dir_check = next(c for c in result["checks"] if c["id"] == "private_data.exists")
+        assert dir_check["status"] == "OK"
+
+        # Should find portfolio_input
+        pi_check = next(c for c in result["checks"] if c["id"] == "portfolio_input.exists")
+        assert pi_check["status"] == "OK"
+
+        # Output must not contain the absolute path
+        output = json.dumps(result, default=str)
+        assert str(custom_pd) not in output
+
+    def test_doctor_default_dir_backward_compat(self):
+        """run_doctor() without args still works (backward compat)."""
+        from scripts.fund_agent_private_data_doctor import run_doctor
+
+        result = run_doctor()
+        assert "ok" in result
+        assert "checks" in result

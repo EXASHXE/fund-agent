@@ -56,14 +56,14 @@ def _git_ls_files(patterns: list[str]) -> list[str]:
     return []
 
 
-def _check_private_data_dir() -> dict[str, Any]:
-    if PRIVATE_DATA_DIR.is_dir():
-        return _check("private_data.exists", "OK", "private_data/ directory exists")
-    return _check("private_data.exists", "WARNING", "private_data/ directory not found")
+def _check_private_data_dir(private_data_dir: Path) -> dict[str, Any]:
+    if private_data_dir.is_dir():
+        return _check("private_data.exists", "OK", "private_data directory exists")
+    return _check("private_data.exists", "WARNING", "configured private data directory not found")
 
 
-def _check_alipay_csv() -> dict[str, Any]:
-    csv_files = list(PRIVATE_DATA_DIR.glob("*.csv")) if PRIVATE_DATA_DIR.is_dir() else []
+def _check_alipay_csv(private_data_dir: Path) -> dict[str, Any]:
+    csv_files = list(private_data_dir.glob("*.csv")) if private_data_dir.is_dir() else []
     count = len(csv_files)
     if count > 0:
         return _check(
@@ -75,8 +75,8 @@ def _check_alipay_csv() -> dict[str, Any]:
     return _check("alipay_csv.exists", "WARNING", "No CSV files found in private_data/")
 
 
-def _check_identity_overrides() -> dict[str, Any]:
-    yaml_path = PRIVATE_DATA_DIR / "fund_identity_overrides.private.yaml"
+def _check_identity_overrides(private_data_dir: Path) -> dict[str, Any]:
+    yaml_path = private_data_dir / "fund_identity_overrides.private.yaml"
     if not yaml_path.exists():
         return _check("identity_overrides.exists", "WARNING", "fund_identity_overrides.private.yaml not found")
 
@@ -128,8 +128,8 @@ def _check_identity_overrides() -> dict[str, Any]:
     return _check("identity_overrides.schema", status, message, details)
 
 
-def _check_nav_overrides() -> dict[str, Any]:
-    json_path = PRIVATE_DATA_DIR / "nav_overrides.private.json"
+def _check_nav_overrides(private_data_dir: Path) -> dict[str, Any]:
+    json_path = private_data_dir / "nav_overrides.private.json"
     if not json_path.exists():
         return _check("nav_overrides.exists", "WARNING", "nav_overrides.private.json not found")
 
@@ -178,8 +178,8 @@ def _check_nav_overrides() -> dict[str, Any]:
     return _check("nav_overrides.schema", status, message, details)
 
 
-def _check_portfolio_input() -> dict[str, Any]:
-    json_path = PRIVATE_DATA_DIR / "portfolio_input.private.json"
+def _check_portfolio_input(private_data_dir: Path) -> dict[str, Any]:
+    json_path = private_data_dir / "portfolio_input.private.json"
     if not json_path.exists():
         return _check("portfolio_input.exists", "INFO", "portfolio_input.private.json not found (optional)")
     try:
@@ -235,16 +235,27 @@ def _check_no_private_tracked() -> dict[str, Any]:
     return _check("privacy.no_tracked_private", "OK", "No private files tracked by git")
 
 
-def run_doctor() -> dict[str, Any]:
+def run_doctor(private_data_dir: str | Path | None = None) -> dict[str, Any]:
+    """Run private data doctor checks.
+
+    Args:
+        private_data_dir: Path to private data directory.
+            Defaults to REPO_ROOT / "private_data".
+
+    Returns:
+        Dict with ok, status, checks, warnings, errors.
+    """
+    pdd = Path(private_data_dir) if private_data_dir else PRIVATE_DATA_DIR
+
     checks: list[dict[str, Any]] = []
     warnings: list[str] = []
     errors: list[str] = []
 
-    checks.append(_check_private_data_dir())
-    checks.append(_check_alipay_csv())
-    checks.append(_check_identity_overrides())
-    checks.append(_check_nav_overrides())
-    checks.append(_check_portfolio_input())
+    checks.append(_check_private_data_dir(pdd))
+    checks.append(_check_alipay_csv(pdd))
+    checks.append(_check_identity_overrides(pdd))
+    checks.append(_check_nav_overrides(pdd))
+    checks.append(_check_portfolio_input(pdd))
     checks.append(_check_gitignore_coverage())
     checks.append(_check_no_private_tracked())
 
@@ -286,9 +297,13 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Pretty-print the JSON output.",
     )
+    parser.add_argument(
+        "--private-data-dir", default="",
+        help="Private data directory (default: private_data/)",
+    )
     args = parser.parse_args(argv)
 
-    result = run_doctor()
+    result = run_doctor(args.private_data_dir if args.private_data_dir else None)
 
     indent = 2 if args.pretty else None
     separators = None if args.pretty else (",", ":")
