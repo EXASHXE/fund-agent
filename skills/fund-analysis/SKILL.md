@@ -575,6 +575,18 @@ and read SKILL.md files. It does NOT launch Python, call the runtime bridge,
 fetch live data, or manage MCP servers. Runtime execution requires host,
 manual, Python subprocess, or other integration outside the OpenCode plugin.
 
+## Agent-facing personal run
+
+For agent consumption, `bin/fund-agent-personal-run` produces a deterministic
+evidence package including `agent_context.md` and `agent_context.json`. Agents
+should read `agent_context.md` first — it explains what data is safe to analyze
+and what should not be inferred. The CLI is the entry point, not the analysis
+interface. See `docs/usage/personal-run.md` for details.
+
+- `--skip-akshare` and `--skip-news` are **on by default** (deterministic mode)
+- Live data should be injected by the host/agent explicitly
+- fund-agent generates evidence; agents interpret
+
 ## Chinese personal fund example
 
 A typical Chinese fund user scenario:

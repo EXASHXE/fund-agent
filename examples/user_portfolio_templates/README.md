@@ -99,6 +99,17 @@ To print only the health report:
 bin/fund-agent-e2e --health-report-only --skip-akshare --skip-news
 ```
 
+For agent consumption, use `fund-agent-personal-run` which produces
+`agent_context.md` alongside the health report:
+
+```bash
+bin/fund-agent-personal-run --skip-akshare --skip-news
+```
+
+Agents should read `agent_context.md` first — it explains what data is safe
+to analyze and what should not be inferred. See `docs/usage/personal-run.md`
+for the full agent-facing workflow.
+
 See `docs/usage/personal-health-report.md` for details.
 
 ## Safety

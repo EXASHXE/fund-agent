@@ -253,6 +253,23 @@ Key rules:
 
 ## Running Scenarios
 
+### Agent-facing evidence package (recommended)
+
+For agent consumption, use `fund-agent-personal-run` which produces a complete
+evidence package including `agent_context.md` for external agents:
+
+```bash
+# Deterministic mode (default: skip-akshare + skip-news)
+bin/fund-agent-personal-run --skip-akshare --skip-news
+
+# With live data (explicit opt-in)
+bin/fund-agent-personal-run --no-skip-akshare --no-skip-news
+```
+
+See [Personal Run usage guide](usage/personal-run.md) for the full workflow.
+
+### Direct E2E pipeline
+
 ```bash
 # Scenario A: raw CSV only
 bin/fund-agent-e2e --skip-akshare --skip-news
@@ -310,7 +327,15 @@ To print only the health report:
 bin/fund-agent-e2e --health-report-only --skip-akshare --skip-news
 ```
 
-See [Personal Health Report usage guide](usage/personal-health-report.md) for details.
+For agent consumption, use `fund-agent-personal-run` which produces
+`agent_context.md` and `agent_context.json` alongside the health report:
+
+```bash
+bin/fund-agent-personal-run --skip-akshare --skip-news
+```
+
+See [Personal Health Report usage guide](usage/personal-health-report.md) and
+[Personal Run usage guide](usage/personal-run.md) for details.
 
 ## Safety Boundaries
 

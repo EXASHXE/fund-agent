@@ -23,7 +23,21 @@ The health report is automatically included in `e2e_summary.json` under the
 `personal_health_report` key whenever you run the E2E pipeline. It consumes
 NAV coverage diagnostics from the reconstruction summary
 (`confirmed_portfolio.private.json` → `summary.nav_coverage_summary`) to
-populate coverage counts, stale NAV, and QDII-like detection:
+populate coverage counts, stale NAV, and QDII-like detection.
+
+### Via personal-run (recommended for agent consumption)
+
+```bash
+bin/fund-agent-personal-run --skip-akshare --skip-news
+```
+
+This produces a full evidence package including `personal_health_report.json`
+and `agent_context.md`. Agents should read `agent_context.md` first — it
+explains what data is safe to analyze and what should not be inferred.
+
+See [personal-run.md](personal-run.md) for the full agent-facing workflow.
+
+### Via E2E pipeline directly
 
 ```bash
 bin/fund-agent-e2e --skip-akshare --skip-news
@@ -36,7 +50,8 @@ bin/fund-agent-e2e --health-report-only --skip-akshare --skip-news
 ```
 
 The `--health-report-only` flag does **not** skip pipeline steps or change
-calculations — it only affects console output.
+calculations — it only affects console output. It does NOT replace agent
+analysis — it is a data quality diagnostic, not an interpretation.
 
 ## Interpreting Overall Status
 
