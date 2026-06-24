@@ -297,6 +297,12 @@ Run the private data doctor to verify your files are correctly structured:
 bin/fund-agent-private-data-doctor --pretty
 ```
 
+To check a custom directory:
+
+```bash
+bin/fund-agent-private-data-doctor --pretty --private-data-dir /path/to/custom_data
+```
+
 The doctor checks:
 1. `private_data/` directory exists
 2. CSV files present (count only, no content)

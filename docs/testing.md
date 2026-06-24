@@ -153,6 +153,25 @@ They require `private_data/` with real data files.
 PYTHONPATH=. python scripts/fund_agent_e2e.py --as-of 2026-06-20 --skip-akshare
 ```
 
+## Personal Run Testing
+
+The personal-run CLI orchestrates doctor → E2E → health report → agent context.
+
+```bash
+# Run personal-run tests
+PYTHONPATH=. pytest -q tests/scripts/test_personal_run.py
+
+# Test agent context module
+PYTHONPATH=. pytest -q tests/tools/portfolio/test_agent_context.py
+```
+
+Key behaviors tested:
+- `--private-data-dir` applies to both doctor and E2E
+- `--health-report-only --summary-path` reads existing summary without running pipeline
+- `--agent-context-only --run-dir` reads existing summary without running pipeline
+- Default mode (no --summary-path/--run-dir) runs full pipeline
+- No private paths in agent_context or manifest output
+
 ## Parallel Testing (Optional)
 
 If `pytest-xdist` is installed (dev extra):

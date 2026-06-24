@@ -12,6 +12,8 @@ interpret, follow up, and synthesize.
 
 ## Usage
 
+### First run (full pipeline)
+
 ```bash
 bin/fund-agent-personal-run \
   --private-data-dir private_data \
@@ -21,11 +23,19 @@ bin/fund-agent-personal-run \
   --skip-news
 ```
 
+### Subsequent agent re-read (skip pipeline)
+
+```bash
+bin/fund-agent-personal-run \
+  --agent-context-only \
+  --run-dir local_reports/20260701-153000
+```
+
 ### Flags
 
 | Flag | Default | Purpose |
 |------|---------|---------|
-| `--private-data-dir` | `private_data/` | Private data directory |
+| `--private-data-dir` | `private_data/` | Private data directory (applies to both doctor and E2E) |
 | `--output-dir` | `local_reports/` | Output root directory |
 | `--transaction-source` | `auto` | Transaction source: auto, alipay, portfolio_input |
 | `--skip-akshare` | **on** | No live provider calls (deterministic mode) |
@@ -36,6 +46,8 @@ bin/fund-agent-personal-run \
 | `--dry-run` | off | Print steps without executing |
 | `--health-report-only` | off | Print only personal_health_report JSON |
 | `--agent-context-only` | off | Print only agent_context.md |
+| `--summary-path` | off | Path to existing e2e_summary.json (skip pipeline) |
+| `--run-dir` | off | Path to run directory containing e2e_summary.json (skip pipeline) |
 
 ### Deterministic Mode
 
@@ -43,14 +55,50 @@ bin/fund-agent-personal-run \
 runtime deterministic and offline. Live data should be injected by the
 host/agent explicitly — the CLI does not become a live research system.
 
-## Execution Steps
+## --private-data-dir
 
-1. Run private data doctor
-2. Run E2E pipeline
+The `--private-data-dir` flag applies to **both** the private data doctor and
+the E2E pipeline. This ensures they check the same directory. Default is
+`private_data/` (relative to repo root).
+
+## Execution Modes
+
+### Default mode (full pipeline)
+
+1. Run private data doctor (with `--private-data-dir`)
+2. Run E2E pipeline (with `--private-data-dir`)
 3. Build personal_health_report
 4. Build agent_context (md + json)
 5. Write all artifacts to output directory
 6. Print concise console summary
+
+### --health-report-only
+
+Two behaviors:
+
+- **With `--summary-path` or `--run-dir`**: Reads the existing e2e_summary.json
+  and prints only the personal_health_report JSON. Does NOT run doctor or E2E.
+- **Without `--summary-path` or `--run-dir`**: Runs the full pipeline, then
+  prints only the personal_health_report JSON.
+
+Does NOT replace agent analysis — it is a data quality diagnostic, not an
+interpretation.
+
+### --agent-context-only
+
+Two behaviors:
+
+- **With `--summary-path` or `--run-dir`**: Reads the existing e2e_summary.json,
+  generates and prints agent_context.md, and writes agent_context.md/json to
+  the run directory. Does NOT run doctor or E2E.
+- **Without `--summary-path` or `--run-dir`**: Runs the full pipeline, then
+  prints only the agent_context.md.
+
+### Recommended agent workflow
+
+1. **First run**: `bin/fund-agent-personal-run` — produces full evidence package
+2. **Agent re-read**: `bin/fund-agent-personal-run --agent-context-only --run-dir local_reports/<run_id>`
+   — reads existing summary, regenerates agent context without re-running pipeline
 
 ## Output Directory
 
@@ -98,17 +146,6 @@ Next:
 Ask your agent to read agent_context.md and continue the analysis.
 ```
 
-## --health-report-only
-
-Prints only the personal health report JSON. Does NOT replace agent analysis —
-it is a data quality diagnostic, not an interpretation.
-
-## --agent-context-only
-
-Regenerates `agent_context.md` and `agent_context.json` from an existing
-`e2e_summary.json`. Useful when the E2E pipeline has already run and you only
-need to refresh the agent context.
-
 ## Privacy
 
 Never output:
@@ -120,6 +157,8 @@ Never output:
 - Unredacted notes
 
 All artifact paths in `agent_context` are **relative** (within the run directory).
+The `run_manifest.json` contains `private_data_configured` (boolean) but never
+the actual private_data_dir path.
 
 ## This Is Not a Trading System
 
