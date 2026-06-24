@@ -1,0 +1,74 @@
+{
+  "schema_version": "portfolio_input.v1",
+  "as_of_date": "2026-06-30",
+  "holdings": [
+    {
+      "fund_code": "000001",
+      "fund_name": "示例基金A",
+      "units": 123.45,
+      "latest_nav": 1.2345,
+      "current_value": 152.40,
+      "cost_basis": 140.00,
+      "valuation_source": "manual_private_input"
+    },
+    {
+      "fund_code": "000002",
+      "fund_name": "示例基金B",
+      "units": 50.00,
+      "latest_nav": 2.10,
+      "current_value": 105.00,
+      "cost_basis": 95.00,
+      "valuation_source": "manual_private_input"
+    }
+  ],
+  "transactions": [
+    {
+      "trade_date": "2026-06-01",
+      "fund_code": "000001",
+      "fund_name": "示例基金A",
+      "transaction_type": "buy",
+      "amount": 100.00,
+      "units": 81.00,
+      "nav": 1.2345,
+      "source": "manual_private_input",
+      "note": "synthetic example"
+    },
+    {
+      "trade_date": "2026-06-10",
+      "fund_code": "000001",
+      "fund_name": "示例基金A",
+      "transaction_type": "buy",
+      "amount": 50.00,
+      "units": 40.50,
+      "nav": 1.2345,
+      "source": "manual_private_input",
+      "note": "synthetic example"
+    },
+    {
+      "trade_date": "2026-06-15",
+      "fund_code": "000002",
+      "fund_name": "示例基金B",
+      "transaction_type": "buy",
+      "amount": 200.00,
+      "source": "manual_private_input",
+      "note": "synthetic example — no units/nav provided"
+    },
+    {
+      "trade_date": "2026-06-20",
+      "fund_code": "000001",
+      "fund_name": "示例基金A",
+      "transaction_type": "dividend",
+      "amount": 5.00,
+      "source": "manual_private_input",
+      "note": "synthetic example"
+    },
+    {
+      "trade_date": "2026-05-15",
+      "fund_name": "示例基金C（仅有名称）",
+      "transaction_type": "buy",
+      "amount": 300.00,
+      "source": "manual_private_input",
+      "note": "synthetic example — name-only, no fund_code"
+    }
+  ]
+}
