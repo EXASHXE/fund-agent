@@ -47,6 +47,31 @@ def _write_text(path: Path, text: str) -> None:
     path.write_text(text, encoding="utf-8")
 
 
+def _resolve_existing_summary(args: argparse.Namespace) -> tuple[dict[str, Any], Path] | None:
+    """Try to load an existing e2e_summary from --summary-path or --run-dir.
+
+    Returns (summary_dict, summary_path) if found, else None.
+    """
+    if args.summary_path:
+        sp = Path(args.summary_path)
+        if sp.exists():
+            summary = _load_json_safe(sp)
+            if summary:
+                return summary, sp
+        return None
+
+    if args.run_dir:
+        rd = Path(args.run_dir)
+        sp = rd / "e2e_summary.json"
+        if sp.exists():
+            summary = _load_json_safe(sp)
+            if summary:
+                return summary, sp
+        return None
+
+    return None
+
+
 def _build_run_manifest(
     *,
     run_id: str,
@@ -56,13 +81,20 @@ def _build_run_manifest(
     skip_akshare: bool,
     skip_news: bool,
     transaction_source: str,
+    private_data_configured: bool,
+    health: dict[str, Any],
 ) -> dict[str, Any]:
     return {
         "schema_version": "fund_agent_run_manifest.v1",
         "run_id": run_id,
         "completed_at": datetime.now().isoformat(),
+        "private_data_configured": private_data_configured,
         "doctor_ok": doctor_ok,
+        "doctor_status": "ok" if doctor_ok else "issues",
         "e2e_status": e2e_status,
+        "health_overall_status": health.get("overall_status", "unavailable"),
+        "confidence_level": health.get("confidence_level", "unavailable"),
+        "reason_codes": health.get("reason_codes", []),
         "mode": "deterministic" if (skip_akshare and skip_news) else "live",
         "flags": {
             "skip_akshare": skip_akshare,
@@ -106,7 +138,44 @@ def _print_console_summary(
     print("Ask your agent to read agent_context.md and continue the analysis.")
 
 
+def _run_print_only(args: argparse.Namespace) -> int:
+    """Handle --health-report-only / --agent-context-only with existing summary."""
+    existing = _resolve_existing_summary(args)
+    if existing is None:
+        return -1  # Signal: no existing summary found, fall through to full pipeline
+
+    e2e_summary, summary_path = existing
+    health = _as_dict(e2e_summary.get("personal_health_report"))
+    run_id = e2e_summary.get("run_id", summary_path.parent.name)
+
+    if args.health_report_only:
+        print(json.dumps(health, indent=2, ensure_ascii=False))
+        return 0
+
+    if args.agent_context_only:
+        agent_context = build_agent_context(e2e_summary, run_id=run_id)
+        agent_context_md = render_agent_context_markdown(agent_context)
+
+        # Optionally write to run-dir if --run-dir is specified
+        if args.run_dir:
+            rd = Path(args.run_dir)
+            _write_json(rd / "agent_context.json", agent_context)
+            _write_text(rd / "agent_context.md", agent_context_md)
+
+        print(agent_context_md)
+        return 0
+
+    return -1
+
+
 def run_personal(args: argparse.Namespace) -> int:
+    # ── Print-only mode: skip pipeline if summary exists ──────────────
+    if args.health_report_only or args.agent_context_only:
+        rc = _run_print_only(args)
+        if rc >= 0:
+            return rc
+        # No existing summary found — fall through to full pipeline
+
     run_id = args.run_id or _generate_run_id()
     private_data = Path(args.private_data_dir) if args.private_data_dir else REPO_ROOT / "private_data"
     output_dir = Path(args.output_dir) if args.output_dir else REPO_ROOT / "local_reports"
@@ -116,7 +185,7 @@ def run_personal(args: argparse.Namespace) -> int:
 
     # ── Step 1: Doctor ────────────────────────────────────────────────
     print("[step 1] Running private data doctor...")
-    doctor_result = run_doctor()
+    doctor_result = run_doctor(private_data)
     doctor_ok = doctor_result.get("ok", False)
     if not doctor_ok:
         print(f"  Doctor status: {doctor_result.get('status', 'unknown')}")
@@ -202,6 +271,8 @@ def run_personal(args: argparse.Namespace) -> int:
         skip_akshare=args.skip_akshare,
         skip_news=args.skip_news,
         transaction_source=args.transaction_source,
+        private_data_configured=private_data.is_dir(),
+        health=health,
     )
     _write_json(run_dir / "run_manifest.json", manifest)
 
@@ -283,12 +354,28 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--health-report-only",
         action="store_true",
-        help="Print only the personal health report JSON",
+        help=(
+            "Print only the personal health report JSON. "
+            "With --summary-path or --run-dir, reads existing summary "
+            "without running the pipeline."
+        ),
     )
     parser.add_argument(
         "--agent-context-only",
         action="store_true",
-        help="Print only the agent context markdown (regenerate from e2e_summary)",
+        help=(
+            "Print only the agent context markdown. "
+            "With --summary-path or --run-dir, reads existing summary "
+            "without running the pipeline."
+        ),
+    )
+    parser.add_argument(
+        "--summary-path", default="",
+        help="Path to existing e2e_summary.json (skip pipeline when used with print-only flags)",
+    )
+    parser.add_argument(
+        "--run-dir", default="",
+        help="Path to existing run directory containing e2e_summary.json (skip pipeline)",
     )
     args = parser.parse_args(argv)
     return run_personal(args)

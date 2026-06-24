@@ -9,7 +9,7 @@ import os
 import textwrap
 from pathlib import Path
 from typing import Any
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 import pytest
 
@@ -51,6 +51,54 @@ def output_dir(tmp_path: Path) -> Path:
     return od
 
 
+def _make_synthetic_e2e_summary(run_id: str = "test-001") -> dict[str, Any]:
+    """Create a synthetic e2e_summary for print-only mode tests."""
+    return {
+        "run_id": run_id,
+        "as_of": "2026-06-24",
+        "status": "partial",
+        "warnings": [],
+        "errors": [],
+        "steps_completed": ["resolve_fund_identities"],
+        "pipeline_steps": {
+            "reconstruction_status": "reconstructed_from_ledger",
+            "valid_fund_codes_count": 2,
+            "name_only_count": 0,
+        },
+        "personal_health_report": {
+            "schema_version": "personal_health_report.v1",
+            "overall_status": "partial",
+            "confidence_level": "medium",
+            "reason_codes": ["partial_nav_coverage"],
+            "data_sources": {
+                "transaction_source": "alipay",
+                "valuation_source": "reconstructed_from_ledger",
+                "identity_source": "direct_fund_code",
+            },
+            "valuation_quality": {
+                "positions_total": 3,
+                "confirmed_count": 0,
+                "estimated_full_coverage_count": 1,
+                "estimated_partial_coverage_count": 2,
+            },
+            "nav_coverage": {
+                "full": 1,
+                "partial": 2,
+                "none": 0,
+                "latest_only": 0,
+                "stale_count": 0,
+                "qdii_like_count": 0,
+            },
+            "fix_it_checklist": [
+                "Add trade-date NAV overrides for 2 fund(s) with missing coverage"
+            ],
+            "safety_notes": [
+                "This is not a formal investment decision — no BUY/SELL/HOLD instruction.",
+            ],
+        },
+    }
+
+
 # ── Test: personal_run_writes_agent_context_files ─────────────────────
 
 
@@ -85,7 +133,6 @@ class TestHealthReportOnly:
         # Should output health report JSON
         captured = capsys.readouterr()
         # Even if E2E fails, health-report-only should not crash
-        # The output should be JSON-parseable (or empty if no data)
 
 
 # ── Test: agent_context_only_regenerates_from_summary ─────────────────
@@ -113,7 +160,6 @@ class TestDeterministicMode:
     def test_default_skip_akshare_is_true(self):
         """Verify --skip-akshare defaults to True."""
         import argparse
-        from scripts.fund_agent_personal_run import main
 
         # Parse args with defaults
         parser = argparse.ArgumentParser()
@@ -157,6 +203,25 @@ class TestRunManifest:
                 assert "mode" in manifest
                 assert manifest["mode"] == "deterministic"
 
+    def test_manifest_has_health_fields(self, tmp_private_data: Path, output_dir: Path):
+        rc = personal_run_main([
+            "--private-data-dir", str(tmp_private_data),
+            "--output-dir", str(output_dir),
+            "--dry-run",
+            "--skip-akshare",
+            "--skip-news",
+        ])
+        run_dirs = list(output_dir.iterdir())
+        if run_dirs:
+            manifest_path = run_dirs[0] / "run_manifest.json"
+            if manifest_path.exists():
+                manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+                assert "health_overall_status" in manifest
+                assert "confidence_level" in manifest
+                assert "reason_codes" in manifest
+                assert "private_data_configured" in manifest
+                assert "doctor_status" in manifest
+
 
 # ── Test: no private data in output ───────────────────────────────────
 
@@ -196,6 +261,21 @@ class TestNoPrivateDataInOutput:
                 assert "C:" not in md
                 assert str(tmp_private_data) not in md
 
+    def test_manifest_no_private_paths(self, tmp_private_data: Path, output_dir: Path):
+        rc = personal_run_main([
+            "--private-data-dir", str(tmp_private_data),
+            "--output-dir", str(output_dir),
+            "--dry-run",
+            "--skip-akshare",
+            "--skip-news",
+        ])
+        run_dirs = list(output_dir.iterdir())
+        if run_dirs:
+            manifest_path = run_dirs[0] / "run_manifest.json"
+            if manifest_path.exists():
+                manifest_json = manifest_path.read_text(encoding="utf-8")
+                assert str(tmp_private_data) not in manifest_json
+
 
 # ── Test: console output format ───────────────────────────────────────
 
@@ -213,3 +293,173 @@ class TestConsoleOutput:
         # Should contain key phrases
         if rc == 0:
             assert "evidence package" in captured.out.lower() or "Run ID" in captured.out
+
+
+# ── Test: doctor respects private-data-dir ────────────────────────────
+
+
+class TestDoctorRespectsPrivateDataDir:
+    def test_doctor_checks_custom_dir(self, tmp_path: Path):
+        """run_doctor(private_data_dir=custom) checks custom dir, not repo default."""
+        from scripts.fund_agent_private_data_doctor import run_doctor
+
+        custom_pd = tmp_path / "my_custom_private"
+        custom_pd.mkdir()
+
+        # Put a portfolio_input in custom dir
+        pi = {"schema_version": "portfolio_input.v1", "holdings": []}
+        (custom_pd / "portfolio_input.private.json").write_text(
+            json.dumps(pi), encoding="utf-8"
+        )
+
+        result = run_doctor(custom_pd)
+        # Should find the directory and portfolio_input
+        dir_check = next(c for c in result["checks"] if c["id"] == "private_data.exists")
+        assert dir_check["status"] == "OK"
+
+        pi_check = next(c for c in result["checks"] if c["id"] == "portfolio_input.exists")
+        assert pi_check["status"] == "OK"
+
+        # Output should NOT contain the absolute path
+        output = json.dumps(result, default=str)
+        assert str(custom_pd) not in output
+
+    def test_doctor_default_dir(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        """run_doctor() without args uses default PRIVATE_DATA_DIR."""
+        from scripts.fund_agent_private_data_doctor import run_doctor
+
+        result = run_doctor()
+        # Should not crash — default dir may or may not exist
+        assert "ok" in result
+        assert "checks" in result
+
+    def test_personal_run_passes_private_data_dir_to_doctor(self, tmp_private_data: Path, output_dir: Path):
+        """personal-run --private-data-dir passes the dir to run_doctor."""
+        with patch("scripts.fund_agent_personal_run.run_doctor") as mock_doctor:
+            mock_doctor.return_value = {"ok": True, "status": "ok", "checks": [], "warnings": [], "errors": []}
+            with patch("scripts.fund_agent_personal_run.e2e_main") as mock_e2e:
+                mock_e2e.return_value = 0
+
+                rc = personal_run_main([
+                    "--private-data-dir", str(tmp_private_data),
+                    "--output-dir", str(output_dir),
+                    "--skip-akshare",
+                    "--skip-news",
+                ])
+
+                # run_doctor should have been called with tmp_private_data
+                mock_doctor.assert_called_once()
+                call_arg = mock_doctor.call_args[0][0]
+                assert Path(call_arg) == tmp_private_data
+
+
+# ── Test: print-only mode with existing summary ──────────────────────
+
+
+class TestPrintOnlyMode:
+    def test_health_report_only_with_summary_path_skips_pipeline(self, tmp_path: Path, capsys):
+        """--health-report-only --summary-path reads existing summary, no pipeline."""
+        summary = _make_synthetic_e2e_summary()
+        summary_path = tmp_path / "e2e_summary.json"
+        summary_path.write_text(json.dumps(summary), encoding="utf-8")
+
+        with patch("scripts.fund_agent_personal_run.e2e_main") as mock_e2e:
+            with patch("scripts.fund_agent_personal_run.run_doctor") as mock_doctor:
+                rc = personal_run_main([
+                    "--health-report-only",
+                    "--summary-path", str(summary_path),
+                ])
+
+                # Neither e2e_main nor run_doctor should be called
+                mock_e2e.assert_not_called()
+                mock_doctor.assert_not_called()
+
+                assert rc == 0
+                captured = capsys.readouterr()
+                output = json.loads(captured.out)
+                assert output["overall_status"] == "partial"
+
+    def test_agent_context_only_with_run_dir_skips_pipeline(self, tmp_path: Path, capsys):
+        """--agent-context-only --run-dir reads existing summary, no pipeline."""
+        run_dir = tmp_path / "run-001"
+        run_dir.mkdir()
+        summary = _make_synthetic_e2e_summary("run-001")
+        (run_dir / "e2e_summary.json").write_text(json.dumps(summary), encoding="utf-8")
+
+        with patch("scripts.fund_agent_personal_run.e2e_main") as mock_e2e:
+            with patch("scripts.fund_agent_personal_run.run_doctor") as mock_doctor:
+                rc = personal_run_main([
+                    "--agent-context-only",
+                    "--run-dir", str(run_dir),
+                ])
+
+                mock_e2e.assert_not_called()
+                mock_doctor.assert_not_called()
+
+                assert rc == 0
+                captured = capsys.readouterr()
+                assert "Fund Agent Analysis Context" in captured.out
+                assert "partial" in captured.out
+
+    def test_agent_context_only_writes_files_to_run_dir(self, tmp_path: Path, capsys):
+        """--agent-context-only --run-dir writes agent_context files."""
+        run_dir = tmp_path / "run-002"
+        run_dir.mkdir()
+        summary = _make_synthetic_e2e_summary("run-002")
+        (run_dir / "e2e_summary.json").write_text(json.dumps(summary), encoding="utf-8")
+
+        with patch("scripts.fund_agent_personal_run.e2e_main") as mock_e2e:
+            with patch("scripts.fund_agent_personal_run.run_doctor") as mock_doctor:
+                rc = personal_run_main([
+                    "--agent-context-only",
+                    "--run-dir", str(run_dir),
+                ])
+
+                assert rc == 0
+                assert (run_dir / "agent_context.json").exists()
+                assert (run_dir / "agent_context.md").exists()
+
+    def test_missing_summary_path_falls_through_to_pipeline(self, tmp_path: Path, capsys):
+        """--agent-context-only --summary-path missing falls through to full pipeline."""
+        missing_path = tmp_path / "nonexistent.json"
+
+        with patch("scripts.fund_agent_personal_run.e2e_main") as mock_e2e:
+            with patch("scripts.fund_agent_personal_run.run_doctor") as mock_doctor:
+                mock_e2e.return_value = 0
+                mock_doctor.return_value = {"ok": True, "status": "ok", "checks": [], "warnings": [], "errors": []}
+
+                # Create output dir for the pipeline
+                output_dir = tmp_path / "local_reports"
+                output_dir.mkdir()
+                pd = tmp_path / "private_data"
+                pd.mkdir()
+
+                rc = personal_run_main([
+                    "--agent-context-only",
+                    "--summary-path", str(missing_path),
+                    "--private-data-dir", str(pd),
+                    "--output-dir", str(output_dir),
+                    "--skip-akshare",
+                    "--skip-news",
+                ])
+
+                # Should fall through to running pipeline
+                mock_e2e.assert_called_once()
+                mock_doctor.assert_called_once()
+
+    def test_default_mode_runs_full_pipeline(self, tmp_private_data: Path, output_dir: Path):
+        """Without --summary-path or --run-dir, default mode runs full pipeline."""
+        with patch("scripts.fund_agent_personal_run.e2e_main") as mock_e2e:
+            with patch("scripts.fund_agent_personal_run.run_doctor") as mock_doctor:
+                mock_e2e.return_value = 0
+                mock_doctor.return_value = {"ok": True, "status": "ok", "checks": [], "warnings": [], "errors": []}
+
+                rc = personal_run_main([
+                    "--private-data-dir", str(tmp_private_data),
+                    "--output-dir", str(output_dir),
+                    "--skip-akshare",
+                    "--skip-news",
+                ])
+
+                mock_e2e.assert_called_once()
+                mock_doctor.assert_called_once()
