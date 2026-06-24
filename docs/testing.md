@@ -91,6 +91,7 @@ Explicit fast paths (no marker-based negative selection alone):
 
 ```
 tests/end_to_end/test_e2e_identity_nav.py
+tests/end_to_end/test_e2e_personal_health_report.py
 tests/schemas/ tests/tools/portfolio/ tests/contracts/ tests/ci/
 tests/graph/ tests/golden/ tests/public_api/ tests/reporting/
 tests/skills/ tests/host_data/ tests/host_adapters/ tests/evidence/

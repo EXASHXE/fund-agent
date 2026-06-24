@@ -294,6 +294,24 @@ The doctor checks:
 
 Output contains **counts only** — no real fund names, amounts, transaction IDs, or CSV content.
 
+## Personal Health Report (v0.10.6+)
+
+The E2E pipeline automatically includes a `personal_health_report` section in
+`e2e_summary.json`. This provides a quick data-quality diagnostic:
+
+- **overall_status**: `ok` / `partial` / `needs_data` / `needs_manual_review` / `unavailable`
+- **confidence_level**: `high` / `medium` / `low` / `unavailable`
+- **reason_codes**: Why the status isn't optimal (e.g., `nav_missing`, `partial_nav_coverage`)
+- **fix_it_checklist**: Data-quality next steps to improve your report
+
+To print only the health report:
+
+```bash
+bin/fund-agent-e2e --health-report-only --skip-akshare --skip-news
+```
+
+See [Personal Health Report usage guide](usage/personal-health-report.md) for details.
+
 ## Safety Boundaries
 
 - fund-agent does **not** place orders or execute trades.

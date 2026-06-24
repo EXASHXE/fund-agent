@@ -84,6 +84,23 @@ Key rules:
 - Stale NAV (>7 days domestic, >10 days QDII) triggers a warning
 - Conversion/refund/unknown transactions require manual review
 
+### Personal Health Report (v0.10.6+)
+
+After running the E2E pipeline, `e2e_summary.json` includes a
+`personal_health_report` section with:
+
+- **overall_status**: `ok` / `partial` / `needs_data` / `needs_manual_review` / `unavailable`
+- **confidence_level**: `high` / `medium` / `low` / `unavailable`
+- **fix_it_checklist**: Data-quality next steps
+
+To print only the health report:
+
+```bash
+bin/fund-agent-e2e --health-report-only --skip-akshare --skip-news
+```
+
+See `docs/usage/personal-health-report.md` for details.
+
 ## Safety
 
 - **Never commit real portfolio data** — use `local_data/` or `private_data/`
