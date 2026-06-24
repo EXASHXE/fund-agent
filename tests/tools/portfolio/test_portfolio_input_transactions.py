@@ -347,3 +347,63 @@ class TestLedgerCompatibility:
         assert txn["source"] == "portfolio_input.transactions"
         # note should not be propagated
         assert "note" not in txn
+
+
+# ── Validation visibility tests ───────────────────────────────────────
+
+
+class TestValidationVisibility:
+    def test_adapter_summary_counts_validation_warnings(self):
+        """Summary must include warning_count, invalid_count, and per-type counts."""
+        txns = [
+            {"trade_date": "bad-date", "fund_code": "ABC", "transaction_type": "buy", "amount": 100.0},
+            {"trade_date": "2026-06-01", "fund_code": "000001", "transaction_type": "buy", "amount": 100.0},
+            {"trade_date": "2026-06-01", "fund_code": "000002", "transaction_type": "badtype", "amount": "bad"},
+        ]
+        result = build_ledger_from_portfolio_input_transactions(txns)
+        s = result["summary"]
+        assert s["total_transactions"] == 3
+        assert s["valid_count"] == 1
+        assert s["invalid_count"] == 2
+        assert s["warning_count"] > 0
+        assert s["invalid_fund_code_count"] == 1
+        assert s["invalid_date_count"] == 1
+        assert s["invalid_amount_count"] == 1
+        assert s["unknown_transaction_type_count"] == 1
+        assert s["manual_review_count"] == 2
+
+    def test_warning_text_no_sensitive_content(self):
+        """Warning text must not contain real fund names, amounts, or notes."""
+        txns = [
+            {"trade_date": "bad", "fund_code": "ABC", "transaction_type": "buy", "amount": 100.0, "fund_name": "Sensitive Fund Name"},
+        ]
+        result = build_ledger_from_portfolio_input_transactions(txns)
+        warning_text = " ".join(result["warnings"])
+        assert "Sensitive Fund Name" not in warning_text
+        assert "100.0" not in warning_text
+
+    def test_needs_manual_review_flag(self):
+        """Invalid entries must have needs_manual_review=True."""
+        txns = [
+            {"trade_date": "bad", "fund_code": "000001", "transaction_type": "buy", "amount": 100.0},
+            {"trade_date": "2026-06-01", "fund_code": "000001", "transaction_type": "buy", "amount": 100.0},
+        ]
+        result = build_ledger_from_portfolio_input_transactions(txns)
+        invalid_entry = next(t for t in result["transactions"] if t.get("trade_date") == "bad")
+        valid_entry = next(t for t in result["transactions"] if t.get("trade_date") == "2026-06-01")
+        assert invalid_entry["needs_manual_review"] is True
+        assert invalid_entry["validation_status"] == "warning"
+        assert valid_entry["needs_manual_review"] is False
+        assert valid_entry["validation_status"] == "ok"
+
+    def test_valid_ledger_no_manual_review(self):
+        """Valid entries must have needs_manual_review=False."""
+        txns = [
+            {"trade_date": "2026-06-01", "fund_code": "000001", "transaction_type": "buy", "amount": 100.0},
+        ]
+        result = build_ledger_from_portfolio_input_transactions(txns)
+        assert result["summary"]["manual_review_count"] == 0
+        assert result["summary"]["warning_count"] == 0
+        assert result["summary"]["invalid_count"] == 0
+        assert result["transactions"][0]["needs_manual_review"] is False
+        assert result["transactions"][0]["validation_status"] == "ok"

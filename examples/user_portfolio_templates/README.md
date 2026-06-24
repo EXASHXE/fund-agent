@@ -59,6 +59,17 @@ This validates:
 - No private files are tracked by git
 - Output contains counts only — no real fund names, amounts, or IDs
 
+### Transaction Validation (v0.10.6+)
+
+When using `portfolio_input.transactions`, the pipeline validates each row
+and surfaces warnings in the E2E summary and report:
+
+- Invalid `fund_code` (not 6 digits), bad `trade_date`, non-numeric `amount`,
+  or unknown `transaction_type` are flagged
+- Flagged transactions get `needs_manual_review: true`
+- The report mentions when manual review is needed
+- Warning output is counts-only — no real fund names, amounts, or IDs
+
 ## Safety
 
 - **Never commit real portfolio data** — use `local_data/` or `private_data/`

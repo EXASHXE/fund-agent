@@ -84,6 +84,28 @@ Key rules:
 - Estimated is NOT confirmed
 - Partial coverage must be labeled
 
+## Validation Visibility
+
+Invalid transactions are not silently dropped. The adapter surfaces:
+
+| Field | Location | Purpose |
+|-------|----------|---------|
+| `needs_manual_review` | Per-transaction | `True` if any validation warning |
+| `validation_status` | Per-transaction | `"ok"` or `"warning"` |
+| `valid_count` / `invalid_count` | Summary | How many passed/failed validation |
+| `warning_count` | Summary | Total warnings across all transactions |
+| `manual_review_count` | Summary | Count of transactions needing review |
+| `invalid_fund_code_count` | Summary | Bad fund code count |
+| `invalid_date_count` | Summary | Bad date count |
+| `invalid_amount_count` | Summary | Non-numeric amount count |
+| `unknown_transaction_type_count` | Summary | Unrecognized type count |
+
+The E2E pipeline surfaces these in `e2e_summary.json` under the
+`portfolio_input_transactions` key and adds a pipeline-level warning
+when validation warnings exist. The report builder shows total/warnings/
+manual_review counts in the reconstruction_status section, and adds a
+limitation when manual review is needed.
+
 ## Privacy Rules
 
 - No real fund names in logs/tests

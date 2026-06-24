@@ -123,6 +123,11 @@ def normalize_portfolio_input_transaction(
 
     if warnings:
         entry["warnings"] = warnings
+        entry["needs_manual_review"] = True
+        entry["validation_status"] = "warning"
+    else:
+        entry["needs_manual_review"] = False
+        entry["validation_status"] = "ok"
 
     return entry
 
@@ -138,14 +143,27 @@ def build_ledger_from_portfolio_input_transactions(
     all_warnings: list[str] = []
     valid_count = 0
     invalid_count = 0
+    invalid_fund_code_count = 0
+    invalid_date_count = 0
+    invalid_amount_count = 0
+    unknown_transaction_type_count = 0
 
     for i, raw in enumerate(transactions):
         entry = normalize_portfolio_input_transaction(raw, i)
         entry_warnings = entry.pop("warnings", [])
         if entry_warnings:
             all_warnings.extend(entry_warnings)
-            # Still include the entry — just flag it
             invalid_count += 1
+            # Count specific warning types
+            for w in entry_warnings:
+                if "fund_code" in w:
+                    invalid_fund_code_count += 1
+                if "trade_date" in w:
+                    invalid_date_count += 1
+                if "amount" in w:
+                    invalid_amount_count += 1
+                if "transaction_type" in w:
+                    unknown_transaction_type_count += 1
         else:
             valid_count += 1
         normalized.append(entry)
@@ -153,8 +171,14 @@ def build_ledger_from_portfolio_input_transactions(
     # Sort by trade_date
     normalized.sort(key=lambda t: t.get("trade_date") or "9999-99-99")
 
+    manual_review_count = sum(1 for t in normalized if t.get("needs_manual_review"))
+
     summary = {
         "total_transactions": len(normalized),
+        "valid_count": valid_count,
+        "invalid_count": invalid_count,
+        "warning_count": len(all_warnings),
+        "manual_review_count": manual_review_count,
         "user_provided_private_input": sum(
             1 for t in normalized if t.get("confirmation_type") == "user_provided_private_input"
         ),
@@ -165,6 +189,10 @@ def build_ledger_from_portfolio_input_transactions(
         "ambiguous_portfolio_effect": sum(
             1 for t in normalized if t.get("ambiguous_portfolio_effect")
         ),
+        "invalid_fund_code_count": invalid_fund_code_count,
+        "invalid_date_count": invalid_date_count,
+        "invalid_amount_count": invalid_amount_count,
+        "unknown_transaction_type_count": unknown_transaction_type_count,
     }
 
     return {

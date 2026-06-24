@@ -230,3 +230,52 @@ class TestScenarioGAlipayRegression:
         loaded = load_portfolio_input_transactions(path)
         assert len(loaded) == 1
         # This should work even without any Alipay CSV present
+
+
+# ── Scenario H: Validation visibility in E2E summary ─────────────────────
+
+
+class TestScenarioHValidationVisibility:
+    """Validation warnings must surface in e2e_summary and not leak private data."""
+
+    def test_e2e_summary_surfaces_portfolio_input_warning_counts(self, tmp_path: Path):
+        """portfolio_input.transactions with invalid rows → e2e_summary warning_count > 0,
+        warnings list has counts-only hint, no real field values leaked."""
+        txns = [
+            {"trade_date": "bad-date", "fund_code": "ABC", "transaction_type": "buy", "amount": 100.0},
+            {"trade_date": "2026-06-01", "fund_code": "000001", "transaction_type": "buy", "amount": 100.0},
+            {"trade_date": "2026-06-01", "fund_code": "000002", "transaction_type": "badtype", "amount": "bad"},
+        ]
+        path = _make_portfolio_input_with_transactions(tmp_path, txns)
+        loaded = load_portfolio_input_transactions(path)
+        ledger = build_ledger_from_portfolio_input_transactions(loaded)
+
+        # Simulate what e2e_summary would contain
+        pi_summary = ledger.get("summary", {})
+        assert pi_summary["warning_count"] > 0
+        assert pi_summary["manual_review_count"] > 0
+
+        # Warnings must not contain real fund names or amounts
+        # (transaction_type labels like 'badtype' are not private data)
+        warning_text = " ".join(ledger.get("warnings", []))
+        assert "ABC" not in warning_text  # fund_code values not leaked
+        assert "100.0" not in warning_text  # amounts not leaked
+
+    def test_e2e_invalid_portfolio_input_transactions_status_partial(self, tmp_path: Path):
+        """When portfolio_input.transactions has valid + invalid rows,
+        status should reflect partial parsing."""
+        txns = [
+            {"trade_date": "bad-date", "fund_code": "000001", "transaction_type": "buy", "amount": 100.0},
+            {"trade_date": "2026-06-01", "fund_code": "000002", "transaction_type": "buy", "amount": 200.0},
+        ]
+        path = _make_portfolio_input_with_transactions(tmp_path, txns)
+        loaded = load_portfolio_input_transactions(path)
+        ledger = build_ledger_from_portfolio_input_transactions(loaded)
+
+        # Some valid, some invalid → partial
+        assert ledger["summary"]["valid_count"] >= 1
+        assert ledger["summary"]["invalid_count"] >= 1
+        assert ledger["summary"]["total_transactions"] == 2
+
+        # Source should still be portfolio_input_transactions
+        assert ledger["source"] == "portfolio_input_transactions"

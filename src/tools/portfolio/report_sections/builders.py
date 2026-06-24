@@ -260,6 +260,18 @@ def _build_reconstruction_status(context: dict[str, Any]) -> dict[str, Any]:
     if has_transactions and transaction_source != "unknown":
         bullets.append(f"Transaction source: {transaction_source}.")
 
+    # Portfolio input transaction validation details
+    pi_txn_summary = _as_dict(artifacts.get("portfolio_input_transactions_summary"))
+    if pi_txn_summary:
+        total = pi_txn_summary.get("total_transactions", 0)
+        warnings = pi_txn_summary.get("warning_count", 0)
+        manual_review = pi_txn_summary.get("manual_review_count", 0)
+        bullets.append(f"Portfolio input transactions: total={total}, warnings={warnings}, manual_review={manual_review}.")
+        if manual_review > 0:
+            limitations.append(
+                "Some user-provided transactions need manual review before relying on reconstructed valuation."
+            )
+
     if source_of_truth == "derived_from_transactions":
         bullets.append("Ledger built from transactions + current_nav: yes.")
         if ledger_quality:

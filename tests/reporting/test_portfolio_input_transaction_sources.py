@@ -101,3 +101,65 @@ class TestReportTransactionSource:
         all_text = " ".join(rs_section.get("bullets", []))
         # Should mention "no current_nav" or "partial"
         assert any(word in all_text.lower() for word in ["partial", "no current_nav", "not available"])
+
+
+class TestReportValidationVisibility:
+    """Report must surface validation warnings and manual review for portfolio_input.transactions."""
+
+    def test_report_mentions_manual_review_for_warning_transactions(self):
+        """When portfolio_input_transactions_summary has manual_review > 0,
+        report must mention manual review / validation warning,
+        must NOT contain fake 0.00, and must NOT label fallback as reconstructed_from_ledger."""
+        artifacts = _make_artifacts(
+            source_of_truth="transactions_only",
+            transaction_source="portfolio_input.transactions",
+        )
+        artifacts["portfolio_input_transactions_summary"] = {
+            "total_transactions": 3,
+            "warning_count": 2,
+            "manual_review_count": 2,
+            "valid_count": 1,
+            "invalid_count": 2,
+        }
+        result = compose_personal_fund_report(artifacts, options={"language": "en"})
+        rs_section = next(
+            (s for s in result["report_sections"] if s["id"] == "reconstruction_status"),
+            None,
+        )
+        assert rs_section is not None
+        all_text = " ".join(rs_section.get("bullets", []))
+
+        # Must mention manual review
+        assert "manual_review" in all_text or "manual review" in all_text.lower()
+
+        # Must mention warnings count
+        assert "warnings=" in all_text or "warning" in all_text.lower()
+
+        # Limitations must mention manual review
+        limitations_text = " ".join(rs_section.get("limitations", []))
+        assert "manual review" in limitations_text.lower()
+
+        # Must NOT label as reconstructed_from_ledger
+        assert "reconstructed_from_ledger" not in all_text
+
+        # Must NOT contain fake 0.00
+        assert "0.00" not in all_text
+
+    def test_alipay_path_regression_no_portfolio_warning(self):
+        """When using Alipay path (no portfolio_input_transactions_summary),
+        report must NOT show portfolio_input.transactions warning."""
+        artifacts = _make_artifacts(
+            source_of_truth="derived_from_transactions",
+            transaction_source="alipay",
+        )
+        # No portfolio_input_transactions_summary key → Alipay-only path
+        result = compose_personal_fund_report(artifacts, options={"language": "en"})
+        rs_section = next(
+            (s for s in result["report_sections"] if s["id"] == "reconstruction_status"),
+            None,
+        )
+        assert rs_section is not None
+        all_text = " ".join(rs_section.get("bullets", []))
+
+        # Must NOT mention portfolio_input transactions summary
+        assert "Portfolio input transactions:" not in all_text

@@ -344,6 +344,12 @@ def run_pipeline(args: argparse.Namespace) -> int:
             except OSError as exc:
                 print(f"ERROR: failed to write portfolio_input transactions: {_redact(str(exc))}", file=sys.stderr)
         portfolio_input_txn_stats = pi_ledger.get("summary", {})
+        pi_warnings = pi_ledger.get("warnings", [])
+        if pi_warnings and not dry_run:
+            pipeline.warnings.append(
+                f"portfolio_input.transactions has {len(pi_warnings)} validation warning(s); "
+                f"check transaction source data"
+            )
         print(f"[step 0a-alt] portfolio_input.transactions: {pi_ledger['summary'].get('total_transactions', 0)} transaction(s)")
 
     if investment_plan:

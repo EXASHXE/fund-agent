@@ -69,6 +69,15 @@ in `portfolio_input.private.json`. This is useful for:
 - `confirmation_type` is `user_provided_private_input` (not `evidence_confirmed`)
 - `latest_nav` alone does NOT create historical units
 
+**Validation visibility** (v0.10.6+):
+
+When portfolio_input.transactions contains invalid rows, the adapter:
+- Marks each invalid transaction with `needs_manual_review: true` and `validation_status: "warning"`
+- Reports `warning_count`, `invalid_count`, and `manual_review_count` in the summary
+- The E2E pipeline surfaces these counts in `e2e_summary.json` and adds a pipeline warning
+- The report mentions manual review needed in the reconstruction_status section
+- Warning text contains counts only — no real fund names, amounts, or IDs
+
 **Source precedence** (`--transaction-source` flag):
 
 | Mode | Behavior |
