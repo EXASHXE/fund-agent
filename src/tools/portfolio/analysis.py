@@ -704,7 +704,7 @@ def apply_trade_constraints(
         fund_code = trade.get("fund_code", "")
         action = str(trade.get("action", "")).upper()
         amount = _float(trade.get("amount", trade.get("requested_amount", 0)))
-        target_weight = trade.get("target_weight")
+        trade.get("target_weight")
 
         cap_reasons: list[str] = []
         capped = False
@@ -780,7 +780,7 @@ def rank_trade_plan(
     fund_metrics = fund_metrics or {}
     cost_basis = cost_basis or {}
     risk_fund_codes = {f.get("details", {}).get("fund_code", "") for f in risk_flags if "fund_code" in f.get("details", {})}
-    overweight_themes = {f.get("details", {}).get("theme", "") for f in risk_flags if f.get("type") == "overweight_theme"}
+    {f.get("details", {}).get("theme", "") for f in risk_flags if f.get("type") == "overweight_theme"}
 
     def rank(trade: dict) -> tuple[int, int, float]:
         code = trade.get("fund_code", "")
@@ -815,7 +815,7 @@ def _is_recent(transaction: dict[str, Any], days: int, as_of_date: str = "") -> 
     if not as_of_date:
         return False
     try:
-        from datetime import date, timedelta
+        from datetime import date
         d = date.fromisoformat(str(tx_date)[:10])
         ref = date.fromisoformat(str(as_of_date)[:10])
         return (ref - d).days <= days

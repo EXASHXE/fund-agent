@@ -9,8 +9,6 @@ from typing import Any
 
 from src.schemas.evidence_graph import EvidenceGraph
 
-from .context import _dict
-
 ACTIVE_ACTIONS: frozenset[str] = frozenset({"BUY", "SELL", "INCREASE", "REDUCE"})
 PASSIVE_ACTIONS: frozenset[str] = frozenset({"WAIT", "HOLD", "PAUSE_DCA"})
 ALL_ACTIONS: frozenset[str] = ACTIVE_ACTIONS | PASSIVE_ACTIONS

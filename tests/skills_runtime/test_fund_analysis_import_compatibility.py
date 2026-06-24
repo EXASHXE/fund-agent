@@ -9,7 +9,6 @@ import pytest
 
 from tests.support.bridge_runner import run_bridge_inprocess_json, run_bridge_subprocess
 
-
 ROOT = Path(__file__).resolve().parents[2]
 INPUT = ROOT / "examples" / "runtime_bridge_fund_analysis_input.json"
 

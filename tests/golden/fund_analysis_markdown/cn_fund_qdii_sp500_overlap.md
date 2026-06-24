@@ -11,6 +11,13 @@
 - Largest position is SYNQD001 at 33.33% of portfolio value.
 - Position detail is available for 4 fund(s).
 
+## Reconstruction status [PARTIAL]
+- Report source: unknown.
+- Transactions parsed: no.
+- Ledger built: not applicable (host portfolio provided).
+- NAV snapshot available: no.
+- Confirmed portfolio with valuation: yes.
+
 ## PnL and cost basis [OK]
 - Unrealized PnL is 5,000.00 (3.03%) on total cost 165,000.00.
 - Position-level PnL is available for 4 fund(s).
@@ -41,9 +48,12 @@
 Limitations:
 - Peer group data is missing; no peer ranking is fabricated.
 
-## Benchmark divergence [OK]
+## Benchmark divergence [PARTIAL]
 - Benchmark divergence reviewed 4 fund(s).
 - No severe benchmark divergence was detected from provided data.
+
+Limitations:
+- Benchmark divergence check completed but no divergence was found — results are limited without NAV and benchmark history.
 
 ## Factor and style [OK]
 - Host-provided factor dimensions: ai_theme, growth, usd_equity.
@@ -78,18 +88,15 @@ Limitations:
 - Short-term trade budget status: ok.
 - Cash 10000 is below 8% liquidity reserve (14400). Gap: 4400.
 
-## Profit protection [OK]
+## Profit protection [PARTIAL]
 - Profit protection reviewed 4 position(s).
+
+Limitations:
+- Profit protection has no detailed breakdown; profit levels and action suggestions are unavailable without current NAV data.
 
 ## Right-side confirmation [OK]
 - Right-side confirmation applies to 1 drawdown position(s); 0 confirmed.
 - Fresh NAV, benchmark, news, or sentiment evidence is needed before action.
-
-## Event hype failure [MISSING]
-- No section content available from provided artifacts.
-
-Limitations:
-- Event hype diagnostics are missing or no host event metadata was provided.
 
 ## Cash deployment [OK]
 - Cash-like weight 5.56%; deployment readiness ready.
@@ -97,6 +104,7 @@ Limitations:
 - Estimated deployable cash: 0.00.
 
 ## Evidence status [PARTIAL]
+- Available conclusions: portfolio has 4 identified position(s); benchmark divergence checked for 4 fund(s); profit protection reviewed for 4 position(s); right-side confirmation assessed for 4 position(s); exposure breakdown computed.
 - decision_support_ready: False.
 - Formal decision blockers: missing_recent_news.
 - Analysis warnings: right_side_unconfirmed, sentiment_missing.
@@ -109,16 +117,19 @@ Limitations:
 
 ## Missing data [PARTIAL]
 - Missing data groups: missing_recent_news, missing_sentiment.
-- missing_recent_news: next data recent fund or theme news.
-- missing_sentiment: next data sentiment snapshot for held funds or themes.
+- missing_recent_news [blocker] (provider_could_fetch): next data recent fund or theme news.
+- missing_sentiment [warning] (provider_could_fetch): next data sentiment snapshot for held funds or themes.
 
 ## Suggested next checks [PARTIAL]
 - Next data to fetch: recent fund news, sentiment snapshot, recent benchmark movement, benchmark price history, recent news evidence.
+- Specific data to provide:
+-   missing_recent_news (provider_could_fetch): recent fund or theme news
+-   missing_sentiment (provider_could_fetch): sentiment snapshot for held funds or themes
 
 ## Uncertainty note [PARTIAL]
 - This conclusion is based on host-provided data and does not include live market fetching.
 - No formal decision generated; call decision-support for formal action.
-- Report limitations count: 1.
+- Report limitations count: 1. See each section for details.
 
 Limitations:
 - Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data
@@ -128,16 +139,11 @@ Limitations:
 - Sample host-supplied caps are informational unless the runtime consumes them.
 - Overlap review uses synthetic holdings only.
 
-## Research query plan [MISSING]
-- No section content available from provided artifacts.
-
-Limitations:
-- Research planning was not requested by the host.
-
 ## Data completeness and limitations [OK]
 - Completeness grade B with score 0.833.
 - Missing data groups: Peer Group, Manager Profile, Fund Flow, Macro Events, User Investment Plan.
 - Optional gaps: Peer Group, Manager Profile, Fund Flow, Macro Events, User Investment Plan.
+- Snapshot availability: provider_snapshot=absent, news_snapshot=absent, factor_snapshot=absent, kg_context_snapshot=absent.
 
 Limitations:
 - Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data
@@ -148,8 +154,13 @@ Limitations:
 
 ## Limitations
 
+- Transaction cashflow: Transaction cashflow data is not available.
 - Benchmark and peer: Peer group data is missing; no peer ranking is fabricated.
+- Benchmark divergence: Benchmark divergence check completed but no divergence was found — results are limited without NAV and benchmark history.
+- Factor analysis: Factor snapshot not provided; no factor analysis is fabricated.
 - Manager and fund profile: Manager tenure and manager-change analysis are unavailable.
+- Profit protection: Profit protection has no detailed breakdown; profit levels and action suggestions are unavailable without current NAV data.
 - Event hype failure: Event hype diagnostics are missing or no host event metadata was provided.
+- News and events: News snapshot not provided; no news or events are fabricated.
 - Uncertainty note: Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data
 - Research query plan: Research planning was not requested by the host.

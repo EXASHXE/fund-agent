@@ -9,13 +9,17 @@ from src.tools.portfolio.report_sections.helpers import (
     _as_dict,
     _as_list,
     _best_total_return,
+    _current_value_likely_missing,
     _fixed,
     _format_counts,
     _largest_weight,
     _missing_gap_codes,
     _money,
+    _money_or_missing,
     _pct,
+    _pct_or_missing,
     _portfolio_summary,
+    _ratio_or_missing,
     _risk_counts_by_severity,
     _string_list,
     _unique_strings,
@@ -23,7 +27,6 @@ from src.tools.portfolio.report_sections.helpers import (
 from src.tools.portfolio.report_sections.registry import (
     SECTION_ORDER,
     VALID_STATUSES,
-    ZH_CN_SECTION_TITLES,
 )
 
 
@@ -49,15 +52,34 @@ def _section(
 def _build_executive_summary(context: dict[str, Any]) -> dict[str, Any]:
     portfolio = _portfolio_summary(context)
     completeness = context["data_completeness"]
-    limitations = []
+    likely_missing = _current_value_likely_missing(context)
+    source_of_truth = context["artifacts"].get("source_of_truth")
+    limitations: list[str] = []
     bullets: list[str] = []
     if portfolio:
-        bullets.append(
-            "Portfolio value "
-            f"{_money(portfolio.get('total_value'))} across "
-            f"{int(portfolio.get('position_count') or 0)} position(s); "
-            f"cash {_money(portfolio.get('cash_available'))}."
-        )
+        if source_of_truth == "transactions_only":
+            # Show transaction-based summary, not valuation
+            cf_summary = _as_dict(context["artifacts"].get("transaction_cashflow_summary"))
+            portfolio_level = _as_dict(cf_summary.get("portfolio_level")) if cf_summary else {}
+            pos_count = int(portfolio.get("position_count") or 0)
+            net_cf = portfolio_level.get("net_cashflow_amount")
+            if net_cf is not None:
+                bullets.append(
+                    f"Transaction-based analysis across {pos_count} identified fund(s); "
+                    f"net cashflow {_money(net_cf)} (流水口径净投入，不是当前市值)."
+                )
+            else:
+                bullets.append(
+                    f"Transaction-based analysis across {pos_count} identified fund(s); "
+                    f"valuation unavailable."
+                )
+        else:
+            bullets.append(
+                "Portfolio value "
+                f"{_money_or_missing(portfolio.get('total_value'), likely_missing=likely_missing)} across "
+                f"{int(portfolio.get('position_count') or 0)} position(s); "
+                f"cash {_money_or_missing(portfolio.get('cash_available'), likely_missing=likely_missing)}."
+            )
     else:
         limitations.append("Portfolio summary artifact is missing.")
 
@@ -91,14 +113,32 @@ def _build_executive_summary(context: dict[str, Any]) -> dict[str, Any]:
 def _build_portfolio_snapshot(context: dict[str, Any]) -> dict[str, Any]:
     portfolio = _portfolio_summary(context)
     positions = _as_dict(context["artifacts"].get("position_summary"))
+    likely_missing = _current_value_likely_missing(context)
+    source_of_truth = context["artifacts"].get("source_of_truth")
     bullets: list[str] = []
     limitations: list[str] = []
+
+    if source_of_truth == "transactions_only":
+        # Valuation is unavailable — show identified funds only
+        if positions:
+            bullets.append(
+                f"Identified {len(positions)} fund(s) from transaction records. "
+                f"Valuation is unavailable (current_value/units/NAV are unknown)."
+            )
+            limitations.append(
+                "Valuation data is unavailable — current_value, units, NAV, and cost_basis "
+                "cannot be determined from transactions alone without current_nav."
+            )
+        else:
+            limitations.append("No identified positions from transaction records.")
+        status = "PARTIAL" if positions else "MISSING"
+        return _section("portfolio_snapshot", status, bullets, ["portfolio_summary", "position_summary"], limitations)
 
     if portfolio:
         as_of = portfolio.get("as_of_date") or "unspecified date"
         bullets.append(
-            f"As of {as_of}, total value is {_money(portfolio.get('total_value'))} "
-            f"with {_money(portfolio.get('cash_available'))} cash."
+            f"As of {as_of}, total value is {_money_or_missing(portfolio.get('total_value'), likely_missing=likely_missing)} "
+            f"with {_money_or_missing(portfolio.get('cash_available'), likely_missing=likely_missing)} cash."
         )
         weights = _as_dict(portfolio.get("position_weights"))
         if weights:
@@ -116,6 +156,137 @@ def _build_portfolio_snapshot(context: dict[str, Any]) -> dict[str, Any]:
     return _section("portfolio_snapshot", status, bullets, ["portfolio_summary", "position_summary"], limitations)
 
 
+def _build_transaction_cashflow(context: dict[str, Any]) -> dict[str, Any]:
+    """Build transaction cashflow section — shows cashflow data, not market value."""
+    cf_summary = _as_dict(context["artifacts"].get("transaction_cashflow_summary"))
+    ledger_cf = _as_dict(context["artifacts"].get("ledger_cashflow_summary"))
+    source_of_truth = context["artifacts"].get("source_of_truth")
+    bullets: list[str] = []
+    limitations: list[str] = []
+
+    # Use transaction_cashflow_summary (transactions_only) or ledger_cashflow_summary (derived)
+    cf_data = cf_summary or ledger_cf
+    if not cf_data and source_of_truth != "transactions_only":
+        # No cashflow data available
+        limitations.append("Transaction cashflow data is not available.")
+        return _section("transaction_cashflow", "MISSING", bullets, ["transaction_cashflow_summary", "ledger_cashflow_summary"], limitations)
+
+    if cf_data:
+        # Portfolio-level summary
+        portfolio_level = _as_dict(cf_data.get("portfolio_level"))
+        if portfolio_level:
+            total_txn = cf_data.get("total_transactions", 0)
+            fund_count = portfolio_level.get("transaction_fund_count", 0)
+            completed = cf_data.get("completed_count", 0)
+            pending = cf_data.get("pending_count", 0)
+
+            bullets.append(
+                f"Total transactions: {total_txn} (confirmed: {completed}, pending: {pending}) "
+                f"across {fund_count} fund(s)."
+            )
+
+            gross_buy = portfolio_level.get("gross_buy_amount")
+            gross_sell = portfolio_level.get("gross_sell_amount")
+            dividend = portfolio_level.get("dividend_amount")
+            net_cf = portfolio_level.get("net_cashflow_amount")
+            pending_amt = portfolio_level.get("pending_amount")
+
+            if gross_buy is not None:
+                bullets.append(f"Completed buy: {_money(gross_buy)}.")
+            if gross_sell is not None:
+                bullets.append(f"Completed sell: {_money(gross_sell)}.")
+            if dividend is not None and dividend > 0:
+                bullets.append(f"Dividend income: {_money(dividend)}.")
+            if pending_amt is not None and pending_amt > 0:
+                bullets.append(f"Pending amount: {_money(pending_amt)}.")
+            if net_cf is not None:
+                bullets.append(f"Net cashflow: {_money(net_cf)}.")
+        else:
+            # Legacy ledger_cashflow_summary format
+            total_in = cf_data.get("total_inflows", 0.0)
+            total_out = cf_data.get("total_outflows", 0.0)
+            net = cf_data.get("net_cashflow", 0.0)
+            dividend = cf_data.get("dividend_income", 0.0)
+            bullets.append(f"Total inflows: {_money(total_in)}, total outflows: {_money(total_out)}.")
+            bullets.append(f"Net cashflow: {_money(net)}.")
+            if dividend > 0:
+                bullets.append(f"Dividend income: {_money(dividend)}.")
+
+        # Top funds by net cashflow
+        by_fund = _as_dict(cf_data.get("by_fund"))
+        if by_fund:
+            sorted_funds = sorted(
+                by_fund.items(),
+                key=lambda x: abs(float(x[1].get("net_cashflow_amount", 0.0) or 0.0)),
+                reverse=True,
+            )
+            top_n = 3
+            for fund_code, fund_data in sorted_funds[:top_n]:
+                net = fund_data.get("net_cashflow_amount", 0.0)
+                bullets.append(f"  {fund_code}: net cashflow {_money(net)}.")
+
+    if source_of_truth == "transactions_only":
+        limitations.append(
+            "Cashflow data is based on transaction records (流水口径净投入，不是当前市值). "
+            "This does not represent current market value."
+        )
+
+    status = "OK" if cf_data else "MISSING"
+    return _section("transaction_cashflow", status, bullets, ["transaction_cashflow_summary", "ledger_cashflow_summary"], limitations)
+
+
+def _build_reconstruction_status(context: dict[str, Any]) -> dict[str, Any]:
+    """Build reconstruction status section — shows how the report was produced."""
+    source_of_truth = context["artifacts"].get("source_of_truth")
+    artifacts = context["artifacts"]
+    bullets: list[str] = []
+    limitations: list[str] = []
+
+    # Report source
+    source_labels = {
+        "host_portfolio": "existing_private_portfolio_input",
+        "derived_from_transactions": "reconstructed_from_ledger",
+        "transactions_only": "transactions_only",
+    }
+    report_source = source_labels.get(source_of_truth, "unknown")
+
+    # Transaction parsing status
+    has_transactions = bool(artifacts.get("transaction_summary") or artifacts.get("transaction_cashflow_summary"))
+    ledger_quality = _as_dict(artifacts.get("ledger_quality_summary"))
+
+    bullets.append(f"Report source: {report_source}.")
+    bullets.append(f"Transactions parsed: {'yes' if has_transactions else 'no'}.")
+
+    if source_of_truth == "derived_from_transactions":
+        bullets.append("Ledger built from transactions + current_nav: yes.")
+        if ledger_quality:
+            is_complete = ledger_quality.get("is_complete", False)
+            bullets.append(f"Ledger complete: {'yes' if is_complete else 'no'}.")
+    elif source_of_truth == "transactions_only":
+        bullets.append("Ledger built from transactions: partial (no current_nav for valuation).")
+        limitations.append("NAV snapshot is not available — portfolio cannot be valued from transactions alone.")
+    else:
+        bullets.append("Ledger built: not applicable (host portfolio provided).")
+
+    # NAV snapshot
+    has_nav = bool(artifacts.get("factor_snapshot") and _as_dict(artifacts["factor_snapshot"]).get("data_quality"))
+    bullets.append(f"NAV snapshot available: {'yes' if has_nav else 'no'}.")
+
+    # Confirmed portfolio
+    portfolio = _portfolio_summary(context)
+    has_valuation = portfolio and portfolio.get("total_value") is not None and float(portfolio.get("total_value", 0) or 0) > 0
+    bullets.append(f"Confirmed portfolio with valuation: {'yes' if has_valuation else 'no'}.")
+
+    # as_of date comparison
+    report_run_as_of = context.get("report", {}).get("report_options", {}).get("as_of_date", "")
+    input_snapshot_as_of = portfolio.get("as_of_date", "") if portfolio else ""
+    if report_run_as_of and input_snapshot_as_of and report_run_as_of != input_snapshot_as_of:
+        bullets.append(f"Report run as-of: {report_run_as_of}; input snapshot as-of: {input_snapshot_as_of}.")
+
+    status = "OK" if source_of_truth else "PARTIAL"
+    return _section("reconstruction_status", status, bullets, ["source_of_truth", "ledger_quality_summary", "transaction_cashflow_summary"], limitations)
+
+
 def _build_pnl_and_cost_basis(context: dict[str, Any]) -> dict[str, Any]:
     pnl = _as_dict(context["artifacts"].get("pnl_summary") or context["report"].get("pnl_summary"))
     cost_basis = _as_dict(context["artifacts"].get("cost_basis_summary") or context["report"].get("cost_basis_summary"))
@@ -123,10 +294,11 @@ def _build_pnl_and_cost_basis(context: dict[str, Any]) -> dict[str, Any]:
     limitations: list[str] = []
 
     if pnl:
+        likely_missing = _current_value_likely_missing(context)
         bullets.append(
             "Unrealized PnL is "
-            f"{_money(pnl.get('unrealized_pnl'))} "
-            f"({_pct(pnl.get('unrealized_pnl_pct'))}) on total cost {_money(pnl.get('total_cost'))}."
+            f"{_money_or_missing(pnl.get('unrealized_pnl'), likely_missing=likely_missing)} "
+            f"({_pct(pnl.get('unrealized_pnl_pct'))}) on total cost {_money_or_missing(pnl.get('total_cost'), likely_missing=likely_missing)}."
         )
         positions = _as_dict(pnl.get("positions"))
         if positions:
@@ -151,6 +323,7 @@ def _build_position_contribution(context: dict[str, Any]) -> dict[str, Any]:
     limitations: list[str] = []
 
     if positions:
+        has_detail = bool(summary.get("largest_value_position") or summary.get("largest_profit_contributor") or summary.get("largest_loss_contributor"))
         bullets.append(f"Position contribution covers {len(positions)} fund(s).")
         largest_value = summary.get("largest_value_position")
         if largest_value:
@@ -161,10 +334,12 @@ def _build_position_contribution(context: dict[str, Any]) -> dict[str, Any]:
         largest_loss = summary.get("largest_loss_contributor")
         if largest_loss:
             bullets.append(f"Largest loss contributor: {largest_loss}.")
+        if not has_detail:
+            limitations.append("Position contribution has no detailed breakdown; contribution analysis is limited.")
     else:
         limitations.append("Position contribution artifact is missing.")
 
-    status = "OK" if positions else "MISSING"
+    status = "OK" if positions and (summary.get("largest_value_position") or summary.get("largest_profit_contributor")) else "PARTIAL" if positions else "MISSING"
     return _section(
         "position_contribution",
         status,
@@ -177,6 +352,7 @@ def _build_position_contribution(context: dict[str, Any]) -> dict[str, Any]:
 def _build_allocation_and_exposure(context: dict[str, Any]) -> dict[str, Any]:
     exposure = _as_dict(context["artifacts"].get("exposure_summary") or context["report"].get("exposure_summary"))
     concentration = _as_dict(context["report"].get("concentration"))
+    likely_missing = _current_value_likely_missing(context)
     bullets: list[str] = []
     limitations: list[str] = []
 
@@ -190,13 +366,16 @@ def _build_allocation_and_exposure(context: dict[str, Any]) -> dict[str, Any]:
         limitations.append("Exposure summary is unavailable.")
 
     if concentration:
-        bullets.append(
-            "Single-fund max weight is "
-            f"{_pct(concentration.get('single_fund_max_weight'))}; "
-            f"HHI is {_fixed(concentration.get('hhi'), 6)}."
-        )
+        if likely_missing and concentration.get("single_fund_max_weight", 0.0) == 0.0:
+            limitations.append("Concentration metrics are unavailable because current value is missing.")
+        else:
+            bullets.append(
+                "Single-fund max weight is "
+                f"{_pct_or_missing(concentration.get('single_fund_max_weight'), likely_missing=likely_missing)}; "
+                f"HHI is {_ratio_or_missing(concentration.get('hhi'), digits=6, likely_missing=likely_missing)}."
+            )
 
-    status = "OK" if exposure else "PARTIAL" if concentration else "MISSING"
+    status = "OK" if exposure and not (likely_missing and concentration.get("single_fund_max_weight", 0.0) == 0.0) else "PARTIAL" if exposure or concentration else "MISSING"
     return _section("allocation_and_exposure", status, bullets, ["exposure_summary", "concentration"], limitations)
 
 
@@ -285,6 +464,7 @@ def _build_benchmark_divergence(context: dict[str, Any]) -> dict[str, Any]:
     limitations: list[str] = []
 
     if items:
+        has_divergence = bool(summary.get("has_severe_underperformance") or summary.get("has_benchmark_divergence"))
         bullets.append(f"Benchmark divergence reviewed {len(items)} fund(s).")
         if summary.get("has_severe_underperformance"):
             bullets.append("Severe benchmark underperformance is present in provided data.")
@@ -292,12 +472,14 @@ def _build_benchmark_divergence(context: dict[str, Any]) -> dict[str, Any]:
             bullets.append("Benchmark divergence is present in provided data.")
         else:
             bullets.append("No severe benchmark divergence was detected from provided data.")
+            limitations.append("Benchmark divergence check completed but no divergence was found — results are limited without NAV and benchmark history.")
     else:
         limitations.append("Benchmark divergence diagnostics are missing.")
 
+    status = "OK" if items and has_divergence else "PARTIAL" if items else "MISSING"
     return _section(
         "benchmark_divergence",
-        "OK" if items else "MISSING",
+        status,
         bullets,
         ["benchmark_divergence_diagnostics"],
         limitations,
@@ -317,6 +499,61 @@ def _build_factor_and_style(context: dict[str, Any]) -> dict[str, Any]:
     else:
         limitations.append("Factor exposure data is missing; no style exposure is fabricated.")
     return _section("factor_and_style", "OK" if factor else "MISSING", bullets, ["factor_summary"], limitations)
+
+
+def _build_factor_analysis(context: dict[str, Any]) -> dict[str, Any]:
+    """Build factor analysis section from optional factor_snapshot data."""
+    factor_snapshot = _as_dict(context["artifacts"].get("factor_snapshot"))
+    bullets: list[str] = []
+    limitations: list[str] = []
+
+    if factor_snapshot:
+        factors = _as_dict(factor_snapshot.get("factors"))
+        if factors:
+            bullets.append(f"Portfolio-level factor summary covers {len(factors)} factor dimension(s).")
+            for factor_name, factor_value in list(factors.items())[:5]:
+                if isinstance(factor_value, (int, float)):
+                    bullets.append(f"  {factor_name}: {_fixed(factor_value, 4)}.")
+                elif isinstance(factor_value, dict):
+                    bullets.append(f"  {factor_name}: available.")
+                else:
+                    bullets.append(f"  {factor_name}: {factor_value}.")
+        else:
+            provider_status = _as_dict(factor_snapshot.get("provider_status"))
+            available_providers = _string_list(provider_status.get("available_providers") or [])
+            if available_providers:
+                limitations.append(
+                    f"Factor snapshot was built by {', '.join(available_providers)} but no factor dimensions were extracted. "
+                    "This typically means the provider returned no factor-style data for the held funds."
+                )
+            else:
+                limitations.append(
+                    "Factor snapshot is present but contains no factor dimensions — "
+                    "no factor-style data providers were configured. "
+                    "Provide fund NAV history or connect a factor-data MCP provider to enable factor analysis."
+                )
+
+        data_quality = _as_dict(factor_snapshot.get("data_quality"))
+        if data_quality:
+            grade = data_quality.get("grade")
+            coverage = data_quality.get("coverage")
+            if grade is not None:
+                bullets.append(f"Factor data quality grade: {grade}.")
+            if coverage is not None:
+                bullets.append(f"Factor data coverage: {coverage}.")
+
+        provider_status = _as_dict(factor_snapshot.get("provider_status"))
+        if provider_status:
+            available = _string_list(provider_status.get("available_providers") or [])
+            if available:
+                bullets.append(f"Factor data providers: {', '.join(available)}.")
+
+        status = "OK" if factors else "PARTIAL"
+    else:
+        limitations.append("Factor snapshot not provided; no factor analysis is fabricated.")
+        status = "MISSING"
+
+    return _section("factor_analysis", status, bullets, ["factor_snapshot"], limitations)
 
 
 def _build_fees_and_redemption(context: dict[str, Any]) -> dict[str, Any]:
@@ -379,11 +616,12 @@ def _build_dca_and_trade_budget(context: dict[str, Any]) -> dict[str, Any]:
     limitations: list[str] = []
 
     if trade_budget:
+        likely_missing = _current_value_likely_missing(context)
         bullets.append(
             "Trade budget: max buy "
-            f"{_money(trade_budget.get('max_buy_amount'))}, max sell "
-            f"{_money(trade_budget.get('max_sell_amount'))}, liquidity reserve "
-            f"{_money(trade_budget.get('liquidity_reserve'))}."
+            f"{_money_or_missing(trade_budget.get('max_buy_amount'), likely_missing=likely_missing)}, max sell "
+            f"{_money_or_missing(trade_budget.get('max_sell_amount'), likely_missing=likely_missing)}, liquidity reserve "
+            f"{_money_or_missing(trade_budget.get('liquidity_reserve'), likely_missing=likely_missing)}."
         )
     else:
         limitations.append("Trade budget artifact is missing.")
@@ -397,7 +635,13 @@ def _build_dca_and_trade_budget(context: dict[str, Any]) -> dict[str, Any]:
         limitations.append("DCA plan review is absent; host did not provide DCA inputs.")
 
     status = "OK" if trade_budget and dca_review else "PARTIAL" if trade_budget or short_term_budget else "MISSING"
-    return _section("dca_and_trade_budget", status, bullets, ["trade_budget", "short_term_trade_budget", "dca_plan_review"], limitations)
+    return _section(
+        "dca_and_trade_budget",
+        status,
+        bullets,
+        ["trade_budget", "short_term_trade_budget", "dca_plan_review"],
+        limitations,
+    )
 
 
 def _build_professional_diagnostics(context: dict[str, Any]) -> dict[str, Any]:
@@ -406,14 +650,29 @@ def _build_professional_diagnostics(context: dict[str, Any]) -> dict[str, Any]:
     bullets: list[str] = []
     limitations: list[str] = []
 
-    if not prof_diag:
+    # Check if prof_diag has any actual sub-diagnostics
+    diag_keys = [
+        "redemption_fee_risk",
+        "overlap_diagnostics",
+        "theme_overweight_diagnostics",
+        "dca_drawdown_diagnostics",
+        "cash_budget_diagnostics",
+    ]
+    has_sub_diagnostics = any(
+        prof_diag.get(key) is not None for key in diag_keys
+    )
+
+    if not prof_diag or not has_sub_diagnostics:
         limitations.append(
             "Professional diagnostics require host-supplied transactions, holdings, "
             "fund profiles, redemption rules, risk constraints, DCA plans, or budget data."
         )
         return _section(
-            "professional_diagnostics", "MISSING", bullets,
-            ["professional_diagnostics"], limitations,
+            "professional_diagnostics",
+            "MISSING",
+            bullets,
+            ["professional_diagnostics"],
+            limitations,
         )
 
     redemption = _as_dict(prof_diag.get("redemption_fee_risk"))
@@ -423,8 +682,7 @@ def _build_professional_diagnostics(context: dict[str, Any]) -> dict[str, Any]:
             highest = redemption.get("summary", {}).get("highest_fee_pct")
             fee_str = f"highest host-supplied fee is {highest * 100:.1f}%" if highest is not None else ""
             bullets.append(
-                f"Short-holding redemption fee scan found {len(affected)} "
-                f"affected fund/transaction item(s); {fee_str}."
+                f"Short-holding redemption fee scan found {len(affected)} affected fund/transaction item(s); {fee_str}."
             )
             # List first 3 affected funds
             for item in affected[:3]:
@@ -458,7 +716,7 @@ def _build_professional_diagnostics(context: dict[str, Any]) -> dict[str, Any]:
 
     dca = _as_dict(prof_diag.get("dca_drawdown_diagnostics"))
     if dca:
-        reviewed = _as_list(dca.get("reviewed_funds"))
+        _as_list(dca.get("reviewed_funds"))
         summary = dca.get("summary", {})
         bullets.append(
             f"DCA drawdown scan reviewed {summary.get('reviewed_count', 0)} plan(s); "
@@ -485,9 +743,11 @@ def _build_professional_diagnostics(context: dict[str, Any]) -> dict[str, Any]:
         for w in unique_warns[:5]:
             bullets.append(w)
 
-    status = "PARTIAL" if prof_warnings else "OK"
+    status = "PARTIAL" if prof_warnings else "PARTIAL" if not bullets else "OK"
     return _section(
-        "professional_diagnostics", status, bullets,
+        "professional_diagnostics",
+        status,
+        bullets,
         [
             "professional_diagnostics",
             "redemption_fee_risk",
@@ -510,20 +770,23 @@ def _build_profit_protection(context: dict[str, Any]) -> dict[str, Any]:
     if items:
         bullets.append(f"Profit protection reviewed {len(items)} position(s).")
         high_profit = [
-            item for item in items
-            if isinstance(item, dict) and item.get("profit_level") in {"high", "very_high"}
+            item for item in items if isinstance(item, dict) and item.get("profit_level") in {"high", "very_high"}
         ]
         if high_profit:
             bullets.append(f"High-profit watchlist contains {len(high_profit)} position(s).")
         action_counts = _as_dict(summary.get("suggested_action_counts"))
         if action_counts:
             bullets.append(f"Analysis-only action distribution: {_format_counts(action_counts)}.")
+        has_detail = bool(high_profit or action_counts)
+        if not has_detail:
+            limitations.append("Profit protection has no detailed breakdown; profit levels and action suggestions are unavailable without current NAV data.")
     else:
         limitations.append("Profit protection diagnostics are missing.")
 
+    status = "OK" if items and (high_profit or action_counts) else "PARTIAL" if items else "MISSING"
     return _section(
         "profit_protection",
-        "OK" if items else "MISSING",
+        status,
         bullets,
         ["profit_protection_diagnostics"],
         limitations,
@@ -539,16 +802,11 @@ def _build_right_side_confirmation(context: dict[str, Any]) -> dict[str, Any]:
 
     if items:
         applicable = [
-            item for item in items
-            if isinstance(item, dict) and item.get("applicability") != "not_applicable"
+            item for item in items if isinstance(item, dict) and item.get("applicability") != "not_applicable"
         ]
-        confirmed = [
-            item for item in applicable
-            if isinstance(item, dict) and item.get("right_side_confirmed") is True
-        ]
+        confirmed = [item for item in applicable if isinstance(item, dict) and item.get("right_side_confirmed") is True]
         bullets.append(
-            f"Right-side confirmation applies to {len(applicable)} drawdown position(s); "
-            f"{len(confirmed)} confirmed."
+            f"Right-side confirmation applies to {len(applicable)} drawdown position(s); {len(confirmed)} confirmed."
         )
         if summary.get("needs_more_evidence"):
             bullets.append("Fresh NAV, benchmark, news, or sentiment evidence is needed before action.")
@@ -572,10 +830,7 @@ def _build_event_hype_failure(context: dict[str, Any]) -> dict[str, Any]:
     limitations: list[str] = []
 
     if items:
-        failed = [
-            item for item in items
-            if isinstance(item, dict) and item.get("hype_failed") is True
-        ]
+        failed = [item for item in items if isinstance(item, dict) and item.get("hype_failed") is True]
         bullets.append(f"Event catalyst review covers {len(items)} event(s).")
         if failed:
             bullets.append(f"Event hype failure detected for {len(failed)} event(s).")
@@ -596,6 +851,75 @@ def _build_event_hype_failure(context: dict[str, Any]) -> dict[str, Any]:
     )
 
 
+def _build_news_and_events(context: dict[str, Any]) -> dict[str, Any]:
+    """Build news and events section from optional news_snapshot data."""
+    news_snapshot = _as_dict(context["artifacts"].get("news_snapshot"))
+    bullets: list[str] = []
+    limitations: list[str] = []
+
+    if news_snapshot:
+        items = _as_list(news_snapshot.get("items"))
+        if items:
+            bullets.append(f"News snapshot covers {len(items)} news item(s).")
+            # Render summary per topic/entity (up to 5 items)
+            for item in items[:5]:
+                if isinstance(item, dict):
+                    source = item.get("source", "unknown")
+                    title = item.get("title", "")
+                    url = item.get("url", "")
+                    entity = item.get("entity", item.get("topic", ""))
+                    related_funds = _string_list(item.get("related_funds") or [])
+                    related_entities = _string_list(item.get("related_entities") or [])
+                    bullet_parts = []
+                    if entity:
+                        bullet_parts.append(f"[{entity}]")
+                    if title:
+                        bullet_parts.append(title)
+                    bullet_parts.append(f"(source: {source})")
+                    if related_funds:
+                        bullet_parts.append(f"related: {', '.join(related_funds[:3])}")
+                    elif related_entities:
+                        bullet_parts.append(f"entities: {', '.join(related_entities[:3])}")
+                    if url:
+                        bullet_parts.append(f"url: {url}")
+                    bullets.append(" ".join(bullet_parts))
+                elif isinstance(item, str):
+                    bullets.append(item)
+        else:
+            limitations.append("News snapshot is present but contains no news items.")
+
+        # Provider status summary
+        provider_status = _as_dict(news_snapshot.get("provider_status"))
+        if provider_status:
+            available = _string_list(provider_status.get("available_providers") or [])
+            if available:
+                bullets.append(f"News data providers: {', '.join(available)}.")
+            failed = _string_list(provider_status.get("failed_providers") or [])
+            if failed:
+                limitations.append(f"Failed news providers: {', '.join(failed)}.")
+
+        # Coverage gaps
+        coverage_gaps = _string_list(news_snapshot.get("coverage_gaps") or [])
+        if coverage_gaps:
+            bullets.append(f"News coverage gaps: {', '.join(coverage_gaps)}.")
+            status = "PARTIAL"
+        elif items:
+            status = "OK"
+        else:
+            status = "PARTIAL"
+    else:
+        limitations.append("News snapshot not provided; no news or events are fabricated.")
+        status = "MISSING"
+
+    return _section(
+        "news_and_events",
+        status,
+        bullets,
+        ["news_snapshot"],
+        limitations,
+    )
+
+
 def _build_cash_deployment(context: dict[str, Any]) -> dict[str, Any]:
     diagnostics = _artifact(context, "cash_deployment_diagnostics")
     summary = _as_dict(diagnostics.get("summary"))
@@ -603,17 +927,20 @@ def _build_cash_deployment(context: dict[str, Any]) -> dict[str, Any]:
     limitations: list[str] = []
 
     if summary:
+        likely_missing = _current_value_likely_missing(context)
+        cash_weight = summary.get('cash_like_weight')
         bullets.append(
             "Cash-like weight "
-            f"{_pct(summary.get('cash_like_weight'))}; deployment readiness "
+            f"{_pct_or_missing(cash_weight, likely_missing=likely_missing)}; deployment readiness "
             f"{summary.get('deployment_readiness', 'unknown')}."
         )
-        bullets.append(
-            f"Cash accounting basis: {summary.get('cash_accounting_basis', 'unspecified')}."
-        )
+        bullets.append(f"Cash accounting basis: {summary.get('cash_accounting_basis', 'unspecified')}.")
         deployable = summary.get("estimated_deployable_cash")
         if deployable is not None:
-            bullets.append(f"Estimated deployable cash: {_money(deployable)}.")
+            likely_missing = _current_value_likely_missing(context)
+            bullets.append(
+                f"Estimated deployable cash: {_money_or_missing(deployable, likely_missing=likely_missing)}."
+            )
     else:
         limitations.append("Cash deployment diagnostics are missing.")
 
@@ -632,6 +959,35 @@ def _build_evidence_status(context: dict[str, Any]) -> dict[str, Any]:
     redemption = _artifact(context, "redemption_fee_risk")
     bullets: list[str] = []
     limitations: list[str] = []
+
+    # Positive-evidence summary: what CAN be concluded from available data
+    available: list[str] = []
+    portfolio = _portfolio_summary(context)
+    if portfolio:
+        pos_count = int(portfolio.get("position_count") or 0)
+        if pos_count > 0:
+            available.append(f"portfolio has {pos_count} identified position(s)")
+    if context["artifacts"].get("benchmark_divergence_diagnostics"):
+        items = _as_list(context["artifacts"]["benchmark_divergence_diagnostics"].get("items"))
+        if items:
+            available.append(f"benchmark divergence checked for {len(items)} fund(s)")
+    if context["artifacts"].get("profit_protection_diagnostics"):
+        items = _as_list(context["artifacts"]["profit_protection_diagnostics"].get("items"))
+        if items:
+            available.append(f"profit protection reviewed for {len(items)} position(s)")
+    if context["artifacts"].get("right_side_confirmation_diagnostics"):
+        items = _as_list(context["artifacts"]["right_side_confirmation_diagnostics"].get("items"))
+        if items:
+            available.append(f"right-side confirmation assessed for {len(items)} position(s)")
+    if context["artifacts"].get("exposure_summary") or context["report"].get("exposure_summary"):
+        available.append("exposure breakdown computed")
+    if context["artifacts"].get("factor_snapshot"):
+        factors = _as_dict(context["artifacts"]["factor_snapshot"].get("factors"))
+        if factors:
+            available.append(f"factor analysis covers {len(factors)} dimension(s)")
+
+    if available:
+        bullets.append(f"Available conclusions: {'; '.join(available)}.")
 
     if plan:
         ready = bool(plan.get("decision_support_ready"))
@@ -708,8 +1064,16 @@ def _build_missing_data(context: dict[str, Any]) -> dict[str, Any]:
     for detail in details[:5]:
         if isinstance(detail, dict):
             code = detail.get("code", "unknown")
+            severity = detail.get("severity", "")
+            reason = detail.get("reason", "")
             next_data = detail.get("recommended_next_data", "")
-            bullets.append(f"{code}: next data {next_data}.")
+            parts = [code]
+            if severity:
+                parts.append(f"[{severity}]")
+            if reason:
+                parts.append(f"({reason})")
+            bullet = " ".join(parts) + f": next data {next_data}." if next_data else " ".join(parts) + "."
+            bullets.append(bullet)
 
     return _section(
         "missing_data",
@@ -722,6 +1086,7 @@ def _build_missing_data(context: dict[str, Any]) -> dict[str, Any]:
 
 def _build_suggested_next_checks(context: dict[str, Any]) -> dict[str, Any]:
     plan = _artifact(context, "analysis_plan")
+    gap = _artifact(context, "evidence_gap_diagnostics")
     next_data = _string_list(plan.get("next_data_to_fetch") or [])
     bullets: list[str] = []
     limitations: list[str] = []
@@ -733,11 +1098,31 @@ def _build_suggested_next_checks(context: dict[str, Any]) -> dict[str, Any]:
     else:
         limitations.append("analysis_plan is missing; no next checks can be derived.")
 
+    # Append specific recommended_next_data from evidence_gap_diagnostics details
+    details = _as_list(gap.get("details"))
+    seen_codes: set[str] = set()
+    detail_bullets: list[str] = []
+    for detail in details:
+        if not isinstance(detail, dict):
+            continue
+        code = detail.get("code", "")
+        next_item = detail.get("recommended_next_data", "")
+        reason = detail.get("reason", "")
+        if code in seen_codes or not next_item:
+            continue
+        seen_codes.add(code)
+        reason_label = f" ({reason})" if reason else ""
+        detail_bullets.append(f"{code}{reason_label}: {next_item}")
+    if detail_bullets:
+        bullets.append("Specific data to provide:")
+        for db in detail_bullets:
+            bullets.append(f"  {db}")
+
     return _section(
         "suggested_next_checks",
         "PARTIAL" if next_data else "OK" if plan else "MISSING",
         bullets,
-        ["analysis_plan.next_data_to_fetch"],
+        ["analysis_plan.next_data_to_fetch", "evidence_gap_diagnostics"],
         limitations,
     )
 
@@ -749,7 +1134,7 @@ def _build_uncertainty_note(context: dict[str, Any]) -> dict[str, Any]:
         "No formal decision generated; call decision-support for formal action.",
     ]
     if limitations:
-        bullets.append(f"Report limitations count: {len(limitations)}.")
+        bullets.append(f"Report limitations count: {len(limitations)}. See each section for details.")
 
     return _section(
         "uncertainty_note",
@@ -766,9 +1151,10 @@ def _build_rebalance_plan(context: dict[str, Any]) -> dict[str, Any]:
     limitations: list[str] = []
     if plan:
         trades = _as_list(plan.get("suggested_trade_plan"))
+        likely_missing = _current_value_likely_missing(context)
         bullets.append(
             f"Rebalance simulation produced {len(trades)} trade leg(s) "
-            f"with total trade amount {_money(plan.get('total_trade_amount'))}."
+            f"with total trade amount {_money_or_missing(plan.get('total_trade_amount'), likely_missing=likely_missing)}."
         )
         bullets.extend(_string_list(plan.get("warnings") or []))
         status = "OK"
@@ -786,7 +1172,9 @@ def _build_research_query_plan(context: dict[str, Any]) -> dict[str, Any]:
     if plan:
         news = _as_list(plan.get("news_queries"))
         sentiment = _as_list(plan.get("sentiment_queries"))
-        bullets.append(f"Research query plan includes {len(news)} news query(ies) and {len(sentiment)} sentiment query(ies).")
+        bullets.append(
+            f"Research query plan includes {len(news)} news query(ies) and {len(sentiment)} sentiment query(ies)."
+        )
         status = "OK"
     else:
         research_status = coverage.get("research_plan")
@@ -806,10 +1194,11 @@ def _build_data_completeness_and_limitations(context: dict[str, Any]) -> dict[st
     completeness = context["data_completeness"]
     limitations = list(context["report_limitations"])
     bullets: list[str] = []
+    artifacts = context["artifacts"]
+
     if completeness:
         bullets.append(
-            f"Completeness grade {completeness.get('grade', 'D')} "
-            f"with score {_fixed(completeness.get('score'), 3)}."
+            f"Completeness grade {completeness.get('grade', 'D')} with score {_fixed(completeness.get('score'), 3)}."
         )
         missing = _string_list(completeness.get("missing_sections") or [])
         if missing:
@@ -821,7 +1210,24 @@ def _build_data_completeness_and_limitations(context: dict[str, Any]) -> dict[st
     else:
         limitations.append("Data completeness artifact is missing.")
         status = "MISSING"
-    return _section("data_completeness_and_limitations", status, bullets, ["data_completeness", "report_limitations"], limitations)
+
+    # Snapshot presence/absence reporting
+    snapshot_keys = {
+        "provider_snapshot": "provider_snapshot",
+        "news_snapshot": "news_snapshot",
+        "factor_snapshot": "factor_snapshot",
+        "kg_context_snapshot": "kg_context_snapshot",
+    }
+    snapshot_statuses: list[str] = []
+    for key, label in snapshot_keys.items():
+        present = key in artifacts and artifacts[key] is not None
+        snapshot_statuses.append(f"{label}={'present' if present else 'absent'}")
+    if snapshot_statuses:
+        bullets.append(f"Snapshot availability: {', '.join(snapshot_statuses)}.")
+
+    return _section(
+        "data_completeness_and_limitations", status, bullets, ["data_completeness", "report_limitations"], limitations
+    )
 
 
 def _build_evidence_appendix(context: dict[str, Any]) -> dict[str, Any]:

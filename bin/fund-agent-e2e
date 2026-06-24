@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Thin POSIX entrypoint. All E2E orchestration lives in scripts/fund_agent_e2e.py.
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PYTHONPATH="${REPO_ROOT}${PYTHONPATH:+:$PYTHONPATH}" exec "${PYTHON:-python}" "$REPO_ROOT/scripts/fund_agent_e2e.py" "$@"

@@ -1,6 +1,5 @@
 """Tests for decision_support evidence anchor policy."""
 
-import pytest
 
 from src.schemas.evidence import EvidenceItem
 from src.schemas.evidence_graph import EvidenceGraph

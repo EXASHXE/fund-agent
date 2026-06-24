@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 FORBIDDEN_EXECUTION_FIELDS = frozenset({
     "broker_order_id",
     "order_id",

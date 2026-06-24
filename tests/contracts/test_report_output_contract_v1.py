@@ -4,13 +4,10 @@ from __future__ import annotations
 
 import json
 
-import pytest
-
 from src.schemas.skill import SkillInput
 from src.skills_runtime.fund_analysis import FundAnalysisSkill
 from src.tools.portfolio.report_composer import (
     SECTION_ORDER,
-    compose_personal_fund_report,
     render_report_markdown,
 )
 

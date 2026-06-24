@@ -103,18 +103,14 @@ def assemble_analysis_report_and_artifacts(
         "dca_plan_review": metrics.dca_review if bundle.dca_plans else None,
         "suggested_rebalance_plan": metrics.rebalance_plan,
         "fund_analysis_report": report,
-        "warnings": warnings + list(
-            metrics.reconciliation.get("warnings", [])
-            if metrics.reconciliation else []
-        ),
+        "warnings": warnings + list(metrics.reconciliation.get("warnings", []) if metrics.reconciliation else []),
         "market_scenario_impact": bundle.market_scenario if bundle.market_scenario else None,
     }
 
     # Derived portfolio / ledger artifacts
     if source_of_truth == "derived_from_transactions" and derived_snapshot:
         warnings.append(
-            "portfolio was derived from transactions and current_nav; "
-            "accuracy depends on input completeness"
+            "portfolio was derived from transactions and current_nav; accuracy depends on input completeness"
         )
         artifacts["derived_portfolio_snapshot"] = derived_snapshot
         artifacts["ledger_cashflow_summary"] = derived_snapshot.get("cashflow_summary")
@@ -124,6 +120,23 @@ def assemble_analysis_report_and_artifacts(
             derived_snapshot,
             warnings,
         )
+
+    # Transactions-only mode: cashflow evidence without valuation
+    if source_of_truth == "transactions_only":
+        artifacts["source_of_truth"] = "transactions_only"
+        warnings.append(
+            "source_of_truth is transactions_only: report shows cashflow data, not current market value; "
+            "流水口径净投入，不是当前市值"
+        )
+        # Compute cashflow summary from transactions
+        from src.tools.portfolio.ledger_snapshot import compute_transaction_cashflow_summary
+        as_of_date = bundle.portfolio.get("as_of_date", bundle.as_of_date or "")
+        cashflow_summary = compute_transaction_cashflow_summary(
+            transactions=bundle.transactions,
+            as_of_date=as_of_date,
+            options=bundle.payload.get("settlement_options"),
+        )
+        artifacts["transaction_cashflow_summary"] = cashflow_summary
 
     if reconciliation_report:
         artifacts["ledger_reconciliation_report"] = reconciliation_report
@@ -207,6 +220,13 @@ def assemble_analysis_report_and_artifacts(
     if knowledge_graph_summary:
         artifacts["knowledge_graph_summary"] = knowledge_graph_summary
         report["knowledge_graph_summary"] = knowledge_graph_summary
+
+    # Pass snapshot data from payload through to artifacts for report builders
+    payload = bundle.payload
+    for snapshot_key in ("news_snapshot", "factor_snapshot", "kg_context_snapshot"):
+        snapshot_data = payload.get(snapshot_key)
+        if snapshot_data is not None:
+            artifacts[snapshot_key] = snapshot_data
 
     data_completeness = attach_report_artifacts(
         payload=bundle.payload,

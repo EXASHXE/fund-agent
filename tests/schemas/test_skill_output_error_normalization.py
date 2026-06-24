@@ -65,8 +65,9 @@ class TestSkillOutputErrorNormalization:
             SkillOutput(status="INVALID")
 
     def test_preserves_artifacts_evidence_warnings(self):
-        from src.schemas.evidence import EvidenceItem
         from datetime import datetime
+
+        from src.schemas.evidence import EvidenceItem
         ev = EvidenceItem(
             evidence_id="ev-1",
             evidence_type="HardEvidence",

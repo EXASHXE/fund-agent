@@ -4,9 +4,9 @@ Only decision_support may produce formal Decision and ExecutionLedger.
 Other skills must not.
 """
 
+from src.schemas.skill import SkillInput
 from src.skills_runtime.fund_analysis.skill import FundAnalysisSkill
 from src.skills_runtime.thesis_generation import ThesisGenerationSkill
-from src.schemas.skill import SkillInput
 
 
 def _skill_input(**overrides):

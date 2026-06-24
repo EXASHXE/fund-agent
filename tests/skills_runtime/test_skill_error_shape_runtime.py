@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from src.schemas.skill import SkillInput, SkillOutput
 from src.skills_runtime.base import BaseSkillRuntime
-from src.skills_runtime.fund_analysis.skill import FundAnalysisSkill
 from src.skills_runtime.decision_support.skill import DecisionSupportSkill
+from src.skills_runtime.fund_analysis.skill import FundAnalysisSkill
 from src.skills_runtime.news_research import NewsResearchSkill
 from src.skills_runtime.sentiment_analysis import SentimentAnalysisSkill
 from src.skills_runtime.thesis_generation import ThesisGenerationSkill

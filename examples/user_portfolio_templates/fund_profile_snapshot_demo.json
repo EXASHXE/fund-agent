@@ -1,0 +1,88 @@
+{
+  "schema_version": "fund_profile_snapshot.v1",
+  "as_of_date": "2024-12-31",
+  "fund_profiles": {
+    "SYN001": {
+      "fund_code": "SYN001",
+      "fund_name": "合成成长混合A",
+      "fund_type": "混合型",
+      "manager": "示例经理甲",
+      "benchmark": "SYNHS300",
+      "inception_date": "2018-03-15",
+      "size_category": "mid",
+      "tags": ["成长", "混合"]
+    },
+    "SYN002": {
+      "fund_code": "SYN002",
+      "fund_name": "合成短债C",
+      "fund_type": "债券型",
+      "manager": "示例经理乙",
+      "benchmark": "SYNBOND1Y",
+      "inception_date": "2020-07-01",
+      "size_category": "large",
+      "tags": ["短债", "稳健"]
+    },
+    "SYN003": {
+      "fund_code": "SYN003",
+      "fund_name": "合成半导体指数A",
+      "fund_type": "指数型",
+      "manager": "示例经理丙",
+      "benchmark": "SYNSEMI",
+      "inception_date": "2021-11-20",
+      "size_category": "small",
+      "tags": ["半导体", "指数", "科技"]
+    }
+  },
+  "fund_holdings": {
+    "SYN001": {
+      "fund_code": "SYN001",
+      "as_of": "2024-09-30",
+      "holdings": [
+        {"name": "合成科技股份", "weight": 9.2, "code": "SY6001", "asset_type": "stock", "industry": "科技"},
+        {"name": "合成消费集团", "weight": 7.1, "code": "SY6002", "asset_type": "stock", "industry": "消费"},
+        {"name": "合成医药有限", "weight": 5.8, "code": "SY6003", "asset_type": "stock", "industry": "医药"}
+      ]
+    },
+    "SYN003": {
+      "fund_code": "SYN003",
+      "as_of": "2024-09-30",
+      "holdings": [
+        {"name": "合成芯片设计", "weight": 10.5, "code": "SY6101", "asset_type": "stock", "industry": "半导体"},
+        {"name": "合成封测技术", "weight": 8.3, "code": "SY6102", "asset_type": "stock", "industry": "半导体"},
+        {"name": "合成材料科技", "weight": 6.7, "code": "SY6103", "asset_type": "stock", "industry": "材料"}
+      ]
+    }
+  },
+  "benchmark_info": {
+    "SYNHS300": {
+      "symbol": "SYNHS300",
+      "name": "合成沪深300指数",
+      "provider": "synthetic",
+      "asset_class": "equity"
+    },
+    "SYNBOND1Y": {
+      "symbol": "SYNBOND1Y",
+      "name": "合成中债1年期指数",
+      "provider": "synthetic",
+      "asset_class": "bond"
+    },
+    "SYNSEMI": {
+      "symbol": "SYNSEMI",
+      "name": "合成半导体指数",
+      "provider": "synthetic",
+      "asset_class": "equity"
+    }
+  },
+  "provenance": {
+    "synthetic": {
+      "source": "synthetic_demo",
+      "fetched_at": "2024-12-31T12:00:00Z",
+      "notes": "synthetic demo data — not real market data"
+    }
+  },
+  "limitations": [
+    "synthetic demo data — not real market data",
+    "fund_holdings as_of may be stale",
+    "no NAV or performance history in this snapshot"
+  ]
+}

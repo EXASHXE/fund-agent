@@ -4,9 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-import pytest
-
-from src.schemas.skill import SkillInput, SkillOutput
+from src.schemas.skill import SkillInput
 from src.skills_runtime.mcp_adapter_skill import MCPAdapterSkill
 from src.tools.adapters.mcp import InMemoryMCPHostAdapter, MCPCapability
 

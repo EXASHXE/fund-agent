@@ -104,15 +104,9 @@ def validate_evidence(item: EvidenceItem) -> list[str]:
     if not item.related_entities:
         errors.append("Missing related_entities")
     if item.evidence_type == "HardEvidence" and item.confidence_weight != 1.0:
-        errors.append(
-            f"HardEvidence confidence must be 1.0, got {item.confidence_weight}"
-        )
-    if item.evidence_type in ("SoftEvidence", "HybridEvidence"):
-        if not (0.1 <= item.confidence_weight <= 1.0):
-            errors.append(
-                f"Soft/Hybrid confidence must be [0.1, 1.0], "
-                f"got {item.confidence_weight}"
-            )
+        errors.append(f"HardEvidence confidence must be 1.0, got {item.confidence_weight}")
+    if item.evidence_type in ("SoftEvidence", "HybridEvidence") and not (0.1 <= item.confidence_weight <= 1.0):
+        errors.append(f"Soft/Hybrid confidence must be [0.1, 1.0], got {item.confidence_weight}")
     return errors
 
 
@@ -174,12 +168,47 @@ def aggregate_confidence(items: list[EvidenceItem]) -> float:
     return total / len(items)
 
 
+# SoftEvidence confidence cap for fallback-only items
+_FALLBACK_SOFT_EVIDENCE_CAP = 0.3
+
+
+def _cap_fallback_soft_evidence(items: list[EvidenceItem]) -> None:
+    """Cap fallback-only SoftEvidence at confidence_weight=0.3.
+
+    When SoftEvidence comes from a fallback query (is_fallback_query=True or
+    query_type=theme_fallback), its confidence_weight is capped at 0.3.
+    This prevents fallback news from providing strong evidence for decisions.
+
+    The function mutates items in-place by adjusting confidence_weight.
+
+    Args:
+        items: List of EvidenceItem instances to check and potentially cap.
+    """
+    for item in items:
+        if item.evidence_type != "SoftEvidence":
+            continue
+
+        # Check if this is fallback evidence via provenance or value
+        provenance = item.provenance or {}
+        value = item.value if isinstance(item.value, dict) else {}
+
+        is_fallback = (
+            provenance.get("is_fallback_query") is True
+            or value.get("is_fallback_query") is True
+            or provenance.get("query_type") == "theme_fallback"
+            or value.get("query_type") == "theme_fallback"
+        )
+
+        if is_fallback and item.confidence_weight > _FALLBACK_SOFT_EVIDENCE_CAP:
+            item.confidence_weight = _FALLBACK_SOFT_EVIDENCE_CAP
+
+
 def compile_evidence_graph(items: list[EvidenceItem]) -> EvidenceGraphCompileResult:
     """Compile evidence through the full contract pipeline.
 
     Pipeline order:
-    validate → reject invalid → deduplicate → detect conflicts →
-    hybrid upgrade → confidence aggregation.
+    validate → reject invalid → cap fallback SoftEvidence → deduplicate →
+    detect conflicts → hybrid upgrade → confidence aggregation.
 
     Args:
         items: List of EvidenceItem instances.
@@ -203,6 +232,9 @@ def compile_evidence_graph(items: list[EvidenceItem]) -> EvidenceGraphCompileRes
             continue
         valid_items.append(item)
 
+    # Cap fallback-only SoftEvidence at confidence_weight=0.3
+    _cap_fallback_soft_evidence(valid_items)
+
     graph = EvidenceGraph()
     for item in valid_items:
         graph.add(item)
@@ -221,9 +253,7 @@ def compile_evidence_graph(items: list[EvidenceItem]) -> EvidenceGraphCompileRes
         hybrid_upgraded_ids=hybrid_upgraded_ids,
         confidence_by_entity=confidence_by_entity,
         average_confidence=aggregate_confidence(list(graph.items.values())),
-        warnings=[
-            f"Rejected {len(rejected_items)} invalid evidence item(s)"
-        ] if rejected_items else [],
+        warnings=[f"Rejected {len(rejected_items)} invalid evidence item(s)"] if rejected_items else [],
     )
     return EvidenceGraphCompileResult(graph=graph, report=report)
 
@@ -243,11 +273,7 @@ def _upgrade_corroborated_soft_evidence(graph: EvidenceGraph) -> list[str]:
         if len(distinct_sources) < 2:
             continue
         target = group[0]
-        supporting_ids = [
-            item.evidence_id
-            for item in group[1:]
-            if item.evidence_id in graph.items
-        ]
+        supporting_ids = [item.evidence_id for item in group[1:] if item.evidence_id in graph.items]
         if not supporting_ids:
             continue
         result = graph.upgrade_to_hybrid(target.evidence_id, supporting_ids)
@@ -257,12 +283,5 @@ def _upgrade_corroborated_soft_evidence(graph: EvidenceGraph) -> list[str]:
 
 
 def _aggregate_confidence_by_entity(graph: EvidenceGraph) -> dict[str, float]:
-    entities = {
-        entity
-        for item in graph.items.values()
-        for entity in item.related_entities
-    }
-    return {
-        entity: graph.aggregate_confidence(entity)
-        for entity in sorted(entities)
-    }
+    entities = {entity for item in graph.items.values() for entity in item.related_entities}
+    return {entity: graph.aggregate_confidence(entity) for entity in sorted(entities)}

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .action_policy import ACTIVE_ACTIONS, PASSIVE_ACTIONS, _risk_level
+from .action_policy import PASSIVE_ACTIONS, _risk_level
 from .context import _dict, _float_value, _optional_float
 
 

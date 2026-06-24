@@ -20,32 +20,36 @@ section identities, ordering, status semantics, and no-fabrication policy.
 Sections are ordered. The canonical order is defined by `SECTION_ORDER`:
 
 1. `executive_summary` — Executive summary
-2. `portfolio_snapshot` — Portfolio snapshot
-3. `pnl_and_cost_basis` — PnL and cost basis
-4. `position_contribution` — Position contribution
-5. `allocation_and_exposure` — Allocation and exposure
-6. `risk_flags` — Risk flags
-7. `performance_and_nav` — Performance and NAV
-8. `benchmark_and_peer` — Benchmark and peer
-9. `benchmark_divergence` — Benchmark divergence
-10. `factor_and_style` — Factor and style
-11. `fees_and_redemption` — Fees and redemption
-12. `manager_and_fund_profile` — Manager and fund profile
-13. `dca_and_trade_budget` — DCA and trade budget
-14. `professional_diagnostics` — Professional diagnostics
-15. `profit_protection` — Profit protection
-16. `right_side_confirmation` — Right-side confirmation
-17. `event_hype_failure` — Event hype failure
-18. `cash_deployment` — Cash deployment
-19. `evidence_status` — Evidence status
-20. `action_watchlist` — Action watchlist
-21. `missing_data` — Missing data
-22. `suggested_next_checks` — Suggested next checks
-23. `uncertainty_note` — Uncertainty note
-24. `rebalance_plan` — Rebalance plan
-25. `research_query_plan` — Research query plan
-26. `data_completeness_and_limitations` — Data completeness and limitations
-27. `evidence_appendix` — Evidence appendix
+2. `transaction_cashflow` — Transaction cashflow (流水口径)
+3. `portfolio_snapshot` — Portfolio snapshot
+4. `reconstruction_status` — Reconstruction status (重建状态)
+5. `pnl_and_cost_basis` — PnL and cost basis
+6. `position_contribution` — Position contribution
+7. `allocation_and_exposure` — Allocation and exposure
+8. `risk_flags` — Risk flags
+9. `performance_and_nav` — Performance and NAV
+10. `benchmark_and_peer` — Benchmark and peer
+11. `benchmark_divergence` — Benchmark divergence
+12. `factor_and_style` — Factor and style
+13. `factor_analysis` — Factor analysis (from host-layer factor snapshot)
+14. `fees_and_redemption` — Fees and redemption
+15. `manager_and_fund_profile` — Manager and fund profile
+16. `dca_and_trade_budget` — DCA and trade budget
+17. `professional_diagnostics` — Professional diagnostics
+18. `profit_protection` — Profit protection
+19. `right_side_confirmation` — Right-side confirmation
+20. `event_hype_failure` — Event hype failure
+21. `news_and_events` — News and events (from host-layer news snapshot)
+22. `cash_deployment` — Cash deployment
+23. `evidence_status` — Evidence status
+24. `action_watchlist` — Action watchlist
+25. `missing_data` — Missing data
+26. `suggested_next_checks` — Suggested next checks
+27. `uncertainty_note` — Uncertainty note
+28. `rebalance_plan` — Rebalance plan
+29. `research_query_plan` — Research query plan
+30. `data_completeness_and_limitations` — Data completeness and limitations
+31. `evidence_appendix` — Evidence appendix
 
 The ordering is stable. No section may be omitted; MISSING sections are
 represented with `status: "MISSING"` and an empty `bullets` list.

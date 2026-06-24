@@ -8,6 +8,9 @@ import sys
 import tempfile
 from pathlib import Path
 
+import pytest
+
+pytestmark = [pytest.mark.slow, pytest.mark.subprocess]
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "run_personal_regressions.py"
@@ -19,6 +22,7 @@ def test_personal_regression_runner_json_outputs_summary():
         cwd=ROOT,
         text=True,
         encoding="utf-8",
+        errors="replace",
         capture_output=True,
         check=True,
     )
@@ -41,6 +45,7 @@ def test_personal_regression_runner_can_filter_one_scenario():
         cwd=ROOT,
         text=True,
         encoding="utf-8",
+        errors="replace",
         capture_output=True,
         check=True,
     )
@@ -58,6 +63,7 @@ def test_json_output_includes_workflow_trace():
         cwd=ROOT,
         text=True,
         encoding="utf-8",
+        errors="replace",
         capture_output=True,
         check=True,
     )
@@ -78,6 +84,7 @@ def test_json_output_includes_quality_gate():
         cwd=ROOT,
         text=True,
         encoding="utf-8",
+        errors="replace",
         capture_output=True,
         check=True,
     )

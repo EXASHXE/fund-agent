@@ -6,10 +6,23 @@
 - Risk scan surfaced 5 flag(s) from available inputs.
 - No formal decision generated; call decision-support for formal action.
 
+## Transaction cashflow [OK]
+- Total inflows: 5,300.00, total outflows: 67,030.00.
+- Net cashflow: -61,730.00.
+- Dividend income: 300.00.
+
 ## Portfolio snapshot [OK]
 - As of 2026-03-31, total value is 71,350.00 with 7,000.00 cash.
 - Largest position is SYNLED001 at 66.15% of portfolio value.
 - Position detail is available for 2 fund(s).
+
+## Reconstruction status [OK]
+- Report source: reconstructed_from_ledger.
+- Transactions parsed: no.
+- Ledger built from transactions + current_nav: yes.
+- Ledger complete: yes.
+- NAV snapshot available: no.
+- Confirmed portfolio with valuation: yes.
 
 ## PnL and cost basis [OK]
 - Unrealized PnL is 8,350.00 (13.25%) on total cost 63,000.00.
@@ -34,22 +47,12 @@
 - NAV-derived metrics are available for 2 fund(s).
 - Highest total return in provided NAV history is SYNLED001 at 18.00%.
 
-## Benchmark and peer [MISSING]
-- No section content available from provided artifacts.
-
-Limitations:
-- Benchmark data is missing; no benchmark comparison is fabricated.
-- Peer group data is missing; no peer ranking is fabricated.
-
-## Benchmark divergence [OK]
+## Benchmark divergence [PARTIAL]
 - Benchmark divergence reviewed 2 fund(s).
 - No severe benchmark divergence was detected from provided data.
 
-## Factor and style [MISSING]
-- No section content available from provided artifacts.
-
 Limitations:
-- Factor exposure data is missing; no style exposure is fabricated.
+- Benchmark divergence check completed but no divergence was found — results are limited without NAV and benchmark history.
 
 ## Fees and redemption [OK]
 - Fee schedule is available for 2 fund(s).
@@ -83,18 +86,13 @@ Limitations:
 ## Right-side confirmation [OK]
 - Right-side confirmation applies to 0 drawdown position(s); 0 confirmed.
 
-## Event hype failure [MISSING]
-- No section content available from provided artifacts.
-
-Limitations:
-- Event hype diagnostics are missing or no host event metadata was provided.
-
 ## Cash deployment [OK]
 - Cash-like weight 8.93%; deployment readiness ready.
 - Cash accounting basis: conservative_effective_total.
 - Estimated deployable cash: 0.00.
 
 ## Evidence status [PARTIAL]
+- Available conclusions: portfolio has 2 identified position(s); benchmark divergence checked for 2 fund(s); profit protection reviewed for 2 position(s); right-side confirmation assessed for 2 position(s); exposure breakdown computed.
 - decision_support_ready: False.
 - Formal decision blockers: missing_recent_news.
 - Analysis warnings: benchmark_data_missing, sentiment_missing, theme_overweight_warning.
@@ -108,37 +106,30 @@ Limitations:
 
 ## Missing data [PARTIAL]
 - Missing data groups: missing_benchmark_data, missing_recent_news, missing_sentiment.
-- missing_benchmark_data: next data benchmark price history.
-- missing_recent_news: next data recent fund or theme news.
-- missing_sentiment: next data sentiment snapshot for held funds or themes.
+- missing_benchmark_data [warning] (provider_could_fetch): next data benchmark price history.
+- missing_recent_news [blocker] (provider_could_fetch): next data recent fund or theme news.
+- missing_sentiment [warning] (provider_could_fetch): next data sentiment snapshot for held funds or themes.
 
 ## Suggested next checks [PARTIAL]
 - Next data to fetch: recent benchmark movement, recent fund news, sentiment snapshot.
+- Specific data to provide:
+-   missing_benchmark_data (provider_could_fetch): benchmark price history
+-   missing_recent_news (provider_could_fetch): recent fund or theme news
+-   missing_sentiment (provider_could_fetch): sentiment snapshot for held funds or themes
 
 ## Uncertainty note [PARTIAL]
 - This conclusion is based on host-provided data and does not include live market fetching.
 - No formal decision generated; call decision-support for formal action.
-- Report limitations count: 1.
+- Report limitations count: 1. See each section for details.
 
 Limitations:
 - Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data
-
-## Rebalance plan [MISSING]
-- No section content available from provided artifacts.
-
-Limitations:
-- Rebalance plan is missing; target weights or constraints may be unavailable.
-
-## Research query plan [MISSING]
-- No section content available from provided artifacts.
-
-Limitations:
-- Research planning was not requested by the host.
 
 ## Data completeness and limitations [OK]
 - Completeness grade B with score 0.767.
 - Missing data groups: Benchmark History, Peer Group, Factor Exposures, Manager Profile, Fund Flow, Macro Events, User Investment Plan.
 - Optional gaps: Benchmark History, Peer Group, Factor Exposures, Manager Profile, Fund Flow, Macro Events, User Investment Plan.
+- Snapshot availability: provider_snapshot=absent, news_snapshot=absent, factor_snapshot=absent, kg_context_snapshot=absent.
 
 Limitations:
 - Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data
@@ -151,9 +142,12 @@ Limitations:
 
 - Benchmark and peer: Benchmark data is missing; no benchmark comparison is fabricated.
 - Benchmark and peer: Peer group data is missing; no peer ranking is fabricated.
+- Benchmark divergence: Benchmark divergence check completed but no divergence was found — results are limited without NAV and benchmark history.
 - Factor and style: Factor exposure data is missing; no style exposure is fabricated.
+- Factor analysis: Factor snapshot not provided; no factor analysis is fabricated.
 - Manager and fund profile: Manager tenure and manager-change analysis are unavailable.
 - Event hype failure: Event hype diagnostics are missing or no host event metadata was provided.
+- News and events: News snapshot not provided; no news or events are fabricated.
 - Action watchlist: Suggested rebalance plan is missing.
 - Uncertainty note: Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data
 - Rebalance plan: Rebalance plan is missing; target weights or constraints may be unavailable.

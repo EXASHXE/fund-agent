@@ -212,6 +212,35 @@ When the Codex plugin spec stabilizes, the install can graduate from
 "manual / light" to "first-class". Until then, the manual flow above
 and the runtime bridge CLI are the supported paths.
 
+## Codex Agent Skills (v0.10.5+)
+
+Starting with v0.10.5, fund-agent ships dedicated Codex Agent Skills
+under `.agents/skills/` and a plugin manifest at `.codex-plugin/plugin.json`.
+
+### Repo-local skills
+
+These are automatically available when Codex opens the fund-agent repo:
+
+| Skill | Description |
+|---|---|
+| `.agents/skills/fund-agent-e2e/` | E2E portfolio report via `bin/fund-agent-e2e` |
+| `.agents/skills/fund-agent-privacy-audit/` | Privacy audit via `bin/fund-agent-privacy-check` |
+| `.agents/skills/fund-agent-setup-private-data/` | Private data file setup guide |
+
+### User-global install
+
+```bash
+python install/fund-agent-agent-install.py --target codex --mode symlink
+```
+
+This symlinks the three skills into `~/.agents/skills/`.
+
+### Doctor check
+
+```bash
+python install/fund-agent-agent-doctor.py --target codex
+```
+
 ## Separate installs for other harnesses
 
 - **OpenCode:** see [`docs/install/opencode.md`](./opencode.md). First

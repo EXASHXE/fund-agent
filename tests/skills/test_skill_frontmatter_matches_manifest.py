@@ -23,6 +23,11 @@ CANONICAL_SKILL_SLUGS = {
     "sentiment-analysis",
     "thesis-generation",
 }
+PLUGIN_OPERATION_SKILL_SLUGS = {
+    "audit-privacy",
+    "e2e-report",
+    "setup-private-data",
+}
 
 
 def _manifest() -> dict:
@@ -56,7 +61,6 @@ class TestFrontmatterMatchesManifest:
         return slug.replace("-", "_")
 
     def test_frontmatter_id_matches_manifest_runtime_name(self):
-        manifest_skills = _manifest_skills_by_name()
         for slug in sorted(CANONICAL_SKILL_SLUGS):
             fm = _read_skill_frontmatter(slug)
             expected_id = self._slug_to_runtime_id(slug)
@@ -140,15 +144,22 @@ class TestFrontmatterMatchesManifest:
 class TestCanonicalSkillDirectoryStructure:
     """Enforce canonical skill directory rules."""
 
-    def test_canonical_skill_directories_are_exactly_the_five(self):
+    def test_skill_directories_are_runtime_or_plugin_operations(self):
         actual_dirs = set()
         for entry in SKILLS_DIR.iterdir():
             if entry.is_dir() and (entry / "SKILL.md").exists():
                 actual_dirs.add(entry.name)
-        assert actual_dirs == CANONICAL_SKILL_SLUGS, (
+        expected_dirs = CANONICAL_SKILL_SLUGS | PLUGIN_OPERATION_SKILL_SLUGS
+        assert actual_dirs == expected_dirs, (
             f"Skill directories with SKILL.md: {sorted(actual_dirs)} != "
-            f"expected canonical: {sorted(CANONICAL_SKILL_SLUGS)}"
+            f"expected runtime and plugin-operation skills: {sorted(expected_dirs)}"
         )
+
+    def test_plugin_operation_skills_are_not_runtime_manifest_entries(self):
+        manifest_names = set(_manifest_skills_by_name())
+        assert not {
+            slug.replace("-", "_") for slug in PLUGIN_OPERATION_SKILL_SLUGS
+        }.intersection(manifest_names)
 
     def test_no_underscore_skill_directory(self):
         for entry in SKILLS_DIR.iterdir():

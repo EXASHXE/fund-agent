@@ -13,7 +13,6 @@ from src.skillpack.artifact_contracts import (
     load_artifact_contracts,
 )
 
-
 ROOT = Path(__file__).resolve().parents[2]
 CONTRACT_PATH = ROOT / "skillpack" / "artifact-contracts.yaml"
 DOC_PATH = ROOT / "docs" / "contracts" / "fund-analysis-artifacts.v1.md"
@@ -113,13 +112,13 @@ def test_forbidden_artifacts_and_status_values_are_declared() -> None:
     contract = _fund_contract()
     forbidden = set(contract["forbidden_artifacts"])
     assert {"decision", "execution_ledger"} <= forbidden
-    assert FORMAL_DECISION_ARTIFACTS <= forbidden
+    assert forbidden >= FORMAL_DECISION_ARTIFACTS
     assert {"OK", "PARTIAL", "FAILED"} <= set(contract["status_values"])
 
 
 def test_required_public_keys_are_documented_in_yaml() -> None:
     keys = set(_artifact_keys())
-    assert MINIMUM_PUBLIC_KEYS <= keys
+    assert keys >= MINIMUM_PUBLIC_KEYS
 
 
 def test_formal_decision_artifacts_are_not_public_artifact_keys() -> None:

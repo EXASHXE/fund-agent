@@ -15,16 +15,9 @@ import pytest
 import yaml
 
 from .conftest import (
-    DEPRECATED_SRC_MODULES,
-    DEPRECATED_SRC_PATHS,
-    NETWORK_CLIENTS,
-    PLUGIN_CORE_DIRS,
-    PROVIDER_SDKS,
     ROOT,
-    SRC,
     cached_dir_imports,
     cached_file_read,
-    imports_from_dir,
 )
 
 PROJECT_ROOT = str(ROOT)

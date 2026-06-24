@@ -32,6 +32,7 @@ def test_minimal_host_portfolio_review_demo_runs():
         capture_output=True,
         text=True,
         encoding="utf-8",
+        errors="replace",
         env={**__import__("os").environ, "PYTHONPATH": "."},
         cwd=Path(__file__).parent.parent.parent,
     )

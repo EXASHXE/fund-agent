@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+import uuid
 from datetime import datetime
 from types import SimpleNamespace
 from typing import Any
-import uuid
 
 from src.schemas.decision import Decision
 from src.schemas.evidence_graph import EvidenceGraph
@@ -14,11 +14,8 @@ from src.skills_runtime.common.strings import unique_strings
 
 from .action_policy import (
     ACTIVE_ACTIONS,
-    ALL_ACTIONS,
     PASSIVE_ACTIONS,
     _determine_action,
-    _normalized_action,
-    _risk_level,
 )
 from .amount_policy import _calculate_risk_budget, _derive_execution_amount
 from .audit_stage import (
@@ -27,8 +24,8 @@ from .audit_stage import (
     _deterministic_timestamp,
 )
 from .context import _dict
-from .graph_stage import _extract_rationale_anchor, _validate_anchor_membership
 from .gatekeeper import GatekeeperResult, evaluate_gatekeeper
+from .graph_stage import _extract_rationale_anchor, _validate_anchor_membership
 
 
 def _dedupe_strings(*groups: Any) -> list[str]:

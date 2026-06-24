@@ -30,7 +30,7 @@ class ThesisGenerationSkill(BaseSkillRuntime):
         evidence_items_raw = self._collect_evidence_items(payload, skill_input)
         fund_analysis_report = payload.get("fund_analysis_report")
         artifacts_payload = payload.get("artifacts")
-        constraints = payload.get("constraints", {})
+        _constraints = payload.get("constraints", {})  # noqa: F841 — reserved for future constraint-aware thesis logic
         risk_profile = payload.get("risk_profile", {})
         research_focus = payload.get("research_focus")
 
@@ -130,7 +130,7 @@ class ThesisGenerationSkill(BaseSkillRuntime):
         if isinstance(evidence_graph, dict):
             graph_items = evidence_graph.get("items", {})
             if isinstance(graph_items, dict):
-                for eid, item in graph_items.items():
+                for _eid, item in graph_items.items():
                     if isinstance(item, dict):
                         items.append(item)
             elif isinstance(graph_items, list):
@@ -157,7 +157,7 @@ class ThesisGenerationSkill(BaseSkillRuntime):
         for item in items:
             direction = str(item.get("direction", "neutral")).lower()
             category = str(item.get("category", "")).lower()
-            claim = item.get("claim", "")
+            _claim = item.get("claim", "")  # noqa: F841 — reserved for claim-based classification
 
             if category in ("missing", "gap", "absent"):
                 missing.append(self._evidence_summary(item))
@@ -185,7 +185,7 @@ class ThesisGenerationSkill(BaseSkillRuntime):
             "claim": item.get("claim", ""),
             "source_type": item.get("source_type", "unknown"),
             "direction": item.get("direction", "neutral"),
-            "confidence_weight": item.get("confidence_weight", item.get("confidence", None)),
+            "confidence_weight": item.get("confidence_weight", item.get("confidence")),
             "related_entities": item.get("related_entities", []),
         }
 
@@ -211,7 +211,7 @@ class ThesisGenerationSkill(BaseSkillRuntime):
 
         support_weight = len(supporting)
         counter_weight = len(counter)
-        balance = support_weight - counter_weight if total > 0 else 0
+        net_direction = support_weight - counter_weight if total > 0 else 0  # noqa: F841
 
         base_score = 0.5
         if total > 0:

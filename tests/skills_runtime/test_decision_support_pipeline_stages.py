@@ -6,31 +6,28 @@ from datetime import datetime
 
 from src.schemas.evidence import EvidenceItem
 from src.schemas.evidence_graph import EvidenceGraph
-from src.schemas.skill import SkillInput
-
 from src.skills_runtime.decision_support.action_policy import (
     ACTIVE_ACTIONS,
     PASSIVE_ACTIONS,
     _normalized_action,
 )
-from src.skills_runtime.decision_support.graph_stage import (
-    _graph_from_payload,
-    _resolve_trade_evidence_anchors,
-)
 from src.skills_runtime.decision_support.amount_policy import (
     _validate_trade_amount,
 )
-from src.skills_runtime.decision_support.trade_plan_stage import (
-    validate_and_filter_trades,
-)
 from src.skills_runtime.decision_support.decision_stage import (
     _build_decision,
+)
+from src.skills_runtime.decision_support.graph_stage import (
+    _graph_from_payload,
+    _resolve_trade_evidence_anchors,
 )
 from src.skills_runtime.decision_support.status_stage import (
     _SkillContractError,
     build_failed_output,
 )
-from src.skills_runtime.decision_support import DecisionSupportSkill
+from src.skills_runtime.decision_support.trade_plan_stage import (
+    validate_and_filter_trades,
+)
 
 
 def _pos_graph(ev_id: str = "ev-1") -> EvidenceGraph:
@@ -54,10 +51,10 @@ def _pos_graph(ev_id: str = "ev-1") -> EvidenceGraph:
 
 class TestActionPolicy:
     def test_active_actions_set(self):
-        assert ACTIVE_ACTIONS == frozenset({"BUY", "SELL", "INCREASE", "REDUCE"})
+        assert frozenset({"BUY", "SELL", "INCREASE", "REDUCE"}) == ACTIVE_ACTIONS
 
     def test_passive_actions_set(self):
-        assert PASSIVE_ACTIONS == frozenset({"WAIT", "HOLD", "PAUSE_DCA"})
+        assert frozenset({"WAIT", "HOLD", "PAUSE_DCA"}) == PASSIVE_ACTIONS
 
     def test_norm_action_lowercase(self):
         assert _normalized_action("buy") == "BUY"

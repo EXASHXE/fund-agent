@@ -1,6 +1,5 @@
 """Tests for decision_support active action policy — active actions require evidence anchors."""
 
-import pytest
 
 from src.skills_runtime.decision_support.action_policy import ACTIVE_ACTIONS, PASSIVE_ACTIONS, _normalized_action
 

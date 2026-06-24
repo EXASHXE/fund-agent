@@ -144,6 +144,9 @@ def test_no_orphan_underscore_skill_dirs_in_skills_dir():
         if name in {"archive", "workflows", "reference_workflows", "contracts"}:
             # Top-level reference dirs; not skill docs.
             continue
+        if name in {"e2e-report", "setup-private-data", "audit-privacy"}:
+            # Claude Code wrapper skills; not in skillpack manifest.
+            continue
         # Hyphenated dirs that are not in the manifest must not exist.
         assert name in canonical_dirs, (
             f"unexpected hyphenated skill directory '{name}' "

@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.10.5] — 2026-06-17
+
+### Added
+
+- Multi-harness agent distribution: Claude Code (.claude-plugin), Codex (.codex-plugin + .agents/skills), OpenCode (.opencode/skills/agents/plugins)
+- Shared runner scripts: `bin/fund-agent-e2e`, `bin/fund-agent-privacy-check` (with Windows .cmd wrappers)
+- `install/fund-agent-agent-install.py` — multi-harness installer (--target claude-code|codex|opencode|all, --mode symlink|copy)
+- `install/fund-agent-agent-uninstall.py` — removes only fund-agent-owned files/symlinks
+- `install/fund-agent-agent-doctor.py` — harness structure, paths, executable bits, env vars, privacy checks
+- `scripts/privacy_audit.py` — standalone privacy scan for API keys/tokens/tracked private paths
+- OpenCode privacy protection TypeScript plugin
+- Harness-specific SKILL.md and agent definitions for all three platforms
+
+### Changed
+
+- `pyproject.toml` version bumped to 0.10.5
+
 ## [0.10.4] — 2026-06-15
 
 ### Changed

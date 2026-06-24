@@ -183,6 +183,7 @@ def _check_demo_scripts(errors: list[str]) -> int:
                 capture_output=True,
                 text=True,
                 encoding="utf-8",
+                errors="replace",
                 env=env,
                 cwd=str(PROJECT_ROOT),
                 timeout=60,
@@ -203,7 +204,7 @@ def _check_demo_scripts(errors: list[str]) -> int:
             continue
 
         try:
-            output = json.loads(result.stdout)
+            json.loads(result.stdout)
         except json.JSONDecodeError:
             errors.append(f"demo output not valid JSON: {script_path}")
             continue
@@ -238,6 +239,8 @@ def _validate_trade_plan_demo() -> None:
         [sys.executable, str(PROJECT_ROOT / "examples/minimal_host_trade_plan_to_decisions.py")],
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         env=env,
         cwd=str(PROJECT_ROOT),
     )

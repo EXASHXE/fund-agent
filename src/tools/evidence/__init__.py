@@ -9,6 +9,7 @@ from src.tools.evidence.builders import (
     build_soft_evidence_from_mcp_result,
     build_soft_evidence_from_sentiment,
 )
+from src.tools.evidence.review import EvidenceReviewResult, review_evidence_graph
 from src.tools.evidence.validators import (
     EvidenceGraphCompileReport,
     EvidenceGraphCompileResult,
@@ -18,7 +19,6 @@ from src.tools.evidence.validators import (
     detect_conflicts,
     validate_evidence,
 )
-from src.tools.evidence.review import EvidenceReviewResult, review_evidence_graph
 
 __all__ = [
     "build_hard_evidence",

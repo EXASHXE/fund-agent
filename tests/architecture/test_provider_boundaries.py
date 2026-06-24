@@ -7,7 +7,6 @@ credential redaction in trace/gate output.
 
 from __future__ import annotations
 
-import ast
 import json
 import os
 import re
@@ -15,7 +14,6 @@ import re
 import pytest
 
 from tests.architecture.conftest import ROOT, cached_dir_imports
-
 
 PROJECT_ROOT = str(ROOT)
 
@@ -115,7 +113,7 @@ def test_no_committed_secrets_in_config():
     config_path = os.path.join(PROJECT_ROOT, "config", "providers.example.yaml")
     if not os.path.exists(config_path):
         pytest.skip("config/providers.example.yaml not found")
-    with open(config_path, "r", encoding="utf-8") as f:
+    with open(config_path, encoding="utf-8") as f:
         content = f.read()
 
     real_secret_patterns = [
@@ -137,7 +135,7 @@ def test_no_committed_secrets_in_adapter_examples():
         if not filename.endswith(".py"):
             continue
         filepath = os.path.join(adapters_dir, filename)
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, encoding="utf-8") as f:
             content = f.read()
         real_secret_patterns = [
             r'(?:api_key|token|cookie|password|secret)\s*=\s*["\'][A-Za-z0-9+/=]{10,}["\']',
@@ -154,7 +152,7 @@ def test_examples_host_data_adapters_may_import_provider_sdks():
     akshare_file = os.path.join(adapters_dir, "akshare_adapter.py")
     if not os.path.exists(akshare_file):
         pytest.skip("akshare_adapter.py not found")
-    with open(akshare_file, "r", encoding="utf-8") as f:
+    with open(akshare_file, encoding="utf-8") as f:
         content = f.read()
     assert "import akshare" in content or "akshare" in content
 
@@ -172,7 +170,7 @@ def test_no_cookie_like_values_in_config():
     config_path = os.path.join(PROJECT_ROOT, "config", "providers.example.yaml")
     if not os.path.exists(config_path):
         pytest.skip("config/providers.example.yaml not found")
-    with open(config_path, "r", encoding="utf-8") as f:
+    with open(config_path, encoding="utf-8") as f:
         content = f.read()
     cookie_value_pattern = r'(?:cookie|session_id|sess)\s*[:=]\s*["\'][A-Za-z0-9+/=._-]{8,}["\']'
     matches = re.findall(cookie_value_pattern, content, re.IGNORECASE)
@@ -183,7 +181,7 @@ def test_no_token_like_values_in_config():
     config_path = os.path.join(PROJECT_ROOT, "config", "providers.example.yaml")
     if not os.path.exists(config_path):
         pytest.skip("config/providers.example.yaml not found")
-    with open(config_path, "r", encoding="utf-8") as f:
+    with open(config_path, encoding="utf-8") as f:
         content = f.read()
     token_value_pattern = r'(?:bearer|authorization|access_token)\s*[:=]\s*["\'][A-Za-z0-9+/=._-]{10,}["\']'
     matches = re.findall(token_value_pattern, content, re.IGNORECASE)
@@ -194,7 +192,7 @@ def test_no_api_key_like_values_in_config():
     config_path = os.path.join(PROJECT_ROOT, "config", "providers.example.yaml")
     if not os.path.exists(config_path):
         pytest.skip("config/providers.example.yaml not found")
-    with open(config_path, "r", encoding="utf-8") as f:
+    with open(config_path, encoding="utf-8") as f:
         content = f.read()
     api_key_value_pattern = r'(?:api_key|apikey|api-secret)\s*[:=]\s*["\'][A-Za-z0-9+/=]{20,}["\']'
     matches = re.findall(api_key_value_pattern, content, re.IGNORECASE)
@@ -209,7 +207,7 @@ def test_no_authorization_header_hardcoded():
         if not filename.endswith(".py"):
             continue
         filepath = os.path.join(adapters_dir, filename)
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, encoding="utf-8") as f:
             content = f.read()
         auth_patterns = [
             r'["\']Authorization["\']\s*:\s*["\']Bearer\s+[A-Za-z0-9+/=._-]{10,}["\']',
@@ -221,7 +219,7 @@ def test_no_authorization_header_hardcoded():
 
 
 def test_provider_result_redacted_in_to_dict():
-    from src.host_data.provider_config import ProviderConfig, ProviderCredentialSpec, ProviderCredentials
+    from src.host_data.provider_config import ProviderConfig, ProviderCredentials, ProviderCredentialSpec
 
     config = ProviderConfig(
         provider_name="test",

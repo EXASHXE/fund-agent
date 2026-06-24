@@ -14,6 +14,8 @@ from pathlib import Path
 
 import pytest
 
+pytestmark = [pytest.mark.slow]
+
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -142,7 +144,7 @@ class TestRunAllAudits:
             assert key in result
 
     def test_writes_artifacts(self):
-        from scripts.audit.run_all_audits import run_all, AUDIT_DIR
+        from scripts.audit.run_all_audits import AUDIT_DIR, run_all
         run_all()
         assert (AUDIT_DIR / "summary.md").exists()
         assert (AUDIT_DIR / "project_structure.json").exists()

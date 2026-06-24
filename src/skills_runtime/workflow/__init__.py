@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from .advisory_markdown_adapter import adapt_personal_fund_report_to_advisory_markdown_report
 from .advisory_intent import (
     AdvisoryIntent,
     classify_advisory_intent,
@@ -12,14 +11,15 @@ from .advisory_intent import (
     is_report_only,
     is_soft_advice_only,
 )
+from .advisory_markdown_adapter import adapt_personal_fund_report_to_advisory_markdown_report
 from .evidence_bridge import (
+    WorkflowEvidenceGraphResult,
     build_evidence_graph_from_workflow,
     convert_host_news_to_soft_evidence,
     convert_host_sentiment_to_soft_evidence,
-    WorkflowEvidenceGraphResult,
 )
-from .portfolio_input_bridge import bridge_portfolio_input
 from .markdown_report import render_advisory_report_markdown
+from .portfolio_input_bridge import bridge_portfolio_input
 from .workflow_trace import WorkflowTrace
 
 __all__ = [

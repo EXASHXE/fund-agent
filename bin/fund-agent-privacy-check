@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# fund-agent-privacy-check — Scan for privacy violations in the repo.
+#
+# Checks:
+#   1. No tracked private paths (private_data/, local_data/, etc.)
+#   2. No tracked .private files
+#   3. No API keys/tokens/cookies in tracked files
+#   4. No raw Alipay IDs in tracked files
+#
+# Exits non-zero on privacy violation.
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+exec python "$REPO_ROOT/scripts/privacy_audit.py" --repo-root "$REPO_ROOT" "$@"

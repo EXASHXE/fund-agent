@@ -21,8 +21,17 @@ from typing import Any, Literal
 EvidenceType = Literal["HardEvidence", "SoftEvidence", "HybridEvidence"]
 Direction = Literal["positive", "negative", "neutral"]
 SourceType = Literal[
-    "quant_tool", "news_source", "sentiment_analysis",
-    "kg_query", "llm_inference", "hybrid",
+    "quant_tool",
+    "news_source",
+    "sentiment_analysis",
+    "kg_query",
+    "llm_inference",
+    "hybrid",
+    "news_snapshot",
+    "provider_snapshot",
+    "factor_snapshot",
+    "manual_transaction",
+    "portfolio_snapshot",
 ]
 
 
@@ -63,9 +72,7 @@ class EvidenceItem:
         """Validate constraints after initialization."""
         # HardEvidence must have confidence_weight == 1.0
         if self.evidence_type == "HardEvidence" and self.confidence_weight != 1.0:
-            raise ValueError(
-                f"HardEvidence confidence_weight must be 1.0, got {self.confidence_weight}"
-            )
+            raise ValueError(f"HardEvidence confidence_weight must be 1.0, got {self.confidence_weight}")
 
         # Validate required fields
         if not self.source_type:
@@ -76,10 +83,7 @@ class EvidenceItem:
 
         # Validate confidence_weight range
         if self.confidence_weight < 0.0 or self.confidence_weight > 1.0:
-            raise ValueError(
-                f"confidence_weight must be in [0.0, 1.0], "
-                f"got {self.confidence_weight}"
-            )
+            raise ValueError(f"confidence_weight must be in [0.0, 1.0], got {self.confidence_weight}")
 
     @staticmethod
     def from_tool_output(
@@ -104,7 +108,6 @@ class EvidenceItem:
             EvidenceItem with evidence_type="HardEvidence" and
             confidence_weight=1.0.
         """
-        import uuid
 
         return EvidenceItem(
             evidence_id=str(uuid.uuid4()),
@@ -140,7 +143,6 @@ class EvidenceItem:
             EvidenceItem with evidence_type="SoftEvidence" and
             confidence_weight clamped to [0.1, 0.9].
         """
-        import uuid
 
         return EvidenceItem(
             evidence_id=str(uuid.uuid4()),

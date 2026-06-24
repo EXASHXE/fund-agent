@@ -135,6 +135,18 @@
         "Constraints"
       ],
       "critical_missing": [],
+      "field_coverage": {
+        "cost_basis_complete_count": 1,
+        "cost_basis_missing_count": 0,
+        "current_value_zero_treated_as_unknown": false,
+        "holdings_count": 1,
+        "holdings_with_current_value": 1,
+        "holdings_without_current_value": 0,
+        "nav_complete_count": 0,
+        "nav_missing_count": 1,
+        "units_complete_count": 1,
+        "units_missing_count": 0
+      },
       "grade": "B",
       "limitations": [],
       "missing_sections": [
@@ -176,26 +188,31 @@
       "details": [
         {
           "code": "missing_transaction_history",
+          "reason": "user_must_provide",
           "recommended_next_data": "transaction ledger with BUY/SELL/DIVIDEND/FEE events",
           "severity": "warning"
         },
         {
           "code": "missing_fee_schedule",
+          "reason": "provider_could_fetch",
           "recommended_next_data": "fee schedule and redemption rules",
           "severity": "warning"
         },
         {
           "code": "missing_benchmark_data",
+          "reason": "provider_could_fetch",
           "recommended_next_data": "benchmark price history",
           "severity": "warning"
         },
         {
           "code": "missing_recent_news",
+          "reason": "provider_could_fetch",
           "recommended_next_data": "recent fund or theme news",
           "severity": "blocker"
         },
         {
           "code": "missing_sentiment",
+          "reason": "provider_could_fetch",
           "recommended_next_data": "sentiment snapshot for held funds or themes",
           "severity": "warning"
         }
@@ -369,6 +386,18 @@
           "Constraints"
         ],
         "critical_missing": [],
+        "field_coverage": {
+          "cost_basis_complete_count": 1,
+          "cost_basis_missing_count": 0,
+          "current_value_zero_treated_as_unknown": false,
+          "holdings_count": 1,
+          "holdings_with_current_value": 1,
+          "holdings_without_current_value": 0,
+          "nav_complete_count": 0,
+          "nav_missing_count": 1,
+          "units_complete_count": 1,
+          "units_missing_count": 0
+        },
         "grade": "B",
         "limitations": [],
         "missing_sections": [
@@ -410,26 +439,31 @@
         "details": [
           {
             "code": "missing_transaction_history",
+            "reason": "user_must_provide",
             "recommended_next_data": "transaction ledger with BUY/SELL/DIVIDEND/FEE events",
             "severity": "warning"
           },
           {
             "code": "missing_fee_schedule",
+            "reason": "provider_could_fetch",
             "recommended_next_data": "fee schedule and redemption rules",
             "severity": "warning"
           },
           {
             "code": "missing_benchmark_data",
+            "reason": "provider_could_fetch",
             "recommended_next_data": "benchmark price history",
             "severity": "warning"
           },
           {
             "code": "missing_recent_news",
+            "reason": "provider_could_fetch",
             "recommended_next_data": "recent fund or theme news",
             "severity": "blocker"
           },
           {
             "code": "missing_sentiment",
+            "reason": "provider_could_fetch",
             "recommended_next_data": "sentiment snapshot for held funds or themes",
             "severity": "warning"
           }
@@ -517,6 +551,7 @@
       "portfolio_metrics": {
         "as_of_date": "2026-06-01",
         "cash_available": 20000.0,
+        "current_value_likely_missing": false,
         "position_count": 1,
         "position_weights": {
           "110011": 0.15
@@ -597,9 +632,19 @@
           "title": "Executive summary"
         },
         {
+          "id": "transaction_cashflow",
+          "status": "MISSING",
+          "title": "Transaction cashflow"
+        },
+        {
           "id": "portfolio_snapshot",
           "status": "OK",
           "title": "Portfolio snapshot"
+        },
+        {
+          "id": "reconstruction_status",
+          "status": "PARTIAL",
+          "title": "Reconstruction status"
         },
         {
           "id": "pnl_and_cost_basis",
@@ -633,13 +678,18 @@
         },
         {
           "id": "benchmark_divergence",
-          "status": "OK",
+          "status": "PARTIAL",
           "title": "Benchmark divergence"
         },
         {
           "id": "factor_and_style",
           "status": "MISSING",
           "title": "Factor and style"
+        },
+        {
+          "id": "factor_analysis",
+          "status": "MISSING",
+          "title": "Factor analysis"
         },
         {
           "id": "fees_and_redemption",
@@ -663,7 +713,7 @@
         },
         {
           "id": "profit_protection",
-          "status": "OK",
+          "status": "PARTIAL",
           "title": "Profit protection"
         },
         {
@@ -675,6 +725,11 @@
           "id": "event_hype_failure",
           "status": "MISSING",
           "title": "Event hype failure"
+        },
+        {
+          "id": "news_and_events",
+          "status": "MISSING",
+          "title": "News and events"
         },
         {
           "id": "cash_deployment",
@@ -751,6 +806,19 @@
           "title": "Executive summary"
         },
         {
+          "bullets": [],
+          "data_sources": [
+            "transaction_cashflow_summary",
+            "ledger_cashflow_summary"
+          ],
+          "id": "transaction_cashflow",
+          "limitations": [
+            "Transaction cashflow data is not available."
+          ],
+          "status": "MISSING",
+          "title": "Transaction cashflow"
+        },
+        {
           "bullets": [
             "As of 2026-06-01, total value is 200,000.00 with 20,000.00 cash.",
             "Largest position is 110011 at 15.00% of portfolio value.",
@@ -764,6 +832,24 @@
           "limitations": [],
           "status": "OK",
           "title": "Portfolio snapshot"
+        },
+        {
+          "bullets": [
+            "Report source: unknown.",
+            "Transactions parsed: no.",
+            "Ledger built: not applicable (host portfolio provided).",
+            "NAV snapshot available: no.",
+            "Confirmed portfolio with valuation: yes."
+          ],
+          "data_sources": [
+            "source_of_truth",
+            "ledger_quality_summary",
+            "transaction_cashflow_summary"
+          ],
+          "id": "reconstruction_status",
+          "limitations": [],
+          "status": "PARTIAL",
+          "title": "Reconstruction status"
         },
         {
           "bullets": [
@@ -860,8 +946,10 @@
             "benchmark_divergence_diagnostics"
           ],
           "id": "benchmark_divergence",
-          "limitations": [],
-          "status": "OK",
+          "limitations": [
+            "Benchmark divergence check completed but no divergence was found — results are limited without NAV and benchmark history."
+          ],
+          "status": "PARTIAL",
           "title": "Benchmark divergence"
         },
         {
@@ -875,6 +963,18 @@
           ],
           "status": "MISSING",
           "title": "Factor and style"
+        },
+        {
+          "bullets": [],
+          "data_sources": [
+            "factor_snapshot"
+          ],
+          "id": "factor_analysis",
+          "limitations": [
+            "Factor snapshot not provided; no factor analysis is fabricated."
+          ],
+          "status": "MISSING",
+          "title": "Factor analysis"
         },
         {
           "bullets": [],
@@ -907,7 +1007,7 @@
         },
         {
           "bullets": [
-            "Trade budget: max buy 0.00, max sell 0.00, liquidity reserve 20,000.00."
+            "Trade budget: max buy 无法计算, max sell 无法计算, liquidity reserve 20,000.00."
           ],
           "data_sources": [
             "trade_budget",
@@ -947,8 +1047,10 @@
             "profit_protection_diagnostics"
           ],
           "id": "profit_protection",
-          "limitations": [],
-          "status": "OK",
+          "limitations": [
+            "Profit protection has no detailed breakdown; profit levels and action suggestions are unavailable without current NAV data."
+          ],
+          "status": "PARTIAL",
           "title": "Profit protection"
         },
         {
@@ -976,6 +1078,18 @@
           "title": "Event hype failure"
         },
         {
+          "bullets": [],
+          "data_sources": [
+            "news_snapshot"
+          ],
+          "id": "news_and_events",
+          "limitations": [
+            "News snapshot not provided; no news or events are fabricated."
+          ],
+          "status": "MISSING",
+          "title": "News and events"
+        },
+        {
           "bullets": [
             "Cash-like weight 10.00%; deployment readiness ready.",
             "Cash accounting basis: conservative_effective_total.",
@@ -991,6 +1105,7 @@
         },
         {
           "bullets": [
+            "Available conclusions: portfolio has 1 identified position(s); benchmark divergence checked for 1 fund(s); profit protection reviewed for 1 position(s); right-side confirmation assessed for 1 position(s); exposure breakdown computed.",
             "decision_support_ready: False.",
             "Formal decision blockers: missing_fee_schedule, missing_recent_news.",
             "Analysis warnings: benchmark_data_missing, sentiment_missing, transaction_history_incomplete.",
@@ -1024,11 +1139,11 @@
         {
           "bullets": [
             "Missing data groups: missing_benchmark_data, missing_fee_schedule, missing_recent_news, missing_sentiment, missing_transaction_history.",
-            "missing_transaction_history: next data transaction ledger with BUY/SELL/DIVIDEND/FEE events.",
-            "missing_fee_schedule: next data fee schedule and redemption rules.",
-            "missing_benchmark_data: next data benchmark price history.",
-            "missing_recent_news: next data recent fund or theme news.",
-            "missing_sentiment: next data sentiment snapshot for held funds or themes."
+            "missing_transaction_history [warning] (user_must_provide): next data transaction ledger with BUY/SELL/DIVIDEND/FEE events.",
+            "missing_fee_schedule [warning] (provider_could_fetch): next data fee schedule and redemption rules.",
+            "missing_benchmark_data [warning] (provider_could_fetch): next data benchmark price history.",
+            "missing_recent_news [blocker] (provider_could_fetch): next data recent fund or theme news.",
+            "missing_sentiment [warning] (provider_could_fetch): next data sentiment snapshot for held funds or themes."
           ],
           "data_sources": [
             "analysis_plan",
@@ -1041,10 +1156,17 @@
         },
         {
           "bullets": [
-            "Next data to fetch: fund fee schedule, recent benchmark movement, recent fund news, sentiment snapshot, transaction history."
+            "Next data to fetch: fund fee schedule, recent benchmark movement, recent fund news, sentiment snapshot, transaction history.",
+            "Specific data to provide:",
+            "  missing_transaction_history (user_must_provide): transaction ledger with BUY/SELL/DIVIDEND/FEE events",
+            "  missing_fee_schedule (provider_could_fetch): fee schedule and redemption rules",
+            "  missing_benchmark_data (provider_could_fetch): benchmark price history",
+            "  missing_recent_news (provider_could_fetch): recent fund or theme news",
+            "  missing_sentiment (provider_could_fetch): sentiment snapshot for held funds or themes"
           ],
           "data_sources": [
-            "analysis_plan.next_data_to_fetch"
+            "analysis_plan.next_data_to_fetch",
+            "evidence_gap_diagnostics"
           ],
           "id": "suggested_next_checks",
           "limitations": [],
@@ -1055,7 +1177,7 @@
           "bullets": [
             "This conclusion is based on host-provided data and does not include live market fetching.",
             "No formal decision generated; call decision-support for formal action.",
-            "Report limitations count: 1."
+            "Report limitations count: 1. See each section for details."
           ],
           "data_sources": [
             "report_limitations",
@@ -1096,7 +1218,8 @@
           "bullets": [
             "Completeness grade B with score 0.700.",
             "Missing data groups: Benchmark History, Peer Group, Factor Exposures, Manager Profile, Fee Schedule, Redemption Rules, Fund Flow, Macro Events, User Investment Plan.",
-            "Optional gaps: Benchmark History, Peer Group, Factor Exposures, Manager Profile, Fee Schedule, Redemption Rules, Fund Flow, Macro Events, User Investment Plan."
+            "Optional gaps: Benchmark History, Peer Group, Factor Exposures, Manager Profile, Fee Schedule, Redemption Rules, Fund Flow, Macro Events, User Investment Plan.",
+            "Snapshot availability: provider_snapshot=absent, news_snapshot=absent, factor_snapshot=absent, kg_context_snapshot=absent."
           ],
           "data_sources": [
             "data_completeness",
@@ -1228,6 +1351,7 @@
     "portfolio_summary": {
       "as_of_date": "2026-06-01",
       "cash_available": 20000.0,
+      "current_value_likely_missing": false,
       "position_count": 1,
       "position_weights": {
         "110011": 0.15
@@ -1322,9 +1446,19 @@
         "title": "Executive summary"
       },
       {
+        "id": "transaction_cashflow",
+        "status": "MISSING",
+        "title": "Transaction cashflow"
+      },
+      {
         "id": "portfolio_snapshot",
         "status": "OK",
         "title": "Portfolio snapshot"
+      },
+      {
+        "id": "reconstruction_status",
+        "status": "PARTIAL",
+        "title": "Reconstruction status"
       },
       {
         "id": "pnl_and_cost_basis",
@@ -1358,13 +1492,18 @@
       },
       {
         "id": "benchmark_divergence",
-        "status": "OK",
+        "status": "PARTIAL",
         "title": "Benchmark divergence"
       },
       {
         "id": "factor_and_style",
         "status": "MISSING",
         "title": "Factor and style"
+      },
+      {
+        "id": "factor_analysis",
+        "status": "MISSING",
+        "title": "Factor analysis"
       },
       {
         "id": "fees_and_redemption",
@@ -1388,7 +1527,7 @@
       },
       {
         "id": "profit_protection",
-        "status": "OK",
+        "status": "PARTIAL",
         "title": "Profit protection"
       },
       {
@@ -1400,6 +1539,11 @@
         "id": "event_hype_failure",
         "status": "MISSING",
         "title": "Event hype failure"
+      },
+      {
+        "id": "news_and_events",
+        "status": "MISSING",
+        "title": "News and events"
       },
       {
         "id": "cash_deployment",
@@ -1476,6 +1620,19 @@
         "title": "Executive summary"
       },
       {
+        "bullets": [],
+        "data_sources": [
+          "transaction_cashflow_summary",
+          "ledger_cashflow_summary"
+        ],
+        "id": "transaction_cashflow",
+        "limitations": [
+          "Transaction cashflow data is not available."
+        ],
+        "status": "MISSING",
+        "title": "Transaction cashflow"
+      },
+      {
         "bullets": [
           "As of 2026-06-01, total value is 200,000.00 with 20,000.00 cash.",
           "Largest position is 110011 at 15.00% of portfolio value.",
@@ -1489,6 +1646,24 @@
         "limitations": [],
         "status": "OK",
         "title": "Portfolio snapshot"
+      },
+      {
+        "bullets": [
+          "Report source: unknown.",
+          "Transactions parsed: no.",
+          "Ledger built: not applicable (host portfolio provided).",
+          "NAV snapshot available: no.",
+          "Confirmed portfolio with valuation: yes."
+        ],
+        "data_sources": [
+          "source_of_truth",
+          "ledger_quality_summary",
+          "transaction_cashflow_summary"
+        ],
+        "id": "reconstruction_status",
+        "limitations": [],
+        "status": "PARTIAL",
+        "title": "Reconstruction status"
       },
       {
         "bullets": [
@@ -1585,8 +1760,10 @@
           "benchmark_divergence_diagnostics"
         ],
         "id": "benchmark_divergence",
-        "limitations": [],
-        "status": "OK",
+        "limitations": [
+          "Benchmark divergence check completed but no divergence was found — results are limited without NAV and benchmark history."
+        ],
+        "status": "PARTIAL",
         "title": "Benchmark divergence"
       },
       {
@@ -1600,6 +1777,18 @@
         ],
         "status": "MISSING",
         "title": "Factor and style"
+      },
+      {
+        "bullets": [],
+        "data_sources": [
+          "factor_snapshot"
+        ],
+        "id": "factor_analysis",
+        "limitations": [
+          "Factor snapshot not provided; no factor analysis is fabricated."
+        ],
+        "status": "MISSING",
+        "title": "Factor analysis"
       },
       {
         "bullets": [],
@@ -1632,7 +1821,7 @@
       },
       {
         "bullets": [
-          "Trade budget: max buy 0.00, max sell 0.00, liquidity reserve 20,000.00."
+          "Trade budget: max buy 无法计算, max sell 无法计算, liquidity reserve 20,000.00."
         ],
         "data_sources": [
           "trade_budget",
@@ -1672,8 +1861,10 @@
           "profit_protection_diagnostics"
         ],
         "id": "profit_protection",
-        "limitations": [],
-        "status": "OK",
+        "limitations": [
+          "Profit protection has no detailed breakdown; profit levels and action suggestions are unavailable without current NAV data."
+        ],
+        "status": "PARTIAL",
         "title": "Profit protection"
       },
       {
@@ -1701,6 +1892,18 @@
         "title": "Event hype failure"
       },
       {
+        "bullets": [],
+        "data_sources": [
+          "news_snapshot"
+        ],
+        "id": "news_and_events",
+        "limitations": [
+          "News snapshot not provided; no news or events are fabricated."
+        ],
+        "status": "MISSING",
+        "title": "News and events"
+      },
+      {
         "bullets": [
           "Cash-like weight 10.00%; deployment readiness ready.",
           "Cash accounting basis: conservative_effective_total.",
@@ -1716,6 +1919,7 @@
       },
       {
         "bullets": [
+          "Available conclusions: portfolio has 1 identified position(s); benchmark divergence checked for 1 fund(s); profit protection reviewed for 1 position(s); right-side confirmation assessed for 1 position(s); exposure breakdown computed.",
           "decision_support_ready: False.",
           "Formal decision blockers: missing_fee_schedule, missing_recent_news.",
           "Analysis warnings: benchmark_data_missing, sentiment_missing, transaction_history_incomplete.",
@@ -1749,11 +1953,11 @@
       {
         "bullets": [
           "Missing data groups: missing_benchmark_data, missing_fee_schedule, missing_recent_news, missing_sentiment, missing_transaction_history.",
-          "missing_transaction_history: next data transaction ledger with BUY/SELL/DIVIDEND/FEE events.",
-          "missing_fee_schedule: next data fee schedule and redemption rules.",
-          "missing_benchmark_data: next data benchmark price history.",
-          "missing_recent_news: next data recent fund or theme news.",
-          "missing_sentiment: next data sentiment snapshot for held funds or themes."
+          "missing_transaction_history [warning] (user_must_provide): next data transaction ledger with BUY/SELL/DIVIDEND/FEE events.",
+          "missing_fee_schedule [warning] (provider_could_fetch): next data fee schedule and redemption rules.",
+          "missing_benchmark_data [warning] (provider_could_fetch): next data benchmark price history.",
+          "missing_recent_news [blocker] (provider_could_fetch): next data recent fund or theme news.",
+          "missing_sentiment [warning] (provider_could_fetch): next data sentiment snapshot for held funds or themes."
         ],
         "data_sources": [
           "analysis_plan",
@@ -1766,10 +1970,17 @@
       },
       {
         "bullets": [
-          "Next data to fetch: fund fee schedule, recent benchmark movement, recent fund news, sentiment snapshot, transaction history."
+          "Next data to fetch: fund fee schedule, recent benchmark movement, recent fund news, sentiment snapshot, transaction history.",
+          "Specific data to provide:",
+          "  missing_transaction_history (user_must_provide): transaction ledger with BUY/SELL/DIVIDEND/FEE events",
+          "  missing_fee_schedule (provider_could_fetch): fee schedule and redemption rules",
+          "  missing_benchmark_data (provider_could_fetch): benchmark price history",
+          "  missing_recent_news (provider_could_fetch): recent fund or theme news",
+          "  missing_sentiment (provider_could_fetch): sentiment snapshot for held funds or themes"
         ],
         "data_sources": [
-          "analysis_plan.next_data_to_fetch"
+          "analysis_plan.next_data_to_fetch",
+          "evidence_gap_diagnostics"
         ],
         "id": "suggested_next_checks",
         "limitations": [],
@@ -1780,7 +1991,7 @@
         "bullets": [
           "This conclusion is based on host-provided data and does not include live market fetching.",
           "No formal decision generated; call decision-support for formal action.",
-          "Report limitations count: 1."
+          "Report limitations count: 1. See each section for details."
         ],
         "data_sources": [
           "report_limitations",
@@ -1821,7 +2032,8 @@
         "bullets": [
           "Completeness grade B with score 0.700.",
           "Missing data groups: Benchmark History, Peer Group, Factor Exposures, Manager Profile, Fee Schedule, Redemption Rules, Fund Flow, Macro Events, User Investment Plan.",
-          "Optional gaps: Benchmark History, Peer Group, Factor Exposures, Manager Profile, Fee Schedule, Redemption Rules, Fund Flow, Macro Events, User Investment Plan."
+          "Optional gaps: Benchmark History, Peer Group, Factor Exposures, Manager Profile, Fee Schedule, Redemption Rules, Fund Flow, Macro Events, User Investment Plan.",
+          "Snapshot availability: provider_snapshot=absent, news_snapshot=absent, factor_snapshot=absent, kg_context_snapshot=absent."
         ],
         "data_sources": [
           "data_completeness",
@@ -1969,6 +2181,7 @@
         "portfolio_summary": {
           "as_of_date": "2026-06-01",
           "cash_available": 20000.0,
+          "current_value_likely_missing": false,
           "position_count": 1,
           "position_weights": {
             "110011": 0.15

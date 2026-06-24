@@ -49,11 +49,8 @@ Policy choices that downstream callers MUST know:
 
 from __future__ import annotations
 
-import warnings as _warnings
-from dataclasses import asdict, dataclass, field
 from datetime import date as date_type
 from typing import Any
-
 
 # ———————————————————————————————————————————————— Valid actions
 
@@ -66,6 +63,13 @@ _BUY_ACTIONS = frozenset({"BUY", "TRANSFER_IN"})
 _SELL_ACTIONS = frozenset({"SELL", "TRANSFER_OUT"})
 _POSITION_INCREASE = frozenset({"BUY", "TRANSFER_IN"})
 _POSITION_DECREASE = frozenset({"SELL", "TRANSFER_OUT"})
+
+# Cashflow summary action classification
+_CASHFLOW_BUY_TYPES = frozenset({"BUY"})
+_CASHFLOW_SELL_TYPES = frozenset({"SELL"})
+_CASHFLOW_DIVIDEND_TYPES = frozenset({"DIVIDEND"})
+_CASHFLOW_TRANSFER_TYPES = frozenset({"TRANSFER_IN", "TRANSFER_OUT"})
+_CASHFLOW_FEE_TYPES = frozenset({"FEE"})
 
 # Number of decimal places for cost basis / share rounding
 _COST_ROUND = 2
@@ -696,6 +700,249 @@ def build_position_snapshot_from_transactions(
             "pending_count": len(settlement.get("pending", [])),
             "lag_days": opts.get("settlement_lag_days", 3),
             "include_pending": opts.get("include_pending", False),
+        },
+        "warnings": all_warnings,
+    }
+
+
+# ———————————————————————————————————————————————— Cashflow summary from transactions only
+
+
+def compute_transaction_cashflow_summary(
+    transactions: list[dict[str, Any]],
+    as_of_date: str = "",
+    options: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Compute a cashflow summary from transactions without requiring current_nav.
+
+    This is used when source_of_truth="transactions_only" — the input is cashflow
+    evidence, not a valuation snapshot. The summary aggregates by action type and
+    by fund_name, distinguishing completed vs pending.
+
+    Important: this is labeled as cashflow_data, NOT current market value.
+
+    Args:
+        transactions: Raw transaction events (will be normalized).
+        as_of_date: The as-of date for settlement filtering.
+        options: Optional config (settlement_lag_days, include_pending).
+
+    Returns:
+        {
+            "total_transactions": int,
+            "completed_count": int,
+            "pending_count": int,
+            "by_type": {
+                "buy": {"count": n, "amount": f},
+                "sell": {"count": n, "amount": f},
+                "dividend": {"count": n, "amount": f},
+                "transfer": {"count": n, "amount": f},
+                "refund": {"count": n, "amount": f},
+                "fee": {"count": n, "amount": f},
+                "unknown": {"count": n, "amount": f},
+            },
+            "by_fund": {
+                "FUND_CODE": {
+                    "completed_buy_amount": f,
+                    "completed_sell_amount": f,
+                    "dividend_amount": f,
+                    "transfer_amount": f,
+                    "pending_amount": f,
+                    "net_cashflow_amount": f,
+                    "latest_transaction_date": "YYYY-MM-DD",
+                },
+            },
+            "portfolio_level": {
+                "gross_buy_amount": f,
+                "gross_sell_amount": f,
+                "dividend_amount": f,
+                "pending_amount": f,
+                "net_cashflow_amount": f,
+                "transaction_fund_count": n,
+                "latest_transaction_date": "YYYY-MM-DD",
+            },
+            "warnings": [...],
+        }
+    """
+    opts = options or {}
+    all_warnings: list[str] = []
+
+    # Normalize transactions
+    normalized, norm_warnings = normalize_transaction_events(transactions)
+    all_warnings.extend(norm_warnings)
+
+    if not normalized:
+        return {
+            "total_transactions": 0,
+            "completed_count": 0,
+            "pending_count": 0,
+            "by_type": {},
+            "by_fund": {},
+            "portfolio_level": {
+                "gross_buy_amount": 0.0,
+                "gross_sell_amount": 0.0,
+                "dividend_amount": 0.0,
+                "pending_amount": 0.0,
+                "net_cashflow_amount": 0.0,
+                "transaction_fund_count": 0,
+                "latest_transaction_date": "",
+            },
+            "warnings": all_warnings,
+        }
+
+    # Apply settlement rules to split confirmed vs pending
+    confirmed_list: list[dict[str, Any]] = normalized
+    pending_list: list[dict[str, Any]] = []
+    if as_of_date:
+        settlement = apply_settlement_rules(normalized, as_of_date, options=opts)
+        confirmed_list = settlement.get("confirmed", [])
+        pending_list = settlement.get("pending", [])
+        all_warnings.extend(settlement.get("warnings", []))
+
+    confirmed_set: set[int] = set()
+    for txn in confirmed_list:
+        if id(txn) not in confirmed_set:
+            confirmed_set.add(id(txn))
+
+    # Initialize by_type counters
+    by_type: dict[str, dict[str, Any]] = {
+        "buy": {"count": 0, "amount": 0.0},
+        "sell": {"count": 0, "amount": 0.0},
+        "dividend": {"count": 0, "amount": 0.0},
+        "transfer": {"count": 0, "amount": 0.0},
+        "refund": {"count": 0, "amount": 0.0},
+        "fee": {"count": 0, "amount": 0.0},
+        "unknown": {"count": 0, "amount": 0.0},
+    }
+
+    # By-fund accumulators
+    by_fund: dict[str, dict[str, Any]] = {}
+
+    # Portfolio-level accumulators
+    gross_buy = 0.0
+    gross_sell = 0.0
+    dividend_total = 0.0
+    pending_total = 0.0
+    latest_date = ""
+
+    def _classify_action(action: str) -> str:
+        if action in _CASHFLOW_BUY_TYPES:
+            return "buy"
+        if action in _CASHFLOW_SELL_TYPES:
+            return "sell"
+        if action in _CASHFLOW_DIVIDEND_TYPES:
+            return "dividend"
+        if action in _CASHFLOW_TRANSFER_TYPES:
+            return "transfer"
+        if action in _CASHFLOW_FEE_TYPES:
+            return "fee"
+        return "unknown"
+
+    def _ensure_fund(fund_key: str) -> dict[str, Any]:
+        if fund_key not in by_fund:
+            by_fund[fund_key] = {
+                "completed_buy_amount": 0.0,
+                "completed_sell_amount": 0.0,
+                "dividend_amount": 0.0,
+                "transfer_amount": 0.0,
+                "pending_amount": 0.0,
+                "net_cashflow_amount": 0.0,
+                "latest_transaction_date": "",
+            }
+        return by_fund[fund_key]
+
+    def _safe_amount(txn: dict[str, Any]) -> float:
+        v = txn.get("amount")
+        if v is None:
+            return 0.0
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            return 0.0
+
+    # Process all transactions (confirmed + pending)
+    all_txns = confirmed_list + pending_list
+    pending_ids: set[int] = {id(t) for t in pending_list}
+
+    for txn in all_txns:
+        if txn.get("valid") is False:
+            continue
+
+        action = txn.get("action", "")
+        amount = _safe_amount(txn)
+        fund_code = str(txn.get("fund_code", "") or "")
+        txn_date = str(txn.get("date", "") or "")
+        is_pending = id(txn) in pending_ids
+        category = _classify_action(action)
+
+        # Update by_type
+        by_type[category]["count"] += 1
+        by_type[category]["amount"] = round(by_type[category]["amount"] + amount, 2)
+
+        # Update by_fund
+        fund = _ensure_fund(fund_code)
+        if is_pending:
+            fund["pending_amount"] = round(fund["pending_amount"] + amount, 2)
+            pending_total += amount
+        else:
+            if category == "buy":
+                fund["completed_buy_amount"] = round(fund["completed_buy_amount"] + amount, 2)
+                gross_buy += amount
+            elif category == "sell":
+                fund["completed_sell_amount"] = round(fund["completed_sell_amount"] + amount, 2)
+                gross_sell += amount
+            elif category == "dividend":
+                fund["dividend_amount"] = round(fund["dividend_amount"] + amount, 2)
+                dividend_total += amount
+            elif category == "transfer":
+                fund["transfer_amount"] = round(fund["transfer_amount"] + amount, 2)
+            elif category == "fee":
+                # Fee reduces net cashflow but is not buy/sell
+                pass
+            elif category == "unknown":
+                # Ambiguous — mark for manual review
+                if amount > 0:
+                    fund["pending_amount"] = round(fund["pending_amount"] + amount, 2)
+                    pending_total += amount
+                all_warnings.append(
+                    f"transaction with action '{action}' for fund {fund_code} "
+                    f"has ambiguous portfolio effect; marked manual_review_required"
+                )
+
+        # Track latest date
+        if txn_date and (not latest_date or txn_date > latest_date):
+            latest_date = txn_date
+        if txn_date and (not fund["latest_transaction_date"] or txn_date > fund["latest_transaction_date"]):
+            fund["latest_transaction_date"] = txn_date
+
+    # Compute net cashflow per fund: sell + dividend - buy
+    for _fund_key, fund_data in by_fund.items():
+        fund_data["net_cashflow_amount"] = round(
+            fund_data["completed_sell_amount"]
+            + fund_data["dividend_amount"]
+            - fund_data["completed_buy_amount"],
+            2,
+        )
+
+    # Round by_type amounts
+    for cat in by_type:
+        by_type[cat]["amount"] = round(by_type[cat]["amount"], 2)
+
+    net_cashflow = round(gross_sell + dividend_total - gross_buy, 2)
+
+    return {
+        "total_transactions": len(normalized),
+        "completed_count": len(confirmed_list),
+        "pending_count": len(pending_list),
+        "by_type": by_type,
+        "by_fund": by_fund,
+        "portfolio_level": {
+            "gross_buy_amount": round(gross_buy, 2),
+            "gross_sell_amount": round(gross_sell, 2),
+            "dividend_amount": round(dividend_total, 2),
+            "pending_amount": round(pending_total, 2),
+            "net_cashflow_amount": net_cashflow,
+            "transaction_fund_count": len(by_fund),
+            "latest_transaction_date": latest_date,
         },
         "warnings": all_warnings,
     }

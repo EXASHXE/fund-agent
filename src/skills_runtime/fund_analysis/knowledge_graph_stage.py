@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.graph.knowledge_graph import KnowledgeGraph
 from src.graph.enrichment import enrich_with_events
+from src.graph.knowledge_graph import KnowledgeGraph
 from src.graph.schema import EventNode
 
 

@@ -12,20 +12,19 @@ from typing import Any
 def normalize_nav_history(raw: list[dict] | dict | None, provider: str) -> dict[str, Any]:
     if not raw:
         return {"nav_points": [], "warnings": ["EMPTY_RESULT"]}
-    if isinstance(raw, dict):
-        items = raw.get("data", raw.get("items", []))
-    else:
-        items = raw
+    items = raw.get("data", raw.get("items", [])) if isinstance(raw, dict) else raw
     if not isinstance(items, list):
         return {"nav_points": [], "warnings": ["UNEXPECTED_FORMAT"]}
     nav_points: list[dict[str, Any]] = []
     for item in items:
         if isinstance(item, dict):
-            nav_points.append({
-                "date": item.get("date", item.get("nav_date", "")),
-                "nav": item.get("nav", item.get("unit_nav", item.get("dwjz", 0))),
-                "acc_nav": item.get("acc_nav", item.get("ljjz", None)),
-            })
+            nav_points.append(
+                {
+                    "date": item.get("date", item.get("nav_date", "")),
+                    "nav": item.get("nav", item.get("unit_nav", item.get("dwjz", 0))),
+                    "acc_nav": item.get("acc_nav", item.get("ljjz", None)),
+                }
+            )
     return {"nav_points": nav_points, "warnings": []}
 
 

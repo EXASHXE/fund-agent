@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from src.skills_runtime.common.strings import unique_strings
+
 
 def adapt_personal_fund_report_to_advisory_markdown_report(
     final_report: dict[str, Any],
@@ -99,10 +101,7 @@ def _build_direct_answer(
     elif analysis_mode == "soft_action_advice":
         mode_note = "本报告包含操作建议，但不包含正式交易决策。"
     elif analysis_mode == "formal_trade_decision":
-        if decision is not None:
-            mode_note = "本报告包含正式交易决策。"
-        else:
-            mode_note = "请求正式交易决策模式，但决策尚未生成。"
+        mode_note = "本报告包含正式交易决策。" if decision is not None else "请求正式交易决策模式，但决策尚未生成。"
     if mode_note:
         bullets.append(mode_note)
 
@@ -143,6 +142,7 @@ def _build_portfolio_overview(index: dict[str, dict[str, Any]]) -> dict[str, Any
 def _build_current_risks(index: dict[str, dict[str, Any]]) -> dict[str, Any]:
     risk_flags = _find_section(index, "risk_flags")
     prof_diag = _find_section(index, "professional_diagnostics")
+    news_events = _find_section(index, "news_and_events")
 
     bullets: list[str] = []
     data_sources: list[str] = []
@@ -163,6 +163,16 @@ def _build_current_risks(index: dict[str, dict[str, Any]]) -> dict[str, Any]:
         data_sources.extend(_string_list(prof_diag.get("data_sources")))
         limitations.extend(_string_list(prof_diag.get("limitations")))
         statuses.append(str(prof_diag.get("status", "MISSING")))
+
+    # Include news and events in current risks section
+    if news_events:
+        bullets.extend(_string_list(news_events.get("bullets")))
+        data_sources.extend(_string_list(news_events.get("data_sources")))
+        limitations.extend(_string_list(news_events.get("limitations")))
+        statuses.append(str(news_events.get("status", "MISSING")))
+    else:
+        limitations.append("News and events section is missing.")
+        statuses.append("MISSING")
 
     status = _worst_status(statuses)
     return _adapted_section("current_risks", status, bullets, data_sources, limitations)
@@ -395,9 +405,9 @@ def _adapted_section(
         "id": section_id,
         "title": section_id,
         "status": clean_status,
-        "bullets": _unique_strings(bullets),
-        "data_sources": _unique_strings(data_sources),
-        "limitations": _unique_strings(limitations),
+        "bullets": unique_strings(bullets),
+        "data_sources": unique_strings(data_sources),
+        "limitations": unique_strings(limitations),
     }
 
 
@@ -438,13 +448,3 @@ def _string_list(value: Any) -> list[str]:
     if isinstance(value, list):
         return [str(item) for item in value if item is not None]
     return [str(value)]
-
-
-def _unique_strings(items: list[str]) -> list[str]:
-    seen: set[str] = set()
-    result: list[str] = []
-    for item in items:
-        if item not in seen:
-            seen.add(item)
-            result.append(item)
-    return result

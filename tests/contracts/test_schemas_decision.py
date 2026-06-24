@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import re
+from datetime import datetime
 
 import pytest
-from datetime import datetime
+
 from src.schemas.decision import Decision, ExecutionLedger
 
 

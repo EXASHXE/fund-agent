@@ -15,11 +15,11 @@ Constraints:
 
 from __future__ import annotations
 
+import uuid
 from collections import Counter
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from typing import Any, Literal
-import uuid
 
 ActionType = Literal["BUY", "SELL", "HOLD", "PAUSE_DCA", "REDUCE", "INCREASE", "WAIT"]
 EvidenceState = Literal[
@@ -77,28 +77,34 @@ EVIDENCE_STATES: tuple[str, ...] = (
 _ACTIONS_NEED_AMOUNT: frozenset[str] = frozenset({"BUY", "SELL", "INCREASE", "REDUCE"})
 _ACTIONS_NEED_ANCHOR: frozenset[str] = frozenset({"BUY", "SELL", "INCREASE", "REDUCE"})
 _PASSIVE_EMPTY_ANCHOR_ALLOWED: frozenset[str] = frozenset({"WAIT", "HOLD", "PAUSE_DCA"})
-_PASSIVE_EMPTY_ANCHOR_EVIDENCE_STATES: frozenset[str] = frozenset({
-    "INSUFFICIENT_EVIDENCE",
-    "CRITIC_BLOCKED",
-    "CONSTRAINT_BLOCKED",
-    "BUDGET_BLOCKED",
-    "DOWNGRADED",
-})
-_PASSIVE_EMPTY_ANCHOR_REASON_CODES: frozenset[str] = frozenset({
-    "INSUFFICIENT_EVIDENCE",
-    "CRITIC_BLOCKED",
-    "CONSTRAINT_BLOCKED",
-    "BUDGET_BLOCKED",
-    "DOWNGRADED_ACTIVE_TO_HOLD",
-})
-_FAKE_ANCHORS: frozenset[str] = frozenset({
-    "no_evidence_available",
-    "fake_anchor",
-    "fake-anchor",
-    "placeholder",
-    "missing_evidence",
-    "missing-evidence",
-})
+_PASSIVE_EMPTY_ANCHOR_EVIDENCE_STATES: frozenset[str] = frozenset(
+    {
+        "INSUFFICIENT_EVIDENCE",
+        "CRITIC_BLOCKED",
+        "CONSTRAINT_BLOCKED",
+        "BUDGET_BLOCKED",
+        "DOWNGRADED",
+    }
+)
+_PASSIVE_EMPTY_ANCHOR_REASON_CODES: frozenset[str] = frozenset(
+    {
+        "INSUFFICIENT_EVIDENCE",
+        "CRITIC_BLOCKED",
+        "CONSTRAINT_BLOCKED",
+        "BUDGET_BLOCKED",
+        "DOWNGRADED_ACTIVE_TO_HOLD",
+    }
+)
+_FAKE_ANCHORS: frozenset[str] = frozenset(
+    {
+        "no_evidence_available",
+        "fake_anchor",
+        "fake-anchor",
+        "placeholder",
+        "missing_evidence",
+        "missing-evidence",
+    }
+)
 
 
 @dataclass
@@ -147,10 +153,7 @@ class Decision:
         """Validate constraints after initialization."""
         # Actions that require execution must have positive amount
         if self.action in _ACTIONS_NEED_AMOUNT and self.execution_amount <= 0:
-            raise ValueError(
-                f"Action '{self.action}' requires execution_amount > 0, "
-                f"got {self.execution_amount}"
-            )
+            raise ValueError(f"Action '{self.action}' requires execution_amount > 0, got {self.execution_amount}")
 
         # Must have trigger conditions
         if not self.trigger_conditions:
@@ -161,22 +164,14 @@ class Decision:
             raise ValueError("Decision must specify invalidating_conditions")
 
         if self.evidence_state not in EVIDENCE_STATES:
-            raise ValueError(
-                f"evidence_state must be one of {', '.join(EVIDENCE_STATES)}, "
-                f"got {self.evidence_state!r}"
-            )
+            raise ValueError(f"evidence_state must be one of {', '.join(EVIDENCE_STATES)}, got {self.evidence_state!r}")
 
         if any(str(anchor).strip().lower() in _FAKE_ANCHORS for anchor in self.rationale_anchor):
-            raise ValueError(
-                "rationale_anchor must reference real evidence_id values, "
-                "not fake placeholders"
-            )
+            raise ValueError("rationale_anchor must reference real evidence_id values, not fake placeholders")
 
         # Active decisions must reference at least one real evidence_id.
         if self.action in _ACTIONS_NEED_ANCHOR and not self.rationale_anchor:
-            raise ValueError(
-                "Active decision must reference at least one evidence_id in rationale_anchor"
-            )
+            raise ValueError("Active decision must reference at least one evidence_id in rationale_anchor")
 
         if (
             not self.rationale_anchor
@@ -190,15 +185,11 @@ class Decision:
             )
 
         if not self.rationale_anchor and self.action not in _PASSIVE_EMPTY_ANCHOR_ALLOWED:
-            raise ValueError(
-                "Decision must reference at least one evidence_id in rationale_anchor"
-            )
+            raise ValueError("Decision must reference at least one evidence_id in rationale_anchor")
 
         # Risk budget must be positive
         if self.risk_budget <= 0:
-            raise ValueError(
-                f"risk_budget must be > 0, got {self.risk_budget}"
-            )
+            raise ValueError(f"risk_budget must be > 0, got {self.risk_budget}")
 
     def _has_empty_anchor_justification(self) -> bool:
         if self.evidence_state in _PASSIVE_EMPTY_ANCHOR_EVIDENCE_STATES:
@@ -215,9 +206,7 @@ class Decision:
         # passive empty-anchor decisions only in free text. New runtime outputs
         # must populate structured justification fields instead.
         text = " ".join(
-            list(self.trigger_conditions)
-            + list(self.invalidating_conditions)
-            + list(self.audit_trail)
+            list(self.trigger_conditions) + list(self.invalidating_conditions) + list(self.audit_trail)
         ).lower()
         return "insufficient evidence" in text or "blocked by critic" in text
 
@@ -251,7 +240,7 @@ class ExecutionLedger:
 
     def ledger_summary(self) -> dict[str, Any]:
         """Compute aggregate summary across all decisions in the ledger."""
-        _ACTIVE = _ACTIONS_NEED_AMOUNT
+        _active = _ACTIONS_NEED_AMOUNT
 
         action_counts: dict[str, int] = {}
         for action in ("BUY", "SELL", "INCREASE", "REDUCE", "HOLD", "WAIT", "PAUSE_DCA"):
@@ -268,7 +257,7 @@ class ExecutionLedger:
 
         for d in self.decisions:
             action_counts[d.action] = action_counts.get(d.action, 0) + 1
-            if d.action in _ACTIVE:
+            if d.action in _active:
                 active_count += 1
             else:
                 passive_count += 1

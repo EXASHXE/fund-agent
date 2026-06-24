@@ -1,0 +1,6 @@
+{
+  "name": "fund-agent",
+  "version": "0.10.5",
+  "description": "Private mutual fund portfolio reconstruction and KG/news report pipeline.",
+  "author": "EXASHXE"
+}

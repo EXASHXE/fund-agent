@@ -6,7 +6,6 @@ import importlib
 
 from src.skillpack.loader import load_skillpack_manifest
 
-
 PUBLIC_IMPORTS = [
     ("src.schemas.skill", "SkillInput"),
     ("src.schemas.skill", "SkillOutput"),

@@ -1,0 +1,159 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "InvestmentPlan",
+  "description": "Investment plan schema for automatic DCA / scheduled investments. Supports daily, weekly, biweekly, monthly, and one-off schedules with confirmation rules and fee policy. All demo data must be synthetic.",
+  "type": "object",
+  "required": ["schema_version", "plans"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "investment_plan.v1"
+    },
+    "plans": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["plan_id", "fund_code", "schedule", "amount"],
+        "properties": {
+          "plan_id": {
+            "type": "string",
+            "description": "Unique identifier for this investment plan"
+          },
+          "fund_code": {
+            "type": "string",
+            "description": "Fund code to invest in"
+          },
+          "fund_name": {
+            "type": "string",
+            "description": "Fund name (optional, for display only)"
+          },
+          "schedule": {
+            "type": "object",
+            "required": ["frequency"],
+            "properties": {
+              "frequency": {
+                "type": "string",
+                "enum": ["daily", "weekly", "biweekly", "monthly", "one_off"],
+                "description": "How often the investment occurs"
+              },
+              "day_of_week": {
+                "type": "string",
+                "enum": ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
+                "description": "For weekly/biweekly: which day of the week"
+              },
+              "day_of_month": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 31,
+                "description": "For monthly: day of month (1-31). If day exceeds month length, last business day is used."
+              },
+              "specific_date": {
+                "type": "string",
+                "description": "For one_off: the specific date (YYYY-MM-DD)"
+              },
+              "start_date": {
+                "type": "string",
+                "description": "When this plan starts (YYYY-MM-DD). Defaults to plan creation date if omitted."
+              },
+              "end_date": {
+                "type": ["string", "null"],
+                "description": "When this plan ends (YYYY-MM-DD). Null means ongoing."
+              }
+            }
+          },
+          "amount": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "Investment amount per occurrence (CNY)"
+          },
+          "execution_policy": {
+            "type": "object",
+            "properties": {
+              "assume_auto_execution": {
+                "type": "boolean",
+                "default": false,
+                "description": "If true, scheduled transactions are treated as rule_confirmed when confirmation rules are met. If false, they remain pending_confirmation."
+              },
+              "confirmation_rules": {
+                "type": "object",
+                "properties": {
+                  "settlement_days": {
+                    "type": "integer",
+                    "default": 1,
+                    "description": "T+N days after scheduled date for NAV availability (default T+1)"
+                  },
+                  "qdii_lag_days": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "Additional lag days for QDII funds (applied on top of settlement_days)"
+                  },
+                  "require_nav_available": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "NAV must be available before rule confirmation"
+                  },
+                  "require_no_contradictory_evidence": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "No contradictory evidence (e.g. cancellation, refund) before rule confirmation"
+                  },
+                  "expected_confirmation_date_offset_days": {
+                    "type": "integer",
+                    "default": 3,
+                    "description": "Maximum days after scheduled date to wait for confirmation. Beyond this, remains pending."
+                  }
+                }
+              },
+              "cutoff_time": {
+                "type": "string",
+                "description": "Daily cutoff time for same-day execution (HH:MM, 24h). Defaults to 15:00 (market close)."
+              },
+              "skip_non_trading_days": {
+                "type": "boolean",
+                "default": true,
+                "description": "If true, non-trading days are skipped to next trading day"
+              },
+              "next_trading_day_on_skip": {
+                "type": "boolean",
+                "default": true,
+                "description": "If a scheduled day is non-trading, execute on next trading day instead of skipping entirely"
+              }
+            }
+          },
+          "fee_policy": {
+            "type": "object",
+            "properties": {
+              "subscription_fee_rate": {
+                "type": ["number", "null"],
+                "description": "Subscription fee rate as decimal (e.g. 0.0015 = 0.15%). Null means unknown."
+              },
+              "redemption_fee_rate": {
+                "type": ["number", "null"],
+                "description": "Redemption fee rate as decimal. Null means unknown."
+              },
+              "fee_source": {
+                "type": "string",
+                "enum": ["plan_declared", "provider_lookup", "assumed_default", "unknown"],
+                "default": "unknown",
+                "description": "Source of the fee rate information"
+              },
+              "fee_discount_rate": {
+                "type": ["number", "null"],
+                "description": "Discount rate applied to subscription fee (e.g. 0.1 = 10% of stated fee). Common for Alipay platform discounts."
+              }
+            }
+          },
+          "is_qdii": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether this fund is a QDII fund (affects settlement timing)"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Free-text notes about this plan"
+          }
+        }
+      }
+    }
+  }
+}

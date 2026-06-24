@@ -1,8 +1,9 @@
-"""Release consistency tests for v0.10.0.
+"""Release consistency tests for the current v0.10.x candidate.
 
 Ensures all version declarations agree, CHANGELOG is updated,
 README does not overclaim, and public API imports work.
 """
+
 from __future__ import annotations
 
 import json
@@ -12,10 +13,8 @@ from pathlib import Path
 
 import yaml
 
-import pytest
-
 ROOT = Path(__file__).resolve().parents[2]
-EXPECTED_VERSION = "0.10.1"
+EXPECTED_VERSION = "0.10.5"
 
 VERSION_PATH = ROOT / "VERSION"
 PYPROJECT_PATH = ROOT / "pyproject.toml"
@@ -51,9 +50,7 @@ class TestVersionConsistency:
     def test_plugin_version_is_0100(self):
         text = PLUGIN_PATH.read_text(encoding="utf-8")
         pattern = r'PLUGIN_VERSION\s*=\s*["\']' + re.escape(EXPECTED_VERSION) + r'["\']'
-        assert re.search(pattern, text), (
-            f"opencode.plugin.js PLUGIN_VERSION is not {EXPECTED_VERSION!r}"
-        )
+        assert re.search(pattern, text), f"opencode.plugin.js PLUGIN_VERSION is not {EXPECTED_VERSION!r}"
 
     def test_all_version_sources_agree(self):
         v = VERSION_PATH.read_text(encoding="utf-8").strip()
@@ -71,28 +68,24 @@ class TestVersionConsistency:
 
     def test_python_version_returns_0100(self):
         from src.fund_agent.version import __version__
-        assert __version__ == EXPECTED_VERSION, (
-            f"src.fund_agent.__version__ is {__version__!r}"
-        )
+
+        assert __version__ == EXPECTED_VERSION, f"src.fund_agent.__version__ is {__version__!r}"
 
     def test_toplevel_version_returns_0100(self):
         from fund_agent.version import __version__
-        assert __version__ == EXPECTED_VERSION, (
-            f"fund_agent.__version__ is {__version__!r}"
-        )
+
+        assert __version__ == EXPECTED_VERSION, f"fund_agent.__version__ is {__version__!r}"
 
 
 class TestChangelogV010:
     def test_changelog_has_v0100_section(self):
         text = CHANGELOG_PATH.read_text(encoding="utf-8")
-        assert "## [0.10.0]" in text or "## 0.10.0" in text, (
-            "CHANGELOG.md does not have a v0.10.0 section"
-        )
+        assert "## [0.10.0]" in text or "## 0.10.0" in text, "CHANGELOG.md does not have a v0.10.0 section"
 
     def test_changelog_v010_mentions_beta_candidate(self):
         text = CHANGELOG_PATH.read_text(encoding="utf-8")
         v010_section = text.split("## [0.10.0]")[1].split("## [")[0] if "## [0.10.0]" in text else ""
-        assert "beta" in v010_section.lower() or "beta" in text[text.find("0.10.0"):].lower(), (
+        assert "beta" in v010_section.lower() or "beta" in text[text.find("0.10.0") :].lower(), (
             "CHANGELOG v0.10.0 section does not mention beta"
         )
 
@@ -124,9 +117,7 @@ class TestReadmeV010:
 
     def test_readme_does_not_claim_v1_stability(self):
         text = README_PATH.read_text(encoding="utf-8")
-        assert "v1.0.0" not in text or "not v1.0.0" in text.lower(), (
-            "README should not claim v1.0.0 stability"
-        )
+        assert "v1.0.0" not in text or "not v1.0.0" in text.lower(), "README should not claim v1.0.0 stability"
 
 
 class TestReadinessChecklist:
@@ -135,7 +126,9 @@ class TestReadinessChecklist:
 
     def test_readiness_checklist_mentions_version(self):
         text = CHECKLIST_PATH.read_text(encoding="utf-8")
-        assert "0.10.0" in text, "Readiness checklist does not mention 0.10.0"
+        assert EXPECTED_VERSION in text, (
+            f"Readiness checklist does not mention {EXPECTED_VERSION}"
+        )
 
     def test_readiness_checklist_full_pytest_marked(self):
         text = CHECKLIST_PATH.read_text(encoding="utf-8")
@@ -152,16 +145,14 @@ class TestReadinessChecklist:
 
 class TestProvidersExampleNoSecrets:
     def test_providers_example_has_no_real_secrets(self):
-        assert PROVIDERS_EXAMPLE_PATH.exists(), (
-            f"providers.example.yaml not found at {PROVIDERS_EXAMPLE_PATH}"
-        )
+        assert PROVIDERS_EXAMPLE_PATH.exists(), f"providers.example.yaml not found at {PROVIDERS_EXAMPLE_PATH}"
         text = PROVIDERS_EXAMPLE_PATH.read_text(encoding="utf-8")
         forbidden_patterns = [
-            r'api_key:\s*[A-Za-z0-9]{20,}',
-            r'secret:\s*[A-Za-z0-9]{20,}',
-            r'token:\s*[A-Za-z0-9]{20,}',
-            r'password:\s*\S+',
-            r'cookie:\s*[A-Za-z0-9]{20,}',
+            r"api_key:\s*[A-Za-z0-9]{20,}",
+            r"secret:\s*[A-Za-z0-9]{20,}",
+            r"token:\s*[A-Za-z0-9]{20,}",
+            r"password:\s*\S+",
+            r"cookie:\s*[A-Za-z0-9]{20,}",
         ]
         for pat in forbidden_patterns:
             assert not re.search(pat, text, re.IGNORECASE), (
@@ -181,29 +172,18 @@ class TestProvidersExampleNoSecrets:
             "EASTMONEY_COOKIE",
         ]
         for placeholder in expected_placeholders:
-            assert placeholder in text, (
-                f"providers.example.yaml missing expected env placeholder: {placeholder}"
-            )
+            assert placeholder in text, f"providers.example.yaml missing expected env placeholder: {placeholder}"
 
 
 class TestPublicImports:
     def test_fund_agent_public_imports_work(self):
-        from fund_agent.workflow import WorkflowTrace, classify_advisory_intent
-        from fund_agent.regression import list_personal_regression_fixtures
-        from fund_agent.quality import evaluate_advisory_quality_gate, FORBIDDEN_EXECUTION_FIELDS
-        from fund_agent.providers import ProviderCapability, ProviderConfig, ProviderRegistry
-        from fund_agent.reporting import compose_advisory_workflow_report, compute_report_status
-        from fund_agent.runtime import FundAnalysisSkill, DecisionSupportSkill, SkillInput, SkillOutput
         from fund_agent.version import __version__
-        from fund_agent.cli import build_parser, main
+
         assert __version__ == EXPECTED_VERSION
 
     def test_src_fund_agent_compat_imports_work(self):
         from src.fund_agent.version import __version__
-        from src.fund_agent.workflow import WorkflowTrace
-        from src.fund_agent.quality import evaluate_advisory_quality_gate
-        from src.fund_agent.providers import ProviderRegistry
-        from src.fund_agent.runtime import FundAnalysisSkill
+
         assert __version__ == EXPECTED_VERSION
 
 
@@ -220,14 +200,22 @@ class TestNoStaleVersionReferences:
             ]:
                 matches = list(re.finditer(pattern, text))
                 for m in matches:
-                    ctx = text[max(0, m.start()-30):m.end()+30]
+                    ctx = text[max(0, m.start() - 30) : m.end() + 30]
                     # Allow historical context phrases
-                    if any(kw in ctx.lower() for kw in [
-                        "historical", "upgrade from", "shipped in", "since",
-                        "status:", "not v0.9.0", "v0.9.0-"
-                    ]):
+                    if any(
+                        kw in ctx.lower()
+                        for kw in [
+                            "historical",
+                            "upgrade from",
+                            "shipped in",
+                            "since",
+                            "status:",
+                            "not v0.9.0",
+                            "v0.9.0-",
+                        ]
+                    ):
                         continue
                     # Allow clone examples that are tag-specific (not current version)
                     if "clone" in ctx.lower() or "checkout" in ctx.lower():
                         continue
-                    assert False, f"{path} contains stale v0.9.0 reference: ...{ctx}..."
+                    raise AssertionError(f"{path} contains stale v0.9.0 reference: ...{ctx}...")

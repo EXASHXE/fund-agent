@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from src.skills_runtime.workflow.advisory_markdown_adapter import (
     adapt_personal_fund_report_to_advisory_markdown_report,
 )

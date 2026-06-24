@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from src.skills_runtime.workflow.portfolio_input_bridge import bridge_portfolio_input
 
 
@@ -132,13 +130,15 @@ class TestCostBasisHandling:
 
     def test_mixed_cost_basis_holdings(self):
         inp = _demo_input()
-        inp["holdings"].append({
-            "fund_code": "003003",
-            "fund_name": "华夏现金增利货币",
-            "current_value": 20000,
-            "cost_basis": None,
-            "cost_basis_confidence": "unknown",
-        })
+        inp["holdings"].append(
+            {
+                "fund_code": "003003",
+                "fund_name": "华夏现金增利货币",
+                "current_value": 20000,
+                "cost_basis": None,
+                "cost_basis_confidence": "unknown",
+            }
+        )
         result = bridge_portfolio_input(inp)
         positions = result["payload"]["portfolio"]["positions"]
         assert positions[0]["total_cost"] == 45000
@@ -154,3 +154,120 @@ class TestCostBasisHandling:
         assert "broker" not in payload_str.lower()
         assert "order" not in payload_str.lower()
         assert "execution" not in payload_str.lower()
+
+
+class TestBridgePortfolioInputSnapshots:
+    """Tests for optional host-layer snapshot injection."""
+
+    def test_no_snapshots_by_default(self):
+        result = bridge_portfolio_input(_demo_input())
+        payload = result["payload"]
+        assert payload.get("provider_snapshot_present") is False
+        assert payload.get("news_snapshot_present") is False
+        assert payload.get("factor_snapshot_present") is False
+        assert payload.get("kg_context_snapshot_present") is False
+
+    def test_nonexistent_snapshot_path_warns(self, tmp_path):
+        result = bridge_portfolio_input(
+            _demo_input(),
+            provider_snapshot_path=str(tmp_path / "nonexistent.json"),
+            news_snapshot_path=str(tmp_path / "nonexistent_news.json"),
+            factor_snapshot_path=str(tmp_path / "nonexistent_factor.json"),
+            kg_context_path=str(tmp_path / "nonexistent_kg.json"),
+        )
+        assert any("PROVIDER_SNAPSHOT_LOAD_FAILED" in w for w in result["warnings"])
+        assert any("NEWS_SNAPSHOT_LOAD_FAILED" in w for w in result["warnings"])
+        assert any("FACTOR_SNAPSHOT_LOAD_FAILED" in w for w in result["warnings"])
+        assert any("KG_CONTEXT_LOAD_FAILED" in w for w in result["warnings"])
+
+    def test_valid_provider_snapshot_injected(self, tmp_path):
+        snapshot = {"snapshot_type": "provider_data_snapshot", "nav_data": {"000001": 1.5}}
+        snap_path = tmp_path / "provider_snapshot.private.json"
+        snap_path.write_text(__import__("json").dumps(snapshot), encoding="utf-8")
+
+        result = bridge_portfolio_input(
+            _demo_input(),
+            provider_snapshot_path=str(snap_path),
+        )
+        payload = result["payload"]
+        assert payload.get("provider_snapshot_present") is True
+        assert payload.get("provider_data_snapshot") == snapshot
+
+    def test_valid_news_snapshot_injected(self, tmp_path):
+        snapshot = {"snapshot_type": "news_snapshot", "items": []}
+        snap_path = tmp_path / "news_snapshot.private.json"
+        snap_path.write_text(__import__("json").dumps(snapshot), encoding="utf-8")
+
+        result = bridge_portfolio_input(
+            _demo_input(),
+            news_snapshot_path=str(snap_path),
+        )
+        payload = result["payload"]
+        assert payload.get("news_snapshot_present") is True
+        assert payload.get("news_snapshot") == snapshot
+
+    def test_valid_factor_snapshot_injected(self, tmp_path):
+        snapshot = {"snapshot_type": "factor_snapshot", "portfolio_factors": {}}
+        snap_path = tmp_path / "factor_snapshot.private.json"
+        snap_path.write_text(__import__("json").dumps(snapshot), encoding="utf-8")
+
+        result = bridge_portfolio_input(
+            _demo_input(),
+            factor_snapshot_path=str(snap_path),
+        )
+        payload = result["payload"]
+        assert payload.get("factor_snapshot_present") is True
+        assert payload.get("factor_snapshot") == snapshot
+
+    def test_valid_kg_context_injected(self, tmp_path):
+        snapshot = {"snapshot_type": "knowledge_graph_context", "entities": []}
+        snap_path = tmp_path / "kg_context.private.json"
+        snap_path.write_text(__import__("json").dumps(snapshot), encoding="utf-8")
+
+        result = bridge_portfolio_input(
+            _demo_input(),
+            kg_context_path=str(snap_path),
+        )
+        payload = result["payload"]
+        assert payload.get("kg_context_snapshot_present") is True
+        assert payload.get("kg_context_snapshot") == snapshot
+
+    def test_all_snapshots_injected_together(self, tmp_path):
+        for name, data in [
+            ("provider.private.json", {"snapshot_type": "provider_data_snapshot"}),
+            ("news.private.json", {"snapshot_type": "news_snapshot"}),
+            ("factor.private.json", {"snapshot_type": "factor_snapshot"}),
+            ("kg.private.json", {"snapshot_type": "knowledge_graph_context"}),
+        ]:
+            (tmp_path / name).write_text(__import__("json").dumps(data), encoding="utf-8")
+
+        result = bridge_portfolio_input(
+            _demo_input(),
+            provider_snapshot_path=str(tmp_path / "provider.private.json"),
+            news_snapshot_path=str(tmp_path / "news.private.json"),
+            factor_snapshot_path=str(tmp_path / "factor.private.json"),
+            kg_context_path=str(tmp_path / "kg.private.json"),
+        )
+        payload = result["payload"]
+        assert payload.get("provider_snapshot_present") is True
+        assert payload.get("news_snapshot_present") is True
+        assert payload.get("factor_snapshot_present") is True
+        assert payload.get("kg_context_snapshot_present") is True
+
+    def test_invalid_json_snapshot_warns(self, tmp_path):
+        snap_path = tmp_path / "bad.json"
+        snap_path.write_text("not valid json {{{", encoding="utf-8")
+
+        result = bridge_portfolio_input(
+            _demo_input(),
+            provider_snapshot_path=str(snap_path),
+        )
+        assert any("PROVIDER_SNAPSHOT_LOAD_FAILED" in w for w in result["warnings"])
+        assert result["payload"].get("provider_snapshot_present") is False
+
+    def test_backward_compatible_no_snapshot_args(self):
+        """Calling bridge_portfolio_input without snapshot args still works."""
+        result = bridge_portfolio_input(_demo_input())
+        assert "payload" in result
+        assert "warnings" in result
+        assert result["payload"]["portfolio"]["total_value"] == 50000

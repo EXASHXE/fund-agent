@@ -11,13 +11,18 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from .report_safety import FORBIDDEN_EXECUTION_FIELDS, find_forbidden_execution_fields
+from .quality_status import compute_quality_status
+from .report_safety import FORBIDDEN_EXECUTION_FIELDS
 
-_EXTENDED_FORBIDDEN_FIELDS = FORBIDDEN_EXECUTION_FIELDS | frozenset({
-    "actual_fill",
-    "filled_at",
-    "trade_confirmation_id",
-})
+__all__ = ["evaluate_advisory_quality_gate", "compute_quality_status"]
+
+_EXTENDED_FORBIDDEN_FIELDS = FORBIDDEN_EXECUTION_FIELDS | frozenset(
+    {
+        "actual_fill",
+        "filled_at",
+        "trade_confirmation_id",
+    }
+)
 
 
 def evaluate_advisory_quality_gate(
@@ -104,14 +109,13 @@ def _check_formal_source_boundary(fr: dict, ds: dict | None) -> dict:
     decision_status = str(summary.get("decision_status", ""))
     formal_source = str(safety.get("formal_decision_source", ""))
 
-    if decision_status in ("FORMAL_DECISION", "BLOCKED", "DOWNGRADED"):
-        if formal_source != "decision_support":
-            return _make_check(
-                "formal_source_boundary",
-                "FAIL",
-                f"decision_status={decision_status} but formal_decision_source={formal_source}, expected decision_support",
-                {"decision_status": decision_status, "formal_decision_source": formal_source},
-            )
+    if decision_status in ("FORMAL_DECISION", "BLOCKED", "DOWNGRADED") and formal_source != "decision_support":
+        return _make_check(
+            "formal_source_boundary",
+            "FAIL",
+            f"decision_status={decision_status} but formal_decision_source={formal_source}, expected decision_support",
+            {"decision_status": decision_status, "formal_decision_source": formal_source},
+        )
     if ds is None and decision_status not in ("NO_FORMAL_DECISION", ""):
         return _make_check(
             "formal_source_boundary",
@@ -183,9 +187,8 @@ def _check_decision_support_required_artifacts(ds: dict | None) -> dict:
         missing.append("execution_ledger or decision")
 
     ledger = ds_artifacts.get("execution_ledger", {})
-    if isinstance(ledger, dict):
-        if "ledger_summary" not in ledger:
-            missing.append("ledger_summary")
+    if isinstance(ledger, dict) and "ledger_summary" not in ledger:
+        missing.append("ledger_summary")
 
     if "evidence_anchor_diagnostics" not in ds_artifacts:
         missing.append("evidence_anchor_diagnostics")
@@ -262,11 +265,92 @@ def _check_active_trade_anchor_gate(ds: dict | None, eg: dict) -> dict:
                 f"active {action} decision allowed without evidence anchors or rationale_anchor",
                 {"action": action, "rationale_anchor": None, "evidence_graph_items": 0},
             )
+
+    # Fallback-only evidence gate: active actions must not be driven solely by fallback evidence
+    fallback_only = _is_fallback_only_evidence(ds_artifacts, eg)
+    if fallback_only:
+        return _make_check(
+            "active_trade_anchor_gate",
+            "FAIL",
+            f"active {action} decision has only fallback evidence anchors; "
+            f"active actions require at least one specific (non-fallback) evidence anchor",
+            {"action": action, "fallback_only_evidence": True},
+        )
+
     return _make_check(
         "active_trade_anchor_gate",
         "PASS",
         f"active {action} decision has evidence anchors",
     )
+
+
+# Query types that represent specific (non-fallback) evidence
+_SPECIFIC_QUERY_TYPES = frozenset(
+    {
+        "holding_company",
+        "benchmark",
+        "fund_name",
+        "fund_code",
+        "fund_manager",
+    }
+)
+
+
+def _is_fallback_only_evidence(ds_artifacts: dict, eg: dict) -> bool:
+    """Check if all evidence for an active decision comes from fallback queries.
+
+    Returns True if there is evidence but ALL of it is from fallback queries
+    (is_fallback_query=True or query_type=theme_fallback). Returns False if
+    there is at least one non-fallback evidence anchor.
+    """
+    anchor_diag = ds_artifacts.get("evidence_anchor_diagnostics", {})
+    anchor_details = []
+    if isinstance(anchor_diag, dict):
+        anchor_details = anchor_diag.get("anchor_details", [])
+
+    # Check anchor_details from decision_support diagnostics
+    if anchor_details:
+        has_specific = False
+        for anchor in anchor_details:
+            if not isinstance(anchor, dict):
+                continue
+            query_type = anchor.get("query_type", "")
+            is_fallback = anchor.get("is_fallback_query", False)
+            if query_type in _SPECIFIC_QUERY_TYPES and not is_fallback:
+                has_specific = True
+                break
+        if not has_specific:
+            # All anchors are fallback — check if there are any anchors at all
+            return bool(anchor_details)
+        return False  # Has at least one specific anchor
+
+    # Fallback: check evidence_graph items directly
+    eg_items = eg.get("items", {})
+    if not eg_items:
+        return False  # No items means no fallback-only issue (handled by anchor check above)
+
+    has_any_evidence = False
+    has_specific_evidence = False
+    for item_data in eg_items.values() if isinstance(eg_items, dict) else eg_items:
+        if not isinstance(item_data, dict):
+            continue
+        has_any_evidence = True
+        query_type = item_data.get("query_type", "")
+        is_fallback = item_data.get("is_fallback_query", False)
+        provenance = item_data.get("provenance", {})
+        value = item_data.get("value", {})
+        if isinstance(provenance, dict):
+            query_type = query_type or provenance.get("query_type", "")
+            is_fallback = is_fallback or provenance.get("is_fallback_query", False)
+        if isinstance(value, dict):
+            query_type = query_type or value.get("query_type", "")
+            is_fallback = is_fallback or value.get("is_fallback_query", False)
+
+        if query_type in _SPECIFIC_QUERY_TYPES and not is_fallback:
+            has_specific_evidence = True
+            break
+
+    return has_any_evidence and not has_specific_evidence
 
 
 def _check_missing_data_disclosed(fa: dict, fr: dict) -> dict:
@@ -300,7 +384,18 @@ def _check_missing_data_disclosed(fa: dict, fr: dict) -> dict:
             if isinstance(section, dict) and section.get("id") == field:
                 has_disclosure = True
 
-    disclosure_phrases = ("missing", "incomplete", "partial", "limitation", "gap", "缺失", "不完整", "部分", "限制", "证据不足")
+    disclosure_phrases = (
+        "missing",
+        "incomplete",
+        "partial",
+        "limitation",
+        "gap",
+        "缺失",
+        "不完整",
+        "部分",
+        "限制",
+        "证据不足",
+    )
     for phrase in disclosure_phrases:
         if phrase in fr_text.lower() or phrase in fr_text:
             has_disclosure = True
@@ -369,7 +464,10 @@ def _check_action_boundary_present(fr: dict, ds: dict | None) -> dict:
     bullets = boundary_section.get("bullets", [])
     text = " ".join(str(b) for b in bullets)
 
-    has_no_broker = any(kw in text for kw in ("不执行券商下单", "does not execute broker", "no broker execution", "not execute", "不执行"))
+    has_no_broker = any(
+        kw in text
+        for kw in ("不执行券商下单", "does not execute broker", "no broker execution", "not execute", "不执行")
+    )
     if not has_no_broker:
         return _make_check(
             "action_boundary_present",
@@ -382,7 +480,9 @@ def _check_action_boundary_present(fr: dict, ds: dict | None) -> dict:
     decision_status = str(summary.get("decision_status", ""))
 
     if decision_status == "NO_FORMAL_DECISION":
-        has_no_formal = any(kw in text for kw in ("no formal decision", "未进行正式决策", "no formal", "report-only", "仅报告"))
+        has_no_formal = any(
+            kw in text for kw in ("no formal decision", "未进行正式决策", "no formal", "report-only", "仅报告")
+        )
         if not has_no_formal:
             return _make_check(
                 "action_boundary_present",
@@ -411,6 +511,7 @@ def _check_zh_direct_answer_present(fr: dict, language: str | None) -> dict:
     is_zh = False
     if effective_lang:
         from .report_status import normalize_language
+
         is_zh = normalize_language(effective_lang) == "zh-CN"
 
     if not is_zh:
@@ -497,7 +598,9 @@ def _check_suggested_rebalance_analysis_only(fa: dict, fr: dict) -> dict:
             boundary_text = " ".join(str(b) for b in section.get("bullets", []))
             break
 
-    has_analysis_only = any(kw in boundary_text for kw in ("analysis-only", "仅分析", "分析用途", "not execution", "advisory only"))
+    has_analysis_only = any(
+        kw in boundary_text for kw in ("analysis-only", "仅分析", "分析用途", "not execution", "advisory only")
+    )
     if not has_analysis_only:
         return _make_check(
             "suggested_rebalance_analysis_only",
@@ -597,3 +700,8 @@ def _flatten_report_text(fr: dict) -> str:
         for bullet in chinese.get("bullets", []):
             parts.append(str(bullet))
     return " ".join(parts)
+
+
+# compute_quality_status has been extracted to quality_status.py.
+# It is re-exported here for backward-compatible imports.
+

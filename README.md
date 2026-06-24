@@ -117,9 +117,9 @@ fund-agent audit [--pretty] [--json]            # run project audit scripts
 
 Old commands remain compatible: `fund-agent-run-skill`, `fund-agent-doctor`.
 
-## v0.10.1
+## v0.10.5
 
-This is **fund-agent v0.10.1**, adding manual portfolio bootstrap support. Provider adapters
+This is **fund-agent v0.10.5**, adding multi-harness agent wrappers and a shared E2E runner on top of the snapshot builders, CLI bridge, evidence graph extensions, and privacy hardening. Provider adapters
 (AkShare, Eastmoney, Xueqiu) are prototypes unless smoke-tested with real
 credentials. See the v0.9.0 tag for the first pre-launch baseline.
 

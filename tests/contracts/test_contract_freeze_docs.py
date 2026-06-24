@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 DOC_PATH = Path("docs/CONTRACT_FREEZE.md")
 
 

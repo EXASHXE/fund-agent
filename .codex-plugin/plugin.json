@@ -1,0 +1,8 @@
+{
+  "name": "fund-agent",
+  "version": "0.10.5",
+  "description": "Private mutual fund portfolio reconstruction and KG/news report pipeline.",
+  "author": "EXASHXE",
+  "_comment": "This plugin.json is experimental. Codex plugin spec is not yet stable. Skills are available via .agents/skills/ for local Agent Skill discovery only.",
+  "skills": "./.agents/skills/"
+}

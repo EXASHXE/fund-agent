@@ -8,14 +8,15 @@ report.md
 local_data/
 private_data/
 local_reports/
+eval_workspace/
 *.private.json
 *.private.yaml
 *.private.csv
 
 # 本地 Agent 配置
-CLAUDE.md
 SUPERPOWERS.md
 .claude/
+.cac/
 
 # 数据库
 /data/
@@ -31,6 +32,7 @@ node_modules/
 package-lock.json
 bun.lockb
 .opencode/plugins/
+!.opencode/plugins/fund-agent-privacy-protection.ts
 .opencode/package.json
 .opencode/node_modules/
 
@@ -40,6 +42,8 @@ bun.lockb
 
 # 环境
 .env
+.env.*
+!.env.example
 
 # 新闻关键词缓存
 data/cache/
@@ -61,6 +65,16 @@ artifacts/audit/
 .omo/
 .pytest_cache/
 .coverage
+htmlcov/
 1.txt
 plan.txt
 nul
+
+# API key / credential files (safety net)
+api.txt
+api_keys.txt
+credentials.json
+*.secret
+
+# Old scaffold (replaced by .claude-plugin)
+claude-plugin/

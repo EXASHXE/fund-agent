@@ -347,6 +347,47 @@ rm .opencode/plugins/fund-agent.js
 # restart OpenCode
 ```
 
+## Operation Skills (v0.10.5+)
+
+Starting with v0.10.5, fund-agent ships dedicated OpenCode operation skills,
+agents, and a privacy protection plugin.
+
+### Skills
+
+| Skill | Directory | Description |
+|---|---|---|
+| `fund-agent-e2e` | `.opencode/skills/fund-agent-e2e/` | E2E portfolio report via `bin/fund-agent-e2e` |
+| `fund-agent-privacy-audit` | `.opencode/skills/fund-agent-privacy-audit/` | Privacy audit via `bin/fund-agent-privacy-check` |
+| `fund-agent-setup-private-data` | `.opencode/skills/fund-agent-setup-private-data/` | Private data file setup guide |
+
+### Agents
+
+| Agent | File | Description |
+|---|---|---|
+| `fund-report-e2e` | `.opencode/agents/fund-report-e2e.md` | Orchestrate E2E pipeline |
+| `fund-data-auditor` | `.opencode/agents/fund-data-auditor.md` | Privacy compliance auditor |
+
+### Plugin
+
+- `.opencode/plugins/fund-agent-privacy-protection.ts` — warns when agent
+  attempts to read protected paths (`private_data/`, `local_data/`,
+  `local_reports/`, `*.private.*`, `.env*`)
+
+### User-global install
+
+```bash
+python install/fund-agent-agent-install.py --target opencode --mode symlink
+```
+
+This symlinks skills, agents, and the privacy plugin into
+`~/.config/opencode/`.
+
+### Doctor check
+
+```bash
+python install/fund-agent-agent-doctor.py --target opencode
+```
+
 ## Separate installs for other harnesses
 
 This install path is for **OpenCode only**. Other harnesses (Claude

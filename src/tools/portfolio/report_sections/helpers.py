@@ -21,6 +21,7 @@ def _string_list(value: Any) -> list[str]:
 
 def _unique_strings(values: list[Any]) -> list[str]:
     from src.skills_runtime.common.strings import unique_strings
+
     return unique_strings(values, skip_empty=True)
 
 
@@ -30,6 +31,68 @@ def _money(value: Any) -> str:
     except (TypeError, ValueError):
         amount = 0.0
     return f"{amount:,.2f}"
+
+
+def _money_or_missing(value: Any, *, likely_missing: bool = False, lang: str = "zh") -> str:
+    """Format money value, returning N/A when value is None or likely missing.
+
+    Args:
+        value: The monetary value to format.
+        likely_missing: If True, treat the value as likely missing (e.g. current_value=0
+            when 80%+ holdings have zero). Returns N/A instead of "0.00".
+        lang: Language for the missing indicator — "zh" returns "无法计算", "en" returns "N/A".
+
+    Returns:
+        Formatted money string, or missing indicator when value is absent/likely missing.
+    """
+    missing_text = "N/A" if lang == "en" else "无法计算"
+    if value is None:
+        return missing_text
+    if likely_missing:
+        return missing_text
+    try:
+        amount = float(value)
+    except (TypeError, ValueError):
+        return missing_text
+    return f"{amount:,.2f}"
+
+
+def _pct_or_missing(value: Any, *, likely_missing: bool = False, lang: str = "zh") -> str:
+    """Format percentage value, returning missing indicator when data is likely absent."""
+    missing_text = "N/A" if lang == "en" else "无法计算"
+    if value is None:
+        return missing_text
+    if likely_missing:
+        try:
+            v = float(value)
+            if abs(v) < 1e-9:
+                return missing_text
+        except (TypeError, ValueError):
+            return missing_text
+    try:
+        pct = float(value or 0.0) * 100
+    except (TypeError, ValueError):
+        return missing_text
+    return f"{pct:.2f}%"
+
+
+def _ratio_or_missing(value: Any, *, digits: int = 6, likely_missing: bool = False, lang: str = "zh") -> str:
+    """Format ratio/decimal value, returning missing indicator when data is likely absent."""
+    missing_text = "N/A" if lang == "en" else "无法计算"
+    if value is None:
+        return missing_text
+    if likely_missing:
+        try:
+            v = float(value)
+            if abs(v) < 1e-9:
+                return missing_text
+        except (TypeError, ValueError):
+            return missing_text
+    try:
+        number = float(value or 0.0)
+    except (TypeError, ValueError):
+        return missing_text
+    return f"{number:.{digits}f}"
 
 
 def _pct(value: Any) -> str:
@@ -109,7 +172,14 @@ def _missing_gap_codes(gap: dict[str, Any]) -> list[str]:
 
 
 def _portfolio_summary(context: dict[str, Any]) -> dict[str, Any]:
-    return _as_dict(
-        context["artifacts"].get("portfolio_summary")
-        or context["report"].get("portfolio_metrics")
-    )
+    return _as_dict(context["artifacts"].get("portfolio_summary") or context["report"].get("portfolio_metrics"))
+
+
+def _current_value_likely_missing(context: dict[str, Any]) -> bool:
+    """Check if current_value is likely missing from the portfolio data."""
+    ps = _portfolio_summary(context)
+    if ps.get("current_value_likely_missing"):
+        return True
+    # Also check factor_snapshot data_quality if available
+    fs = _as_dict(context["artifacts"].get("factor_snapshot"))
+    return bool(fs.get("data_quality", {}).get("current_value_likely_missing"))

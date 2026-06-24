@@ -1,19 +1,44 @@
 """Portfolio input bridge — deterministic converter from portfolio input to fund_analysis payload.
 
 Reads validated portfolio input dict, produces fund_analysis input payload.
+Supports optional host-layer snapshots (provider, news, factor, KG context).
 Never fetches live data. Never executes trades.
 """
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import Any
 
 
-def bridge_portfolio_input(portfolio_input: dict[str, Any]) -> dict[str, Any]:
+def _load_optional_snapshot(path: str | None) -> dict[str, Any] | None:
+    """Load an optional JSON snapshot file. Returns None if path is None or file missing."""
+    if not path:
+        return None
+    try:
+        p = Path(path)
+        if p.exists():
+            data = json.loads(p.read_text(encoding="utf-8"))
+            return data if isinstance(data, dict) else None
+    except (json.JSONDecodeError, OSError):
+        pass
+    return None
+
+
+def bridge_portfolio_input(
+    portfolio_input: dict[str, Any],
+    *,
+    provider_snapshot_path: str | None = None,
+    news_snapshot_path: str | None = None,
+    factor_snapshot_path: str | None = None,
+    kg_context_path: str | None = None,
+) -> dict[str, Any]:
     """Convert a validated fund_portfolio_input dict into a fund_analysis SkillInput payload.
 
     Preserves user_question, analysis_mode, risk_profile, constraints.
     Attaches provider_data_snapshot as host evidence.
+    Optionally consumes host-layer snapshots (news, factor, KG context).
     Emits data_quality warnings.
     Never fetches live data. Never executes trades.
     """
@@ -32,8 +57,10 @@ def bridge_portfolio_input(portfolio_input: dict[str, Any]) -> dict[str, Any]:
         pos: dict[str, Any] = {
             "fund_code": h.get("fund_code", ""),
             "fund_name": h.get("fund_name", ""),
-            "current_value": h.get("current_value", 0),
+            "current_value": h.get("current_value"),
         }
+        if h.get("current_value") is None:
+            pos["current_value_missing"] = True
         cost_basis_val = h.get("cost_basis")
         if cost_basis_val is not None:
             pos["total_cost"] = cost_basis_val
@@ -50,8 +77,19 @@ def bridge_portfolio_input(portfolio_input: dict[str, Any]) -> dict[str, Any]:
             pos["holding_days"] = h["holding_days"]
         positions.append(pos)
 
-    total_value = sum(p.get("current_value", 0) for p in positions)
+    non_none_values = [p["current_value"] for p in positions if p.get("current_value") is not None]
+    total_value: float | None = sum(non_none_values) if non_none_values else None
     cash_available = 0.0
+
+    # Apply 80% heuristic: if most current_values are 0 or None, treat total as missing
+    total_positions = len(positions)
+    if total_positions > 0:
+        zero_or_none_count = sum(1 for p in positions if p.get("current_value") is None or p.get("current_value") == 0)
+        if zero_or_none_count / total_positions >= 0.8:
+            total_value = None
+            for p in positions:
+                if p.get("current_value") == 0:
+                    p["current_value_missing"] = True
     cash_alloc = portfolio_input.get("cash_allocation")
     if isinstance(cash_alloc, dict):
         cash_available = cash_alloc.get("cash_available", 0) or 0
@@ -84,6 +122,9 @@ def bridge_portfolio_input(portfolio_input: dict[str, Any]) -> dict[str, Any]:
         "analysis_mode": analysis_mode,
     }
 
+    if total_value is None:
+        payload["portfolio"]["current_value_likely_missing"] = True
+
     if portfolio_input.get("risk_profile_ref"):
         payload["risk_profile_ref"] = portfolio_input["risk_profile_ref"]
     if portfolio_input.get("constraints_ref"):
@@ -105,6 +146,47 @@ def bridge_portfolio_input(portfolio_input: dict[str, Any]) -> dict[str, Any]:
     if isinstance(user_prefs, dict):
         payload["language"] = user_prefs.get("language", "zh-CN")
         payload["report_style"] = user_prefs.get("report_style", "detailed")
+
+    # --- Optional host-layer snapshot injection ---
+    provider_snapshot = _load_optional_snapshot(provider_snapshot_path)
+    if provider_snapshot:
+        payload["provider_data_snapshot"] = provider_snapshot
+        payload["provider_snapshot_present"] = True
+    elif provider_snapshot_path:
+        warnings.append("PROVIDER_SNAPSHOT_LOAD_FAILED: could not load provider snapshot")
+        payload["provider_snapshot_present"] = False
+    else:
+        payload["provider_snapshot_present"] = False
+
+    news_snapshot = _load_optional_snapshot(news_snapshot_path)
+    if news_snapshot:
+        payload["news_snapshot"] = news_snapshot
+        payload["news_snapshot_present"] = True
+    elif news_snapshot_path:
+        warnings.append("NEWS_SNAPSHOT_LOAD_FAILED: could not load news snapshot")
+        payload["news_snapshot_present"] = False
+    else:
+        payload["news_snapshot_present"] = False
+
+    factor_snapshot = _load_optional_snapshot(factor_snapshot_path)
+    if factor_snapshot:
+        payload["factor_snapshot"] = factor_snapshot
+        payload["factor_snapshot_present"] = True
+    elif factor_snapshot_path:
+        warnings.append("FACTOR_SNAPSHOT_LOAD_FAILED: could not load factor snapshot")
+        payload["factor_snapshot_present"] = False
+    else:
+        payload["factor_snapshot_present"] = False
+
+    kg_context = _load_optional_snapshot(kg_context_path)
+    if kg_context:
+        payload["kg_context_snapshot"] = kg_context
+        payload["kg_context_snapshot_present"] = True
+    elif kg_context_path:
+        warnings.append("KG_CONTEXT_LOAD_FAILED: could not load KG context snapshot")
+        payload["kg_context_snapshot_present"] = False
+    else:
+        payload["kg_context_snapshot_present"] = False
 
     return {
         "payload": payload,

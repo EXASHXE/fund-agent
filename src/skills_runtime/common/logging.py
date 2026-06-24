@@ -15,8 +15,6 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Any
-
 
 # PII redaction patterns
 _MONETARY_PATTERN = re.compile(

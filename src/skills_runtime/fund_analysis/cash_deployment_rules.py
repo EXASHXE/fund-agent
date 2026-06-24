@@ -13,7 +13,6 @@ from typing import Any
 from .context import CoreMetricsBundle, PortfolioInputBundle
 from .safe_parsing import _safe_float
 
-
 CASH_LOW_THRESHOLD = 0.05
 CASH_HIGH_THRESHOLD = 0.30
 

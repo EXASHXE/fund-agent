@@ -14,7 +14,6 @@ from typing import Any
 from .context import CoreMetricsBundle, PortfolioInputBundle
 from .safe_parsing import _safe_float
 
-
 REBOUND_THRESHOLD = 0.02
 MATERIAL_DRAWDOWN_THRESHOLD = -0.03
 
@@ -279,9 +278,7 @@ def _determine_right_side_confirmed(
         return False
     confirmations = [nav_confirmation, benchmark_confirmation, news_confirmation, sentiment_confirmation]
     missing_count = sum(1 for c in confirmations if c == "missing")
-    if missing_count >= 2:
-        return False
-    return True
+    return not missing_count >= 2
 
 
 def _determine_evidence_state(

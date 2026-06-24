@@ -1,0 +1,12 @@
+{
+  "_comment": "Example NAV overrides file for portfolio reconstruction. Copy to private_data/nav_overrides.private.json and fill in real NAV values. DO NOT commit with real data.",
+  "_format": "Keys are fund_code (six-digit string). Values are date→NAV maps. Dates are YYYY-MM-DD. NAV is the fund's unit net value on that date.",
+  "_usage": "Used by reconstruct_portfolio_from_ledger.py to estimate units from cashflow-only transaction history. Only trade-date NAVs are needed — the pipeline does not require a full NAV series.",
+  "110011": {
+    "2026-01-15": 2.5432,
+    "2026-02-10": 2.6100
+  },
+  "005827": {
+    "2026-01-20": 1.8234
+  }
+}

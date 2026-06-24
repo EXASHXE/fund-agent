@@ -6,6 +6,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 SCRIPT = PROJECT_ROOT / "scripts" / "check_examples.py"
@@ -15,6 +17,8 @@ def test_check_examples_script_exists():
     assert SCRIPT.exists()
 
 
+@pytest.mark.slow
+@pytest.mark.subprocess
 def test_check_examples_script_passes():
     result = subprocess.run(
         [sys.executable, str(SCRIPT)],

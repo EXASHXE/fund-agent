@@ -177,6 +177,6 @@ def test_loader_accepts_hyphen_slug():
 def test_loader_raises_for_unknown_skill():
     try:
         get_decision_contract("nonexistent_skill")
-        assert False, "expected KeyError"
+        raise AssertionError("expected KeyError")
     except KeyError:
         pass

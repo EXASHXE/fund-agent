@@ -14,9 +14,9 @@ echo
 
 echo "=== parser checks ==="
 python -c "import tomllib; tomllib.load(open('pyproject.toml','rb'))"
-python -c "import yaml; yaml.safe_load(open('.github/workflows/ci.yml'))"
-python -c "import yaml; yaml.safe_load(open('.github/workflows/plugin-ci.yml'))"
-python -c "import yaml; yaml.safe_load(open('skillpack/fund-agent.skillpack.yaml'))"
+python -c "import yaml; yaml.safe_load(open('.github/workflows/ci.yml', encoding='utf-8'))"
+python -c "import yaml; yaml.safe_load(open('.github/workflows/plugin-ci.yml', encoding='utf-8'))"
+python -c "import yaml; yaml.safe_load(open('skillpack/fund-agent.skillpack.yaml', encoding='utf-8'))"
 echo
 
 echo "=== architecture ==="

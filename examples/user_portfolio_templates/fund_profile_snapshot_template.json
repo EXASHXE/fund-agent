@@ -1,0 +1,9 @@
+{
+  "schema_version": "fund_profile_snapshot.v1",
+  "as_of_date": "",
+  "fund_profiles": {},
+  "fund_holdings": {},
+  "benchmark_info": {},
+  "provenance": {},
+  "limitations": []
+}

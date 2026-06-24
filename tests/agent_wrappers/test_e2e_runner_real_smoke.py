@@ -1,0 +1,405 @@
+"""Real synthetic E2E smoke test — not dry-run only.
+
+Uses synthetic fixtures to run the actual E2E pipeline end-to-end.
+Does not use real Alipay data or provider keys.
+"""
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+import sys
+from datetime import date
+from pathlib import Path
+
+import pytest
+
+from scripts.build_fund_data_snapshot import (
+    build_fee_schedule_snapshot,
+    build_fund_profile_snapshot,
+    build_nav_snapshot,
+)
+
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+SCRIPTS_DIR = REPO_ROOT / "scripts"
+E2E_PY = SCRIPTS_DIR / "fund_agent_e2e.py"
+
+# Synthetic Alipay CSV (minimal valid structure)
+SYNTHETIC_ALIPAY_CSV = """\
+交易号,商户订单号,交易创建时间,付款时间,交易来源地,类型,交易对方,商品名称,金额（元）,收/支,交易状态,服务费（元）,成功退款（元）,备注
+SYNTH-TRADE-001,SYNTH-ORDER-001,2026-06-17 10:00:00,2026-06-17 10:00:05,其他,即时到账交易,华夏基金管理有限公司,000001 华夏成长混合基金申购,1000.00,支出,交易成功,0.00,0.00,合成基金申购
+SYNTH-TRADE-002,SYNTH-ORDER-002,2026-06-17 11:00:00,2026-06-17 11:00:05,其他,即时到账交易,华夏基金管理有限公司,000001 华夏成长混合基金申购,500.00,支出,交易成功,0.00,0.00,合成基金申购
+"""
+
+# Synthetic investment plan
+SYNTHETIC_INVESTMENT_PLAN_YAML = """\
+plans:
+  - plan_id: plan_001
+    fund_code: "000001"
+    fund_name: "华夏成长混合"
+    amount: 500
+    schedule:
+      frequency: monthly
+      day_of_month: 15
+      start_date: "2026-01-01"
+    execution_policy:
+      assume_auto_execution: true
+      confirmation_rules:
+        settlement_days: 1
+        require_nav_available: true
+        expected_confirmation_date_offset_days: 3
+    fee_policy:
+      fee_source: unknown
+    is_qdii: false
+"""
+
+# Synthetic NAV overrides
+SYNTHETIC_NAV_OVERRIDES = {
+    "000001": {
+        "2026-06-15": 1.2345,
+        "2026-06-16": 1.2350,
+        "2026-06-17": 1.2360,
+    }
+}
+
+# Synthetic profile overrides
+SYNTHETIC_PROFILE_OVERRIDES = {
+    "000001": {
+        "fund_name": "华夏成长混合",
+        "fund_type": "混合型",
+        "manager": "张三",
+        "benchmark": "沪深300指数",
+        "tracking_index": "沪深300",
+        "inception_date": "2020-01-01",
+        "size_category": "中盘",
+        "tags": ["混合", "成长"],
+        "holdings": [
+            {"name": "贵州茅台", "code": "600519", "industry": "白酒", "weight": 8.5},
+            {"name": "宁德时代", "code": "300750", "industry": "新能源", "weight": 6.2},
+        ],
+        "benchmark_symbol": "000300.SS",
+        "benchmark_name": "沪深300",
+        "benchmark_provider": "sse",
+        "asset_class": "equity",
+    }
+}
+
+# Synthetic fee overrides
+SYNTHETIC_FEE_OVERRIDES = {
+    "000001": {
+        "purchase_fee": 0.0015,
+        "redemption_fee_tiers": [
+            {"holding_days_max": 7, "fee_rate": 0.015},
+            {"holding_days_max": 30, "fee_rate": 0.0075},
+            {"holding_days_max": 365, "fee_rate": 0.005},
+        ],
+    }
+}
+
+
+def _setup_synthetic_workspace(tmp_dir: Path) -> Path:
+    """Create synthetic private_data directory with all fixtures."""
+    private_data = tmp_dir / "private_data"
+    private_data.mkdir(parents=True, exist_ok=True)
+
+    # Write Alipay CSV
+    (private_data / "alipay_record_20260617_1200_1.csv").write_text(
+        SYNTHETIC_ALIPAY_CSV, encoding="utf-8"
+    )
+
+    # Write investment plan
+    (private_data / "investment_plan.private.yaml").write_text(
+        SYNTHETIC_INVESTMENT_PLAN_YAML, encoding="utf-8"
+    )
+
+    # Write NAV/profile/fee overrides for build_fund_data_snapshot
+    overrides_dir = tmp_dir / "overrides"
+    overrides_dir.mkdir(parents=True, exist_ok=True)
+    (overrides_dir / "nav_overrides.json").write_text(
+        json.dumps(SYNTHETIC_NAV_OVERRIDES, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    (overrides_dir / "profile_overrides.json").write_text(
+        json.dumps(SYNTHETIC_PROFILE_OVERRIDES, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    (overrides_dir / "fee_overrides.json").write_text(
+        json.dumps(SYNTHETIC_FEE_OVERRIDES, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+
+    # Seed the runner's snapshot directory so --skip-akshare remains fully
+    # offline while the real ledger-to-portfolio reconstruction path runs.
+    snapshot_dir = tmp_dir / "output" / "fund_data_snapshot"
+    snapshot_dir.mkdir(parents=True, exist_ok=True)
+    as_of = date(2026, 6, 17)
+    snapshots = {
+        "nav_snapshot.private.json": build_nav_snapshot(
+            ["000001"], as_of, SYNTHETIC_NAV_OVERRIDES
+        ),
+        "fund_profile_snapshot.private.json": build_fund_profile_snapshot(
+            ["000001"], as_of, SYNTHETIC_PROFILE_OVERRIDES
+        ),
+        "fee_schedule_snapshot.private.json": build_fee_schedule_snapshot(
+            ["000001"], as_of, SYNTHETIC_FEE_OVERRIDES
+        ),
+    }
+    for filename, payload in snapshots.items():
+        (snapshot_dir / filename).write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+
+    return private_data
+
+
+@pytest.mark.slow
+class TestE2ERunnerRealSmoke:
+    """Real synthetic E2E smoke test — runs actual pipeline steps."""
+
+    def test_python_e2e_with_synthetic_data(self, tmp_path):
+        """Run the Python E2E orchestrator with synthetic data."""
+        private_data = _setup_synthetic_workspace(tmp_path)
+        output_dir = tmp_path / "output"
+        output_dir.mkdir(parents=True, exist_ok=True)
+        report_path = output_dir / "real_portfolio_report.md"
+
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(REPO_ROOT)
+
+        result = subprocess.run(
+            [
+                sys.executable, str(E2E_PY),
+                "--as-of", "2026-06-17",
+                "--skip-news",
+                "--skip-akshare",
+                "--private-data-dir", str(private_data),
+                "--output-dir", str(output_dir),
+                "--output-report", str(report_path),
+                "--run-id", "test-smoke-001",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            env=env,
+            cwd=str(REPO_ROOT),
+        )
+
+        # Should not crash
+        assert result.returncode == 0, (
+            f"E2E runner failed (exit={result.returncode}):\n"
+            f"stdout: {result.stdout[:2000]}\n"
+            f"stderr: {result.stderr[:2000]}"
+        )
+
+        # e2e_summary.json should exist
+        summary_path = output_dir / "e2e_summary.json"
+        assert summary_path.exists(), f"e2e_summary.json not found at {summary_path}"
+
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        assert summary["run_id"] == "test-smoke-001"
+        assert summary["status"] in {"success", "partial"}
+        assert summary["warnings"]
+        assert summary["errors"] == []
+        assert "steps_completed" in summary
+        assert summary["outputs"]["report"] == str(report_path)
+        assert summary["outputs"]["summary"] == str(summary_path)
+        assert report_path.exists()
+
+        normalized = json.loads(
+            (output_dir / "normalized_transactions.json").read_text(encoding="utf-8")
+        )
+        assert normalized["transaction_count"] == 2
+        ledger = json.loads(
+            (output_dir / "transaction_ledger.json").read_text(encoding="utf-8")
+        )
+        assert ledger["summary"]["evidence_confirmed"] == 2
+        assert (output_dir / "portfolio" / "portfolio_input.private.json").exists()
+
+        # Output should not contain raw private row content or API keys
+        combined = result.stdout + result.stderr
+        assert "api_key=" not in combined.lower() or "***REDACTED***" in combined
+        assert "token=" not in combined.lower() or "***REDACTED***" in combined
+
+    def test_normalized_transactions_output(self, tmp_path):
+        """Verify normalized_transactions output exists when CSV is present."""
+        private_data = _setup_synthetic_workspace(tmp_path)
+        output_dir = tmp_path / "output"
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(REPO_ROOT)
+
+        result = subprocess.run(
+            [
+                sys.executable, str(E2E_PY),
+                "--as-of", "2026-06-17",
+                "--skip-news",
+                "--skip-akshare",
+                "--private-data-dir", str(private_data),
+                "--output-dir", str(output_dir),
+                "--run-id", "test-norm-001",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            env=env,
+            cwd=str(REPO_ROOT),
+        )
+
+        normalized_path = output_dir / "normalized_transactions.json"
+        assert normalized_path.exists(), (
+            f"normalized_transactions.json not found.\n"
+            f"stdout: {result.stdout[:1000]}\nstderr: {result.stderr[:1000]}"
+        )
+
+    def test_transaction_ledger_output(self, tmp_path):
+        """Verify transaction_ledger output exists."""
+        private_data = _setup_synthetic_workspace(tmp_path)
+        output_dir = tmp_path / "output"
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(REPO_ROOT)
+
+        result = subprocess.run(
+            [
+                sys.executable, str(E2E_PY),
+                "--as-of", "2026-06-17",
+                "--skip-news",
+                "--skip-akshare",
+                "--private-data-dir", str(private_data),
+                "--output-dir", str(output_dir),
+                "--run-id", "test-ledger-001",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            env=env,
+            cwd=str(REPO_ROOT),
+        )
+
+        ledger_path = output_dir / "transaction_ledger.json"
+        assert ledger_path.exists(), (
+            f"transaction_ledger.json not found.\n"
+            f"stdout: {result.stdout[:1000]}\nstderr: {result.stderr[:1000]}"
+        )
+
+    def test_no_stale_round3_in_output(self, tmp_path):
+        """Verify output does not reference stale round3 envelope paths."""
+        private_data = _setup_synthetic_workspace(tmp_path)
+        output_dir = tmp_path / "output"
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(REPO_ROOT)
+
+        result = subprocess.run(
+            [
+                sys.executable, str(E2E_PY),
+                "--as-of", "2026-06-17",
+                "--skip-news",
+                "--skip-akshare",
+                "--private-data-dir", str(private_data),
+                "--output-dir", str(output_dir),
+                "--run-id", "test-staleref-001",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            env=env,
+            cwd=str(REPO_ROOT),
+        )
+
+        # Check for stale references in actual pipeline output files, not temp paths
+        combined = result.stdout + result.stderr
+        # Remove temp paths that may coincidentally contain "round3" in directory names.
+        # Must handle native, JSON-escaped (\\), and forward-slash path variants.
+        def _path_variants(p: str) -> list[str]:
+            return [p, p.replace("\\", "\\\\"), p.replace("\\", "/")]
+
+        filter_paths = [str(tmp_path), str(output_dir)]
+        lines = combined.splitlines()
+        non_path_lines = [
+            line for line in lines
+            if not any(v in line for p in filter_paths for v in _path_variants(p))
+        ]
+        filtered = "\n".join(non_path_lines)
+        assert "round3_" not in filtered
+        assert "fund_analysis_input_envelope" not in filtered
+
+    def test_python_e2e_help(self):
+        """Verify --help works."""
+        result = subprocess.run(
+            [sys.executable, str(E2E_PY), "--help"],
+            capture_output=True, text=True, timeout=30,
+        )
+        assert result.returncode == 0
+        assert "--as-of" in result.stdout
+        assert "--skip-news" in result.stdout
+        assert "--private-data-dir" in result.stdout
+
+    def test_python_e2e_dry_run(self, tmp_path):
+        """Verify --dry-run works with custom dirs."""
+        private_data = _setup_synthetic_workspace(tmp_path)
+        output_dir = tmp_path / "output"
+
+        result = subprocess.run(
+            [
+                sys.executable, str(E2E_PY),
+                "--dry-run",
+                "--as-of", "2026-06-17",
+                "--private-data-dir", str(private_data),
+                "--output-dir", str(output_dir),
+            ],
+            capture_output=True, text=True, timeout=30,
+        )
+        assert result.returncode == 0
+        assert "dry-run" in result.stdout.lower() or "would run" in result.stdout.lower()
+
+    def test_no_usable_input_fails_with_summary(self, tmp_path):
+        private_data = tmp_path / "empty-private-data"
+        private_data.mkdir()
+        output_dir = tmp_path / "output"
+        result = subprocess.run(
+            [
+                sys.executable, str(E2E_PY),
+                "--private-data-dir", str(private_data),
+                "--output-dir", str(output_dir),
+                "--output-report", str(output_dir / "report.md"),
+            ],
+            capture_output=True, text=True, timeout=30, cwd=str(REPO_ROOT),
+        )
+        assert result.returncode != 0
+        summary = json.loads((output_dir / "e2e_summary.json").read_text(encoding="utf-8"))
+        assert summary["status"] == "failed"
+        assert summary["errors"]
+        assert summary["outputs"]["report"] is None
+
+    def test_path_filter_normalizes_json_escaped_and_forward_slash(self):
+        """Regression: _path_variants must filter JSON-escaped and forward-slash paths."""
+        def _path_variants(p: str) -> list[str]:
+            return [p, p.replace("\\", "\\\\"), p.replace("\\", "/")]
+
+        # Simulate a Windows tmp_path that contains "round3_" in the directory name
+        fake_tmp = r"C:\temp\test_no_stale_round3_in_output0"
+        fake_output = r"C:\temp\test_no_stale_round3_in_output0\output"
+        variants = [v for p in [fake_tmp, fake_output] for v in _path_variants(p)]
+
+        # JSON-escaped path line (the actual failure case)
+        json_line = f'"summary": "{fake_tmp}\\\\output\\\\e2e_summary.json"'
+        assert any(v in json_line for v in variants), (
+            f"JSON-escaped path not filtered: {json_line}"
+        )
+
+        # Forward-slash path line
+        fwd_line = fake_tmp.replace("\\", "/") + "/output/e2e_summary.json"
+        assert any(v in fwd_line for v in variants), (
+            f"Forward-slash path not filtered: {fwd_line}"
+        )
+
+        # A line with actual stale round3_ content (not a path) should NOT be filtered
+        runtime_line = "round3_envelope_path = /opt/data/round3_input.json"
+        assert not any(v in runtime_line for v in variants), (
+            f"Runtime line incorrectly filtered: {runtime_line}"
+        )
+
+    def test_live_provider_flag_is_forwarded_to_snapshot_subprocess(self):
+        content = E2E_PY.read_text(encoding="utf-8")
+        assert '{"RUN_LIVE_PROVIDER_TESTS": "1"}' in content

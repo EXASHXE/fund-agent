@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import ast
 import os
-from pathlib import Path
 
 import pytest
 
@@ -49,8 +48,7 @@ def _find_dangerous_string_error_patterns(dirpath: str, exclude: set[str] | None
             for node in ast.walk(tree):
                 if isinstance(node, ast.Call):
                     func = node.func
-                    if isinstance(func, ast.Attribute):
-                        if func.attr == "append" and isinstance(func.value, ast.Name) and func.value.id == "errors":
+                    if isinstance(func, ast.Attribute) and func.attr == "append" and isinstance(func.value, ast.Name) and func.value.id == "errors":
                             for arg in node.args:
                                 if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
                                     violations.append(
@@ -73,7 +71,7 @@ class TestNoRawStringErrorsInRuntime:
     def test_skills_runtime_no_string_errors_append(self):
         violations = _find_dangerous_string_error_patterns("src/skills_runtime")
         assert not violations, (
-            f"src/skills_runtime has raw string error patterns:\n" + "\n".join(violations)
+            "src/skills_runtime has raw string error patterns:\n" + "\n".join(violations)
         )
 
     def test_skillpack_no_string_errors_append(self):
@@ -82,7 +80,7 @@ class TestNoRawStringErrorsInRuntime:
             exclude={"validator.py", "doctor.py"},
         )
         assert not violations, (
-            f"src/skillpack has raw string error patterns:\n" + "\n".join(violations)
+            "src/skillpack has raw string error patterns:\n" + "\n".join(violations)
         )
 
 

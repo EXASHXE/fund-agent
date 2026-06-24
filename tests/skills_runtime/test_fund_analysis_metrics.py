@@ -1,6 +1,5 @@
 """Unit tests for fund_analysis core metrics computation."""
 
-import pytest
 
 from src.skills_runtime.fund_analysis.input_stage import (
     collect_fund_codes,

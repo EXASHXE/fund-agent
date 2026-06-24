@@ -16,16 +16,12 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
 
 from src.schemas.skill import SkillInput
-from src.skills_runtime.fund_analysis.skill import FundAnalysisSkill
-from src.skills_runtime.fund_analysis.contribution_stage import compute_position_contribution
-from src.skills_runtime.fund_analysis.profit_protection_rules import compute_profit_protection_diagnostics
 from src.skills_runtime.fund_analysis.benchmark_rules import compute_benchmark_divergence_diagnostics
-from src.skills_runtime.fund_analysis.right_side_rules import compute_right_side_confirmation_diagnostics
-from src.skills_runtime.fund_analysis.event_rules import compute_event_hype_failure_diagnostics
 from src.skills_runtime.fund_analysis.cash_deployment_rules import compute_cash_deployment_diagnostics
+from src.skills_runtime.fund_analysis.contribution_stage import compute_position_contribution
+from src.skills_runtime.fund_analysis.event_rules import compute_event_hype_failure_diagnostics
 from src.skills_runtime.fund_analysis.input_stage import (
     build_portfolio_input_bundle,
     collect_fund_codes,
@@ -33,7 +29,10 @@ from src.skills_runtime.fund_analysis.input_stage import (
 )
 from src.skills_runtime.fund_analysis.metrics_stage import compute_core_metrics
 from src.skills_runtime.fund_analysis.planning_stage import build_analysis_plan
+from src.skills_runtime.fund_analysis.profit_protection_rules import compute_profit_protection_diagnostics
+from src.skills_runtime.fund_analysis.right_side_rules import compute_right_side_confirmation_diagnostics
 from src.skills_runtime.fund_analysis.safe_parsing import _safe_float, _safe_int
+from src.skills_runtime.fund_analysis.skill import FundAnalysisSkill
 
 USER_FLOWS_DIR = Path(__file__).resolve().parents[2] / "examples" / "user_flows"
 
@@ -130,7 +129,7 @@ def test_pnl_contribution_uses_absolute_pnl_denominator() -> None:
     assert isinstance(pos_b["pnl_contribution_pct"], float)
     assert pos_a["pnl_contribution_pct"] < 0
     assert pos_b["pnl_contribution_pct"] > 0
-    total_abs = abs(pos_a["absolute_pnl"]) + abs(pos_b["absolute_pnl"])
+    abs(pos_a["absolute_pnl"]) + abs(pos_b["absolute_pnl"])
     assert abs(abs(pos_a["pnl_contribution_pct"]) + pos_b["pnl_contribution_pct"] - 1.0) < 0.01
 
 

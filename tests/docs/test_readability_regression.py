@@ -19,7 +19,6 @@ from pathlib import Path
 
 import yaml
 
-
 ROOT = Path(__file__).resolve().parents[2]
 
 VERSION_BEARING_FILES = [
@@ -86,6 +85,21 @@ def test_opencode_plugin_js_version_matches():
     assert m, "PLUGIN_VERSION not found in opencode.plugin.js"
     assert m.group(1) == expected, (
         f"opencode.plugin.js PLUGIN_VERSION {m.group(1)!r} != VERSION {expected!r}"
+    )
+
+
+def test_e2e_pipeline_version_uses_version_file():
+    """fund_agent_e2e.py pipeline_version must read from VERSION, not hardcode."""
+    e2e_source = (ROOT / "scripts" / "fund_agent_e2e.py").read_text(encoding="utf-8")
+    # Must use _read_version() dynamically
+    assert "_read_version()" in e2e_source, (
+        "fund_agent_e2e.py must use _read_version() for pipeline_version, "
+        "not a hardcoded version string"
+    )
+    # Must not contain a hardcoded pipeline_version like "0.10.x"
+    assert not re.search(r'"pipeline_version"\s*:\s*"[0-9]+\.[0-9]+\.[0-9]+"', e2e_source), (
+        "fund_agent_e2e.py must not contain a hardcoded pipeline_version string; "
+        "use _read_version() instead"
     )
 
 
