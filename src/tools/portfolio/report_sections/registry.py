@@ -38,6 +38,7 @@ SECTION_ORDER: tuple[tuple[str, str], ...] = (
     ("research_query_plan", "Research query plan"),
     ("data_completeness_and_limitations", "Data completeness and limitations"),
     ("evidence_appendix", "Evidence appendix"),
+    ("personal_health", "Personal portfolio health"),
 )
 
 ZH_CN_SECTION_TITLES: dict[str, str] = {
@@ -72,6 +73,7 @@ ZH_CN_SECTION_TITLES: dict[str, str] = {
     "research_query_plan": "研究查询计划",
     "data_completeness_and_limitations": "数据限制",
     "evidence_appendix": "证据附录",
+    "personal_health": "组合体检",
 }
 
 VALID_STATUSES = {"OK", "PARTIAL", "MISSING"}

@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Any
 
 from scripts.fund_identity_utils import is_valid_fund_code
+from src.tools.portfolio.personal_health_report import build_personal_health_summary
 from src.tools.portfolio.portfolio_input_transactions import (
     build_ledger_from_portfolio_input_transactions,
     load_portfolio_input_transactions,
@@ -240,6 +241,75 @@ def _collect_coverage(factor_snapshot: Path, news_snapshot: Path) -> dict[str, A
     except (OSError, json.JSONDecodeError):
         pass
     return coverage
+
+
+def _build_personal_health_report(
+    *,
+    pipeline: PipelineState,
+    portfolio_input_source: str,
+    transaction_source_used: str,
+    portfolio_input_txn_stats: dict[str, Any],
+    identity_resolution_summary: dict[str, Any],
+    valuation_type_counts: dict[str, int],
+) -> dict[str, Any]:
+    """Build personal health report from collected pipeline state.
+
+    Wraps build_personal_health_summary with error handling so that
+    a health report failure never crashes the E2E pipeline or leaks
+    private data.
+    """
+    try:
+        artifacts = {
+            "e2e_summary": {
+                "transaction_source": transaction_source_used,
+                "portfolio_input_source": portfolio_input_source,
+                "pipeline_steps": {
+                    "fund_data_snapshot_attempted": pipeline.fund_data_snapshot_attempted,
+                    "fund_data_snapshot_status": pipeline.fund_data_snapshot_status,
+                    "reconstruction_attempted": pipeline.reconstruction_attempted,
+                    "reconstruction_status": pipeline.reconstruction_status,
+                    "valid_fund_codes_count": pipeline.valid_fund_codes_count,
+                    "name_only_count": pipeline.name_only_count,
+                },
+            },
+            "portfolio_input_transactions_summary": portfolio_input_txn_stats,
+            "identity_summary": identity_resolution_summary,
+            "valuation_summary": valuation_type_counts,
+        }
+        return build_personal_health_summary(artifacts)
+    except Exception as exc:
+        # Never crash the pipeline; return a minimal error report
+        return {
+            "schema_version": "personal_health_report.v1",
+            "overall_status": "unavailable",
+            "confidence_level": "unavailable",
+            "reason_codes": [],
+            "data_sources": {
+                "transaction_source": transaction_source_used,
+                "valuation_source": portfolio_input_source,
+                "identity_source": "unavailable",
+            },
+            "valuation_quality": {
+                "positions_total": 0,
+                "confirmed_count": 0,
+                "estimated_full_coverage_count": 0,
+                "estimated_partial_coverage_count": 0,
+                "cashflow_only_count": 0,
+                "unavailable_count": 0,
+                "manual_review_count": 0,
+                "estimated_current_value_total_is_partial": False,
+            },
+            "nav_coverage": {
+                "full": 0,
+                "partial": 0,
+                "none": 0,
+                "latest_only": 0,
+                "stale_count": 0,
+                "qdii_like_count": 0,
+            },
+            "fix_it_checklist": [],
+            "safety_notes": [f"Health report generation failed: {type(exc).__name__}"],
+        }
 
 
 def run_pipeline(args: argparse.Namespace) -> int:
@@ -706,6 +776,14 @@ def run_pipeline(args: argparse.Namespace) -> int:
         "identity_resolution": identity_resolution_summary,
         "identity_schema_version": identity_schema_version,
         "valuation_summary": valuation_type_counts,
+        "personal_health_report": _build_personal_health_report(
+            pipeline=pipeline,
+            portfolio_input_source=portfolio_input_source,
+            transaction_source_used=transaction_source_used,
+            portfolio_input_txn_stats=portfolio_input_txn_stats,
+            identity_resolution_summary=identity_resolution_summary,
+            valuation_type_counts=valuation_type_counts,
+        ),
         "pipeline_version": _read_version(),
     }
     try:
@@ -715,6 +793,13 @@ def run_pipeline(args: argparse.Namespace) -> int:
         return 1
 
     print(json.dumps(summary, indent=2))
+
+    # If --health-report-only, also print a focused health summary
+    if args.health_report_only:
+        health = summary.get("personal_health_report", {})
+        print("\n── Personal Health Report ──")
+        print(json.dumps(health, indent=2))
+
     print(f"\nE2E pipeline {status}. Run ID: {run_id}")
     print(f"Summary: {summary_path}")
     print(f"Report:  {output_report if output_report.exists() else 'not generated'}")
@@ -744,6 +829,11 @@ def main(argv: list[str] | None = None) -> int:
         choices=["auto", "alipay", "portfolio_input"],
         default="auto",
         help="Transaction source: auto (default, alipay first), alipay, or portfolio_input",
+    )
+    parser.add_argument(
+        "--health-report-only",
+        action="store_true",
+        help="Print only the personal health report section from e2e_summary.json (does not skip pipeline steps)",
     )
     args = parser.parse_args(argv)
     return run_pipeline(args)

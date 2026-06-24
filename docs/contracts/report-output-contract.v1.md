@@ -50,6 +50,7 @@ Sections are ordered. The canonical order is defined by `SECTION_ORDER`:
 29. `research_query_plan` — Research query plan
 30. `data_completeness_and_limitations` — Data completeness and limitations
 31. `evidence_appendix` — Evidence appendix
+32. `personal_health` — Personal portfolio health (组合体检)
 
 The ordering is stable. No section may be omitted; MISSING sections are
 represented with `status: "MISSING"` and an empty `bullets` list.

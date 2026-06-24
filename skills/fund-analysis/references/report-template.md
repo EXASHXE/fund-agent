@@ -55,6 +55,7 @@ Statuses are `OK`, `PARTIAL`, or `MISSING`. Missing data must appear as
 28. `research_query_plan`
 29. `data_completeness_and_limitations`
 30. `evidence_appendix`
+31. `personal_health`
 
 ## Section guidance
 

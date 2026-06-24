@@ -1307,3 +1307,117 @@ def _build_evidence_appendix(context: dict[str, Any]) -> dict[str, Any]:
         limitations.append("No analysis artifacts are available for evidence appendix context.")
         status = "MISSING"
     return _section("evidence_appendix", status, bullets, ["SkillOutput.evidence_items"], limitations)
+
+
+def _build_personal_health(context: dict[str, Any]) -> dict[str, Any]:
+    """Build personal portfolio health section from health report artifact."""
+    from src.tools.portfolio.personal_health_report import build_personal_health_summary
+
+    artifacts = context["artifacts"]
+    health_report = _as_dict(artifacts.get("personal_health_report"))
+
+    # If no pre-built health report, try to build one from available artifacts
+    if not health_report:
+        try:
+            health_report = build_personal_health_summary(artifacts)
+        except Exception:
+            health_report = {}
+
+    if not health_report:
+        return _section(
+            "personal_health",
+            "MISSING",
+            [],
+            ["personal_health_report"],
+            ["Personal health report is unavailable."],
+        )
+
+    bullets: list[str] = []
+    limitations: list[str] = []
+    data_sources_list: list[str] = []
+
+    overall_status = str(health_report.get("overall_status", "unavailable"))
+    confidence = str(health_report.get("confidence_level", "unavailable"))
+
+    bullets.append(f"Overall status: {overall_status}")
+    bullets.append(f"Confidence: {confidence}")
+
+    # Data sources
+    ds = _as_dict(health_report.get("data_sources"))
+    txn_src = str(ds.get("transaction_source", "none"))
+    val_src = str(ds.get("valuation_source", "unavailable"))
+    id_src = str(ds.get("identity_source", "unavailable"))
+    bullets.append(f"Transactions: {txn_src}")
+    bullets.append(f"Valuation: {val_src}")
+    bullets.append(f"Identity: {id_src}")
+    data_sources_list = [txn_src, val_src, id_src]
+
+    # Valuation quality
+    vq = _as_dict(health_report.get("valuation_quality"))
+    efc = int(vq.get("estimated_full_coverage_count", 0))
+    epc = int(vq.get("estimated_partial_coverage_count", 0))
+    cfo = int(vq.get("cashflow_only_count", 0))
+    mr = int(vq.get("manual_review_count", 0))
+    unavail = int(vq.get("unavailable_count", 0))
+
+    vq_parts: list[str] = []
+    if efc > 0:
+        vq_parts.append(f"full-coverage={efc}")
+    if epc > 0:
+        vq_parts.append(f"partial-coverage={epc}")
+    if cfo > 0:
+        vq_parts.append(f"cashflow-only={cfo}")
+    if mr > 0:
+        vq_parts.append(f"manual-review={mr}")
+    if unavail > 0:
+        vq_parts.append(f"unavailable={unavail}")
+    if vq_parts:
+        bullets.append(f"Valuation quality: {', '.join(vq_parts)}")
+    if vq.get("estimated_current_value_total_is_partial"):
+        limitations.append("Estimated current value is partial — not all positions have valuation.")
+
+    # NAV coverage
+    nc = _as_dict(health_report.get("nav_coverage"))
+    nav_parts: list[str] = []
+    for key in ("full", "partial", "none", "latest_only"):
+        count = int(nc.get(key, 0))
+        if count > 0:
+            nav_parts.append(f"{key}={count}")
+    if nav_parts:
+        bullets.append(f"NAV coverage: {', '.join(nav_parts)}")
+    stale = int(nc.get("stale_count", 0))
+    qdii = int(nc.get("qdii_like_count", 0))
+    if stale > 0:
+        bullets.append(f"Stale NAV count: {stale}")
+    if qdii > 0:
+        bullets.append(f"QDII-like count: {qdii}")
+
+    # Fix-it checklist
+    checklist = _string_list(health_report.get("fix_it_checklist"))
+    for item in checklist:
+        bullets.append(f"Action needed: {item}")
+
+    # Reason codes
+    reason_codes = _string_list(health_report.get("reason_codes"))
+    if reason_codes:
+        bullets.append(f"Reason codes: {', '.join(reason_codes)}")
+
+    # Safety notes as limitations
+    safety = _string_list(health_report.get("safety_notes"))
+    for note in safety:
+        limitations.append(note)
+
+    # Section status
+    section_status = "OK"
+    if overall_status in ("needs_data", "unavailable"):
+        section_status = "MISSING"
+    elif overall_status in ("partial", "needs_manual_review"):
+        section_status = "PARTIAL"
+
+    return _section(
+        "personal_health",
+        section_status,
+        bullets,
+        data_sources_list,
+        limitations,
+    )

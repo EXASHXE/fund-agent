@@ -16,6 +16,7 @@ from src.tools.portfolio.report_sections.builders import (
     _build_evidence_appendix,
     _build_evidence_status,
     _build_executive_summary,
+    _build_personal_health,
     _build_factor_analysis,
     _build_factor_and_style,
     _build_fees_and_redemption,
@@ -122,6 +123,7 @@ def compose_personal_fund_report(
             _build_research_query_plan(context),
             _build_data_completeness_and_limitations(context),
             _build_evidence_appendix(context),
+            _build_personal_health(context),
         ]
     )
     sections = _localize_sections(sections, language)
@@ -494,6 +496,28 @@ def _localize_bullet(text: str) -> str:
         return "流动性储备缺口：" + text[len("Liquidity reserve gap: ") :]
     if text.startswith("Short-term trade budget status: "):
         return "短期交易预算状态：" + text[len("Short-term trade budget status: ") :]
+    if text.startswith("Overall status: "):
+        return "整体状态：" + text[len("Overall status: ") :]
+    if text.startswith("Confidence: "):
+        return "置信度：" + text[len("Confidence: ") :]
+    if text.startswith("Transactions: "):
+        return "交易来源：" + text[len("Transactions: ") :]
+    if text.startswith("Valuation: "):
+        return "估值来源：" + text[len("Valuation: ") :]
+    if text.startswith("Identity: "):
+        return "身份来源：" + text[len("Identity: ") :]
+    if text.startswith("Valuation quality: "):
+        return "估值质量：" + text[len("Valuation quality: ") :]
+    if text.startswith("NAV coverage: "):
+        return "净值覆盖：" + text[len("NAV coverage: ") :]
+    if text.startswith("Stale NAV count: "):
+        return "过时净值数量：" + text[len("Stale NAV count: ") :]
+    if text.startswith("QDII-like count: "):
+        return "QDII类基金数量：" + text[len("QDII-like count: ") :]
+    if text.startswith("Action needed: "):
+        return "需处理：" + text[len("Action needed: ") :]
+    if text.startswith("Reason codes: "):
+        return "原因码：" + text[len("Reason codes: ") :]
     return text
 
 
