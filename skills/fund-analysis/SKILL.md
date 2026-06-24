@@ -575,17 +575,90 @@ and read SKILL.md files. It does NOT launch Python, call the runtime bridge,
 fetch live data, or manage MCP servers. Runtime execution requires host,
 manual, Python subprocess, or other integration outside the OpenCode plugin.
 
-## Agent-facing personal run
+## Agent-facing personal analysis package
 
 For agent consumption, `bin/fund-agent-personal-run` produces a deterministic
-evidence package including `agent_context.md` and `agent_context.json`. Agents
-should read `agent_context.md` first — it explains what data is safe to analyze
-and what should not be inferred. The CLI is the entry point, not the analysis
-interface. See `docs/usage/personal-run.md` for details.
+evidence package including `agent_context.md`, `agent_context.json`,
+`personal_health_report.json`, and `report.md`.
 
-- `--skip-akshare` and `--skip-news` are **on by default** (deterministic mode)
-- Live data should be injected by the host/agent explicitly
-- fund-agent generates evidence; agents interpret
+### First run (full pipeline)
+
+```bash
+bin/fund-agent-personal-run --skip-akshare --skip-news
+```
+
+`--skip-akshare` and `--skip-news` are **on by default** (deterministic mode).
+Live data should be injected by the host/agent explicitly — the CLI does not
+become a live research system.
+
+### Re-read existing run (skip pipeline)
+
+```bash
+bin/fund-agent-personal-run --agent-context-only --run-dir local_reports/<run_id>
+```
+
+### Agent reading order
+
+1. `agent_context.json` — machine-readable status, scope, and constraints
+2. `agent_context.md` — human-readable summary of the same data
+3. `e2e_summary.json` — full pipeline summary (if deeper detail needed)
+4. `personal_health_report.json` — data quality diagnostic and fix-it checklist
+5. `report.md` — composed report (if user wants narrative)
+6. Reconstructed portfolio / ledger — only if position-level detail is needed
+
+### Agent output limits
+
+Agents consuming this evidence package MUST NOT:
+
+- Output formal `Decision` or `ExecutionLedger` objects
+- Issue broker order execution instructions
+- Auto-trade
+- Treat `estimated` values as `confirmed` market values
+- Treat partial valuation as complete portfolio market value
+- Treat `cashflow_only` as current valuation
+- Fabricate `fund_code`, NAV, or holdings
+- Leak private paths or real transaction details
+
+### Agent should prioritize
+
+- Data quality explanation (overall_status, confidence_level, reason_codes)
+- Missing data checklist (from `personal_health_report.fix_it_checklist`)
+- Risk / exposure observations (with evidence citations and confidence qualifiers)
+- User follow-up questions (from `agent_context.recommended_agent_questions`)
+
+### Agent response structure
+
+1. Data readiness — overall status, confidence, reason codes
+2. What I can analyze now — safe-to-analyze scope
+3. What is unsafe to infer — unsafe-to-infer scope
+4. Key findings with evidence — each finding cites its artifact source
+5. Missing data / fix-it checklist
+6. Questions for user
+7. Optional next run command
+
+### Live data extension
+
+When the user explicitly requests live data (news, real-time NAV):
+
+- The agent should call the host's MCP provider
+- Live data must be labeled separately from deterministic fund-agent evidence
+- Live data does NOT upgrade `estimated` to `confirmed`
+- Suggest re-running with `--no-skip-akshare` if live NAV should be integrated
+
+### Prompt templates
+
+See `docs/agent-integration/prompts/` for ready-to-use agent prompts:
+
+- `analyze-agent-context.zh.md` — Chinese analysis prompt
+- `analyze-agent-context.en.md` — English analysis prompt
+- `follow-up-missing-data.zh.md` — Missing data follow-up prompt
+- `live-provider-extension.zh.md` — Live data extension prompt
+
+### Contract reference
+
+- Design: `docs/design/agent-context-consumption-contract.md`
+- Contract: `docs/contracts/agent-context-contract.v1.md`
+- Schema version: `fund_agent_context.v1`
 
 ## Chinese personal fund example
 

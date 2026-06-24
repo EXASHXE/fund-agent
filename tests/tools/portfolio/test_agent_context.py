@@ -33,7 +33,7 @@ def _make_summary(
             "schema_version": "personal_health_report.v1",
             "overall_status": overall_status,
             "confidence_level": confidence_level,
-            "reason_codes": reason_codes or ["partial_nav_coverage"],
+            "reason_codes": reason_codes if reason_codes is not None else ["partial_nav_coverage"],
             "data_sources": {
                 "transaction_source": "alipay",
                 "valuation_source": "reconstructed_from_ledger",

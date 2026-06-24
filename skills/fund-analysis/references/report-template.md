@@ -238,3 +238,28 @@ Evidence appendix:
 
 The host renders appendix formatting from `SkillOutput.evidence_items`,
 `artifacts`, and `warnings`.
+
+### Personal health
+
+Use `personal_health_report` artifact. Shows overall status, confidence level,
+reason codes, and fix-it checklist. This is a data-quality diagnostic, not
+trading advice. When consumed by an external agent, the agent should follow
+the agent context consumption contract (see
+`docs/contracts/agent-context-contract.v1.md`).
+
+## Agent consumption
+
+When an external agent (Claude Code, Codex, OpenCode, etc.) consumes the
+report alongside `agent_context.md`/`agent_context.json`, it must:
+
+1. Read `agent_context.md` first — it defines safe-to-analyze and
+   unsafe-to-infer scope
+2. Treat `estimated` values as approximate, not confirmed
+3. Not treat partial coverage as complete market value
+4. Not output formal `Decision` or `ExecutionLedger`
+5. Not issue broker orders or auto-trade
+6. Cite evidence sources for all claims
+
+See `docs/design/agent-context-consumption-contract.md` for the full
+consumption protocol and `docs/agent-integration/prompts/` for
+ready-to-use agent prompt templates.

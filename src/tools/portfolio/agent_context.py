@@ -12,30 +12,54 @@ from typing import Any
 
 SCHEMA_VERSION = "fund_agent_context.v1"
 
-# ── Safe-to-analyze scope ─────────────────────────────────────────────
-_SAFE_TO_ANALYZE = [
+# ── Allowed reason codes (stable enumeration) ─────────────────────────
+REASON_CODES = frozenset({
+    "no_valid_fund_codes",
+    "name_only_funds",
+    "nav_missing",
+    "partial_nav_coverage",
+    "manual_review_transactions",
+    "stale_nav",
+    "qdii_nav_lag",
+    "fallback_holdings_used",
+    "cashflow_only",
+    "estimated_only",
+})
+
+# ── Allowed safety constraints (stable enumeration) ────────────────────
+SAFETY_CONSTRAINTS = frozenset({
+    "not_formal_decision",
+    "no_auto_trading",
+    "no_broker_or_order_execution",
+    "estimated_values_are_not_confirmed",
+    "partial_not_complete_market_value",
+})
+
+# ── Allowed safe-to-analyze items ─────────────────────────────────────
+SAFE_TO_ANALYZE_ITEMS = frozenset({
     "cashflow_trend",
     "estimated_valuation_with_partial_coverage",
     "holdings_fallback",
     "transaction_quality",
     "nav_coverage_quality",
-]
+})
 
-# ── Unsafe-to-infer scope ─────────────────────────────────────────────
-_UNSAFE_TO_INFER = [
+# ── Allowed unsafe-to-infer items ─────────────────────────────────────
+UNSAFE_TO_INFER_ITEMS = frozenset({
     "complete_market_value_if_coverage_partial",
     "confirmed_p_and_l_if_valuation_estimated",
     "trading_decision",
     "broker_or_order_execution",
-]
+})
+
+# ── Safe-to-analyze scope ─────────────────────────────────────────────
+_SAFE_TO_ANALYZE = sorted(SAFE_TO_ANALYZE_ITEMS)
+
+# ── Unsafe-to-infer scope ─────────────────────────────────────────────
+_UNSAFE_TO_INFER = sorted(UNSAFE_TO_INFER_ITEMS)
 
 # ── Safety constraints ────────────────────────────────────────────────
-_SAFETY_CONSTRAINTS = [
-    "not_formal_decision",
-    "no_auto_trading",
-    "no_broker_or_order_execution",
-    "estimated_values_are_not_confirmed",
-]
+_SAFETY_CONSTRAINTS = sorted(SAFETY_CONSTRAINTS)
 
 # ── Recommended agent questions (data quality, not trading advice) ────
 _RECOMMENDED_QUESTIONS = [
