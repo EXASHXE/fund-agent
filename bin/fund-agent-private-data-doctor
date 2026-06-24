@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# fund-agent-private-data-doctor — Check private_data/ readiness.
+#
+# Checks existence, parseability, and schema validity of override files.
+# Output is JSON with counts only — no real fund names, amounts, or IDs.
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+PYTHONPATH="${REPO_ROOT}${PYTHONPATH:+:$PYTHONPATH}" exec "${PYTHON:-python}" "$REPO_ROOT/scripts/fund_agent_private_data_doctor.py" "$@"
