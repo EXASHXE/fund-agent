@@ -246,7 +246,7 @@ def _build_reconstruction_status(context: dict[str, Any]) -> dict[str, Any]:
     source_labels = {
         "host_portfolio": "existing_private_portfolio_input",
         "derived_from_transactions": "reconstructed_from_ledger",
-        "transactions_only": "existing_private_portfolio_input",
+        "transactions_only": "transactions_only",
     }
     report_source = source_labels.get(source_of_truth, "unknown")
 
