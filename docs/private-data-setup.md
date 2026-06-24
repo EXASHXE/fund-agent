@@ -26,12 +26,22 @@ Maps fund names (from Alipay/product descriptions) to canonical fund
 codes and metadata. Used when fund codes cannot be resolved automatically.
 
 ```yaml
-overrides:
-  "蚂蚁财富-示例基金A-买入":
+funds:
+  - raw_name: "示例基金A"
     fund_code: "110011"
-    fund_name: "易方达蓝筹精选"
-    fund_type: "equity"
+    fund_name: "示例基金A"
+  - raw_name: "示例基金B"
+    fund_code: "000002"
+    fund_name: "示例基金B"
 ```
+
+Schema rules:
+- Top-level key must be `funds` (a list)
+- Each entry requires `raw_name` (Chinese names are OK here)
+- `fund_code` must be a valid six-digit code if provided (empty string
+  is allowed for unresolved identities)
+- Chinese names may appear in `raw_name` and `fund_name`, but never in
+  `resolved_fund_code`
 
 ### nav_overrides.private.json
 
@@ -47,6 +57,12 @@ date→NAV maps.
   }
 }
 ```
+
+Schema rules:
+- Top-level keys must be six-digit fund codes
+- Date keys must be in `YYYY-MM-DD` format
+- NAV values must be positive numbers (int or float)
+- Zero, negative, or non-numeric values will be flagged as errors
 
 ## Reconstruction Scenarios
 
@@ -141,6 +157,28 @@ bin/fund-agent-e2e --skip-akshare --skip-news
 # Dry run (no subprocess execution)
 bin/fund-agent-e2e --dry-run
 ```
+
+## Checking Your Setup
+
+Run the private data doctor to verify your files are correctly structured:
+
+```bash
+bin/fund-agent-private-data-doctor --pretty
+```
+
+The doctor checks:
+1. `private_data/` directory exists
+2. CSV files present (count only, no content)
+3. Identity overrides YAML exists and is parseable
+4. Fund codes are valid six-digit numbers
+5. NAV overrides JSON exists and is parseable
+6. NAV dates are in `YYYY-MM-DD` format
+7. NAV values are positive numbers
+8. `portfolio_input.private.json` exists (optional)
+9. `local_reports/` and `eval_workspace/` are gitignored
+10. No private files are tracked by git
+
+Output contains **counts only** — no real fund names, amounts, transaction IDs, or CSV content.
 
 ## Safety Boundaries
 

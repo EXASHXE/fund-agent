@@ -44,6 +44,20 @@ Key rules:
 
 See `docs/development/manual-portfolio-maintenance.md` for full details.
 
+## Checking Your Setup (v0.10.6+)
+
+After placing files in `private_data/`, run the private data doctor:
+
+```bash
+bin/fund-agent-private-data-doctor --pretty
+```
+
+This validates:
+- Identity override YAML has `funds` list with valid six-digit `fund_code`
+- NAV override JSON has valid dates (`YYYY-MM-DD`) and positive values
+- No private files are tracked by git
+- Output contains counts only — no real fund names, amounts, or IDs
+
 ## Safety
 
 - **Never commit real portfolio data** — use `local_data/` or `private_data/`
