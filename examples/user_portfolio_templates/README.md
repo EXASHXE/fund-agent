@@ -107,8 +107,8 @@ bin/fund-agent-personal-run --skip-akshare --skip-news
 ```
 
 Agents should read `agent_context.md` first — it explains what data is safe
-to analyze and what should not be inferred. See `docs/usage/personal-run.md`
-for the full agent-facing workflow.
+to analyze and what should not be inferred. See `docs/usage/agent-consumption.md`
+for the full agent consumption protocol.
 
 See `docs/usage/personal-health-report.md` for details.
 

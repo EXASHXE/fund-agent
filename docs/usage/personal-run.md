@@ -167,3 +167,16 @@ the actual private_data_dir path.
 - No broker/order execution
 - No auto trading
 - Estimated values are not confirmed market values
+
+## Agent Consumption
+
+For the full agent consumption protocol, see
+[agent-consumption.md](agent-consumption.md). It covers:
+
+- How to let Claude Code / Codex / OpenCode consume the evidence package
+- Agent reading order and response structure
+- What agents must NOT do
+- Live data extension workflow
+- Prompt templates in `docs/agent-integration/prompts/`
+
+Contract reference: `docs/contracts/agent-context-contract.v1.md`

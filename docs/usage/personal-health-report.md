@@ -35,7 +35,8 @@ This produces a full evidence package including `personal_health_report.json`
 and `agent_context.md`. Agents should read `agent_context.md` first — it
 explains what data is safe to analyze and what should not be inferred.
 
-See [personal-run.md](personal-run.md) for the full agent-facing workflow.
+See [personal-run.md](personal-run.md) for the full agent-facing workflow,
+and [agent-consumption.md](agent-consumption.md) for the agent consumption protocol.
 
 ### Via E2E pipeline directly
 
@@ -185,3 +186,12 @@ The health report always includes these safety notes:
 3. No auto trading
 4. Estimated values are not confirmed market values
 5. Partial coverage means incomplete valuation
+
+## Agent Consumption
+
+When consumed by an external agent, the health report is embedded in
+`agent_context.json` via `build_agent_context()`. Agents should read
+`agent_context.md` first and follow the consumption contract in
+`docs/contracts/agent-context-contract.v1.md`.
+
+See [agent-consumption.md](agent-consumption.md) for the full protocol.
