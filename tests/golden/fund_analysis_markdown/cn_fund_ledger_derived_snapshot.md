@@ -1,7 +1,7 @@
 # Personal fund report
 
 ## Executive summary [OK]
-- Portfolio value 71,350.00 across 2 position(s); cash 7,000.00.
+- Estimated portfolio value 71,350.00 across 2 position(s); cash 7,000.00.
 - Data completeness grade B with score 0.767.
 - Risk scan surfaced 5 flag(s) from available inputs.
 - No formal decision generated; call decision-support for formal action.
@@ -138,6 +138,22 @@ Limitations:
 - FundAnalysisSkill emits HardEvidence separately in SkillOutput.evidence_items.
 - This composed report does not create formal decisions or execution ledgers.
 
+## Personal portfolio health [MISSING]
+- Overall status: unavailable
+- Confidence: unavailable
+- Transactions: none
+- Valuation: unavailable
+- Identity: unavailable
+- Action needed: Provide portfolio_input.holdings if valuation is unavailable
+- Reason codes: no_valid_fund_codes
+
+Limitations:
+- This is not a formal investment decision — no BUY/SELL/HOLD instruction.
+- No broker/order execution capability.
+- No auto trading.
+- Estimated values are not confirmed market values.
+- Partial coverage means incomplete valuation.
+
 ## Limitations
 
 - Benchmark and peer: Benchmark data is missing; no benchmark comparison is fabricated.
@@ -152,3 +168,8 @@ Limitations:
 - Uncertainty note: Report data completeness is adequate but some optional sections are unavailable — deeper analysis may require additional data
 - Rebalance plan: Rebalance plan is missing; target weights or constraints may be unavailable.
 - Research query plan: Research planning was not requested by the host.
+- Personal portfolio health: This is not a formal investment decision — no BUY/SELL/HOLD instruction.
+- Personal portfolio health: No broker/order execution capability.
+- Personal portfolio health: No auto trading.
+- Personal portfolio health: Estimated values are not confirmed market values.
+- Personal portfolio health: Partial coverage means incomplete valuation.

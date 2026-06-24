@@ -1223,6 +1223,11 @@
           "id": "evidence_appendix",
           "status": "OK",
           "title": "Evidence appendix"
+        },
+        {
+          "id": "personal_health",
+          "status": "MISSING",
+          "title": "Personal portfolio health"
         }
       ],
       "report_quality_gate": {
@@ -1233,7 +1238,7 @@
       "report_sections": [
         {
           "bullets": [
-            "Portfolio value 71,350.00 across 2 position(s); cash 7,000.00.",
+            "Estimated portfolio value 71,350.00 across 2 position(s); cash 7,000.00.",
             "Data completeness grade B with score 0.767.",
             "Risk scan surfaced 5 flag(s) from available inputs.",
             "No formal decision generated; call decision-support for formal action."
@@ -1690,6 +1695,31 @@
           "limitations": [],
           "status": "OK",
           "title": "Evidence appendix"
+        },
+        {
+          "bullets": [
+            "Overall status: unavailable",
+            "Confidence: unavailable",
+            "Transactions: none",
+            "Valuation: unavailable",
+            "Identity: unavailable",
+            "Action needed: Provide portfolio_input.holdings if valuation is unavailable",
+            "Reason codes: no_valid_fund_codes"
+          ],
+          "data_sources": [
+            "none",
+            "unavailable"
+          ],
+          "id": "personal_health",
+          "limitations": [
+            "This is not a formal investment decision — no BUY/SELL/HOLD instruction.",
+            "No broker/order execution capability.",
+            "No auto trading.",
+            "Estimated values are not confirmed market values.",
+            "Partial coverage means incomplete valuation."
+          ],
+          "status": "MISSING",
+          "title": "Personal portfolio health"
         }
       ],
       "right_side_confirmation_diagnostics": {
@@ -2320,6 +2350,11 @@
         "id": "evidence_appendix",
         "status": "OK",
         "title": "Evidence appendix"
+      },
+      {
+        "id": "personal_health",
+        "status": "MISSING",
+        "title": "Personal portfolio health"
       }
     ],
     "report_quality_gate": {
@@ -2330,7 +2365,7 @@
     "report_sections": [
       {
         "bullets": [
-          "Portfolio value 71,350.00 across 2 position(s); cash 7,000.00.",
+          "Estimated portfolio value 71,350.00 across 2 position(s); cash 7,000.00.",
           "Data completeness grade B with score 0.767.",
           "Risk scan surfaced 5 flag(s) from available inputs.",
           "No formal decision generated; call decision-support for formal action."
@@ -2787,6 +2822,31 @@
         "limitations": [],
         "status": "OK",
         "title": "Evidence appendix"
+      },
+      {
+        "bullets": [
+          "Overall status: unavailable",
+          "Confidence: unavailable",
+          "Transactions: none",
+          "Valuation: unavailable",
+          "Identity: unavailable",
+          "Action needed: Provide portfolio_input.holdings if valuation is unavailable",
+          "Reason codes: no_valid_fund_codes"
+        ],
+        "data_sources": [
+          "none",
+          "unavailable"
+        ],
+        "id": "personal_health",
+        "limitations": [
+          "This is not a formal investment decision — no BUY/SELL/HOLD instruction.",
+          "No broker/order execution capability.",
+          "No auto trading.",
+          "Estimated values are not confirmed market values.",
+          "Partial coverage means incomplete valuation."
+        ],
+        "status": "MISSING",
+        "title": "Personal portfolio health"
       }
     ],
     "right_side_confirmation_diagnostics": {

@@ -137,6 +137,22 @@ Limitations:
 - FundAnalysisSkill emits HardEvidence separately in SkillOutput.evidence_items.
 - This composed report does not create formal decisions or execution ledgers.
 
+## Personal portfolio health [MISSING]
+- Overall status: unavailable
+- Confidence: unavailable
+- Transactions: none
+- Valuation: unavailable
+- Identity: unavailable
+- Action needed: Provide portfolio_input.holdings if valuation is unavailable
+- Reason codes: no_valid_fund_codes
+
+Limitations:
+- This is not a formal investment decision — no BUY/SELL/HOLD instruction.
+- No broker/order execution capability.
+- No auto trading.
+- Estimated values are not confirmed market values.
+- Partial coverage means incomplete valuation.
+
 ## Limitations
 
 - Transaction cashflow: Transaction cashflow data is not available.
@@ -146,3 +162,8 @@ Limitations:
 - Profit protection: Profit protection has no detailed breakdown; profit levels and action suggestions are unavailable without current NAV data.
 - Event hype failure: Event hype diagnostics are missing or no host event metadata was provided.
 - News and events: News snapshot not provided; no news or events are fabricated.
+- Personal portfolio health: This is not a formal investment decision — no BUY/SELL/HOLD instruction.
+- Personal portfolio health: No broker/order execution capability.
+- Personal portfolio health: No auto trading.
+- Personal portfolio health: Estimated values are not confirmed market values.
+- Personal portfolio health: Partial coverage means incomplete valuation.

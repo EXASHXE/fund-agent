@@ -1828,6 +1828,11 @@
           "id": "evidence_appendix",
           "status": "OK",
           "title": "Evidence appendix"
+        },
+        {
+          "id": "personal_health",
+          "status": "MISSING",
+          "title": "Personal portfolio health"
         }
       ],
       "report_quality_gate": {
@@ -2301,6 +2306,31 @@
           "limitations": [],
           "status": "OK",
           "title": "Evidence appendix"
+        },
+        {
+          "bullets": [
+            "Overall status: unavailable",
+            "Confidence: unavailable",
+            "Transactions: none",
+            "Valuation: unavailable",
+            "Identity: unavailable",
+            "Action needed: Provide portfolio_input.holdings if valuation is unavailable",
+            "Reason codes: no_valid_fund_codes"
+          ],
+          "data_sources": [
+            "none",
+            "unavailable"
+          ],
+          "id": "personal_health",
+          "limitations": [
+            "This is not a formal investment decision — no BUY/SELL/HOLD instruction.",
+            "No broker/order execution capability.",
+            "No auto trading.",
+            "Estimated values are not confirmed market values.",
+            "Partial coverage means incomplete valuation."
+          ],
+          "status": "MISSING",
+          "title": "Personal portfolio health"
         }
       ],
       "right_side_confirmation_diagnostics": {
@@ -3132,6 +3162,11 @@
         "id": "evidence_appendix",
         "status": "OK",
         "title": "Evidence appendix"
+      },
+      {
+        "id": "personal_health",
+        "status": "MISSING",
+        "title": "Personal portfolio health"
       }
     ],
     "report_quality_gate": {
@@ -3605,6 +3640,31 @@
         "limitations": [],
         "status": "OK",
         "title": "Evidence appendix"
+      },
+      {
+        "bullets": [
+          "Overall status: unavailable",
+          "Confidence: unavailable",
+          "Transactions: none",
+          "Valuation: unavailable",
+          "Identity: unavailable",
+          "Action needed: Provide portfolio_input.holdings if valuation is unavailable",
+          "Reason codes: no_valid_fund_codes"
+        ],
+        "data_sources": [
+          "none",
+          "unavailable"
+        ],
+        "id": "personal_health",
+        "limitations": [
+          "This is not a formal investment decision — no BUY/SELL/HOLD instruction.",
+          "No broker/order execution capability.",
+          "No auto trading.",
+          "Estimated values are not confirmed market values.",
+          "Partial coverage means incomplete valuation."
+        ],
+        "status": "MISSING",
+        "title": "Personal portfolio health"
       }
     ],
     "right_side_confirmation_diagnostics": {
