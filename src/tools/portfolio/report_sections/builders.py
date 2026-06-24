@@ -253,9 +253,12 @@ def _build_reconstruction_status(context: dict[str, Any]) -> dict[str, Any]:
     # Transaction parsing status
     has_transactions = bool(artifacts.get("transaction_summary") or artifacts.get("transaction_cashflow_summary"))
     ledger_quality = _as_dict(artifacts.get("ledger_quality_summary"))
+    transaction_source = artifacts.get("transaction_source", "unknown")
 
     bullets.append(f"Report source: {report_source}.")
     bullets.append(f"Transactions parsed: {'yes' if has_transactions else 'no'}.")
+    if has_transactions and transaction_source != "unknown":
+        bullets.append(f"Transaction source: {transaction_source}.")
 
     if source_of_truth == "derived_from_transactions":
         bullets.append("Ledger built from transactions + current_nav: yes.")

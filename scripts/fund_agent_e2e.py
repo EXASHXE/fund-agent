@@ -20,6 +20,10 @@ from pathlib import Path
 from typing import Any
 
 from scripts.fund_identity_utils import is_valid_fund_code
+from src.tools.portfolio.portfolio_input_transactions import (
+    build_ledger_from_portfolio_input_transactions,
+    load_portfolio_input_transactions,
+)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS_DIR = REPO_ROOT / "scripts"
@@ -228,6 +232,38 @@ def run_pipeline(args: argparse.Namespace) -> int:
             + ["--input", str(alipay_csv), "--output", str(normalized_tx)],
             critical=True, expected_output=normalized_tx,
         )
+
+    # Transaction source fallback: if no Alipay CSV, try portfolio_input.transactions
+    transaction_source_used = "none"
+    portfolio_input_txn_stats: dict[str, Any] = {}
+    use_portfolio_input_transactions = False
+
+    if not alipay_csv and input_path.exists():
+        pi_txns = load_portfolio_input_transactions(input_path)
+        if pi_txns:
+            use_portfolio_input_transactions = True
+            transaction_source_used = "portfolio_input.transactions"
+    elif alipay_csv and args.transaction_source == "portfolio_input" and input_path.exists():
+        pi_txns = load_portfolio_input_transactions(input_path)
+        if pi_txns:
+            use_portfolio_input_transactions = True
+            transaction_source_used = "portfolio_input.transactions"
+
+    if use_portfolio_input_transactions and not normalized_tx.exists():
+        pi_ledger = build_ledger_from_portfolio_input_transactions(pi_txns)
+        if not dry_run:
+            try:
+                run_dir.mkdir(parents=True, exist_ok=True)
+                normalized_tx.write_text(
+                    json.dumps(pi_ledger, ensure_ascii=False, indent=2),
+                    encoding="utf-8",
+                )
+            except OSError as exc:
+                print(f"ERROR: failed to write portfolio_input transactions: {_redact(str(exc))}", file=sys.stderr)
+        portfolio_input_txn_stats = pi_ledger.get("summary", {})
+        print(f"[step 0a-alt] portfolio_input.transactions: {pi_ledger['summary'].get('total_transactions', 0)} transaction(s)")
+    elif alipay_csv:
+        transaction_source_used = "alipay"
 
     if investment_plan:
         run_step(
@@ -515,6 +551,8 @@ def run_pipeline(args: argparse.Namespace) -> int:
                 pass
         else:
             transaction_reconstruction_status = "not_reconstructed_from_alipay"
+    elif use_portfolio_input_transactions:
+        transaction_reconstruction_status = "parsed_from_portfolio_input_transactions"
 
     # Warn if Alipay CSV found but no fund transactions parsed
     if alipay_csv is not None and alipay_import_stats.get("fund_transactions", 0) == 0 and not dry_run:
@@ -573,7 +611,9 @@ def run_pipeline(args: argparse.Namespace) -> int:
         "coverage": _collect_coverage(factor_snapshot, news_snapshot),
         "portfolio_input_source": portfolio_input_source,
         "transaction_reconstruction_status": transaction_reconstruction_status,
+        "transaction_source": transaction_source_used,
         "alipay_import": alipay_import_stats,
+        "portfolio_input_transactions": portfolio_input_txn_stats,
         "identity_resolution": identity_resolution_summary,
         "identity_schema_version": identity_schema_version,
         "valuation_summary": valuation_type_counts,
@@ -610,6 +650,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--run-id", default="", help="Run identifier for eval_workspace")
     parser.add_argument("--private-data-dir", default="", help="Private data directory (default: private_data/)")
     parser.add_argument("--output-dir", default="", help="Output/workspace directory")
+    parser.add_argument(
+        "--transaction-source",
+        choices=["auto", "alipay", "portfolio_input"],
+        default="auto",
+        help="Transaction source: auto (default, alipay first), alipay, or portfolio_input",
+    )
     args = parser.parse_args(argv)
     return run_pipeline(args)
 
