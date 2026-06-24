@@ -279,3 +279,40 @@ class TestScenarioHValidationVisibility:
 
         # Source should still be portfolio_input_transactions
         assert ledger["source"] == "portfolio_input_transactions"
+
+
+# ── Scenario I: Privacy redaction in E2E summary ──────────────────────
+
+
+class TestScenarioIPrivacyRedaction:
+    """E2E summary warnings must be counts-only, no raw user input."""
+
+    def test_e2e_summary_warning_is_counts_only(self, tmp_path: Path):
+        """Invalid transaction_type must not appear in e2e_summary warnings."""
+        txns = [
+            {
+                "trade_date": "2026-06-01",
+                "fund_code": "000001",
+                "fund_name": "Sensitive Fund Name",
+                "transaction_type": "private_type_xyz",
+                "amount": 99999.99,
+            },
+            {
+                "trade_date": "2026-06-01",
+                "fund_code": "000002",
+                "transaction_type": "buy",
+                "amount": 100.0,
+            },
+        ]
+        path = _make_portfolio_input_with_transactions(tmp_path, txns)
+        loaded = load_portfolio_input_transactions(path)
+        ledger = build_ledger_from_portfolio_input_transactions(loaded)
+
+        # Warnings must exist (unknown type)
+        assert ledger["summary"]["warning_count"] > 0
+
+        # Warnings must not contain raw user input
+        warning_text = " ".join(ledger.get("warnings", []))
+        assert "private_type_xyz" not in warning_text
+        assert "Sensitive Fund Name" not in warning_text
+        assert "99999.99" not in warning_text

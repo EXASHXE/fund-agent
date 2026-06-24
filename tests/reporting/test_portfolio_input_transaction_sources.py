@@ -163,3 +163,81 @@ class TestReportValidationVisibility:
 
         # Must NOT mention portfolio_input transactions summary
         assert "Portfolio input transactions:" not in all_text
+
+
+class TestReportPrivacyRedaction:
+    """Report must not contain raw user input in warnings or manual review text."""
+
+    def test_report_manual_review_warning_is_counts_only(self):
+        """Report shows counts only — no raw invalid transaction_type values."""
+        artifacts = _make_artifacts(
+            source_of_truth="transactions_only",
+            transaction_source="portfolio_input.transactions",
+        )
+        artifacts["portfolio_input_transactions_summary"] = {
+            "total_transactions": 3,
+            "warning_count": 1,
+            "manual_review_count": 1,
+            "valid_count": 2,
+            "invalid_count": 1,
+            "unknown_count": 1,
+        }
+        result = compose_personal_fund_report(artifacts, options={"language": "en"})
+        rs_section = next(
+            (s for s in result["report_sections"] if s["id"] == "reconstruction_status"),
+            None,
+        )
+        assert rs_section is not None
+        all_text = " ".join(rs_section.get("bullets", [])) + " ".join(rs_section.get("limitations", []))
+
+        # Must show counts
+        assert "warnings=1" in all_text or "warning" in all_text.lower()
+        # Must NOT contain raw transaction_type values that might have been in input
+        assert "private_type" not in all_text
+        assert "secret_order" not in all_text
+
+
+class TestReportValuationWording:
+    """Valuation wording must be accurate — estimated vs confirmed."""
+
+    def test_derived_from_transactions_labelled_estimated(self):
+        """When source_of_truth is derived_from_transactions, report says 'Estimated portfolio value'."""
+        artifacts = _make_artifacts(
+            source_of_truth="derived_from_transactions",
+            transaction_source="alipay",
+        )
+        artifacts["portfolio_summary"] = {
+            "total_value": 1000.0,
+            "position_count": 2,
+            "cash_available": 100.0,
+        }
+        result = compose_personal_fund_report(artifacts, options={"language": "en"})
+        es_section = next(
+            (s for s in result["report_sections"] if s["id"] == "executive_summary"),
+            None,
+        )
+        assert es_section is not None
+        all_text = " ".join(es_section.get("bullets", []))
+        assert "Estimated portfolio value" in all_text
+
+    def test_host_portfolio_not_labelled_estimated(self):
+        """When source_of_truth is host_portfolio, report says 'Portfolio value' (not estimated)."""
+        artifacts = _make_artifacts(
+            source_of_truth="host_portfolio",
+            transaction_source="alipay",
+        )
+        artifacts["portfolio_summary"] = {
+            "total_value": 1000.0,
+            "position_count": 2,
+            "cash_available": 100.0,
+        }
+        result = compose_personal_fund_report(artifacts, options={"language": "en"})
+        es_section = next(
+            (s for s in result["report_sections"] if s["id"] == "executive_summary"),
+            None,
+        )
+        assert es_section is not None
+        all_text = " ".join(es_section.get("bullets", []))
+        # Should say "Portfolio value" not "Estimated portfolio value"
+        assert "Portfolio value" in all_text
+        assert "Estimated portfolio value" not in all_text

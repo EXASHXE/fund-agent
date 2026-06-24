@@ -74,8 +74,9 @@ def _build_executive_summary(context: dict[str, Any]) -> dict[str, Any]:
                     f"valuation unavailable."
                 )
         else:
+            value_label = "Estimated portfolio value" if source_of_truth == "derived_from_transactions" else "Portfolio value"
             bullets.append(
-                "Portfolio value "
+                f"{value_label} "
                 f"{_money_or_missing(portfolio.get('total_value'), likely_missing=likely_missing)} across "
                 f"{int(portfolio.get('position_count') or 0)} position(s); "
                 f"cash {_money_or_missing(portfolio.get('cash_available'), likely_missing=likely_missing)}."

@@ -88,6 +88,8 @@ class TestNormalizeTransaction:
         result = normalize_portfolio_input_transaction(raw, 0)
         assert result["action"] == "unknown"
         assert any("unknown transaction_type" in w for w in result.get("warnings", []))
+        # Raw type value must NOT appear in warnings
+        assert not any("redeem" in w for w in result.get("warnings", []))
 
     def test_conversion_type_maps_to_conversion(self):
         raw = {
@@ -407,3 +409,48 @@ class TestValidationVisibility:
         assert result["summary"]["invalid_count"] == 0
         assert result["transactions"][0]["needs_manual_review"] is False
         assert result["transactions"][0]["validation_status"] == "ok"
+
+
+# ── Privacy redaction tests ────────────────────────────────────────────
+
+
+class TestWarningPrivacyRedaction:
+    def test_unknown_transaction_type_warning_redacts_raw_value(self):
+        """Warning must not contain the raw transaction_type value."""
+        raw = {
+            "trade_date": "2026-06-01",
+            "fund_code": "000001",
+            "transaction_type": "secret_order_123",
+            "amount": 100.00,
+        }
+        result = normalize_portfolio_input_transaction(raw, 0)
+        assert result["action"] == "unknown"
+        assert result["manual_review_required"] is True
+        # Warning must not contain the raw type
+        warning_text = " ".join(result.get("warnings", []))
+        assert "secret_order_123" not in warning_text
+        # Warning must contain index and label
+        assert any("unknown transaction_type" in w for w in result.get("warnings", []))
+        assert any("transaction index 0" in w for w in result.get("warnings", []))
+
+    def test_adapter_warnings_do_not_leak_fund_name_amount_or_note(self):
+        """Warnings must not contain fund_name, amount, or note from input."""
+        txns = [
+            {
+                "trade_date": "bad-date",
+                "fund_code": "ABC",
+                "fund_name": "Sensitive Fund Name",
+                "transaction_type": "private_type_xyz",
+                "amount": 99999.99,
+                "note": "user private note content",
+            },
+        ]
+        result = build_ledger_from_portfolio_input_transactions(txns)
+        warning_text = " ".join(result.get("warnings", []))
+        # Must not contain any raw user input
+        assert "Sensitive Fund Name" not in warning_text
+        assert "99999.99" not in warning_text
+        assert "private_type_xyz" not in warning_text
+        assert "user private note content" not in warning_text
+        # Must contain counts/indexes
+        assert "transaction index 0" in warning_text

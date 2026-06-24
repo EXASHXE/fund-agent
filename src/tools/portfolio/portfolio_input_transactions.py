@@ -68,7 +68,7 @@ def normalize_portfolio_input_transaction(
     action = TRANSACTION_TYPE_MAP.get(raw_type)
     if action is None:
         action = "unknown"
-        warnings.append(f"transaction index {index}: unknown transaction_type '{raw_type}'")
+        warnings.append(f"transaction index {index}: unknown transaction_type")
 
     amount = raw.get("amount")
     if not isinstance(amount, (int, float)):
