@@ -14,6 +14,22 @@ interpret, follow up, and synthesize.
 
 ### First run (full pipeline)
 
+**Real analysis** (recommended for actual portfolio review):
+
+```bash
+bin/fund-agent-personal-run \
+  --private-data-dir private_data \
+  --output-dir local_reports \
+  --transaction-source auto \
+  --no-skip-akshare \
+  --skip-news
+```
+
+`--no-skip-akshare` enables live NAV provider for real valuations.
+`--skip-news` remains on by default — news requires explicit user request.
+
+**Offline / debugging** (deterministic, no live data):
+
 ```bash
 bin/fund-agent-personal-run \
   --private-data-dir private_data \
@@ -22,6 +38,10 @@ bin/fund-agent-personal-run \
   --skip-akshare \
   --skip-news
 ```
+
+If the NAV provider is unavailable, positions without NAV data will be
+marked `cashflow_only` — no valuation will be fabricated. Do NOT treat
+offline results as real analysis.
 
 ### Subsequent agent re-read (skip pipeline)
 

@@ -7,6 +7,14 @@ agent host.
 
 ### 1. First run — generate evidence package
 
+**Real analysis** (recommended):
+
+```bash
+bin/fund-agent-personal-run --no-skip-akshare --skip-news
+```
+
+**Offline / debugging**:
+
 ```bash
 bin/fund-agent-personal-run --skip-akshare --skip-news
 ```
