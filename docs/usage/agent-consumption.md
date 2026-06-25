@@ -69,6 +69,18 @@ Structure the response as:
 - Fabricate `fund_code`, NAV, or holdings
 - Leak private paths or real transaction details
 
+## Identity Source
+
+The `personal_health_report.data_sources.identity_source` field tells you how
+fund codes were resolved:
+
+| Source | Meaning | Agent follow-up |
+|--------|---------|-----------------|
+| `direct_fund_code` | Codes in data directly | None needed |
+| `manual_override` | From `fund_identity_overrides.private.yaml` | Verify overrides are current |
+| `name_only` | Some funds by name only | Suggest adding overrides |
+| `unavailable` | No identity data | Suggest setting up overrides |
+
 ## Live Data
 
 fund-agent runs in **deterministic mode** by default (`--skip-akshare`,

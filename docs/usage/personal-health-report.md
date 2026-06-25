@@ -177,6 +177,16 @@ are present. The checklist will ask to review those transactions.
 }
 ```
 
+## Interpreting Identity Source
+
+| Source | Meaning |
+|--------|---------|
+| `direct_fund_code` | Fund codes were present directly in the data (no overrides needed) |
+| `manual_override` | Fund codes were resolved via `fund_identity_overrides.private.yaml` |
+| `overrides` | Overrides file was loaded (may have validation warnings) |
+| `name_only` | Some funds resolved by name only (no fund code) |
+| `unavailable` | No identity data available |
+
 ## Safety Notes
 
 The health report always includes these safety notes:
