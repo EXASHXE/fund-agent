@@ -68,6 +68,7 @@ _RECOMMENDED_QUESTIONS = [
     "Should conversion/refund transactions be confirmed?",
     "Should portfolio_input.holdings be provided as fallback?",
     "Should the host query live NAV or news data?",
+    "Should explicit units be provided for cashflow-only transactions?",
 ]
 
 
@@ -117,6 +118,8 @@ def build_agent_context(
         questions.append(_RECOMMENDED_QUESTIONS[2])
     if "fallback_holdings_used" in reason_codes or "unavailable" in overall_status:
         questions.append(_RECOMMENDED_QUESTIONS[3])
+    if "cashflow_only" in reason_codes or "estimated_only" in reason_codes:
+        questions.append(_RECOMMENDED_QUESTIONS[5])
     if "stale_nav" in reason_codes or "qdii_nav_lag" in reason_codes:
         questions.append(_RECOMMENDED_QUESTIONS[4])
     # Always include if no specific questions matched

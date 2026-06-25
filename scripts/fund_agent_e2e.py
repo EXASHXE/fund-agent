@@ -701,7 +701,7 @@ def run_pipeline(args: argparse.Namespace) -> int:
     if dry_run:
         print("\nE2E dry-run complete.")
         print(f"Summary: {summary_path}")
-        print(f"Report:  {output_report}")
+        print(f"Report:  {output_report.relative_to(REPO_ROOT) if output_report.is_relative_to(REPO_ROOT) else output_report.name}")
         return 0
 
     status = "failed" if pipeline.errors else "partial" if pipeline.warnings else "success"
@@ -796,10 +796,10 @@ def run_pipeline(args: argparse.Namespace) -> int:
             "name_only_count": pipeline.name_only_count,
         },
         "outputs": {
-            "report": str(output_report) if output_report.exists() else None,
-            "summary": str(summary_path),
+            "report": str(output_report.relative_to(REPO_ROOT)) if output_report.exists() and output_report.is_relative_to(REPO_ROOT) else (str(output_report.name) if output_report.exists() else None),
+            "summary": str(summary_path.relative_to(REPO_ROOT)) if summary_path.is_relative_to(REPO_ROOT) else str(summary_path.name),
         },
-        "output_report": str(output_report) if output_report.exists() else None,
+        "output_report": str(output_report.relative_to(REPO_ROOT)) if output_report.exists() and output_report.is_relative_to(REPO_ROOT) else (str(output_report.name) if output_report.exists() else None),
         "coverage": _collect_coverage(factor_snapshot, news_snapshot),
         "portfolio_input_source": portfolio_input_source,
         "transaction_reconstruction_status": transaction_reconstruction_status,
@@ -836,7 +836,7 @@ def run_pipeline(args: argparse.Namespace) -> int:
 
     print(f"\nE2E pipeline {status}. Run ID: {run_id}")
     print(f"Summary: {summary_path}")
-    print(f"Report:  {output_report if output_report.exists() else 'not generated'}")
+    print(f"Report:  {output_report.relative_to(REPO_ROOT) if output_report.exists() and output_report.is_relative_to(REPO_ROOT) else (output_report.name if output_report.exists() else 'not generated')}")
     return 1 if pipeline.errors else 0
 
 

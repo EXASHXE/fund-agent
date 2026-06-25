@@ -263,6 +263,10 @@ def _determine_identity_source(identity: dict[str, Any], e2e: dict[str, Any]) ->
         # Overrides file existed (even if it had warnings)
         return "overrides"
 
+    # Check if manual overrides were used (from identity resolution summary)
+    if identity.get("manual_overrides_used") or int(identity.get("manual_override_matches_count", 0)) > 0:
+        return "manual_override"
+
     valid_codes = int(e2e.get("pipeline_steps", {}).get("valid_fund_codes_count", 0))
     name_only = int(e2e.get("pipeline_steps", {}).get("name_only_count", 0))
 

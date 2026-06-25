@@ -198,8 +198,10 @@ class TestE2ERunnerRealSmoke:
         assert summary["warnings"]
         assert summary["errors"] == []
         assert "steps_completed" in summary
-        assert summary["outputs"]["report"] == str(report_path)
-        assert summary["outputs"]["summary"] == str(summary_path)
+        # outputs.report and outputs.summary are relative paths (privacy)
+        assert summary["outputs"]["report"] is not None
+        assert not Path(summary["outputs"]["report"]).is_absolute()
+        assert summary["outputs"]["summary"] is not None
         assert report_path.exists()
 
         normalized = json.loads(
