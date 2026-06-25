@@ -119,13 +119,29 @@ def _parse_amount(val: str) -> float | None:
 
 
 def _parse_datetime(val: str) -> str | None:
-    """Parse a datetime string to ISO format date."""
+    """Parse a datetime string to ISO format date (YYYY-MM-DD)."""
     if not val or val.strip() == "":
         return None
     for fmt in ("%Y-%m-%d %H:%M:%S", "%Y/%m/%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
         try:
             dt = datetime.strptime(val.strip(), fmt)
             return dt.strftime("%Y-%m-%d")
+        except ValueError:
+            continue
+    return None
+
+
+def _parse_datetime_full(val: str) -> str | None:
+    """Parse a datetime string preserving full ISO timestamp (YYYY-MM-DDTHH:MM:SS).
+
+    Used for submitted_at field to support 15:00 cutoff logic.
+    """
+    if not val or val.strip() == "":
+        return None
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y/%m/%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
+        try:
+            dt = datetime.strptime(val.strip(), fmt)
+            return dt.strftime("%Y-%m-%dT%H:%M:%S")
         except ValueError:
             continue
     return None
@@ -270,6 +286,7 @@ def import_alipay_csv(
 
         amount = _parse_amount(raw_amount)
         trade_date = _parse_datetime(trade_time_raw)
+        submitted_at = _parse_datetime_full(trade_time_raw)
         action = _classify_action(product_name, trade_type, amount, income_expense)
         fund_code = _extract_fund_code(product_name, counterparty)
 
@@ -300,6 +317,7 @@ def import_alipay_csv(
             "source": "alipay",
             "source_ref": _redact_id(raw_trade_no) if redact_ids and raw_trade_no else None,
             "trade_date": trade_date,
+            "submitted_at": submitted_at,
             "action": action,
             "amount": abs(amount) if amount is not None else None,
             "fund_code": fund_code,

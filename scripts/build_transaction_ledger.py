@@ -87,6 +87,7 @@ def build_transaction_ledger(
             "fund_code": txn.get("fund_code"),
             "fund_name": txn.get("fund_name"),
             "trade_date": txn.get("trade_date"),
+            "submitted_at": txn.get("submitted_at"),
             "action": txn.get("action", "unknown"),
             "amount": txn.get("amount"),
             "confirmation_type": "evidence_confirmed",
