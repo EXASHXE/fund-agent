@@ -76,6 +76,25 @@ Structure the response as:
 - Treat `cashflow_only` as current valuation
 - Fabricate `fund_code`, NAV, or holdings
 - Leak private paths or real transaction details
+- Call `FundAnalysisSkill().run()` directly for personal portfolio analysis
+- Construct `SkillInput` manually for personal portfolio analysis
+- Read `confirmed_portfolio.private.json` as final report input
+- Use `local_reports/skill_output` as personal analysis result
+- Convert missing `current_value` / `null` / `None` to `0.0`
+- Calculate P&L, HHI, max holding, contribution, or risk flags from `cashflow_only` positions
+- Continue analysis if `agent_context.json` is missing
+
+## Short User Intent
+
+A user may simply say: "请使用本仓库的 fund-analysis skill 做一次个人基金组合分析。新的流水数据在 private_data。"
+
+The agent must automatically:
+1. Read `skills/fund-analysis/SKILL.md` to identify the canonical workflow
+2. Run `bin/fund-agent-personal-run --no-skip-akshare --skip-news`
+3. Read `local_reports/<run_id>/agent_context.json`
+4. Output a contract-compliant analysis
+
+Do NOT require the user to repeat safety constraints or entrypoint instructions.
 
 ## Identity Source
 

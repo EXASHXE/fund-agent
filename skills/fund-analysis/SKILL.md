@@ -1,6 +1,6 @@
 ---
 name: fund-analysis
-version: "0.10.4"
+version: "0.10.6"
 id: fund_analysis
 runtime: src.skills_runtime.fund_analysis:FundAnalysisSkill
 runtime_id: fund_analysis
@@ -18,6 +18,87 @@ entrypoint: skills/fund-analysis/SKILL.md
 ---
 
 # Fund Analysis
+
+## User intent trigger
+
+When the user requests any of the following, the agent MUST enter the
+**autonomous personal analysis workflow** — no further disambiguation needed:
+
+- "分析我的基金组合" / "分析下我的基金"
+- "做一次个人基金组合分析" / "个人基金体检"
+- "新的流水数据在 private_data"
+- "用 fund-analysis skill 分析" / "跑 fund-agent 分析我的基金"
+- "请使用本仓库的 fund-analysis skill 做一次个人基金组合分析"
+
+The user does NOT need to explicitly write:
+- `personal-run`
+- `agent_context`
+- `--no-skip-akshare`
+- forbidden paths or safety constraints
+
+All of these are specified by this SKILL.md. The agent reads this file and
+follows the rules automatically.
+
+## Canonical personal analysis entrypoint
+
+For personal portfolio analysis, the **only canonical entrypoint** is:
+
+```bash
+bin/fund-agent-personal-run \
+  --private-data-dir private_data \
+  --output-dir local_reports \
+  --transaction-source auto \
+  --no-skip-akshare \
+  --skip-news
+```
+
+- `--no-skip-akshare` enables live NAV for real valuations (default for real analysis).
+- `--skip-news` remains on — news requires explicit user request.
+- If the user specifies a different data directory, replace `--private-data-dir`.
+- If the user does not specify a directory, try `private_data` first; if it does not
+  exist, ask the user.
+
+### Canonical artifact path
+
+After a successful run, the canonical output is:
+
+```
+local_reports/<run_id>/
+```
+
+This directory MUST contain:
+- `agent_context.json` — machine-readable status, scope, and constraints
+- `agent_context.md` — human-readable summary
+- `e2e_summary.json` — full pipeline summary
+- `personal_health_report.json` — data quality diagnostic and fix-it checklist
+- `report.md` — composed report
+
+If these files do not exist, the agent MUST:
+1. Stop.
+2. Report pipeline failure.
+3. NOT synthesize a portfolio report on its own.
+
+### Forbidden non-canonical paths
+
+For personal portfolio analysis, agents MUST NOT:
+
+- Call `FundAnalysisSkill().run()` directly
+- Construct `SkillInput` manually
+- Read `confirmed_portfolio.private.json` as final report input
+- Create `local_reports/run_skill_analysis.py`
+- Use `local_reports/skill_output` as personal analysis result
+- Convert missing `current_value` / `null` / `None` to `0.0`
+- Calculate P&L, HHI, max holding, contribution, cash reserve, or risk flags
+  from `cashflow_only` or `valuation_blocked` positions
+- Continue analysis if `agent_context.json` is missing
+
+`FundAnalysisSkill` is an internal runtime component. It exists as a
+programmable skill for host integration, but for personal portfolio analysis
+the agent MUST use `bin/fund-agent-personal-run` and read the canonical
+artifact package. The skill runtime is NOT the user-facing entrypoint.
+
+`local_reports/skill_output` is legacy / non-canonical. It must NOT be used
+for personal analysis.
 
 ## Default entrypoint
 

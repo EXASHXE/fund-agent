@@ -1205,6 +1205,7 @@
             "hold_pressure": "medium",
             "invested_amount": 180000.0,
             "pnl_pct": 0.111111,
+            "portfolio_weight": 0.4,
             "principal_recovered": "unknown",
             "principal_recovery_status": "unknown",
             "profit_level": "moderate",
@@ -1221,6 +1222,7 @@
             "hold_pressure": "low",
             "invested_amount": 175000.0,
             "pnl_pct": 0.028571,
+            "portfolio_weight": 0.36,
             "principal_recovered": "unknown",
             "principal_recovery_status": "unknown",
             "profit_level": "low",
@@ -1237,6 +1239,7 @@
             "hold_pressure": "medium",
             "invested_amount": 65000.0,
             "pnl_pct": 0.076923,
+            "portfolio_weight": 0.14,
             "principal_recovered": "unknown",
             "principal_recovery_status": "unknown",
             "profit_level": "moderate",
@@ -2085,7 +2088,9 @@
       },
       "trading_flags": [],
       "transaction_summary": null,
-      "warnings": []
+      "warnings": [
+        "non_canonical_personal_analysis_entrypoint: FundAnalysisSkill was called directly for personal portfolio analysis. Use bin/fund-agent-personal-run and agent_context for canonical analysis. This output is not canonical for personal portfolio analysis."
+      ]
     },
     "knowledge_graph_summary": {
       "enabled": true,
@@ -2340,6 +2345,7 @@
           "hold_pressure": "medium",
           "invested_amount": 180000.0,
           "pnl_pct": 0.111111,
+          "portfolio_weight": 0.4,
           "principal_recovered": "unknown",
           "principal_recovery_status": "unknown",
           "profit_level": "moderate",
@@ -2356,6 +2362,7 @@
           "hold_pressure": "low",
           "invested_amount": 175000.0,
           "pnl_pct": 0.028571,
+          "portfolio_weight": 0.36,
           "principal_recovered": "unknown",
           "principal_recovery_status": "unknown",
           "profit_level": "low",
@@ -2372,6 +2379,7 @@
           "hold_pressure": "medium",
           "invested_amount": 65000.0,
           "pnl_pct": 0.076923,
+          "portfolio_weight": 0.14,
           "principal_recovered": "unknown",
           "principal_recovery_status": "unknown",
           "profit_level": "moderate",
@@ -3214,7 +3222,9 @@
         "Cash reserve >= 10%"
       ]
     },
-    "warnings": []
+    "warnings": [
+      "non_canonical_personal_analysis_entrypoint: FundAnalysisSkill was called directly for personal portfolio analysis. Use bin/fund-agent-personal-run and agent_context for canonical analysis. This output is not canonical for personal portfolio analysis."
+    ]
   },
   "errors": [],
   "evidence_items": [
@@ -3477,5 +3487,7 @@
   "skill_name": "fund_analysis",
   "status": "OK",
   "used_mcp_capabilities": [],
-  "warnings": []
+  "warnings": [
+    "non_canonical_personal_analysis_entrypoint: FundAnalysisSkill was called directly for personal portfolio analysis. Use bin/fund-agent-personal-run and agent_context for canonical analysis. This output is not canonical for personal portfolio analysis."
+  ]
 }

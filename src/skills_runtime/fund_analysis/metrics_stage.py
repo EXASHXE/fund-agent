@@ -28,6 +28,7 @@ from src.tools.portfolio.transaction import (
 )
 
 from .context import CoreMetricsBundle, PortfolioInputBundle
+from .safe_parsing import _has_valuation
 from .evidence_stage import evidence_specs
 from .input_stage import target_weights_from_payload
 
@@ -252,7 +253,7 @@ def build_portfolio_summary(
     # Determine if current_value is likely missing (all positions have None/0 current_value)
     positions = portfolio.get("positions", [])
     has_valuation = any(
-        isinstance(p, dict) and p.get("current_value") is not None and float(p["current_value"]) > 0
+        isinstance(p, dict) and _has_valuation(p)
         for p in positions
     ) if positions else False
     return {
@@ -295,7 +296,7 @@ def enrich_rebalance_plan_with_positions(
         fund_code = trade_leg.get("fund_code", "")
         pos = position_map.get(fund_code, {})
         trade_leg["fund_name"] = pos.get("fund_name", pos.get("name", fund_code))
-        trade_leg["current_value"] = pos.get("current_value", 0.0)
+        trade_leg["current_value"] = pos.get("current_value")
         trade_leg["current_cost"] = pos.get("total_cost")
         trade_leg["unrealized_pnl"] = pos_pnl_map.get(fund_code, {}).get("unrealized_pnl")
         trade_leg["cap_reasons"] = trade_leg.get("cap_reasons", [])

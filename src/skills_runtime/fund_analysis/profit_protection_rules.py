@@ -14,6 +14,7 @@ from __future__ import annotations
 from typing import Any
 
 from .context import CoreMetricsBundle, PortfolioInputBundle
+from .safe_parsing import _position_current_value
 
 
 def compute_profit_protection_diagnostics(
@@ -33,7 +34,7 @@ def compute_profit_protection_diagnostics(
             continue
         fund_code = str(pos["fund_code"])
         fund_name = str(pos.get("fund_name", pos.get("name", "")))
-        current_value = float(pos.get("current_value", 0) or 0)
+        current_value = _position_current_value(pos)
         invested_raw = pos.get("total_cost") or pos.get("invested_amount")
         invested_amount: float | None = None
         if invested_raw is not None:
@@ -44,16 +45,16 @@ def compute_profit_protection_diagnostics(
 
         absolute_pnl: float | None = None
         pnl_pct: float | None = None
-        if invested_amount is not None:
+        if current_value is not None and invested_amount is not None:
             absolute_pnl = round(current_value - invested_amount, 2)
             if invested_amount > 0:
                 pnl_pct = round(absolute_pnl / invested_amount, 6)
 
         profit_level = _classify_profit_level(pnl_pct)
-        portfolio_weight = round(current_value / total_value, 6) if total_value > 0 else 0.0
+        portfolio_weight = round(current_value / total_value, 6) if total_value > 0 and current_value is not None else None
 
         principal_recovered, principal_recovery_status, free_carry = _assess_principal_recovery(
-            fund_code, bundle.transactions, invested_amount, current_value,
+            fund_code, bundle.transactions, invested_amount, current_value if current_value is not None else 0.0,
         )
         trim_pressure = _classify_trim_pressure(profit_level, portfolio_weight)
         hold_pressure = _classify_hold_pressure(profit_level, principal_recovery_status)
@@ -75,6 +76,7 @@ def compute_profit_protection_diagnostics(
             "invested_amount": invested_amount,
             "absolute_pnl": absolute_pnl,
             "pnl_pct": pnl_pct,
+            "portfolio_weight": portfolio_weight,
             "profit_level": profit_level,
             "principal_recovered": principal_recovered,
             "principal_recovery_status": principal_recovery_status,

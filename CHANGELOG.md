@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.10.6.dev0]
+
+### Added
+
+- Canonical personal analysis entrypoint enforcement: `bin/fund-agent-personal-run` is the only entrypoint for personal portfolio analysis
+- Short prompt robustness: users can trigger full analysis with a short intent like "请使用本仓库的 fund-analysis skill 做一次个人基金组合分析"
+- Runtime guard: `FundAnalysisSkill` emits `non_canonical_personal_analysis_entrypoint` warning when called directly for personal portfolio analysis without canonical provenance
+- `_has_valuation()` and `_position_current_value()` safe parsing helpers that preserve `None` for cashflow_only / valuation-blocked positions
+- Forbidden non-canonical paths documented in SKILL.md and prompt templates
+
+### Changed
+
+- `current_value=None` is no longer silently converted to `0.0` in contribution, cash deployment, profit protection, professional rules, and metrics stages
+- `cashflow_only` positions are excluded from P&L, contribution, HHI, max holding, and risk flag calculations
+- `build_portfolio_summary` uses `_has_valuation()` instead of `float(p["current_value"]) > 0`
+- VERSION synced from `0.10.5` to `0.10.6-dev`
+
 ## [0.10.5] — 2026-06-17
 
 ### Added

@@ -1537,6 +1537,7 @@
             "hold_pressure": "medium",
             "invested_amount": 56000.0,
             "pnl_pct": 0.071429,
+            "portfolio_weight": 0.333333,
             "principal_recovered": "false",
             "principal_recovery_status": "not_recovered",
             "profit_level": "moderate",
@@ -1553,6 +1554,7 @@
             "hold_pressure": "low",
             "invested_amount": 52000.0,
             "pnl_pct": -0.038462,
+            "portfolio_weight": 0.277778,
             "principal_recovered": "false",
             "principal_recovery_status": "not_recovered",
             "profit_level": "none",
@@ -1569,6 +1571,7 @@
             "hold_pressure": "medium",
             "invested_amount": 42000.0,
             "pnl_pct": 0.071429,
+            "portfolio_weight": 0.25,
             "principal_recovered": "false",
             "principal_recovery_status": "not_recovered",
             "profit_level": "moderate",
@@ -1585,6 +1588,7 @@
             "hold_pressure": "low",
             "invested_amount": 15000.0,
             "pnl_pct": 0.0,
+            "portfolio_weight": 0.083333,
             "principal_recovered": "false",
             "principal_recovery_status": "not_recovered",
             "profit_level": "low",
@@ -2553,6 +2557,7 @@
         "warnings": []
       },
       "warnings": [
+        "non_canonical_personal_analysis_entrypoint: FundAnalysisSkill was called directly for personal portfolio analysis. Use bin/fund-agent-personal-run and agent_context for canonical analysis. This output is not canonical for personal portfolio analysis.",
         "Cash 10000 is below 8% liquidity reserve (14400). Gap: 4400."
       ]
     },
@@ -2907,6 +2912,7 @@
           "hold_pressure": "medium",
           "invested_amount": 56000.0,
           "pnl_pct": 0.071429,
+          "portfolio_weight": 0.333333,
           "principal_recovered": "false",
           "principal_recovery_status": "not_recovered",
           "profit_level": "moderate",
@@ -2923,6 +2929,7 @@
           "hold_pressure": "low",
           "invested_amount": 52000.0,
           "pnl_pct": -0.038462,
+          "portfolio_weight": 0.277778,
           "principal_recovered": "false",
           "principal_recovery_status": "not_recovered",
           "profit_level": "none",
@@ -2939,6 +2946,7 @@
           "hold_pressure": "medium",
           "invested_amount": 42000.0,
           "pnl_pct": 0.071429,
+          "portfolio_weight": 0.25,
           "principal_recovered": "false",
           "principal_recovery_status": "not_recovered",
           "profit_level": "moderate",
@@ -2955,6 +2963,7 @@
           "hold_pressure": "low",
           "invested_amount": 15000.0,
           "pnl_pct": 0.0,
+          "portfolio_weight": 0.083333,
           "principal_recovered": "false",
           "principal_recovery_status": "not_recovered",
           "profit_level": "low",
@@ -3974,6 +3983,7 @@
       ]
     },
     "warnings": [
+      "non_canonical_personal_analysis_entrypoint: FundAnalysisSkill was called directly for personal portfolio analysis. Use bin/fund-agent-personal-run and agent_context for canonical analysis. This output is not canonical for personal portfolio analysis.",
       "Cash 10000 is below 8% liquidity reserve (14400). Gap: 4400."
     ]
   },
@@ -4631,6 +4641,7 @@
   "status": "PARTIAL",
   "used_mcp_capabilities": [],
   "warnings": [
+    "non_canonical_personal_analysis_entrypoint: FundAnalysisSkill was called directly for personal portfolio analysis. Use bin/fund-agent-personal-run and agent_context for canonical analysis. This output is not canonical for personal portfolio analysis.",
     "Cash 10000 is below 8% liquidity reserve (14400). Gap: 4400."
   ]
 }

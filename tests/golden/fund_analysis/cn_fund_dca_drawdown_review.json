@@ -1094,6 +1094,7 @@
             "hold_pressure": "low",
             "invested_amount": 53000.0,
             "pnl_pct": -0.150943,
+            "portfolio_weight": 0.45,
             "principal_recovered": "false",
             "principal_recovery_status": "not_recovered",
             "profit_level": "none",
@@ -1110,6 +1111,7 @@
             "hold_pressure": "low",
             "invested_amount": 31000.0,
             "pnl_pct": -0.032258,
+            "portfolio_weight": 0.3,
             "principal_recovered": "false",
             "principal_recovery_status": "not_recovered",
             "profit_level": "none",
@@ -1126,6 +1128,7 @@
             "hold_pressure": "low",
             "invested_amount": 13000.0,
             "pnl_pct": 0.0,
+            "portfolio_weight": 0.13,
             "principal_recovered": "false",
             "principal_recovery_status": "not_recovered",
             "profit_level": "low",
@@ -2138,6 +2141,7 @@
         "warnings": []
       },
       "warnings": [
+        "non_canonical_personal_analysis_entrypoint: FundAnalysisSkill was called directly for personal portfolio analysis. Use bin/fund-agent-personal-run and agent_context for canonical analysis. This output is not canonical for personal portfolio analysis.",
         "SYNDCA001: shares mismatch [high] — snapshot=52992.8699/47693.58, portfolio=50000.0000/45000.0, delta=2992.8699/2693.58",
         "Fund SYNDCA001 has max drawdown 29.2%. DCA may benefit from buying at lower NAV, but review risk tolerance."
       ]
@@ -2454,6 +2458,7 @@
           "hold_pressure": "low",
           "invested_amount": 53000.0,
           "pnl_pct": -0.150943,
+          "portfolio_weight": 0.45,
           "principal_recovered": "false",
           "principal_recovery_status": "not_recovered",
           "profit_level": "none",
@@ -2470,6 +2475,7 @@
           "hold_pressure": "low",
           "invested_amount": 31000.0,
           "pnl_pct": -0.032258,
+          "portfolio_weight": 0.3,
           "principal_recovered": "false",
           "principal_recovery_status": "not_recovered",
           "profit_level": "none",
@@ -2486,6 +2492,7 @@
           "hold_pressure": "low",
           "invested_amount": 13000.0,
           "pnl_pct": 0.0,
+          "portfolio_weight": 0.13,
           "principal_recovered": "false",
           "principal_recovery_status": "not_recovered",
           "profit_level": "low",
@@ -3466,6 +3473,7 @@
       }
     },
     "warnings": [
+      "non_canonical_personal_analysis_entrypoint: FundAnalysisSkill was called directly for personal portfolio analysis. Use bin/fund-agent-personal-run and agent_context for canonical analysis. This output is not canonical for personal portfolio analysis.",
       "SYNDCA001: shares mismatch [high] — snapshot=52992.8699/47693.58, portfolio=50000.0000/45000.0, delta=2992.8699/2693.58",
       "Fund SYNDCA001 has max drawdown 29.2%. DCA may benefit from buying at lower NAV, but review risk tolerance."
     ]
@@ -4130,6 +4138,7 @@
   "status": "PARTIAL",
   "used_mcp_capabilities": [],
   "warnings": [
+    "non_canonical_personal_analysis_entrypoint: FundAnalysisSkill was called directly for personal portfolio analysis. Use bin/fund-agent-personal-run and agent_context for canonical analysis. This output is not canonical for personal portfolio analysis.",
     "SYNDCA001: shares mismatch [high] — snapshot=52992.8699/47693.58, portfolio=50000.0000/45000.0, delta=2992.8699/2693.58",
     "Fund SYNDCA001 has max drawdown 29.2%. DCA may benefit from buying at lower NAV, but review risk tolerance."
   ]

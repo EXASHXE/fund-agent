@@ -61,6 +61,19 @@ class FundAnalysisSkill(BaseSkillRuntime):
                 "FundAnalysisSkill payload must be a dictionary",
             )
 
+        # Runtime guard: warn when used directly for personal portfolio analysis
+        # without canonical provenance (personal-run pipeline).
+        warnings_list: list[str] = []
+        if _looks_like_personal_portfolio(payload):
+            provenance = payload.get("_provenance", {})
+            if not isinstance(provenance, dict) or provenance.get("source") != "personal_run":
+                warnings_list.append(
+                    "non_canonical_personal_analysis_entrypoint: "
+                    "FundAnalysisSkill was called directly for personal portfolio analysis. "
+                    "Use bin/fund-agent-personal-run and agent_context for canonical analysis. "
+                    "This output is not canonical for personal portfolio analysis."
+                )
+
         stage_result = resolve_portfolio_context(skill_input, payload)
         if stage_result.output is not None:
             return stage_result.output
@@ -80,6 +93,7 @@ class FundAnalysisSkill(BaseSkillRuntime):
             source_of_truth=context.source_of_truth,
             derived_snapshot=context.derived_snapshot,
             reconciliation_report=context.reconciliation_report,
+            entrypoint_warnings=warnings_list,
         )
 
     def _run_portfolio_analysis(
@@ -89,6 +103,7 @@ class FundAnalysisSkill(BaseSkillRuntime):
         source_of_truth: str | None = None,
         derived_snapshot: dict[str, Any] | None = None,
         reconciliation_report: dict[str, Any] | None = None,
+        entrypoint_warnings: list[str] | None = None,
     ) -> SkillOutput:
         portfolio = dict_or_empty(payload.get("portfolio"))
 
@@ -141,6 +156,8 @@ class FundAnalysisSkill(BaseSkillRuntime):
             nav_history=bundle.nav_history,
             holdings=bundle.holdings,
         )
+        if entrypoint_warnings:
+            warnings.extend(entrypoint_warnings)
 
         try:
             metrics = compute_core_metrics(bundle, warnings, skill_input)
@@ -245,3 +262,28 @@ class FundAnalysisSkill(BaseSkillRuntime):
             ],
             status="OK" if evidence_items and not errors else "FAILED",
         )
+
+
+def _looks_like_personal_portfolio(payload: dict[str, Any]) -> bool:
+    """Heuristic: does this payload look like a personal portfolio analysis?
+
+    Detects patterns common in personal portfolio inputs:
+    - Has portfolio.positions with fund_code + invested_amount/total_cost
+    - Has transactions list
+    - Missing _provenance.source == "personal_run"
+
+    This is a heuristic guard, not a strict gate. It warns but does not block.
+    """
+    portfolio = payload.get("portfolio")
+    if not isinstance(portfolio, dict):
+        return False
+    positions = portfolio.get("positions")
+    if not isinstance(positions, list) or len(positions) < 1:
+        return False
+    # Check for personal-portfolio-style fields
+    has_invested = any(
+        isinstance(p, dict) and (p.get("invested_amount") is not None or p.get("total_cost") is not None)
+        for p in positions
+    )
+    has_transactions = isinstance(payload.get("transactions"), list)
+    return has_invested or has_transactions

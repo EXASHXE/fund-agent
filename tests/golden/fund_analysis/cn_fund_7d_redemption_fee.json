@@ -1112,6 +1112,7 @@
             "hold_pressure": "medium",
             "invested_amount": 40000.0,
             "pnl_pct": 0.05,
+            "portfolio_weight": 0.35,
             "principal_recovered": "false",
             "principal_recovery_status": "not_recovered",
             "profit_level": "moderate",
@@ -1128,6 +1129,7 @@
             "hold_pressure": "low",
             "invested_amount": 48000.0,
             "pnl_pct": 0.041667,
+            "portfolio_weight": 0.416667,
             "principal_recovered": "false",
             "principal_recovery_status": "not_recovered",
             "profit_level": "low",
@@ -1144,6 +1146,7 @@
             "hold_pressure": "low",
             "invested_amount": 20000.0,
             "pnl_pct": 0.0,
+            "portfolio_weight": 0.166667,
             "principal_recovered": "false",
             "principal_recovery_status": "not_recovered",
             "profit_level": "low",
@@ -2174,6 +2177,7 @@
         "warnings": []
       },
       "warnings": [
+        "non_canonical_personal_analysis_entrypoint: FundAnalysisSkill was called directly for personal portfolio analysis. Use bin/fund-agent-personal-run and agent_context for canonical analysis. This output is not canonical for personal portfolio analysis.",
         "SYN7D001: shares mismatch [high] — snapshot=38995.5239/41959.18, portfolio=39024.3902/42000.0, delta=-28.8663/-40.82",
         "SYN7D002: shares mismatch [high] — snapshot=48000.0000/51600.0, portfolio=46511.6279/50000.0, delta=1488.3721/1600.0",
         "SYN7D003: shares mismatch [high] — snapshot=20000.0000/20200.0, portfolio=19801.9802/20000.0, delta=198.0198/200.0",
@@ -2550,6 +2554,7 @@
           "hold_pressure": "medium",
           "invested_amount": 40000.0,
           "pnl_pct": 0.05,
+          "portfolio_weight": 0.35,
           "principal_recovered": "false",
           "principal_recovery_status": "not_recovered",
           "profit_level": "moderate",
@@ -2566,6 +2571,7 @@
           "hold_pressure": "low",
           "invested_amount": 48000.0,
           "pnl_pct": 0.041667,
+          "portfolio_weight": 0.416667,
           "principal_recovered": "false",
           "principal_recovery_status": "not_recovered",
           "profit_level": "low",
@@ -2582,6 +2588,7 @@
           "hold_pressure": "low",
           "invested_amount": 20000.0,
           "pnl_pct": 0.0,
+          "portfolio_weight": 0.166667,
           "principal_recovered": "false",
           "principal_recovery_status": "not_recovered",
           "profit_level": "low",
@@ -3521,6 +3528,7 @@
       }
     },
     "warnings": [
+      "non_canonical_personal_analysis_entrypoint: FundAnalysisSkill was called directly for personal portfolio analysis. Use bin/fund-agent-personal-run and agent_context for canonical analysis. This output is not canonical for personal portfolio analysis.",
       "SYN7D001: shares mismatch [high] — snapshot=38995.5239/41959.18, portfolio=39024.3902/42000.0, delta=-28.8663/-40.82",
       "SYN7D002: shares mismatch [high] — snapshot=48000.0000/51600.0, portfolio=46511.6279/50000.0, delta=1488.3721/1600.0",
       "SYN7D003: shares mismatch [high] — snapshot=20000.0000/20200.0, portfolio=19801.9802/20000.0, delta=198.0198/200.0",
@@ -4087,6 +4095,7 @@
   "status": "PARTIAL",
   "used_mcp_capabilities": [],
   "warnings": [
+    "non_canonical_personal_analysis_entrypoint: FundAnalysisSkill was called directly for personal portfolio analysis. Use bin/fund-agent-personal-run and agent_context for canonical analysis. This output is not canonical for personal portfolio analysis.",
     "SYN7D001: shares mismatch [high] — snapshot=38995.5239/41959.18, portfolio=39024.3902/42000.0, delta=-28.8663/-40.82",
     "SYN7D002: shares mismatch [high] — snapshot=48000.0000/51600.0, portfolio=46511.6279/50000.0, delta=1488.3721/1600.0",
     "SYN7D003: shares mismatch [high] — snapshot=20000.0000/20200.0, portfolio=19801.9802/20000.0, delta=198.0198/200.0",

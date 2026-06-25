@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import Any
 
 from .context import CoreMetricsBundle, PortfolioInputBundle
-from .safe_parsing import _safe_float
+from .safe_parsing import _position_current_value, _safe_float
 
 CASH_LOW_THRESHOLD = 0.05
 CASH_HIGH_THRESHOLD = 0.30
@@ -48,7 +48,9 @@ def compute_cash_deployment_diagnostics(
     for pos in bundle.positions:
         if not isinstance(pos, dict):
             continue
-        position_total_value += _safe_float(pos.get("current_value"), 0.0) or 0.0
+        cv = _position_current_value(pos)
+        if cv is not None:
+            position_total_value += cv
 
     effective_total_value = max(
         reported_total_value,
@@ -59,7 +61,7 @@ def compute_cash_deployment_diagnostics(
         if not isinstance(pos, dict) or not pos.get("fund_code"):
             continue
         fund_code = str(pos["fund_code"])
-        current_value = _safe_float(pos.get("current_value"), 0.0) or 0.0
+        current_value = _position_current_value(pos)
         profile = fund_profiles.get(fund_code, {}) if isinstance(fund_profiles, dict) else {}
         fund_type = str(profile.get("fund_type", "")).lower() if isinstance(profile, dict) else ""
         theme = str(profile.get("theme", "")).lower() if isinstance(profile, dict) else ""
@@ -69,7 +71,21 @@ def compute_cash_deployment_diagnostics(
 
         bucket = _classify_bucket(fund_type, theme, tags)
         liquidity_hint = _classify_liquidity(bucket)
-        weight = round(current_value / effective_total_value, 6) if effective_total_value > 0 else 0.0
+
+        if current_value is not None:
+            weight = round(current_value / effective_total_value, 6) if effective_total_value > 0 else 0.0
+            if bucket == "cash":
+                cash_bucket_value += current_value
+            elif bucket == "money_market":
+                money_market_value += current_value
+            elif bucket == "short_bond":
+                short_bond_value += current_value
+            elif bucket == "bond":
+                bond_value += current_value
+            elif bucket == "equity":
+                equity_value += current_value
+        else:
+            weight = None
 
         bucket_items.append({
             "bucket": bucket,
@@ -77,17 +93,6 @@ def compute_cash_deployment_diagnostics(
             "weight": weight,
             "liquidity_hint": liquidity_hint,
         })
-
-        if bucket == "cash":
-            cash_bucket_value += current_value
-        elif bucket == "money_market":
-            money_market_value += current_value
-        elif bucket == "short_bond":
-            short_bond_value += current_value
-        elif bucket == "bond":
-            bond_value += current_value
-        elif bucket == "equity":
-            equity_value += current_value
 
     cash_like_value = max(cash_available, cash_bucket_value) + money_market_value + short_bond_value
     cash_like_weight = (

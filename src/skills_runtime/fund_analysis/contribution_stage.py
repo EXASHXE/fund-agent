@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 from .context import CoreMetricsBundle, PortfolioInputBundle
+from .safe_parsing import _has_valuation, _position_current_value
 
 
 def compute_position_contribution(
@@ -36,7 +37,7 @@ def compute_position_contribution(
         if not isinstance(pos, dict) or not pos.get("fund_code"):
             continue
         fund_code = str(pos["fund_code"])
-        current_value = float(pos.get("current_value", 0) or 0)
+        current_value = _position_current_value(pos)
         invested_amount_raw = pos.get("total_cost") or pos.get("invested_amount")
         invested_amount: float | None = None
         if invested_amount_raw is not None:
@@ -44,6 +45,23 @@ def compute_position_contribution(
                 invested_amount = float(invested_amount_raw)
             except (TypeError, ValueError):
                 invested_amount = None
+
+        # Skip positions without valuation from weight/PnL calculations
+        if current_value is None:
+            positions_data.append({
+                "position_id": fund_code,
+                "fund_code": fund_code,
+                "fund_name": str(pos.get("fund_name", pos.get("name", ""))),
+                "current_value": None,
+                "invested_amount": invested_amount,
+                "absolute_pnl": None,
+                "pnl_pct": None,
+                "portfolio_weight": None,
+                "pnl_contribution_pct": None,
+                "pnl_contribution_basis": "valuation_unavailable",
+                "risk_contribution_hint": "low_data",
+            })
+            continue
 
         portfolio_weight = round(current_value / total_value, 6) if total_value > 0 else 0.0
         absolute_pnl: float | None = None
@@ -120,7 +138,7 @@ def _build_summary(
 
     for p in positions:
         cv = p["current_value"]
-        if cv > max_val:
+        if cv is not None and cv > max_val:
             max_val = cv
             largest_value_pos = p["fund_code"]
         ap = p.get("absolute_pnl")
@@ -131,7 +149,8 @@ def _build_summary(
             if ap < -max_loss:
                 max_loss = abs(ap)
                 largest_loss_pos = p["fund_code"]
-        if p["portfolio_weight"] >= 0.25 and p.get("pnl_contribution_pct", 0) is not None and (p.get("pnl_contribution_pct") or 0) < 0.05:
+        pw = p.get("portfolio_weight")
+        if pw is not None and pw >= 0.25 and p.get("pnl_contribution_pct") is not None and (p.get("pnl_contribution_pct") or 0) < 0.05:
             high_weight_low_contrib.append(p["fund_code"])
 
     return {

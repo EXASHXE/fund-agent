@@ -65,7 +65,12 @@ def status_from_analysis(
                 f"(score {data_completeness['score']:.2f})"
             )
     elif warnings:
-        status = "PARTIAL"
+        # Meta-warnings about invocation pattern (e.g. non_canonical_* prefix)
+        # should not downgrade status from OK to PARTIAL.
+        data_quality_warnings = [
+            w for w in warnings if not w.startswith("non_canonical_")
+        ]
+        status = "PARTIAL" if data_quality_warnings else "OK"
     else:
         status = "OK"
     return status

@@ -11,7 +11,7 @@ import contextlib
 from typing import Any
 
 from .context import CoreMetricsBundle, PortfolioInputBundle
-from .safe_parsing import _safe_float, _safe_int
+from .safe_parsing import _position_current_value, _safe_float, _safe_int
 
 
 def _dt(date_str: str) -> str:
@@ -37,11 +37,11 @@ def _classify_fee_items(
         holding_days = af.get("holding_days")
         threshold_days = af.get("threshold_days")
         pos = positions_index.get(fund_code, {})
-        current_value = float(pos.get("current_value", 0) or 0)
+        current_value = _position_current_value(pos)
         invested_raw = pos.get("total_cost") or pos.get("invested_amount")
         absolute_pnl: float | None = None
         pnl_pct: float | None = None
-        if invested_raw is not None:
+        if current_value is not None and invested_raw is not None:
             try:
                 invested = float(invested_raw)
                 absolute_pnl = round(current_value - invested, 2)
@@ -271,11 +271,12 @@ def compute_overlap_diagnostics(
             weight = float(h.get("weight", 0) or 0)
             holding_funds.setdefault(name, {})[fc] = weight
 
-    position_values = {
-        p["fund_code"]: float(p.get("current_value", 0) or 0)
-        for p in bundle.positions
-        if isinstance(p, dict) and p.get("fund_code")
-    }
+    position_values = {}
+    for p in bundle.positions:
+        if isinstance(p, dict) and p.get("fund_code"):
+            cv = _position_current_value(p)
+            if cv is not None:
+                position_values[p["fund_code"]] = cv
 
     overlapping_holdings: list[dict[str, Any]] = []
     overlapping_themes: dict[str, set[str]] = {}
@@ -400,12 +401,13 @@ def compute_theme_overweight_diagnostics(
         if not theme:
             continue
         fund_to_theme[fc] = theme
-        pos_val = 0.0
+        pos_val = None
         for p in bundle.positions:
             if isinstance(p, dict) and p.get("fund_code") == fc:
-                pos_val = float(p.get("current_value", 0) or 0)
+                pos_val = _position_current_value(p)
                 break
-        theme_weights[theme] = theme_weights.get(theme, 0.0) + pos_val / total_value
+        if pos_val is not None:
+            theme_weights[theme] = theme_weights.get(theme, 0.0) + pos_val / total_value
 
     if not theme_weights:
         return None

@@ -1,7 +1,7 @@
 # Runtime Bridge — Design
 
-> Status: **partially implemented in v0.4.9-dev**. The thin local
-> JSON-in / JSON-out CLI bridge is shipped in v0.4.9-dev
+> Status: **shipped in v0.10.6.dev0**. The thin local
+> JSON-in / JSON-out CLI bridge is shipped in v0.10.6.dev0
 > (`scripts/run_skill.py`, `src/skillpack/run_skill.py`). The
 > deeper parts of this design — subprocess-based MCP handler
 > spawning, the OpenCode plugin `fund_agent_run_skill` tool, and
