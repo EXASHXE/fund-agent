@@ -87,6 +87,53 @@ def _load_overrides(overrides_path: Path) -> tuple[dict[str, dict[str, Any]], li
 
 
 
+def _compute_identity_verification_status(
+    resolved_code: str | None,
+    resolution_status: str,
+    ref_info: dict[str, Any],
+    override_record: dict[str, Any] | None = None,
+) -> str:
+    """Compute identity_verification_status for a fund resolution entry.
+
+    Returns one of: verified, override_verified, provider_verified,
+    code_name_mismatch, code_unverified, name_only, invalid_code.
+    """
+    # Invalid code → invalid_code
+    if resolution_status == "invalid_code":
+        return "invalid_code"
+
+    # Name-only → name_only
+    if resolution_status == "name_only":
+        return "name_only"
+
+    # Manual override with valid code → override_verified
+    if resolution_status == "manual_override" and resolved_code is not None:
+        return "override_verified"
+
+    # Unresolved → code_unverified
+    if resolved_code is None:
+        return "code_unverified"
+
+    # valid_code: check for code/name mismatch
+    # A mismatch occurs when the resolved fund_code does not match the
+    # fund_name in the override record (i.e., the override mapped a name
+    # to a different code than what the data originally contained).
+    raw_code = ref_info.get("fund_code")
+    if raw_code is not None and str(raw_code) != str(resolved_code):
+        # The code was changed by override or plan — check if names match
+        override_name = override_record.get("fund_name") if override_record else None
+        raw_name = ref_info.get("fund_name")
+        if override_name and raw_name and normalize_fund_name(override_name) != normalize_fund_name(raw_name):
+            return "code_name_mismatch"
+
+    # If we have a valid code from the transaction source (no override needed)
+    if resolution_status == "valid_code":
+        return "verified"
+
+    # Fallback
+    return "code_unverified"
+
+
 def _compute_resolution_status(
     resolved_code: str | None,
     resolution_source: str,
@@ -234,6 +281,14 @@ def resolve_fund_identities(
         # Compute resolution_status
         resolution_status = _compute_resolution_status(resolved_code, resolution_source, ref_info)
 
+        # Compute identity_verification_status
+        identity_verification_status = _compute_identity_verification_status(
+            resolved_code=resolved_code,
+            resolution_status=resolution_status,
+            ref_info=ref_info,
+            override_record=ov_record,
+        )
+
         resolutions.append({
             "resolved_fund_code": resolved_code,
             "raw_reference": fund_key,
@@ -243,6 +298,7 @@ def resolve_fund_identities(
             "fund_name": raw_fund_name,
             "resolution_source": resolution_source,
             "resolution_status": resolution_status,
+            "identity_verification_status": identity_verification_status,
             "confidence": confidence,
             "candidates": candidates,
             "audit_trail": audit_steps,
@@ -252,6 +308,8 @@ def resolve_fund_identities(
         "total_funds": len(resolutions),
         "valid_fund_codes_count": sum(1 for r in resolutions if r["resolved_fund_code"] is not None),
         "name_only_count": sum(1 for r in resolutions if r["resolution_status"] == "name_only"),
+        "identity_mismatch_count": sum(1 for r in resolutions if r["identity_verification_status"] == "code_name_mismatch"),
+        "code_unverified_count": sum(1 for r in resolutions if r["identity_verification_status"] == "code_unverified"),
         "high_confidence": sum(1 for r in resolutions if r["confidence"] == "high"),
         "medium_confidence": sum(1 for r in resolutions if r["confidence"] == "medium"),
         "low_confidence_count": sum(1 for r in resolutions if r["confidence"] == "low"),
@@ -264,6 +322,15 @@ def resolve_fund_identities(
             "name_only": sum(1 for r in resolutions if r["resolution_status"] == "name_only"),
             "invalid_code": sum(1 for r in resolutions if r["resolution_status"] == "invalid_code"),
             "unresolved": sum(1 for r in resolutions if r["resolution_status"] == "unresolved"),
+        },
+        "identity_verification_status_counts": {
+            "verified": sum(1 for r in resolutions if r["identity_verification_status"] == "verified"),
+            "override_verified": sum(1 for r in resolutions if r["identity_verification_status"] == "override_verified"),
+            "provider_verified": sum(1 for r in resolutions if r["identity_verification_status"] == "provider_verified"),
+            "code_name_mismatch": sum(1 for r in resolutions if r["identity_verification_status"] == "code_name_mismatch"),
+            "code_unverified": sum(1 for r in resolutions if r["identity_verification_status"] == "code_unverified"),
+            "name_only": sum(1 for r in resolutions if r["identity_verification_status"] == "name_only"),
+            "invalid_code": sum(1 for r in resolutions if r["identity_verification_status"] == "invalid_code"),
         },
     }
 

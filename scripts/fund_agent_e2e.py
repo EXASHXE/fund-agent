@@ -490,6 +490,7 @@ def run_pipeline(args: argparse.Namespace) -> int:
         )
         # Extract fund codes from identity resolution (always, even with --skip-akshare)
         fund_codes: list[str] = []
+        identity_mismatch_codes: set[str] = set()
         if identity_ok and fund_identity.exists():
             try:
                 identity_data = json.loads(fund_identity.read_text(encoding="utf-8"))
@@ -509,7 +510,22 @@ def run_pipeline(args: argparse.Namespace) -> int:
                 )
                 # Validate: only six-digit codes are valid fund codes
                 fund_codes = [c for c in raw_codes if is_valid_fund_code(c)]
-                pipeline.valid_fund_codes_count = len(fund_codes)
+                # Track identity-mismatch codes — these must NOT enter NAV fetch
+                for entry in entries:
+                    ivs = entry.get("identity_verification_status", "")
+                    if ivs == "code_name_mismatch":
+                        code = entry.get(code_field, "")
+                        if code and is_valid_fund_code(code):
+                            identity_mismatch_codes.add(code)
+                # Filter out mismatched codes from NAV fetch
+                if identity_mismatch_codes:
+                    mismatched_count = len(identity_mismatch_codes)
+                    fund_codes = [c for c in fund_codes if c not in identity_mismatch_codes]
+                    pipeline.warnings.append(
+                        f"{mismatched_count} fund code(s) have identity mismatch; "
+                        "blocked from NAV fetch and valuation"
+                    )
+                pipeline.valid_fund_codes_count = len(fund_codes) + len(identity_mismatch_codes)
                 pipeline.name_only_count = name_only_count
             except (OSError, json.JSONDecodeError, TypeError) as exc:
                 pipeline.warnings.append(

@@ -38,6 +38,8 @@ All `reason_codes` values must come from this stable set:
 | `fallback_holdings_used` | Valuation from existing portfolio_input, not reconstructed |
 | `cashflow_only` | Some positions are cashflow-only (no valuation) |
 | `estimated_only` | All positions are estimated (no confirmed valuation) |
+| `identity_mismatch` | Some fund codes have code/name mismatch — valuation blocked for those funds |
+| `redemption_fee_unknown` | Some funds have unknown redemption fees — confirmed P&L not available |
 
 ## Safety Constraints Enumeration
 
@@ -73,6 +75,7 @@ Known unsafe-to-infer scope items:
 | `confirmed_p_and_l_if_valuation_estimated` | Do not infer confirmed P&L when valuation is estimated |
 | `trading_decision` | Do not make trading decisions |
 | `broker_or_order_execution` | Do not execute broker orders |
+| `valuation_if_identity_mismatch` | Do not infer valuation for funds with code/name mismatch |
 
 ## Artifact Paths
 

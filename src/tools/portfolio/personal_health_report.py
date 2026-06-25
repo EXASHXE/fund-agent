@@ -22,6 +22,8 @@ REASON_FALLBACK_HOLDINGS_USED = "fallback_holdings_used"
 REASON_CASHFLOW_ONLY = "cashflow_only"
 REASON_ESTIMATED_ONLY = "estimated_only"
 REASON_NAME_ONLY_FUNDS = "name_only_funds"
+REASON_IDENTITY_MISMATCH = "identity_mismatch"
+REASON_REDEMPTION_FEE_UNKNOWN = "redemption_fee_unknown"
 
 VALID_REASON_CODES = frozenset({
     REASON_NO_VALID_FUND_CODES,
@@ -34,6 +36,8 @@ VALID_REASON_CODES = frozenset({
     REASON_CASHFLOW_ONLY,
     REASON_ESTIMATED_ONLY,
     REASON_NAME_ONLY_FUNDS,
+    REASON_IDENTITY_MISMATCH,
+    REASON_REDEMPTION_FEE_UNKNOWN,
 })
 
 # ── Status / confidence enums ─────────────────────────────────────────
@@ -100,6 +104,18 @@ def build_personal_health_summary(artifacts: Mapping[str, Any]) -> dict[str, Any
 
     if name_only_count > 0:
         reason_codes.append(REASON_NAME_ONLY_FUNDS)
+
+    # Identity mismatch
+    identity_mismatch_count = int(identity.get("identity_mismatch_count", 0))
+    if identity_mismatch_count > 0:
+        reason_codes.append(REASON_IDENTITY_MISMATCH)
+
+    # Redemption fee unknown
+    redemption_fee_unknown_count = int(valuation.get("redemption_fee_unknown_count", 0))
+    if redemption_fee_unknown_count == 0:
+        redemption_fee_unknown_count = int(nav_coverage.get("positions_redemption_fee_unknown", 0))
+    if redemption_fee_unknown_count > 0:
+        reason_codes.append(REASON_REDEMPTION_FEE_UNKNOWN)
 
     # NAV availability
     reconstruction_status = str(e2e.get("pipeline_steps", {}).get("reconstruction_status", ""))
@@ -233,6 +249,8 @@ def build_personal_health_summary(artifacts: Mapping[str, Any]) -> dict[str, Any
         cashflow_only_count=cashflow_only_count,
         positions_total=positions_total,
         valuation_source=valuation_source,
+        identity_mismatch_count=identity_mismatch_count,
+        redemption_fee_unknown_count=redemption_fee_unknown_count,
     )
 
     return {
@@ -367,9 +385,17 @@ def _build_checklist(
     cashflow_only_count: int,
     positions_total: int,
     valuation_source: str,
+    identity_mismatch_count: int = 0,
+    redemption_fee_unknown_count: int = 0,
 ) -> list[str]:
     """Build fix-it checklist from data quality diagnostics."""
     items: list[str] = []
+
+    if identity_mismatch_count > 0:
+        items.append(f"Verify fund_identity_overrides for {identity_mismatch_count} fund(s) with code/name mismatch")
+
+    if redemption_fee_unknown_count > 0:
+        items.append(f"Provide fee_overrides for {redemption_fee_unknown_count} fund(s) with unknown redemption fees")
 
     if name_only_count > 0:
         items.append(f"Add fund_identity_overrides for {name_only_count} name-only fund(s)")

@@ -24,6 +24,8 @@ REASON_CODES = frozenset({
     "fallback_holdings_used",
     "cashflow_only",
     "estimated_only",
+    "identity_mismatch",
+    "redemption_fee_unknown",
 })
 
 # ── Allowed safety constraints (stable enumeration) ────────────────────
@@ -50,6 +52,7 @@ UNSAFE_TO_INFER_ITEMS = frozenset({
     "confirmed_p_and_l_if_valuation_estimated",
     "trading_decision",
     "broker_or_order_execution",
+    "valuation_if_identity_mismatch",
 })
 
 # ── Safe-to-analyze scope ─────────────────────────────────────────────
@@ -69,6 +72,8 @@ _RECOMMENDED_QUESTIONS = [
     "Should portfolio_input.holdings be provided as fallback?",
     "Should the host query live NAV or news data?",
     "Should explicit units be provided for cashflow-only transactions?",
+    "Should fund_identity_overrides be verified for code/name mismatched funds?",
+    "Should fee_overrides be provided for funds with unknown redemption fees?",
 ]
 
 
@@ -122,6 +127,10 @@ def build_agent_context(
         questions.append(_RECOMMENDED_QUESTIONS[5])
     if "stale_nav" in reason_codes or "qdii_nav_lag" in reason_codes:
         questions.append(_RECOMMENDED_QUESTIONS[4])
+    if "identity_mismatch" in reason_codes:
+        questions.append(_RECOMMENDED_QUESTIONS[6])
+    if "redemption_fee_unknown" in reason_codes:
+        questions.append(_RECOMMENDED_QUESTIONS[7])
     # Always include if no specific questions matched
     if not questions:
         questions.append(_RECOMMENDED_QUESTIONS[4])
