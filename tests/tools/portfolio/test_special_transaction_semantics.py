@@ -65,7 +65,8 @@ class TestRefundSemantics:
         assert result["action"] == "refund"
         assert result["ambiguous_portfolio_effect"] is True
         assert result["manual_review_required"] is True
-        assert "ambiguous_portfolio_effect: refund" in result.get("manual_review_reasons", [])
+        # With special_transaction_status=ambiguous, the reason is more specific
+        assert any("refund" in r for r in result.get("manual_review_reasons", []))
 
     def test_refund_in_summary(self):
         """Refund transactions counted in summary."""

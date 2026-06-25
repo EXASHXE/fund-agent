@@ -30,6 +30,46 @@ TRANSACTION_TYPE_MAP: dict[str, str] = {
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
+def _determine_special_transaction_status(
+    action: str,
+    raw: Mapping[str, Any],
+) -> str:
+    """Determine special_transaction_status for conversion/refund transactions.
+
+    Returns one of: computable, estimated, ambiguous, manual_review_required.
+    """
+    if action == "conversion":
+        # A conversion is computable if we have both source and target fund info
+        has_source = bool(raw.get("source_fund_code") or raw.get("from_fund_code"))
+        has_target = bool(raw.get("target_fund_code") or raw.get("to_fund_code"))
+        has_units = raw.get("units") is not None
+        has_nav = raw.get("nav") is not None
+
+        if has_source and has_target and has_units and has_nav:
+            return "computable"
+        if (has_source or has_target) and (has_units or has_nav):
+            return "estimated"
+        if has_source or has_target:
+            return "ambiguous"
+        return "manual_review_required"
+
+    if action == "refund":
+        # A refund is computable if we have the amount and matching reference
+        has_amount = raw.get("amount") is not None
+        has_ref = bool(raw.get("refund_reference") or raw.get("original_transaction_id"))
+        has_units = raw.get("units") is not None
+
+        if has_amount and has_ref and has_units:
+            return "computable"
+        if has_amount and has_ref:
+            return "estimated"
+        if has_amount:
+            return "ambiguous"
+        return "manual_review_required"
+
+    return "manual_review_required"
+
+
 def load_portfolio_input_transactions(path: Path) -> list[dict[str, Any]]:
     """Load transactions from a portfolio_input JSON file.
 
@@ -121,7 +161,14 @@ def normalize_portfolio_input_transaction(
     manual_review_reasons: list[str] = []
     if action in ("conversion", "refund"):
         entry["ambiguous_portfolio_effect"] = True
-        manual_review_reasons.append(f"ambiguous_portfolio_effect: {action}")
+        # Determine special_transaction_status based on available data
+        special_status = _determine_special_transaction_status(action, raw)
+        entry["special_transaction_status"] = special_status
+        if special_status == "manual_review_required":
+            manual_review_reasons.append(f"ambiguous_portfolio_effect: {action}")
+        elif special_status == "ambiguous":
+            manual_review_reasons.append(f"insufficient_data_for_{action}_computation")
+        # computable/estimated: no manual review needed for the action itself
     if action == "unknown":
         manual_review_reasons.append("unknown_transaction_type")
 
