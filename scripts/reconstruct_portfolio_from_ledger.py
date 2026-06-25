@@ -35,6 +35,7 @@ from src.tools.portfolio.nav_coverage import (
     compute_nav_coverage,
     compute_portfolio_nav_coverage,
 )
+from src.tools.portfolio.trade_date_rules import compute_effective_trade_date
 
 
 def _parse_date(val) -> date | None:
@@ -85,21 +86,30 @@ def _calculate_units(net_amount: float | None, nav: float | None) -> float | Non
     return net_amount / nav
 
 
-def _build_identity_map(identity_data: dict[str, Any] | None) -> dict[str, str]:
+def _build_identity_map(identity_data: dict[str, Any] | None) -> tuple[dict[str, str], set[str]]:
     """Build a multi-key mapping from fund_name variants to resolved_fund_code.
 
     Indexes by fund_name, normalized_name, raw_fund_name, and normalized
     variants.  Only includes entries where resolved_fund_code is a valid
-    six-digit code.
+    six-digit code and identity_verification_status is NOT code_name_mismatch.
+
+    Returns:
+        Tuple of (name_to_code mapping, set of identity_mismatch fund codes).
     """
     if not identity_data:
-        return {}
+        return {}, set()
     entries = identity_data.get("resolutions", identity_data.get("funds", []))
     code_field = "resolved_fund_code" if "resolutions" in identity_data else "resolved_code"
     name_to_code: dict[str, str] = {}
+    identity_mismatch_codes: set[str] = set()
     for entry in entries:
         code = entry.get(code_field, "")
         if not is_valid_fund_code(code):
+            continue
+        # Block identity-mismatch codes from the map
+        ivs = entry.get("identity_verification_status", "")
+        if ivs == "code_name_mismatch":
+            identity_mismatch_codes.add(code)
             continue
         # Index by all available name variants
         for name in (
@@ -113,7 +123,7 @@ def _build_identity_map(identity_data: dict[str, Any] | None) -> dict[str, str]:
                 norm = normalize_fund_name(name)
                 if norm and norm != name:
                     name_to_code[norm] = code
-    return name_to_code
+    return name_to_code, identity_mismatch_codes
 
 
 def reconstruct_portfolio(
@@ -129,9 +139,10 @@ def reconstruct_portfolio(
     """
     as_of = as_of_date or date.today()
     nav_by_fund = nav_snapshot.get("nav_by_fund", {}) if nav_snapshot else {}
+    fee_schedules = fee_snapshot.get("fee_schedules", {}) if fee_snapshot else {}
 
     # Build identity map: fund_name -> resolved six-digit fund_code
-    identity_map = _build_identity_map(identity_data)
+    identity_map, identity_mismatch_codes = _build_identity_map(identity_data)
 
     # Group transactions by canonical fund_code
     # If txn has no fund_code but has fund_name that resolves via identity, use resolved code
@@ -168,6 +179,47 @@ def reconstruct_portfolio(
     pending_transactions = []
 
     for fund_code, txns in sorted(fund_txns.items()):
+        # Block valuation for identity-mismatch funds
+        if fund_code in identity_mismatch_codes:
+            confirmed_positions.append({
+                "fund_code": fund_code,
+                "units": None,
+                "current_value": None,
+                "cost_basis": None,
+                "average_cost_per_unit": None,
+                "latest_nav": None,
+                "latest_nav_date": None,
+                "latest_nav_stale_days": None,
+                "valuation_type": "none",
+                "valuation_source": "identity_mismatch_blocked",
+                "valuation_quality": "identity_mismatch",
+                "nav_coverage_status": "identity_mismatch_blocked",
+                "trade_nav_coverage_ratio": 0.0,
+                "trade_nav_missing_count": 0,
+                "trades_missing_trade_date_nav": 0,
+                "is_qdii_like": False,
+                "manual_review_required": True,
+                "manual_review_reasons": ["identity_mismatch"],
+                "manual_review_transaction_count": 0,
+                "data_quality": ["identity_mismatch"],
+                "buy_count": 0,
+                "sell_count": 0,
+                "dividends_received": None,
+                "fees_paid": None,
+                "fee_unknown": False,
+                "pending_amount": None,
+                "has_manual_review": True,
+                "confirmation_sources": [],
+                "identity_provenance": None,
+                "confidence": "identity_mismatch",
+                "holding_source": "transaction_derived",
+            })
+            reconstruction_notes.append({
+                "fund_code": fund_code,
+                "note": "valuation blocked: fund code/name mismatch; verify fund_identity_overrides",
+            })
+            continue
+
         nav_records = nav_by_fund.get(fund_code, {}).get("records", [])
         latest_nav, latest_nav_date = _get_latest_nav(nav_records, as_of)
 
@@ -192,6 +244,7 @@ def reconstruct_portfolio(
         units_from_trade_nav = 0    # count of txns where units derived from trade-date NAV
         total_confirmed_txns = 0    # count of buy/sell confirmed txns (excl dividend/fee/conversion/refund)
         manual_review_txn_count = 0
+        has_conversion_or_refund_estimated = False  # True when estimated conversion/refund applied
 
         for txn in sorted(txns, key=lambda t: t.get("trade_date") or "9999-99-99"):
             conf_type = txn.get("confirmation_type", "pending_confirmation")
@@ -199,6 +252,8 @@ def reconstruct_portfolio(
             amount = txn.get("amount")
             fee_amount = txn.get("fee_amount")
             trade_date = txn.get("trade_date")
+            # Use effective_trade_date for NAV lookup if available (15:00 cutoff)
+            effective_td = txn.get("effective_trade_date") or trade_date
 
             if conf_type == "manual_review_required":
                 has_manual_review = True
@@ -227,8 +282,8 @@ def reconstruct_portfolio(
                         except (ValueError, TypeError):
                             units = None
                     else:
-                        # Get NAV for this date
-                        txn_date = _parse_date(trade_date)
+                        # Get NAV for this date (use effective_trade_date if available)
+                        txn_date = _parse_date(effective_td)
                         txn_nav = _get_nav_on_date(nav_records, txn_date) if txn_date else None
 
                         # Calculate units
@@ -277,7 +332,7 @@ def reconstruct_portfolio(
                         except (ValueError, TypeError):
                             units_sold = None
                     else:
-                        txn_date = _parse_date(trade_date)
+                        txn_date = _parse_date(effective_td)
                         txn_nav = _get_nav_on_date(nav_records, txn_date) if txn_date else None
 
                         units_sold = abs(net_amount) / txn_nav if txn_nav and net_amount else None
@@ -310,24 +365,168 @@ def reconstruct_portfolio(
                         fees_paid += amount
 
                 elif action == "conversion":
-                    # Conversion is ambiguous -> manual review, exclude from units
-                    has_manual_review = True
-                    manual_review_txn_count += 1
-                    reconstruction_notes.append({
-                        "fund_code": fund_code,
-                        "note": "conversion transaction requires manual review",
-                        "transaction_id": txn.get("transaction_id"),
-                    })
+                    # Check special_transaction_status for computability
+                    special_status = txn.get("special_transaction_status", "manual_review_required")
+                    if special_status == "computable":
+                        # conversion_in: source fund loses units
+                        # conversion_out: target fund gains units
+                        conv_direction = txn.get("transaction_type", "")
+                        explicit_units = txn.get("units") or txn.get("shares")
+                        conv_amount = amount
+
+                        if conv_direction == "conversion_out" and explicit_units is not None:
+                            # Target fund gains units
+                            try:
+                                units = abs(float(explicit_units))
+                                confirmed_units += units
+                                projected_units += units
+                                if conv_amount is not None:
+                                    confirmed_cost += conv_amount
+                                    projected_cost += conv_amount
+                                confirmation_sources.add("conversion_computable")
+                            except (ValueError, TypeError):
+                                has_manual_review = True
+                                manual_review_txn_count += 1
+                        elif conv_direction == "conversion_in" and explicit_units is not None:
+                            # Source fund loses units
+                            try:
+                                units_out = abs(float(explicit_units))
+                                if confirmed_units >= units_out:
+                                    cost_of_out = confirmed_cost * (units_out / confirmed_units) if confirmed_units > 0 else 0
+                                    confirmed_units -= units_out
+                                    projected_units -= units_out
+                                    confirmed_cost -= cost_of_out
+                                    projected_cost -= cost_of_out
+                                else:
+                                    confirmed_units = max(0, confirmed_units - units_out)
+                                    projected_units = max(0, projected_units - units_out)
+                                confirmation_sources.add("conversion_computable")
+                            except (ValueError, TypeError):
+                                has_manual_review = True
+                                manual_review_txn_count += 1
+                        else:
+                            # computable but missing direction or units
+                            has_manual_review = True
+                            manual_review_txn_count += 1
+                            reconstruction_notes.append({
+                                "fund_code": fund_code,
+                                "note": "conversion computable but missing direction/units",
+                                "transaction_id": txn.get("transaction_id"),
+                            })
+                    elif special_status == "estimated":
+                        # Estimated conversion: apply with uncertainty flag
+                        conv_direction = txn.get("transaction_type", "")
+                        explicit_units = txn.get("units") or txn.get("shares")
+                        conv_amount = amount
+
+                        if conv_direction == "conversion_out" and explicit_units is not None:
+                            try:
+                                units = abs(float(explicit_units))
+                                confirmed_units += units
+                                projected_units += units
+                                if conv_amount is not None:
+                                    confirmed_cost += conv_amount
+                                    projected_cost += conv_amount
+                                has_conversion_or_refund_estimated = True
+                                confirmation_sources.add("conversion_estimated")
+                            except (ValueError, TypeError):
+                                has_manual_review = True
+                                manual_review_txn_count += 1
+                        elif conv_direction == "conversion_in" and explicit_units is not None:
+                            try:
+                                units_out = abs(float(explicit_units))
+                                if confirmed_units >= units_out:
+                                    cost_of_out = confirmed_cost * (units_out / confirmed_units) if confirmed_units > 0 else 0
+                                    confirmed_units -= units_out
+                                    projected_units -= units_out
+                                    confirmed_cost -= cost_of_out
+                                    projected_cost -= cost_of_out
+                                else:
+                                    confirmed_units = max(0, confirmed_units - units_out)
+                                    projected_units = max(0, projected_units - units_out)
+                                has_conversion_or_refund_estimated = True
+                                confirmation_sources.add("conversion_estimated")
+                            except (ValueError, TypeError):
+                                has_manual_review = True
+                                manual_review_txn_count += 1
+                        else:
+                            has_manual_review = True
+                            manual_review_txn_count += 1
+                            reconstruction_notes.append({
+                                "fund_code": fund_code,
+                                "note": "conversion estimated but missing direction/units",
+                                "transaction_id": txn.get("transaction_id"),
+                            })
+                    else:
+                        # ambiguous or manual_review_required → skip from units
+                        has_manual_review = True
+                        manual_review_txn_count += 1
+                        reconstruction_notes.append({
+                            "fund_code": fund_code,
+                            "note": "conversion transaction requires manual review",
+                            "transaction_id": txn.get("transaction_id"),
+                        })
 
                 elif action == "refund":
-                    # Refund is ambiguous -> manual review, exclude from units
-                    has_manual_review = True
-                    manual_review_txn_count += 1
-                    reconstruction_notes.append({
-                        "fund_code": fund_code,
-                        "note": "refund transaction requires manual review",
-                        "transaction_id": txn.get("transaction_id"),
-                    })
+                    # Check special_transaction_status for computability
+                    special_status = txn.get("special_transaction_status", "manual_review_required")
+                    if special_status == "computable":
+                        # Refund with amount and matching reference → add back units
+                        refund_amount = amount
+                        refund_units = txn.get("units") or txn.get("shares")
+                        if refund_units is not None:
+                            try:
+                                units_back = abs(float(refund_units))
+                                confirmed_units += units_back
+                                projected_units += units_back
+                                if refund_amount is not None:
+                                    confirmed_cost += refund_amount
+                                    projected_cost += refund_amount
+                                confirmation_sources.add("refund_computable")
+                            except (ValueError, TypeError):
+                                has_manual_review = True
+                                manual_review_txn_count += 1
+                        elif refund_amount is not None:
+                            # Amount known but units unknown → add to cost only
+                            confirmed_cost += refund_amount
+                            projected_cost += refund_amount
+                            confirmation_sources.add("refund_computable")
+                        else:
+                            has_manual_review = True
+                            manual_review_txn_count += 1
+                    elif special_status == "estimated":
+                        # Estimated refund: apply with uncertainty
+                        refund_amount = amount
+                        refund_units = txn.get("units") or txn.get("shares")
+                        if refund_units is not None:
+                            try:
+                                units_back = abs(float(refund_units))
+                                confirmed_units += units_back
+                                projected_units += units_back
+                                if refund_amount is not None:
+                                    confirmed_cost += refund_amount
+                                    projected_cost += refund_amount
+                                has_conversion_or_refund_estimated = True
+                                confirmation_sources.add("refund_estimated")
+                            except (ValueError, TypeError):
+                                has_manual_review = True
+                                manual_review_txn_count += 1
+                        elif refund_amount is not None:
+                            confirmed_cost += refund_amount
+                            projected_cost += refund_amount
+                            confirmation_sources.add("refund_estimated")
+                        else:
+                            has_manual_review = True
+                            manual_review_txn_count += 1
+                    else:
+                        # ambiguous or manual_review_required → skip from units
+                        has_manual_review = True
+                        manual_review_txn_count += 1
+                        reconstruction_notes.append({
+                            "fund_code": fund_code,
+                            "note": "refund transaction requires manual review",
+                            "transaction_id": txn.get("transaction_id"),
+                        })
 
             # Process pending transactions
             elif conf_type == "pending_confirmation":
@@ -344,7 +543,7 @@ def reconstruct_portfolio(
             # Process projected transactions
             elif conf_type == "projected" and action == "buy" and amount is not None:
                     # Add to projected but not to confirmed
-                    txn_date = _parse_date(trade_date)
+                    txn_date = _parse_date(effective_td)
                     txn_nav = _get_nav_on_date(nav_records, txn_date) if txn_date else None
                     net_amount = txn.get("net_amount") or amount
 
@@ -404,6 +603,32 @@ def reconstruct_portfolio(
             data_quality_flags.append("partial_trade_nav_coverage")
         if has_manual_review:
             data_quality_flags.append("has_manual_review_transactions")
+        if has_conversion_or_refund_estimated:
+            data_quality_flags.append("conversion_or_refund_estimated")
+        # Valuation output hard gate: mark positions where valuation is blocked
+        if valuation_type == "cashflow_only":
+            data_quality_flags.append("valuation_blocked_cashflow_only")
+        if valuation_type == "none" and has_cost:
+            data_quality_flags.append("valuation_blocked_no_nav")
+
+        # Fee schedule status
+        fund_fee_schedule = fee_schedules.get(fund_code, {})
+        fee_provenance = fund_fee_schedule.get("provenance", {}).get("source", "unavailable")
+        if fee_provenance == "manual_override":
+            fee_schedule_status = "override_provided"
+        elif fund_fee_schedule.get("purchase_fee") is not None or fund_fee_schedule.get("redemption_fee_tiers"):
+            fee_schedule_status = "available"
+        else:
+            fee_schedule_status = "unavailable"
+
+        # Check for redemption fee unknown
+        redemption_fee_unknown = False
+        if fee_schedule_status == "unavailable":
+            redemption_fee_unknown = True
+            data_quality_flags.append("redemption_fee_unknown")
+        elif not fund_fee_schedule.get("redemption_fee_tiers"):
+            redemption_fee_unknown = True
+            data_quality_flags.append("redemption_fee_unknown")
 
         # NAV coverage diagnostics
         nav_cov = compute_nav_coverage(
@@ -443,6 +668,13 @@ def reconstruct_portfolio(
         confirmed_avg_cost = _safe_round(confirmed_cost / confirmed_units) if confirmed_units > 0 else None
         confirmed_cost_basis = _safe_round(confirmed_cost)
 
+        # Valuation coverage annotation for partial estimated positions
+        # When estimated with partial NAV coverage, mark the ratio explicitly
+        valuation_coverage_ratio = None
+        if valuation_type == "estimated" and partial_units_estimated:
+            valuation_coverage_ratio = trade_nav_coverage_ratio
+            data_quality_flags.append(f"valuation_coverage_{trade_nav_coverage_ratio:.0%}")
+
         confirmed_pos = {
             "fund_code": fund_code,
             "units": _safe_round(confirmed_units, 4) if confirmed_units > 0 else None,
@@ -457,6 +689,7 @@ def reconstruct_portfolio(
             "valuation_type": valuation_type,
             "valuation_source": valuation_source,
             "valuation_quality": valuation_quality,
+            "valuation_coverage_ratio": valuation_coverage_ratio,
             "nav_coverage_status": nav_coverage_status,
             "trade_nav_coverage_ratio": trade_nav_coverage_ratio,
             "trade_nav_missing_count": nav_missing_count,
@@ -471,6 +704,8 @@ def reconstruct_portfolio(
             "dividends_received": _safe_round(dividends) if dividends > 0 else None,
             "fees_paid": _safe_round(fees_paid) if fees_paid > 0 else None,
             "fee_unknown": fee_unknown,
+            "fee_schedule_status": fee_schedule_status,
+            "redemption_fee_unknown": redemption_fee_unknown,
             "pending_amount": _safe_round(pending_amount) if pending_amount > 0 else None,
             "has_manual_review": has_manual_review,
             "confirmation_sources": sorted(confirmation_sources),
@@ -565,6 +800,7 @@ def reconstruct_portfolio(
                 "none_count": sum(1 for p in confirmed_positions if p["valuation_type"] == "none"),
                 "units_estimated_count": sum(1 for p in confirmed_positions if p.get("units_estimated") is not None),
                 "partial_nav_coverage_count": sum(1 for p in confirmed_positions if p.get("units_source") == "partial_trade_date_nav"),
+                "redemption_fee_unknown_count": sum(1 for p in confirmed_positions if p.get("redemption_fee_unknown")),
             },
         },
         "source_notes": "Auto-reconstructed from Alipay evidence and investment plan schedule rules",
