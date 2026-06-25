@@ -583,13 +583,24 @@ evidence package including `agent_context.md`, `agent_context.json`,
 
 ### First run (full pipeline)
 
+**Real analysis** (recommended for actual portfolio review):
+
+```bash
+bin/fund-agent-personal-run --no-skip-akshare --skip-news
+```
+
+`--no-skip-akshare` enables live NAV provider for real valuations.
+`--skip-news` remains on by default — news requires explicit user request.
+
+**Offline / debugging** (deterministic, no live data):
+
 ```bash
 bin/fund-agent-personal-run --skip-akshare --skip-news
 ```
 
-`--skip-akshare` and `--skip-news` are **on by default** (deterministic mode).
-Live data should be injected by the host/agent explicitly — the CLI does not
-become a live research system.
+If the NAV provider is unavailable, positions without NAV data will be
+marked `cashflow_only` — no valuation will be fabricated. Do NOT treat
+offline results as real analysis.
 
 ### Re-read existing run (skip pipeline)
 
@@ -618,6 +629,59 @@ Agents consuming this evidence package MUST NOT:
 - Treat `cashflow_only` as current valuation
 - Fabricate `fund_code`, NAV, or holdings
 - Leak private paths or real transaction details
+
+### Hard analysis constraints (v0.10.6)
+
+These constraints are **absolute** — no data availability, user request, or
+pipeline stage overrides them:
+
+1. **Identity mismatch blocks valuation.** When a fund has
+   `identity_verification_status=code_name_mismatch`, the agent MUST NOT
+   output valuation, PnL, or yield for that fund. The position is
+   `valuation_type=none` and `valuation_if_identity_mismatch` is in
+   `unsafe_to_infer`. The agent should ask the user to verify
+   `fund_identity_overrides` instead.
+
+2. **Incomplete NAV/units/trade-date NAV → no market value, PnL, or yield.**
+   When a position has `valuation_type=cashflow_only` or `nav_coverage_status`
+   indicating missing trade-date NAV, the agent MUST NOT output market value,
+   PnL (盈亏), or yield (收益率). These positions have `current_value=None` and
+   `valuation_blocked_*` in `data_quality`. The agent should explain the gap
+   and suggest providing NAV overrides or explicit units.
+
+3. **Fee/redemption rate unknown → no confirmed PnL.** When
+   `redemption_fee_unknown=True` or `fee_schedule_status=unavailable` for a
+   position, the agent MUST NOT output confirmed PnL. It may state
+   "estimated PnL before fees" with an explicit caveat. The agent should ask
+   whether `fee_overrides` can be provided.
+
+4. **Conversion/refund computability.** The agent MUST NOT assume all
+   conversions/refunds are computable. Check `special_transaction_status`:
+   - `computable`: units change is deterministic — may include in analysis
+   - `estimated`: units change is approximate — include with caveat
+   - `ambiguous` / `manual_review_required`: exclude from unit calculations,
+     ask user to confirm
+
+5. **15:00 cutoff for NAV lookup.** Transactions submitted before 15:00 on a
+   trading day use T-date NAV; at or after 15:00 use T+1 NAV. The pipeline
+   computes `effective_trade_date` from `submitted_at` and the 15:00 cutoff.
+   The agent MUST NOT ignore this cutoff when interpreting trade-date NAV
+   coverage or unit calculations.
+
+6. **Agent report must not exceed evidence boundary.** The agent MUST NOT
+   output analysis that is more certain than the underlying evidence allows.
+   Specifically:
+   - Do not state market value when `valuation_type` is not `estimated`
+   - Do not state confirmed PnL when `redemption_fee_unknown=True`
+   - Do not state yield/return when NAV coverage is partial
+   - Do not state portfolio total value when some positions are blocked
+   - Always qualify uncertain findings with the data quality flag or
+     confidence level from the artifact
+
+7. **Identity mismatch in unsafe_to_infer.** When `identity_mismatch` is in
+   `reason_codes`, `valuation_if_identity_mismatch` appears in
+   `unsafe_to_infer`. The agent MUST NOT infer valuation for mismatched funds
+   even if the fund_code appears in the position list.
 
 ### Agent should prioritize
 
