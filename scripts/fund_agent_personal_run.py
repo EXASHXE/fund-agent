@@ -129,6 +129,30 @@ def _resolve_existing_summary(args: argparse.Namespace) -> tuple[dict[str, Any],
     return None
 
 
+def _resolve_skip_akshare(args: argparse.Namespace) -> bool:
+    """Determine skip_akshare based on execution_mode and explicit flags.
+
+    Rules:
+    - real_analysis: skip_akshare=False (live NAV required).
+      If user explicitly passes --skip-akshare, fail fast.
+    - offline_debug: skip_akshare=True (deterministic, no live data).
+    """
+    execution_mode = getattr(args, "execution_mode", "real_analysis")
+
+    if execution_mode == "real_analysis":
+        if args._explicit_skip_akshare:
+            print(
+                "ERROR: --skip-akshare is not allowed with --execution-mode real_analysis.\n"
+                "For offline/deterministic mode, use --execution-mode offline_debug.",
+                file=sys.stderr,
+            )
+            return True  # Will be caught by caller
+        return False  # real_analysis → no skip → live NAV
+    else:
+        # offline_debug
+        return True  # skip akshare
+
+
 def _build_run_manifest(
     *,
     run_id: str,
@@ -140,6 +164,7 @@ def _build_run_manifest(
     transaction_source: str,
     private_data_configured: bool,
     health: dict[str, Any],
+    execution_mode: str = "real_analysis",
 ) -> dict[str, Any]:
     return {
         "schema_version": "fund_agent_run_manifest.v1",
@@ -153,11 +178,14 @@ def _build_run_manifest(
         "confidence_level": health.get("confidence_level", "unavailable"),
         "reason_codes": health.get("reason_codes", []),
         "mode": "deterministic" if (skip_akshare and skip_news) else "live",
+        "execution_mode": execution_mode,
         "flags": {
             "skip_akshare": skip_akshare,
             "skip_news": skip_news,
             "transaction_source": transaction_source,
         },
+        "canonical_entrypoint": True,
+        "invoked_script": "fund_agent_personal_run",
         "artifacts": artifacts,
     }
 
@@ -243,6 +271,17 @@ def run_personal(args: argparse.Namespace) -> int:
             return rc
         # No existing summary found — fall through to full pipeline
 
+    # ── Execution mode resolution ─────────────────────────────────────
+    execution_mode = getattr(args, "execution_mode", "real_analysis")
+    skip_akshare = _resolve_skip_akshare(args)
+
+    # Fail fast if real_analysis + explicit --skip-akshare
+    if execution_mode == "real_analysis" and args._explicit_skip_akshare:
+        return 1
+
+    # Override args.skip_akshare with the resolved value
+    args.skip_akshare = skip_akshare
+
     run_id = args.run_id or _generate_run_id()
     private_data = Path(args.private_data_dir) if args.private_data_dir else REPO_ROOT / "private_data"
     output_dir = Path(args.output_dir) if args.output_dir else REPO_ROOT / "local_reports"
@@ -268,6 +307,7 @@ def run_personal(args: argparse.Namespace) -> int:
         "--output-dir", str(run_dir),
         "--output-report", str(run_dir / "report.md"),
         "--transaction-source", args.transaction_source,
+        "--invoked-by-personal-run",
     ]
     if args.skip_akshare:
         e2e_argv.append("--skip-akshare")
@@ -276,7 +316,8 @@ def run_personal(args: argparse.Namespace) -> int:
     if args.dry_run:
         e2e_argv.append("--dry-run")
 
-    e2e_rc = e2e_main(e2e_argv)
+    e2e_env = {"FUND_AGENT_CANONICAL_PERSONAL_RUN": "1"}
+    e2e_rc = e2e_main(e2e_argv, env_overrides=e2e_env)
 
     # ── Step 2b: Load holdings snapshot (if available) ────────────────
     holdings_snapshot = _load_holdings_snapshot(args, private_data)
@@ -434,6 +475,7 @@ def run_personal(args: argparse.Namespace) -> int:
         transaction_source=args.transaction_source,
         private_data_configured=private_data.is_dir(),
         health=health,
+        execution_mode=execution_mode,
     )
     _write_json(run_dir / "run_manifest.json", manifest)
 
@@ -481,10 +523,22 @@ def main(argv: list[str] | None = None) -> int:
         help="Transaction source: auto (default), alipay, or portfolio_input",
     )
     parser.add_argument(
+        "--execution-mode",
+        choices=["real_analysis", "offline_debug"],
+        default="real_analysis",
+        help=(
+            "Execution mode: real_analysis (default, live NAV) or "
+            "offline_debug (deterministic, no live data)"
+        ),
+    )
+    parser.add_argument(
         "--skip-akshare",
         action="store_true",
-        default=True,
-        help="Skip AkShare-dependent steps (default: True, deterministic mode)",
+        default=False,
+        help=(
+            "Skip AkShare-dependent steps. NOT allowed with real_analysis mode; "
+            "use --execution-mode offline_debug instead."
+        ),
     )
     parser.add_argument(
         "--no-skip-akshare",
@@ -552,6 +606,8 @@ def main(argv: list[str] | None = None) -> int:
         help="Generate fix-it package with data templates for missing information",
     )
     args = parser.parse_args(argv)
+    # Track whether --skip-akshare was explicitly passed (not just the default)
+    args._explicit_skip_akshare = "--skip-akshare" in (argv or sys.argv[1:])
     return run_personal(args)
 
 
@@ -692,10 +748,13 @@ def _build_fixit_readme(
         "## Re-running",
         "",
         "```bash",
-        "python scripts/fund_agent_personal_run.py \\",
+        "bin/fund-agent-personal-run \\",
         "  --private-data-dir private_data \\",
         "  --output-dir local_reports \\",
-        "  --transaction-source auto",
+        "  --transaction-source auto \\",
+        "  --execution-mode real_analysis \\",
+        "  --skip-news \\",
+        "  --generate-fixit-package",
         "```",
     ]
     return "\n".join(lines)

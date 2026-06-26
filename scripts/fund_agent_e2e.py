@@ -429,7 +429,58 @@ def run_pipeline(args: argparse.Namespace) -> int:
     private_data = Path(args.private_data_dir) if args.private_data_dir else REPO_ROOT / "private_data"
     run_id = args.run_id or f"e2e-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
     run_dir = Path(args.output_dir) if args.output_dir else REPO_ROOT / "eval_workspace" / "runs" / run_id
-    output_report = Path(args.output_report) if args.output_report else REPO_ROOT / "local_reports" / "real_portfolio_report.md"
+
+    # M7.7: For personal/private-data analysis, --output-report is mandatory.
+    # The legacy flat path local_reports/real_portfolio_report.md is forbidden.
+    is_canonical = (
+        os.environ.get("FUND_AGENT_CANONICAL_PERSONAL_RUN") == "1"
+        or getattr(args, "invoked_by_personal_run", False)
+    )
+    is_personal_data = private_data.name == "private_data" and private_data.is_dir()
+    has_explicit_report = bool(args.output_report)
+
+    if not has_explicit_report:
+        if is_canonical:
+            # personal-run must always specify --output-report; this is a bug
+            print(
+                "ERROR: canonical personal-run must specify --output-report. "
+                "This is an internal error — please report.",
+                file=sys.stderr,
+            )
+            return 1
+        if is_personal_data and not getattr(args, "allow_noncanonical_test_run", False):
+            print(
+                "ERROR: --output-report is required for personal/private-data analysis. "
+                "Use bin/fund-agent-personal-run which sets this automatically.",
+                file=sys.stderr,
+            )
+            return 1
+
+    if args.output_report:
+        output_report = Path(args.output_report)
+    elif getattr(args, "allow_noncanonical_test_run", False):
+        # Test runs without --output-report default to run_dir instead of legacy flat path
+        output_report = run_dir / "report.md"
+    else:
+        output_report = REPO_ROOT / "local_reports" / "real_portfolio_report.md"
+
+    # M7.7: Block the legacy flat report path — always, even with --allow-noncanonical-test-run.
+    # The flat path is inherently wrong for personal analysis; tests should use a run_dir path.
+    # Check both exact repo-root match and any path ending in local_reports/real_portfolio_report.md
+    legacy_flat = REPO_ROOT / "local_reports" / "real_portfolio_report.md"
+    is_legacy_flat_path = (
+        output_report.resolve() == legacy_flat.resolve()
+        or output_report.name == "real_portfolio_report.md"
+        and output_report.parent.name == "local_reports"
+    )
+    if is_legacy_flat_path and is_personal_data:
+        print(
+            "ERROR: local_reports/real_portfolio_report.md is forbidden for personal analysis. "
+            "Use bin/fund-agent-personal-run which outputs to local_reports/<run_id>/report.md.",
+            file=sys.stderr,
+        )
+        return 1
+
     summary_path = run_dir / "e2e_summary.json"
     dry_run = args.dry_run
 
@@ -947,7 +998,93 @@ def run_pipeline(args: argparse.Namespace) -> int:
     return 1 if pipeline.errors else 0
 
 
-def main(argv: list[str] | None = None) -> int:
+def _check_noncanonical_personal_analysis(args: argparse.Namespace) -> int | None:
+    """M7.7: Fail fast if e2e is called directly for personal/private-data analysis.
+
+    Returns None if the invocation is allowed, or a non-zero exit code if blocked.
+    """
+    # Canonical provenance means personal-run invoked this — always allowed
+    has_canonical_env = os.environ.get("FUND_AGENT_CANONICAL_PERSONAL_RUN") == "1"
+    has_canonical_arg = getattr(args, "invoked_by_personal_run", False)
+    if has_canonical_env or has_canonical_arg:
+        return None
+
+    # Explicit test override
+    if getattr(args, "allow_noncanonical_test_run", False):
+        return None
+
+    # Detect personal/private-data analysis signals
+    private_data_dir = args.private_data_dir or str(REPO_ROOT / "private_data")
+    private_data_path = Path(private_data_dir)
+
+    # Signal 1: --private-data-dir points to "private_data"
+    is_private_data_dir = private_data_path.name == "private_data" and private_data_path.is_dir()
+
+    # Signal 2: --transaction-source is alipay or auto (implies real transactions)
+    txn_source = getattr(args, "transaction_source", "auto")
+    is_personal_txn_source = txn_source in ("alipay", "auto")
+
+    # Signal 3: run_id starts with "personal-"
+    run_id = args.run_id or ""
+    is_personal_run_id = run_id.startswith("personal-")
+
+    # Signal 4: output report is the legacy flat path
+    output_report = args.output_report or ""
+    is_legacy_flat_report = "real_portfolio_report.md" in output_report
+
+    # Signal 5: private_data directory contains real portfolio artifacts
+    has_real_portfolio_artifacts = False
+    if is_private_data_dir:
+        artifact_indicators = [
+            "alipay_record_*.csv",
+            "portfolio_input.private.json",
+            "fund_identity_overrides.private.yaml",
+            "nav_overrides.private.json",
+        ]
+        for pattern in artifact_indicators:
+            if list(private_data_path.glob(pattern)):
+                has_real_portfolio_artifacts = True
+                break
+
+    # Determine if this looks like personal analysis
+    personal_signals = sum([
+        is_private_data_dir,
+        is_personal_txn_source,
+        is_personal_run_id,
+        is_legacy_flat_report,
+        has_real_portfolio_artifacts,
+    ])
+
+    # Need at least 2 signals to block (avoid false positives on generic e2e)
+    if personal_signals < 2:
+        return None
+
+    # Also block if no --output-report and private data detected (legacy flat path fallback)
+    if not args.output_report and (is_private_data_dir or has_real_portfolio_artifacts):
+        personal_signals += 1
+
+    if personal_signals >= 2:
+        print(
+            "ERROR [non_canonical_personal_analysis_entrypoint]:\n"
+            "Personal portfolio analysis must use bin/fund-agent-personal-run.\n"
+            "Do not call scripts/fund_agent_e2e.py directly for private_data analysis.\n"
+            "\n"
+            "Suggested command:\n"
+            "  bin/fund-agent-personal-run \\\n"
+            "    --private-data-dir private_data \\\n"
+            "    --output-dir local_reports \\\n"
+            "    --transaction-source auto \\\n"
+            "    --execution-mode real_analysis \\\n"
+            "    --skip-news \\\n"
+            "    --generate-fixit-package",
+            file=sys.stderr,
+        )
+        return 1
+
+    return None
+
+
+def main(argv: list[str] | None = None, *, env_overrides: dict[str, str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="fund-agent-e2e",
         description="fund-agent E2E pipeline runner",
@@ -976,7 +1113,30 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Print only the personal health report section from e2e_summary.json (does not skip pipeline steps)",
     )
+    parser.add_argument(
+        "--invoked-by-personal-run",
+        action="store_true",
+        help=argparse.SUPPRESS,  # Internal: set by fund-agent-personal-run for provenance
+    )
+    parser.add_argument(
+        "--allow-noncanonical-test-run",
+        action="store_true",
+        help=(
+            "Allow non-canonical invocation for tests/synthetic fixtures only. "
+            "NOT for personal analysis with real private data."
+        ),
+    )
     args = parser.parse_args(argv)
+
+    # ── M7.7: Non-canonical personal analysis guard ───────────────────
+    if env_overrides:
+        for k, v in env_overrides.items():
+            os.environ[k] = v
+
+    guard_result = _check_noncanonical_personal_analysis(args)
+    if guard_result is not None:
+        return guard_result
+
     return run_pipeline(args)
 
 
