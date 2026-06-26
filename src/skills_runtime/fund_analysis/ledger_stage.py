@@ -113,6 +113,15 @@ def portfolio_from_derived_snapshot(
         if cv is not None:
             total_value += cv
             has_any_valuation = True
+    # Check for partial diagnostic from confirmed_portfolio summary
+    cp_summary = derived_snapshot.get("confirmed_portfolio", {}).get("summary", {})
+    is_partial_diagnostic = bool(cp_summary.get("is_partial_diagnostic"))
+    portfolio_valuation_status = cp_summary.get("portfolio_valuation_status")
+    if portfolio_valuation_status in ("partial_diagnostic_only", "unavailable"):
+        is_partial_diagnostic = True
+    # If no positions have valuation, it's also partial
+    if not has_any_valuation and len(positions) > 0:
+        is_partial_diagnostic = True
     return {
         "as_of_date": derived_snapshot.get("as_of_date", payload.get("as_of_date", "")),
         "total_value": total_value if has_any_valuation else None,
@@ -129,6 +138,8 @@ def portfolio_from_derived_snapshot(
             }
             for pos in positions
         ],
+        "is_partial_diagnostic": is_partial_diagnostic,
+        "portfolio_valuation_status": portfolio_valuation_status,
     }
 
 

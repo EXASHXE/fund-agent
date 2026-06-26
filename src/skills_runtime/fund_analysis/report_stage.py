@@ -115,6 +115,9 @@ def assemble_analysis_report_and_artifacts(
         artifacts["derived_portfolio_snapshot"] = derived_snapshot
         artifacts["ledger_cashflow_summary"] = derived_snapshot.get("cashflow_summary")
         artifacts["source_of_truth"] = "derived_from_transactions"
+        # Pass confirmed_portfolio for partial diagnostic detection (M7.4)
+        if "confirmed_portfolio" in derived_snapshot:
+            artifacts["confirmed_portfolio"] = derived_snapshot["confirmed_portfolio"]
 
         artifacts["ledger_quality_summary"] = build_ledger_quality_summary(
             derived_snapshot,

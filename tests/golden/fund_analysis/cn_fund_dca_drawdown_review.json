@@ -950,6 +950,8 @@
         "as_of_date": "2026-03-31",
         "cash_available": 12000.0,
         "current_value_likely_missing": false,
+        "is_partial_diagnostic": false,
+        "portfolio_valuation_status": null,
         "position_count": 3,
         "position_weights": {
           "SYNDCA001": 0.45,
@@ -2273,6 +2275,8 @@
       "as_of_date": "2026-03-31",
       "cash_available": 12000.0,
       "current_value_likely_missing": false,
+      "is_partial_diagnostic": false,
+      "portfolio_valuation_status": null,
       "position_count": 3,
       "position_weights": {
         "SYNDCA001": 0.45,
@@ -3511,6 +3515,8 @@
           "as_of_date": "2026-03-31",
           "cash_available": 12000.0,
           "current_value_likely_missing": false,
+          "is_partial_diagnostic": false,
+          "portfolio_valuation_status": null,
           "position_count": 3,
           "position_weights": {
             "SYNDCA001": 0.45,

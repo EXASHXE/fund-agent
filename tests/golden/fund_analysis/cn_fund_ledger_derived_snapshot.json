@@ -863,6 +863,8 @@
         "as_of_date": "2026-03-31",
         "cash_available": 7000.0,
         "current_value_likely_missing": false,
+        "is_partial_diagnostic": false,
+        "portfolio_valuation_status": null,
         "position_count": 2,
         "position_weights": {
           "SYNLED001": 0.661528,
@@ -1992,6 +1994,8 @@
       "as_of_date": "2026-03-31",
       "cash_available": 7000.0,
       "current_value_likely_missing": false,
+      "is_partial_diagnostic": false,
+      "portfolio_valuation_status": null,
       "position_count": 2,
       "position_weights": {
         "SYNLED001": 0.661528,
@@ -3024,6 +3028,8 @@
           "as_of_date": "2026-03-31",
           "cash_available": 7000.0,
           "current_value_likely_missing": false,
+          "is_partial_diagnostic": false,
+          "portfolio_valuation_status": null,
           "position_count": 2,
           "position_weights": {
             "SYNLED001": 0.661528,

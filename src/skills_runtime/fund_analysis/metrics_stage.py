@@ -256,6 +256,14 @@ def build_portfolio_summary(
         isinstance(p, dict) and _has_valuation(p)
         for p in positions
     ) if positions else False
+    # Check for partial diagnostic from reconstruction output
+    is_partial_diagnostic = bool(portfolio.get("is_partial_diagnostic"))
+    portfolio_valuation_status = portfolio.get("portfolio_valuation_status")
+    if portfolio_valuation_status in ("partial_diagnostic_only", "unavailable"):
+        is_partial_diagnostic = True
+    # If no positions have valuation, it's also partial
+    if not has_valuation and len(fund_codes) > 0:
+        is_partial_diagnostic = True
     return {
         "as_of_date": portfolio.get("as_of_date", ""),
         "total_value": float(total_value) if total_value is not None else None,
@@ -263,6 +271,8 @@ def build_portfolio_summary(
         "position_count": len(fund_codes),
         "position_weights": position_weights,
         "current_value_likely_missing": not has_valuation,
+        "is_partial_diagnostic": is_partial_diagnostic,
+        "portfolio_valuation_status": portfolio_valuation_status,
     }
 
 

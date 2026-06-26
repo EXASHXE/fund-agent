@@ -552,6 +552,8 @@
         "as_of_date": "2026-06-01",
         "cash_available": 20000.0,
         "current_value_likely_missing": false,
+        "is_partial_diagnostic": false,
+        "portfolio_valuation_status": null,
         "position_count": 1,
         "position_weights": {
           "110011": 0.15
@@ -1385,6 +1387,8 @@
       "as_of_date": "2026-06-01",
       "cash_available": 20000.0,
       "current_value_likely_missing": false,
+      "is_partial_diagnostic": false,
+      "portfolio_valuation_status": null,
       "position_count": 1,
       "position_weights": {
         "110011": 0.15
@@ -2248,6 +2252,8 @@
           "as_of_date": "2026-06-01",
           "cash_available": 20000.0,
           "current_value_likely_missing": false,
+          "is_partial_diagnostic": false,
+          "portfolio_valuation_status": null,
           "position_count": 1,
           "position_weights": {
             "110011": 0.15
