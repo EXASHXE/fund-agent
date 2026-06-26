@@ -19,7 +19,8 @@ class TestBinRunners:
 
     def test_e2e_dry_run(self):
         result = subprocess.run(
-            ["bash", str(BIN_DIR / "fund-agent-e2e"), "--dry-run"],
+            ["bash", str(BIN_DIR / "fund-agent-e2e"), "--dry-run",
+             "--allow-noncanonical-test-run"],
             capture_output=True, text=True, timeout=30,
         )
         assert result.returncode == 0, f"e2e --dry-run failed: {result.stderr}"

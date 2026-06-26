@@ -172,6 +172,7 @@ class TestE2ERunnerRealSmoke:
                 "--skip-news",
                 "--skip-akshare",
                 "--private-data-dir", str(private_data),
+                "--allow-noncanonical-test-run",
                 "--output-dir", str(output_dir),
                 "--output-report", str(report_path),
                 "--run-id", "test-smoke-001",
@@ -237,6 +238,7 @@ class TestE2ERunnerRealSmoke:
                 "--skip-news",
                 "--skip-akshare",
                 "--private-data-dir", str(private_data),
+                "--allow-noncanonical-test-run",
                 "--output-dir", str(output_dir),
                 "--run-id", "test-norm-001",
             ],
@@ -269,6 +271,7 @@ class TestE2ERunnerRealSmoke:
                 "--skip-news",
                 "--skip-akshare",
                 "--private-data-dir", str(private_data),
+                "--allow-noncanonical-test-run",
                 "--output-dir", str(output_dir),
                 "--run-id", "test-ledger-001",
             ],
@@ -301,6 +304,7 @@ class TestE2ERunnerRealSmoke:
                 "--skip-news",
                 "--skip-akshare",
                 "--private-data-dir", str(private_data),
+                "--allow-noncanonical-test-run",
                 "--output-dir", str(output_dir),
                 "--run-id", "test-staleref-001",
             ],
@@ -350,6 +354,7 @@ class TestE2ERunnerRealSmoke:
                 "--dry-run",
                 "--as-of", "2026-06-17",
                 "--private-data-dir", str(private_data),
+                "--allow-noncanonical-test-run",
                 "--output-dir", str(output_dir),
             ],
             capture_output=True, text=True, timeout=30,
@@ -365,6 +370,7 @@ class TestE2ERunnerRealSmoke:
             [
                 sys.executable, str(E2E_PY),
                 "--private-data-dir", str(private_data),
+                "--allow-noncanonical-test-run",
                 "--output-dir", str(output_dir),
                 "--output-report", str(output_dir / "report.md"),
             ],
@@ -399,6 +405,8 @@ class TestE2ERunnerRealSmoke:
             output_dir=str(output_dir),
             transaction_source="auto",
             health_report_only=False,
+            invoked_by_personal_run=False,
+            allow_noncanonical_test_run=True,
         )
 
         rc = e2e.run_pipeline(args)

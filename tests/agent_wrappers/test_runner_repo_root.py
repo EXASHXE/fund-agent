@@ -12,7 +12,8 @@ BIN_PRIV = REPO_ROOT / "bin" / "fund-agent-privacy-check"
 class TestRunnerRepoRoot:
     def test_e2e_dry_run_from_repo_root(self):
         result = subprocess.run(
-            ["bash", str(BIN_E2E), "--dry-run", "--as-of", "2026-06-17"],
+            ["bash", str(BIN_E2E), "--dry-run", "--as-of", "2026-06-17",
+             "--allow-noncanonical-test-run"],
             capture_output=True, text=True, timeout=30, cwd=str(REPO_ROOT),
         )
         assert result.returncode == 0, f"e2e dry-run failed: {result.stderr}"
@@ -21,14 +22,16 @@ class TestRunnerRepoRoot:
     def test_e2e_dry_run_from_subdirectory(self):
         sub = REPO_ROOT / "bin"
         result = subprocess.run(
-            ["bash", str(BIN_E2E), "--dry-run", "--as-of", "2026-06-17"],
+            ["bash", str(BIN_E2E), "--dry-run", "--as-of", "2026-06-17",
+             "--allow-noncanonical-test-run"],
             capture_output=True, text=True, timeout=30, cwd=str(sub),
         )
         assert result.returncode == 0, f"e2e dry-run from subdir failed: {result.stderr}"
 
     def test_e2e_dry_run_no_private_data_printed(self):
         result = subprocess.run(
-            ["bash", str(BIN_E2E), "--dry-run", "--as-of", "2026-06-17"],
+            ["bash", str(BIN_E2E), "--dry-run", "--as-of", "2026-06-17",
+             "--allow-noncanonical-test-run"],
             capture_output=True, text=True, timeout=30, cwd=str(REPO_ROOT),
         )
         # Should not print file contents — paths are OK
@@ -53,7 +56,8 @@ class TestRunnerRepoRoot:
 
     def test_e2e_reports_output_paths(self):
         result = subprocess.run(
-            ["bash", str(BIN_E2E), "--dry-run", "--as-of", "2026-06-17"],
+            ["bash", str(BIN_E2E), "--dry-run", "--as-of", "2026-06-17",
+             "--allow-noncanonical-test-run"],
             capture_output=True, text=True, timeout=30, cwd=str(REPO_ROOT),
         )
         assert "report" in result.stdout.lower() or "summary" in result.stdout.lower()
