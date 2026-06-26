@@ -10,7 +10,7 @@ A user may simply say: "请使用本仓库的 fund-analysis skill 做一次个�
 
 You must automatically:
 1. Read `skills/fund-analysis/SKILL.md` to identify the canonical workflow
-2. Run `bin/fund-agent-personal-run --no-skip-akshare --skip-news`
+2. Run `bin/fund-agent-personal-run --execution-mode real_analysis --skip-news --generate-fixit-package`
 3. Read `local_reports/<run_id>/agent_context.json`
 4. Output a contract-compliant analysis
 
@@ -22,11 +22,12 @@ All constraints are defined by the skill and this prompt.
 For personal portfolio analysis, the only entrypoint is:
 
 ```bash
-bin/fund-agent-personal-run --no-skip-akshare --skip-news
+bin/fund-agent-personal-run --execution-mode real_analysis --skip-news --generate-fixit-package
 ```
 
 You MUST NOT:
 - Call `FundAnalysisSkill().run()` directly
+- Call `scripts/fund_agent_e2e.py` directly for personal analysis
 - Construct `SkillInput` manually
 - Read `confirmed_portfolio.private.json` as final report input
 - Create `local_reports/run_skill_analysis.py`
@@ -40,10 +41,10 @@ pipeline failure, do NOT synthesize a report.
 
 # Real Analysis vs Offline Debugging
 
-- **Real analysis** should use `--no-skip-akshare` to enable NAV provider
+- **Real analysis** should use `--execution-mode real_analysis` to enable NAV provider
 - If the user requests real analysis but NAV data is unavailable, ask whether
   they can provide NAV overrides or allow a retry
-- Offline debugging results (`--skip-akshare`) must NOT be treated as real analysis
+- Offline debugging results (`--execution-mode offline_debug`) must NOT be treated as real analysis
 - If the provider is unavailable, do NOT fabricate NAV — mark as data gap
 
 # Input

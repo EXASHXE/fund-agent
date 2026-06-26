@@ -21,12 +21,15 @@ bin/fund-agent-personal-run \
   --private-data-dir private_data \
   --output-dir local_reports \
   --transaction-source auto \
-  --no-skip-akshare \
-  --skip-news
+  --execution-mode real_analysis \
+  --skip-news \
+  --generate-fixit-package
 ```
 
-`--no-skip-akshare` enables live NAV provider for real valuations.
+`--execution-mode real_analysis` (default) enables live NAV provider for real valuations.
+Equivalent to `--no-skip-akshare`. Do NOT pass `--skip-akshare` with real_analysis.
 `--skip-news` remains on by default — news requires explicit user request.
+`--generate-fixit-package` creates data completion templates.
 
 **Offline / debugging** (deterministic, no live data):
 
@@ -35,7 +38,7 @@ bin/fund-agent-personal-run \
   --private-data-dir private_data \
   --output-dir local_reports \
   --transaction-source auto \
-  --skip-akshare \
+  --execution-mode offline_debug \
   --skip-news
 ```
 
@@ -58,8 +61,9 @@ bin/fund-agent-personal-run \
 | `--private-data-dir` | `private_data/` | Private data directory (applies to both doctor and E2E) |
 | `--output-dir` | `local_reports/` | Output root directory |
 | `--transaction-source` | `auto` | Transaction source: auto, alipay, portfolio_input |
-| `--skip-akshare` | **on** | No live provider calls (deterministic mode) |
-| `--no-skip-akshare` | off | Allow AkShare-dependent steps (live mode) |
+| `--execution-mode` | `real_analysis` | `real_analysis` (live NAV) or `offline_debug` (deterministic) |
+| `--skip-akshare` | off (real_analysis) / on (offline_debug) | Override AkShare skip; NOT allowed with real_analysis |
+| `--no-skip-akshare` | off | Explicitly enable AkShare (redundant with real_analysis) |
 | `--skip-news` | **on** | No news research (deterministic mode) |
 | `--no-skip-news` | off | Allow news snapshot step (live mode) |
 | `--run-id` | auto-generated | Run identifier |
@@ -68,12 +72,29 @@ bin/fund-agent-personal-run \
 | `--agent-context-only` | off | Print only agent_context.md |
 | `--summary-path` | off | Path to existing e2e_summary.json (skip pipeline) |
 | `--run-dir` | off | Path to run directory containing e2e_summary.json (skip pipeline) |
+| `--generate-fixit-package` | off | Generate fix-it package with data templates |
 
 ### Deterministic Mode
 
-`--skip-akshare` and `--skip-news` are **on by default**. This keeps the core
-runtime deterministic and offline. Live data should be injected by the
-host/agent explicitly — the CLI does not become a live research system.
+`--execution-mode` controls the default behavior:
+- `real_analysis` (default): `skip_akshare=False`, `skip_news=True`. Live NAV
+  is enabled by default for real valuations.
+- `offline_debug`: `skip_akshare=True`, `skip_news=True`. Fully deterministic,
+  no live data calls.
+
+Live data should be injected by the host/agent explicitly — the CLI does not
+become a live research system. For real analysis, `--execution-mode real_analysis`
+is the default and recommended mode.
+
+### M7.7: Non-canonical invocation guard
+
+`scripts/fund_agent_e2e.py` is an internal pipeline component. If it detects
+personal/private-data analysis without canonical provenance (i.e., not invoked
+by `bin/fund-agent-personal-run`), it **fails fast** with error code
+`non_canonical_personal_analysis_entrypoint`.
+
+Tests can bypass this guard with `--allow-noncanonical-test-run` for synthetic
+fixtures only.
 
 ## --private-data-dir
 

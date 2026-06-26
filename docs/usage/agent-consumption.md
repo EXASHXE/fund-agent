@@ -10,13 +10,18 @@ agent host.
 **Real analysis** (recommended):
 
 ```bash
-bin/fund-agent-personal-run --no-skip-akshare --skip-news
+bin/fund-agent-personal-run \
+  --execution-mode real_analysis \
+  --skip-news \
+  --generate-fixit-package
 ```
 
 **Offline / debugging**:
 
 ```bash
-bin/fund-agent-personal-run --skip-akshare --skip-news
+bin/fund-agent-personal-run \
+  --execution-mode offline_debug \
+  --skip-news
 ```
 
 This produces a deterministic evidence package in `local_reports/<run_id>/`:
@@ -77,9 +82,12 @@ Structure the response as:
 - Fabricate `fund_code`, NAV, or holdings
 - Leak private paths or real transaction details
 - Call `FundAnalysisSkill().run()` directly for personal portfolio analysis
+- Call `scripts/fund_agent_e2e.py` directly for personal/private-data analysis
 - Construct `SkillInput` manually for personal portfolio analysis
 - Read `confirmed_portfolio.private.json` as final report input
 - Use `local_reports/skill_output` as personal analysis result
+- Use `local_reports/real_portfolio_report.md` as personal analysis output
+- Use `eval_workspace/runs/<run_id>` as user-visible final output
 - Convert missing `current_value` / `null` / `None` to `0.0`
 - Calculate P&L, HHI, max holding, contribution, or risk flags from `cashflow_only` positions
 - Continue analysis if `agent_context.json` is missing
@@ -90,7 +98,7 @@ A user may simply say: "请使用本仓库的 fund-analysis skill 做一次个�
 
 The agent must automatically:
 1. Read `skills/fund-analysis/SKILL.md` to identify the canonical workflow
-2. Run `bin/fund-agent-personal-run --no-skip-akshare --skip-news`
+2. Run `bin/fund-agent-personal-run --execution-mode real_analysis --skip-news --generate-fixit-package`
 3. Read `local_reports/<run_id>/agent_context.json`
 4. Output a contract-compliant analysis
 

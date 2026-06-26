@@ -48,15 +48,46 @@ bin/fund-agent-personal-run \
   --private-data-dir private_data \
   --output-dir local_reports \
   --transaction-source auto \
-  --no-skip-akshare \
-  --skip-news
+  --execution-mode real_analysis \
+  --skip-news \
+  --generate-fixit-package
 ```
 
-- `--no-skip-akshare` enables live NAV for real valuations (default for real analysis).
+- `--execution-mode real_analysis` (default) enables live NAV for real valuations.
+  Equivalent to `--no-skip-akshare`. Do NOT pass `--skip-akshare` with real_analysis.
 - `--skip-news` remains on — news requires explicit user request.
+- `--generate-fixit-package` creates data completion templates.
 - If the user specifies a different data directory, replace `--private-data-dir`.
 - If the user does not specify a directory, try `private_data` first; if it does not
   exist, ask the user.
+
+### Execution modes
+
+| Mode | NAV source | Use case |
+|------|-----------|----------|
+| `real_analysis` (default) | Live provider (AkShare) | Real portfolio analysis |
+| `offline_debug` | Deterministic only, no live data | Tests, development, debugging |
+
+- `real_analysis` defaults `skip_akshare=False` (live NAV).
+  Passing `--skip-akshare` with `real_analysis` causes a fail-fast error.
+- `offline_debug` defaults `skip_akshare=True` (no live data).
+  Positions without NAV data will be `cashflow_only` — no valuation fabricated.
+
+### M7.7: Non-canonical invocation guard
+
+`scripts/fund_agent_e2e.py` is an internal pipeline component. If it detects
+personal/private-data analysis without canonical provenance (i.e., not invoked
+by `bin/fund-agent-personal-run`), it **fails fast** with error code
+`non_canonical_personal_analysis_entrypoint`.
+
+This guard prevents:
+- Direct `scripts/fund_agent_e2e.py` calls with `--private-data-dir private_data`
+- Legacy flat report output to `local_reports/real_portfolio_report.md`
+- Missing `agent_context.json` / `agent_context.md` / `run_manifest.json`
+- Missing doctor, health report, and holdings snapshot overlay steps
+
+Tests can bypass this guard with `--allow-noncanonical-test-run` for synthetic
+fixtures only.
 
 ### Canonical artifact path
 
@@ -667,15 +698,22 @@ evidence package including `agent_context.md`, `agent_context.json`,
 **Real analysis** (recommended for actual portfolio review):
 
 ```bash
-bin/fund-agent-personal-run --no-skip-akshare --skip-news
+bin/fund-agent-personal-run \
+  --execution-mode real_analysis \
+  --skip-news \
+  --generate-fixit-package
 ```
 
-`--no-skip-akshare` enables live NAV provider for real valuations.
+`--execution-mode real_analysis` (default) enables live NAV provider for real valuations.
 `--skip-news` remains on by default — news requires explicit user request.
+`--generate-fixit-package` creates data completion templates.
 
 **Offline / debugging** (deterministic, no live data):
 
 ```bash
+bin/fund-agent-personal-run \
+  --execution-mode offline_debug \
+  --skip-news
 bin/fund-agent-personal-run --skip-akshare --skip-news
 ```
 

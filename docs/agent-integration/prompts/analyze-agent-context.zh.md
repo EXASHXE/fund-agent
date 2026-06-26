@@ -8,7 +8,7 @@
 
 你必须自动：
 1. 读取 `skills/fund-analysis/SKILL.md` 识别 canonical 工作流
-2. 运行 `bin/fund-agent-personal-run --no-skip-akshare --skip-news`
+2. 运行 `bin/fund-agent-personal-run --execution-mode real_analysis --skip-news --generate-fixit-package`
 3. 读取 `local_reports/<run_id>/agent_context.json`
 4. 输出符合 contract 的分析
 
@@ -19,7 +19,7 @@
 对于个人基金组合分析，唯一入口是：
 
 ```bash
-bin/fund-agent-personal-run --no-skip-akshare --skip-news
+bin/fund-agent-personal-run --execution-mode real_analysis --skip-news --generate-fixit-package
 ```
 
 FundAnalysisSkill 不是直接调用入口；personal-run 才是入口。
@@ -27,6 +27,7 @@ FundAnalysisSkill 作为内部 runtime 存在，也不得由 agent 绕过 pipeli
 
 你不得：
 - 直接调用 `FundAnalysisSkill().run()`
+- 直接调用 `scripts/fund_agent_e2e.py` 进行个人分析
 - 手动构造 `SkillInput`
 - 读取 `confirmed_portfolio.private.json` 作为最终报告输入
 - 创建 `local_reports/run_skill_analysis.py`
@@ -39,9 +40,9 @@ FundAnalysisSkill 作为内部 runtime 存在，也不得由 agent 绕过 pipeli
 
 # 真实分析 vs 离线调试
 
-- **真实分析**应使用 `--no-skip-akshare` 启用 NAV provider
+- **真实分析**应使用 `--execution-mode real_analysis` 启用 NAV provider
 - 如果用户要求真实分析但数据显示 NAV 不可用，应询问用户是否提供 NAV overrides 或允许重试
-- 离线调试结果（`--skip-akshare`）不能当作真实分析
+- 离线调试结果（`--execution-mode offline_debug`）不能当作真实分析
 - 如果 provider 不可用，不编估 NAV，标记为数据缺口
 
 # 输入
