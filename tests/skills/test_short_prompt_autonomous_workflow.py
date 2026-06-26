@@ -6,6 +6,9 @@ Verifies that:
 3. SKILL.md lists forbidden non-canonical paths
 4. Prompt templates support short user intent
 5. agent-consumption.md has short user intent section
+6. M7.7: execution-mode is documented
+7. M7.7: non-canonical guard is documented
+8. M7.7: e2e direct call is forbidden
 """
 
 from __future__ import annotations
@@ -91,3 +94,64 @@ class TestAgentConsumptionShortPrompt:
     def test_consumption_md_forbids_cashflow_only_in_calculations(self):
         content = _read(CONSUMPTION_MD)
         assert "cashflow_only" in content
+
+    def test_consumption_md_forbids_direct_e2e(self):
+        """M7.7: agent-consumption.md forbids calling e2e directly."""
+        content = _read(CONSUMPTION_MD)
+        assert "fund_agent_e2e.py" in content
+
+    def test_consumption_md_forbids_legacy_flat_report(self):
+        """M7.7: agent-consumption.md forbids real_portfolio_report.md."""
+        content = _read(CONSUMPTION_MD)
+        assert "real_portfolio_report.md" in content
+
+    def test_consumption_md_forbids_eval_workspace_as_final(self):
+        """M7.7: agent-consumption.md forbids eval_workspace as user-visible output."""
+        content = _read(CONSUMPTION_MD)
+        assert "eval_workspace" in content
+
+
+class TestSkillMdM77Enforcement:
+    """M7.7: Verify SKILL.md documents execution-mode and non-canonical guard."""
+
+    def test_skill_md_has_execution_mode(self):
+        content = _read(SKILL_MD)
+        assert "execution-mode" in content or "execution_mode" in content
+
+    def test_skill_md_has_real_analysis_mode(self):
+        content = _read(SKILL_MD)
+        assert "real_analysis" in content
+
+    def test_skill_md_has_offline_debug_mode(self):
+        content = _read(SKILL_MD)
+        assert "offline_debug" in content
+
+    def test_skill_md_documents_noncanonical_guard(self):
+        content = _read(SKILL_MD)
+        assert "non_canonical_personal_analysis_entrypoint" in content or \
+               "non-canonical" in content.lower()
+
+    def test_skill_md_forbids_skip_akshare_with_real_analysis(self):
+        content = _read(SKILL_MD)
+        # real_analysis should not allow --skip-akshare
+        assert "NOT" in content and "skip-akshare" in content and "real_analysis" in content
+
+    def test_skill_md_documents_allow_noncanonical_test_run(self):
+        content = _read(SKILL_MD)
+        assert "allow-noncanonical-test-run" in content or \
+               "allow_noncanonical_test_run" in content
+
+    def test_skill_md_real_analysis_command_uses_execution_mode(self):
+        content = _read(SKILL_MD)
+        # The canonical command should use --execution-mode real_analysis
+        # Find the code block with the canonical command
+        assert "--execution-mode" in content
+        assert "real_analysis" in content
+
+    def test_en_prompt_uses_execution_mode(self):
+        content = _read(PROMPT_EN)
+        assert "execution-mode" in content or "execution_mode" in content
+
+    def test_zh_prompt_uses_execution_mode(self):
+        content = _read(PROMPT_ZH)
+        assert "execution-mode" in content or "execution_mode" in content

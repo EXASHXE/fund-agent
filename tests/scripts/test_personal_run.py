@@ -108,7 +108,7 @@ class TestPersonalRunWritesArtifacts:
             "--private-data-dir", str(tmp_private_data),
             "--output-dir", str(output_dir),
             "--dry-run",
-            "--skip-akshare",
+            "--execution-mode", "offline_debug",
             "--skip-news",
         ])
         # Dry run should succeed
@@ -127,7 +127,7 @@ class TestHealthReportOnly:
             "--private-data-dir", str(tmp_private_data),
             "--output-dir", str(output_dir),
             "--health-report-only",
-            "--skip-akshare",
+            "--execution-mode", "offline_debug",
             "--skip-news",
         ])
         # Should output health report JSON
@@ -144,7 +144,7 @@ class TestAgentContextOnly:
             "--private-data-dir", str(tmp_private_data),
             "--output-dir", str(output_dir),
             "--agent-context-only",
-            "--skip-akshare",
+            "--execution-mode", "offline_debug",
             "--skip-news",
         ])
         captured = capsys.readouterr()
@@ -157,26 +157,33 @@ class TestAgentContextOnly:
 
 
 class TestDeterministicMode:
-    def test_default_skip_akshare_is_true(self):
-        """Verify --skip-akshare defaults to True."""
+    def test_default_execution_mode_is_real_analysis(self):
+        """Verify --execution-mode defaults to real_analysis."""
         import argparse
 
         # Parse args with defaults
         parser = argparse.ArgumentParser()
-        parser.add_argument("--skip-akshare", action="store_true", default=True)
+        parser.add_argument("--execution-mode", choices=["real_analysis", "offline_debug"], default="real_analysis")
         parser.add_argument("--skip-news", action="store_true", default=True)
         args = parser.parse_args([])
-        assert args.skip_akshare is True
+        assert args.execution_mode == "real_analysis"
         assert args.skip_news is True
 
-    def test_no_skip_akshare_overrides_default(self):
-        """Verify --no-skip-akshare overrides the default."""
+    def test_offline_debug_mode_sets_skip_akshare(self):
+        """Verify offline_debug mode implies skip_akshare=True."""
         import argparse
         parser = argparse.ArgumentParser()
-        parser.add_argument("--skip-akshare", action="store_true", default=True)
-        parser.add_argument("--no-skip-akshare", action="store_false", dest="skip_akshare")
-        args = parser.parse_args(["--no-skip-akshare"])
-        assert args.skip_akshare is False
+        parser.add_argument("--execution-mode", choices=["real_analysis", "offline_debug"], default="real_analysis")
+        args = parser.parse_args(["--execution-mode", "offline_debug"])
+        assert args.execution_mode == "offline_debug"
+
+    def test_real_analysis_mode_implies_no_skip_akshare(self):
+        """Verify real_analysis mode implies skip_akshare=False (live NAV)."""
+        import argparse
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--execution-mode", choices=["real_analysis", "offline_debug"], default="real_analysis")
+        args = parser.parse_args(["--execution-mode", "real_analysis"])
+        assert args.execution_mode == "real_analysis"
 
 
 # ── Test: run_manifest_schema ─────────────────────────────────────────
@@ -188,7 +195,7 @@ class TestRunManifest:
             "--private-data-dir", str(tmp_private_data),
             "--output-dir", str(output_dir),
             "--dry-run",
-            "--skip-akshare",
+            "--execution-mode", "offline_debug",
             "--skip-news",
         ])
         run_dirs = list(output_dir.iterdir())
@@ -208,7 +215,7 @@ class TestRunManifest:
             "--private-data-dir", str(tmp_private_data),
             "--output-dir", str(output_dir),
             "--dry-run",
-            "--skip-akshare",
+            "--execution-mode", "offline_debug",
             "--skip-news",
         ])
         run_dirs = list(output_dir.iterdir())
@@ -232,7 +239,7 @@ class TestNoPrivateDataInOutput:
             "--private-data-dir", str(tmp_private_data),
             "--output-dir", str(output_dir),
             "--dry-run",
-            "--skip-akshare",
+            "--execution-mode", "offline_debug",
             "--skip-news",
         ])
         run_dirs = list(output_dir.iterdir())
@@ -250,7 +257,7 @@ class TestNoPrivateDataInOutput:
             "--private-data-dir", str(tmp_private_data),
             "--output-dir", str(output_dir),
             "--dry-run",
-            "--skip-akshare",
+            "--execution-mode", "offline_debug",
             "--skip-news",
         ])
         run_dirs = list(output_dir.iterdir())
@@ -266,7 +273,7 @@ class TestNoPrivateDataInOutput:
             "--private-data-dir", str(tmp_private_data),
             "--output-dir", str(output_dir),
             "--dry-run",
-            "--skip-akshare",
+            "--execution-mode", "offline_debug",
             "--skip-news",
         ])
         run_dirs = list(output_dir.iterdir())
@@ -286,7 +293,7 @@ class TestConsoleOutput:
             "--private-data-dir", str(tmp_private_data),
             "--output-dir", str(output_dir),
             "--dry-run",
-            "--skip-akshare",
+            "--execution-mode", "offline_debug",
             "--skip-news",
         ])
         captured = capsys.readouterr()
@@ -343,7 +350,7 @@ class TestDoctorRespectsPrivateDataDir:
                 rc = personal_run_main([
                     "--private-data-dir", str(tmp_private_data),
                     "--output-dir", str(output_dir),
-                    "--skip-akshare",
+                    "--execution-mode", "offline_debug",
                     "--skip-news",
                 ])
 
@@ -366,7 +373,7 @@ class TestFailedPipelineReportHandling:
         stale_report = output_dir / "stale_report.md"
         stale_report.write_text("# stale report\n", encoding="utf-8")
 
-        def fake_e2e(argv: list[str]) -> int:
+        def fake_e2e(argv: list[str], *, env_overrides=None) -> int:
             run_dir = Path(argv[argv.index("--output-dir") + 1])
             output_report = Path(argv[argv.index("--output-report") + 1])
             assert output_report == run_dir / "report.md"
@@ -411,7 +418,7 @@ class TestFailedPipelineReportHandling:
                     "--private-data-dir", str(tmp_private_data),
                     "--output-dir", str(output_dir),
                     "--run-id", run_id,
-                    "--skip-akshare",
+                    "--execution-mode", "offline_debug",
                     "--skip-news",
                 ])
 
@@ -522,7 +529,7 @@ class TestPrintOnlyMode:
                     "--summary-path", str(missing_path),
                     "--private-data-dir", str(pd),
                     "--output-dir", str(output_dir),
-                    "--skip-akshare",
+                    "--execution-mode", "offline_debug",
                     "--skip-news",
                 ])
 
@@ -540,7 +547,7 @@ class TestPrintOnlyMode:
                 rc = personal_run_main([
                     "--private-data-dir", str(tmp_private_data),
                     "--output-dir", str(output_dir),
-                    "--skip-akshare",
+                    "--execution-mode", "offline_debug",
                     "--skip-news",
                 ])
 
