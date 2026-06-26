@@ -567,6 +567,7 @@ def _generate_fixit_package(
     """Generate fix-it package with data templates for missing information.
 
     Only writes template/suggested files — never includes real private data.
+    M7.6: Also generates identity_candidates.private.csv for user review.
     """
     fixit_dir.mkdir(parents=True, exist_ok=True)
 
@@ -586,7 +587,9 @@ def _generate_fixit_package(
     unverified_count = int(identity.get("identity_verification_status_counts", {}).get("manual_override_unverified", 0))
     identity_yaml = (
         "# Suggested fund identity overrides\n"
-        "# Fill in verified_by_user: true and verification_source after manual verification\n"
+        "# M7.6: Fill in verified_by_user: true ONLY AFTER manually verifying the code and name.\n"
+        "# You must also provide verification_source and verified_at.\n"
+        "# DO NOT add verified_by_user:true without first verifying — it is NOT an unlock switch.\n"
         "# DO NOT commit this file with real fund codes\n\n"
         f"# {unverified_count} fund(s) need identity verification\n\n"
         "funds: []\n"
@@ -609,6 +612,9 @@ def _generate_fixit_package(
         fee_csv += ",7,0.015\n,30,0.005\n,365,0.0\n"
     _write_text(fixit_dir / "fee_overrides_needed.csv", fee_csv)
 
+    # 6. M7.6: Identity candidates private CSV — contains real fund names and candidate codes
+    _generate_identity_candidates_csv(fixit_dir, e2e_summary)
+
     print(f"  Fix-it package generated: {fixit_dir}")
 
 
@@ -620,6 +626,7 @@ def _build_fixit_readme(
     reason_codes = list(e2e_summary.get("personal_health_report", {}).get("reason_codes", []))
     vs = e2e_summary.get("valuation_summary", {})
     identity = e2e_summary.get("identity_resolution", {})
+    unverified_count = int(identity.get("identity_verification_status_counts", {}).get("manual_override_unverified", 0))
 
     lines = [
         "# Fix-it Package — Personal Data Completion Guide",
@@ -631,7 +638,7 @@ def _build_fixit_readme(
         "",
         f"- Reason codes: {', '.join(reason_codes) if reason_codes else 'none'}",
         f"- Valuation: {vs.get('estimated_count', 0)} estimated, {vs.get('cashflow_only_count', 0)} cashflow-only",
-        f"- Identity: {identity.get('identity_verification_status_counts', {}).get('manual_override_unverified', 0)} unverified",
+        f"- Identity: {unverified_count} unverified",
         "",
         "## What to Provide",
         "",
@@ -650,11 +657,21 @@ def _build_fixit_readme(
         "",
         "Place the filled file as: `private_data/current_holdings_snapshot.private.csv`",
         "",
-        "### 2. Fund Identity Verification",
+        "### 2. Fund Identity Verification (M7.6)",
         "",
-        "If fund codes are unverified, edit `fund_identity_overrides.suggested.yaml`:",
-        "- Set `verified_by_user: true` for each fund you have manually verified",
-        "- Set `verification_source` (e.g., 'alipay_holdings_page')",
+        "If fund codes are unverified, review `identity_candidates.private.csv` first.",
+        "This file contains the candidate codes that the system found for each fund.",
+        "",
+        "**IMPORTANT:** Candidate codes are NOT verified. You must manually verify each one.",
+        "",
+        "After verifying, edit `fund_identity_overrides.suggested.yaml`:",
+        "- Set `verified_by_user: true` ONLY AFTER verifying the code and name match",
+        "- Set `verification_source` (must be one of: alipay_holdings_page, fund_detail_page,",
+        "  official_fund_statement, provider_cross_check, user_manual_verified)",
+        "- Set `verified_at` (date of verification)",
+        "",
+        "**Do NOT add verified_by_user:true without first verifying.**",
+        "It is NOT an unlock switch — it records that you have verified the mapping.",
         "",
         "### 3. NAV Overrides",
         "",
@@ -682,6 +699,83 @@ def _build_fixit_readme(
         "```",
     ]
     return "\n".join(lines)
+
+
+def _generate_identity_candidates_csv(
+    fixit_dir: Path,
+    e2e_summary: dict[str, Any],
+) -> None:
+    """M7.6: Generate identity_candidates.private.csv for user review.
+
+    Contains real fund names and candidate codes — this is a private artifact.
+    Users must verify each candidate before adding verified_by_user:true.
+    """
+    identity = e2e_summary.get("identity_resolution", {})
+    resolutions = identity.get("resolutions", [])
+
+    if not resolutions:
+        return
+
+    # Build CSV with candidate information
+    csv_lines = [
+        "raw_fund_name,candidate_fund_code,candidate_source,verification_status,user_verified,verified_at,verification_source",
+    ]
+
+    candidate_count = 0
+    verified_count = 0
+    unverified_count = 0
+    mismatch_count = 0
+
+    for res in resolutions:
+        if not isinstance(res, dict):
+            continue
+        raw_name = res.get("raw_fund_name", "")
+        resolved_code = res.get("resolved_fund_code", "")
+        identity_status = res.get("identity_verification_status", "")
+        resolution_source = res.get("resolution_source", "")
+
+        # Only include entries that have candidate codes
+        if not resolved_code:
+            continue
+
+        # Determine candidate source
+        candidates = res.get("candidates", [])
+        candidate_source = resolution_source
+        if candidates:
+            # Use the last candidate's source (most recent resolution step)
+            candidate_source = candidates[-1].get("source", resolution_source)
+
+        # Determine verification fields
+        user_verified = "true" if identity_status in ("user_verified_override", "provider_verified", "verified") else "false"
+        verified_at = res.get("verified_at", "")
+        verification_source = res.get("verification_source", "")
+
+        csv_lines.append(
+            f"{raw_name},{resolved_code},{candidate_source},{identity_status},"
+            f"{user_verified},{verified_at},{verification_source}"
+        )
+
+        candidate_count += 1
+        if identity_status in ("verified", "provider_verified", "user_verified_override"):
+            verified_count += 1
+        elif identity_status == "code_name_mismatch":
+            mismatch_count += 1
+        else:
+            unverified_count += 1
+
+    _write_text(fixit_dir / "identity_candidates.private.csv", "\n".join(csv_lines) + "\n")
+
+    # Write public counts-only summary
+    summary = {
+        "candidate_count": candidate_count,
+        "verified_count": verified_count,
+        "unverified_count": unverified_count,
+        "mismatch_count": mismatch_count,
+    }
+    _write_json(fixit_dir / "identity_candidates_summary.json", summary)
+
+    if unverified_count > 0:
+        print(f"  Identity candidates: {unverified_count} unverified, {verified_count} verified, {mismatch_count} mismatch")
 
 
 if __name__ == "__main__":
