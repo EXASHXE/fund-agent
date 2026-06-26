@@ -9,11 +9,13 @@ import json
 import os
 import subprocess
 import sys
+from argparse import Namespace
 from datetime import date
 from pathlib import Path
 
 import pytest
 
+from scripts import fund_agent_e2e as e2e
 from scripts.build_fund_data_snapshot import (
     build_fee_schedule_snapshot,
     build_fund_profile_snapshot,
@@ -373,6 +375,71 @@ class TestE2ERunnerRealSmoke:
         assert summary["status"] == "failed"
         assert summary["errors"]
         assert summary["outputs"]["report"] is None
+
+    def test_failed_run_does_not_claim_stale_default_report(self, tmp_path, monkeypatch):
+        fake_repo = tmp_path / "repo"
+        stale_report = fake_repo / "local_reports" / "real_portfolio_report.md"
+        stale_report.parent.mkdir(parents=True)
+        stale_report.write_text("# stale\n", encoding="utf-8")
+
+        private_data = tmp_path / "empty-private-data"
+        private_data.mkdir()
+        output_dir = tmp_path / "output"
+
+        monkeypatch.setattr(e2e, "REPO_ROOT", fake_repo)
+        args = Namespace(
+            as_of="2026-06-17",
+            use_live_provider=False,
+            skip_news=False,
+            skip_akshare=False,
+            dry_run=False,
+            output_report="",
+            run_id="test-stale-default-report",
+            private_data_dir=str(private_data),
+            output_dir=str(output_dir),
+            transaction_source="auto",
+            health_report_only=False,
+        )
+
+        rc = e2e.run_pipeline(args)
+
+        assert rc != 0
+        summary = json.loads((output_dir / "e2e_summary.json").read_text(encoding="utf-8"))
+        assert summary["status"] == "failed"
+        assert summary["outputs"]["report"] is None
+        assert summary["output_report"] is None
+
+    def test_identity_overrides_template_generated_for_name_only_funds(self, tmp_path):
+        identity_path = tmp_path / "fund_identity_resolution.json"
+        identity_path.write_text(
+            json.dumps(
+                {
+                    "schema_version": "fund_identity_resolution.v2",
+                    "resolutions": [
+                        {
+                            "raw_fund_name": "Synthetic Name Only Fund",
+                            "resolution_status": "name_only",
+                            "identity_verification_status": "name_only",
+                        },
+                        {
+                            "raw_fund_name": "Synthetic Coded Fund",
+                            "resolution_status": "valid_code",
+                            "identity_verification_status": "verified",
+                        },
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+        output_path = tmp_path / "fund_identity_overrides.template.private.yaml"
+
+        result = e2e._write_identity_overrides_template(identity_path, output_path)
+
+        assert result == output_path
+        content = output_path.read_text(encoding="utf-8")
+        assert "Synthetic Name Only Fund" in content
+        assert "Synthetic Coded Fund" not in content
+        assert 'fund_code: ""' in content
 
     def test_path_filter_normalizes_json_escaped_and_forward_slash(self):
         """Regression: _path_variants must filter JSON-escaped and forward-slash paths."""

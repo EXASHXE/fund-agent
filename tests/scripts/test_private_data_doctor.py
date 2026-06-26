@@ -241,6 +241,60 @@ class TestDoctorOutputRedaction:
             # No raw_name or fund_name values in details
             assert "Fake Test Fund Alpha" not in json.dumps(check.get("details", {}), default=str)
 
+    def test_doctor_reports_identity_template_counts_only(self, tmp_path: Path):
+        """Doctor should report generated template counts without names."""
+        from scripts.fund_agent_private_data_doctor import run_doctor
+
+        fake_private = tmp_path / "private_data"
+        fake_private.mkdir()
+
+        yaml_content = textwrap.dedent("""\
+            funds:
+              - raw_name: "Fake Template Fund Alpha"
+                fund_code: ""
+                fund_name: "Fake Template Fund Alpha"
+              - raw_name: "Fake Template Fund Beta"
+                fund_code: "000002"
+                fund_name: "Fake Template Fund Beta"
+        """)
+        (fake_private / "fund_identity_overrides.template.private.yaml").write_text(
+            yaml_content, encoding="utf-8"
+        )
+
+        result = run_doctor(fake_private)
+        template_check = next(
+            c for c in result["checks"]
+            if c["id"] == "identity_overrides_template.exists"
+        )
+
+        assert template_check["status"] == "INFO"
+        assert template_check["details"]["total_entries"] == 2
+        assert template_check["details"]["missing_code_count"] == 1
+        output = json.dumps(result, default=str)
+        assert "Fake Template Fund Alpha" not in output
+        assert "Fake Template Fund Beta" not in output
+
+    def test_doctor_reports_news_key_count_only(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        """Doctor should report news key readiness without leaking values."""
+        from scripts.fund_agent_private_data_doctor import NEWS_API_ENV_VARS, run_doctor
+
+        fake_private = tmp_path / "private_data"
+        fake_private.mkdir()
+        for key in NEWS_API_ENV_VARS:
+            monkeypatch.delenv(key, raising=False)
+        monkeypatch.setenv("TAVILY_API_KEY", "synthetic-secret-value")
+
+        result = run_doctor(fake_private)
+        key_check = next(
+            c for c in result["checks"]
+            if c["id"] == "news_api_keys.configured"
+        )
+
+        assert key_check["status"] == "OK"
+        assert key_check["details"]["configured_count"] == 1
+        output = json.dumps(result, default=str)
+        assert "synthetic-secret-value" not in output
+
     def test_doctor_no_amounts_in_output(self, tmp_path: Path):
         """Doctor output must not contain NAV values."""
         from scripts.fund_agent_private_data_doctor import run_doctor

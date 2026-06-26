@@ -47,6 +47,33 @@ def _write_text(path: Path, text: str) -> None:
     path.write_text(text, encoding="utf-8")
 
 
+def _summary_step_completed(summary: dict[str, Any], step_id: str) -> bool:
+    steps = summary.get("steps_completed", [])
+    return isinstance(steps, list) and step_id in steps
+
+
+def _summary_report_generated(summary: dict[str, Any]) -> bool:
+    """Return whether the E2E summary proves a report came from this run."""
+    outputs = _as_dict(summary.get("outputs"))
+    return _summary_step_completed(summary, "analyze-portfolio") and bool(
+        outputs.get("report") or summary.get("output_report")
+    )
+
+
+def _copy_identity_template_to_private_data(run_dir: Path, private_data: Path) -> bool:
+    """Copy the generated fill-in template into private_data without overwriting."""
+    source = run_dir / "fund_identity_overrides.template.private.yaml"
+    final_overrides = private_data / "fund_identity_overrides.private.yaml"
+    target = private_data / "fund_identity_overrides.template.private.yaml"
+    if not source.exists() or final_overrides.exists() or target.exists():
+        return False
+    try:
+        target.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+    except OSError:
+        return False
+    return True
+
+
 def _resolve_existing_summary(args: argparse.Namespace) -> tuple[dict[str, Any], Path] | None:
     """Try to load an existing e2e_summary from --summary-path or --run-dir.
 
@@ -111,6 +138,7 @@ def _print_console_summary(
     health: dict[str, Any],
     run_dir: Path,
     output_dir: Path,
+    artifacts: dict[str, str],
 ) -> None:
     overall = health.get("overall_status", "unavailable").upper()
     confidence = health.get("confidence_level", "unavailable").upper()
@@ -129,8 +157,17 @@ def _print_console_summary(
 
     # Relative path from output_dir root
     rel_dir = run_dir.relative_to(output_dir) if run_dir.is_relative_to(output_dir) else run_dir
-    for name in ("agent_context.md", "e2e_summary.json", "report.md", "personal_health_report.json"):
-        artifact_path = rel_dir / name
+    display_order = [
+        ("agent_context_md", "agent_context.md"),
+        ("e2e_summary", "e2e_summary.json"),
+        ("report", "report.md"),
+        ("identity_overrides_template", "fund_identity_overrides.template.private.yaml"),
+        ("personal_health_report", "personal_health_report.json"),
+    ]
+    for artifact_key, filename in display_order:
+        if artifact_key not in artifacts:
+            continue
+        artifact_path = rel_dir / filename
         print(f"- {artifact_path}")
 
     print()
@@ -199,6 +236,7 @@ def run_personal(args: argparse.Namespace) -> int:
         "--run-id", run_id,
         "--private-data-dir", str(private_data),
         "--output-dir", str(run_dir),
+        "--output-report", str(run_dir / "report.md"),
         "--transaction-source", args.transaction_source,
     ]
     if args.skip_akshare:
@@ -209,7 +247,6 @@ def run_personal(args: argparse.Namespace) -> int:
         e2e_argv.append("--dry-run")
 
     e2e_rc = e2e_main(e2e_argv)
-    e2e_status = "success" if e2e_rc == 0 else "partial" if e2e_rc == 1 else "failed"
 
     # ── Step 3: Load summary and build agent context ──────────────────
     e2e_summary_path = run_dir / "e2e_summary.json"
@@ -222,46 +259,69 @@ def run_personal(args: argparse.Namespace) -> int:
         if e2e_summary and alt_path.exists():
             e2e_summary_path = alt_path
 
+    summary_status = str(e2e_summary.get("status", "")).lower()
+    if summary_status in {"success", "partial", "failed"}:
+        e2e_status = summary_status
+    else:
+        e2e_status = "success" if e2e_rc == 0 else "failed"
+
     health = _as_dict(e2e_summary.get("personal_health_report"))
 
-    # Build agent context
-    agent_context = build_agent_context(
-        e2e_summary,
-        run_id=run_id,
-    )
-    agent_context_md = render_agent_context_markdown(agent_context)
-
-    # ── Step 4: Write artifacts ───────────────────────────────────────
-    _write_json(run_dir / "personal_health_report.json", health)
-    _write_json(run_dir / "agent_context.json", agent_context)
-    _write_text(run_dir / "agent_context.md", agent_context_md)
-
-    # Copy e2e_summary to run_dir if it was written elsewhere
-    if e2e_summary and e2e_summary_path != run_dir / "e2e_summary.json":
-        _write_json(run_dir / "e2e_summary.json", e2e_summary)
-
-    # Build run manifest
-    artifact_paths = {
-        "e2e_summary": "e2e_summary.json",
-        "personal_health_report": "personal_health_report.json",
-        "agent_context_md": "agent_context.md",
-        "agent_context_json": "agent_context.json",
-    }
-    # Check for report.md
     report_path = run_dir / "report.md"
-    if not report_path.exists():
-        # E2E may have written it elsewhere; check e2e_summary for the path
+    report_generated = _summary_report_generated(e2e_summary)
+
+    if not report_path.exists() and report_generated:
+        # E2E may have written it elsewhere; copy only when the summary proves
+        # the analyze step completed in this run. This prevents stale reports.
         report_from_summary = e2e_summary.get("output_report", "")
         if report_from_summary:
             src = Path(report_from_summary)
+            if not src.is_absolute():
+                src = REPO_ROOT / src
             if src.exists():
                 try:
                     report_content = src.read_text(encoding="utf-8")
                     _write_text(report_path, report_content)
                 except OSError:
                     pass
-    if report_path.exists():
+    report_available = report_generated and report_path.exists()
+
+    # ── Step 4: Write artifacts ───────────────────────────────────────
+    _write_json(run_dir / "personal_health_report.json", health)
+
+    # Copy e2e_summary to run_dir if it was written elsewhere
+    if e2e_summary and e2e_summary_path != run_dir / "e2e_summary.json":
+        _write_json(run_dir / "e2e_summary.json", e2e_summary)
+
+    artifact_paths = {
+        "e2e_summary": "e2e_summary.json",
+        "personal_health_report": "personal_health_report.json",
+        "agent_context_md": "agent_context.md",
+        "agent_context_json": "agent_context.json",
+    }
+    if report_available:
         artifact_paths["report"] = "report.md"
+    identity_template_path = run_dir / "fund_identity_overrides.template.private.yaml"
+    if identity_template_path.exists():
+        _copy_identity_template_to_private_data(run_dir, private_data)
+        artifact_paths["identity_overrides_template"] = "fund_identity_overrides.template.private.yaml"
+
+    # Build agent context after artifact availability is known.
+    context_artifact_paths = {
+        "e2e_summary": "e2e_summary.json",
+        "personal_health_report": "personal_health_report.json",
+        **({"report": "report.md"} if report_available else {}),
+    }
+    if identity_template_path.exists():
+        context_artifact_paths["identity_overrides_template"] = "fund_identity_overrides.template.private.yaml"
+    agent_context = build_agent_context(
+        e2e_summary,
+        run_id=run_id,
+        artifact_paths=context_artifact_paths,
+    )
+    agent_context_md = render_agent_context_markdown(agent_context)
+    _write_json(run_dir / "agent_context.json", agent_context)
+    _write_text(run_dir / "agent_context.md", agent_context_md)
 
     manifest = _build_run_manifest(
         run_id=run_id,
@@ -290,9 +350,10 @@ def run_personal(args: argparse.Namespace) -> int:
         health=health,
         run_dir=run_dir,
         output_dir=output_dir,
+        artifacts=artifact_paths,
     )
 
-    return 0
+    return 1 if e2e_status == "failed" else 0
 
 
 def main(argv: list[str] | None = None) -> int:

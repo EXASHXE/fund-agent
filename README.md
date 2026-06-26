@@ -117,11 +117,14 @@ fund-agent audit [--pretty] [--json]            # run project audit scripts
 
 Old commands remain compatible: `fund-agent-run-skill`, `fund-agent-doctor`.
 
-## v0.10.5
+## v0.10.6.dev0
 
-This is **fund-agent v0.10.5**, adding multi-harness agent wrappers and a shared E2E runner on top of the snapshot builders, CLI bridge, evidence graph extensions, and privacy hardening. Provider adapters
-(AkShare, Eastmoney, Xueqiu) are prototypes unless smoke-tested with real
-credentials. See the v0.9.0 tag for the first pre-launch baseline.
+This is **fund-agent v0.10.6.dev0**, the current development line after the
+multi-harness agent wrappers and shared E2E runner work. It tightens the
+canonical personal analysis entrypoint, cashflow-only valuation safety, and
+report artifact provenance. Provider adapters (AkShare, Eastmoney, Xueqiu) are
+prototypes unless smoke-tested with real credentials. See the v0.9.0 tag for
+the first pre-launch baseline.
 
 See [`docs/release/v0.10.0-beta-readiness-checklist.md`](docs/release/v0.10.0-beta-readiness-checklist.md).
 

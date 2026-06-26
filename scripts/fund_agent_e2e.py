@@ -274,6 +274,84 @@ def _load_nav_coverage_summary(portfolio_dir: Path) -> dict[str, Any]:
     return {}
 
 
+def _yaml_quote(value: Any) -> str:
+    return json.dumps(str(value), ensure_ascii=False)
+
+
+def _relative_output(path: Path | None) -> str | None:
+    if path is None or not path.exists():
+        return None
+    return str(path.relative_to(REPO_ROOT)) if path.is_relative_to(REPO_ROOT) else str(path.name)
+
+
+def _write_identity_overrides_template(
+    fund_identity_path: Path,
+    output_path: Path,
+) -> Path | None:
+    """Write a private fill-in template for name-only fund references.
+
+    The generated file may contain private fund names, so callers must keep it
+    under gitignored run/private directories and never print its contents.
+    """
+    try:
+        identity_data = json.loads(fund_identity_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, TypeError):
+        return None
+
+    entries = identity_data.get("resolutions", identity_data.get("funds", []))
+    if not isinstance(entries, list):
+        return None
+
+    names: list[str] = []
+    seen: set[str] = set()
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        is_name_only = (
+            entry.get("resolution_status") == "name_only"
+            or entry.get("identity_verification_status") == "name_only"
+        )
+        if not is_name_only:
+            continue
+        raw_name = (
+            entry.get("raw_fund_name")
+            or entry.get("fund_name")
+            or entry.get("raw_reference")
+        )
+        if not raw_name:
+            continue
+        raw_name = str(raw_name)
+        if raw_name not in seen:
+            seen.add(raw_name)
+            names.append(raw_name)
+
+    if not names:
+        return None
+
+    lines = [
+        "# Auto-generated private template from fund identity resolution.",
+        "# Fill each fund_code with the official six-digit fund code, then copy",
+        "# this file to private_data/fund_identity_overrides.private.yaml.",
+        "# Do not commit this file.",
+        "",
+        "funds:",
+    ]
+    for name in names:
+        lines.extend([
+            f"  - raw_name: {_yaml_quote(name)}",
+            '    fund_code: ""',
+            f"    fund_name: {_yaml_quote(name)}",
+        ])
+    lines.extend(["", "aliases: {}", ""])
+
+    try:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text("\n".join(lines), encoding="utf-8")
+    except OSError:
+        return None
+    return output_path
+
+
 def _build_personal_health_report(
     *,
     pipeline: PipelineState,
@@ -408,6 +486,8 @@ def run_pipeline(args: argparse.Namespace) -> int:
     kg_context = run_dir / "kg_context_snapshot.json"
     news_snapshot = run_dir / "news_snapshot.json"
     factor_snapshot = run_dir / "factor_snapshot.json"
+    identity_overrides_template = run_dir / "fund_identity_overrides.template.private.yaml"
+    identity_overrides_template_output: Path | None = None
 
     # ── Transaction source selection ──────────────────────────────────
     # Probe available sources, then decide based on --transaction-source flag.
@@ -527,6 +607,11 @@ def run_pipeline(args: argparse.Namespace) -> int:
                     )
                 pipeline.valid_fund_codes_count = len(fund_codes) + len(identity_mismatch_codes)
                 pipeline.name_only_count = name_only_count
+                if name_only_count > 0:
+                    identity_overrides_template_output = _write_identity_overrides_template(
+                        fund_identity,
+                        identity_overrides_template,
+                    )
             except (OSError, json.JSONDecodeError, TypeError) as exc:
                 pipeline.warnings.append(
                     f"Identity output unreadable ({type(exc).__name__})"
@@ -644,6 +729,8 @@ def run_pipeline(args: argparse.Namespace) -> int:
             pipeline.reconstruction_attempted = False
             pipeline.reconstruction_status = "nav_unavailable"
 
+    analysis_report_generated = False
+
     if portfolio_input and portfolio_input.exists():
         kg_args = ["--portfolio-input", str(portfolio_input), "--output", str(kg_context)]
         if fund_profile_snapshot.exists():
@@ -706,7 +793,7 @@ def run_pipeline(args: argparse.Namespace) -> int:
             analysis_args += ["--factor-snapshot", str(factor_snapshot)]
         if kg_context.exists():
             analysis_args += ["--kg-context", str(kg_context)]
-        run_step(
+        analysis_report_generated = run_step(
             "4", "analyze-portfolio", "Analyze portfolio (markdown report)",
             analysis_args, critical=True, expected_output=output_report,
         )
@@ -795,6 +882,8 @@ def run_pipeline(args: argparse.Namespace) -> int:
         except (OSError, json.JSONDecodeError):
             pass
 
+    report_output = _relative_output(output_report) if analysis_report_generated else None
+
     summary: dict[str, Any] = {
         "run_id": run_id,
         "as_of": as_of,
@@ -812,10 +901,11 @@ def run_pipeline(args: argparse.Namespace) -> int:
             "name_only_count": pipeline.name_only_count,
         },
         "outputs": {
-            "report": str(output_report.relative_to(REPO_ROOT)) if output_report.exists() and output_report.is_relative_to(REPO_ROOT) else (str(output_report.name) if output_report.exists() else None),
+            "report": report_output,
             "summary": str(summary_path.relative_to(REPO_ROOT)) if summary_path.is_relative_to(REPO_ROOT) else str(summary_path.name),
+            "identity_overrides_template": _relative_output(identity_overrides_template_output),
         },
-        "output_report": str(output_report.relative_to(REPO_ROOT)) if output_report.exists() and output_report.is_relative_to(REPO_ROOT) else (str(output_report.name) if output_report.exists() else None),
+        "output_report": report_output,
         "coverage": _collect_coverage(factor_snapshot, news_snapshot),
         "portfolio_input_source": portfolio_input_source,
         "transaction_reconstruction_status": transaction_reconstruction_status,
@@ -852,7 +942,7 @@ def run_pipeline(args: argparse.Namespace) -> int:
 
     print(f"\nE2E pipeline {status}. Run ID: {run_id}")
     print(f"Summary: {summary_path}")
-    print(f"Report:  {output_report.relative_to(REPO_ROOT) if output_report.exists() and output_report.is_relative_to(REPO_ROOT) else (output_report.name if output_report.exists() else 'not generated')}")
+    print(f"Report:  {report_output or 'not generated'}")
     return 1 if pipeline.errors else 0
 
 

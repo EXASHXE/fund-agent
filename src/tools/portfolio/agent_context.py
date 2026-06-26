@@ -135,14 +135,19 @@ def build_agent_context(
     if not questions:
         questions.append(_RECOMMENDED_QUESTIONS[4])
 
-    # Default artifact paths (relative)
+    # Default artifact paths (relative). Legacy summaries without explicit
+    # output metadata keep the historical report entry; modern summaries can
+    # explicitly suppress it with outputs.report/output_report = null.
     default_artifacts = {
         "e2e_summary": "e2e_summary.json",
-        "report": "report.md",
         "personal_health_report": "personal_health_report.json",
     }
+    if _summary_report_available(summary):
+        default_artifacts["report"] = "report.md"
     if artifact_paths:
         default_artifacts.update(artifact_paths)
+        if "report" not in artifact_paths and _summary_explicitly_has_no_report(summary):
+            default_artifacts.pop("report", None)
 
     # Check if reconstructed portfolio is available
     pipeline_steps = _as_dict(summary.get("pipeline_steps"))
@@ -237,3 +242,21 @@ def render_agent_context_markdown(context: Mapping[str, Any]) -> str:
 
 def _as_dict(value: Any) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
+
+
+def _summary_explicitly_has_no_report(summary: Mapping[str, Any]) -> bool:
+    outputs = _as_dict(summary.get("outputs"))
+    if "report" in outputs:
+        return outputs.get("report") in (None, "")
+    if "output_report" in summary:
+        return summary.get("output_report") in (None, "")
+    return False
+
+
+def _summary_report_available(summary: Mapping[str, Any]) -> bool:
+    outputs = _as_dict(summary.get("outputs"))
+    if "report" in outputs:
+        return bool(outputs.get("report"))
+    if "output_report" in summary:
+        return bool(summary.get("output_report"))
+    return True

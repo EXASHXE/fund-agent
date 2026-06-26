@@ -353,6 +353,89 @@ class TestDoctorRespectsPrivateDataDir:
                 assert Path(call_arg) == tmp_private_data
 
 
+# ── Test: failed pipeline must not expose stale report ────────────────
+
+
+class TestFailedPipelineReportHandling:
+    def test_failed_e2e_does_not_copy_stale_report(
+        self,
+        tmp_private_data: Path,
+        output_dir: Path,
+    ):
+        run_id = "failed-no-report"
+        stale_report = output_dir / "stale_report.md"
+        stale_report.write_text("# stale report\n", encoding="utf-8")
+
+        def fake_e2e(argv: list[str]) -> int:
+            run_dir = Path(argv[argv.index("--output-dir") + 1])
+            output_report = Path(argv[argv.index("--output-report") + 1])
+            assert output_report == run_dir / "report.md"
+            run_dir.mkdir(parents=True, exist_ok=True)
+            summary = {
+                "run_id": run_id,
+                "status": "failed",
+                "errors": ["No portfolio input available for required analysis"],
+                "warnings": [],
+                "steps_completed": ["import_alipay_transactions"],
+                "outputs": {"report": None, "summary": "e2e_summary.json"},
+                "output_report": str(stale_report),
+                "pipeline_steps": {"reconstruction_status": "nav_unavailable"},
+                "personal_health_report": {
+                    "schema_version": "personal_health_report.v1",
+                    "overall_status": "needs_data",
+                    "confidence_level": "unavailable",
+                    "reason_codes": ["nav_missing"],
+                    "nav_coverage": {
+                        "full": 0,
+                        "partial": 0,
+                        "none": 0,
+                        "latest_only": 0,
+                        "stale_count": 0,
+                        "qdii_like_count": 0,
+                    },
+                },
+            }
+            (run_dir / "e2e_summary.json").write_text(
+                json.dumps(summary), encoding="utf-8"
+            )
+            (run_dir / "fund_identity_overrides.template.private.yaml").write_text(
+                "funds: []\n", encoding="utf-8"
+            )
+            return 1
+
+        with patch("scripts.fund_agent_personal_run.e2e_main", side_effect=fake_e2e):
+            with patch("scripts.fund_agent_personal_run.run_doctor") as mock_doctor:
+                mock_doctor.return_value = {"ok": True, "status": "ok", "checks": [], "warnings": [], "errors": []}
+
+                rc = personal_run_main([
+                    "--private-data-dir", str(tmp_private_data),
+                    "--output-dir", str(output_dir),
+                    "--run-id", run_id,
+                    "--skip-akshare",
+                    "--skip-news",
+                ])
+
+        run_dir = output_dir / run_id
+        assert rc == 1
+        assert not (run_dir / "report.md").exists()
+        assert (tmp_private_data / "fund_identity_overrides.template.private.yaml").exists()
+
+        manifest = json.loads((run_dir / "run_manifest.json").read_text(encoding="utf-8"))
+        assert manifest["e2e_status"] == "failed"
+        assert "report" not in manifest["artifacts"]
+        assert (
+            manifest["artifacts"]["identity_overrides_template"]
+            == "fund_identity_overrides.template.private.yaml"
+        )
+
+        context = json.loads((run_dir / "agent_context.json").read_text(encoding="utf-8"))
+        assert "report" not in context["artifact_paths"]
+        assert (
+            context["artifact_paths"]["identity_overrides_template"]
+            == "fund_identity_overrides.template.private.yaml"
+        )
+
+
 # ── Test: print-only mode with existing summary ──────────────────────
 
 

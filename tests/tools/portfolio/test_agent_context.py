@@ -255,6 +255,15 @@ class TestMarkdownRendering:
         assert "e2e_summary.json" in md
         assert "report.md" in md
 
+    def test_markdown_omits_report_when_summary_has_no_report(self):
+        summary = _make_summary()
+        summary["outputs"] = {"report": None}
+        summary["output_report"] = None
+        ctx = build_agent_context(summary)
+        md = render_agent_context_markdown(ctx)
+        assert "e2e_summary.json" in md
+        assert "report.md" not in md
+
 
 # ── Test: empty/missing data ──────────────────────────────────────────
 

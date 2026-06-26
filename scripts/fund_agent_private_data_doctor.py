@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -26,6 +27,7 @@ PRIVATE_DATA_DIR = REPO_ROOT / "private_data"
 
 FUND_CODE_RE = re.compile(r"^\d{6}$")
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+NEWS_API_ENV_VARS = ("TAVILY_API_KEY", "BOCHA_API_KEY", "SERPAPI_KEY", "FINNHUB_API_KEY")
 
 
 def _check(
@@ -128,6 +130,53 @@ def _check_identity_overrides(private_data_dir: Path) -> dict[str, Any]:
     return _check("identity_overrides.schema", status, message, details)
 
 
+def _check_identity_overrides_template(private_data_dir: Path) -> dict[str, Any]:
+    template_path = private_data_dir / "fund_identity_overrides.template.private.yaml"
+    if not template_path.exists():
+        return _check(
+            "identity_overrides_template.exists",
+            "INFO",
+            "fund_identity_overrides.template.private.yaml not found",
+        )
+
+    try:
+        import yaml
+        data = yaml.safe_load(template_path.read_text(encoding="utf-8"))
+    except ImportError:
+        return _check(
+            "identity_overrides_template.parse",
+            "WARNING",
+            "PyYAML not installed — cannot parse identity override template",
+        )
+    except Exception as exc:
+        return _check(
+            "identity_overrides_template.parse",
+            "WARNING",
+            f"YAML parse error: {exc}",
+        )
+
+    funds = data.get("funds", []) if isinstance(data, dict) else []
+    if not isinstance(funds, list):
+        return _check(
+            "identity_overrides_template.schema",
+            "WARNING",
+            "Template 'funds' must be a list",
+        )
+
+    total = len(funds)
+    missing_code_count = 0
+    for entry in funds:
+        if isinstance(entry, dict) and not str(entry.get("fund_code", "")).strip():
+            missing_code_count += 1
+
+    return _check(
+        "identity_overrides_template.exists",
+        "INFO",
+        f"Identity override template exists: {total} entries, {missing_code_count} missing fund_code",
+        {"total_entries": total, "missing_code_count": missing_code_count},
+    )
+
+
 def _check_nav_overrides(private_data_dir: Path) -> dict[str, Any]:
     json_path = private_data_dir / "nav_overrides.private.json"
     if not json_path.exists():
@@ -189,6 +238,27 @@ def _check_portfolio_input(private_data_dir: Path) -> dict[str, Any]:
     if not isinstance(data, dict):
         return _check("portfolio_input.schema", "FAILED", "Top-level value must be an object")
     return _check("portfolio_input.exists", "OK", "portfolio_input.private.json exists and is valid JSON")
+
+
+def _check_news_api_keys() -> dict[str, Any]:
+    configured_count = sum(1 for key in NEWS_API_ENV_VARS if os.environ.get(key))
+    details = {
+        "configured_count": configured_count,
+        "supported_count": len(NEWS_API_ENV_VARS),
+    }
+    if configured_count > 0:
+        return _check(
+            "news_api_keys.configured",
+            "OK",
+            f"{configured_count} news API key env var(s) configured",
+            details,
+        )
+    return _check(
+        "news_api_keys.configured",
+        "INFO",
+        "No news API key env vars configured",
+        details,
+    )
 
 
 def _check_gitignore_coverage() -> dict[str, Any]:
@@ -254,8 +324,10 @@ def run_doctor(private_data_dir: str | Path | None = None) -> dict[str, Any]:
     checks.append(_check_private_data_dir(pdd))
     checks.append(_check_alipay_csv(pdd))
     checks.append(_check_identity_overrides(pdd))
+    checks.append(_check_identity_overrides_template(pdd))
     checks.append(_check_nav_overrides(pdd))
     checks.append(_check_portfolio_input(pdd))
+    checks.append(_check_news_api_keys())
     checks.append(_check_gitignore_coverage())
     checks.append(_check_no_private_tracked())
 

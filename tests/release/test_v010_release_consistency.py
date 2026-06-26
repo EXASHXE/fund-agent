@@ -14,7 +14,7 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
-EXPECTED_VERSION = "0.10.5"
+EXPECTED_VERSION = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
 
 VERSION_PATH = ROOT / "VERSION"
 PYPROJECT_PATH = ROOT / "pyproject.toml"
