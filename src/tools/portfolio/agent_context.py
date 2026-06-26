@@ -29,6 +29,8 @@ REASON_CODES = frozenset({
     "partial_valuation",
     "redemption_fee_unknown",
     "insufficient_trade_date_nav_coverage",
+    "no_holdings_snapshot",
+    "reconciliation_gap",
 })
 
 # ── Allowed safety constraints (stable enumeration) ────────────────────
@@ -47,6 +49,8 @@ SAFE_TO_ANALYZE_ITEMS = frozenset({
     "holdings_fallback",
     "transaction_quality",
     "nav_coverage_quality",
+    "holdings_snapshot_valuation",
+    "platform_reported_profit_and_cost",
 })
 
 # ── Allowed unsafe-to-infer items ─────────────────────────────────────
@@ -58,6 +62,8 @@ UNSAFE_TO_INFER_ITEMS = frozenset({
     "valuation_if_identity_mismatch",
     "valuation_if_identity_unverified",
     "complete_market_value_if_partial_valuation",
+    "market_value_without_holdings_snapshot",
+    "reconcile_snapshot_discrepancy_automatically",
 })
 
 # ── Safe-to-analyze scope ─────────────────────────────────────────────
@@ -81,6 +87,8 @@ _RECOMMENDED_QUESTIONS = [
     "Should fee_overrides be provided for funds with unknown redemption fees?",
     "Should fund_identity_overrides be verified (verified_by_user or provider cross-check) for unverified manual overrides?",
     "Should trade-date NAV or explicit units be provided to complete valuation coverage?",
+    "Should a current holdings snapshot be provided for authoritative valuation?",
+    "Should reconciliation gaps between snapshot and transaction history be manually verified?",
 ]
 
 
@@ -120,6 +128,20 @@ def build_agent_context(
         # Full coverage — can infer market value
         unsafe = [u for u in unsafe if u != "complete_market_value_if_coverage_partial"]
 
+    # Holdings snapshot availability affects unsafe-to-infer scope
+    holdings_snapshot_loaded = bool(
+        _as_dict(summary.get("holdings_snapshot")).get("loaded", False)
+    )
+    if holdings_snapshot_loaded:
+        # Snapshot available — can reference platform-reported values
+        unsafe = [u for u in unsafe if u != "market_value_without_holdings_snapshot"]
+        safe.append("holdings_snapshot_valuation")
+        safe.append("platform_reported_profit_and_cost")
+    else:
+        # No snapshot — market value inference is unsafe
+        if "market_value_without_holdings_snapshot" not in unsafe:
+            unsafe.append("market_value_without_holdings_snapshot")
+
     # Determine recommended questions based on reason codes
     questions: list[str] = []
     if "name_only_funds" in reason_codes or "no_valid_fund_codes" in reason_codes:
@@ -142,6 +164,10 @@ def build_agent_context(
         questions.append(_RECOMMENDED_QUESTIONS[9])
     if "redemption_fee_unknown" in reason_codes:
         questions.append(_RECOMMENDED_QUESTIONS[7])
+    if "no_holdings_snapshot" in reason_codes:
+        questions.append(_RECOMMENDED_QUESTIONS[10])
+    if "reconciliation_gap" in reason_codes:
+        questions.append(_RECOMMENDED_QUESTIONS[11])
     # Always include if no specific questions matched
     if not questions:
         questions.append(_RECOMMENDED_QUESTIONS[4])

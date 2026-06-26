@@ -43,6 +43,8 @@ All `reason_codes` values must come from this stable set:
 | `partial_valuation` | Some positions lack valuation — portfolio metrics incomplete |
 | `redemption_fee_unknown` | Some funds have unknown redemption fees — confirmed P&L not available |
 | `insufficient_trade_date_nav_coverage` | Some trades lack trade-date NAV — units derivation incomplete |
+| `no_holdings_snapshot` | No holdings snapshot provided — authoritative valuation unavailable |
+| `reconciliation_gap` | Holdings snapshot and transaction reconstruction disagree — manual verification needed |
 
 ## Safety Constraints Enumeration
 
@@ -67,6 +69,8 @@ Known safe-to-analyze scope items:
 | `holdings_fallback` | Holdings fallback analysis |
 | `transaction_quality` | Transaction quality assessment |
 | `nav_coverage_quality` | NAV coverage quality assessment |
+| `holdings_snapshot_valuation` | Valuation from holdings snapshot (authoritative) |
+| `platform_reported_profit_and_cost` | Platform-reported profit and cost from holdings snapshot |
 
 ## Unsafe-to-Infer Values
 
@@ -81,6 +85,8 @@ Known unsafe-to-infer scope items:
 | `valuation_if_identity_mismatch` | Do not infer valuation for funds with code/name mismatch |
 | `valuation_if_identity_unverified` | Do not infer valuation for funds with unverified manual override |
 | `complete_market_value_if_partial_valuation` | Do not infer complete market value when valuation coverage is partial |
+| `market_value_without_holdings_snapshot` | Do not infer market value without holdings snapshot verification |
+| `reconcile_snapshot_discrepancy_automatically` | Do not automatically reconcile snapshot/reconstruction discrepancies |
 
 ## Artifact Paths
 

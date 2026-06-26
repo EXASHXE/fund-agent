@@ -27,6 +27,8 @@ REASON_IDENTITY_UNVERIFIED = "identity_unverified"
 REASON_PARTIAL_VALUATION = "partial_valuation"
 REASON_REDEMPTION_FEE_UNKNOWN = "redemption_fee_unknown"
 REASON_INSUFFICIENT_TRADE_DATE_NAV = "insufficient_trade_date_nav_coverage"
+REASON_NO_HOLDINGS_SNAPSHOT = "no_holdings_snapshot"
+REASON_RECONCILIATION_GAP = "reconciliation_gap"
 
 VALID_REASON_CODES = frozenset({
     REASON_NO_VALID_FUND_CODES,
@@ -44,6 +46,8 @@ VALID_REASON_CODES = frozenset({
     REASON_PARTIAL_VALUATION,
     REASON_REDEMPTION_FEE_UNKNOWN,
     REASON_INSUFFICIENT_TRADE_DATE_NAV,
+    REASON_NO_HOLDINGS_SNAPSHOT,
+    REASON_RECONCILIATION_GAP,
 })
 
 # ── Status / confidence enums ─────────────────────────────────────────
@@ -90,11 +94,13 @@ def build_personal_health_summary(artifacts: Mapping[str, Any]) -> dict[str, Any
     transaction_source = str(e2e.get("transaction_source", "none"))
     valuation_source = str(e2e.get("portfolio_input_source", "unavailable"))
     identity_source = _determine_identity_source(identity, e2e)
+    holdings_snapshot_info = _as_dict(e2e.get("holdings_snapshot"))
 
     data_sources = {
         "transaction_source": transaction_source,
         "valuation_source": valuation_source,
         "identity_source": identity_source,
+        "holdings_snapshot_loaded": bool(holdings_snapshot_info.get("loaded", False)),
     }
 
     # ── Reason codes ──────────────────────────────────────────────────
@@ -180,6 +186,17 @@ def build_personal_health_summary(artifacts: Mapping[str, Any]) -> dict[str, Any
     if cashflow_only_count > 0:
         reason_codes.append(REASON_CASHFLOW_ONLY)
 
+    # No holdings snapshot (M7.5) — only flag when snapshot would improve valuation
+    if not holdings_snapshot_info.get("loaded", False) and (
+        is_partial_diagnostic or cashflow_only_count > 0
+    ):
+        reason_codes.append(REASON_NO_HOLDINGS_SNAPSHOT)
+
+    # Reconciliation gap between snapshot and reconstruction (M7.5)
+    reconciliation_gap_count = int(holdings_snapshot_info.get("reconciliation_gap_count", 0))
+    if reconciliation_gap_count > 0:
+        reason_codes.append(REASON_RECONCILIATION_GAP)
+
     # Estimated-only: only flag when all positions are estimated AND there are
     # no full-NAV-coverage positions (i.e., estimated without full coverage).
     # Normal reconstructed portfolios are all "estimated" — that's expected.
@@ -228,6 +245,9 @@ def build_personal_health_summary(artifacts: Mapping[str, Any]) -> dict[str, Any
             nav_coverage.get("estimated_current_value_total_is_partial", False)
         ),
         "is_partial_diagnostic": is_partial_diagnostic,
+        "holdings_snapshot_loaded": bool(holdings_snapshot_info.get("loaded", False)),
+        "holdings_snapshot_valued_count": int(holdings_snapshot_info.get("valued_count", 0)),
+        "reconciliation_gap_count": reconciliation_gap_count,
     }
 
     # ── NAV coverage summary ──────────────────────────────────────────
@@ -277,6 +297,8 @@ def build_personal_health_summary(artifacts: Mapping[str, Any]) -> dict[str, Any
         identity_mismatch_count=identity_mismatch_count,
         identity_unverified_count=identity_unverified_count,
         redemption_fee_unknown_count=redemption_fee_unknown_count,
+        holdings_snapshot_loaded=bool(holdings_snapshot_info.get("loaded", False)),
+        reconciliation_gap_count=reconciliation_gap_count,
     )
 
     return {
@@ -414,9 +436,17 @@ def _build_checklist(
     identity_mismatch_count: int = 0,
     identity_unverified_count: int = 0,
     redemption_fee_unknown_count: int = 0,
+    holdings_snapshot_loaded: bool = False,
+    reconciliation_gap_count: int = 0,
 ) -> list[str]:
     """Build fix-it checklist from data quality diagnostics."""
     items: list[str] = []
+
+    if not holdings_snapshot_loaded and (unavailable_count > 0 or cashflow_only_count > 0 or nav_missing):
+        items.append("Provide a current holdings snapshot (current_holdings_snapshot.private.csv) for authoritative valuation")
+
+    if reconciliation_gap_count > 0:
+        items.append(f"Verify {reconciliation_gap_count} position(s) with reconciliation gap between snapshot and transaction history")
 
     if identity_mismatch_count > 0:
         items.append(f"Verify fund_identity_overrides for {identity_mismatch_count} fund(s) with code/name mismatch")

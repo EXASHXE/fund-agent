@@ -1,0 +1,47 @@
+{
+  "schema_version": "current_holdings_snapshot.v1",
+  "as_of_date": "2026-06-26",
+  "source": "user_provided_holdings_snapshot",
+  "positions": [
+    {
+      "fund_code": "000001",
+      "fund_name": "Example Fund A",
+      "shares": 10000.00,
+      "latest_nav": 1.50,
+      "nav_date": "2026-06-25",
+      "current_value": 15000.00,
+      "holding_cost": 10000.00,
+      "holding_profit": 5000.00,
+      "holding_profit_pct": 0.50,
+      "source": "alipay_holdings_page",
+      "user_verified": true
+    },
+    {
+      "fund_code": "",
+      "fund_name": "Example Fund B",
+      "shares": 5000.00,
+      "latest_nav": 2.00,
+      "nav_date": "2026-06-25",
+      "current_value": 10000.00,
+      "holding_cost": 8000.00,
+      "holding_profit": 2000.00,
+      "holding_profit_pct": 0.25,
+      "source": "alipay_holdings_page",
+      "user_verified": true
+    },
+    {
+      "fund_code": "000003",
+      "fund_name": "Example Fund C",
+      "shares": null,
+      "latest_nav": null,
+      "nav_date": null,
+      "current_value": null,
+      "holding_cost": null,
+      "holding_profit": null,
+      "holding_profit_pct": null,
+      "source": "alipay_holdings_page",
+      "user_verified": false
+    }
+  ],
+  "notes": "This is a current holdings snapshot, NOT transaction history. It represents the current state of your portfolio."
+}

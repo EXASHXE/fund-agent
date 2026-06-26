@@ -1,0 +1,4 @@
+as_of_date,fund_code,fund_name,shares,latest_nav,nav_date,current_value,holding_cost,holding_profit,holding_profit_pct,source,user_verified
+2026-06-26,000001,Example Fund A,10000.00,1.50,2026-06-25,15000.00,10000.00,5000.00,0.50,alipay_holdings_page,true
+2026-06-26,,Example Fund B,5000.00,2.00,2026-06-25,10000.00,8000.00,2000.00,0.25,alipay_holdings_page,true
+2026-06-26,000003,Example Fund C,,,,,,alipay_holdings_page,false

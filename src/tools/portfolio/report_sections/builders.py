@@ -118,6 +118,10 @@ def _build_portfolio_snapshot(context: dict[str, Any]) -> dict[str, Any]:
     likely_missing = _current_value_likely_missing(context)
     source_of_truth = context["artifacts"].get("source_of_truth")
     is_partial = _is_partial_diagnostic(context)
+    holdings_snapshot_loaded = bool(
+        _as_dict(context.get("e2e_summary") or context.get("artifacts", {}).get("e2e_summary", {}))
+        .get("holdings_snapshot", {}).get("loaded", False)
+    )
     bullets: list[str] = []
     limitations: list[str] = []
 
@@ -156,10 +160,19 @@ def _build_portfolio_snapshot(context: dict[str, Any]) -> dict[str, Any]:
             limitations.append("不能计算组合权重或总盈亏")
             limitations.append("需要补充份额或交易日 NAV")
         else:
-            bullets.append(
-                f"As of {as_of}, total value is {_money_or_missing(portfolio.get('total_value'), likely_missing=likely_missing)} "
-                f"with {_money_or_missing(portfolio.get('cash_available'), likely_missing=likely_missing)} cash."
-            )
+            # Full coverage available
+            total_val = portfolio.get("total_value")
+            if holdings_snapshot_loaded and total_val is not None:
+                # M7.5: Distinguish platform_reported vs reconstructed
+                bullets.append(
+                    f"As of {as_of}, total portfolio value is {_money_or_missing(total_val, likely_missing=likely_missing)} "
+                    f"(based on holdings snapshot + transaction reconstruction)."
+                )
+            else:
+                bullets.append(
+                    f"As of {as_of}, total value is {_money_or_missing(total_val, likely_missing=likely_missing)} "
+                    f"with {_money_or_missing(portfolio.get('cash_available'), likely_missing=likely_missing)} cash."
+                )
             weights = _as_dict(portfolio.get("position_weights"))
             if weights:
                 fund_code, weight = _largest_weight(weights)
@@ -374,6 +387,10 @@ def _build_pnl_and_cost_basis(context: dict[str, Any]) -> dict[str, Any]:
     pnl = _as_dict(context["artifacts"].get("pnl_summary") or context["report"].get("pnl_summary"))
     cost_basis = _as_dict(context["artifacts"].get("cost_basis_summary") or context["report"].get("cost_basis_summary"))
     partial = _is_partial_diagnostic(context)
+    holdings_snapshot_loaded = bool(
+        _as_dict(context.get("e2e_summary") or context.get("artifacts", {}).get("e2e_summary", {}))
+        .get("holdings_snapshot", {}).get("loaded", False)
+    )
     bullets: list[str] = []
     limitations: list[str] = []
 
@@ -397,6 +414,9 @@ def _build_pnl_and_cost_basis(context: dict[str, Any]) -> dict[str, Any]:
         positions = _as_dict(pnl.get("positions"))
         if positions:
             bullets.append(f"Position-level PnL is available for {len(positions)} fund(s).")
+        # M7.5: Note platform-reported profit if holdings snapshot is loaded
+        if holdings_snapshot_loaded:
+            bullets.append("Note: PnL figures are based on reconstructed valuation. Platform-reported profit (from holdings snapshot) is available separately as platform_reported_profit.")
     else:
         limitations.append("PnL summary is unavailable from provided artifacts.")
 

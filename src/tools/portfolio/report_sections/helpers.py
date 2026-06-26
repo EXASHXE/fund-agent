@@ -197,6 +197,11 @@ REQUIRED_PARTIAL_WORDING = frozenset({
     "不能计算组合权重或总盈亏", "需要补充份额或交易日 NAV",
 })
 
+# M7.5: Wording required when holdings snapshot is loaded
+REQUIRED_HOLDINGS_SNAPSHOT_WORDING = frozenset({
+    "platform_reported_profit", "holdings snapshot",
+})
+
 
 def _is_partial_diagnostic(context: dict[str, Any]) -> bool:
     """Check if the portfolio valuation is partial diagnostic only (M7.4).
