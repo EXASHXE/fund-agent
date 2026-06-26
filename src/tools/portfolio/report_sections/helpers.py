@@ -202,6 +202,18 @@ REQUIRED_HOLDINGS_SNAPSHOT_WORDING = frozenset({
     "platform_reported_profit", "holdings snapshot",
 })
 
+# M7.6: Wording forbidden when identity is unverified
+FORBIDDEN_IDENTITY_BLOCKED_WORDING = frozenset({
+    "显著浮盈", "深度浮亏", "均价异常", "NAV vs 均价",
+    "完整估值", "正式分析报告", "NAV趋势信号",
+})
+
+# M7.6: Wording required when identity is blocked
+REQUIRED_IDENTITY_BLOCKED_WORDING = frozenset({
+    "identity_unverified", "基金代码未验证",
+    "candidate code", "不用于估值或展示",
+})
+
 
 def _is_partial_diagnostic(context: dict[str, Any]) -> bool:
     """Check if the portfolio valuation is partial diagnostic only (M7.4).

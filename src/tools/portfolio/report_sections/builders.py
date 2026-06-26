@@ -25,6 +25,13 @@ from src.tools.portfolio.report_sections.helpers import (
     _string_list,
     _unique_strings,
 )
+from src.tools.portfolio.evidence_visibility import (
+    BLOCKED_IDENTITY_STATUSES,
+    is_identity_blocked,
+    is_valuation_blocked,
+    sanitize_position_for_public_report,
+    compute_blocked_evidence_summary,
+)
 from src.tools.portfolio.report_sections.registry import (
     SECTION_ORDER,
     VALID_STATUSES,
@@ -48,6 +55,36 @@ def _section(
         "data_sources": _unique_strings(data_sources),
         "limitations": _unique_strings(limitations),
     }
+
+
+def _has_blocked_identity_positions(context: dict[str, Any]) -> bool:
+    """Check if any positions have blocked identity status (M7.6)."""
+    positions = _as_dict(context["artifacts"].get("position_summary"))
+    for _code, pos in positions.items():
+        if not isinstance(pos, dict):
+            continue
+        if is_identity_blocked(pos):
+            return True
+    # Also check from e2e_summary identity data
+    e2e = _as_dict(context.get("e2e_summary") or context.get("artifacts", {}).get("e2e_summary", {}))
+    identity = _as_dict(e2e.get("identity_resolution", {}))
+    status_counts = _as_dict(identity.get("identity_verification_status_counts", {}))
+    for blocked_status in BLOCKED_IDENTITY_STATUSES:
+        if int(status_counts.get(blocked_status, 0)) > 0:
+            return True
+    return False
+
+
+def _count_blocked_positions(context: dict[str, Any]) -> int:
+    """Count positions with blocked identity status."""
+    count = 0
+    positions = _as_dict(context["artifacts"].get("position_summary"))
+    for _code, pos in positions.items():
+        if not isinstance(pos, dict):
+            continue
+        if is_identity_blocked(pos):
+            count += 1
+    return count
 
 
 def _build_executive_summary(context: dict[str, Any]) -> dict[str, Any]:
@@ -118,6 +155,8 @@ def _build_portfolio_snapshot(context: dict[str, Any]) -> dict[str, Any]:
     likely_missing = _current_value_likely_missing(context)
     source_of_truth = context["artifacts"].get("source_of_truth")
     is_partial = _is_partial_diagnostic(context)
+    has_blocked = _has_blocked_identity_positions(context)
+    blocked_count = _count_blocked_positions(context)
     holdings_snapshot_loaded = bool(
         _as_dict(context.get("e2e_summary") or context.get("artifacts", {}).get("e2e_summary", {}))
         .get("holdings_snapshot", {}).get("loaded", False)
@@ -180,12 +219,38 @@ def _build_portfolio_snapshot(context: dict[str, Any]) -> dict[str, Any]:
     else:
         limitations.append("Portfolio snapshot is unavailable.")
 
-    if positions:
+    # M7.6: Report blocked identity positions as raw-name + status, not confirmed codes
+    if has_blocked:
+        blocked_names: list[str] = []
+        for _code, pos in positions.items():
+            if not isinstance(pos, dict):
+                continue
+            if is_identity_blocked(pos):
+                raw_name = pos.get("fund_name") or pos.get("raw_fund_name", "unknown")
+                blocked_names.append(raw_name)
+        if blocked_names:
+            bullets.append(
+                f"{blocked_count} fund(s) with identity_unverified status — "
+                f"showing raw fund names and transaction statistics only."
+            )
+            limitations.append(
+                "Candidate fund codes exist but are unverified — not used for valuation or display. "
+                "Verify codes or provide holdings snapshot to enable valuation."
+            )
+            for name in blocked_names[:5]:
+                bullets.append(f"  {name}: identity_unverified (verify code or provide holdings snapshot)")
+            if len(blocked_names) > 5:
+                bullets.append(f"  ... and {len(blocked_names) - 5} more unverified fund(s)")
+        limitations.append(
+            "Do not add verified_by_user:true without first verifying the fund code and name. "
+            "After verification, record verified_at and verification_source."
+        )
+    elif positions:
         bullets.append(f"Position detail is available for {len(positions)} fund(s).")
     else:
         limitations.append("Position summary artifact is missing.")
 
-    status = "OK" if portfolio and positions and not is_partial else "PARTIAL" if portfolio else "MISSING"
+    status = "OK" if portfolio and positions and not is_partial and not has_blocked else "PARTIAL" if portfolio else "MISSING"
     return _section("portfolio_snapshot", status, bullets, ["portfolio_summary", "position_summary"], limitations)
 
 
@@ -248,15 +313,21 @@ def _build_transaction_cashflow(context: dict[str, Any]) -> dict[str, Any]:
         # Top funds by net cashflow
         by_fund = _as_dict(cf_data.get("by_fund"))
         if by_fund:
+            has_blocked = _has_blocked_identity_positions(context)
             sorted_funds = sorted(
                 by_fund.items(),
                 key=lambda x: abs(float(x[1].get("net_cashflow_amount", 0.0) or 0.0)),
                 reverse=True,
             )
             top_n = 3
-            for fund_code, fund_data in sorted_funds[:top_n]:
+            for fund_key, fund_data in sorted_funds[:top_n]:
                 net = fund_data.get("net_cashflow_amount", 0.0)
-                bullets.append(f"  {fund_code}: net cashflow {_money(net)}.")
+                # M7.6: If identity is blocked, show raw name instead of candidate code
+                if has_blocked and is_identity_blocked(fund_data):
+                    raw_name = fund_data.get("fund_name") or fund_data.get("raw_fund_name", "unverified")
+                    bullets.append(f"  {raw_name} (identity_unverified): net cashflow {_money(net)}.")
+                else:
+                    bullets.append(f"  {fund_key}: net cashflow {_money(net)}.")
 
     if source_of_truth == "transactions_only":
         limitations.append(
@@ -373,6 +444,21 @@ def _build_reconstruction_status(context: dict[str, Any]) -> dict[str, Any]:
     has_valuation = portfolio and portfolio.get("total_value") is not None and float(portfolio.get("total_value", 0) or 0) > 0
     bullets.append(f"Confirmed portfolio with valuation: {'yes' if has_valuation else 'no'}.")
 
+    # M7.6: Identity verification status diagnostics
+    e2e = _as_dict(context.get("e2e_summary") or context.get("artifacts", {}).get("e2e_summary", {}))
+    identity = _as_dict(e2e.get("identity_resolution", {}))
+    status_counts = _as_dict(identity.get("identity_verification_status_counts", {}))
+    unverified_count = sum(
+        int(status_counts.get(s, 0))
+        for s in BLOCKED_IDENTITY_STATUSES
+    )
+    if unverified_count > 0:
+        bullets.append(f"Identity unverified: {unverified_count} fund(s) — candidate codes not used for valuation.")
+        limitations.append(
+            "Candidate fund codes exist but are unverified — they are not displayed as confirmed codes "
+            "and are not used for NAV trend, P&L, or valuation conclusions."
+        )
+
     # as_of date comparison
     report_run_as_of = context.get("report", {}).get("report_options", {}).get("as_of_date", "")
     input_snapshot_as_of = portfolio.get("as_of_date", "") if portfolio else ""
@@ -387,6 +473,7 @@ def _build_pnl_and_cost_basis(context: dict[str, Any]) -> dict[str, Any]:
     pnl = _as_dict(context["artifacts"].get("pnl_summary") or context["report"].get("pnl_summary"))
     cost_basis = _as_dict(context["artifacts"].get("cost_basis_summary") or context["report"].get("cost_basis_summary"))
     partial = _is_partial_diagnostic(context)
+    has_blocked = _has_blocked_identity_positions(context)
     holdings_snapshot_loaded = bool(
         _as_dict(context.get("e2e_summary") or context.get("artifacts", {}).get("e2e_summary", {}))
         .get("holdings_snapshot", {}).get("loaded", False)
@@ -394,11 +481,19 @@ def _build_pnl_and_cost_basis(context: dict[str, Any]) -> dict[str, Any]:
     bullets: list[str] = []
     limitations: list[str] = []
 
-    if partial:
-        # Partial diagnostic: no unrealized PnL, cost-basis only
+    # M7.6: Blocked identity blocks P&L just like partial diagnostic
+    if partial or has_blocked:
+        # Partial diagnostic or blocked identity: no unrealized PnL, cost-basis only
         if cost_basis:
             bullets.append(f"Transaction-derived cost basis is available for {len(cost_basis)} fund(s).")
-        bullets.append("仅成本维度可用；P&L 需要完整的估值覆盖")
+        if has_blocked:
+            bullets.append("基金代码未验证，P&L 和 NAV 趋势不可用")
+            limitations.append(
+                "Unrealized PnL and NAV trend are blocked because fund identity is unverified. "
+                "Verify fund codes or provide holdings snapshot before relying on valuation."
+            )
+        else:
+            bullets.append("仅成本维度可用；P&L 需要完整的估值覆盖")
         limitations.append("Unrealized PnL requires complete valuation coverage across all positions.")
         if pnl:
             positions = _as_dict(pnl.get("positions"))
@@ -558,8 +653,27 @@ def _build_risk_flags(context: dict[str, Any]) -> dict[str, Any]:
 def _build_performance_and_nav(context: dict[str, Any]) -> dict[str, Any]:
     fund_metrics = _as_dict(context["report"].get("fund_metrics"))
     coverage = context["analysis_coverage"]
+    has_blocked = _has_blocked_identity_positions(context)
+    is_partial = _is_partial_diagnostic(context)
     bullets: list[str] = []
     limitations: list[str] = []
+
+    # M7.6: Block NAV trend section when identity is unverified or valuation is partial
+    if has_blocked or is_partial:
+        if fund_metrics:
+            limitations.append(
+                f"NAV-derived metrics exist for {len(fund_metrics)} fund(s) but are suppressed "
+                "because identity is unverified or valuation is partial. "
+                "NAV trend signals, NAV vs avg cost, and profit/loss conclusions are not reliable."
+            )
+        else:
+            limitations.append(
+                "Fund metrics are unavailable because NAV history is missing or incomplete."
+            )
+        limitations.append(
+            "NAV趋势信号、NAV vs 均价、显著浮盈/深度浮亏结论在身份未验证时不可用"
+        )
+        return _section("performance_and_nav", "MISSING", bullets, ["fund_analysis_report.fund_metrics"], limitations)
 
     if fund_metrics:
         bullets.append(f"NAV-derived metrics are available for {len(fund_metrics)} fund(s).")
