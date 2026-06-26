@@ -64,6 +64,10 @@ UNSAFE_TO_INFER_ITEMS = frozenset({
     "complete_market_value_if_partial_valuation",
     "market_value_without_holdings_snapshot",
     "reconcile_snapshot_discrepancy_automatically",
+    "nav_trend_from_unverified_identity",
+    "fund_code_from_manual_override_without_verification",
+    "p_and_l_from_avg_cost_nav_comparison",
+    "complete_identity_from_candidate_code",
 })
 
 # ── Safe-to-analyze scope ─────────────────────────────────────────────
@@ -91,6 +95,13 @@ _RECOMMENDED_QUESTIONS = [
     "Should reconciliation gaps between snapshot and transaction history be manually verified?",
 ]
 
+# M7.6: Identity-specific recommended questions (replace generic ones when identity is blocked)
+_IDENTITY_BLOCKED_QUESTIONS = [
+    "请从支付宝当前持仓页核对基金代码和基金名称是否一致。",
+    "请提供 current_holdings_snapshot.private.csv，其中包含 fund_code/fund_name/current_value 或 shares。",
+    "不要仅为了通过门控添加 verified_by_user:true。",
+]
+
 
 def build_agent_context(
     summary: Mapping[str, Any],
@@ -109,6 +120,11 @@ def build_agent_context(
     Returns:
         Structured agent context dict conforming to fund_agent_context.v1.
     """
+    from src.tools.portfolio.evidence_visibility import (
+        BLOCKED_IDENTITY_STATUSES,
+        compute_blocked_evidence_summary,
+    )
+
     health = _as_dict(summary.get("personal_health_report"))
     overall_status = str(health.get("overall_status", "unavailable"))
     confidence_level = str(health.get("confidence_level", "unavailable"))
@@ -142,6 +158,18 @@ def build_agent_context(
         if "market_value_without_holdings_snapshot" not in unsafe:
             unsafe.append("market_value_without_holdings_snapshot")
 
+    # M7.6: Compute blocked evidence summary from positions
+    positions = _extract_positions(summary)
+    blocked_summary = compute_blocked_evidence_summary(positions)
+
+    # If identity is blocked, add identity-specific unsafe items
+    has_identity_blocked = blocked_summary["nav_trend_blocked"]
+    if has_identity_blocked:
+        for item in ("nav_trend_from_unverified_identity", "fund_code_from_manual_override_without_verification",
+                     "p_and_l_from_avg_cost_nav_comparison", "complete_identity_from_candidate_code"):
+            if item not in unsafe:
+                unsafe.append(item)
+
     # Determine recommended questions based on reason codes
     questions: list[str] = []
     if "name_only_funds" in reason_codes or "no_valid_fund_codes" in reason_codes:
@@ -159,7 +187,11 @@ def build_agent_context(
     if "identity_mismatch" in reason_codes:
         questions.append(_RECOMMENDED_QUESTIONS[6])
     if "identity_unverified" in reason_codes:
+        # M7.6: Use identity-specific questions instead of generic one
         questions.append(_RECOMMENDED_QUESTIONS[8])
+        for q in _IDENTITY_BLOCKED_QUESTIONS:
+            if q not in questions:
+                questions.append(q)
     if "partial_valuation" in reason_codes:
         questions.append(_RECOMMENDED_QUESTIONS[9])
     if "redemption_fee_unknown" in reason_codes:
@@ -191,6 +223,10 @@ def build_agent_context(
     if pipeline_steps.get("reconstruction_status") == "reconstructed_from_ledger":
         default_artifacts["portfolio"] = "portfolio/confirmed_portfolio.private.json"
 
+    # M7.6: Add fixit identity candidates path if generated
+    if has_identity_blocked:
+        default_artifacts["identity_candidates"] = "fixit/identity_candidates.private.csv"
+
     return {
         "schema_version": SCHEMA_VERSION,
         "run_id": run_id,
@@ -202,6 +238,7 @@ def build_agent_context(
         "recommended_agent_questions": questions,
         "artifact_paths": default_artifacts,
         "safety_constraints": list(_SAFETY_CONSTRAINTS),
+        "blocked_evidence_summary": blocked_summary,
     }
 
 
@@ -230,6 +267,24 @@ def render_agent_context_markdown(context: Mapping[str, Any]) -> str:
     else:
         lines.append("- **Reason codes:** (none)")
     lines.append("")
+
+    # ── Blocked evidence summary (M7.6) ──────────────────────────────
+    blocked = _as_dict(context.get("blocked_evidence_summary"))
+    if blocked and blocked.get("nav_trend_blocked"):
+        lines.append("## Blocked Evidence Summary")
+        lines.append("")
+        lines.append(f"- **Candidate code count:** {blocked.get('candidate_code_count', 0)}")
+        lines.append(f"- **Estimated units blocked:** {blocked.get('estimated_units_blocked_count', 0)}")
+        lines.append(f"- **Latest NAV blocked:** {blocked.get('latest_nav_blocked_count', 0)}")
+        lines.append(f"- **NAV trend blocked:** {blocked.get('nav_trend_blocked', False)}")
+        reasons = blocked.get("reasons", [])
+        if reasons:
+            lines.append(f"- **Reasons:** {', '.join(reasons)}")
+        lines.append("")
+        lines.append("> **M7.6 Firewall:** When identity is unverified, candidate codes, NAV trend,")
+        lines.append("> P&L, and valuation conclusions are blocked from agent analysis.")
+        lines.append("> Do NOT bypass this firewall. Verify fund codes first.")
+        lines.append("")
 
     # ── Safe-to-analyze scope ─────────────────────────────────────────
     lines.append("## Safe-to-Analyze Scope")
@@ -297,3 +352,42 @@ def _summary_report_available(summary: Mapping[str, Any]) -> bool:
     if "output_report" in summary:
         return bool(summary.get("output_report"))
     return True
+
+
+def _extract_positions(summary: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """Extract position list from E2E summary for blocked evidence computation.
+
+    Looks in confirmed_portfolio.positions or position_summary.
+    """
+    positions: list[dict[str, Any]] = []
+
+    # Try confirmed_portfolio first
+    cp = _as_dict(summary.get("confirmed_portfolio"))
+    cp_positions = _as_list(cp.get("positions"))
+    if cp_positions:
+        for pos in cp_positions:
+            if isinstance(pos, dict):
+                positions.append(pos)
+        return positions
+
+    # Try position_summary (dict keyed by fund_code)
+    ps = _as_dict(summary.get("position_summary"))
+    if ps:
+        for _code, pos in ps.items():
+            if isinstance(pos, dict):
+                positions.append(pos)
+        return positions
+
+    # Try from portfolio_summary embedded positions
+    portfolio = _as_dict(summary.get("portfolio_summary"))
+    portfolio_positions = _as_list(portfolio.get("positions"))
+    if portfolio_positions:
+        for pos in portfolio_positions:
+            if isinstance(pos, dict):
+                positions.append(pos)
+
+    return positions
+
+
+def _as_list(value: Any) -> list[Any]:
+    return value if isinstance(value, list) else []
