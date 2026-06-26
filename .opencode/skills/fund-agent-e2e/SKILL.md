@@ -1,49 +1,69 @@
 ---
 name: fund-agent-e2e
-description: Use when running the fund-agent private portfolio E2E report generation pipeline
+description: Internal pipeline debugging only. For personal fund analysis, use bin/fund-agent-personal-run instead.
 ---
 
-# fund-agent E2E Pipeline
+# fund-agent E2E Pipeline (internal)
 
-Run the fund-agent private portfolio E2E report pipeline from start to finish.
-
-## Runner
+> **M7.8: This skill is for internal pipeline debugging/development only.**
+> **For personal portfolio analysis, DO NOT run `bin/fund-agent-e2e` directly.**
+> **Use the canonical entrypoint instead:**
 
 ```bash
-bin/fund-agent-e2e --as-of YYYY-MM-DD
+bin/fund-agent-personal-run \
+  --private-data-dir private_data \
+  --output-dir local_reports \
+  --transaction-source auto \
+  --execution-mode real_analysis \
+  --skip-news \
+  --generate-fixit-package
 ```
 
-## Pipeline Steps
+## Why not call bin/fund-agent-e2e directly?
 
-1. Import Alipay transactions (if CSV exists in private_data/)
-2. Generate planned transactions (if investment plan exists)
-3. Build transaction ledger
-4. Resolve fund identities
-5. Build fund data snapshot (skipped if --skip-akshare)
-6. Reconstruct portfolio from ledger
-7. Build knowledge graph context
-8. Build news snapshot (graceful skip if no API keys, or --skip-news)
-9. Build factor snapshot
-10. Analyze portfolio and produce markdown report
+`scripts/fund_agent_e2e.py` is an **internal pipeline component**, not a
+user-facing entrypoint. Since M7.7 it has a non-canonical personal-analysis
+guard that **fails fast** (exit code 1, error
+`non_canonical_personal_analysis_entrypoint`) whenever it detects personal /
+`private_data` analysis without canonical provenance.
 
-## Flags
+Direct calls to `bin/fund-agent-e2e` for personal analysis are blocked because
+they would:
 
-- `--as-of YYYY-MM-DD` — portfolio reconstruction date (default: today)
-- `--use-live-provider` — enable live provider data fetch
-- `--skip-news` — skip news snapshot step
-- `--skip-akshare` — skip AkShare-dependent steps
-- `--dry-run` — print pipeline steps without executing
-- `--output-report PATH` — custom report output path
-- `--run-id ID` — custom run identifier
+- Bypass the doctor, health-report, holdings-snapshot-overlay, and
+  agent-context steps.
+- Produce `local_reports/real_portfolio_report.md` (the forbidden legacy flat
+  report path) or `eval_workspace/runs/<run_id>/` (not a user-visible final
+  output).
+- Skip `agent_context.json` / `agent_context.md` / `run_manifest.json`, which
+  are mandatory for the agent evidence package.
 
-## Output
+## Canonical personal analysis
 
-- `local_reports/real_portfolio_report.md` — the markdown report
-- `eval_workspace/runs/<run_id>/e2e_summary.json` — pipeline summary
+For ANY request that looks like personal fund / portfolio analysis — including
+short prompts like "帮我做分析报告", "分析我的基金组合", or "新的流水数据在
+private_data" — the agent MUST:
+
+1. Read `skills/fund-analysis/SKILL.md` (the primary skill) first.
+2. Run `bin/fund-agent-personal-run` (the canonical entrypoint).
+3. Read `local_reports/<run_id>/agent_context.md` for the evidence package.
+4. Follow the blocked-evidence firewall rules in `agent_context.json`.
+
+The canonical output directory is `local_reports/<run_id>/` and MUST contain
+`agent_context.json`, `agent_context.md`, `personal_health_report.json`,
+`report.md`, and `run_manifest.json` with `canonical_entrypoint: true`.
+
+## When this skill is actually useful
+
+Only for:
+- Debugging the internal pipeline with synthetic fixtures (tests must pass
+  `--allow-noncanonical-test-run`).
+- Inspecting `e2e_summary.json` structure during development.
 
 ## Safety Rules
 
 - NEVER read private file contents into chat (private_data/, *.private.json, etc.)
 - NEVER print API key values or env var values
 - NEVER commit private artifacts
-- Only summarize e2e_summary.json fields (run_id, steps_completed, pipeline_version)
+- NEVER call `bin/fund-agent-e2e` for personal analysis — use
+  `bin/fund-agent-personal-run` instead.

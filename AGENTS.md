@@ -10,11 +10,29 @@ At the skill layer, `fund-agent` is **Markdown-first**. `skills/<slug>/SKILL.md`
 files are the primary agent-facing workflow and policy instructions. Python
 under `src/` is deterministic runtime, schema, and tool implementation support.
 
+## Skill precedence (M7.8)
+
+For **any** fund analysis or portfolio report request — including very short
+prompts like "帮我做分析报告", "分析我的基金组合", or "新的流水数据在
+private_data" — the agent MUST:
+
+1. Load the `fund-analysis` skill (`skills/fund-analysis/SKILL.md`) **first**,
+   before any other skill.
+2. Enter the autonomous personal analysis workflow described there — **no
+   brainstorming, no A/B/C clarifying questions**.
+3. Run `bin/fund-agent-personal-run` (the canonical entrypoint) if
+   `private_data/` exists.
+
+`fund-analysis` takes precedence over general-purpose skills (including
+brainstorming) for fund/portfolio analysis requests. If the user's request
+could be satisfied by a fund report, load `fund-analysis` first.
+
 ## What Agents Should Use
 
 Primary entrypoints and resources:
 
-- `bin/fund-agent-e2e` — shared E2E pipeline runner (use for portfolio reconstruction)
+- `bin/fund-agent-personal-run` — **canonical** personal analysis entrypoint (use this for personal/portfolio analysis)
+- `bin/fund-agent-e2e` — internal pipeline component only (do NOT call directly for personal analysis; M7.7 guard fails fast)
 - `bin/fund-agent-privacy-check` — privacy audit before commits
 - `skillpack/fund-agent.skillpack.yaml` — plugin manifest (start here)
 - `skills/README.md` — Markdown skill directory policy

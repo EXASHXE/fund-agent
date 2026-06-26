@@ -19,6 +19,10 @@ entrypoint: skills/fund-analysis/SKILL.md
 
 # Fund Analysis
 
+> **MUST read this file before running any command for a fund/portfolio analysis
+> request.** This skill takes precedence over general-purpose skills (including
+> brainstorming) for any fund analysis or portfolio report request.
+
 ## User intent trigger
 
 When the user requests any of the following, the agent MUST enter the
@@ -29,6 +33,16 @@ When the user requests any of the following, the agent MUST enter the
 - "新的流水数据在 private_data"
 - "用 fund-analysis skill 分析" / "跑 fund-agent 分析我的基金"
 - "请使用本仓库的 fund-analysis skill 做一次个人基金组合分析"
+- **Short / ambiguous report requests that map to fund analysis:**
+  "帮我做分析报告" / "帮我做报告" / "做分析报告" / "生成报告" /
+  "分析报告" / "做个基金报告" / "基金报告"
+
+`fund-analysis` is the **primary / default skill** for this skill pack. Any
+request that could be satisfied by a fund or portfolio report — even a very
+short one like "帮我做分析报告" — MUST load `fund-analysis` first and enter
+the autonomous workflow below. **Do NOT invoke the brainstorming skill or ask
+A/B/C clarifying questions for these requests.** If `private_data/` exists,
+run the canonical entrypoint directly.
 
 The user does NOT need to explicitly write:
 - `personal-run`
