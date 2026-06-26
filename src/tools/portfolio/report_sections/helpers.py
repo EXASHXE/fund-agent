@@ -183,3 +183,38 @@ def _current_value_likely_missing(context: dict[str, Any]) -> bool:
     # Also check factor_snapshot data_quality if available
     fs = _as_dict(context["artifacts"].get("factor_snapshot"))
     return bool(fs.get("data_quality", {}).get("current_value_likely_missing"))
+
+
+# ── M7.4: Partial diagnostic wording constants ─────────────────────────
+
+FORBIDDEN_PARTIAL_WORDING = frozenset({
+    "总估值", "总浮亏", "最大持仓", "HHI", "现金占比",
+    "亏损严重", "最大盈利贡献", "建议降低单基集中",
+})
+
+REQUIRED_PARTIAL_WORDING = frozenset({
+    "已估值部分", "partial diagnostic", "不能代表组合总市值",
+    "不能计算组合权重或总盈亏", "需要补充份额或交易日 NAV",
+})
+
+
+def _is_partial_diagnostic(context: dict[str, Any]) -> bool:
+    """Check if the portfolio valuation is partial diagnostic only (M7.4).
+
+    A partial diagnostic means some positions lack valuation, so portfolio-level
+    metrics (total value, HHI, weights, cash ratio) must NOT be output.
+    """
+    ps = _portfolio_summary(context)
+    if ps.get("is_partial_diagnostic"):
+        return True
+    pvs = ps.get("portfolio_valuation_status")
+    if pvs in ("partial_diagnostic_only", "unavailable"):
+        return True
+    # Check from confirmed_portfolio summary
+    cp = _as_dict(context["artifacts"].get("confirmed_portfolio"))
+    if cp.get("summary", {}).get("is_partial_diagnostic"):
+        return True
+    cp_pvs = cp.get("summary", {}).get("portfolio_valuation_status")
+    if cp_pvs in ("partial_diagnostic_only", "unavailable"):
+        return True
+    return False

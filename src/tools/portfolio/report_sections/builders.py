@@ -12,6 +12,7 @@ from src.tools.portfolio.report_sections.helpers import (
     _current_value_likely_missing,
     _fixed,
     _format_counts,
+    _is_partial_diagnostic,
     _largest_weight,
     _missing_gap_codes,
     _money,
@@ -116,6 +117,7 @@ def _build_portfolio_snapshot(context: dict[str, Any]) -> dict[str, Any]:
     positions = _as_dict(context["artifacts"].get("position_summary"))
     likely_missing = _current_value_likely_missing(context)
     source_of_truth = context["artifacts"].get("source_of_truth")
+    is_partial = _is_partial_diagnostic(context)
     bullets: list[str] = []
     limitations: list[str] = []
 
@@ -137,14 +139,31 @@ def _build_portfolio_snapshot(context: dict[str, Any]) -> dict[str, Any]:
 
     if portfolio:
         as_of = portfolio.get("as_of_date") or "unspecified date"
-        bullets.append(
-            f"As of {as_of}, total value is {_money_or_missing(portfolio.get('total_value'), likely_missing=likely_missing)} "
-            f"with {_money_or_missing(portfolio.get('cash_available'), likely_missing=likely_missing)} cash."
-        )
-        weights = _as_dict(portfolio.get("position_weights"))
-        if weights:
-            fund_code, weight = _largest_weight(weights)
-            bullets.append(f"Largest position is {fund_code} at {_pct(weight)} of portfolio value.")
+        if is_partial:
+            # M7.4: Partial diagnostic — do NOT output total value or largest position
+            known_val = portfolio.get("known_valued_amount")
+            valued_count = portfolio.get("valued_positions_count")
+            total_count = portfolio.get("total_positions")
+            if known_val is not None:
+                bullets.append(
+                    f"As of {as_of}, 已估值部分为 {_money(known_val)} "
+                    f"(partial diagnostic; 不能代表组合总市值)."
+                )
+            else:
+                bullets.append(f"As of {as_of}, valuation is partial — total value cannot be computed.")
+            if valued_count is not None and total_count is not None:
+                bullets.append(f"Valued {valued_count} of {total_count} position(s); remaining lack units or trade-date NAV.")
+            limitations.append("不能计算组合权重或总盈亏")
+            limitations.append("需要补充份额或交易日 NAV")
+        else:
+            bullets.append(
+                f"As of {as_of}, total value is {_money_or_missing(portfolio.get('total_value'), likely_missing=likely_missing)} "
+                f"with {_money_or_missing(portfolio.get('cash_available'), likely_missing=likely_missing)} cash."
+            )
+            weights = _as_dict(portfolio.get("position_weights"))
+            if weights:
+                fund_code, weight = _largest_weight(weights)
+                bullets.append(f"Largest position is {fund_code} at {_pct(weight)} of portfolio value.")
     else:
         limitations.append("Portfolio snapshot is unavailable.")
 
@@ -153,7 +172,7 @@ def _build_portfolio_snapshot(context: dict[str, Any]) -> dict[str, Any]:
     else:
         limitations.append("Position summary artifact is missing.")
 
-    status = "OK" if portfolio and positions else "PARTIAL" if portfolio else "MISSING"
+    status = "OK" if portfolio and positions and not is_partial else "PARTIAL" if portfolio else "MISSING"
     return _section("portfolio_snapshot", status, bullets, ["portfolio_summary", "position_summary"], limitations)
 
 
@@ -354,10 +373,21 @@ def _build_reconstruction_status(context: dict[str, Any]) -> dict[str, Any]:
 def _build_pnl_and_cost_basis(context: dict[str, Any]) -> dict[str, Any]:
     pnl = _as_dict(context["artifacts"].get("pnl_summary") or context["report"].get("pnl_summary"))
     cost_basis = _as_dict(context["artifacts"].get("cost_basis_summary") or context["report"].get("cost_basis_summary"))
+    partial = _is_partial_diagnostic(context)
     bullets: list[str] = []
     limitations: list[str] = []
 
-    if pnl:
+    if partial:
+        # Partial diagnostic: no unrealized PnL, cost-basis only
+        if cost_basis:
+            bullets.append(f"Transaction-derived cost basis is available for {len(cost_basis)} fund(s).")
+        bullets.append("仅成本维度可用；P&L 需要完整的估值覆盖")
+        limitations.append("Unrealized PnL requires complete valuation coverage across all positions.")
+        if pnl:
+            positions = _as_dict(pnl.get("positions"))
+            if positions:
+                limitations.append(f"Position-level PnL data exists for {len(positions)} fund(s) but is suppressed under partial coverage.")
+    elif pnl:
         likely_missing = _current_value_likely_missing(context)
         bullets.append(
             "Unrealized PnL is "
@@ -370,12 +400,13 @@ def _build_pnl_and_cost_basis(context: dict[str, Any]) -> dict[str, Any]:
     else:
         limitations.append("PnL summary is unavailable from provided artifacts.")
 
-    if cost_basis:
-        bullets.append(f"Transaction-derived cost basis is available for {len(cost_basis)} fund(s).")
-    elif pnl:
-        limitations.append("Transaction-level cost-basis summary is absent; PnL uses provided position cost fields.")
+    if not partial:
+        if cost_basis:
+            bullets.append(f"Transaction-derived cost basis is available for {len(cost_basis)} fund(s).")
+        elif pnl:
+            limitations.append("Transaction-level cost-basis summary is absent; PnL uses provided position cost fields.")
 
-    status = "OK" if pnl else "PARTIAL" if cost_basis else "MISSING"
+    status = "OK" if (not partial and pnl) else "PARTIAL" if cost_basis or pnl else "MISSING"
     return _section("pnl_and_cost_basis", status, bullets, ["pnl_summary", "cost_basis_summary"], limitations)
 
 
@@ -383,27 +414,32 @@ def _build_position_contribution(context: dict[str, Any]) -> dict[str, Any]:
     contribution = _artifact(context, "position_contribution")
     positions = _as_list(contribution.get("positions"))
     summary = _as_dict(contribution.get("summary"))
+    partial = _is_partial_diagnostic(context)
     bullets: list[str] = []
     limitations: list[str] = []
 
     if positions:
         has_detail = bool(summary.get("largest_value_position") or summary.get("largest_profit_contributor") or summary.get("largest_loss_contributor"))
         bullets.append(f"Position contribution covers {len(positions)} fund(s).")
-        largest_value = summary.get("largest_value_position")
-        if largest_value:
-            bullets.append(f"Largest value position: {largest_value}.")
-        largest_profit = summary.get("largest_profit_contributor")
-        if largest_profit:
-            bullets.append(f"Largest profit contributor: {largest_profit}.")
-        largest_loss = summary.get("largest_loss_contributor")
-        if largest_loss:
-            bullets.append(f"Largest loss contributor: {largest_loss}.")
+        if partial:
+            # Partial: suppress market-value-based contributors
+            limitations.append("Largest profit/loss contributors require complete valuation coverage.")
+        else:
+            largest_value = summary.get("largest_value_position")
+            if largest_value:
+                bullets.append(f"Largest value position: {largest_value}.")
+            largest_profit = summary.get("largest_profit_contributor")
+            if largest_profit:
+                bullets.append(f"Largest profit contributor: {largest_profit}.")
+            largest_loss = summary.get("largest_loss_contributor")
+            if largest_loss:
+                bullets.append(f"Largest loss contributor: {largest_loss}.")
         if not has_detail:
             limitations.append("Position contribution has no detailed breakdown; contribution analysis is limited.")
     else:
         limitations.append("Position contribution artifact is missing.")
 
-    status = "OK" if positions and (summary.get("largest_value_position") or summary.get("largest_profit_contributor")) else "PARTIAL" if positions else "MISSING"
+    status = "OK" if positions and not partial and (summary.get("largest_value_position") or summary.get("largest_profit_contributor")) else "PARTIAL" if positions else "MISSING"
     return _section(
         "position_contribution",
         status,
@@ -417,6 +453,7 @@ def _build_allocation_and_exposure(context: dict[str, Any]) -> dict[str, Any]:
     exposure = _as_dict(context["artifacts"].get("exposure_summary") or context["report"].get("exposure_summary"))
     concentration = _as_dict(context["report"].get("concentration"))
     likely_missing = _current_value_likely_missing(context)
+    partial = _is_partial_diagnostic(context)
     bullets: list[str] = []
     limitations: list[str] = []
 
@@ -429,7 +466,11 @@ def _build_allocation_and_exposure(context: dict[str, Any]) -> dict[str, Any]:
     else:
         limitations.append("Exposure summary is unavailable.")
 
-    if concentration:
+    if partial:
+        # Partial: suppress HHI, weights, concentration metrics
+        bullets.append("权重和集中度需要所有持仓的完整估值覆盖")
+        limitations.append("Concentration and weight metrics require complete valuation coverage across all positions.")
+    elif concentration:
         if likely_missing and concentration.get("single_fund_max_weight", 0.0) == 0.0:
             limitations.append("Concentration metrics are unavailable because current value is missing.")
         else:
@@ -439,7 +480,10 @@ def _build_allocation_and_exposure(context: dict[str, Any]) -> dict[str, Any]:
                 f"HHI is {_ratio_or_missing(concentration.get('hhi'), digits=6, likely_missing=likely_missing)}."
             )
 
-    status = "OK" if exposure and not (likely_missing and concentration.get("single_fund_max_weight", 0.0) == 0.0) else "PARTIAL" if exposure or concentration else "MISSING"
+    if partial:
+        status = "PARTIAL" if exposure else "MISSING"
+    else:
+        status = "OK" if exposure and not (likely_missing and concentration.get("single_fund_max_weight", 0.0) == 0.0) else "PARTIAL" if exposure or concentration else "MISSING"
     return _section("allocation_and_exposure", status, bullets, ["exposure_summary", "concentration"], limitations)
 
 
@@ -447,8 +491,31 @@ def _build_risk_flags(context: dict[str, Any]) -> dict[str, Any]:
     risk_flags = _as_list(context["artifacts"].get("risk_flags") or context["report"].get("risk_flags"))
     completeness = context["data_completeness"]
     missing = set(_string_list(completeness.get("missing_sections") or []))
+    partial = _is_partial_diagnostic(context)
     limitations: list[str] = []
     bullets: list[str] = []
+
+    # Market-value-dependent risk flag types to suppress under partial diagnostic
+    _MARKET_VALUE_DEPENDENT_FLAGS = {"overweight", "cash_reserve_deficit", "concentration_risk"}
+
+    if partial and risk_flags:
+        # Filter out market-value-dependent risk flags
+        filtered = []
+        suppressed_count = 0
+        for flag in risk_flags:
+            if not isinstance(flag, dict):
+                filtered.append(flag)
+                continue
+            flag_type = flag.get("flag_type", flag.get("type", ""))
+            if flag_type in _MARKET_VALUE_DEPENDENT_FLAGS:
+                suppressed_count += 1
+            else:
+                filtered.append(flag)
+        risk_flags = filtered
+        if suppressed_count > 0:
+            limitations.append(
+                f"{suppressed_count} market-value-dependent risk flag(s) suppressed under partial valuation coverage."
+            )
 
     if risk_flags:
         by_severity = _risk_counts_by_severity(risk_flags)
@@ -790,12 +857,19 @@ def _build_professional_diagnostics(context: dict[str, Any]) -> dict[str, Any]:
 
     cash = _as_dict(prof_diag.get("cash_budget_diagnostics"))
     if cash:
-        bullets.append(f"Cash ratio is {cash.get('cash_ratio', 0) * 100:.1f}%.")
-        gap = cash.get("reserve_gap")
-        if gap is not None:
-            bullets.append(f"Liquidity reserve gap: {gap:,.0f}.")
-        status = cash.get("short_term_budget_status", "ok")
-        bullets.append(f"Short-term trade budget status: {status}.")
+        partial = _is_partial_diagnostic(context)
+        if partial:
+            # Suppress cash ratio and reserve gap under partial diagnostic
+            limitations.append("Cash ratio and liquidity reserve gap require complete portfolio valuation.")
+            status = cash.get("short_term_budget_status", "ok")
+            bullets.append(f"Short-term trade budget status: {status}.")
+        else:
+            bullets.append(f"Cash ratio is {cash.get('cash_ratio', 0) * 100:.1f}%.")
+            gap = cash.get("reserve_gap")
+            if gap is not None:
+                bullets.append(f"Liquidity reserve gap: {gap:,.0f}.")
+            status = cash.get("short_term_budget_status", "ok")
+            bullets.append(f"Short-term trade budget status: {status}.")
 
     prof_warnings = _string_list(prof_diag.get("professional_warnings"))
     if prof_warnings:
