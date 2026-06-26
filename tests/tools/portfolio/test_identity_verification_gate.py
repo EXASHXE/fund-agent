@@ -50,14 +50,70 @@ class TestComputeIdentityVerificationStatus:
         )
         assert result == "verified"
 
-    def test_manual_override_is_override_verified(self):
+    def test_manual_override_is_manual_override_unverified(self):
+        """M7.4: manual_override without provider check or user verification
+        defaults to manual_override_unverified, NOT override_verified."""
         result = _compute_identity_verification_status(
             resolved_code="000002",
             resolution_status="manual_override",
             ref_info={"fund_code": None, "fund_name": "Test Fund"},
             override_record={"fund_code": "000002", "fund_name": "Test Fund"},
         )
-        assert result == "override_verified"
+        assert result == "manual_override_unverified"
+
+    def test_manual_override_with_user_verified(self):
+        """M7.4: manual_override with verified_by_user → user_verified_override."""
+        result = _compute_identity_verification_status(
+            resolved_code="000002",
+            resolution_status="manual_override",
+            ref_info={"fund_code": None, "fund_name": "Test Fund"},
+            override_record={"fund_code": "000002", "fund_name": "Test Fund", "verified_by_user": True},
+        )
+        assert result == "user_verified_override"
+
+    def test_manual_override_with_provider_confirmed(self):
+        """M7.4: manual_override with provider cross-check confirmed → provider_verified."""
+        result = _compute_identity_verification_status(
+            resolved_code="000002",
+            resolution_status="manual_override",
+            ref_info={"fund_code": None, "fund_name": "Test Fund"},
+            override_record={"fund_code": "000002", "fund_name": "Test Fund"},
+            provider_lookup_result="confirmed",
+        )
+        assert result == "provider_verified"
+
+    def test_manual_override_with_provider_mismatch(self):
+        """M7.4: manual_override with provider cross-check mismatch → code_name_mismatch."""
+        result = _compute_identity_verification_status(
+            resolved_code="000002",
+            resolution_status="manual_override",
+            ref_info={"fund_code": None, "fund_name": "Test Fund"},
+            override_record={"fund_code": "000002", "fund_name": "Test Fund"},
+            provider_lookup_result="mismatch",
+        )
+        assert result == "code_name_mismatch"
+
+    def test_manual_override_provider_failed_no_user_verified(self):
+        """M7.4: provider failed + no user verification → provider_lookup_failed."""
+        result = _compute_identity_verification_status(
+            resolved_code="000002",
+            resolution_status="manual_override",
+            ref_info={"fund_code": None, "fund_name": "Test Fund"},
+            override_record={"fund_code": "000002", "fund_name": "Test Fund", "verified_by_user": False},
+            provider_lookup_result="failed",
+        )
+        assert result == "provider_lookup_failed"
+
+    def test_manual_override_provider_failed_with_user_verified(self):
+        """M7.4: provider failed + user verified → user_verified_override."""
+        result = _compute_identity_verification_status(
+            resolved_code="000002",
+            resolution_status="manual_override",
+            ref_info={"fund_code": None, "fund_name": "Test Fund"},
+            override_record={"fund_code": "000002", "fund_name": "Test Fund", "verified_by_user": True},
+            provider_lookup_result="failed",
+        )
+        assert result == "user_verified_override"
 
     def test_name_only_is_name_only(self):
         result = _compute_identity_verification_status(
@@ -132,7 +188,8 @@ class TestResolveFundIdentitiesVerificationStatus:
         for r in result["resolutions"]:
             assert "identity_verification_status" in r
             assert r["identity_verification_status"] in {
-                "verified", "override_verified", "provider_verified",
+                "verified", "provider_verified", "user_verified_override",
+                "manual_override_unverified", "provider_lookup_failed",
                 "code_name_mismatch", "code_unverified", "name_only", "invalid_code",
             }
 
@@ -170,7 +227,8 @@ class TestResolveFundIdentitiesVerificationStatus:
         name_only = [r for r in result["resolutions"] if r["identity_verification_status"] == "name_only"]
         assert len(name_only) >= 1
 
-    def test_override_produces_override_verified(self):
+    def test_override_produces_manual_override_unverified(self):
+        """M7.4: manual_override without verification → manual_override_unverified."""
         result = resolve_fund_identities(
             ledger_data={
                 "transactions": [
@@ -179,8 +237,8 @@ class TestResolveFundIdentitiesVerificationStatus:
             },
             manual_overrides={"Name Only Fund": "000001"},
         )
-        override_verified = [r for r in result["resolutions"] if r["identity_verification_status"] == "override_verified"]
-        assert len(override_verified) >= 1
+        unverified = [r for r in result["resolutions"] if r["identity_verification_status"] == "manual_override_unverified"]
+        assert len(unverified) >= 1
 
 
 # ── 3. _build_identity_map blocks mismatched codes ──────────────────────
@@ -204,10 +262,10 @@ class TestBuildIdentityMapBlocksMismatch:
                 },
             ],
         }
-        name_map, mismatch_codes = _build_identity_map(identity_data)
+        name_map, blocked_codes, unverified_codes, status_map = _build_identity_map(identity_data)
         assert "Verified Fund" in name_map
         assert "Mismatch Fund" not in name_map
-        assert "000002" in mismatch_codes
+        assert "000002" in blocked_codes
 
     def test_verified_codes_included_in_map(self):
         identity_data = {
@@ -219,14 +277,32 @@ class TestBuildIdentityMapBlocksMismatch:
                 },
             ],
         }
-        name_map, mismatch_codes = _build_identity_map(identity_data)
+        name_map, blocked_codes, unverified_codes, status_map = _build_identity_map(identity_data)
         assert "Verified Fund" in name_map
-        assert len(mismatch_codes) == 0
+        assert len(blocked_codes) == 0
 
     def test_empty_identity_returns_empty(self):
-        name_map, mismatch_codes = _build_identity_map(None)
+        name_map, blocked_codes, unverified_codes, status_map = _build_identity_map(None)
         assert name_map == {}
-        assert mismatch_codes == set()
+        assert blocked_codes == set()
+
+    def test_unverified_codes_in_unverified_set(self):
+        """M7.4: manual_override_unverified codes go to unverified_codes set."""
+        identity_data = {
+            "resolutions": [
+                {
+                    "resolved_fund_code": "000003",
+                    "fund_name": "Unverified Override Fund",
+                    "identity_verification_status": "manual_override_unverified",
+                },
+            ],
+        }
+        name_map, blocked_codes, unverified_codes, status_map = _build_identity_map(identity_data)
+        assert "000003" in unverified_codes
+        assert "000003" not in blocked_codes
+        # Unverified codes are still in name_to_code (NAV fetch allowed)
+        assert "Unverified Override Fund" in name_map
+        assert status_map.get("000003") == "manual_override_unverified"
 
 
 # ── 4. Reconstruction blocks valuation for mismatched funds ─────────────
@@ -310,14 +386,38 @@ class TestReconstructionBlocksMismatchValuation:
         assert pos["valuation_type"] == "estimated"
         assert pos["current_value"] is not None
 
-    def test_override_verified_fund_valuation_allowed(self):
-        """Override-verified fund should get normal valuation."""
+    def test_override_verified_fund_valuation_blocked(self):
+        """M7.4: manual_override_unverified fund should block valuation."""
         identity_data = {
             "resolutions": [
                 {
                     "resolved_fund_code": "000001",
                     "fund_name": "Test Fund",
-                    "identity_verification_status": "override_verified",
+                    "identity_verification_status": "manual_override_unverified",
+                },
+            ],
+        }
+        result = reconstruct_portfolio(
+            ledger_data=self._make_ledger(),
+            nav_snapshot=self._make_nav(),
+            as_of_date=__import__("datetime").date(2025, 6, 1),
+            identity_data=identity_data,
+        )
+        positions = result["confirmed_portfolio"]["positions"]
+        assert len(positions) == 1
+        pos = positions[0]
+        assert pos["valuation_type"] == "cashflow_only"
+        assert pos["current_value"] is None
+        assert "identity_unverified" in pos.get("data_quality", [])
+
+    def test_user_verified_override_fund_valuation_allowed(self):
+        """M7.4: user_verified_override fund should allow valuation."""
+        identity_data = {
+            "resolutions": [
+                {
+                    "resolved_fund_code": "000001",
+                    "fund_name": "Test Fund",
+                    "identity_verification_status": "user_verified_override",
                 },
             ],
         }
@@ -652,3 +752,79 @@ class TestValuationOutputHardGate:
         total_value = result["confirmed_portfolio"]["summary"].get("total_current_value")
         # Should be 0 or None since the only position is blocked
         assert total_value is None or total_value == 0
+
+
+# ── 8. M7.4: Identity unverified health report and agent context ──────────
+
+
+class TestHealthReportIdentityUnverified:
+    """M7.4: personal_health_report must include identity_unverified when
+    manual_override_unverified count > 0."""
+
+    def test_identity_unverified_in_reason_codes(self):
+        artifacts = _base_health_artifacts()
+        artifacts["identity_summary"]["identity_verification_status_counts"] = {
+            "manual_override_unverified": 2,
+        }
+        result = build_personal_health_summary(artifacts)
+        assert "identity_unverified" in result["reason_codes"]
+
+    def test_identity_unverified_in_checklist(self):
+        artifacts = _base_health_artifacts()
+        artifacts["identity_summary"]["identity_verification_status_counts"] = {
+            "manual_override_unverified": 2,
+        }
+        result = build_personal_health_summary(artifacts)
+        checklist_text = " ".join(result["fix_it_checklist"])
+        assert "unverified" in checklist_text.lower() or "verified_by_user" in checklist_text.lower()
+
+    def test_identity_unverified_is_valid_reason_code(self):
+        from src.tools.portfolio.personal_health_report import REASON_IDENTITY_UNVERIFIED
+        assert REASON_IDENTITY_UNVERIFIED in VALID_REASON_CODES
+        assert REASON_IDENTITY_UNVERIFIED == "identity_unverified"
+
+
+class TestAgentContextIdentityUnverified:
+    """M7.4: agent_context must include identity_unverified in reason_codes and
+    valuation_if_identity_unverified in unsafe_to_infer."""
+
+    def test_identity_unverified_in_reason_codes_enum(self):
+        assert "identity_unverified" in REASON_CODES
+
+    def test_valuation_if_identity_unverified_in_unsafe_enum(self):
+        assert "valuation_if_identity_unverified" in UNSAFE_TO_INFER_ITEMS
+
+    def test_identity_unverified_triggers_unsafe_item(self):
+        summary = {
+            "personal_health_report": {
+                "overall_status": "partial",
+                "confidence_level": "low",
+                "reason_codes": ["identity_unverified", "partial_nav_coverage"],
+                "data_sources": {},
+                "valuation_quality": {},
+                "nav_coverage": {"full": 0, "partial": 1, "none": 0},
+            },
+            "pipeline_steps": {
+                "reconstruction_status": "reconstructed_from_ledger",
+            },
+        }
+        ctx = build_agent_context(summary)
+        assert "valuation_if_identity_unverified" in ctx["unsafe_to_infer"]
+
+    def test_identity_unverified_triggers_recommended_question(self):
+        summary = {
+            "personal_health_report": {
+                "overall_status": "partial",
+                "confidence_level": "low",
+                "reason_codes": ["identity_unverified"],
+                "data_sources": {},
+                "valuation_quality": {},
+                "nav_coverage": {"full": 0, "partial": 0, "none": 0},
+            },
+            "pipeline_steps": {
+                "reconstruction_status": "reconstructed_from_ledger",
+            },
+        }
+        ctx = build_agent_context(summary)
+        questions_text = " ".join(ctx["recommended_agent_questions"])
+        assert "unverified" in questions_text.lower() or "verified_by_user" in questions_text.lower()

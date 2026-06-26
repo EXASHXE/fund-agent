@@ -64,7 +64,12 @@ def _load_overrides(overrides_path: Path) -> tuple[dict[str, dict[str, Any]], li
                 f"Override fund_code '{fund_code}' for raw_name '{raw_name}' is not a valid six-digit code; skipped"
             )
             continue
-        record = {"fund_code": fund_code, "fund_name": fund_name or raw_name}
+        record = {
+            "fund_code": fund_code,
+            "fund_name": fund_name or raw_name,
+            "verified_by_user": bool(entry.get("verified_by_user", False)),
+            "verified_at": entry.get("verified_at"),
+        }
         # Index by raw_name and normalized variants
         lookup[raw_name] = record
         lookup[normalize_fund_name(raw_name)] = record
@@ -92,11 +97,17 @@ def _compute_identity_verification_status(
     resolution_status: str,
     ref_info: dict[str, Any],
     override_record: dict[str, Any] | None = None,
+    provider_lookup_result: str | None = None,
 ) -> str:
     """Compute identity_verification_status for a fund resolution entry.
 
-    Returns one of: verified, override_verified, provider_verified,
-    code_name_mismatch, code_unverified, name_only, invalid_code.
+    Returns one of: verified, provider_verified, user_verified_override,
+    manual_override_unverified, code_name_mismatch, provider_lookup_failed,
+    code_unverified, name_only, invalid_code.
+
+    M7.4: manual_override no longer auto-elevates to override_verified.
+    Without provider cross-check or explicit user verification, manual
+    overrides default to manual_override_unverified.
     """
     # Invalid code → invalid_code
     if resolution_status == "invalid_code":
@@ -106,9 +117,24 @@ def _compute_identity_verification_status(
     if resolution_status == "name_only":
         return "name_only"
 
-    # Manual override with valid code → override_verified
+    # Manual override with valid code — requires verification
     if resolution_status == "manual_override" and resolved_code is not None:
-        return "override_verified"
+        # Provider cross-check takes priority
+        if provider_lookup_result == "confirmed":
+            return "provider_verified"
+        if provider_lookup_result == "mismatch":
+            return "code_name_mismatch"
+        if provider_lookup_result == "failed":
+            # Provider unavailable — check user verification
+            override_verified_by_user = bool(override_record.get("verified_by_user", False)) if override_record else False
+            if override_verified_by_user:
+                return "user_verified_override"
+            return "provider_lookup_failed"
+        # No provider attempted — check user verification
+        override_verified_by_user = bool(override_record.get("verified_by_user", False)) if override_record else False
+        if override_verified_by_user:
+            return "user_verified_override"
+        return "manual_override_unverified"
 
     # Unresolved → code_unverified
     if resolved_code is None:
@@ -287,6 +313,7 @@ def resolve_fund_identities(
             resolution_status=resolution_status,
             ref_info=ref_info,
             override_record=ov_record,
+            provider_lookup_result=None,  # Provider cross-check done separately
         )
 
         resolutions.append({
@@ -325,8 +352,10 @@ def resolve_fund_identities(
         },
         "identity_verification_status_counts": {
             "verified": sum(1 for r in resolutions if r["identity_verification_status"] == "verified"),
-            "override_verified": sum(1 for r in resolutions if r["identity_verification_status"] == "override_verified"),
             "provider_verified": sum(1 for r in resolutions if r["identity_verification_status"] == "provider_verified"),
+            "user_verified_override": sum(1 for r in resolutions if r["identity_verification_status"] == "user_verified_override"),
+            "manual_override_unverified": sum(1 for r in resolutions if r["identity_verification_status"] == "manual_override_unverified"),
+            "provider_lookup_failed": sum(1 for r in resolutions if r["identity_verification_status"] == "provider_lookup_failed"),
             "code_name_mismatch": sum(1 for r in resolutions if r["identity_verification_status"] == "code_name_mismatch"),
             "code_unverified": sum(1 for r in resolutions if r["identity_verification_status"] == "code_unverified"),
             "name_only": sum(1 for r in resolutions if r["identity_verification_status"] == "name_only"),

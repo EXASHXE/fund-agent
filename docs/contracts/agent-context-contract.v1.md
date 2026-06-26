@@ -39,7 +39,10 @@ All `reason_codes` values must come from this stable set:
 | `cashflow_only` | Some positions are cashflow-only (no valuation) |
 | `estimated_only` | All positions are estimated (no confirmed valuation) |
 | `identity_mismatch` | Some fund codes have code/name mismatch — valuation blocked for those funds |
+| `identity_unverified` | Some fund codes have unverified manual override — valuation blocked until verified |
+| `partial_valuation` | Some positions lack valuation — portfolio metrics incomplete |
 | `redemption_fee_unknown` | Some funds have unknown redemption fees — confirmed P&L not available |
+| `insufficient_trade_date_nav_coverage` | Some trades lack trade-date NAV — units derivation incomplete |
 
 ## Safety Constraints Enumeration
 
@@ -76,6 +79,8 @@ Known unsafe-to-infer scope items:
 | `trading_decision` | Do not make trading decisions |
 | `broker_or_order_execution` | Do not execute broker orders |
 | `valuation_if_identity_mismatch` | Do not infer valuation for funds with code/name mismatch |
+| `valuation_if_identity_unverified` | Do not infer valuation for funds with unverified manual override |
+| `complete_market_value_if_partial_valuation` | Do not infer complete market value when valuation coverage is partial |
 
 ## Artifact Paths
 

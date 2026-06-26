@@ -25,7 +25,10 @@ REASON_CODES = frozenset({
     "cashflow_only",
     "estimated_only",
     "identity_mismatch",
+    "identity_unverified",
+    "partial_valuation",
     "redemption_fee_unknown",
+    "insufficient_trade_date_nav_coverage",
 })
 
 # ── Allowed safety constraints (stable enumeration) ────────────────────
@@ -53,6 +56,8 @@ UNSAFE_TO_INFER_ITEMS = frozenset({
     "trading_decision",
     "broker_or_order_execution",
     "valuation_if_identity_mismatch",
+    "valuation_if_identity_unverified",
+    "complete_market_value_if_partial_valuation",
 })
 
 # ── Safe-to-analyze scope ─────────────────────────────────────────────
@@ -74,6 +79,8 @@ _RECOMMENDED_QUESTIONS = [
     "Should explicit units be provided for cashflow-only transactions?",
     "Should fund_identity_overrides be verified for code/name mismatched funds?",
     "Should fee_overrides be provided for funds with unknown redemption fees?",
+    "Should fund_identity_overrides be verified (verified_by_user or provider cross-check) for unverified manual overrides?",
+    "Should trade-date NAV or explicit units be provided to complete valuation coverage?",
 ]
 
 
@@ -129,6 +136,10 @@ def build_agent_context(
         questions.append(_RECOMMENDED_QUESTIONS[4])
     if "identity_mismatch" in reason_codes:
         questions.append(_RECOMMENDED_QUESTIONS[6])
+    if "identity_unverified" in reason_codes:
+        questions.append(_RECOMMENDED_QUESTIONS[8])
+    if "partial_valuation" in reason_codes:
+        questions.append(_RECOMMENDED_QUESTIONS[9])
     if "redemption_fee_unknown" in reason_codes:
         questions.append(_RECOMMENDED_QUESTIONS[7])
     # Always include if no specific questions matched

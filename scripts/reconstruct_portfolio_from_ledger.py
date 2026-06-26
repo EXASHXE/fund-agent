@@ -36,6 +36,7 @@ from src.tools.portfolio.nav_coverage import (
     compute_portfolio_nav_coverage,
 )
 from src.tools.portfolio.trade_date_rules import compute_effective_trade_date
+from src.tools.portfolio.valuation_anomaly import check_valuation_anomalies
 
 
 def _parse_date(val) -> date | None:
@@ -86,7 +87,7 @@ def _calculate_units(net_amount: float | None, nav: float | None) -> float | Non
     return net_amount / nav
 
 
-def _build_identity_map(identity_data: dict[str, Any] | None) -> tuple[dict[str, str], set[str]]:
+def _build_identity_map(identity_data: dict[str, Any] | None) -> tuple[dict[str, str], set[str], set[str], dict[str, str]]:
     """Build a multi-key mapping from fund_name variants to resolved_fund_code.
 
     Indexes by fund_name, normalized_name, raw_fund_name, and normalized
@@ -94,23 +95,33 @@ def _build_identity_map(identity_data: dict[str, Any] | None) -> tuple[dict[str,
     six-digit code and identity_verification_status is NOT code_name_mismatch.
 
     Returns:
-        Tuple of (name_to_code mapping, set of identity_mismatch fund codes).
+        Tuple of:
+        - name_to_code mapping
+        - set of identity_blocked fund codes (code_name_mismatch)
+        - set of identity_unverified fund codes (manual_override_unverified)
+        - dict mapping fund_code → identity_verification_status
     """
     if not identity_data:
-        return {}, set()
+        return {}, set(), set(), {}
     entries = identity_data.get("resolutions", identity_data.get("funds", []))
     code_field = "resolved_fund_code" if "resolutions" in identity_data else "resolved_code"
     name_to_code: dict[str, str] = {}
-    identity_mismatch_codes: set[str] = set()
+    identity_blocked_codes: set[str] = set()
+    identity_unverified_codes: set[str] = set()
+    identity_status_map: dict[str, str] = {}
     for entry in entries:
         code = entry.get(code_field, "")
         if not is_valid_fund_code(code):
             continue
         # Block identity-mismatch codes from the map
         ivs = entry.get("identity_verification_status", "")
+        identity_status_map[code] = ivs
         if ivs == "code_name_mismatch":
-            identity_mismatch_codes.add(code)
+            identity_blocked_codes.add(code)
             continue
+        if ivs == "manual_override_unverified":
+            identity_unverified_codes.add(code)
+            # Still index in name_to_code so NAV fetch can proceed
         # Index by all available name variants
         for name in (
             entry.get("fund_name"),
@@ -123,7 +134,102 @@ def _build_identity_map(identity_data: dict[str, Any] | None) -> tuple[dict[str,
                 norm = normalize_fund_name(name)
                 if norm and norm != name:
                     name_to_code[norm] = code
-    return name_to_code, identity_mismatch_codes
+    return name_to_code, identity_blocked_codes, identity_unverified_codes, identity_status_map
+
+
+# ── M7.4: Lot-level valuation helpers ──────────────────────────────────
+
+
+def _classify_lot_status(
+    units_source: str,
+    identity_status: str,
+    action: str,
+) -> str:
+    """Classify a single lot's reconstruction status.
+
+    Returns one of: confirmed, estimated, blocked_missing_trade_nav,
+    blocked_missing_units, blocked_identity, manual_review_required.
+    """
+    if identity_status in ("code_name_mismatch",):
+        return "blocked_identity"
+    if identity_status == "manual_override_unverified":
+        return "blocked_identity"
+
+    if action in ("dividend", "fee"):
+        # These don't affect units — always confirmed
+        return "confirmed"
+
+    if units_source == "explicit_units":
+        return "confirmed"
+    if units_source == "trade_date_nav_derived":
+        return "estimated"
+    if units_source == "conversion_verified":
+        return "confirmed"
+    if units_source == "conversion_estimated":
+        return "estimated"
+    if units_source == "refund_matched":
+        return "confirmed"
+    if units_source == "refund_estimated":
+        return "estimated"
+    if units_source == "unavailable":
+        return "blocked_missing_units"
+
+    return "blocked_missing_units"
+
+
+def _compute_position_valuation_status(
+    lot_statuses: list[str],
+    identity_status: str,
+    has_units: bool,
+    has_cost: bool,
+    latest_nav: float | None,
+) -> str:
+    """Compute position-level valuation status from lot statuses.
+
+    Returns one of: confirmed, estimated_full_lot_coverage,
+    estimated_partial_lot_coverage, cashflow_only, blocked_identity,
+    blocked_missing_units, blocked_missing_trade_nav,
+    manual_review_required.
+    """
+    if identity_status in ("code_name_mismatch",):
+        return "blocked_identity"
+    if identity_status == "manual_override_unverified":
+        return "blocked_identity"
+
+    if not has_cost and not has_units:
+        return "cashflow_only"
+
+    if not lot_statuses:
+        # No lots processed — cashflow only
+        return "cashflow_only"
+
+    confirmed_lots = sum(1 for s in lot_statuses if s == "confirmed")
+    estimated_lots = sum(1 for s in lot_statuses if s == "estimated")
+    blocked_lots = sum(1 for s in lot_statuses if s.startswith("blocked_"))
+    manual_review_lots = sum(1 for s in lot_statuses if s == "manual_review_required")
+    total_lots = len(lot_statuses)
+
+    if blocked_lots > 0 and confirmed_lots + estimated_lots == 0:
+        # All lots blocked
+        if any(s == "blocked_identity" for s in lot_statuses):
+            return "blocked_identity"
+        return "blocked_missing_units"
+
+    if manual_review_lots > 0 and confirmed_lots + estimated_lots == 0:
+        return "manual_review_required"
+
+    if not has_units or latest_nav is None:
+        return "cashflow_only"
+
+    # Has units + latest_nav — check coverage
+    covered_lots = confirmed_lots + estimated_lots
+    if covered_lots == total_lots:
+        if estimated_lots > 0:
+            return "estimated_full_lot_coverage"
+        return "confirmed"
+
+    # Partial lot coverage
+    return "estimated_partial_lot_coverage"
 
 
 def reconstruct_portfolio(
@@ -142,7 +248,7 @@ def reconstruct_portfolio(
     fee_schedules = fee_snapshot.get("fee_schedules", {}) if fee_snapshot else {}
 
     # Build identity map: fund_name -> resolved six-digit fund_code
-    identity_map, identity_mismatch_codes = _build_identity_map(identity_data)
+    identity_map, identity_blocked_codes, identity_unverified_codes, identity_status_map = _build_identity_map(identity_data)
 
     # Group transactions by canonical fund_code
     # If txn has no fund_code but has fund_name that resolves via identity, use resolved code
@@ -180,7 +286,7 @@ def reconstruct_portfolio(
 
     for fund_code, txns in sorted(fund_txns.items()):
         # Block valuation for identity-mismatch funds
-        if fund_code in identity_mismatch_codes:
+        if fund_code in identity_blocked_codes:
             confirmed_positions.append({
                 "fund_code": fund_code,
                 "units": None,
@@ -211,6 +317,7 @@ def reconstruct_portfolio(
                 "has_manual_review": True,
                 "confirmation_sources": [],
                 "identity_provenance": None,
+                "identity_verification_status": "code_name_mismatch",
                 "confidence": "identity_mismatch",
                 "holding_source": "transaction_derived",
             })
@@ -246,6 +353,11 @@ def reconstruct_portfolio(
         manual_review_txn_count = 0
         has_conversion_or_refund_estimated = False  # True when estimated conversion/refund applied
 
+        # M7.4: Lot-level tracking
+        lot_statuses: list[str] = []  # per-confirmed-txn lot status
+        lot_units_sources: list[str] = []  # per-confirmed-txn units source
+        fund_identity_status = identity_status_map.get(fund_code, "")
+
         for txn in sorted(txns, key=lambda t: t.get("trade_date") or "9999-99-99"):
             conf_type = txn.get("confirmation_type", "pending_confirmation")
             action = txn.get("action", "buy")
@@ -275,10 +387,12 @@ def reconstruct_portfolio(
 
                     # Check for explicit units/share field in transaction
                     explicit_units = txn.get("units") or txn.get("shares") or txn.get("confirmed_units")
+                    lot_units_source = "unavailable"
                     if explicit_units is not None:
                         try:
                             units = float(explicit_units)
                             units_from_transaction += 1
+                            lot_units_source = "explicit_units"
                         except (ValueError, TypeError):
                             units = None
                     else:
@@ -290,6 +404,7 @@ def reconstruct_portfolio(
                         if txn_nav and net_amount:
                             units = net_amount / txn_nav
                             units_from_trade_nav += 1
+                            lot_units_source = "trade_date_nav_derived"
                         else:
                             # Do NOT use latest_nav to back-compute historical units
                             units = None
@@ -316,6 +431,10 @@ def reconstruct_portfolio(
                     elif txn.get("fee_source") == "unknown":
                         fee_unknown = True
 
+                    # M7.4: Track lot status
+                    lot_units_sources.append(lot_units_source)
+                    lot_statuses.append(_classify_lot_status(lot_units_source, fund_identity_status, action))
+
                 elif action == "sell":
                     net_amount = txn.get("net_amount") or amount
                     if net_amount is None:
@@ -325,10 +444,12 @@ def reconstruct_portfolio(
 
                     # Check for explicit units
                     explicit_units = txn.get("units") or txn.get("shares") or txn.get("confirmed_units")
+                    sell_lot_source = "unavailable"
                     if explicit_units is not None:
                         try:
                             units_sold = abs(float(explicit_units))
                             units_from_transaction += 1
+                            sell_lot_source = "explicit_units"
                         except (ValueError, TypeError):
                             units_sold = None
                     else:
@@ -338,6 +459,7 @@ def reconstruct_portfolio(
                         units_sold = abs(net_amount) / txn_nav if txn_nav and net_amount else None
                         if units_sold is not None:
                             units_from_trade_nav += 1
+                            sell_lot_source = "trade_date_nav_derived"
 
                     if units_sold is not None and confirmed_units > 0:
                         # Pro-rata cost reduction
@@ -355,6 +477,10 @@ def reconstruct_portfolio(
                     if fee_amount is not None:
                         fees_paid += fee_amount
 
+                    # M7.4: Track lot status for sell
+                    lot_units_sources.append(sell_lot_source)
+                    lot_statuses.append(_classify_lot_status(sell_lot_source, fund_identity_status, action))
+
                 elif action == "dividend":
                     # Dividends do not change units, only record cashflow
                     if amount is not None:
@@ -367,6 +493,7 @@ def reconstruct_portfolio(
                 elif action == "conversion":
                     # Check special_transaction_status for computability
                     special_status = txn.get("special_transaction_status", "manual_review_required")
+                    conv_lot_source = "unavailable"
                     if special_status == "computable":
                         # conversion_in: source fund loses units
                         # conversion_out: target fund gains units
@@ -384,6 +511,7 @@ def reconstruct_portfolio(
                                     confirmed_cost += conv_amount
                                     projected_cost += conv_amount
                                 confirmation_sources.add("conversion_computable")
+                                conv_lot_source = "conversion_verified"
                             except (ValueError, TypeError):
                                 has_manual_review = True
                                 manual_review_txn_count += 1
@@ -401,6 +529,7 @@ def reconstruct_portfolio(
                                     confirmed_units = max(0, confirmed_units - units_out)
                                     projected_units = max(0, projected_units - units_out)
                                 confirmation_sources.add("conversion_computable")
+                                conv_lot_source = "conversion_verified"
                             except (ValueError, TypeError):
                                 has_manual_review = True
                                 manual_review_txn_count += 1
@@ -429,6 +558,7 @@ def reconstruct_portfolio(
                                     projected_cost += conv_amount
                                 has_conversion_or_refund_estimated = True
                                 confirmation_sources.add("conversion_estimated")
+                                conv_lot_source = "conversion_estimated"
                             except (ValueError, TypeError):
                                 has_manual_review = True
                                 manual_review_txn_count += 1
@@ -446,6 +576,7 @@ def reconstruct_portfolio(
                                     projected_units = max(0, projected_units - units_out)
                                 has_conversion_or_refund_estimated = True
                                 confirmation_sources.add("conversion_estimated")
+                                conv_lot_source = "conversion_estimated"
                             except (ValueError, TypeError):
                                 has_manual_review = True
                                 manual_review_txn_count += 1
@@ -467,9 +598,14 @@ def reconstruct_portfolio(
                             "transaction_id": txn.get("transaction_id"),
                         })
 
+                    # M7.4: Track lot status for conversion
+                    lot_units_sources.append(conv_lot_source)
+                    lot_statuses.append(_classify_lot_status(conv_lot_source, fund_identity_status, action))
+
                 elif action == "refund":
                     # Check special_transaction_status for computability
                     special_status = txn.get("special_transaction_status", "manual_review_required")
+                    refund_lot_source = "unavailable"
                     if special_status == "computable":
                         # Refund with amount and matching reference → add back units
                         refund_amount = amount
@@ -483,6 +619,7 @@ def reconstruct_portfolio(
                                     confirmed_cost += refund_amount
                                     projected_cost += refund_amount
                                 confirmation_sources.add("refund_computable")
+                                refund_lot_source = "refund_matched"
                             except (ValueError, TypeError):
                                 has_manual_review = True
                                 manual_review_txn_count += 1
@@ -508,6 +645,7 @@ def reconstruct_portfolio(
                                     projected_cost += refund_amount
                                 has_conversion_or_refund_estimated = True
                                 confirmation_sources.add("refund_estimated")
+                                refund_lot_source = "refund_estimated"
                             except (ValueError, TypeError):
                                 has_manual_review = True
                                 manual_review_txn_count += 1
@@ -527,6 +665,10 @@ def reconstruct_portfolio(
                             "note": "refund transaction requires manual review",
                             "transaction_id": txn.get("transaction_id"),
                         })
+
+                    # M7.4: Track lot status for refund
+                    lot_units_sources.append(refund_lot_source)
+                    lot_statuses.append(_classify_lot_status(refund_lot_source, fund_identity_status, action))
 
             # Process pending transactions
             elif conf_type == "pending_confirmation":
@@ -571,30 +713,90 @@ def reconstruct_portfolio(
         else:
             units_source = "unavailable"
 
-        # Determine valuation_type per the state machine:
+        # Determine valuation_type per the state machine (M7.4 lot-level gate):
         #   none: no transactions, no cost, no NAV, no valuation
         #   cashflow_only: has cost_basis but no units or current_value
-        #   estimated: has units + latest_nav → current_value = units * latest_nav
+        #   estimated: has units + latest_nav + full lot coverage → current_value = units * latest_nav
         #   valuation: only when broker/confirmed source exists (not in v0.10.5)
+        # M7.4: identity_unverified blocks valuation even with units+NAV
+        # M7.4: partial lot coverage blocks current_value (diagnostic only)
         has_units = confirmed_units > 0
         has_cost = confirmed_cost > 0
+        is_identity_unverified = fund_code in identity_unverified_codes
 
-        if not has_cost and not has_units:
-            valuation_type = "none"
-            valuation_source = "none"
-        elif has_units and latest_nav is not None:
-            valuation_type = "estimated"
-            valuation_source = "estimated_from_transactions_and_nav"
-        elif has_cost:
-            valuation_type = "cashflow_only"
-            valuation_source = "cashflow_only"
+        # Compute position_valuation_status from lot statuses
+        position_valuation_status = _compute_position_valuation_status(
+            lot_statuses=lot_statuses,
+            identity_status=fund_identity_status,
+            has_units=has_units,
+            has_cost=has_cost,
+            latest_nav=latest_nav,
+        )
+
+        # Compute units coverage metrics
+        lots_with_units = sum(1 for s in lot_statuses if s in ("confirmed", "estimated"))
+        total_lots = len(lot_statuses) if lot_statuses else 0
+        units_coverage_ratio = lots_with_units / total_lots if total_lots > 0 else 0.0
+        missing_lot_count = total_lots - lots_with_units
+        blocked_lot_count = sum(1 for s in lot_statuses if s.startswith("blocked_"))
+
+        # Determine total_units_source
+        if total_lots > 0 and all(s == "explicit_units" for src, s in zip(lot_units_sources, lot_statuses) if s == "confirmed"):
+            total_units_source = "all_explicit"
+        elif total_lots > 0 and all(s in ("confirmed", "estimated") for s in lot_statuses) and units_coverage_ratio == 1.0:
+            total_units_source = "all_trade_date_nav_derived" if units_from_trade_nav > 0 and units_from_transaction == 0 else "all_explicit"
+        elif total_lots > 0 and lots_with_units > 0:
+            total_units_source = "mixed" if units_from_transaction > 0 and units_from_trade_nav > 0 else "partial"
         else:
-            # has_units but no latest_nav — can't compute current_value
+            total_units_source = "unavailable"
+
+        # Valuation gate based on position_valuation_status
+        if position_valuation_status == "blocked_identity":
+            valuation_type = "cashflow_only" if has_cost else "none"
+            valuation_source = "identity_unverified_blocked" if is_identity_unverified else "identity_mismatch_blocked"
+        elif position_valuation_status in ("confirmed", "estimated_full_lot_coverage"):
+            if has_units and latest_nav is not None:
+                valuation_type = "estimated"
+                valuation_source = "estimated_from_transactions_and_nav"
+            elif has_cost:
+                valuation_type = "cashflow_only"
+                valuation_source = "cashflow_only"
+            else:
+                valuation_type = "none"
+                valuation_source = "none"
+        elif position_valuation_status == "estimated_partial_lot_coverage":
+            # M7.4: Partial lot coverage → cashflow_only, no current_value
             valuation_type = "cashflow_only"
-            valuation_source = "cashflow_only"
+            valuation_source = "partial_lot_coverage_blocked"
+        elif position_valuation_status in ("blocked_missing_units", "blocked_missing_trade_nav"):
+            valuation_type = "cashflow_only" if has_cost else "none"
+            valuation_source = "missing_units_blocked" if has_cost else "none"
+        elif position_valuation_status == "manual_review_required":
+            valuation_type = "cashflow_only" if has_cost else "none"
+            valuation_source = "manual_review_required"
+        else:
+            # cashflow_only or other
+            if not has_cost and not has_units:
+                valuation_type = "none"
+                valuation_source = "none"
+            elif has_cost:
+                valuation_type = "cashflow_only"
+                valuation_source = "cashflow_only"
+            else:
+                valuation_type = "cashflow_only"
+                valuation_source = "cashflow_only"
 
         # Compute current_value ONLY for estimated positions
         confirmed_current_value = _safe_round(confirmed_units * latest_nav) if valuation_type == "estimated" else None
+
+        # M7.4: Compute partial_estimated_value as diagnostic-only for partial lot coverage
+        partial_estimated_value = None
+        partial_coverage_ratio = None
+        partial_missing_lot_count = None
+        if position_valuation_status == "estimated_partial_lot_coverage" and has_units and latest_nav is not None:
+            partial_estimated_value = _safe_round(confirmed_units * latest_nav)
+            partial_coverage_ratio = units_coverage_ratio
+            partial_missing_lot_count = missing_lot_count
 
         # Data quality flags for partial coverage
         partial_units_estimated = units_source == "partial_trade_date_nav"
@@ -610,6 +812,12 @@ def reconstruct_portfolio(
             data_quality_flags.append("valuation_blocked_cashflow_only")
         if valuation_type == "none" and has_cost:
             data_quality_flags.append("valuation_blocked_no_nav")
+        if is_identity_unverified:
+            data_quality_flags.append("identity_unverified")
+        if position_valuation_status == "estimated_partial_lot_coverage":
+            data_quality_flags.append("partial_lot_coverage")
+        if blocked_lot_count > 0:
+            data_quality_flags.append("has_blocked_lots")
 
         # Fee schedule status
         fund_fee_schedule = fee_schedules.get(fund_code, {})
@@ -694,6 +902,9 @@ def reconstruct_portfolio(
             "trade_nav_coverage_ratio": trade_nav_coverage_ratio,
             "trade_nav_missing_count": nav_missing_count,
             "trades_missing_trade_date_nav": nav_cov.get("trades_missing_trade_date_nav", 0),
+            "nav_used_for_units_count": nav_cov.get("nav_used_for_units_count", 0),
+            "nav_used_for_current_value_count": nav_cov.get("nav_used_for_current_value_count", 0),
+            "provider_diagnostics": nav_cov.get("provider_diagnostics", {}),
             "is_qdii_like": is_qdii_like,
             "manual_review_required": manual_review_required,
             "manual_review_reasons": manual_review_reasons,
@@ -710,6 +921,15 @@ def reconstruct_portfolio(
             "has_manual_review": has_manual_review,
             "confirmation_sources": sorted(confirmation_sources),
             "identity_provenance": identity_provenance.get(fund_code),
+            "identity_verification_status": identity_status_map.get(fund_code, ""),
+            "position_valuation_status": position_valuation_status,
+            "units_coverage_ratio": units_coverage_ratio if total_lots > 0 else None,
+            "missing_lot_count": missing_lot_count if total_lots > 0 else None,
+            "blocked_lot_count": blocked_lot_count if total_lots > 0 else None,
+            "total_units_source": total_units_source,
+            "partial_estimated_value": partial_estimated_value,
+            "partial_coverage_ratio": partial_coverage_ratio,
+            "partial_missing_lot_count": partial_missing_lot_count,
             "confidence": "evidence_confirmed" if "alipay" in confirmation_sources or "provider" in confirmation_sources else ("rule_confirmed_estimated" if "schedule_rule" in confirmation_sources else "pending"),
             "holding_source": "transaction_derived",
         }
@@ -738,6 +958,25 @@ def reconstruct_portfolio(
         }
         projected_positions.append(projected_pos)
 
+    # M7.4: Run valuation anomaly checks
+    anomaly_results = check_valuation_anomalies(confirmed_positions)
+    anomaly_by_code = {a["fund_code"]: a for a in anomaly_results}
+    anomaly_blocker_count = 0
+    for pos in confirmed_positions:
+        anomaly = anomaly_by_code.get(pos["fund_code"])
+        if anomaly:
+            pos["valuation_anomaly_flags"] = anomaly["flags"]
+            pos["valuation_anomaly_severity"] = anomaly["severity"]
+            if anomaly["severity"] == "blocker":
+                # Blocker suppresses current_value
+                pos["current_value"] = None
+                pos["valuation_type"] = "blocked_anomaly"
+                pos["data_quality"].append("valuation_blocked_anomaly")
+                anomaly_blocker_count += 1
+        else:
+            pos["valuation_anomaly_flags"] = []
+            pos["valuation_anomaly_severity"] = None
+
     # Build portfolio_input compatible with fund-agent
     portfolio_input_holdings = []
     for pos in confirmed_positions:
@@ -763,6 +1002,26 @@ def reconstruct_portfolio(
         portfolio_input_holdings.append(holding)
 
     total_value = sum(h["current_value"] for h in portfolio_input_holdings if h["current_value"] is not None)
+
+    # M7.4: Compute portfolio_valuation_status
+    valued_positions_count = sum(1 for p in confirmed_positions if p["current_value"] is not None)
+    total_positions_count = len(confirmed_positions)
+    known_valued_amount = _safe_round(total_value)
+
+    if valued_positions_count == 0:
+        portfolio_valuation_status = "unavailable"
+    elif valued_positions_count < total_positions_count:
+        portfolio_valuation_status = "partial_diagnostic_only"
+    elif all(p["valuation_type"] == "estimated" for p in confirmed_positions if p["current_value"] is not None):
+        portfolio_valuation_status = "estimated_full_coverage"
+    else:
+        portfolio_valuation_status = "estimated_full_coverage"
+
+    # M7.4: Conditional total_current_value — only when full coverage
+    if portfolio_valuation_status in ("estimated_full_coverage", "confirmed"):
+        total_current_value = _safe_round(total_value)
+    else:
+        total_current_value = None
 
     # Data quality
     missing_fields = []
@@ -801,6 +1060,13 @@ def reconstruct_portfolio(
                 "units_estimated_count": sum(1 for p in confirmed_positions if p.get("units_estimated") is not None),
                 "partial_nav_coverage_count": sum(1 for p in confirmed_positions if p.get("units_source") == "partial_trade_date_nav"),
                 "redemption_fee_unknown_count": sum(1 for p in confirmed_positions if p.get("redemption_fee_unknown")),
+                "insufficient_trade_date_nav_coverage": any(
+                    p.get("provider_diagnostics", {}).get("trade_date_nav_found_count", 0)
+                    < p.get("provider_diagnostics", {}).get("trade_date_nav_requested_count", 0)
+                    for p in confirmed_positions
+                ),
+                "is_partial_diagnostic": portfolio_valuation_status in ("partial_diagnostic_only", "unavailable"),
+                "portfolio_valuation_status": portfolio_valuation_status,
             },
         },
         "source_notes": "Auto-reconstructed from Alipay evidence and investment plan schedule rules",
@@ -818,8 +1084,13 @@ def reconstruct_portfolio(
         "as_of_date": as_of.isoformat(),
         "positions": confirmed_positions,
         "summary": {
-            "total_positions": len(confirmed_positions),
-            "total_current_value": _safe_round(total_value),
+            "total_positions": total_positions_count,
+            "valued_positions_count": valued_positions_count,
+            "total_current_value": total_current_value,
+            "known_valued_amount": known_valued_amount,
+            "total_cashflow_invested": _safe_round(sum(p["cost_basis"] for p in confirmed_positions if p.get("cost_basis") is not None)),
+            "portfolio_valuation_status": portfolio_valuation_status,
+            "is_partial_diagnostic": portfolio_valuation_status in ("partial_diagnostic_only", "unavailable"),
             "evidence_confirmed_count": sum(1 for p in confirmed_positions if "alipay" in p.get("confirmation_sources", []) or "provider" in p.get("confirmation_sources", [])),
             "rule_confirmed_count": sum(1 for p in confirmed_positions if "schedule_rule" in p.get("confirmation_sources", []) and "alipay" not in p.get("confirmation_sources", [])),
             "has_pending": any(p.get("pending_amount") for p in confirmed_positions),

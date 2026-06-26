@@ -23,7 +23,10 @@ REASON_CASHFLOW_ONLY = "cashflow_only"
 REASON_ESTIMATED_ONLY = "estimated_only"
 REASON_NAME_ONLY_FUNDS = "name_only_funds"
 REASON_IDENTITY_MISMATCH = "identity_mismatch"
+REASON_IDENTITY_UNVERIFIED = "identity_unverified"
+REASON_PARTIAL_VALUATION = "partial_valuation"
 REASON_REDEMPTION_FEE_UNKNOWN = "redemption_fee_unknown"
+REASON_INSUFFICIENT_TRADE_DATE_NAV = "insufficient_trade_date_nav_coverage"
 
 VALID_REASON_CODES = frozenset({
     REASON_NO_VALID_FUND_CODES,
@@ -37,7 +40,10 @@ VALID_REASON_CODES = frozenset({
     REASON_ESTIMATED_ONLY,
     REASON_NAME_ONLY_FUNDS,
     REASON_IDENTITY_MISMATCH,
+    REASON_IDENTITY_UNVERIFIED,
+    REASON_PARTIAL_VALUATION,
     REASON_REDEMPTION_FEE_UNKNOWN,
+    REASON_INSUFFICIENT_TRADE_DATE_NAV,
 })
 
 # ── Status / confidence enums ─────────────────────────────────────────
@@ -110,6 +116,18 @@ def build_personal_health_summary(artifacts: Mapping[str, Any]) -> dict[str, Any
     if identity_mismatch_count > 0:
         reason_codes.append(REASON_IDENTITY_MISMATCH)
 
+    # Identity unverified (manual override without provider or user verification)
+    identity_unverified_count = int(identity.get("identity_verification_status_counts", {}).get("manual_override_unverified", 0))
+    if identity_unverified_count == 0:
+        identity_unverified_count = int(identity.get("manual_override_unverified_count", 0))
+    if identity_unverified_count > 0:
+        reason_codes.append(REASON_IDENTITY_UNVERIFIED)
+
+    # Partial valuation (M7.4)
+    is_partial_diagnostic = bool(valuation.get("is_partial_diagnostic", False))
+    if is_partial_diagnostic:
+        reason_codes.append(REASON_PARTIAL_VALUATION)
+
     # Redemption fee unknown
     redemption_fee_unknown_count = int(valuation.get("redemption_fee_unknown_count", 0))
     if redemption_fee_unknown_count == 0:
@@ -131,6 +149,12 @@ def build_personal_health_summary(artifacts: Mapping[str, Any]) -> dict[str, Any
 
     if nav_partial > 0:
         reason_codes.append(REASON_PARTIAL_NAV_COVERAGE)
+
+    # Insufficient trade-date NAV coverage
+    trade_date_nav_requested = int(nav_coverage.get("trade_date_nav_requested_count", 0))
+    trade_date_nav_found = int(nav_coverage.get("trade_date_nav_found_count", 0))
+    if trade_date_nav_requested > 0 and trade_date_nav_found < trade_date_nav_requested:
+        reason_codes.append(REASON_INSUFFICIENT_TRADE_DATE_NAV)
 
     if stale_count > 0:
         reason_codes.append(REASON_STALE_NAV)
@@ -203,6 +227,7 @@ def build_personal_health_summary(artifacts: Mapping[str, Any]) -> dict[str, Any
         "estimated_current_value_total_is_partial": bool(
             nav_coverage.get("estimated_current_value_total_is_partial", False)
         ),
+        "is_partial_diagnostic": is_partial_diagnostic,
     }
 
     # ── NAV coverage summary ──────────────────────────────────────────
@@ -250,6 +275,7 @@ def build_personal_health_summary(artifacts: Mapping[str, Any]) -> dict[str, Any
         positions_total=positions_total,
         valuation_source=valuation_source,
         identity_mismatch_count=identity_mismatch_count,
+        identity_unverified_count=identity_unverified_count,
         redemption_fee_unknown_count=redemption_fee_unknown_count,
     )
 
@@ -386,6 +412,7 @@ def _build_checklist(
     positions_total: int,
     valuation_source: str,
     identity_mismatch_count: int = 0,
+    identity_unverified_count: int = 0,
     redemption_fee_unknown_count: int = 0,
 ) -> list[str]:
     """Build fix-it checklist from data quality diagnostics."""
@@ -393,6 +420,9 @@ def _build_checklist(
 
     if identity_mismatch_count > 0:
         items.append(f"Verify fund_identity_overrides for {identity_mismatch_count} fund(s) with code/name mismatch")
+
+    if identity_unverified_count > 0:
+        items.append(f"Add verified_by_user or provider cross-check for {identity_unverified_count} fund(s) with unverified manual override")
 
     if redemption_fee_unknown_count > 0:
         items.append(f"Provide fee_overrides for {redemption_fee_unknown_count} fund(s) with unknown redemption fees")
