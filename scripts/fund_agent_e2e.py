@@ -267,6 +267,7 @@ def _load_nav_coverage_summary(portfolio_dir: Path) -> dict[str, Any]:
                 "latest_nav_stale_count", "qdii_like_count",
                 "estimated_current_value_total", "estimated_current_value_coverage_count",
                 "estimated_current_value_total_is_partial",
+                "trade_date_nav_requested_count", "trade_date_nav_found_count",
             }
             return {k: v for k, v in nav_cs.items() if k in safe_keys}
     except (OSError, json.JSONDecodeError, TypeError):

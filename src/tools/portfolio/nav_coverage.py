@@ -28,6 +28,10 @@ def compute_nav_coverage(
     nav_records: Sequence[Mapping[str, Any]] | None = None,
     as_of_date: date | None = None,
     is_qdii_like: bool = False,
+    provider_name: str | None = None,
+    provider_available: bool = True,
+    provider_error_count: int = 0,
+    nav_history_window_days: int | None = None,
 ) -> dict[str, Any]:
     """Compute NAV coverage diagnostics for a single fund.
 
@@ -37,20 +41,26 @@ def compute_nav_coverage(
         nav_records: NAV snapshot records [{date, nav}, ...].
         as_of_date: Reference date for stale NAV detection.
         is_qdii_like: Whether this fund is QDII-like (from profile).
+        provider_name: Name of the NAV data provider (e.g. "akshare").
+        provider_available: Whether the provider was reachable.
+        provider_error_count: Number of provider errors for this fund.
+        nav_history_window_days: Window of NAV history retrieved (days).
 
     Returns:
-        Dict with coverage_status, valuation_quality, warnings, etc.
+        Dict with coverage_status, valuation_quality, warnings, provider_diagnostics, etc.
     """
     trade_count = 0
     trades_with_nav = 0
     trades_with_explicit_units = 0
     trades_missing_nav = 0
     nav_gap_count = 0  # trades where trade-date NAV is missing (info only)
+    nav_used_for_units_count = 0  # trades where trade-date NAV was used to derive units
     has_manual_review_action = False
     has_validation_warnings = False
     latest_nav: float | None = None
     latest_nav_date: str | None = None
     latest_nav_stale_days: int | None = None
+    nav_used_for_current_value = False  # whether latest NAV was used for current_value
 
     # Count transaction types
     for txn in transactions:
@@ -85,6 +95,7 @@ def compute_nav_coverage(
                 nav_gap_count += 1
         elif trade_nav is not None:
             trades_with_nav += 1
+            nav_used_for_units_count += 1
         else:
             trades_missing_nav += 1
             nav_gap_count += 1
@@ -162,6 +173,20 @@ def compute_nav_coverage(
         "coverage_status": coverage_status,
         "valuation_quality": valuation_quality,
         "warnings": warnings,
+        "nav_used_for_units_count": nav_used_for_units_count,
+        "nav_used_for_current_value_count": 1 if nav_used_for_current_value else 0,
+        "provider_diagnostics": {
+            "provider_name": provider_name,
+            "provider_available": provider_available,
+            "provider_error_count": provider_error_count,
+            "nav_history_window_days": nav_history_window_days,
+            "trade_date_nav_requested_count": trade_count - trades_with_explicit_units,
+            "trade_date_nav_found_count": trades_with_nav,
+            "latest_nav_found_count": 1 if latest_nav is not None else 0,
+            "latest_nav_only_count": 1 if coverage_status == "latest_only" else 0,
+            "nav_used_for_units_count": nav_used_for_units_count,
+            "nav_used_for_current_value_count": 1 if nav_used_for_current_value else 0,
+        },
     }
 
 
@@ -192,6 +217,8 @@ def compute_portfolio_nav_coverage(
     qdii_like_count = 0
     estimated_current_value_total = 0.0
     estimated_current_value_coverage_count = 0
+    trade_date_nav_requested_count = 0
+    trade_date_nav_found_count = 0
 
     for pos in positions:
         vt = pos.get("valuation_type", "none")
@@ -228,6 +255,12 @@ def compute_portfolio_nav_coverage(
             estimated_current_value_total += float(cv)
             estimated_current_value_coverage_count += 1
 
+        # Aggregate provider diagnostics
+        pd = pos.get("provider_diagnostics", {})
+        if isinstance(pd, dict):
+            trade_date_nav_requested_count += int(pd.get("trade_date_nav_requested_count", 0))
+            trade_date_nav_found_count += int(pd.get("trade_date_nav_found_count", 0))
+
     estimated_current_value_total_is_partial = (
         positions_estimated > 0 and estimated_current_value_coverage_count < positions_total
     )
@@ -247,6 +280,8 @@ def compute_portfolio_nav_coverage(
         "estimated_current_value_total": round(estimated_current_value_total, 2),
         "estimated_current_value_coverage_count": estimated_current_value_coverage_count,
         "estimated_current_value_total_is_partial": estimated_current_value_total_is_partial,
+        "trade_date_nav_requested_count": trade_date_nav_requested_count,
+        "trade_date_nav_found_count": trade_date_nav_found_count,
     }
 
 
