@@ -764,6 +764,35 @@ pipeline stage overrides them:
    `unsafe_to_infer`. The agent MUST NOT infer valuation for mismatched funds
    even if the fund_code appears in the position list.
 
+8. **M7.6: Blocked evidence firewall.** When `identity_unverified` is in
+   `reason_codes` or `blocked_evidence_summary.nav_trend_blocked=true` in
+   `agent_context`, the agent MUST NOT:
+   - Output NAV trend signals, NAV vs avg cost, or significant profit/loss conclusions
+   - Treat candidate fund codes as confirmed codes
+   - Show estimated_units, latest_nav, or nav_coverage for unverified funds
+   - Suggest adding `verified_by_user:true` as an unlock switch
+   - Batch-add `verified_by_user:true` for all unverified overrides
+
+   Instead, the agent MUST:
+   - State "基金代码未验证" (fund codes unverified) as the first response
+   - Guide the user to review `fixit/identity_candidates.private.csv`
+   - Ask the user to provide a `current_holdings_snapshot.private.csv`
+   - Explain that `verified_by_user:true` requires `verification_source` and
+     `verified_at` — it is NOT an unlock switch
+
+9. **M7.6: verified_by_user is not an unlock switch.** Adding
+   `verified_by_user:true` to `fund_identity_overrides.private.yaml` does NOT
+   automatically unlock valuation. It requires:
+   - `fund_code`: valid 6-digit code
+   - `fund_name`: present
+   - `verification_source`: one of `alipay_holdings_page`, `fund_detail_page`,
+     `official_fund_statement`, `provider_cross_check`, `user_manual_verified`
+   - `verified_at`: ISO date string
+
+   Missing `verification_source` or `verified_at` causes automatic downgrade
+   to `manual_override_unverified`. The agent MUST NOT describe
+   `verified_by_user:true` as a way to "unlock" or "bypass" the identity gate.
+
 ### Agent should prioritize
 
 - Data quality explanation (overall_status, confidence_level, reason_codes)
