@@ -21,6 +21,15 @@ from typing import Any
 
 from scripts.fund_identity_utils import coerce_fund_code, is_valid_fund_code, normalize_fund_name
 
+# M7.6: Allowed verification sources for verified_by_user
+ALLOWED_VERIFICATION_SOURCES = frozenset({
+    "alipay_holdings_page",
+    "fund_detail_page",
+    "official_fund_statement",
+    "provider_cross_check",
+    "user_manual_verified",
+})
+
 try:
     import yaml
 except ImportError:
@@ -69,7 +78,22 @@ def _load_overrides(overrides_path: Path) -> tuple[dict[str, dict[str, Any]], li
             "fund_name": fund_name or raw_name,
             "verified_by_user": bool(entry.get("verified_by_user", False)),
             "verified_at": entry.get("verified_at"),
+            "verification_source": entry.get("verification_source"),
         }
+        # M7.6: Validate verified_by_user — if missing required fields, downgrade
+        if record["verified_by_user"]:
+            missing = []
+            if not record.get("verification_source") or record["verification_source"] not in ALLOWED_VERIFICATION_SOURCES:
+                missing.append("verification_source")
+            if not record.get("verified_at"):
+                missing.append("verified_at")
+            if missing:
+                validation_warnings.append(
+                    f"Override for raw_name '{raw_name}' has verified_by_user:true but missing {', '.join(missing)}; "
+                    f"downgrading to unverified"
+                )
+                record["verified_by_user"] = False
+                record["_downgrade_reason"] = f"missing {', '.join(missing)}"
         # Index by raw_name and normalized variants
         lookup[raw_name] = record
         lookup[normalize_fund_name(raw_name)] = record
@@ -108,6 +132,10 @@ def _compute_identity_verification_status(
     M7.4: manual_override no longer auto-elevates to override_verified.
     Without provider cross-check or explicit user verification, manual
     overrides default to manual_override_unverified.
+
+    M7.6: verified_by_user:true is NOT an unlock switch. It requires
+    fund_code (6-digit), fund_name, verification_source (in allowed set),
+    and verified_at. Missing fields cause downgrade to manual_override_unverified.
     """
     # Invalid code → invalid_code
     if resolution_status == "invalid_code":

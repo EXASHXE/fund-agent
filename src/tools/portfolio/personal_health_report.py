@@ -452,7 +452,11 @@ def _build_checklist(
         items.append(f"Verify fund_identity_overrides for {identity_mismatch_count} fund(s) with code/name mismatch")
 
     if identity_unverified_count > 0:
-        items.append(f"Add verified_by_user or provider cross-check for {identity_unverified_count} fund(s) with unverified manual override")
+        items.append(
+            f"Verify fund codes for {identity_unverified_count} fund(s) with unverified manual override, "
+            f"then add verified_by_user:true with verified_at and verification_source "
+            f"(do not add verified_by_user without first verifying)"
+        )
 
     if redemption_fee_unknown_count > 0:
         items.append(f"Provide fee_overrides for {redemption_fee_unknown_count} fund(s) with unknown redemption fees")
