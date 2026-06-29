@@ -37,6 +37,33 @@ from src.tools.portfolio.nav_coverage import (
 )
 from src.tools.portfolio.trade_date_rules import compute_effective_trade_date
 from src.tools.portfolio.valuation_anomaly import check_valuation_anomalies
+from src.tools.portfolio.valuation_source_model import (
+    HOLDINGS_SOURCE_CASHFLOW_ONLY,
+    HOLDINGS_SOURCE_PLATFORM_REPORTED_SNAPSHOT,
+    HOLDINGS_SOURCE_TRANSACTION_DERIVED_FULL,
+    HOLDINGS_SOURCE_TRANSACTION_DERIVED_PARTIAL,
+    HOLDINGS_SOURCE_UNAVAILABLE,
+    PORTFOLIO_VALUATION_PLATFORM_SNAPSHOT_FULL,
+    PORTFOLIO_VALUATION_TRANSACTION_DERIVED_FULL,
+    PORTFOLIO_VALUATION_TRANSACTION_DERIVED_PARTIAL,
+    PORTFOLIO_VALUATION_UNAVAILABLE,
+    POSITION_VALUATION_BLOCKED_IDENTITY,
+    POSITION_VALUATION_BLOCKED_MANUAL_REVIEW,
+    POSITION_VALUATION_BLOCKED_MISSING_NAV,
+    POSITION_VALUATION_CASHFLOW_ONLY,
+    POSITION_VALUATION_CONFIRMED,
+    POSITION_VALUATION_RECONSTRUCTED_ESTIMATED_FULL,
+    POSITION_VALUATION_RECONSTRUCTED_ESTIMATED_PARTIAL,
+    VALUATION_SOURCE_PARTIAL_RECONSTRUCTED_UNITS,
+    VALUATION_SOURCE_PLATFORM_REPORTED_CURRENT_VALUE,
+    VALUATION_SOURCE_RECONSTRUCTED_UNITS_LATEST_NAV,
+    VALUATION_SOURCE_UNAVAILABLE,
+    can_output_current_value,
+    compute_holdings_source,
+    compute_profit_source,
+    compute_reconstruction_quality,
+    compute_valuation_source_from_holdings,
+)
 
 
 def _parse_date(val) -> date | None:
@@ -186,22 +213,21 @@ def _compute_position_valuation_status(
 ) -> str:
     """Compute position-level valuation status from lot statuses.
 
-    Returns one of: confirmed, estimated_full_lot_coverage,
-    estimated_partial_lot_coverage, cashflow_only, blocked_identity,
-    blocked_missing_units, blocked_missing_trade_nav,
-    manual_review_required.
+    Returns one of: confirmed, reconstructed_estimated_full,
+    reconstructed_estimated_partial, cashflow_only, blocked_identity,
+    blocked_missing_nav, blocked_manual_review.
     """
     if identity_status in ("code_name_mismatch",):
-        return "blocked_identity"
+        return POSITION_VALUATION_BLOCKED_IDENTITY
     if identity_status == "manual_override_unverified":
-        return "blocked_identity"
+        return POSITION_VALUATION_BLOCKED_IDENTITY
 
     if not has_cost and not has_units:
-        return "cashflow_only"
+        return POSITION_VALUATION_CASHFLOW_ONLY
 
     if not lot_statuses:
         # No lots processed — cashflow only
-        return "cashflow_only"
+        return POSITION_VALUATION_CASHFLOW_ONLY
 
     confirmed_lots = sum(1 for s in lot_statuses if s == "confirmed")
     estimated_lots = sum(1 for s in lot_statuses if s == "estimated")
@@ -212,24 +238,24 @@ def _compute_position_valuation_status(
     if blocked_lots > 0 and confirmed_lots + estimated_lots == 0:
         # All lots blocked
         if any(s == "blocked_identity" for s in lot_statuses):
-            return "blocked_identity"
-        return "blocked_missing_units"
+            return POSITION_VALUATION_BLOCKED_IDENTITY
+        return POSITION_VALUATION_BLOCKED_MISSING_NAV
 
     if manual_review_lots > 0 and confirmed_lots + estimated_lots == 0:
-        return "manual_review_required"
+        return POSITION_VALUATION_BLOCKED_MANUAL_REVIEW
 
     if not has_units or latest_nav is None:
-        return "cashflow_only"
+        return POSITION_VALUATION_CASHFLOW_ONLY
 
     # Has units + latest_nav — check coverage
     covered_lots = confirmed_lots + estimated_lots
     if covered_lots == total_lots:
         if estimated_lots > 0:
-            return "estimated_full_lot_coverage"
-        return "confirmed"
+            return POSITION_VALUATION_RECONSTRUCTED_ESTIMATED_FULL
+        return POSITION_VALUATION_CONFIRMED
 
     # Partial lot coverage
-    return "estimated_partial_lot_coverage"
+    return POSITION_VALUATION_RECONSTRUCTED_ESTIMATED_PARTIAL
 
 
 def reconstruct_portfolio(
@@ -750,50 +776,47 @@ def reconstruct_portfolio(
         else:
             total_units_source = "unavailable"
 
-        # Valuation gate based on position_valuation_status
-        if position_valuation_status == "blocked_identity":
+        # Valuation gate based on position_valuation_status (M7.9)
+        if position_valuation_status == POSITION_VALUATION_BLOCKED_IDENTITY:
             valuation_type = "cashflow_only" if has_cost else "none"
             valuation_source = "identity_unverified_blocked" if is_identity_unverified else "identity_mismatch_blocked"
-        elif position_valuation_status in ("confirmed", "estimated_full_lot_coverage"):
+        elif position_valuation_status in (POSITION_VALUATION_CONFIRMED, POSITION_VALUATION_RECONSTRUCTED_ESTIMATED_FULL):
             if has_units and latest_nav is not None:
                 valuation_type = "estimated"
-                valuation_source = "estimated_from_transactions_and_nav"
+                valuation_source = VALUATION_SOURCE_RECONSTRUCTED_UNITS_LATEST_NAV
             elif has_cost:
                 valuation_type = "cashflow_only"
-                valuation_source = "cashflow_only"
+                valuation_source = VALUATION_SOURCE_UNAVAILABLE
             else:
                 valuation_type = "none"
-                valuation_source = "none"
-        elif position_valuation_status == "estimated_partial_lot_coverage":
-            # M7.4: Partial lot coverage → cashflow_only, no current_value
+                valuation_source = VALUATION_SOURCE_UNAVAILABLE
+        elif position_valuation_status == POSITION_VALUATION_RECONSTRUCTED_ESTIMATED_PARTIAL:
+            # M7.9: Partial lot coverage → cashflow_only, no current_value
             valuation_type = "cashflow_only"
-            valuation_source = "partial_lot_coverage_blocked"
-        elif position_valuation_status in ("blocked_missing_units", "blocked_missing_trade_nav"):
+            valuation_source = VALUATION_SOURCE_PARTIAL_RECONSTRUCTED_UNITS
+        elif position_valuation_status in (POSITION_VALUATION_BLOCKED_MISSING_NAV, POSITION_VALUATION_BLOCKED_MANUAL_REVIEW):
             valuation_type = "cashflow_only" if has_cost else "none"
-            valuation_source = "missing_units_blocked" if has_cost else "none"
-        elif position_valuation_status == "manual_review_required":
-            valuation_type = "cashflow_only" if has_cost else "none"
-            valuation_source = "manual_review_required"
+            valuation_source = VALUATION_SOURCE_UNAVAILABLE
         else:
             # cashflow_only or other
             if not has_cost and not has_units:
                 valuation_type = "none"
-                valuation_source = "none"
+                valuation_source = VALUATION_SOURCE_UNAVAILABLE
             elif has_cost:
                 valuation_type = "cashflow_only"
-                valuation_source = "cashflow_only"
+                valuation_source = VALUATION_SOURCE_UNAVAILABLE
             else:
                 valuation_type = "cashflow_only"
-                valuation_source = "cashflow_only"
+                valuation_source = VALUATION_SOURCE_UNAVAILABLE
 
         # Compute current_value ONLY for estimated positions
         confirmed_current_value = _safe_round(confirmed_units * latest_nav) if valuation_type == "estimated" else None
 
-        # M7.4: Compute partial_estimated_value as diagnostic-only for partial lot coverage
+        # M7.9: Compute partial_estimated_value as diagnostic-only for partial lot coverage
         partial_estimated_value = None
         partial_coverage_ratio = None
         partial_missing_lot_count = None
-        if position_valuation_status == "estimated_partial_lot_coverage" and has_units and latest_nav is not None:
+        if position_valuation_status == POSITION_VALUATION_RECONSTRUCTED_ESTIMATED_PARTIAL and has_units and latest_nav is not None:
             partial_estimated_value = _safe_round(confirmed_units * latest_nav)
             partial_coverage_ratio = units_coverage_ratio
             partial_missing_lot_count = missing_lot_count
@@ -814,7 +837,7 @@ def reconstruct_portfolio(
             data_quality_flags.append("valuation_blocked_no_nav")
         if is_identity_unverified:
             data_quality_flags.append("identity_unverified")
-        if position_valuation_status == "estimated_partial_lot_coverage":
+        if position_valuation_status == POSITION_VALUATION_RECONSTRUCTED_ESTIMATED_PARTIAL:
             data_quality_flags.append("partial_lot_coverage")
         if blocked_lot_count > 0:
             data_quality_flags.append("has_blocked_lots")
@@ -1003,22 +1026,30 @@ def reconstruct_portfolio(
 
     total_value = sum(h["current_value"] for h in portfolio_input_holdings if h["current_value"] is not None)
 
-    # M7.4: Compute portfolio_valuation_status
+    # M7.9: Compute portfolio_valuation_status
     valued_positions_count = sum(1 for p in confirmed_positions if p["current_value"] is not None)
     total_positions_count = len(confirmed_positions)
     known_valued_amount = _safe_round(total_value)
 
-    if valued_positions_count == 0:
-        portfolio_valuation_status = "unavailable"
-    elif valued_positions_count < total_positions_count:
-        portfolio_valuation_status = "partial_diagnostic_only"
-    elif all(p["valuation_type"] == "estimated" for p in confirmed_positions if p["current_value"] is not None):
-        portfolio_valuation_status = "estimated_full_coverage"
-    else:
-        portfolio_valuation_status = "estimated_full_coverage"
+    # Check if any position has snapshot-based valuation
+    has_snapshot_valued = any(
+        p.get("holding_source") in ("holdings_snapshot_authoritative", "holdings_snapshot_only")
+        for p in confirmed_positions
+    )
 
-    # M7.4: Conditional total_current_value — only when full coverage
-    if portfolio_valuation_status in ("estimated_full_coverage", "confirmed"):
+    if valued_positions_count == 0:
+        portfolio_valuation_status = PORTFOLIO_VALUATION_UNAVAILABLE
+    elif valued_positions_count < total_positions_count:
+        portfolio_valuation_status = PORTFOLIO_VALUATION_TRANSACTION_DERIVED_PARTIAL
+    elif has_snapshot_valued and valued_positions_count == total_positions_count:
+        portfolio_valuation_status = PORTFOLIO_VALUATION_PLATFORM_SNAPSHOT_FULL
+    elif all(p["valuation_type"] == "estimated" for p in confirmed_positions if p["current_value"] is not None):
+        portfolio_valuation_status = PORTFOLIO_VALUATION_TRANSACTION_DERIVED_FULL
+    else:
+        portfolio_valuation_status = PORTFOLIO_VALUATION_TRANSACTION_DERIVED_FULL
+
+    # M7.9: Conditional total_current_value — only when full coverage
+    if portfolio_valuation_status in (PORTFOLIO_VALUATION_TRANSACTION_DERIVED_FULL, PORTFOLIO_VALUATION_PLATFORM_SNAPSHOT_FULL):
         total_current_value = _safe_round(total_value)
     else:
         total_current_value = None
@@ -1065,7 +1096,7 @@ def reconstruct_portfolio(
                     < p.get("provider_diagnostics", {}).get("trade_date_nav_requested_count", 0)
                     for p in confirmed_positions
                 ),
-                "is_partial_diagnostic": portfolio_valuation_status in ("partial_diagnostic_only", "unavailable"),
+                "is_partial_diagnostic": portfolio_valuation_status in (PORTFOLIO_VALUATION_TRANSACTION_DERIVED_PARTIAL, PORTFOLIO_VALUATION_UNAVAILABLE),
                 "portfolio_valuation_status": portfolio_valuation_status,
             },
         },
@@ -1090,7 +1121,7 @@ def reconstruct_portfolio(
             "known_valued_amount": known_valued_amount,
             "total_cashflow_invested": _safe_round(sum(p["cost_basis"] for p in confirmed_positions if p.get("cost_basis") is not None)),
             "portfolio_valuation_status": portfolio_valuation_status,
-            "is_partial_diagnostic": portfolio_valuation_status in ("partial_diagnostic_only", "unavailable"),
+            "is_partial_diagnostic": portfolio_valuation_status in (PORTFOLIO_VALUATION_TRANSACTION_DERIVED_PARTIAL, PORTFOLIO_VALUATION_UNAVAILABLE),
             "evidence_confirmed_count": sum(1 for p in confirmed_positions if "alipay" in p.get("confirmation_sources", []) or "provider" in p.get("confirmation_sources", [])),
             "rule_confirmed_count": sum(1 for p in confirmed_positions if "schedule_rule" in p.get("confirmation_sources", []) and "alipay" not in p.get("confirmation_sources", [])),
             "has_pending": any(p.get("pending_amount") for p in confirmed_positions),

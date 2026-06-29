@@ -945,7 +945,7 @@ class TestReconstructionNormalizedNameBridge:
 
         pos = result["confirmed_portfolio"]["positions"][0]
         assert pos["valuation_type"] == "estimated"
-        assert pos["valuation_source"] == "estimated_from_transactions_and_nav"
+        assert pos["valuation_source"] == "reconstructed_units_latest_nav"
         assert pos["current_value"] is not None
         assert pos["current_value"] == 1500.0  # 1000 units * 1.5 NAV
 
@@ -1215,7 +1215,7 @@ class TestValuationTypeStateMachine:
         )
         pos = result["confirmed_portfolio"]["positions"][0]
         assert pos["valuation_type"] == "estimated"
-        assert pos["valuation_source"] == "estimated_from_transactions_and_nav"
+        assert pos["valuation_source"] == "reconstructed_units_latest_nav"
         assert pos["current_value"] == 2000.0  # 1000 units * 2.0 NAV
         assert pos["units"] == 1000.0
 
@@ -1630,7 +1630,7 @@ class TestReportValuationSemantics:
         assert pos["current_value"] != 0.0
 
     def test_estimated_must_label_source(self) -> None:
-        """estimated positions must have valuation_source=estimated_from_transactions_and_nav."""
+        """estimated positions must have valuation_source=reconstructed_units_latest_nav."""
         from datetime import date
 
         from scripts.reconstruct_portfolio_from_ledger import reconstruct_portfolio
@@ -1662,7 +1662,7 @@ class TestReportValuationSemantics:
         )
         pos = result["confirmed_portfolio"]["positions"][0]
         assert pos["valuation_type"] == "estimated"
-        assert pos["valuation_source"] == "estimated_from_transactions_and_nav"
+        assert pos["valuation_source"] == "reconstructed_units_latest_nav"
         # Must NOT say "confirmed" or "broker"
         assert "confirmed" not in pos["valuation_source"].lower()
         assert "broker" not in pos["valuation_source"].lower()
@@ -1702,7 +1702,7 @@ class TestReportValuationSemantics:
         assert "valuation_type" in holding
         assert holding["valuation_type"] == "estimated"
         assert "valuation_source" in holding
-        assert holding["valuation_source"] == "estimated_from_transactions_and_nav"
+        assert holding["valuation_source"] == "reconstructed_units_latest_nav"
 
     def test_confirmed_portfolio_includes_valuation_type_counts(self) -> None:
         """confirmed_portfolio summary must include valuation_type_counts."""

@@ -605,6 +605,18 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Generate fix-it package with data templates for missing information",
     )
+    parser.add_argument(
+        "--enable-transaction-derived-valuation",
+        action="store_true",
+        default=False,
+        help=(
+            "Enable transaction-derived holdings reconstruction (M7.9). "
+            "When no holdings snapshot is available, reconstruct units and "
+            "current_value from transaction amounts, trade-date NAV, fee rules, "
+            "and trade date rules. All reconstructed values are labeled as "
+            "estimated/transaction-derived, never platform_reported."
+        ),
+    )
     args = parser.parse_args(argv)
     # Track whether --skip-akshare was explicitly passed (not just the default)
     args._explicit_skip_akshare = "--skip-akshare" in (argv or sys.argv[1:])

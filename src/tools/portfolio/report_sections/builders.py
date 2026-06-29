@@ -207,6 +207,16 @@ def _build_portfolio_snapshot(context: dict[str, Any]) -> dict[str, Any]:
                     f"As of {as_of}, total portfolio value is {_money_or_missing(total_val, likely_missing=likely_missing)} "
                     f"(based on holdings snapshot + transaction reconstruction)."
                 )
+            elif total_val is not None:
+                # M7.9: Transaction-derived valuation — must label as estimated
+                bullets.append(
+                    f"As of {as_of}, total portfolio value is {_money_or_missing(total_val, likely_missing=likely_missing)} "
+                    f"(transaction-derived estimate from transaction history, historical NAV, fee rules, and trade date rules)."
+                )
+                limitations.append(
+                    "当前市值由交易流水、历史 NAV、费率和交易规则重建，属于 transaction-derived estimate，"
+                    "非平台直接报告。不得将此标注为 platform_reported。"
+                )
             else:
                 bullets.append(
                     f"As of {as_of}, total value is {_money_or_missing(total_val, likely_missing=likely_missing)} "
@@ -1567,6 +1577,8 @@ def _build_personal_health(context: dict[str, Any]) -> dict[str, Any]:
     cfo = int(vq.get("cashflow_only_count", 0))
     mr = int(vq.get("manual_review_count", 0))
     unavail = int(vq.get("unavailable_count", 0))
+    tdfc = int(vq.get("transaction_derived_full_count", 0))
+    tdpc = int(vq.get("transaction_derived_partial_count", 0))
 
     vq_parts: list[str] = []
     if efc > 0:

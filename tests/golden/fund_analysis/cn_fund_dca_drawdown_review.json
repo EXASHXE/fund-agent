@@ -1430,7 +1430,7 @@
         },
         {
           "bullets": [
-            "As of 2026-03-31, total value is 100,000.00 with 12,000.00 cash.",
+            "As of 2026-03-31, total portfolio value is 100,000.00 (transaction-derived estimate from transaction history, historical NAV, fee rules, and trade date rules).",
             "Largest position is SYNDCA001 at 45.00% of portfolio value.",
             "Position detail is available for 3 fund(s)."
           ],
@@ -1439,7 +1439,9 @@
             "position_summary"
           ],
           "id": "portfolio_snapshot",
-          "limitations": [],
+          "limitations": [
+            "当前市值由交易流水、历史 NAV、费率和交易规则重建，属于 transaction-derived estimate，非平台直接报告。不得将此标注为 platform_reported。"
+          ],
           "status": "OK",
           "title": "Portfolio snapshot"
         },
@@ -2742,7 +2744,7 @@
       },
       {
         "bullets": [
-          "As of 2026-03-31, total value is 100,000.00 with 12,000.00 cash.",
+          "As of 2026-03-31, total portfolio value is 100,000.00 (transaction-derived estimate from transaction history, historical NAV, fee rules, and trade date rules).",
           "Largest position is SYNDCA001 at 45.00% of portfolio value.",
           "Position detail is available for 3 fund(s)."
         ],
@@ -2751,7 +2753,9 @@
           "position_summary"
         ],
         "id": "portfolio_snapshot",
-        "limitations": [],
+        "limitations": [
+          "当前市值由交易流水、历史 NAV、费率和交易规则重建，属于 transaction-derived estimate，非平台直接报告。不得将此标注为 platform_reported。"
+        ],
         "status": "OK",
         "title": "Portfolio snapshot"
       },

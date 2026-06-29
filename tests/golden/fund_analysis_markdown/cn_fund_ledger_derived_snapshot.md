@@ -12,9 +12,12 @@
 - Dividend income: 300.00.
 
 ## Portfolio snapshot [OK]
-- As of 2026-03-31, total value is 71,350.00 with 7,000.00 cash.
+- As of 2026-03-31, total portfolio value is 71,350.00 (transaction-derived estimate from transaction history, historical NAV, fee rules, and trade date rules).
 - Largest position is SYNLED001 at 66.15% of portfolio value.
 - Position detail is available for 2 fund(s).
+
+Limitations:
+- 当前市值由交易流水、历史 NAV、费率和交易规则重建，属于 transaction-derived estimate，非平台直接报告。不得将此标注为 platform_reported。
 
 ## Reconstruction status [OK]
 - Report source: reconstructed_from_ledger.

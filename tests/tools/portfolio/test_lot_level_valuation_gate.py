@@ -112,7 +112,7 @@ class TestComputePositionValuationStatus:
             has_cost=True,
             latest_nav=1.0,
         )
-        assert result == "estimated_full_lot_coverage"
+        assert result == "reconstructed_estimated_full"
 
     def test_mixed_confirmed_estimated_is_estimated_full(self):
         result = _compute_position_valuation_status(
@@ -122,7 +122,7 @@ class TestComputePositionValuationStatus:
             has_cost=True,
             latest_nav=1.0,
         )
-        assert result == "estimated_full_lot_coverage"
+        assert result == "reconstructed_estimated_full"
 
     def test_partial_coverage_is_estimated_partial(self):
         result = _compute_position_valuation_status(
@@ -132,7 +132,7 @@ class TestComputePositionValuationStatus:
             has_cost=True,
             latest_nav=1.0,
         )
-        assert result == "estimated_partial_lot_coverage"
+        assert result == "reconstructed_estimated_partial"
 
     def test_all_blocked_is_blocked_missing_units(self):
         result = _compute_position_valuation_status(
@@ -142,7 +142,7 @@ class TestComputePositionValuationStatus:
             has_cost=True,
             latest_nav=1.0,
         )
-        assert result == "blocked_missing_units"
+        assert result == "blocked_missing_nav"
 
     def test_has_units_no_nav_is_cashflow_only(self):
         result = _compute_position_valuation_status(
@@ -231,7 +231,7 @@ class TestTradeDateNavRequiredToDeriveUnits:
         pos = positions[0]
         assert pos["valuation_type"] == "estimated"
         assert pos["current_value"] is not None
-        assert pos["position_valuation_status"] in ("confirmed", "estimated_full_lot_coverage")
+        assert pos["position_valuation_status"] in ("confirmed", "reconstructed_estimated_full")
 
 
 class TestPartialLotCoverageDoesNotProduceCurrentValue:

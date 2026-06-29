@@ -7,9 +7,12 @@
 - No formal decision generated; call decision-support for formal action.
 
 ## Portfolio snapshot [OK]
-- As of 2026-03-31, total value is 180,000.00 with 10,000.00 cash.
+- As of 2026-03-31, total portfolio value is 180,000.00 (transaction-derived estimate from transaction history, historical NAV, fee rules, and trade date rules).
 - Largest position is SYNQD001 at 33.33% of portfolio value.
 - Position detail is available for 4 fund(s).
+
+Limitations:
+- 当前市值由交易流水、历史 NAV、费率和交易规则重建，属于 transaction-derived estimate，非平台直接报告。不得将此标注为 platform_reported。
 
 ## Reconstruction status [PARTIAL]
 - Report source: unknown.

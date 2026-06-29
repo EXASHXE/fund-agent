@@ -45,6 +45,13 @@ All `reason_codes` values must come from this stable set:
 | `insufficient_trade_date_nav_coverage` | Some trades lack trade-date NAV — units derivation incomplete |
 | `no_holdings_snapshot` | No holdings snapshot provided — authoritative valuation unavailable |
 | `reconciliation_gap` | Holdings snapshot and transaction reconstruction disagree — manual verification needed |
+| `transaction_derived_valuation` | Valuation derived from transactions, not platform snapshot |
+| `reconstruction_partial` | Transaction reconstruction is partial — some lots blocked |
+| `dividend_unmodeled` | Dividend type unknown — reinvest units not modeled |
+| `unmatched_refund` | Refund transaction unmatched to original — manual review needed |
+| `conversion_unverified` | Conversion transaction unverified — units not confirmed |
+| `unknown_amount_semantics` | Transaction amount semantics unknown (gross/net/confirmed) — units quality degraded |
+| `missing_fee` | Fee information missing — units quality degraded |
 
 ## Safety Constraints Enumeration
 
@@ -71,6 +78,8 @@ Known safe-to-analyze scope items:
 | `nav_coverage_quality` | NAV coverage quality assessment |
 | `holdings_snapshot_valuation` | Valuation from holdings snapshot (authoritative) |
 | `platform_reported_profit_and_cost` | Platform-reported profit and cost from holdings snapshot |
+| `transaction_derived_current_value` | Current value from transaction-derived reconstruction |
+| `reconstruction_quality` | Reconstruction quality assessment |
 
 ## Unsafe-to-Infer Values
 
@@ -87,6 +96,8 @@ Known unsafe-to-infer scope items:
 | `complete_market_value_if_partial_valuation` | Do not infer complete market value when valuation coverage is partial |
 | `market_value_without_holdings_snapshot` | Do not infer market value without holdings snapshot verification |
 | `reconcile_snapshot_discrepancy_automatically` | Do not automatically reconcile snapshot/reconstruction discrepancies |
+| `platform_reported_value_from_reconstruction` | Do not label reconstructed values as platform-reported |
+| `confirmed_profit_without_fee_coverage` | Do not report confirmed profit when fee coverage is incomplete |
 
 ## Artifact Paths
 

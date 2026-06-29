@@ -88,7 +88,7 @@ class TestPartialCoverageBlocksTotalValue:
             as_of_date=__import__("datetime").date(2025, 6, 1),
         )
         summary = result["confirmed_portfolio"]["summary"]
-        assert summary["portfolio_valuation_status"] == "partial_diagnostic_only"
+        assert summary["portfolio_valuation_status"] == "transaction_derived_partial"
         assert summary["is_partial_diagnostic"] is True
         assert summary["total_current_value"] is None
         assert summary["valued_positions_count"] < summary["total_positions"]
@@ -122,7 +122,7 @@ class TestFullCoverageAllowsMetrics:
             as_of_date=__import__("datetime").date(2025, 6, 1),
         )
         summary = result["confirmed_portfolio"]["summary"]
-        assert summary["portfolio_valuation_status"] == "estimated_full_coverage"
+        assert summary["portfolio_valuation_status"] == "transaction_derived_full"
         assert summary["total_current_value"] is not None
         assert summary["is_partial_diagnostic"] is False
 

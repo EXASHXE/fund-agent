@@ -31,6 +31,13 @@ REASON_CODES = frozenset({
     "insufficient_trade_date_nav_coverage",
     "no_holdings_snapshot",
     "reconciliation_gap",
+    "transaction_derived_valuation",
+    "reconstruction_partial",
+    "dividend_unmodeled",
+    "unmatched_refund",
+    "conversion_unverified",
+    "unknown_amount_semantics",
+    "missing_fee",
 })
 
 # ── Allowed safety constraints (stable enumeration) ────────────────────
@@ -51,6 +58,8 @@ SAFE_TO_ANALYZE_ITEMS = frozenset({
     "nav_coverage_quality",
     "holdings_snapshot_valuation",
     "platform_reported_profit_and_cost",
+    "transaction_derived_current_value",
+    "reconstruction_quality",
 })
 
 # ── Allowed unsafe-to-infer items ─────────────────────────────────────
@@ -68,6 +77,8 @@ UNSAFE_TO_INFER_ITEMS = frozenset({
     "fund_code_from_manual_override_without_verification",
     "p_and_l_from_avg_cost_nav_comparison",
     "complete_identity_from_candidate_code",
+    "platform_reported_value_from_reconstruction",
+    "confirmed_profit_without_fee_coverage",
 })
 
 # ── Safe-to-analyze scope ─────────────────────────────────────────────
@@ -227,6 +238,20 @@ def build_agent_context(
     if has_identity_blocked:
         default_artifacts["identity_candidates"] = "fixit/identity_candidates.private.csv"
 
+    # M7.9: Reconstruction summary
+    reconstruction_summary = _compute_reconstruction_summary(positions)
+
+    # M7.9: Adjust safe/unsafe based on reconstruction quality
+    if reconstruction_summary.get("transaction_derived_full_count", 0) > 0:
+        safe.append("transaction_derived_current_value")
+        safe.append("reconstruction_quality")
+        # If we have transaction-derived valuation, market value without snapshot is no longer unsafe
+        # BUT only for transaction_derived_full, not partial
+        if "market_value_without_holdings_snapshot" in unsafe:
+            # Keep it unsafe but add nuance — only if all positions are transaction_derived_full
+            if reconstruction_summary.get("transaction_derived_partial_count", 0) == 0:
+                unsafe = [u for u in unsafe if u != "market_value_without_holdings_snapshot"]
+
     return {
         "schema_version": SCHEMA_VERSION,
         "run_id": run_id,
@@ -239,6 +264,7 @@ def build_agent_context(
         "artifact_paths": default_artifacts,
         "safety_constraints": list(_SAFETY_CONSTRAINTS),
         "blocked_evidence_summary": blocked_summary,
+        "reconstruction_summary": reconstruction_summary,
     }
 
 
@@ -391,3 +417,28 @@ def _extract_positions(summary: Mapping[str, Any]) -> list[dict[str, Any]]:
 
 def _as_list(value: Any) -> list[Any]:
     return value if isinstance(value, list) else []
+
+
+def _compute_reconstruction_summary(positions: list[dict[str, Any]]) -> dict[str, Any]:
+    """Compute reconstruction summary from position list (M7.9)."""
+    if not positions:
+        return {}
+
+    holdings_sources = [p.get("holdings_source", "unavailable") for p in positions]
+    recon_qualities = [p.get("reconstruction_quality", "") for p in positions]
+
+    return {
+        "transaction_derived_full_count": sum(1 for h in holdings_sources if h == "transaction_derived_full"),
+        "transaction_derived_partial_count": sum(1 for h in holdings_sources if h == "transaction_derived_partial"),
+        "platform_reported_snapshot_count": sum(1 for h in holdings_sources if h == "platform_reported_snapshot"),
+        "cashflow_only_count": sum(1 for h in holdings_sources if h == "cashflow_only"),
+        "unavailable_count": sum(1 for h in holdings_sources if h == "unavailable"),
+        "reconstruction_quality_by_position": {
+            "confirmed": sum(1 for q in recon_qualities if q == "confirmed"),
+            "estimated_high": sum(1 for q in recon_qualities if q == "estimated_high"),
+            "estimated_medium": sum(1 for q in recon_qualities if q == "estimated_medium"),
+            "estimated_low": sum(1 for q in recon_qualities if q == "estimated_low"),
+            "partial": sum(1 for q in recon_qualities if q == "partial"),
+            "blocked": sum(1 for q in recon_qualities if q == "blocked"),
+        },
+    }
