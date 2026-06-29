@@ -15,6 +15,7 @@ from typing import Any
 def generate_fixit_package(
     positions: list[dict[str, Any]],
     output_dir: Path,
+    identity_resolutions: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Generate fix-it package from position reconstruction data.
 
@@ -23,11 +24,13 @@ def generate_fixit_package(
     - missing_fee_rules.csv: Funds missing fee schedules
     - unmatched_refunds.csv: Refunds that couldn't be matched
     - conversion_review_needed.csv: Conversions needing review
+    - identity_candidates.private.csv: M7.11 name search candidates for unverified funds
     - reconstruction_quality_summary.json: Per-position quality summary
 
     Args:
         positions: List of position dicts with reconstruction data.
         output_dir: Directory to write fix-it files.
+        identity_resolutions: List of identity resolution dicts (M7.11).
 
     Returns:
         Summary dict with file paths and counts.
@@ -38,6 +41,7 @@ def generate_fixit_package(
     missing_fee_rows = []
     unmatched_refund_rows = []
     conversion_review_rows = []
+    identity_candidate_rows = []
     quality_summary = []
 
     for pos in positions:
@@ -92,6 +96,43 @@ def generate_fixit_package(
             "identity_verification_status": pos.get("identity_verification_status", ""),
         })
 
+    # M7.11: Identity candidates from name search
+    if identity_resolutions:
+        for res in identity_resolutions:
+            ivs = res.get("identity_verification_status", "")
+            if ivs in ("name_search_candidate_unverified", "name_only", "code_unverified"):
+                raw_name = res.get("raw_fund_name") or res.get("fund_name", "")
+                resolved_code = res.get("resolved_fund_code", "")
+                # Add unverified fund as a row
+                identity_candidate_rows.append({
+                    "raw_fund_name": raw_name,
+                    "normalized_name": res.get("normalized_name", ""),
+                    "resolved_fund_code": resolved_code or "",
+                    "identity_verification_status": ivs,
+                    "action": "verify_fund_code",
+                    "suggested_fund_code": "",
+                    "suggested_fund_name": "",
+                    "match_score": "",
+                    "match_bucket": "",
+                    "verified_by_user": "",
+                    "verification_source": "",
+                })
+                # Add candidate codes from name search
+                for cand in res.get("name_search_candidates", []):
+                    identity_candidate_rows.append({
+                        "raw_fund_name": raw_name,
+                        "normalized_name": res.get("normalized_name", ""),
+                        "resolved_fund_code": resolved_code or "",
+                        "identity_verification_status": ivs,
+                        "action": "review_candidate",
+                        "suggested_fund_code": cand.get("fund_code", ""),
+                        "suggested_fund_name": cand.get("fund_name", ""),
+                        "match_score": cand.get("match_score", ""),
+                        "match_bucket": cand.get("match_bucket", ""),
+                        "verified_by_user": "",
+                        "verification_source": "",
+                    })
+
     # Write CSVs
     files_written = {}
 
@@ -115,6 +156,12 @@ def generate_fixit_package(
         _write_csv(path, conversion_review_rows)
         files_written["conversion_review_needed"] = str(path)
 
+    # M7.11: Identity candidates CSV
+    if identity_candidate_rows:
+        path = output_dir / "identity_candidates.private.csv"
+        _write_csv(path, identity_candidate_rows)
+        files_written["identity_candidates"] = str(path)
+
     # Write quality summary JSON
     path = output_dir / "reconstruction_quality_summary.json"
     path.write_text(
@@ -129,6 +176,7 @@ def generate_fixit_package(
         "missing_fee_rules_count": len(missing_fee_rows),
         "unmatched_refunds_count": len(unmatched_refund_rows),
         "conversion_review_count": len(conversion_review_rows),
+        "identity_candidate_count": len(identity_candidate_rows),
         "total_positions": len(positions),
     }
 

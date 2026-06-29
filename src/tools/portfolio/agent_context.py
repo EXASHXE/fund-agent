@@ -38,6 +38,7 @@ REASON_CODES = frozenset({
     "conversion_unverified",
     "unknown_amount_semantics",
     "missing_fee",
+    "name_search_candidates_unverified",
 })
 
 # ── Allowed safety constraints (stable enumeration) ────────────────────
@@ -60,6 +61,7 @@ SAFE_TO_ANALYZE_ITEMS = frozenset({
     "platform_reported_profit_and_cost",
     "transaction_derived_current_value",
     "reconstruction_quality",
+    "name_search_candidates",
 })
 
 # ── Allowed unsafe-to-infer items ─────────────────────────────────────
@@ -79,6 +81,7 @@ UNSAFE_TO_INFER_ITEMS = frozenset({
     "complete_identity_from_candidate_code",
     "platform_reported_value_from_reconstruction",
     "confirmed_profit_without_fee_coverage",
+    "confirmed_identity_from_name_search_unverified",
 })
 
 # ── Safe-to-analyze scope ─────────────────────────────────────────────
@@ -104,6 +107,7 @@ _RECOMMENDED_QUESTIONS = [
     "Should trade-date NAV or explicit units be provided to complete valuation coverage?",
     "Should a current holdings snapshot be provided for authoritative valuation?",
     "Should reconciliation gaps between snapshot and transaction history be manually verified?",
+    "Should name search candidates be reviewed and verified for funds without fund_code?",
 ]
 
 # M7.6: Identity-specific recommended questions (replace generic ones when identity is blocked)
@@ -211,6 +215,8 @@ def build_agent_context(
         questions.append(_RECOMMENDED_QUESTIONS[10])
     if "reconciliation_gap" in reason_codes:
         questions.append(_RECOMMENDED_QUESTIONS[11])
+    if "name_search_candidates_unverified" in reason_codes:
+        questions.append(_RECOMMENDED_QUESTIONS[12])
     # Always include if no specific questions matched
     if not questions:
         questions.append(_RECOMMENDED_QUESTIONS[4])

@@ -28,6 +28,14 @@ ALLOWED_VERIFICATION_SOURCES = frozenset({
     "official_fund_statement",
     "provider_cross_check",
     "user_manual_verified",
+    "provider_name_search",
+})
+
+# M7.11: Identity verification statuses that indicate name-only resolution
+# (no fund_code from plan, override, or transaction ledger)
+_NAME_ONLY_STATUSES = frozenset({
+    "name_only",
+    "code_unverified",
 })
 
 try:
@@ -122,12 +130,13 @@ def _compute_identity_verification_status(
     ref_info: dict[str, Any],
     override_record: dict[str, Any] | None = None,
     provider_lookup_result: str | None = None,
+    name_search_result: str | None = None,
 ) -> str:
     """Compute identity_verification_status for a fund resolution entry.
 
     Returns one of: verified, provider_verified, user_verified_override,
     manual_override_unverified, code_name_mismatch, provider_lookup_failed,
-    code_unverified, name_only, invalid_code.
+    code_unverified, name_only, invalid_code, name_search_candidate_unverified.
 
     M7.4: manual_override no longer auto-elevates to override_verified.
     Without provider cross-check or explicit user verification, manual
@@ -136,10 +145,21 @@ def _compute_identity_verification_status(
     M7.6: verified_by_user:true is NOT an unlock switch. It requires
     fund_code (6-digit), fund_name, verification_source (in allowed set),
     and verified_at. Missing fields cause downgrade to manual_override_unverified.
+
+    M7.11: name_search_result can be "auto_verified" (→ provider_verified),
+    "candidate_unverified" (→ name_search_candidate_unverified), or None.
     """
     # Invalid code → invalid_code
     if resolution_status == "invalid_code":
         return "invalid_code"
+
+    # M7.11: Name search auto-verified → provider_verified
+    if name_search_result == "auto_verified":
+        return "provider_verified"
+
+    # M7.11: Name search found candidates but couldn't auto-verify
+    if name_search_result == "candidate_unverified":
+        return "name_search_candidate_unverified"
 
     # Name-only → name_only
     if resolution_status == "name_only":
@@ -215,20 +235,30 @@ def resolve_fund_identities(
     plan_data: dict[str, Any] | None = None,
     manual_overrides: dict[str, str] | None = None,
     override_lookup: dict[str, dict[str, Any]] | None = None,
+    name_search_provider: Any | None = None,
+    enable_name_search: bool = False,
 ) -> dict[str, Any]:
     """Resolve fund identities from available sources.
 
     Priority:
     1. Plan fund_code (from investment plan)
     2. Manual override (from override file or dict)
-    3. Alipay fund_code (from transaction)
-    4. Unresolved (no guessing)
+    3. Provider name search discovery (M7.11, only when enable_name_search=True)
+    4. Alipay fund_code (from transaction)
+    5. Unresolved (no guessing)
+
+    M7.11: When enable_name_search=True and a name_search_provider is given,
+    funds with no code from plan/override/transaction are searched by name.
+    Only unique high-confidence matches auto-promote to provider_verified.
+    Ambiguous/low-confidence candidates stay as name_search_candidate_unverified.
 
     Args:
         ledger_data: Transaction ledger with fund_code fields.
         plan_data: Investment plan with known fund_codes.
         manual_overrides: Manual fund_code mappings {raw_name: resolved_code}.
         override_lookup: Pre-processed override lookup from YAML file.
+        name_search_provider: FundIdentitySearchProvider instance (M7.11).
+        enable_name_search: Whether to enable name search discovery (M7.11).
 
     Returns:
         Fund identity resolution with audit trail.
@@ -310,10 +340,68 @@ def resolve_fund_identities(
             confidence = "high"
             audit_steps.append({"step": "manual_override", "from": fund_key, "to": override_code})
 
+        # Step 2.5: Provider name search discovery (M7.11)
+        # Only attempt when no code from plan, override, or transaction
+        name_search_result = None
+        name_search_candidates_data = None
+        if (
+            enable_name_search
+            and name_search_provider is not None
+            and resolved_code is None
+            and raw_fund_name
+        ):
+            from src.tools.portfolio.fund_identity_candidate_discovery import (
+                discover_candidates,
+                should_auto_verify,
+                extract_fund_name_from_alipay_item,
+            )
+            # Extract normalized name from raw Alipay name
+            extracted = extract_fund_name_from_alipay_item(raw_fund_name)
+            norm_name = extracted["normalized_name"]
+            if norm_name:
+                discovery = discover_candidates([raw_fund_name], provider=name_search_provider)
+                scored_candidates = discovery.get(norm_name, [])
+                if scored_candidates:
+                    name_search_candidates_data = [
+                        {
+                            "fund_code": c.fund_code,
+                            "fund_name": c.fund_name,
+                            "match_score": c.match_score,
+                            "match_bucket": c.match_bucket,
+                            "match_reasons": c.match_reasons,
+                            "risk_flags": c.risk_flags,
+                        }
+                        for c in scored_candidates
+                    ]
+                    can_auto_verify, verify_reason = should_auto_verify(scored_candidates)
+                    if can_auto_verify:
+                        top = scored_candidates[0]
+                        resolved_code = top.fund_code
+                        resolution_source = "name_search_auto_verified"
+                        confidence = "medium"
+                        name_search_result = "auto_verified"
+                        audit_steps.append({
+                            "step": "name_search_auto_verified",
+                            "fund_code": top.fund_code,
+                            "fund_name": top.fund_name,
+                            "match_score": top.match_score,
+                            "match_bucket": top.match_bucket,
+                            "verify_reason": verify_reason,
+                        })
+                    else:
+                        name_search_result = "candidate_unverified"
+                        audit_steps.append({
+                            "step": "name_search_candidate_unverified",
+                            "candidate_count": len(scored_candidates),
+                            "top_score": scored_candidates[0].match_score,
+                            "verify_reason": verify_reason,
+                            "note": "candidates found but auto-verify conditions not met; manual verification required",
+                        })
+
         # Step 3: Transaction ledger
         if ref_info:
             candidates.append({"code": resolved_code, "name": ref_info.get("fund_name"), "source": "transaction_ledger"})
-            if not plan_info and not override_code:
+            if not plan_info and not override_code and name_search_result is None:
                 resolution_source = "transaction_ledger"
                 # Name-only resolution is lower confidence
                 if ref_info.get("resolved_by_name"):
@@ -342,9 +430,10 @@ def resolve_fund_identities(
             ref_info=ref_info,
             override_record=ov_record,
             provider_lookup_result=None,  # Provider cross-check done separately
+            name_search_result=name_search_result,
         )
 
-        resolutions.append({
+        resolution_entry = {
             "resolved_fund_code": resolved_code,
             "raw_reference": fund_key,
             "raw_fund_code": raw_fund_code,
@@ -357,7 +446,13 @@ def resolve_fund_identities(
             "confidence": confidence,
             "candidates": candidates,
             "audit_trail": audit_steps,
-        })
+        }
+
+        # M7.11: Attach name search candidates if discovered
+        if name_search_candidates_data:
+            resolution_entry["name_search_candidates"] = name_search_candidates_data
+
+        resolutions.append(resolution_entry)
 
     summary = {
         "total_funds": len(resolutions),
@@ -371,6 +466,9 @@ def resolve_fund_identities(
         "unresolved_count": sum(1 for r in resolutions if r["resolution_source"] == "none"),
         "manual_overrides_used": bool(ov_lookup or overrides),
         "manual_override_matches_count": sum(1 for r in resolutions if r["resolution_source"] == "manual_override"),
+        "name_search_enabled": enable_name_search,
+        "name_search_auto_verified_count": sum(1 for r in resolutions if r["resolution_source"] == "name_search_auto_verified"),
+        "name_search_candidate_unverified_count": sum(1 for r in resolutions if r["identity_verification_status"] == "name_search_candidate_unverified"),
         "resolution_status_counts": {
             "valid_code": sum(1 for r in resolutions if r["resolution_status"] == "valid_code"),
             "manual_override": sum(1 for r in resolutions if r["resolution_status"] == "manual_override"),
@@ -388,6 +486,7 @@ def resolve_fund_identities(
             "code_unverified": sum(1 for r in resolutions if r["identity_verification_status"] == "code_unverified"),
             "name_only": sum(1 for r in resolutions if r["identity_verification_status"] == "name_only"),
             "invalid_code": sum(1 for r in resolutions if r["identity_verification_status"] == "invalid_code"),
+            "name_search_candidate_unverified": sum(1 for r in resolutions if r["identity_verification_status"] == "name_search_candidate_unverified"),
         },
     }
 
@@ -404,6 +503,8 @@ def main():
     parser.add_argument("--ledger", default=None, help="Path to transaction ledger JSON")
     parser.add_argument("--plan", default=None, help="Path to investment plan YAML")
     parser.add_argument("--overrides", default=None, help="Path to fund identity overrides YAML")
+    parser.add_argument("--enable-name-search", action="store_true", default=False,
+                        help="Enable M7.11 name-based fund identity candidate discovery")
     parser.add_argument("--output", required=True, help="Output path for fund identity resolution JSON")
     args = parser.parse_args()
 
@@ -431,6 +532,8 @@ def main():
         ledger_data=ledger_data,
         plan_data=plan_data,
         override_lookup=override_lookup,
+        name_search_provider=None,  # CLI does not inject provider; use programmatically
+        enable_name_search=args.enable_name_search,
     )
 
     # Include override validation warnings in summary

@@ -52,6 +52,7 @@ All `reason_codes` values must come from this stable set:
 | `conversion_unverified` | Conversion transaction unverified — units not confirmed |
 | `unknown_amount_semantics` | Transaction amount semantics unknown (gross/net/confirmed) — units quality degraded |
 | `missing_fee` | Fee information missing — units quality degraded |
+| `name_search_candidates_unverified` | Name search found candidate codes but auto-verify conditions not met — manual verification required |
 
 ## Safety Constraints Enumeration
 
@@ -80,6 +81,7 @@ Known safe-to-analyze scope items:
 | `platform_reported_profit_and_cost` | Platform-reported profit and cost from holdings snapshot |
 | `transaction_derived_current_value` | Current value from transaction-derived reconstruction |
 | `reconstruction_quality` | Reconstruction quality assessment |
+| `name_search_candidates` | Name search candidate codes for unverified funds (review only, not confirmed) |
 
 ## Unsafe-to-Infer Values
 
@@ -98,6 +100,7 @@ Known unsafe-to-infer scope items:
 | `reconcile_snapshot_discrepancy_automatically` | Do not automatically reconcile snapshot/reconstruction discrepancies |
 | `platform_reported_value_from_reconstruction` | Do not label reconstructed values as platform-reported |
 | `confirmed_profit_without_fee_coverage` | Do not report confirmed profit when fee coverage is incomplete |
+| `confirmed_identity_from_name_search_unverified` | Do not treat name search unverified candidates as confirmed identity |
 
 ## Artifact Paths
 

@@ -143,6 +143,11 @@ def build_personal_health_summary(artifacts: Mapping[str, Any]) -> dict[str, Any
     if identity_unverified_count > 0:
         reason_codes.append(REASON_IDENTITY_UNVERIFIED)
 
+    # M7.11: Name search candidates unverified
+    name_search_unverified_count = int(identity.get("identity_verification_status_counts", {}).get("name_search_candidate_unverified", 0))
+    if name_search_unverified_count > 0:
+        reason_codes.append("name_search_candidates_unverified")
+
     # Partial valuation (M7.4)
     is_partial_diagnostic = bool(valuation.get("is_partial_diagnostic", False))
     if is_partial_diagnostic:
@@ -313,6 +318,7 @@ def build_personal_health_summary(artifacts: Mapping[str, Any]) -> dict[str, Any
         redemption_fee_unknown_count=redemption_fee_unknown_count,
         holdings_snapshot_loaded=bool(holdings_snapshot_info.get("loaded", False)),
         reconciliation_gap_count=reconciliation_gap_count,
+        name_search_unverified_count=name_search_unverified_count,
     )
 
     return {
@@ -452,6 +458,7 @@ def _build_checklist(
     redemption_fee_unknown_count: int = 0,
     holdings_snapshot_loaded: bool = False,
     reconciliation_gap_count: int = 0,
+    name_search_unverified_count: int = 0,
 ) -> list[str]:
     """Build fix-it checklist from data quality diagnostics."""
     items: list[str] = []
@@ -477,6 +484,12 @@ def _build_checklist(
 
     if name_only_count > 0:
         items.append(f"Add fund_identity_overrides for {name_only_count} name-only fund(s)")
+
+    if name_search_unverified_count > 0:
+        items.append(
+            f"Review name search candidates for {name_search_unverified_count} fund(s) — "
+            f"verify the suggested fund code in fund_identity_overrides with verified_by_user:true"
+        )
 
     if nav_missing:
         items.append("NAV data is missing; provide nav_overrides or ensure provider access")

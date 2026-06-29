@@ -22,6 +22,7 @@ BLOCKED_IDENTITY_STATUSES = frozenset({
     "provider_lookup_failed",
     "invalid_code",
     "name_only",
+    "name_search_candidate_unverified",
 })
 
 # ── Valuation types that indicate identity-blocked positions ──────────────
@@ -37,6 +38,7 @@ ALLOWED_VERIFICATION_SOURCES = frozenset({
     "official_fund_statement",
     "provider_cross_check",
     "user_manual_verified",
+    "provider_name_search",
 })
 
 
