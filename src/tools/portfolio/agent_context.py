@@ -258,6 +258,23 @@ def build_agent_context(
             if reconstruction_summary.get("transaction_derived_partial_count", 0) == 0:
                 unsafe = [u for u in unsafe if u != "market_value_without_holdings_snapshot"]
 
+    # M7.12: Name search diagnostics from e2e_summary
+    name_search_diag: dict[str, Any] = {}
+    ns_provider = _as_dict(summary.get("name_search_provider_diagnostics"))
+    if ns_provider:
+        name_search_diag = {
+            "name_search_provider_type": ns_provider.get("name_search_provider_type", ""),
+            "name_search_provider_status": ns_provider.get("name_search_provider_status", ""),
+            "name_search_provider_search_count": ns_provider.get("name_search_provider_search_count", 0),
+            "name_search_provider_result_count": ns_provider.get("name_search_provider_result_count", 0),
+        }
+    # Also extract from identity resolution summary
+    id_summary = _as_dict(summary.get("identity_resolution"))
+    if id_summary:
+        name_search_diag["name_search_enabled"] = id_summary.get("name_search_enabled", False)
+        name_search_diag["name_search_auto_verified_count"] = id_summary.get("name_search_auto_verified_count", 0)
+        name_search_diag["name_search_candidate_unverified_count"] = id_summary.get("name_search_candidate_unverified_count", 0)
+
     return {
         "schema_version": SCHEMA_VERSION,
         "run_id": run_id,
@@ -271,6 +288,7 @@ def build_agent_context(
         "safety_constraints": list(_SAFETY_CONSTRAINTS),
         "blocked_evidence_summary": blocked_summary,
         "reconstruction_summary": reconstruction_summary,
+        "name_search_diagnostics": name_search_diag,
     }
 
 

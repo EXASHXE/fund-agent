@@ -212,6 +212,80 @@ def _python(script: str) -> list[str]:
     return [sys.executable, str(SCRIPTS_DIR / script)]
 
 
+def _resolve_identities_with_name_search(
+    *,
+    ledger_path: Path,
+    overrides_path: Path | None,
+    output_path: Path,
+    enable_name_search: bool = True,
+) -> bool:
+    """M7.12: Resolve fund identities programmatically with name search provider.
+
+    This is called instead of the subprocess approach when --enable-name-search
+    is set, because we need to inject a FundIdentitySearchProvider object.
+
+    Returns True if identity resolution succeeded (output file written).
+    """
+    try:
+        import yaml
+    except ImportError:
+        yaml = None  # type: ignore[assignment]
+
+    from scripts.resolve_fund_identities import resolve_fund_identities, _load_overrides
+    from src.tools.portfolio.akshare_name_search_provider import AkShareNameSearchProvider
+
+    # Load ledger data
+    try:
+        ledger_data = json.loads(ledger_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"  ERROR: Cannot read ledger: {exc}", file=sys.stderr)
+        return False
+
+    # Load overrides if available
+    override_lookup: dict[str, dict[str, Any]] = {}
+    override_warnings: list[str] = []
+    if overrides_path and overrides_path.exists():
+        override_lookup, override_warnings = _load_overrides(overrides_path)
+        for w in override_warnings:
+            print(f"  Warning: {w}", file=sys.stderr)
+
+    # Create and inject name search provider
+    name_search_provider = AkShareNameSearchProvider()
+
+    # Run identity resolution
+    try:
+        result = resolve_fund_identities(
+            ledger_data=ledger_data,
+            override_lookup=override_lookup,
+            name_search_provider=name_search_provider,
+            enable_name_search=enable_name_search,
+        )
+    except Exception as exc:
+        print(f"  ERROR: Identity resolution failed: {exc}", file=sys.stderr)
+        return False
+
+    # Include override validation warnings
+    if override_warnings:
+        result["summary"]["override_validation_warnings"] = override_warnings
+
+    # Include name search provider diagnostics
+    provider_diag = name_search_provider.get_diagnostics()
+    result["name_search_provider_diagnostics"] = provider_diag
+
+    # Write output
+    try:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump(result, f, ensure_ascii=False, indent=2)
+        print(f"  Identity resolution written: {output_path}")
+        summary_line = json.dumps(result["summary"], ensure_ascii=False, indent=2)
+        print(summary_line)
+        return True
+    except OSError as exc:
+        print(f"  ERROR: Cannot write identity output: {exc}", file=sys.stderr)
+        return False
+
+
 def _has_usable_nav(path: Path) -> bool:
     """Return whether a NAV snapshot contains at least one usable record."""
     try:
@@ -615,11 +689,27 @@ def run_pipeline(args: argparse.Namespace) -> int:
         ]
         if overrides_path.exists():
             identity_cmd += ["--overrides", str(overrides_path)]
-        identity_ok = run_step(
-            "0d", "resolve_fund_identities", "Resolve fund identities",
-            identity_cmd,
-            critical=False, expected_output=fund_identity,
-        )
+
+        # M7.12: When --enable-name-search, resolve identities programmatically
+        # to inject the FundIdentitySearchProvider (subprocess can't pass objects)
+        if args.enable_name_search:
+            identity_ok = _resolve_identities_with_name_search(
+                ledger_path=ledger,
+                overrides_path=overrides_path if overrides_path.exists() else None,
+                output_path=fund_identity,
+                enable_name_search=True,
+            )
+            result = StepResult(
+                step_id="0d", name="Resolve fund identities (with name search)",
+                ok=identity_ok, output_path=fund_identity if identity_ok else None,
+            )
+            pipeline.record_step(result, critical=False)
+        else:
+            identity_ok = run_step(
+                "0d", "resolve_fund_identities", "Resolve fund identities",
+                identity_cmd,
+                critical=False, expected_output=fund_identity,
+            )
         # Extract fund codes from identity resolution (always, even with --skip-akshare)
         fund_codes: list[str] = []
         identity_mismatch_codes: set[str] = set()
@@ -916,11 +1006,14 @@ def run_pipeline(args: argparse.Namespace) -> int:
     # Collect identity resolution summary (read-only, never write back)
     identity_resolution_summary: dict[str, Any] = {}
     identity_schema_version: str = "unknown"
+    name_search_provider_diagnostics: dict[str, Any] = {}
     if fund_identity.exists():
         try:
             id_data = json.loads(fund_identity.read_text(encoding="utf-8"))
             identity_resolution_summary = id_data.get("summary", {})
             identity_schema_version = id_data.get("schema_version", "unknown")
+            # M7.12: Extract name search provider diagnostics
+            name_search_provider_diagnostics = id_data.get("name_search_provider_diagnostics", {})
         except (OSError, json.JSONDecodeError):
             pass
 
@@ -966,6 +1059,7 @@ def run_pipeline(args: argparse.Namespace) -> int:
         "portfolio_input_transactions": portfolio_input_txn_stats,
         "identity_resolution": identity_resolution_summary,
         "identity_schema_version": identity_schema_version,
+        "name_search_provider_diagnostics": name_search_provider_diagnostics,
         "valuation_summary": valuation_type_counts,
         "personal_health_report": _build_personal_health_report(
             pipeline=pipeline,
@@ -1097,6 +1191,8 @@ def main(argv: list[str] | None = None, *, env_overrides: dict[str, str] | None 
     )
     parser.add_argument("--skip-news", action="store_true", help="Skip news snapshot step")
     parser.add_argument("--skip-akshare", action="store_true", help="Skip AkShare-dependent steps")
+    parser.add_argument("--enable-name-search", action="store_true", default=False,
+                        help="Enable M7.11/M7.12 name-based fund identity candidate discovery")
     parser.add_argument("--dry-run", action="store_true", help="Print pipeline steps without executing")
     parser.add_argument("--output-report", default="", help="Output report path")
     parser.add_argument("--run-id", default="", help="Run identifier for eval_workspace")

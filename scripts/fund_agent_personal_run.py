@@ -165,7 +165,42 @@ def _build_run_manifest(
     private_data_configured: bool,
     health: dict[str, Any],
     execution_mode: str = "real_analysis",
+    enable_name_search: bool = False,
+    e2e_summary: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    # M7.12: Extract name search diagnostics from e2e_summary
+    name_search_diag: dict[str, Any] = {
+        "name_search_enabled": enable_name_search,
+        "name_search_provider_injected": False,
+    }
+    if e2e_summary:
+        identity = _as_dict(e2e_summary.get("identity_resolution", {}))
+        name_search_diag["name_search_provider_injected"] = bool(
+            e2e_summary.get("name_search_provider_diagnostics", {})
+        )
+        name_search_diag["name_search_requested_count"] = identity.get(
+            "name_search_requested_count",
+            sum(1 for r in identity.get("resolutions", [])
+                if r.get("name_search_candidates") or r.get("resolution_source") == "name_search_auto_verified"),
+        )
+        name_search_diag["name_search_candidate_count"] = identity.get(
+            "name_search_candidate_count", 0)
+        name_search_diag["name_search_unique_high_confidence_count"] = identity.get(
+            "name_search_unique_high_confidence_count", 0)
+        name_search_diag["name_search_ambiguous_count"] = identity.get(
+            "name_search_ambiguous_count", 0)
+        name_search_diag["name_search_no_result_count"] = identity.get(
+            "name_search_no_result_count", 0)
+        name_search_diag["name_search_promoted_provider_verified_count"] = identity.get(
+            "name_search_promoted_provider_verified_count", 0)
+        # Provider diagnostics
+        provider_diag = e2e_summary.get("name_search_provider_diagnostics", {})
+        if provider_diag:
+            name_search_diag["name_search_provider_status"] = provider_diag.get(
+                "name_search_provider_status", "unknown")
+            name_search_diag["name_search_provider_last_error"] = provider_diag.get(
+                "name_search_provider_last_error", "")
+
     return {
         "schema_version": "fund_agent_run_manifest.v1",
         "run_id": run_id,
@@ -183,7 +218,9 @@ def _build_run_manifest(
             "skip_akshare": skip_akshare,
             "skip_news": skip_news,
             "transaction_source": transaction_source,
+            "enable_name_search": enable_name_search,
         },
+        "name_search_diagnostics": name_search_diag,
         "canonical_entrypoint": True,
         "invoked_script": "fund_agent_personal_run",
         "artifacts": artifacts,
@@ -315,6 +352,8 @@ def run_personal(args: argparse.Namespace) -> int:
         e2e_argv.append("--skip-news")
     if args.dry_run:
         e2e_argv.append("--dry-run")
+    if getattr(args, "enable_name_search", False):
+        e2e_argv.append("--enable-name-search")
 
     e2e_env = {"FUND_AGENT_CANONICAL_PERSONAL_RUN": "1"}
     e2e_rc = e2e_main(e2e_argv, env_overrides=e2e_env)
@@ -476,6 +515,8 @@ def run_personal(args: argparse.Namespace) -> int:
         private_data_configured=private_data.is_dir(),
         health=health,
         execution_mode=execution_mode,
+        enable_name_search=getattr(args, "enable_name_search", False),
+        e2e_summary=e2e_summary,
     )
     _write_json(run_dir / "run_manifest.json", manifest)
 
@@ -615,6 +656,18 @@ def main(argv: list[str] | None = None) -> int:
             "current_value from transaction amounts, trade-date NAV, fee rules, "
             "and trade date rules. All reconstructed values are labeled as "
             "estimated/transaction-derived, never platform_reported."
+        ),
+    )
+    parser.add_argument(
+        "--enable-name-search",
+        action="store_true",
+        default=False,
+        help=(
+            "Enable name-based fund identity candidate discovery (M7.11/M7.12). "
+            "When no fund_identity_overrides are available, searches for candidate "
+            "fund codes from provider name lookup. Only unique high-confidence "
+            "matches auto-promote to provider_verified. Ambiguous/low-confidence "
+            "candidates stay unverified for manual review."
         ),
     )
     args = parser.parse_args(argv)
@@ -776,10 +829,11 @@ def _generate_identity_candidates_csv(
     fixit_dir: Path,
     e2e_summary: dict[str, Any],
 ) -> None:
-    """M7.6: Generate identity_candidates.private.csv for user review.
+    """M7.6/M7.12: Generate identity_candidates.private.csv for user review.
 
     Contains real fund names and candidate codes — this is a private artifact.
     Users must verify each candidate before adding verified_by_user:true.
+    M7.12: Also includes name search candidates from M7.11 discovery.
     """
     identity = e2e_summary.get("identity_resolution", {})
     resolutions = identity.get("resolutions", [])
@@ -789,13 +843,14 @@ def _generate_identity_candidates_csv(
 
     # Build CSV with candidate information
     csv_lines = [
-        "raw_fund_name,candidate_fund_code,candidate_source,verification_status,user_verified,verified_at,verification_source",
+        "raw_fund_name,candidate_fund_code,candidate_fund_name,candidate_source,verification_status,match_score,match_bucket,user_verified,verified_at,verification_source",
     ]
 
     candidate_count = 0
     verified_count = 0
     unverified_count = 0
     mismatch_count = 0
+    name_search_candidate_count = 0
 
     for res in resolutions:
         if not isinstance(res, dict):
@@ -805,34 +860,52 @@ def _generate_identity_candidates_csv(
         identity_status = res.get("identity_verification_status", "")
         resolution_source = res.get("resolution_source", "")
 
-        # Only include entries that have candidate codes
-        if not resolved_code:
-            continue
+        # Include entries with resolved codes
+        if resolved_code:
+            # Determine candidate source
+            candidates = res.get("candidates", [])
+            candidate_source = resolution_source
+            if candidates:
+                candidate_source = candidates[-1].get("source", resolution_source)
 
-        # Determine candidate source
-        candidates = res.get("candidates", [])
-        candidate_source = resolution_source
-        if candidates:
-            # Use the last candidate's source (most recent resolution step)
-            candidate_source = candidates[-1].get("source", resolution_source)
+            # Determine verification fields
+            user_verified = "true" if identity_status in ("user_verified_override", "provider_verified", "verified") else "false"
+            verified_at = res.get("verified_at", "")
+            verification_source = res.get("verification_source", "")
 
-        # Determine verification fields
-        user_verified = "true" if identity_status in ("user_verified_override", "provider_verified", "verified") else "false"
-        verified_at = res.get("verified_at", "")
-        verification_source = res.get("verification_source", "")
+            csv_lines.append(
+                f"{raw_name},{resolved_code},,{candidate_source},{identity_status},,,"
+                f"{user_verified},{verified_at},{verification_source}"
+            )
 
-        csv_lines.append(
-            f"{raw_name},{resolved_code},{candidate_source},{identity_status},"
-            f"{user_verified},{verified_at},{verification_source}"
-        )
+            candidate_count += 1
+            if identity_status in ("verified", "provider_verified", "user_verified_override"):
+                verified_count += 1
+            elif identity_status == "code_name_mismatch":
+                mismatch_count += 1
+            else:
+                unverified_count += 1
 
-        candidate_count += 1
-        if identity_status in ("verified", "provider_verified", "user_verified_override"):
-            verified_count += 1
-        elif identity_status == "code_name_mismatch":
-            mismatch_count += 1
-        else:
-            unverified_count += 1
+        # M7.12: Include name search candidates (even without resolved code)
+        name_search_candidates = res.get("name_search_candidates", [])
+        for cand in name_search_candidates:
+            cand_code = cand.get("fund_code", "")
+            cand_name = cand.get("fund_name", "")
+            cand_score = cand.get("match_score", "")
+            cand_bucket = cand.get("match_bucket", "")
+            csv_lines.append(
+                f"{raw_name},{cand_code},{cand_name},name_search_candidate,{identity_status},"
+                f"{cand_score},{cand_bucket},,,"
+            )
+            name_search_candidate_count += 1
+
+        # Include name-only entries without resolved codes (for fix-it)
+        if not resolved_code and not name_search_candidates and identity_status in (
+            "name_only", "name_search_candidate_unverified", "code_unverified",
+        ):
+            csv_lines.append(
+                f"{raw_name},,,unresolved,{identity_status},,,,"
+            )
 
     _write_text(fixit_dir / "identity_candidates.private.csv", "\n".join(csv_lines) + "\n")
 
@@ -842,11 +915,12 @@ def _generate_identity_candidates_csv(
         "verified_count": verified_count,
         "unverified_count": unverified_count,
         "mismatch_count": mismatch_count,
+        "name_search_candidate_count": name_search_candidate_count,
     }
     _write_json(fixit_dir / "identity_candidates_summary.json", summary)
 
-    if unverified_count > 0:
-        print(f"  Identity candidates: {unverified_count} unverified, {verified_count} verified, {mismatch_count} mismatch")
+    if unverified_count > 0 or name_search_candidate_count > 0:
+        print(f"  Identity candidates: {unverified_count} unverified, {verified_count} verified, {mismatch_count} mismatch, {name_search_candidate_count} name-search")
 
 
 if __name__ == "__main__":

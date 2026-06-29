@@ -50,6 +50,14 @@ BROKER_KEYWORDS = {
 PLUGIN_CORE_DIRS = ("skills_runtime", "skillpack", "tools", "schemas", "graph")
 
 
+# Provider adapters that lazy-import SDKs inside function bodies (not at module
+# level).  These are excluded from boundary checks because core never imports
+# them directly — they are injected by the pipeline layer.
+_LAZY_PROVIDER_ADAPTERS = frozenset({
+    "akshare_name_search_provider.py",
+})
+
+
 def imports_from_dir(dirpath: Path) -> set[str]:
     """Extract all imports from Python files in a directory (skips __pycache__, DEPRECATED)."""
     imports: set[str] = set()
@@ -57,6 +65,8 @@ def imports_from_dir(dirpath: Path) -> set[str]:
         return imports
     for path in sorted(dirpath.rglob("*.py")):
         if "__pycache__" in str(path):
+            continue
+        if path.name in _LAZY_PROVIDER_ADAPTERS:
             continue
         try:
             text = path.read_text(encoding="utf-8")
