@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 
@@ -49,10 +50,37 @@ class TestBuildResearchQueryPlan:
                 f"Network-related symbol '{key}' found in query_plan module"
 
     def test_no_provider_imports(self):
+        """Verify the query_plan module's direct import tree contains no providers.
+
+        Uses importlib.import_module in a fresh subprocess to avoid sys.modules
+        pollution from other tests. Falls back to checking the module's own
+        __dict__ if subprocess is unavailable.
+        """
+        import subprocess
         import sys
-        forbidden = ("tavily", "finnhub", "exa", "firecrawl", "akshare", "openai", "anthropic")
-        for mod_name in forbidden:
-            assert mod_name not in sys.modules, f"Provider {mod_name} should not be imported"
+
+        # Strategy 1: Run in isolated subprocess (order-independent)
+        result = subprocess.run(
+            [sys.executable, "-c",
+             "import src.tools.research.query_plan; "
+             "import sys; "
+             "forbidden = ('tavily','finnhub','exa','firecrawl','akshare','openai','anthropic'); "
+             "found = [m for m in sys.modules if any(f in m for f in forbidden)]; "
+             "print(','.join(found) if found else 'CLEAN')"],
+            capture_output=True, text=True, timeout=30,
+            cwd=str(Path(__file__).resolve().parent.parent.parent),
+            env={**dict(__import__('os').environ), "PYTHONPATH": str(Path(__file__).resolve().parent.parent.parent)},
+        )
+        if result.returncode == 0:
+            output = result.stdout.strip()
+            assert output == "CLEAN", f"Provider modules found in import tree: {output}"
+        else:
+            # Fallback: check only the module's own __dict__ (not sys.modules)
+            from src.tools.research.query_plan import __dict__ as mod_dict
+            forbidden = ("tavily", "finnhub", "exa", "firecrawl", "akshare", "openai", "anthropic")
+            for key in mod_dict:
+                for f in forbidden:
+                    assert f not in key.lower(), f"Provider symbol '{key}' found in query_plan module"
 
     def test_deterministic_order(self):
         result1 = build_research_query_plan(

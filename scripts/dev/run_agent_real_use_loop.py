@@ -106,23 +106,24 @@ def _find_latest_run_dir() -> Path | None:
     return candidates[0]
 
 
-def _git_status_porcelain() -> str:
+def _git_status_porcelain(repo_root: Path | None = None) -> str:
     try:
         out = subprocess.run(
             ["git", "status", "--porcelain"],
-            cwd=REPO_ROOT, capture_output=True, text=True, timeout=15,
+            cwd=repo_root or REPO_ROOT, capture_output=True, text=True, timeout=15,
         )
         return out.stdout
     except (OSError, subprocess.SubprocessError):
         return ""
 
 
-def _scan_forbidden_paths() -> dict[str, float]:
+def _scan_forbidden_paths(repo_root: Path | None = None) -> dict[str, float]:
     """Return mtimes (0 = absent) for non-canonical output paths."""
+    root = repo_root or REPO_ROOT
     paths = {
-        "legacy_flat_report": REPO_ROOT / "local_reports" / "real_portfolio_report.md",
-        "skill_output_dir": REPO_ROOT / "local_reports" / "skill_output",
-        "run_skill_analysis_py": REPO_ROOT / "local_reports" / "run_skill_analysis.py",
+        "legacy_flat_report": root / "local_reports" / "real_portfolio_report.md",
+        "skill_output_dir": root / "local_reports" / "skill_output",
+        "run_skill_analysis_py": root / "local_reports" / "run_skill_analysis.py",
     }
     out: dict[str, float] = {}
     for key, p in paths.items():
@@ -179,10 +180,12 @@ def _score_run(
     stderr: str,
     run_dir: Path | None,
     forbidden_paths_before: dict[str, float] | None = None,
+    repo_root: Path | None = None,
 ) -> dict[str, Any]:
     """Score a single child run against the M7.8 contract (Stages 4-5)."""
     failure_reasons: list[str] = []
     forbidden_terms_found: list[str] = []
+    _root = repo_root or REPO_ROOT
 
     artifact_scan = _scan_artifacts(run_dir)
     manifest = _load_json(run_dir / "run_manifest.json") if run_dir else {}
@@ -224,7 +227,7 @@ def _score_run(
         failure_reasons.append("report.md missing despite analyze-portfolio completed")
 
     # ── B. non-canonical paths forbidden ───────────────────────────────
-    forbidden_after = _scan_forbidden_paths()
+    forbidden_after = _scan_forbidden_paths(repo_root=_root)
     if forbidden_paths_before is not None:
         diff = _diff_forbidden_paths(forbidden_paths_before, forbidden_after)
     else:
@@ -313,8 +316,9 @@ def _score_run(
         failure_reasons.append("verified_by_user described as unlock switch (forbidden)")
 
     # ── D. holdings snapshot guidance ──────────────────────────────────
-    has_holdings_snapshot = (PRIVATE_DATA / "current_holdings_snapshot.private.csv").exists() or \
-                            (PRIVATE_DATA / "current_holdings_snapshot.private.json").exists()
+    _private_data = _root / "private_data"
+    has_holdings_snapshot = (_private_data / "current_holdings_snapshot.private.csv").exists() or \
+                            (_private_data / "current_holdings_snapshot.private.json").exists()
     holdings_snapshot_guidance_present = True
     if not has_holdings_snapshot:
         # Should mention no_holdings_snapshot or guide to snapshot
@@ -325,7 +329,7 @@ def _score_run(
                 failure_reasons.append("no_holdings_snapshot guidance missing")
 
     # ── E. privacy ─────────────────────────────────────────────────────
-    git_status = _git_status_porcelain()
+    git_status = _git_status_porcelain(repo_root=_root)
     privacy_risk_patterns = [
         r"private_data/", r"local_reports/", r"eval_workspace/",
         r"\.private\.(json|yaml|csv)",

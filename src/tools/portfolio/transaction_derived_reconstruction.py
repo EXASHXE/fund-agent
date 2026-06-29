@@ -621,7 +621,7 @@ def reconstruct_position(
     Returns:
         Position dict with all reconstruction data.
     """
-    as_of = as_of_date or date.today()
+    as_of = as_of_date  # as_of_date is required — caller must provide it
     nav_recs = nav_records or []
     fee_sched = fee_schedules or {}
 
