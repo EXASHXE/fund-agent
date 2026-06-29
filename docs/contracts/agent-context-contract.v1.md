@@ -53,6 +53,12 @@ All `reason_codes` values must come from this stable set:
 | `unknown_amount_semantics` | Transaction amount semantics unknown (gross/net/confirmed) — units quality degraded |
 | `missing_fee` | Fee information missing — units quality degraded |
 | `name_search_candidates_unverified` | Name search found candidate codes but auto-verify conditions not met — manual verification required |
+| `provider_name_search_network_error` | Name search provider failed due to network/SSL error — candidates unavailable |
+| `provider_name_search_unavailable` | Name search provider unavailable (import failed or unknown error) |
+| `identity_candidate_cache_missing` | No local identity candidate cache file found in private_data/ |
+| `identity_candidate_cache_used` | Local identity candidate cache was used as fallback for name search |
+| `identity_candidates_generated_from_cache` | Candidates were generated from local cache — still require M7.11 scoring |
+| `name_search_provider_chain_failed` | All providers in the name search chain failed — no candidates available |
 
 ## Safety Constraints Enumeration
 
@@ -82,6 +88,7 @@ Known safe-to-analyze scope items:
 | `transaction_derived_current_value` | Current value from transaction-derived reconstruction |
 | `reconstruction_quality` | Reconstruction quality assessment |
 | `name_search_candidates` | Name search candidate codes for unverified funds (review only, not confirmed) |
+| `identity_candidate_cache` | Local identity candidate cache entries (offline fallback, not verified) |
 
 ## Unsafe-to-Infer Values
 

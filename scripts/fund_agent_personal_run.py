@@ -168,7 +168,7 @@ def _build_run_manifest(
     enable_name_search: bool = False,
     e2e_summary: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    # M7.12: Extract name search diagnostics from e2e_summary
+    # M7.12+M7.13: Extract name search diagnostics from e2e_summary
     name_search_diag: dict[str, Any] = {
         "name_search_enabled": enable_name_search,
         "name_search_provider_injected": False,
@@ -200,6 +200,25 @@ def _build_run_manifest(
                 "name_search_provider_status", "unknown")
             name_search_diag["name_search_provider_last_error"] = provider_diag.get(
                 "name_search_provider_last_error", "")
+        # M7.13: Provider chain diagnostics
+        if provider_diag.get("provider_chain_enabled"):
+            name_search_diag["provider_chain_enabled"] = True
+            name_search_diag["providers_attempted"] = provider_diag.get("providers_attempted", [])
+            name_search_diag["providers_succeeded"] = provider_diag.get("providers_succeeded", [])
+            name_search_diag["providers_failed"] = provider_diag.get("providers_failed", [])
+            name_search_diag["fallback_used"] = provider_diag.get("fallback_used", False)
+        # M7.13: Local cache diagnostics
+        local_cache_diag = e2e_summary.get("local_cache_diagnostics", {})
+        if local_cache_diag:
+            name_search_diag["local_cache_present"] = local_cache_diag.get(
+                "name_search_provider_status", "") != "cache_missing"
+            name_search_diag["local_cache_candidate_count"] = local_cache_diag.get(
+                "name_search_provider_entry_count", 0)
+            name_search_diag["network_provider_status"] = "network_error" if any(
+                p in provider_diag.get("providers_failed", [])
+                for p in provider_diag.get("providers_attempted", [])
+                if "akshare" in p.lower() or "network" in p.lower()
+            ) else "available"
 
     return {
         "schema_version": "fund_agent_run_manifest.v1",
@@ -497,7 +516,7 @@ def run_personal(args: argparse.Namespace) -> int:
     fixit_dir = None
     if args.generate_fixit_package:
         fixit_dir = run_dir / "fixit"
-        _generate_fixit_package(fixit_dir, e2e_summary, holdings_snapshot)
+        _generate_fixit_package(fixit_dir, e2e_summary, holdings_snapshot, run_dir=run_dir)
         artifact_paths["fixit_readme"] = "fixit/README.md"
         artifact_paths["fixit_holdings_template"] = "fixit/current_holdings_snapshot_template.csv"
         artifact_paths["fixit_identity_template"] = "fixit/fund_identity_overrides.suggested.yaml"
@@ -684,11 +703,13 @@ def _generate_fixit_package(
     fixit_dir: Path,
     e2e_summary: dict[str, Any],
     holdings_snapshot: dict[str, Any] | None,
+    run_dir: Path | None = None,
 ) -> None:
     """Generate fix-it package with data templates for missing information.
 
     Only writes template/suggested files — never includes real private data.
     M7.6: Also generates identity_candidates.private.csv for user review.
+    M7.13: Also generates identity_candidate_cache_template.private.csv.
     """
     fixit_dir.mkdir(parents=True, exist_ok=True)
 
@@ -734,6 +755,16 @@ def _generate_fixit_package(
     _write_text(fixit_dir / "fee_overrides_needed.csv", fee_csv)
 
     # 6. M7.6: Identity candidates private CSV — contains real fund names and candidate codes
+    # M7.13: Also load identity resolution file for individual resolutions
+    if run_dir is not None:
+        id_file = run_dir / "fund_identity_resolution.json"
+        if id_file.exists():
+            try:
+                id_data = json.loads(id_file.read_text(encoding="utf-8"))
+                if "resolutions" in id_data and "identity_resolution" in e2e_summary:
+                    e2e_summary["identity_resolution"]["resolutions"] = id_data["resolutions"]
+            except (OSError, json.JSONDecodeError):
+                pass
     _generate_identity_candidates_csv(fixit_dir, e2e_summary)
 
     print(f"  Fix-it package generated: {fixit_dir}")
@@ -803,6 +834,21 @@ def _build_fixit_readme(
         "### 4. Fee Overrides",
         "",
         "If redemption fees are unknown, fill in `fee_overrides_needed.csv`.",
+        "",
+        "### 5. Local Identity Candidate Cache (M7.13)",
+        "",
+        "When network providers are unavailable (SSL errors, corporate firewall, etc.),",
+        "you can populate a local identity candidate cache for offline name search.",
+        "",
+        "Fill in `identity_candidate_cache_template.private.csv` with candidate fund codes",
+        "from 支付宝/天天基金/基金详情页, then place it as:",
+        "`private_data/fund_identity_candidate_cache.private.csv`",
+        "",
+        "**IMPORTANT:**",
+        "- This is NOT a holdings snapshot.",
+        "- This is NOT a verified override.",
+        "- Candidates still go through M7.11 deterministic scoring and auto-verify gate.",
+        "- If ambiguous, candidates stay unverified and appear in identity_candidates.private.csv.",
         "",
         "## Key Principle",
         "",
@@ -919,8 +965,68 @@ def _generate_identity_candidates_csv(
     }
     _write_json(fixit_dir / "identity_candidates_summary.json", summary)
 
+    # M7.13: Generate identity candidate cache template if providers failed
+    _generate_identity_candidate_cache_template(fixit_dir, e2e_summary)
+
     if unverified_count > 0 or name_search_candidate_count > 0:
         print(f"  Identity candidates: {unverified_count} unverified, {verified_count} verified, {mismatch_count} mismatch, {name_search_candidate_count} name-search")
+
+
+def _generate_identity_candidate_cache_template(
+    fixit_dir: Path,
+    e2e_summary: dict[str, Any],
+) -> None:
+    """M7.13: Generate identity_candidate_cache_template.private.csv.
+
+    This template helps users populate a local identity candidate cache
+    for offline name search fallback when network providers are unavailable.
+
+    This is NOT a holdings snapshot, NOT a verified override, and NOT
+    authoritative. It is only a candidate source for provider name search.
+    """
+    provider_diag = e2e_summary.get("name_search_provider_diagnostics", {})
+    identity = e2e_summary.get("identity_resolution", {})
+    resolutions = identity.get("resolutions", [])
+
+    # Only generate template if:
+    # 1. Provider chain had failures, OR
+    # 2. There are name-only funds that could benefit from cache
+    chain_failed = bool(provider_diag.get("providers_failed", []))
+    has_name_only = any(
+        r.get("identity_verification_status") == "name_only"
+        for r in resolutions
+        if isinstance(r, dict)
+    )
+
+    if not chain_failed and not has_name_only:
+        return
+
+    # Build template CSV
+    csv_lines = [
+        "normalized_name,fund_code,fund_name,fund_type,share_class,source,updated_at,confidence_hint,notes",
+        "# Fill in candidate fund codes for each fund name below.",
+        "# This is NOT a verified override — candidates still go through M7.11 scoring.",
+        "# Source: 支付宝/天天基金/基金详情页",
+        "# Place the filled file as: private_data/fund_identity_candidate_cache.private.csv",
+        "",
+    ]
+
+    # Add rows for name-only funds
+    for res in resolutions:
+        if not isinstance(res, dict):
+            continue
+        identity_status = res.get("identity_verification_status", "")
+        if identity_status != "name_only":
+            continue
+        raw_name = res.get("raw_fund_name", "")
+        csv_lines.append(f"{raw_name},,,,,manual,,,")
+
+    _write_text(
+        fixit_dir / "identity_candidate_cache_template.private.csv",
+        "\n".join(csv_lines) + "\n",
+    )
+
+    print("  Identity candidate cache template generated (for offline name search fallback)")
 
 
 if __name__ == "__main__":

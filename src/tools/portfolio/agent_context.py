@@ -39,6 +39,12 @@ REASON_CODES = frozenset({
     "unknown_amount_semantics",
     "missing_fee",
     "name_search_candidates_unverified",
+    "provider_name_search_network_error",
+    "provider_name_search_unavailable",
+    "identity_candidate_cache_missing",
+    "identity_candidate_cache_used",
+    "identity_candidates_generated_from_cache",
+    "name_search_provider_chain_failed",
 })
 
 # ── Allowed safety constraints (stable enumeration) ────────────────────
@@ -62,6 +68,7 @@ SAFE_TO_ANALYZE_ITEMS = frozenset({
     "transaction_derived_current_value",
     "reconstruction_quality",
     "name_search_candidates",
+    "identity_candidate_cache",
 })
 
 # ── Allowed unsafe-to-infer items ─────────────────────────────────────
@@ -108,6 +115,7 @@ _RECOMMENDED_QUESTIONS = [
     "Should a current holdings snapshot be provided for authoritative valuation?",
     "Should reconciliation gaps between snapshot and transaction history be manually verified?",
     "Should name search candidates be reviewed and verified for funds without fund_code?",
+    "Should a local identity candidate cache be populated for offline name search fallback?",
 ]
 
 # M7.6: Identity-specific recommended questions (replace generic ones when identity is blocked)
@@ -217,6 +225,8 @@ def build_agent_context(
         questions.append(_RECOMMENDED_QUESTIONS[11])
     if "name_search_candidates_unverified" in reason_codes:
         questions.append(_RECOMMENDED_QUESTIONS[12])
+    if "name_search_provider_chain_failed" in reason_codes or "identity_candidate_cache_missing" in reason_codes:
+        questions.append(_RECOMMENDED_QUESTIONS[13])
     # Always include if no specific questions matched
     if not questions:
         questions.append(_RECOMMENDED_QUESTIONS[4])
@@ -268,12 +278,32 @@ def build_agent_context(
             "name_search_provider_search_count": ns_provider.get("name_search_provider_search_count", 0),
             "name_search_provider_result_count": ns_provider.get("name_search_provider_result_count", 0),
         }
+        # M7.13: Provider chain diagnostics
+        if ns_provider.get("provider_chain_enabled"):
+            name_search_diag["provider_chain_enabled"] = True
+            name_search_diag["providers_attempted"] = ns_provider.get("providers_attempted", [])
+            name_search_diag["providers_succeeded"] = ns_provider.get("providers_succeeded", [])
+            name_search_diag["providers_failed"] = ns_provider.get("providers_failed", [])
+            name_search_diag["fallback_used"] = ns_provider.get("fallback_used", False)
     # Also extract from identity resolution summary
     id_summary = _as_dict(summary.get("identity_resolution"))
     if id_summary:
         name_search_diag["name_search_enabled"] = id_summary.get("name_search_enabled", False)
         name_search_diag["name_search_auto_verified_count"] = id_summary.get("name_search_auto_verified_count", 0)
         name_search_diag["name_search_candidate_unverified_count"] = id_summary.get("name_search_candidate_unverified_count", 0)
+    # M7.13: Local cache diagnostics
+    local_cache_diag = _as_dict(summary.get("local_cache_diagnostics"))
+    if local_cache_diag:
+        name_search_diag["local_cache_present"] = local_cache_diag.get(
+            "name_search_provider_status", "") != "cache_missing"
+        name_search_diag["local_cache_candidate_count"] = local_cache_diag.get(
+            "name_search_provider_entry_count", 0)
+        name_search_diag["network_provider_status"] = (
+            "network_error" if any(
+                "akshare" in p.lower() or "network" in p.lower()
+                for p in ns_provider.get("providers_failed", [])
+            ) else "available"
+        )
 
     return {
         "schema_version": SCHEMA_VERSION,

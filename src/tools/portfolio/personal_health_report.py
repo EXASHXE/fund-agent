@@ -148,6 +148,45 @@ def build_personal_health_summary(artifacts: Mapping[str, Any]) -> dict[str, Any
     if name_search_unverified_count > 0:
         reason_codes.append("name_search_candidates_unverified")
 
+    # M7.13: Provider chain diagnostics
+    provider_diag = e2e.get("name_search_provider_diagnostics", {})
+    if provider_diag:
+        provider_status = provider_diag.get("name_search_provider_status", "")
+        # Single provider case
+        if provider_status in ("network_error",):
+            reason_codes.append("provider_name_search_network_error")
+        if provider_status in ("import_failed", "unknown_error"):
+            reason_codes.append("provider_name_search_unavailable")
+        # Chain case
+        if provider_diag.get("provider_chain_enabled"):
+            providers_failed = provider_diag.get("providers_failed", [])
+            if providers_failed:
+                # Check if all providers failed
+                providers_succeeded = provider_diag.get("providers_succeeded", [])
+                if not providers_succeeded:
+                    reason_codes.append("name_search_provider_chain_failed")
+                # Check if any network provider failed (by name or error message)
+                provider_errors = provider_diag.get("provider_errors_by_name", {})
+                for p in providers_failed:
+                    p_lower = p.lower()
+                    err_msg = provider_errors.get(p, "").lower()
+                    if ("akshare" in p_lower or "eastmoney" in p_lower
+                            or "ssl" in err_msg or "network" in err_msg
+                            or "timeout" in err_msg or "connection" in err_msg):
+                        reason_codes.append("provider_name_search_network_error")
+                        break
+
+    # M7.13: Local cache diagnostics
+    local_cache_diag = e2e.get("local_cache_diagnostics", {})
+    if local_cache_diag:
+        cache_status = local_cache_diag.get("name_search_provider_status", "")
+        if cache_status == "cache_missing":
+            reason_codes.append("identity_candidate_cache_missing")
+        elif cache_status == "available":
+            reason_codes.append("identity_candidate_cache_used")
+            if local_cache_diag.get("name_search_provider_result_count", 0) > 0:
+                reason_codes.append("identity_candidates_generated_from_cache")
+
     # Partial valuation (M7.4)
     is_partial_diagnostic = bool(valuation.get("is_partial_diagnostic", False))
     if is_partial_diagnostic:
@@ -319,6 +358,8 @@ def build_personal_health_summary(artifacts: Mapping[str, Any]) -> dict[str, Any
         holdings_snapshot_loaded=bool(holdings_snapshot_info.get("loaded", False)),
         reconciliation_gap_count=reconciliation_gap_count,
         name_search_unverified_count=name_search_unverified_count,
+        provider_chain_failed="name_search_provider_chain_failed" in unique_reasons,
+        local_cache_missing="identity_candidate_cache_missing" in unique_reasons,
     )
 
     return {
@@ -459,6 +500,8 @@ def _build_checklist(
     holdings_snapshot_loaded: bool = False,
     reconciliation_gap_count: int = 0,
     name_search_unverified_count: int = 0,
+    provider_chain_failed: bool = False,
+    local_cache_missing: bool = False,
 ) -> list[str]:
     """Build fix-it checklist from data quality diagnostics."""
     items: list[str] = []
@@ -489,6 +532,19 @@ def _build_checklist(
         items.append(
             f"Review name search candidates for {name_search_unverified_count} fund(s) — "
             f"verify the suggested fund code in fund_identity_overrides with verified_by_user:true"
+        )
+
+    # M7.13: Provider chain failure and local cache guidance
+    if provider_chain_failed:
+        items.append(
+            "All name search providers failed — populate fund_identity_candidate_cache.private.csv "
+            "in private_data/ with candidate fund codes from 支付宝/天天基金/基金详情页"
+        )
+    elif local_cache_missing and name_only_count > 0:
+        items.append(
+            "No local identity candidate cache found — create "
+            "fund_identity_candidate_cache.private.csv in private_data/ "
+            "with candidate fund codes for offline name search fallback"
         )
 
     if nav_missing:

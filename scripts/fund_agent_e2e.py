@@ -218,11 +218,16 @@ def _resolve_identities_with_name_search(
     overrides_path: Path | None,
     output_path: Path,
     enable_name_search: bool = True,
+    private_data_dir: Path | None = None,
 ) -> bool:
-    """M7.12: Resolve fund identities programmatically with name search provider.
+    """M7.13: Resolve fund identities with provider fallback chain.
 
-    This is called instead of the subprocess approach when --enable-name-search
-    is set, because we need to inject a FundIdentitySearchProvider object.
+    Builds a ChainedFundIdentitySearchProvider:
+    1. LocalIdentityCandidateCacheProvider (if cache file exists in private_data)
+    2. AkShareNameSearchProvider (network provider, may fail)
+
+    When --enable-name-search is set, this is called instead of the subprocess
+    approach because we need to inject FundIdentitySearchProvider objects.
 
     Returns True if identity resolution succeeded (output file written).
     """
@@ -233,6 +238,12 @@ def _resolve_identities_with_name_search(
 
     from scripts.resolve_fund_identities import resolve_fund_identities, _load_overrides
     from src.tools.portfolio.akshare_name_search_provider import AkShareNameSearchProvider
+    from src.tools.portfolio.local_identity_candidate_cache_provider import (
+        LocalIdentityCandidateCacheProvider,
+    )
+    from src.tools.portfolio.name_search_provider_chain import (
+        ChainedFundIdentitySearchProvider,
+    )
 
     # Load ledger data
     try:
@@ -249,8 +260,33 @@ def _resolve_identities_with_name_search(
         for w in override_warnings:
             print(f"  Warning: {w}", file=sys.stderr)
 
-    # Create and inject name search provider
-    name_search_provider = AkShareNameSearchProvider()
+    # M7.13: Build provider chain
+    providers = []
+
+    # 1. Local cache provider (if cache file exists)
+    local_cache_provider = None
+    local_cache_path = None
+    if private_data_dir and private_data_dir.is_dir():
+        for cache_name in (
+            "fund_identity_candidate_cache.private.csv",
+            "fund_identity_candidate_cache.private.json",
+        ):
+            candidate_path = private_data_dir / cache_name
+            if candidate_path.exists():
+                local_cache_path = candidate_path
+                break
+
+    if local_cache_path is not None:
+        local_cache_provider = LocalIdentityCandidateCacheProvider(local_cache_path)
+        providers.append(local_cache_provider)
+        print(f"  Local identity candidate cache found: {local_cache_path.name}")
+
+    # 2. AkShare network provider
+    akshare_provider = AkShareNameSearchProvider()
+    providers.append(akshare_provider)
+
+    # Build chain (always use chain for consistent diagnostics)
+    name_search_provider: Any = ChainedFundIdentitySearchProvider(providers)
 
     # Run identity resolution
     try:
@@ -268,9 +304,13 @@ def _resolve_identities_with_name_search(
     if override_warnings:
         result["summary"]["override_validation_warnings"] = override_warnings
 
-    # Include name search provider diagnostics
+    # M7.13: Include aggregated provider diagnostics
     provider_diag = name_search_provider.get_diagnostics()
     result["name_search_provider_diagnostics"] = provider_diag
+
+    # M7.13: Include local cache diagnostics separately
+    if local_cache_provider is not None:
+        result["local_cache_diagnostics"] = local_cache_provider.get_diagnostics()
 
     # Write output
     try:
@@ -436,6 +476,8 @@ def _build_personal_health_report(
     identity_resolution_summary: dict[str, Any],
     valuation_type_counts: dict[str, int],
     nav_coverage_summary: dict[str, Any] | None = None,
+    name_search_provider_diagnostics: dict[str, Any] | None = None,
+    local_cache_diagnostics: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build personal health report from collected pipeline state.
 
@@ -444,19 +486,26 @@ def _build_personal_health_report(
     private data.
     """
     try:
-        artifacts = {
-            "e2e_summary": {
-                "transaction_source": transaction_source_used,
-                "portfolio_input_source": portfolio_input_source,
-                "pipeline_steps": {
-                    "fund_data_snapshot_attempted": pipeline.fund_data_snapshot_attempted,
-                    "fund_data_snapshot_status": pipeline.fund_data_snapshot_status,
-                    "reconstruction_attempted": pipeline.reconstruction_attempted,
-                    "reconstruction_status": pipeline.reconstruction_status,
-                    "valid_fund_codes_count": pipeline.valid_fund_codes_count,
-                    "name_only_count": pipeline.name_only_count,
-                },
+        e2e_summary_data: dict[str, Any] = {
+            "transaction_source": transaction_source_used,
+            "portfolio_input_source": portfolio_input_source,
+            "pipeline_steps": {
+                "fund_data_snapshot_attempted": pipeline.fund_data_snapshot_attempted,
+                "fund_data_snapshot_status": pipeline.fund_data_snapshot_status,
+                "reconstruction_attempted": pipeline.reconstruction_attempted,
+                "reconstruction_status": pipeline.reconstruction_status,
+                "valid_fund_codes_count": pipeline.valid_fund_codes_count,
+                "name_only_count": pipeline.name_only_count,
             },
+        }
+        # M7.13: Include provider chain diagnostics
+        if name_search_provider_diagnostics:
+            e2e_summary_data["name_search_provider_diagnostics"] = name_search_provider_diagnostics
+        if local_cache_diagnostics:
+            e2e_summary_data["local_cache_diagnostics"] = local_cache_diagnostics
+
+        artifacts = {
+            "e2e_summary": e2e_summary_data,
             "portfolio_input_transactions_summary": portfolio_input_txn_stats,
             "identity_summary": identity_resolution_summary,
             "valuation_summary": valuation_type_counts,
@@ -698,6 +747,7 @@ def run_pipeline(args: argparse.Namespace) -> int:
                 overrides_path=overrides_path if overrides_path.exists() else None,
                 output_path=fund_identity,
                 enable_name_search=True,
+                private_data_dir=private_data,
             )
             result = StepResult(
                 step_id="0d", name="Resolve fund identities (with name search)",
@@ -1007,6 +1057,7 @@ def run_pipeline(args: argparse.Namespace) -> int:
     identity_resolution_summary: dict[str, Any] = {}
     identity_schema_version: str = "unknown"
     name_search_provider_diagnostics: dict[str, Any] = {}
+    local_cache_diagnostics: dict[str, Any] = {}
     if fund_identity.exists():
         try:
             id_data = json.loads(fund_identity.read_text(encoding="utf-8"))
@@ -1014,6 +1065,8 @@ def run_pipeline(args: argparse.Namespace) -> int:
             identity_schema_version = id_data.get("schema_version", "unknown")
             # M7.12: Extract name search provider diagnostics
             name_search_provider_diagnostics = id_data.get("name_search_provider_diagnostics", {})
+            # M7.13: Extract local cache diagnostics
+            local_cache_diagnostics = id_data.get("local_cache_diagnostics", {})
         except (OSError, json.JSONDecodeError):
             pass
 
@@ -1060,6 +1113,7 @@ def run_pipeline(args: argparse.Namespace) -> int:
         "identity_resolution": identity_resolution_summary,
         "identity_schema_version": identity_schema_version,
         "name_search_provider_diagnostics": name_search_provider_diagnostics,
+        "local_cache_diagnostics": local_cache_diagnostics or None,
         "valuation_summary": valuation_type_counts,
         "personal_health_report": _build_personal_health_report(
             pipeline=pipeline,
@@ -1069,6 +1123,8 @@ def run_pipeline(args: argparse.Namespace) -> int:
             identity_resolution_summary=identity_resolution_summary,
             valuation_type_counts=valuation_type_counts,
             nav_coverage_summary=_load_nav_coverage_summary(portfolio_dir),
+            name_search_provider_diagnostics=name_search_provider_diagnostics,
+            local_cache_diagnostics=local_cache_diagnostics or None,
         ),
         "pipeline_version": _read_version(),
     }
