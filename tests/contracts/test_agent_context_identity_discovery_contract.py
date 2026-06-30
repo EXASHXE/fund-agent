@@ -1,7 +1,7 @@
-"""Tests for M7.13 agent context identity discovery contract.
+"""Tests for M7.13/M7.14 agent context identity discovery contract.
 
 Validates that agent_context correctly includes provider chain diagnostics,
-local cache info, and new reason codes.
+local cache info, new reason codes, and M7.14 minimal cache template guidance.
 """
 from __future__ import annotations
 
@@ -96,3 +96,81 @@ class TestAgentContextProviderChainDiagnostics:
         context = build_agent_context(summary, run_id="test")
         questions = context["recommended_agent_questions"]
         assert any("local identity candidate cache" in q.lower() or "candidate cache" in q.lower() for q in questions)
+
+
+class TestM714MinimalCacheTemplateGuidance:
+    """M7.14: Agent context must recommend minimal cache template when identity is blocked."""
+
+    def test_minimal_cache_template_question_for_chain_failed(self):
+        """When provider chain failed, recommended questions must include minimal template."""
+        summary = {
+            "personal_health_report": {
+                "overall_status": "needs_data",
+                "confidence_level": "unavailable",
+                "reason_codes": [
+                    "name_search_provider_chain_failed",
+                    "provider_name_search_network_error",
+                ],
+            },
+            "holdings_snapshot": {"loaded": False},
+        }
+
+        context = build_agent_context(summary, run_id="test")
+        questions = context["recommended_agent_questions"]
+        assert any("minimal" in q.lower() for q in questions), (
+            f"Expected minimal template question. Got: {questions}"
+        )
+
+    def test_minimal_cache_template_question_for_cache_missing(self):
+        """When cache is missing, recommended questions must include minimal template."""
+        summary = {
+            "personal_health_report": {
+                "overall_status": "needs_data",
+                "confidence_level": "unavailable",
+                "reason_codes": [
+                    "identity_candidate_cache_missing",
+                    "name_only_funds",
+                ],
+            },
+            "holdings_snapshot": {"loaded": False},
+        }
+
+        context = build_agent_context(summary, run_id="test")
+        questions = context["recommended_agent_questions"]
+        assert any("minimal" in q.lower() for q in questions), (
+            f"Expected minimal template question. Got: {questions}"
+        )
+
+    def test_identity_questions_before_nav_questions(self):
+        """Identity discovery questions must come before NAV questions."""
+        summary = {
+            "personal_health_report": {
+                "overall_status": "needs_data",
+                "confidence_level": "unavailable",
+                "reason_codes": [
+                    "name_search_provider_chain_failed",
+                    "provider_name_search_network_error",
+                    "nav_missing",
+                ],
+            },
+            "holdings_snapshot": {"loaded": False},
+        }
+
+        context = build_agent_context(summary, run_id="test")
+        questions = context["recommended_agent_questions"]
+
+        identity_idx = None
+        nav_idx = None
+        for i, q in enumerate(questions):
+            if "identity" in q.lower() or "cache" in q.lower() or "candidate" in q.lower():
+                if identity_idx is None:
+                    identity_idx = i
+            if "nav" in q.lower():
+                if nav_idx is None:
+                    nav_idx = i
+
+        if identity_idx is not None and nav_idx is not None:
+            assert identity_idx < nav_idx, (
+                f"Identity question (idx={identity_idx}) must come before "
+                f"NAV question (idx={nav_idx}). Questions: {questions}"
+            )

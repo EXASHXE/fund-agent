@@ -1,7 +1,7 @@
-"""Tests for M7.13 LocalIdentityCandidateCacheProvider.
+"""Tests for M7.13/M7.14 LocalIdentityCandidateCacheProvider.
 
 Validates:
-1. Local cache provider reads private CSV
+1. Local cache provider reads private CSV (full format)
 2. Local cache provider reads private JSON
 3. Cache candidates are not user_verified
 4. Cache unique high-confidence can auto-verify via scoring
@@ -10,6 +10,12 @@ Validates:
 7. Public report hides cache candidate codes
 8. Cache is read-only
 9. Missing cache file handled gracefully
+10. M7.14: Minimal CSV format (raw_fund_name, fund_code, fund_name, notes)
+11. M7.14: Minimal CSV normalizes raw_fund_name
+12. M7.14: Minimal CSV defaults source to local_identity_candidate_cache
+13. M7.14: Minimal CSV candidates are not user_verified
+14. M7.14: Minimal CSV rows with blank fund_code are skipped
+15. M7.14: Minimal CSV valid candidates enter scoring
 """
 from __future__ import annotations
 
@@ -219,3 +225,143 @@ class TestLocalCacheIsReadOnly:
 
         # File must not have changed
         assert csv_path.read_text(encoding="utf-8") == original
+
+
+# ── M7.14: Minimal CSV format tests ──────────────────────────────────────
+
+
+class TestLocalCacheMinimalCSV:
+    """M7.14: Local cache provider must read minimal CSV format."""
+
+    def test_minimal_csv_supported(self, tmp_path: Path):
+        """Minimal CSV (raw_fund_name, fund_code, fund_name, notes) is read."""
+        csv_path = tmp_path / "fund_identity_candidate_cache.private.csv"
+        csv_path.write_text(
+            "raw_fund_name,fund_code,fund_name,notes\n"
+            "华夏沪深300ETF联接C,000001,华夏沪深300ETF联接C,from cache\n",
+            encoding="utf-8",
+        )
+        provider = LocalIdentityCandidateCacheProvider(csv_path)
+        results = provider.search_by_name("华夏沪深300ETF联接C")
+        assert len(results) == 1
+        assert results[0].fund_code == "000001"
+
+    def test_minimal_csv_normalizes_raw_name(self, tmp_path: Path):
+        """raw_fund_name is normalized for matching."""
+        csv_path = tmp_path / "fund_identity_candidate_cache.private.csv"
+        csv_path.write_text(
+            "raw_fund_name,fund_code,fund_name,notes\n"
+            "华夏沪深300ETF联接C,000001,华夏沪深300ETF联接C,test\n",
+            encoding="utf-8",
+        )
+        provider = LocalIdentityCandidateCacheProvider(csv_path)
+        # Normalized search should match (ETF联接 token normalization)
+        results = provider.search_by_name("华夏沪深300ETF联接C")
+        assert len(results) == 1
+        assert results[0].fund_code == "000001"
+
+    def test_minimal_csv_defaults_source(self, tmp_path: Path):
+        """Minimal CSV candidates have source=local_identity_candidate_cache."""
+        csv_path = tmp_path / "fund_identity_candidate_cache.private.csv"
+        csv_path.write_text(
+            "raw_fund_name,fund_code,fund_name,notes\n"
+            "Test Fund,000001,Test Fund,test\n",
+            encoding="utf-8",
+        )
+        provider = LocalIdentityCandidateCacheProvider(csv_path)
+        results = provider.search_by_name("Test Fund")
+        assert results[0].source == "local_identity_candidate_cache"
+
+    def test_minimal_csv_not_user_verified(self, tmp_path: Path):
+        """Minimal CSV candidates are NOT user_verified."""
+        csv_path = tmp_path / "fund_identity_candidate_cache.private.csv"
+        csv_path.write_text(
+            "raw_fund_name,fund_code,fund_name,notes\n"
+            "Test Fund,000001,Test Fund,test\n",
+            encoding="utf-8",
+        )
+        provider = LocalIdentityCandidateCacheProvider(csv_path)
+        results = provider.search_by_name("Test Fund")
+        assert results[0].source != "user_verified"
+
+    def test_minimal_csv_missing_code_skipped(self, tmp_path: Path):
+        """Rows with blank fund_code are skipped (user hasn't filled them)."""
+        csv_path = tmp_path / "fund_identity_candidate_cache.private.csv"
+        csv_path.write_text(
+            "raw_fund_name,fund_code,fund_name,notes\n"
+            "Unfilled Fund,,,not yet filled\n"
+            "Filled Fund,000002,Filled Fund,filled\n",
+            encoding="utf-8",
+        )
+        provider = LocalIdentityCandidateCacheProvider(csv_path)
+        results = provider.search_by_name("Unfilled Fund")
+        assert results == []
+        results2 = provider.search_by_name("Filled Fund")
+        assert len(results2) == 1
+        assert results2[0].fund_code == "000002"
+
+    def test_minimal_csv_valid_candidate_enters_scoring(self, tmp_path: Path):
+        """Minimal CSV valid candidate can enter M7.11 scoring pipeline."""
+        csv_path = tmp_path / "fund_identity_candidate_cache.private.csv"
+        csv_path.write_text(
+            "raw_fund_name,fund_code,fund_name,notes\n"
+            "华夏沪深300ETF联接C,000001,华夏沪深300ETF联接C,from cache\n",
+            encoding="utf-8",
+        )
+        provider = LocalIdentityCandidateCacheProvider(csv_path)
+        results = provider.search_by_name("华夏沪深300ETF联接C")
+        assert len(results) == 1
+
+        scored = score_candidate("华夏沪深300ETF联接C", results[0])
+        assert scored.match_score >= AUTO_VERIFY_MIN_SCORE
+
+        can_verify, reason = should_auto_verify([scored])
+        assert can_verify is True
+
+    def test_minimal_csv_infers_share_class(self, tmp_path: Path):
+        """Minimal CSV infers share_class from fund_name when possible."""
+        csv_path = tmp_path / "fund_identity_candidate_cache.private.csv"
+        csv_path.write_text(
+            "raw_fund_name,fund_code,fund_name,notes\n"
+            "Test Fund A,000001,Test Fund A类,test\n"
+            "Test Fund C,000002,Test Fund C类,test\n",
+            encoding="utf-8",
+        )
+        provider = LocalIdentityCandidateCacheProvider(csv_path)
+        results_a = provider.search_by_name("Test Fund A")
+        results_c = provider.search_by_name("Test Fund C")
+        assert results_a[0].share_class == "A"
+        assert results_c[0].share_class == "C"
+
+    def test_minimal_csv_infers_fund_type(self, tmp_path: Path):
+        """Minimal CSV infers fund_type from fund_name when possible."""
+        csv_path = tmp_path / "fund_identity_candidate_cache.private.csv"
+        csv_path.write_text(
+            "raw_fund_name,fund_code,fund_name,notes\n"
+            "Test Index Fund,000001,Test 指数 Fund,test\n"
+            "Test Bond Fund,000002,Test 债券 Fund,test\n"
+            "Test Mixed Fund,000003,Test 混合 Fund,test\n",
+            encoding="utf-8",
+        )
+        provider = LocalIdentityCandidateCacheProvider(csv_path)
+        r1 = provider.search_by_name("Test Index Fund")
+        r2 = provider.search_by_name("Test Bond Fund")
+        r3 = provider.search_by_name("Test Mixed Fund")
+        assert r1[0].fund_type == "index"
+        assert r2[0].fund_type == "bond"
+        assert r3[0].fund_type == "mixed"
+
+    def test_minimal_csv_diagnostics(self, tmp_path: Path):
+        """Minimal CSV diagnostics show correct entry count."""
+        csv_path = tmp_path / "fund_identity_candidate_cache.private.csv"
+        csv_path.write_text(
+            "raw_fund_name,fund_code,fund_name,notes\n"
+            "Fund A,000001,Fund A,test\n"
+            "Fund B,000002,Fund B,test\n",
+            encoding="utf-8",
+        )
+        provider = LocalIdentityCandidateCacheProvider(csv_path)
+        provider.search_by_name("Fund A")
+        diag = provider.get_diagnostics()
+        assert diag["name_search_provider_entry_count"] == 2
+        assert diag["name_search_provider_status"] == "available"

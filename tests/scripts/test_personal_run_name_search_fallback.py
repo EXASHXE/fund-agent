@@ -1,4 +1,4 @@
-"""Tests for M7.13 personal-run name search fallback integration.
+"""Tests for M7.13/M7.14 personal-run name search fallback integration.
 
 Validates:
 1. personal-run uses provider chain when --enable-name-search
@@ -6,6 +6,8 @@ Validates:
 3. fixit generates identity_candidate_cache_template
 4. provider chain diagnostics in run_manifest
 5. local cache diagnostics in e2e_summary
+6. M7.14: minimal cache template generated alongside full template
+7. M7.14: minimal template contains raw_fund_name and blank fund_code
 """
 from __future__ import annotations
 
@@ -257,3 +259,111 @@ class TestProviderChainDiagnosticsInRunManifest:
         assert "akshare" in diag.get("providers_failed", [])
         assert diag.get("local_cache_present") is True
         assert diag.get("local_cache_candidate_count") == 10
+
+
+class TestM714MinimalCacheTemplate:
+    """M7.14: Minimal cache template must be generated alongside full template."""
+
+    def test_minimal_template_generated_when_providers_fail(self, tmp_path: Path):
+        """Minimal template must be generated when providers fail."""
+        from scripts.fund_agent_personal_run import _generate_identity_candidate_cache_template
+
+        fixit_dir = tmp_path / "fixit"
+        fixit_dir.mkdir()
+
+        e2e_summary = {
+            "name_search_provider_diagnostics": {
+                "providers_failed": ["akshare"],
+            },
+            "identity_resolution": {
+                "resolutions": [
+                    {
+                        "raw_fund_name": "Test Fund A",
+                        "identity_verification_status": "name_only",
+                    },
+                    {
+                        "raw_fund_name": "Test Fund B",
+                        "identity_verification_status": "name_only",
+                    },
+                ],
+            },
+        }
+
+        _generate_identity_candidate_cache_template(fixit_dir, e2e_summary)
+
+        # Full template
+        full_path = fixit_dir / "identity_candidate_cache_template.private.csv"
+        assert full_path.exists()
+        full_content = full_path.read_text(encoding="utf-8")
+        assert "normalized_name" in full_content
+
+        # Minimal template
+        minimal_path = fixit_dir / "identity_candidate_cache_minimal.private.csv"
+        assert minimal_path.exists()
+        minimal_content = minimal_path.read_text(encoding="utf-8")
+        assert "raw_fund_name" in minimal_content
+        assert "fund_code" in minimal_content
+        assert "fund_name" in minimal_content
+        assert "只需填写" in minimal_content or "fill" in minimal_content.lower()
+
+    def test_minimal_template_contains_raw_fund_name_and_blank_code(self, tmp_path: Path):
+        """Minimal template rows must have raw_fund_name filled, fund_code blank."""
+        from scripts.fund_agent_personal_run import _generate_identity_candidate_cache_template
+
+        fixit_dir = tmp_path / "fixit"
+        fixit_dir.mkdir()
+
+        e2e_summary = {
+            "name_search_provider_diagnostics": {
+                "providers_failed": ["akshare"],
+            },
+            "identity_resolution": {
+                "resolutions": [
+                    {
+                        "raw_fund_name": "Test Fund A",
+                        "identity_verification_status": "name_only",
+                    },
+                ],
+            },
+        }
+
+        _generate_identity_candidate_cache_template(fixit_dir, e2e_summary)
+
+        minimal_path = fixit_dir / "identity_candidate_cache_minimal.private.csv"
+        content = minimal_path.read_text(encoding="utf-8")
+
+        # Parse CSV lines (skip comments)
+        import csv
+        data_lines = [l for l in content.splitlines() if l and not l.startswith("#")]
+        reader = csv.DictReader(data_lines)
+        rows = list(reader)
+        assert len(rows) == 1
+        assert rows[0]["raw_fund_name"] == "Test Fund A"
+        assert rows[0]["fund_code"] == ""
+        assert rows[0]["fund_name"] == ""
+
+    def test_minimal_template_not_generated_when_no_failures(self, tmp_path: Path):
+        """Minimal template should not be generated when no failures and no name-only funds."""
+        from scripts.fund_agent_personal_run import _generate_identity_candidate_cache_template
+
+        fixit_dir = tmp_path / "fixit"
+        fixit_dir.mkdir()
+
+        e2e_summary = {
+            "name_search_provider_diagnostics": {
+                "providers_failed": [],
+            },
+            "identity_resolution": {
+                "resolutions": [
+                    {
+                        "raw_fund_name": "Test Fund A",
+                        "identity_verification_status": "provider_verified",
+                    },
+                ],
+            },
+        }
+
+        _generate_identity_candidate_cache_template(fixit_dir, e2e_summary)
+
+        minimal_path = fixit_dir / "identity_candidate_cache_minimal.private.csv"
+        assert not minimal_path.exists()

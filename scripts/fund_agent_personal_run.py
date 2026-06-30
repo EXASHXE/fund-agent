@@ -522,6 +522,8 @@ def run_personal(args: argparse.Namespace) -> int:
         artifact_paths["fixit_identity_template"] = "fixit/fund_identity_overrides.suggested.yaml"
         artifact_paths["fixit_nav_needed"] = "fixit/nav_overrides_needed.csv"
         artifact_paths["fixit_fee_needed"] = "fixit/fee_overrides_needed.csv"
+        artifact_paths["fixit_cache_template"] = "fixit/identity_candidate_cache_template.private.csv"
+        artifact_paths["fixit_cache_minimal"] = "fixit/identity_candidate_cache_minimal.private.csv"
 
     manifest = _build_run_manifest(
         run_id=run_id,
@@ -779,6 +781,19 @@ def _build_fixit_readme(
     vs = e2e_summary.get("valuation_summary", {})
     identity = e2e_summary.get("identity_resolution", {})
     unverified_count = int(identity.get("identity_verification_status_counts", {}).get("manual_override_unverified", 0))
+    name_only_count = int(identity.get("name_only_count", 0))
+
+    # M7.14: Detect identity discovery as primary blocker
+    identity_blocked = any(
+        rc in reason_codes for rc in (
+            "name_search_provider_chain_failed",
+            "provider_name_search_network_error",
+            "identity_candidate_cache_missing",
+            "no_valid_fund_codes",
+            "name_only_funds",
+        )
+    )
+    nav_blocked = "nav_missing" in reason_codes or "partial_nav_coverage" in reason_codes
 
     lines = [
         "# Fix-it Package — Personal Data Completion Guide",
@@ -790,11 +805,80 @@ def _build_fixit_readme(
         "",
         f"- Reason codes: {', '.join(reason_codes) if reason_codes else 'none'}",
         f"- Valuation: {vs.get('estimated_count', 0)} estimated, {vs.get('cashflow_only_count', 0)} cashflow-only",
-        f"- Identity: {unverified_count} unverified",
-        "",
+        f"- Identity: {unverified_count} unverified, {name_only_count} name-only",
+    ]
+
+    # M7.14: Prioritize identity discovery blocker
+    if identity_blocked:
+        lines += [
+            "",
+            "## ⚠️ Primary Blocker: Fund Identity Discovery",
+            "",
+            "The system cannot proceed with valuation because **fund codes are not resolved**.",
+            "This is the first blocker — NAV missing is a downstream consequence.",
+            "",
+            "Your Alipay transaction records contain fund names but not 6-digit fund codes.",
+            "The online name search provider (AkShare) is currently unavailable",
+            "(SSL/network error), so the system cannot automatically resolve names to codes.",
+            "",
+            "### Quick Fix: Minimal Identity Cache Template",
+            "",
+            "1. Open `identity_candidate_cache_minimal.private.csv`",
+            "2. For each row, search the fund name on:",
+            "   - 支付宝基金详情页 (Alipay fund detail page)",
+            "   - 天天基金网 (eastmoney.com)",
+            "   - 基金公司官网 (fund company website)",
+            "3. Fill in **fund_code** (6-digit) and **fund_name** (full name)",
+            "4. Save the filled file as:",
+            "   `private_data/fund_identity_candidate_cache.private.csv`",
+            "5. Re-run:",
+            "",
+            "```bash",
+            "bin/fund-agent-personal-run \\",
+            "  --private-data-dir private_data \\",
+            "  --output-dir local_reports \\",
+            "  --transaction-source auto \\",
+            "  --execution-mode real_analysis \\",
+            "  --skip-news \\",
+            "  --enable-name-search \\",
+            "  --enable-transaction-derived-valuation \\",
+            "  --generate-fixit-package",
+            "```",
+            "",
+            "**IMPORTANT:**",
+            "- This is NOT a holdings snapshot.",
+            "- This is NOT a verified override (verified_by_user).",
+            "- It is only a candidate code source for offline name search.",
+            "- The system will still perform name matching, risk checks, and scoring.",
+            "- Ambiguous candidates will remain unverified and block valuation for those funds.",
+            "",
+        ]
+
+    lines += [
         "## What to Provide",
         "",
-        "### 1. Current Holdings Snapshot (Most Effective)",
+    ]
+
+    # Reorder: identity cache first when blocked
+    if identity_blocked:
+        lines += [
+            "### 1. Local Identity Candidate Cache (Recommended First Step)",
+            "",
+            "When network providers are unavailable (SSL errors, corporate firewall, etc.),",
+            "populate a local identity candidate cache for offline name search.",
+            "",
+            "**Minimal template** (easiest — just fill fund_code and fund_name):",
+            "`identity_candidate_cache_minimal.private.csv`",
+            "",
+            "**Full template** (advanced — all fields):",
+            "`identity_candidate_cache_template.private.csv`",
+            "",
+            "After filling, place as: `private_data/fund_identity_candidate_cache.private.csv`",
+            "",
+        ]
+
+    lines += [
+        f"### {2 if identity_blocked else 1}. Current Holdings Snapshot (Most Effective)",
         "",
         "The single most effective way to get portfolio valuation is to provide",
         "a current holdings snapshot from your platform (e.g., Alipay holdings page).",
@@ -809,7 +893,7 @@ def _build_fixit_readme(
         "",
         "Place the filled file as: `private_data/current_holdings_snapshot.private.csv`",
         "",
-        "### 2. Fund Identity Verification (M7.6)",
+        f"### {3 if identity_blocked else 2}. Fund Identity Verification (M7.6)",
         "",
         "If fund codes are unverified, review `identity_candidates.private.csv` first.",
         "This file contains the candidate codes that the system found for each fund.",
@@ -825,33 +909,59 @@ def _build_fixit_readme(
         "**Do NOT add verified_by_user:true without first verifying.**",
         "It is NOT an unlock switch — it records that you have verified the mapping.",
         "",
-        "### 3. NAV Overrides",
-        "",
-        "If trade-date NAV is missing, fill in `nav_overrides_needed.csv`.",
-        "Note: latest NAV alone is NOT sufficient for valuation.",
-        "You need either shares + latest NAV, or complete trade-date NAV history.",
-        "",
-        "### 4. Fee Overrides",
+    ]
+
+    # NAV section — clarify it's downstream when identity is blocked
+    if identity_blocked and nav_blocked:
+        lines += [
+            f"### {4 if identity_blocked else 3}. NAV Overrides (Downstream — Resolve Identity First)",
+            "",
+            "NAV data is missing because fund codes are not resolved.",
+            "Once fund codes are available, the system can attempt to fetch NAV automatically.",
+            "Only provide manual NAV overrides if identity is resolved but NAV remains unavailable.",
+            "",
+        ]
+    else:
+        lines += [
+            f"### {4 if identity_blocked else 3}. NAV Overrides",
+            "",
+            "If trade-date NAV is missing, fill in `nav_overrides_needed.csv`.",
+            "Note: latest NAV alone is NOT sufficient for valuation.",
+            "You need either shares + latest NAV, or complete trade-date NAV history.",
+            "",
+        ]
+
+    lines += [
+        f"### {5 if identity_blocked else 4}. Fee Overrides",
         "",
         "If redemption fees are unknown, fill in `fee_overrides_needed.csv`.",
         "",
-        "### 5. Local Identity Candidate Cache (M7.13)",
-        "",
-        "When network providers are unavailable (SSL errors, corporate firewall, etc.),",
-        "you can populate a local identity candidate cache for offline name search.",
-        "",
-        "Fill in `identity_candidate_cache_template.private.csv` with candidate fund codes",
-        "from 支付宝/天天基金/基金详情页, then place it as:",
-        "`private_data/fund_identity_candidate_cache.private.csv`",
-        "",
-        "**IMPORTANT:**",
-        "- This is NOT a holdings snapshot.",
-        "- This is NOT a verified override.",
-        "- Candidates still go through M7.11 deterministic scoring and auto-verify gate.",
-        "- If ambiguous, candidates stay unverified and appear in identity_candidates.private.csv.",
-        "",
+    ]
+
+    if not identity_blocked:
+        lines += [
+            "### 5. Local Identity Candidate Cache (M7.13)",
+            "",
+            "When network providers are unavailable (SSL errors, corporate firewall, etc.),",
+            "you can populate a local identity candidate cache for offline name search.",
+            "",
+            "Fill in `identity_candidate_cache_minimal.private.csv` (just fund_code + fund_name)",
+            "or `identity_candidate_cache_template.private.csv` (all fields)",
+            "with candidate fund codes from 支付宝/天天基金/基金详情页, then place as:",
+            "`private_data/fund_identity_candidate_cache.private.csv`",
+            "",
+            "**IMPORTANT:**",
+            "- This is NOT a holdings snapshot.",
+            "- This is NOT a verified override.",
+            "- Candidates still go through M7.11 deterministic scoring and auto-verify gate.",
+            "- If ambiguous, candidates stay unverified and appear in identity_candidates.private.csv.",
+            "",
+        ]
+
+    lines += [
         "## Key Principle",
         "",
+        "- **Fund identity** → resolve fund names to 6-digit codes (first blocker)",
         "- **Holdings snapshot** → current portfolio structure and market value",
         "- **Transaction history** → cost basis, P&L attribution, historical analysis",
         "- **Both together** → complete picture with reconciliation",
@@ -865,6 +975,8 @@ def _build_fixit_readme(
         "  --transaction-source auto \\",
         "  --execution-mode real_analysis \\",
         "  --skip-news \\",
+        "  --enable-name-search \\",
+        "  --enable-transaction-derived-valuation \\",
         "  --generate-fixit-package",
         "```",
     ]
@@ -976,13 +1088,15 @@ def _generate_identity_candidate_cache_template(
     fixit_dir: Path,
     e2e_summary: dict[str, Any],
 ) -> None:
-    """M7.13: Generate identity_candidate_cache_template.private.csv.
+    """M7.13/M7.14: Generate identity candidate cache templates.
 
-    This template helps users populate a local identity candidate cache
-    for offline name search fallback when network providers are unavailable.
+    Generates two templates:
+    1. Full template: identity_candidate_cache_template.private.csv
+       (all fields, for advanced users)
+    2. Minimal template: identity_candidate_cache_minimal.private.csv
+       (raw_fund_name + fund_code + fund_name + notes, for quick onboarding)
 
-    This is NOT a holdings snapshot, NOT a verified override, and NOT
-    authoritative. It is only a candidate source for provider name search.
+    Both are private fix-it artifacts — never commit, never show in public report.
     """
     provider_diag = e2e_summary.get("name_search_provider_diagnostics", {})
     identity = e2e_summary.get("identity_resolution", {})
@@ -1001,8 +1115,16 @@ def _generate_identity_candidate_cache_template(
     if not chain_failed and not has_name_only:
         return
 
-    # Build template CSV
-    csv_lines = [
+    # Collect name-only resolutions
+    name_only_resolutions = []
+    for res in resolutions:
+        if not isinstance(res, dict):
+            continue
+        if res.get("identity_verification_status") == "name_only":
+            name_only_resolutions.append(res)
+
+    # ── Full template ──────────────────────────────────────────────────
+    full_lines = [
         "normalized_name,fund_code,fund_name,fund_type,share_class,source,updated_at,confidence_hint,notes",
         "# Fill in candidate fund codes for each fund name below.",
         "# This is NOT a verified override — candidates still go through M7.11 scoring.",
@@ -1010,23 +1132,37 @@ def _generate_identity_candidate_cache_template(
         "# Place the filled file as: private_data/fund_identity_candidate_cache.private.csv",
         "",
     ]
-
-    # Add rows for name-only funds
-    for res in resolutions:
-        if not isinstance(res, dict):
-            continue
-        identity_status = res.get("identity_verification_status", "")
-        if identity_status != "name_only":
-            continue
+    for res in name_only_resolutions:
         raw_name = res.get("raw_fund_name", "")
-        csv_lines.append(f"{raw_name},,,,,manual,,,")
+        full_lines.append(f"{raw_name},,,,,manual,,,")
 
     _write_text(
         fixit_dir / "identity_candidate_cache_template.private.csv",
-        "\n".join(csv_lines) + "\n",
+        "\n".join(full_lines) + "\n",
     )
 
-    print("  Identity candidate cache template generated (for offline name search fallback)")
+    # ── Minimal template ───────────────────────────────────────────────
+    minimal_lines = [
+        "raw_fund_name,fund_code,fund_name,notes",
+        "# 只需填写 fund_code 和 fund_name 两列即可。",
+        "# raw_fund_name 是从支付宝流水提取的原始基金名，请勿修改。",
+        "# fund_code: 请从支付宝基金详情页/天天基金/基金公司页面核对6位代码。",
+        "# fund_name: 请填写对应的基金全称。",
+        "# 填完后保存为: private_data/fund_identity_candidate_cache.private.csv",
+        "# 注意：这是候选代码来源，不等于已验证。系统仍会做名称匹配和风险检查。",
+        "",
+    ]
+    for res in name_only_resolutions:
+        raw_name = res.get("raw_fund_name", "")
+        # raw_fund_name pre-filled, fund_code and fund_name left blank for user
+        minimal_lines.append(f"{raw_name},,,")
+
+    _write_text(
+        fixit_dir / "identity_candidate_cache_minimal.private.csv",
+        "\n".join(minimal_lines) + "\n",
+    )
+
+    print("  Identity candidate cache templates generated (full + minimal, for offline name search fallback)")
 
 
 if __name__ == "__main__":

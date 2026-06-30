@@ -116,6 +116,7 @@ _RECOMMENDED_QUESTIONS = [
     "Should reconciliation gaps between snapshot and transaction history be manually verified?",
     "Should name search candidates be reviewed and verified for funds without fund_code?",
     "Should a local identity candidate cache be populated for offline name search fallback?",
+    "Should the identity_candidate_cache_minimal.private.csv template be filled in (fund_code + fund_name only) for offline identity resolution?",
 ]
 
 # M7.6: Identity-specific recommended questions (replace generic ones when identity is blocked)
@@ -194,11 +195,37 @@ def build_agent_context(
                 unsafe.append(item)
 
     # Determine recommended questions based on reason codes
+    # M7.14: Identity discovery blockers come FIRST
     questions: list[str] = []
+
+    # Identity discovery blockers — highest priority
+    if "name_search_provider_chain_failed" in reason_codes or "identity_candidate_cache_missing" in reason_codes:
+        # Minimal cache template question (most actionable)
+        questions.append(_RECOMMENDED_QUESTIONS[14])
+        questions.append(_RECOMMENDED_QUESTIONS[13])
     if "name_only_funds" in reason_codes or "no_valid_fund_codes" in reason_codes:
         questions.append(_RECOMMENDED_QUESTIONS[0])
+    if "name_search_candidates_unverified" in reason_codes:
+        questions.append(_RECOMMENDED_QUESTIONS[12])
+
+    # Identity verification
+    if "identity_mismatch" in reason_codes:
+        questions.append(_RECOMMENDED_QUESTIONS[6])
+    if "identity_unverified" in reason_codes:
+        questions.append(_RECOMMENDED_QUESTIONS[8])
+        for q in _IDENTITY_BLOCKED_QUESTIONS:
+            if q not in questions:
+                questions.append(q)
+
+    # NAV / valuation — only after identity is addressed
     if "partial_nav_coverage" in reason_codes or "nav_missing" in reason_codes:
         questions.append(_RECOMMENDED_QUESTIONS[1])
+    if "partial_valuation" in reason_codes:
+        questions.append(_RECOMMENDED_QUESTIONS[9])
+    if "redemption_fee_unknown" in reason_codes:
+        questions.append(_RECOMMENDED_QUESTIONS[7])
+
+    # Other
     if "manual_review_transactions" in reason_codes:
         questions.append(_RECOMMENDED_QUESTIONS[2])
     if "fallback_holdings_used" in reason_codes or "unavailable" in overall_status:
@@ -207,26 +234,10 @@ def build_agent_context(
         questions.append(_RECOMMENDED_QUESTIONS[5])
     if "stale_nav" in reason_codes or "qdii_nav_lag" in reason_codes:
         questions.append(_RECOMMENDED_QUESTIONS[4])
-    if "identity_mismatch" in reason_codes:
-        questions.append(_RECOMMENDED_QUESTIONS[6])
-    if "identity_unverified" in reason_codes:
-        # M7.6: Use identity-specific questions instead of generic one
-        questions.append(_RECOMMENDED_QUESTIONS[8])
-        for q in _IDENTITY_BLOCKED_QUESTIONS:
-            if q not in questions:
-                questions.append(q)
-    if "partial_valuation" in reason_codes:
-        questions.append(_RECOMMENDED_QUESTIONS[9])
-    if "redemption_fee_unknown" in reason_codes:
-        questions.append(_RECOMMENDED_QUESTIONS[7])
     if "no_holdings_snapshot" in reason_codes:
         questions.append(_RECOMMENDED_QUESTIONS[10])
     if "reconciliation_gap" in reason_codes:
         questions.append(_RECOMMENDED_QUESTIONS[11])
-    if "name_search_candidates_unverified" in reason_codes:
-        questions.append(_RECOMMENDED_QUESTIONS[12])
-    if "name_search_provider_chain_failed" in reason_codes or "identity_candidate_cache_missing" in reason_codes:
-        questions.append(_RECOMMENDED_QUESTIONS[13])
     # Always include if no specific questions matched
     if not questions:
         questions.append(_RECOMMENDED_QUESTIONS[4])

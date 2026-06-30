@@ -362,11 +362,23 @@ def build_personal_health_summary(artifacts: Mapping[str, Any]) -> dict[str, Any
         local_cache_missing="identity_candidate_cache_missing" in unique_reasons,
     )
 
+    # M7.14: Identity discovery blocked flag for downstream consumers
+    identity_discovery_blocked = any(
+        rc in unique_reasons for rc in (
+            "name_search_provider_chain_failed",
+            "provider_name_search_network_error",
+            "identity_candidate_cache_missing",
+            "no_valid_fund_codes",
+            "name_only_funds",
+        )
+    )
+
     return {
         "schema_version": SCHEMA_VERSION,
         "overall_status": overall_status,
         "confidence_level": confidence_level,
         "reason_codes": unique_reasons,
+        "identity_discovery_blocked": identity_discovery_blocked,
         "data_sources": data_sources,
         "valuation_quality": valuation_quality,
         "nav_coverage": nav_coverage_result,
@@ -506,11 +518,27 @@ def _build_checklist(
     """Build fix-it checklist from data quality diagnostics."""
     items: list[str] = []
 
-    if not holdings_snapshot_loaded and (unavailable_count > 0 or cashflow_only_count > 0 or nav_missing):
-        items.append("Provide a current holdings snapshot (current_holdings_snapshot.private.csv) for authoritative valuation")
+    # M7.14: Identity discovery blockers come FIRST when provider chain failed
+    if provider_chain_failed:
+        items.append(
+            "All name search providers failed — fill in identity_candidate_cache_minimal.private.csv "
+            "(just fund_code + fund_name) and place as private_data/fund_identity_candidate_cache.private.csv"
+        )
+    elif local_cache_missing and name_only_count > 0:
+        items.append(
+            "No local identity candidate cache found — fill in identity_candidate_cache_minimal.private.csv "
+            "and place as private_data/fund_identity_candidate_cache.private.csv "
+            "(this is the first blocker; NAV missing is a downstream consequence)"
+        )
 
-    if reconciliation_gap_count > 0:
-        items.append(f"Verify {reconciliation_gap_count} position(s) with reconciliation gap between snapshot and transaction history")
+    if name_only_count > 0 and not provider_chain_failed:
+        items.append(f"Add fund_identity_overrides for {name_only_count} name-only fund(s)")
+
+    if name_search_unverified_count > 0:
+        items.append(
+            f"Review name search candidates for {name_search_unverified_count} fund(s) — "
+            f"verify the suggested fund code in fund_identity_overrides with verified_by_user:true"
+        )
 
     if identity_mismatch_count > 0:
         items.append(f"Verify fund_identity_overrides for {identity_mismatch_count} fund(s) with code/name mismatch")
@@ -522,30 +550,14 @@ def _build_checklist(
             f"(do not add verified_by_user without first verifying)"
         )
 
+    if not holdings_snapshot_loaded and (unavailable_count > 0 or cashflow_only_count > 0 or nav_missing):
+        items.append("Provide a current holdings snapshot (current_holdings_snapshot.private.csv) for authoritative valuation")
+
+    if reconciliation_gap_count > 0:
+        items.append(f"Verify {reconciliation_gap_count} position(s) with reconciliation gap between snapshot and transaction history")
+
     if redemption_fee_unknown_count > 0:
         items.append(f"Provide fee_overrides for {redemption_fee_unknown_count} fund(s) with unknown redemption fees")
-
-    if name_only_count > 0:
-        items.append(f"Add fund_identity_overrides for {name_only_count} name-only fund(s)")
-
-    if name_search_unverified_count > 0:
-        items.append(
-            f"Review name search candidates for {name_search_unverified_count} fund(s) — "
-            f"verify the suggested fund code in fund_identity_overrides with verified_by_user:true"
-        )
-
-    # M7.13: Provider chain failure and local cache guidance
-    if provider_chain_failed:
-        items.append(
-            "All name search providers failed — populate fund_identity_candidate_cache.private.csv "
-            "in private_data/ with candidate fund codes from 支付宝/天天基金/基金详情页"
-        )
-    elif local_cache_missing and name_only_count > 0:
-        items.append(
-            "No local identity candidate cache found — create "
-            "fund_identity_candidate_cache.private.csv in private_data/ "
-            "with candidate fund codes for offline name search fallback"
-        )
 
     if nav_missing:
         items.append("NAV data is missing; provide nav_overrides or ensure provider access")
