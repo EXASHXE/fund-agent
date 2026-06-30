@@ -276,6 +276,11 @@ def reconstruct_portfolio(
     # Build identity map: fund_name -> resolved six-digit fund_code
     identity_map, identity_blocked_codes, identity_unverified_codes, identity_status_map = _build_identity_map(identity_data)
 
+    # M7.15: Count total funds from identity resolution (including unresolved)
+    total_funds_in_ledger = len(identity_map) if identity_map else 0
+    if identity_data and "summary" in identity_data:
+        total_funds_in_ledger = int(identity_data["summary"].get("total_funds", total_funds_in_ledger))
+
     # Group transactions by canonical fund_code
     # If txn has no fund_code but has fund_name that resolves via identity, use resolved code
     fund_txns: dict[str, list[dict[str, Any]]] = {}
@@ -1098,6 +1103,7 @@ def reconstruct_portfolio(
                 ),
                 "is_partial_diagnostic": portfolio_valuation_status in (PORTFOLIO_VALUATION_TRANSACTION_DERIVED_PARTIAL, PORTFOLIO_VALUATION_UNAVAILABLE),
                 "portfolio_valuation_status": portfolio_valuation_status,
+                "total_funds_in_ledger": total_funds_in_ledger,
             },
         },
         "source_notes": "Auto-reconstructed from Alipay evidence and investment plan schedule rules",
@@ -1122,6 +1128,7 @@ def reconstruct_portfolio(
             "total_cashflow_invested": _safe_round(sum(p["cost_basis"] for p in confirmed_positions if p.get("cost_basis") is not None)),
             "portfolio_valuation_status": portfolio_valuation_status,
             "is_partial_diagnostic": portfolio_valuation_status in (PORTFOLIO_VALUATION_TRANSACTION_DERIVED_PARTIAL, PORTFOLIO_VALUATION_UNAVAILABLE),
+            "total_funds_in_ledger": total_funds_in_ledger,
             "evidence_confirmed_count": sum(1 for p in confirmed_positions if "alipay" in p.get("confirmation_sources", []) or "provider" in p.get("confirmation_sources", [])),
             "rule_confirmed_count": sum(1 for p in confirmed_positions if "schedule_rule" in p.get("confirmation_sources", []) and "alipay" not in p.get("confirmation_sources", [])),
             "has_pending": any(p.get("pending_amount") for p in confirmed_positions),

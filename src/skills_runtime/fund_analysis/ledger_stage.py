@@ -140,6 +140,7 @@ def portfolio_from_derived_snapshot(
         ],
         "is_partial_diagnostic": is_partial_diagnostic,
         "portfolio_valuation_status": portfolio_valuation_status,
+        "total_funds_in_ledger": int(cp_summary.get("total_funds_in_ledger", 0)),
     }
 
 

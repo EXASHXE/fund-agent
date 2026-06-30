@@ -27,6 +27,7 @@ import pytest
 from src.tools.portfolio.fund_identity_candidate_discovery import (
     AUTO_VERIFY_MIN_SCORE,
     FundIdentityCandidate,
+    apply_hard_reject,
     score_candidate,
     should_auto_verify,
 )
@@ -124,6 +125,9 @@ class TestLocalCacheUniqueHighConfidenceCanAutoVerify:
         # Score the candidate
         scored = score_candidate("华夏沪深300ETF联接C", results[0])
         assert scored.match_score >= AUTO_VERIFY_MIN_SCORE
+
+        # M7.15: Apply hard reject to compute identity_token_overlap
+        scored = apply_hard_reject("华夏沪深300ETF联接C", scored)
 
         can_verify, reason = should_auto_verify([scored])
         assert can_verify is True
@@ -314,6 +318,9 @@ class TestLocalCacheMinimalCSV:
 
         scored = score_candidate("华夏沪深300ETF联接C", results[0])
         assert scored.match_score >= AUTO_VERIFY_MIN_SCORE
+
+        # M7.15: Apply hard reject to compute identity_token_overlap
+        scored = apply_hard_reject("华夏沪深300ETF联接C", scored)
 
         can_verify, reason = should_auto_verify([scored])
         assert can_verify is True

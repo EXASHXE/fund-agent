@@ -1177,7 +1177,10 @@
           "SYNAI003": 0.133333,
           "SYNBOND01": 0.066667
         },
-        "total_value": 150000.0
+        "subset_only_diagnostic": false,
+        "total_funds_in_ledger": 0,
+        "total_value": 150000.0,
+        "valued_subset_count": 4
       },
       "position_contribution": {
         "positions": [
@@ -2609,7 +2612,10 @@
         "SYNAI003": 0.133333,
         "SYNBOND01": 0.066667
       },
-      "total_value": 150000.0
+      "subset_only_diagnostic": false,
+      "total_funds_in_ledger": 0,
+      "total_value": 150000.0,
+      "valued_subset_count": 4
     },
     "position_contribution": {
       "positions": [
@@ -4060,7 +4066,10 @@
             "SYNAI003": 0.133333,
             "SYNBOND01": 0.066667
           },
-          "total_value": 150000.0
+          "subset_only_diagnostic": false,
+          "total_funds_in_ledger": 0,
+          "total_value": 150000.0,
+          "valued_subset_count": 4
         }
       },
       "version": "evidence-contract.v2"

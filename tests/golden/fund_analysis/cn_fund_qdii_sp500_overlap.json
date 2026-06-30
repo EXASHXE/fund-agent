@@ -1391,7 +1391,10 @@
           "SYNQD003": 0.25,
           "SYNQD004": 0.083333
         },
-        "total_value": 180000.0
+        "subset_only_diagnostic": false,
+        "total_funds_in_ledger": 0,
+        "total_value": 180000.0,
+        "valued_subset_count": 4
       },
       "position_contribution": {
         "positions": [
@@ -2713,7 +2716,10 @@
         "SYNQD003": 0.25,
         "SYNQD004": 0.083333
       },
-      "total_value": 180000.0
+      "subset_only_diagnostic": false,
+      "total_funds_in_ledger": 0,
+      "total_value": 180000.0,
+      "valued_subset_count": 4
     },
     "position_contribution": {
       "positions": [
@@ -4041,7 +4047,10 @@
             "SYNQD003": 0.25,
             "SYNQD004": 0.083333
           },
-          "total_value": 180000.0
+          "subset_only_diagnostic": false,
+          "total_funds_in_ledger": 0,
+          "total_value": 180000.0,
+          "valued_subset_count": 4
         }
       },
       "version": "evidence-contract.v2"

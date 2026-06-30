@@ -294,10 +294,20 @@ class TestResolveFundIdentitiesNameSearch:
     def test_audit_trail_includes_name_search(self):
         """Audit trail should include name search steps."""
         provider = _MockNameSearchProvider({
-            "某基金A": [
+            "华夏沪深300ETF联接C": [
                 FundIdentityCandidate(
                     fund_code="000001",
-                    fund_name="某基金A",
+                    fund_name="华夏沪深300ETF联接C",
+                    match_score=0.95,
+                    match_bucket=BUCKET_HIGH,
+                    match_reasons=["high_name_similarity"],
+                    risk_flags=[],
+                ),
+            ],
+            "易方达蓝筹精选混合A": [
+                FundIdentityCandidate(
+                    fund_code="110011",
+                    fund_name="易方达蓝筹精选混合A",
                     match_score=0.95,
                     match_bucket=BUCKET_HIGH,
                     match_reasons=["high_name_similarity"],
@@ -310,7 +320,7 @@ class TestResolveFundIdentitiesNameSearch:
                 "transactions": [
                     {
                         "fund_code": None,
-                        "fund_name": "蚂蚁财富-某基金A-买入",
+                        "fund_name": "蚂蚁财富-华夏沪深300ETF联接C-买入",
                         "source": "alipay",
                     },
                 ],
@@ -320,7 +330,26 @@ class TestResolveFundIdentitiesNameSearch:
         )
         resolutions = result["resolutions"]
         for res in resolutions:
-            if "某基金A" in (res.get("raw_fund_name") or ""):
+            if "华夏沪深300ETF联接C" in (res.get("raw_fund_name") or ""):
+                steps = [s["step"] for s in res["audit_trail"]]
+                assert "name_search_auto_verified" in steps
+                break
+        result = resolve_fund_identities(
+            ledger_data={
+                "transactions": [
+                    {
+                        "fund_code": None,
+                        "fund_name": "蚂蚁财富-易方达蓝筹精选混合A-买入",
+                        "source": "alipay",
+                    },
+                ],
+            },
+            name_search_provider=provider,
+            enable_name_search=True,
+        )
+        resolutions = result["resolutions"]
+        for res in resolutions:
+            if "易方达蓝筹精选混合A" in (res.get("raw_fund_name") or ""):
                 steps = [s["step"] for s in res["audit_trail"]]
                 assert "name_search_auto_verified" in steps
                 break

@@ -264,6 +264,16 @@ def build_portfolio_summary(
     # If no positions have valuation, it's also partial
     if not has_valuation and len(fund_codes) > 0:
         is_partial_diagnostic = True
+
+    # M7.15: subset_only_diagnostic — when only a subset of total funds are valued
+    total_funds_in_ledger = int(portfolio.get("total_funds_in_ledger", 0))
+    valued_subset_count = len(fund_codes)
+    subset_only_diagnostic = False
+    if total_funds_in_ledger > 0 and valued_subset_count < total_funds_in_ledger:
+        subset_only_diagnostic = True
+        # Subset-only implies partial diagnostic
+        is_partial_diagnostic = True
+
     return {
         "as_of_date": portfolio.get("as_of_date", ""),
         "total_value": float(total_value) if total_value is not None else None,
@@ -273,6 +283,9 @@ def build_portfolio_summary(
         "current_value_likely_missing": not has_valuation,
         "is_partial_diagnostic": is_partial_diagnostic,
         "portfolio_valuation_status": portfolio_valuation_status,
+        "subset_only_diagnostic": subset_only_diagnostic,
+        "valued_subset_count": valued_subset_count,
+        "total_funds_in_ledger": total_funds_in_ledger,
     }
 
 

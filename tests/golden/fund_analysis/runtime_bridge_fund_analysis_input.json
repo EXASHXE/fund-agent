@@ -558,7 +558,10 @@
         "position_weights": {
           "110011": 0.15
         },
-        "total_value": 200000.0
+        "subset_only_diagnostic": false,
+        "total_funds_in_ledger": 0,
+        "total_value": 200000.0,
+        "valued_subset_count": 1
       },
       "position_contribution": {
         "positions": [
@@ -1395,7 +1398,10 @@
       "position_weights": {
         "110011": 0.15
       },
-      "total_value": 200000.0
+      "subset_only_diagnostic": false,
+      "total_funds_in_ledger": 0,
+      "total_value": 200000.0,
+      "valued_subset_count": 1
     },
     "position_contribution": {
       "positions": [
@@ -2262,7 +2268,10 @@
           "position_weights": {
             "110011": 0.15
           },
-          "total_value": 200000.0
+          "subset_only_diagnostic": false,
+          "total_funds_in_ledger": 0,
+          "total_value": 200000.0,
+          "valued_subset_count": 1
         }
       },
       "version": "evidence-contract.v2"

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -168,6 +169,7 @@ def _build_run_manifest(
     enable_name_search: bool = False,
     enable_transaction_derived_valuation: bool = False,
     e2e_summary: dict[str, Any] | None = None,
+    use_live_provider: bool = False,
 ) -> dict[str, Any]:
     # M7.12+M7.13: Extract name search diagnostics from e2e_summary
     name_search_diag: dict[str, Any] = {
@@ -241,6 +243,11 @@ def _build_run_manifest(
             "enable_name_search": enable_name_search,
                 "enable_transaction_derived_valuation": enable_transaction_derived_valuation,
         },
+        "use_live_provider": use_live_provider,
+        "live_provider_mode": "real_analysis" if use_live_provider else None,
+        "provider_ca_bundle_configured": any(
+            os.environ.get(k) for k in ("REQUESTS_CA_BUNDLE", "SSL_CERT_FILE", "CURL_CA_BUNDLE")
+        ),
         "name_search_diagnostics": name_search_diag,
         "canonical_entrypoint": True,
         "invoked_script": "fund_agent_personal_run",
@@ -388,6 +395,10 @@ def run_personal(args: argparse.Namespace) -> int:
         e2e_argv.append("--enable-name-search")
 
     e2e_env = {"FUND_AGENT_CANONICAL_PERSONAL_RUN": "1"}
+    if execution_mode == "real_analysis":
+        e2e_env["FUND_AGENT_USE_LIVE_PROVIDER"] = "1"
+        e2e_env["RUN_LIVE_PROVIDER_TESTS"] = "1"  # compat for build_fund_data_snapshot subprocess
+        e2e_argv.append("--use-live-provider")
     e2e_rc = e2e_main(e2e_argv, env_overrides=e2e_env)
 
     # ── Step 2b: Load holdings snapshot (if available) ────────────────
@@ -552,6 +563,7 @@ def run_personal(args: argparse.Namespace) -> int:
         enable_name_search=getattr(args, "enable_name_search", False),
         enable_transaction_derived_valuation=getattr(args, "enable_transaction_derived_valuation", False),
         e2e_summary=e2e_summary,
+        use_live_provider=execution_mode == "real_analysis",
     )
     _write_json(run_dir / "run_manifest.json", manifest)
 
@@ -1015,7 +1027,7 @@ def _generate_identity_candidates_csv(
 
     # Build CSV with candidate information
     csv_lines = [
-        "raw_fund_name,candidate_fund_code,candidate_fund_name,candidate_source,verification_status,match_score,match_bucket,user_verified,verified_at,verification_source",
+        "raw_fund_name,candidate_fund_code,candidate_fund_name,candidate_source,verification_status,match_score,match_bucket,user_verified,verified_at,verification_source,hard_reject,reject_reasons,not_for_verification",
     ]
 
     candidate_count = 0
@@ -1023,6 +1035,7 @@ def _generate_identity_candidates_csv(
     unverified_count = 0
     mismatch_count = 0
     name_search_candidate_count = 0
+    hard_rejected_count = 0
 
     for res in resolutions:
         if not isinstance(res, dict):
@@ -1059,17 +1072,24 @@ def _generate_identity_candidates_csv(
                 unverified_count += 1
 
         # M7.12: Include name search candidates (even without resolved code)
+        # M7.15: Mark hard-rejected candidates with not_for_verification
         name_search_candidates = res.get("name_search_candidates", [])
         for cand in name_search_candidates:
             cand_code = cand.get("fund_code", "")
             cand_name = cand.get("fund_name", "")
             cand_score = cand.get("match_score", "")
             cand_bucket = cand.get("match_bucket", "")
+            is_hard_reject = cand.get("hard_reject", False)
+            reject_reasons_str = ";".join(cand.get("reject_reasons", []))
+            not_for_verification = "true" if is_hard_reject else ""
             csv_lines.append(
                 f"{raw_name},{cand_code},{cand_name},name_search_candidate,{identity_status},"
                 f"{cand_score},{cand_bucket},,,"
+                f"{is_hard_reject},{reject_reasons_str},{not_for_verification}"
             )
             name_search_candidate_count += 1
+            if is_hard_reject:
+                hard_rejected_count += 1
 
         # Include name-only entries without resolved codes (for fix-it)
         if not resolved_code and not name_search_candidates and identity_status in (
@@ -1088,6 +1108,7 @@ def _generate_identity_candidates_csv(
         "unverified_count": unverified_count,
         "mismatch_count": mismatch_count,
         "name_search_candidate_count": name_search_candidate_count,
+        "hard_rejected_count": hard_rejected_count,
     }
     _write_json(fixit_dir / "identity_candidates_summary.json", summary)
 

@@ -32,6 +32,12 @@ class FundIdentityCandidate:
     match_bucket: str = ""
     match_reasons: list[str] = field(default_factory=list)
     risk_flags: list[str] = field(default_factory=list)
+    # M7.15 strict identity fields
+    hard_reject: bool = False
+    reject_reasons: list[str] = field(default_factory=list)
+    critical_token_mismatch: list[str] = field(default_factory=list)
+    identity_token_overlap: float = 0.0
+    candidate_status: str = "accepted_candidate"
 
 
 # ── Match buckets ──────────────────────────────────────────────────────
@@ -105,6 +111,42 @@ ETF_LINK_TOKENS = frozenset({"etf联接", "etf 联接", "联接"})
 
 # Share class suffixes (A/C/E are the common ones for CN funds)
 SHARE_CLASS_PATTERN = r"[ACEace]$"
+
+# ── M7.15 Strict identity tokens ────────────────────────────────────────
+
+# Brand / fund company tokens — different brands must not match
+BRAND_TOKENS: dict[str, str] = {
+    "万家": "万家", "华宝": "华宝", "华夏": "华夏", "华安": "华安",
+    "国泰": "国泰", "天弘": "天弘", "东方": "东方", "建信": "建信",
+    "嘉实": "嘉实", "摩根": "摩根", "易方达": "易方达", "永赢": "永赢",
+    "广发": "广发", "工银": "工银", "南方": "南方", "博时": "博时",
+    "招商": "招商", "鹏华": "鹏华", "富国": "富国", "汇添富": "汇添富",
+    "中欧": "中欧", "兴全": "兴全", "景顺": "景顺", "交银": "交银",
+    "银华": "银华", "诺安": "诺安", "平安": "平安", "前海开源": "前海开源",
+}
+
+# Theme / industry tokens — conflicting themes must not match
+THEME_TOKENS: dict[str, str] = {
+    "黄金": "黄金", "消费电子": "消费电子", "创新药": "创新药",
+    "医药": "医药", "油气": "油气", "石油天然气": "石油天然气",
+    "光伏": "光伏", "新能源车": "新能源车", "电池": "电池",
+    "红利": "红利", "短债": "短债", "纳斯达克": "纳斯达克",
+    "全球新兴市场": "全球新兴市场", "新能源汽车": "新能源汽车",
+    "电子": "电子", "半导体": "半导体", "芯片": "芯片",
+    "白酒": "白酒", "军工": "军工", "银行": "银行",
+    "券商": "券商", "房地产": "房地产", "基建": "基建",
+    "环保": "环保", "人工智能": "人工智能", "机器人": "机器人",
+    "消费": "消费", "科技": "科技", "医药生物": "医药生物",
+    "港股": "港股", "沪港深": "沪港深", "中美互联网": "中美互联网",
+}
+
+# Structure tokens — QDII/non-QDII, ETF联接/non-ETF联接 must not cross
+STRUCTURE_TOKENS: dict[str, str] = {
+    "ETF联接": "ETF联接", "ETF": "ETF", "LOF": "LOF",
+    "QDII": "QDII", "债券": "债券", "短债": "短债",
+    "混合": "混合", "指数": "指数", "股票": "股票",
+    "双债增强": "双债增强", "纯债": "纯债",
+}
 
 
 def extract_fund_name_from_alipay_item(
@@ -247,6 +289,158 @@ def extract_etf_link_token(name: str) -> str:
     if "联接" in name:
         return "联接"
     return ""
+
+
+# ── M7.15 Token extraction for strict matching ─────────────────────────
+
+
+def _extract_brand_token(name: str) -> str:
+    """Extract brand/fund company token from a fund name."""
+    for token, key in BRAND_TOKENS.items():
+        if token in name:
+            return key
+    return ""
+
+
+def _extract_theme_tokens(name: str) -> frozenset[str]:
+    """Extract theme/industry tokens from a fund name."""
+    return frozenset(key for token, key in THEME_TOKENS.items() if token in name)
+
+
+def _extract_structure_tokens(name: str) -> frozenset[str]:
+    """Extract structure tokens from a fund name (QDII, ETF联接, 债券, etc.)."""
+    return frozenset(key for token, key in STRUCTURE_TOKENS.items() if token in name)
+
+
+def _compute_identity_token_overlap(
+    query_name: str, candidate_name: str,
+    q_brand: str, c_brand: str,
+    q_themes: frozenset[str], c_themes: frozenset[str],
+    q_structures: frozenset[str], c_structures: frozenset[str],
+) -> float:
+    """Compute identity token overlap ratio (0.0-1.0).
+
+    Measures how many identity-critical tokens are shared vs total unique.
+    """
+    all_tokens: set[str] = set()
+    shared_tokens: set[str] = set()
+
+    # Brand
+    if q_brand or c_brand:
+        all_tokens.add("brand")
+        if q_brand and c_brand and q_brand == c_brand:
+            shared_tokens.add("brand")
+
+    # Themes
+    all_themes = q_themes | c_themes
+    shared_themes = q_themes & c_themes
+    all_tokens.update(f"theme:{t}" for t in all_themes)
+    shared_tokens.update(f"theme:{t}" for t in shared_themes)
+
+    # Structures
+    all_structs = q_structures | c_structures
+    shared_structs = q_structures & c_structures
+    all_tokens.update(f"struct:{s}" for s in all_structs)
+    shared_tokens.update(f"struct:{s}" for s in shared_structs)
+
+    if not all_tokens:
+        return 0.0
+    return len(shared_tokens) / len(all_tokens)
+
+
+def apply_hard_reject(
+    query_name: str,
+    candidate: FundIdentityCandidate,
+) -> FundIdentityCandidate:
+    """Apply M7.15 hard reject rules to a scored candidate.
+
+    Hard reject if:
+    1. Brand token mismatch (different fund companies)
+    2. Critical theme token conflict (e.g. 消费电子 vs 黄金)
+    3. Critical structure mismatch (QDII vs non-QDII, ETF联接 vs non-ETF联接)
+    4. Share class mismatch (A vs C)
+    """
+    q_norm = normalize_fund_name_for_search(query_name)
+    c_norm = normalize_fund_name_for_search(candidate.fund_name)
+
+    reject_reasons: list[str] = []
+    critical_mismatches: list[str] = []
+
+    # 1. Brand mismatch
+    q_brand = _extract_brand_token(q_norm)
+    c_brand = _extract_brand_token(c_norm)
+    if q_brand and c_brand and q_brand != c_brand:
+        reject_reasons.append("rejected_brand_mismatch")
+        critical_mismatches.append(f"brand:{q_brand}!={c_brand}")
+
+    # 2. Theme mismatch
+    q_themes = _extract_theme_tokens(q_norm)
+    c_themes = _extract_theme_tokens(c_norm)
+    if q_themes and c_themes:
+        # If both have theme tokens but none overlap → hard reject
+        if not (q_themes & c_themes):
+            reject_reasons.append("rejected_theme_mismatch")
+            critical_mismatches.append(f"theme:{q_themes}∩{c_themes}=∅")
+
+    # 3. Structure mismatch
+    q_structs = _extract_structure_tokens(q_norm)
+    c_structs = _extract_structure_tokens(c_norm)
+    q_has_qdii = "QDII" in q_structs
+    c_has_qdii = "QDII" in c_structs
+    q_has_etf_link = "ETF联接" in q_structs
+    c_has_etf_link = "ETF联接" in c_structs
+    q_has_short_debt = "短债" in q_structs
+    c_has_short_debt = "短债" in c_structs
+
+    if q_has_qdii != c_has_qdii:
+        reject_reasons.append("rejected_structure_mismatch")
+        critical_mismatches.append("qdii_vs_non_qdii")
+    if q_has_etf_link != c_has_etf_link:
+        reject_reasons.append("rejected_structure_mismatch")
+        critical_mismatches.append("etf_link_vs_non_etf_link")
+    # 短债 vs 双债增强/纯债 — 短债 only matches 短债
+    if q_has_short_debt and not c_has_short_debt:
+        reject_reasons.append("rejected_structure_mismatch")
+        critical_mismatches.append("short_debt_vs_non_short_debt")
+
+    # 4. Share class mismatch
+    q_share = extract_share_class(q_norm)
+    c_share = extract_share_class(c_norm)
+    if q_share and c_share and q_share != c_share:
+        reject_reasons.append("rejected_share_class_mismatch")
+        critical_mismatches.append(f"share_class:{q_share}!={c_share}")
+
+    # Compute identity token overlap
+    token_overlap = _compute_identity_token_overlap(
+        q_norm, c_norm, q_brand, c_brand,
+        q_themes, c_themes, q_structs, c_structs,
+    )
+
+    # Apply hard reject
+    is_hard_reject = len(reject_reasons) > 0
+    status = "accepted_candidate"
+    if is_hard_reject:
+        # Use first reject reason to determine status
+        for r in reject_reasons:
+            if r in (
+                "rejected_brand_mismatch", "rejected_theme_mismatch",
+                "rejected_structure_mismatch", "rejected_share_class_mismatch",
+            ):
+                status = r
+                break
+
+    candidate.hard_reject = is_hard_reject
+    candidate.reject_reasons = reject_reasons
+    candidate.critical_token_mismatch = critical_mismatches
+    candidate.identity_token_overlap = round(token_overlap, 4)
+    candidate.candidate_status = status
+
+    # If hard rejected, force score down
+    if is_hard_reject:
+        candidate.match_score = min(candidate.match_score, 0.0)
+        candidate.match_bucket = BUCKET_MISMATCH
+
+    return candidate
 
 
 # ── Candidate scoring ──────────────────────────────────────────────────
@@ -428,6 +622,9 @@ def should_auto_verify(
     - No share_class_mismatch risk flag
     - No qdii_mismatch risk flag
     - No etf_link_mismatch risk flag
+    - No hard_reject (M7.15)
+    - No critical_token_mismatch (M7.15)
+    - identity_token_overlap > 0 (M7.15)
     - Valid 6-digit fund_code
     - Provider returned fund profile (non-empty fund_name)
     """
@@ -443,6 +640,18 @@ def should_auto_verify(
     # Must have fund_name from provider
     if not top.fund_name:
         return False, "no_provider_profile"
+
+    # M7.15: Hard reject blocks auto-verify
+    if top.hard_reject:
+        return False, f"hard_reject:{','.join(top.reject_reasons)}"
+
+    # M7.15: Critical token mismatch blocks auto-verify
+    if top.critical_token_mismatch:
+        return False, f"critical_token_mismatch:{','.join(top.critical_token_mismatch)}"
+
+    # M7.15: Must have identity token overlap
+    if top.identity_token_overlap <= 0:
+        return False, "no_identity_token_overlap"
 
     # Score threshold
     if top.match_score < AUTO_VERIFY_MIN_SCORE:
@@ -505,6 +714,8 @@ def discover_candidates(
         scored = []
         for cand in raw_candidates:
             scored_cand = score_candidate(norm_name, cand)
+            # M7.15: Apply hard reject after scoring
+            scored_cand = apply_hard_reject(norm_name, scored_cand)
             scored.append(scored_cand)
 
         # Sort by score descending

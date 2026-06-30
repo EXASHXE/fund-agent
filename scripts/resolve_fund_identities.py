@@ -370,6 +370,11 @@ def resolve_fund_identities(
                             "match_bucket": c.match_bucket,
                             "match_reasons": c.match_reasons,
                             "risk_flags": c.risk_flags,
+                            "hard_reject": c.hard_reject,
+                            "reject_reasons": c.reject_reasons,
+                            "critical_token_mismatch": c.critical_token_mismatch,
+                            "identity_token_overlap": c.identity_token_overlap,
+                            "candidate_status": c.candidate_status,
                         }
                         for c in scored_candidates
                     ]

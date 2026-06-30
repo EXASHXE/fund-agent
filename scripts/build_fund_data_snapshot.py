@@ -25,7 +25,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-RUN_LIVE = os.environ.get("RUN_LIVE_PROVIDER_TESTS", "0") == "1"
+RUN_LIVE = os.environ.get("RUN_LIVE_PROVIDER_TESTS", "0") == "1" or os.environ.get("FUND_AGENT_USE_LIVE_PROVIDER", "0") == "1"
 
 
 def _parse_date(val) -> date | None:

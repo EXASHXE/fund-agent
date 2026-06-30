@@ -958,7 +958,10 @@
           "SYNDCA002": 0.3,
           "SYNMM001": 0.13
         },
-        "total_value": 100000.0
+        "subset_only_diagnostic": false,
+        "total_funds_in_ledger": 0,
+        "total_value": 100000.0,
+        "valued_subset_count": 3
       },
       "position_contribution": {
         "positions": [
@@ -2285,7 +2288,10 @@
         "SYNDCA002": 0.3,
         "SYNMM001": 0.13
       },
-      "total_value": 100000.0
+      "subset_only_diagnostic": false,
+      "total_funds_in_ledger": 0,
+      "total_value": 100000.0,
+      "valued_subset_count": 3
     },
     "position_contribution": {
       "positions": [
@@ -3527,7 +3533,10 @@
             "SYNDCA002": 0.3,
             "SYNMM001": 0.13
           },
-          "total_value": 100000.0
+          "subset_only_diagnostic": false,
+          "total_funds_in_ledger": 0,
+          "total_value": 100000.0,
+          "valued_subset_count": 3
         }
       },
       "version": "evidence-contract.v2"

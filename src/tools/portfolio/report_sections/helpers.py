@@ -220,9 +220,14 @@ def _is_partial_diagnostic(context: dict[str, Any]) -> bool:
 
     A partial diagnostic means some positions lack valuation, so portfolio-level
     metrics (total value, HHI, weights, cash ratio) must NOT be output.
+    M7.15: Also returns True when subset_only_diagnostic is set (only a subset
+    of total funds are valued — not representative of the full portfolio).
     """
     ps = _portfolio_summary(context)
     if ps.get("is_partial_diagnostic"):
+        return True
+    # M7.15: subset_only_diagnostic — valued subset != total funds
+    if ps.get("subset_only_diagnostic"):
         return True
     pvs = ps.get("portfolio_valuation_status")
     if pvs in ("partial_diagnostic_only", "unavailable"):
@@ -233,5 +238,8 @@ def _is_partial_diagnostic(context: dict[str, Any]) -> bool:
         return True
     cp_pvs = cp.get("summary", {}).get("portfolio_valuation_status")
     if cp_pvs in ("partial_diagnostic_only", "unavailable"):
+        return True
+    # M7.15: Check subset_only from confirmed_portfolio
+    if cp.get("summary", {}).get("subset_only_diagnostic"):
         return True
     return False

@@ -870,7 +870,10 @@
           "SYNLED001": 0.661528,
           "SYNLED002": 0.338472
         },
-        "total_value": 71350.0
+        "subset_only_diagnostic": false,
+        "total_funds_in_ledger": 0,
+        "total_value": 71350.0,
+        "valued_subset_count": 2
       },
       "position_contribution": {
         "positions": [
@@ -2003,7 +2006,10 @@
         "SYNLED001": 0.661528,
         "SYNLED002": 0.338472
       },
-      "total_value": 71350.0
+      "subset_only_diagnostic": false,
+      "total_funds_in_ledger": 0,
+      "total_value": 71350.0,
+      "valued_subset_count": 2
     },
     "position_contribution": {
       "positions": [
@@ -3039,7 +3045,10 @@
             "SYNLED001": 0.661528,
             "SYNLED002": 0.338472
           },
-          "total_value": 71350.0
+          "subset_only_diagnostic": false,
+          "total_funds_in_ledger": 0,
+          "total_value": 71350.0,
+          "valued_subset_count": 2
         }
       },
       "version": "evidence-contract.v2"

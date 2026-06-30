@@ -221,6 +221,7 @@ class TestShouldAutoVerify:
                 fund_code="110011", fund_name="易方达蓝筹精选混合A",
                 match_score=0.95, match_bucket=BUCKET_HIGH,
                 match_reasons=["high_name_similarity"], risk_flags=[],
+                identity_token_overlap=0.8,
             ),
         ]
         ok, reason = should_auto_verify(cands)
@@ -233,11 +234,13 @@ class TestShouldAutoVerify:
                 fund_code="110011", fund_name="易方达蓝筹精选混合A",
                 match_score=0.90, match_bucket=BUCKET_HIGH,
                 match_reasons=["high_name_similarity"], risk_flags=[],
+                identity_token_overlap=0.8,
             ),
             FundIdentityCandidate(
                 fund_code="110012", fund_name="易方达蓝筹精选混合C",
                 match_score=0.80, match_bucket=BUCKET_MEDIUM,
                 match_reasons=["medium_name_similarity"], risk_flags=[],
+                identity_token_overlap=0.7,
             ),
         ]
         ok, reason = should_auto_verify(cands)
@@ -250,6 +253,7 @@ class TestShouldAutoVerify:
                 fund_code="110011", fund_name="某基金",
                 match_score=0.70, match_bucket=BUCKET_MEDIUM,
                 match_reasons=["medium_name_similarity"], risk_flags=[],
+                identity_token_overlap=0.8,
             ),
         ]
         ok, reason = should_auto_verify(cands)
@@ -263,6 +267,7 @@ class TestShouldAutoVerify:
                 match_score=0.95, match_bucket=BUCKET_HIGH,
                 match_reasons=["high_name_similarity"],
                 risk_flags=["share_class_mismatch"],
+                identity_token_overlap=0.8,
             ),
         ]
         ok, reason = should_auto_verify(cands)
@@ -299,6 +304,7 @@ class TestShouldAutoVerify:
                 fund_code="110011", fund_name="某基金",
                 match_score=0.86, match_bucket=BUCKET_MEDIUM,
                 match_reasons=["medium_name_similarity"], risk_flags=[],
+                identity_token_overlap=0.8,
             ),
         ]
         ok, reason = should_auto_verify(cands)
@@ -317,6 +323,7 @@ class TestShouldAutoVerify:
                 match_score=0.90, match_bucket=BUCKET_HIGH,
                 match_reasons=["high_name_similarity"],
                 risk_flags=["qdii_mismatch"],
+                identity_token_overlap=0.8,
             ),
         ]
         ok, reason = should_auto_verify(cands)
@@ -330,6 +337,7 @@ class TestShouldAutoVerify:
                 match_score=0.90, match_bucket=BUCKET_HIGH,
                 match_reasons=["high_name_similarity"],
                 risk_flags=["etf_link_mismatch"],
+                identity_token_overlap=0.8,
             ),
         ]
         ok, reason = should_auto_verify(cands)
@@ -398,6 +406,7 @@ class TestComputeDiscoverySummary:
                     fund_code="000001", fund_name="基金A",
                     match_score=0.95, match_bucket=BUCKET_EXACT,
                     match_reasons=["exact_normalized_match"], risk_flags=[],
+                    identity_token_overlap=0.9,
                 ),
             ],
         }
