@@ -59,6 +59,20 @@ ALL_BUCKETS = frozenset({
 AUTO_VERIFY_MIN_SCORE = 0.85
 AUTO_VERIFY_MIN_MARGIN = 0.20
 
+# ── M7.16 Exact match reasons (must match akshare_name_search_provider) ──
+
+EXACT_FUND_UNIVERSE_NAME_MATCH = "exact_fund_universe_name_match"
+EXACT_FUND_UNIVERSE_NAME_WITHOUT_PUNCTUATION_MATCH = "exact_fund_universe_name_without_punctuation_match"
+EXACT_CORE_NAME_AND_SHARE_CLASS_MATCH = "exact_core_name_and_share_class_match"
+EXACT_LOCAL_CACHE_NAME_MATCH = "exact_local_cache_name_match"
+
+_EXACT_MATCH_REASONS = frozenset({
+    EXACT_FUND_UNIVERSE_NAME_MATCH,
+    EXACT_FUND_UNIVERSE_NAME_WITHOUT_PUNCTUATION_MATCH,
+    EXACT_CORE_NAME_AND_SHARE_CLASS_MATCH,
+    EXACT_LOCAL_CACHE_NAME_MATCH,
+})
+
 
 # ── Provider abstraction ───────────────────────────────────────────────
 
@@ -453,6 +467,11 @@ def score_candidate(
     """Score a candidate against a query name using deterministic rules.
 
     Updates candidate.match_score, match_bucket, match_reasons, risk_flags.
+
+    M7.16: If the candidate already has an exact universe match reason
+    from the provider (e.g. exact_fund_universe_name_match), the scoring
+    preserves that reason and uses the provider's score/bucket as the base.
+    Additional scoring dimensions (share class, QDII, ETF联接) are still applied.
     """
     from src.tools.portfolio.provider_identity_cross_check import compute_name_similarity
 
@@ -464,42 +483,51 @@ def score_candidate(
         candidate.match_bucket = BUCKET_MISMATCH
         return candidate
 
-    reasons: list[str] = []
-    risk_flags: list[str] = []
-    score = 0.0
-
-    # 1. Name similarity (LCS-based)
-    name_sim = compute_name_similarity(q_norm, c_norm)
-
-    # 2. Exact normalized match
-    if q_norm == c_norm:
-        score = 1.0
-        reasons.append("exact_normalized_match")
-    elif name_sim >= 0.95:
-        score = 0.95
-        reasons.append("near_exact_name_match")
-    elif name_sim >= 0.85:
-        score = 0.85
-        reasons.append("high_name_similarity")
-    elif name_sim >= 0.70:
-        score = 0.70
-        reasons.append("medium_name_similarity")
-    elif name_sim >= 0.50:
-        score = 0.50
-        reasons.append("low_name_similarity")
+    # M7.16: Check if candidate already has an exact universe match reason
+    existing_exact_reasons = set(candidate.match_reasons) & _EXACT_MATCH_REASONS
+    if existing_exact_reasons:
+        # Preserve the provider's exact match reason and score
+        reasons: list[str] = list(existing_exact_reasons)
+        risk_flags: list[str] = []
+        score = candidate.match_score
+        name_sim = compute_name_similarity(q_norm, c_norm)
     else:
-        score = name_sim
-        reasons.append("weak_name_similarity")
+        reasons = []
+        risk_flags = []
+        score = 0.0
 
-    # 3. Provider name contains query
-    if q_norm in c_norm and "exact_normalized_match" not in reasons:
-        score = max(score, 0.75)
-        reasons.append("provider_name_contains_query")
+        # 1. Name similarity (LCS-based)
+        name_sim = compute_name_similarity(q_norm, c_norm)
 
-    # 4. Query contains provider name
-    if c_norm in q_norm and "exact_normalized_match" not in reasons:
-        score = max(score, 0.70)
-        reasons.append("query_contains_provider_name")
+        # 2. Exact normalized match
+        if q_norm == c_norm:
+            score = 1.0
+            reasons.append("exact_normalized_match")
+        elif name_sim >= 0.95:
+            score = 0.95
+            reasons.append("near_exact_name_match")
+        elif name_sim >= 0.85:
+            score = 0.85
+            reasons.append("high_name_similarity")
+        elif name_sim >= 0.70:
+            score = 0.70
+            reasons.append("medium_name_similarity")
+        elif name_sim >= 0.50:
+            score = 0.50
+            reasons.append("low_name_similarity")
+        else:
+            score = name_sim
+            reasons.append("weak_name_similarity")
+
+        # 3. Provider name contains query
+        if q_norm in c_norm and "exact_normalized_match" not in reasons:
+            score = max(score, 0.75)
+            reasons.append("provider_name_contains_query")
+
+        # 4. Query contains provider name
+        if c_norm in q_norm and "exact_normalized_match" not in reasons:
+            score = max(score, 0.70)
+            reasons.append("query_contains_provider_name")
 
     # 5. Share class check
     q_share = extract_share_class(q_norm)
@@ -616,17 +644,25 @@ def should_auto_verify(
     """Determine if the top candidate can be auto-verified as provider_verified.
 
     Returns (can_auto_verify, reason).
-    Auto-verify requires:
-    - Top candidate score >= AUTO_VERIFY_MIN_SCORE
-    - Top1 - Top2 margin >= AUTO_VERIFY_MIN_MARGIN (or only 1 candidate)
-    - No share_class_mismatch risk flag
-    - No qdii_mismatch risk flag
-    - No etf_link_mismatch risk flag
-    - No hard_reject (M7.15)
-    - No critical_token_mismatch (M7.15)
-    - identity_token_overlap > 0 (M7.15)
+
+    M7.16: Auto-verify REQUIRES an exact match reason from the fund universe:
+    - exact_fund_universe_name_match
+    - exact_fund_universe_name_without_punctuation_match
+    - exact_core_name_and_share_class_match
+
+    Plus all M7.15 requirements:
+    - No hard_reject
+    - No critical_token_mismatch
+    - identity_token_overlap > 0
     - Valid 6-digit fund_code
-    - Provider returned fund profile (non-empty fund_name)
+    - Non-empty fund_name
+    - No share_class_mismatch / qdii_mismatch / etf_link_mismatch risk flags
+
+    Prohibited auto-verify reasons (M7.16):
+    - single_source_fuzzy_high_score
+    - LCS high score
+    - substring containment
+    - identity_token_overlap > 0 alone
     """
     if not candidates:
         return False, "no_candidates"
@@ -652,6 +688,11 @@ def should_auto_verify(
     # M7.15: Must have identity token overlap
     if top.identity_token_overlap <= 0:
         return False, "no_identity_token_overlap"
+
+    # M7.16: MUST have an exact match reason from fund universe
+    has_exact_reason = bool(set(top.match_reasons) & _EXACT_MATCH_REASONS)
+    if not has_exact_reason:
+        return False, "no_exact_universe_match_reason"
 
     # Score threshold
     if top.match_score < AUTO_VERIFY_MIN_SCORE:

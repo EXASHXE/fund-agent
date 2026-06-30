@@ -21,6 +21,9 @@ from src.tools.portfolio.fund_identity_candidate_discovery import (
     BUCKET_LOW,
     BUCKET_MEDIUM,
     BUCKET_MISMATCH,
+    EXACT_CORE_NAME_AND_SHARE_CLASS_MATCH,
+    EXACT_FUND_UNIVERSE_NAME_MATCH,
+    EXACT_FUND_UNIVERSE_NAME_WITHOUT_PUNCTUATION_MATCH,
     FundIdentityCandidate,
     NullFundIdentitySearchProvider,
     compute_discovery_summary,
@@ -79,6 +82,51 @@ class TestExtractFundNameFromAlipayItem:
     def test_share_class_preserved(self):
         result = extract_fund_name_from_alipay_item("蚂蚁财富-易方达蓝筹精选混合A-买入")
         assert "A" in result["normalized_name"]
+
+    # ── M7.16: Exact full fund name extraction tests ──────────────────────
+
+    def test_alipay_product_name_extracts_exact_full_fund_name(self):
+        """After stripping prefix and suffix, the remaining name is the exact full fund name."""
+        result = extract_fund_name_from_alipay_item("蚂蚁财富-天弘中证光伏产业指数A-买入")
+        assert result["normalized_name"] == "天弘中证光伏产业指数A"
+
+    def test_alipay_suffix_buy_sell_redeem_removed(self):
+        """Buy/sell/redeem suffixes must be fully removed, not partially."""
+        for suffix in ["买入", "卖出", "赎回"]:
+            result = extract_fund_name_from_alipay_item(f"蚂蚁财富-易方达蓝筹精选混合-{suffix}")
+            assert result["normalized_name"] == "易方达蓝筹精选混合"
+
+    def test_alipay_conversion_source_and_target_preserved(self):
+        """Conversion patterns must preserve both source and target fund names."""
+        result = extract_fund_name_from_alipay_item("蚂蚁财富-易方达蓝筹精选混合A-[转换至]天弘中证光伏产业指数C-转换")
+        assert result["extracted_role"] == "conversion_source"
+        assert result["normalized_name"] == "易方达蓝筹精选混合A"
+        assert result["conversion_target_name"] == "天弘中证光伏产业指数C"
+
+    def test_share_class_preserved_after_normalization(self):
+        """A/C/E/I share class suffixes must survive normalization."""
+        for share_class in ["A", "C", "E"]:
+            result = extract_fund_name_from_alipay_item(f"蚂蚁财富-某基金{share_class}-买入")
+            assert result["normalized_name"].endswith(share_class)
+
+    def test_qdii_and_etf_link_preserved_after_normalization(self):
+        """QDII, ETF联接, LOF, 指数, 债券, 混合 tokens must survive normalization."""
+        # QDII
+        result = extract_fund_name_from_alipay_item("蚂蚁财富-华夏全球精选QDII-买入")
+        assert "QDII" in result["normalized_name"]
+        # ETF联接
+        result = extract_fund_name_from_alipay_item("蚂蚁财富-易方达沪深300ETF联接A-买入")
+        assert "ETF联接" in result["normalized_name"]
+        assert result["normalized_name"].endswith("A")
+        # 指数
+        result = extract_fund_name_from_alipay_item("蚂蚁财富-招商中证白酒指数-买入")
+        assert "指数" in result["normalized_name"]
+        # 债券
+        result = extract_fund_name_from_alipay_item("蚂蚁财富-某短债债券A-买入")
+        assert "债券" in result["normalized_name"]
+        # 混合
+        result = extract_fund_name_from_alipay_item("蚂蚁财富-易方达蓝筹精选混合-买入")
+        assert "混合" in result["normalized_name"]
 
 
 # ── Name normalization ─────────────────────────────────────────────────
@@ -213,14 +261,17 @@ class TestScoreCandidate:
 
 
 class TestShouldAutoVerify:
-    """Test auto-verify decision logic."""
+    """Test auto-verify decision logic.
+
+    M7.16: Auto-verify now requires an exact universe match reason.
+    """
 
     def test_single_high_confidence(self):
         cands = [
             FundIdentityCandidate(
                 fund_code="110011", fund_name="易方达蓝筹精选混合A",
                 match_score=0.95, match_bucket=BUCKET_HIGH,
-                match_reasons=["high_name_similarity"], risk_flags=[],
+                match_reasons=[EXACT_FUND_UNIVERSE_NAME_MATCH], risk_flags=[],
                 identity_token_overlap=0.8,
             ),
         ]
@@ -233,13 +284,13 @@ class TestShouldAutoVerify:
             FundIdentityCandidate(
                 fund_code="110011", fund_name="易方达蓝筹精选混合A",
                 match_score=0.90, match_bucket=BUCKET_HIGH,
-                match_reasons=["high_name_similarity"], risk_flags=[],
+                match_reasons=[EXACT_FUND_UNIVERSE_NAME_MATCH], risk_flags=[],
                 identity_token_overlap=0.8,
             ),
             FundIdentityCandidate(
                 fund_code="110012", fund_name="易方达蓝筹精选混合C",
                 match_score=0.80, match_bucket=BUCKET_MEDIUM,
-                match_reasons=["medium_name_similarity"], risk_flags=[],
+                match_reasons=[EXACT_FUND_UNIVERSE_NAME_MATCH], risk_flags=[],
                 identity_token_overlap=0.7,
             ),
         ]
@@ -252,7 +303,7 @@ class TestShouldAutoVerify:
             FundIdentityCandidate(
                 fund_code="110011", fund_name="某基金",
                 match_score=0.70, match_bucket=BUCKET_MEDIUM,
-                match_reasons=["medium_name_similarity"], risk_flags=[],
+                match_reasons=[EXACT_FUND_UNIVERSE_NAME_MATCH], risk_flags=[],
                 identity_token_overlap=0.8,
             ),
         ]
@@ -265,7 +316,7 @@ class TestShouldAutoVerify:
             FundIdentityCandidate(
                 fund_code="110011", fund_name="易方达蓝筹精选混合A",
                 match_score=0.95, match_bucket=BUCKET_HIGH,
-                match_reasons=["high_name_similarity"],
+                match_reasons=[EXACT_FUND_UNIVERSE_NAME_MATCH],
                 risk_flags=["share_class_mismatch"],
                 identity_token_overlap=0.8,
             ),
@@ -279,7 +330,7 @@ class TestShouldAutoVerify:
             FundIdentityCandidate(
                 fund_code="abc", fund_name="某基金",
                 match_score=0.95, match_bucket=BUCKET_HIGH,
-                match_reasons=["exact_normalized_match"], risk_flags=[],
+                match_reasons=[EXACT_FUND_UNIVERSE_NAME_MATCH], risk_flags=[],
             ),
         ]
         ok, reason = should_auto_verify(cands)
@@ -291,7 +342,7 @@ class TestShouldAutoVerify:
             FundIdentityCandidate(
                 fund_code="110011", fund_name="",
                 match_score=0.95, match_bucket=BUCKET_HIGH,
-                match_reasons=["exact_normalized_match"], risk_flags=[],
+                match_reasons=[EXACT_FUND_UNIVERSE_NAME_MATCH], risk_flags=[],
             ),
         ]
         ok, reason = should_auto_verify(cands)
@@ -303,7 +354,7 @@ class TestShouldAutoVerify:
             FundIdentityCandidate(
                 fund_code="110011", fund_name="某基金",
                 match_score=0.86, match_bucket=BUCKET_MEDIUM,
-                match_reasons=["medium_name_similarity"], risk_flags=[],
+                match_reasons=[EXACT_FUND_UNIVERSE_NAME_MATCH], risk_flags=[],
                 identity_token_overlap=0.8,
             ),
         ]
@@ -321,7 +372,7 @@ class TestShouldAutoVerify:
             FundIdentityCandidate(
                 fund_code="110011", fund_name="某QDII基金A",
                 match_score=0.90, match_bucket=BUCKET_HIGH,
-                match_reasons=["high_name_similarity"],
+                match_reasons=[EXACT_FUND_UNIVERSE_NAME_MATCH],
                 risk_flags=["qdii_mismatch"],
                 identity_token_overlap=0.8,
             ),
@@ -335,7 +386,7 @@ class TestShouldAutoVerify:
             FundIdentityCandidate(
                 fund_code="110011", fund_name="某ETF联接A",
                 match_score=0.90, match_bucket=BUCKET_HIGH,
-                match_reasons=["high_name_similarity"],
+                match_reasons=[EXACT_FUND_UNIVERSE_NAME_MATCH],
                 risk_flags=["etf_link_mismatch"],
                 identity_token_overlap=0.8,
             ),
@@ -405,7 +456,7 @@ class TestComputeDiscoverySummary:
                 FundIdentityCandidate(
                     fund_code="000001", fund_name="基金A",
                     match_score=0.95, match_bucket=BUCKET_EXACT,
-                    match_reasons=["exact_normalized_match"], risk_flags=[],
+                    match_reasons=[EXACT_FUND_UNIVERSE_NAME_MATCH], risk_flags=[],
                     identity_token_overlap=0.9,
                 ),
             ],

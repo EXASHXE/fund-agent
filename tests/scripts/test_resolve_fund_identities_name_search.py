@@ -92,8 +92,9 @@ class TestResolveFundIdentitiesNameSearch:
                     fund_name="易方达蓝筹精选混合A",
                     match_score=1.0,
                     match_bucket=BUCKET_EXACT,
-                    match_reasons=["exact_normalized_match"],
+                    match_reasons=["exact_fund_universe_name_match"],
                     risk_flags=[],
+                    identity_token_overlap=0.9,
                 ),
             ],
         })
@@ -300,8 +301,9 @@ class TestResolveFundIdentitiesNameSearch:
                     fund_name="华夏沪深300ETF联接C",
                     match_score=0.95,
                     match_bucket=BUCKET_HIGH,
-                    match_reasons=["high_name_similarity"],
+                    match_reasons=["exact_fund_universe_name_match"],
                     risk_flags=[],
+                    identity_token_overlap=0.9,
                 ),
             ],
             "易方达蓝筹精选混合A": [
@@ -310,8 +312,9 @@ class TestResolveFundIdentitiesNameSearch:
                     fund_name="易方达蓝筹精选混合A",
                     match_score=0.95,
                     match_bucket=BUCKET_HIGH,
-                    match_reasons=["high_name_similarity"],
+                    match_reasons=["exact_fund_universe_name_match"],
                     risk_flags=[],
+                    identity_token_overlap=0.9,
                 ),
             ],
         })

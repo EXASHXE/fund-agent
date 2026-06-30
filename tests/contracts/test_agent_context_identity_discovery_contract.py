@@ -27,6 +27,7 @@ from src.tools.portfolio.fund_identity_candidate_discovery import (
     score_candidate,
     should_auto_verify,
     BUCKET_MISMATCH,
+    EXACT_FUND_UNIVERSE_NAME_MATCH,
 )
 
 
@@ -339,6 +340,7 @@ class TestM715ShouldAutoVerifyContract:
             hard_reject=False,
             critical_token_mismatch=[],
             identity_token_overlap=0.8,
+            match_reasons=[EXACT_FUND_UNIVERSE_NAME_MATCH],
         )
         can_verify, reason = should_auto_verify([c])
         assert can_verify is True
@@ -373,3 +375,93 @@ class TestM715ApplyHardRejectContract:
         if not result.hard_reject:
             assert result.candidate_status == "accepted_candidate"
             assert result.reject_reasons == []
+
+
+# ── M7.16: Exact fund universe reverse lookup contract ──────────────────
+
+
+class TestM716ExactLookupContract:
+    """M7.16: Agent context must include exact lookup diagnostics."""
+
+    def test_exact_lookup_diagnostics_in_context(self):
+        summary = {
+            "personal_health_report": {
+                "overall_status": "partial",
+                "confidence_level": "medium",
+                "reason_codes": ["identity_unverified"],
+            },
+            "name_search_provider_diagnostics": {
+                "name_search_provider_type": "akshare",
+                "name_search_provider_status": "available",
+                "fund_universe_size": 12000,
+                "exact_full_name_match_count": 5,
+                "exact_without_punctuation_match_count": 2,
+                "core_share_class_match_count": 1,
+                "fuzzy_fallback_count": 3,
+                "search_strategy_used": "exact_full_name",
+            },
+            "identity_resolution": {
+                "exact_lookup_failed_count": 2,
+                "fuzzy_candidate_count": 3,
+                "hard_rejected_candidate_count": 1,
+            },
+            "holdings_snapshot": {"loaded": False},
+        }
+        context = build_agent_context(summary, run_id="test")
+        ns_diag = context["name_search_diagnostics"]
+        assert ns_diag.get("fund_universe_size") == 12000
+        assert ns_diag.get("exact_full_name_match_count") == 5
+        assert ns_diag.get("exact_without_punctuation_match_count") == 2
+        assert ns_diag.get("core_share_class_match_count") == 1
+        assert ns_diag.get("fuzzy_fallback_count") == 3
+        assert ns_diag.get("exact_lookup_failed_count") == 2
+
+    def test_exact_match_reason_required_for_auto_verify(self):
+        """M7.16: should_auto_verify must require exact match reason."""
+        from src.tools.portfolio.fund_identity_candidate_discovery import (
+            EXACT_FUND_UNIVERSE_NAME_MATCH,
+        )
+        # Without exact match reason → no auto-verify
+        c_no_exact = _make_candidate(
+            fund_code="000001", fund_name="Test Fund",
+            match_score=0.95, match_bucket="high",
+            hard_reject=False, identity_token_overlap=0.8,
+            match_reasons=["high_name_similarity"],
+        )
+        ok, reason = should_auto_verify([c_no_exact])
+        assert not ok
+        assert "no_exact_universe_match_reason" in reason
+
+        # With exact match reason → auto-verify
+        c_exact = _make_candidate(
+            fund_code="000001", fund_name="Test Fund",
+            match_score=0.95, match_bucket="high",
+            hard_reject=False, identity_token_overlap=0.8,
+            match_reasons=[EXACT_FUND_UNIVERSE_NAME_MATCH],
+        )
+        ok, reason = should_auto_verify([c_exact])
+        assert ok
+        assert reason == "auto_verified"
+
+    def test_non_exact_candidate_codes_not_in_public_context(self):
+        """M7.16: Non-exact candidate codes must not appear in public agent context."""
+        summary = {
+            "personal_health_report": {
+                "overall_status": "partial",
+                "confidence_level": "low",
+                "reason_codes": ["identity_unverified"],
+            },
+            "confirmed_portfolio": {
+                "positions": [
+                    {
+                        "fund_code": "000001",
+                        "identity_verification_status": "name_search_candidate_unverified",
+                    },
+                ],
+            },
+            "holdings_snapshot": {"loaded": False},
+        }
+        context = build_agent_context(summary, run_id="test")
+        # Verify no fund codes leak into safe-to-analyze or other public fields
+        context_str = str(context.get("safe_to_analyze", []))
+        assert "000001" not in context_str

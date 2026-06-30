@@ -96,7 +96,7 @@ def generate_fixit_package(
             "identity_verification_status": pos.get("identity_verification_status", ""),
         })
 
-    # M7.11: Identity candidates from name search
+    # M7.11/M7.16: Identity candidates from name search
     if identity_resolutions:
         for res in identity_resolutions:
             ivs = res.get("identity_verification_status", "")
@@ -114,11 +114,30 @@ def generate_fixit_package(
                     "suggested_fund_name": "",
                     "match_score": "",
                     "match_bucket": "",
+                    "match_strategy": "",
+                    "candidate_status": "",
+                    "not_for_verification": "",
+                    "reject_reasons": "",
                     "verified_by_user": "",
                     "verification_source": "",
                 })
                 # Add candidate codes from name search
                 for cand in res.get("name_search_candidates", []):
+                    # M7.16: Determine if candidate is exact match or fuzzy
+                    match_reasons = cand.get("match_reasons", [])
+                    is_exact = any(
+                        r in match_reasons
+                        for r in (
+                            "exact_fund_universe_name_match",
+                            "exact_fund_universe_name_without_punctuation_match",
+                            "exact_core_name_and_share_class_match",
+                        )
+                    )
+                    candidate_status = cand.get("candidate_status", "accepted_candidate")
+                    match_strategy = "exact" if is_exact else "fuzzy"
+                    not_for_verification = "" if is_exact else "yes"
+                    reject_reasons_str = ",".join(cand.get("reject_reasons", []))
+
                     identity_candidate_rows.append({
                         "raw_fund_name": raw_name,
                         "normalized_name": res.get("normalized_name", ""),
@@ -129,6 +148,10 @@ def generate_fixit_package(
                         "suggested_fund_name": cand.get("fund_name", ""),
                         "match_score": cand.get("match_score", ""),
                         "match_bucket": cand.get("match_bucket", ""),
+                        "match_strategy": match_strategy,
+                        "candidate_status": candidate_status,
+                        "not_for_verification": not_for_verification,
+                        "reject_reasons": reject_reasons_str,
                         "verified_by_user": "",
                         "verification_source": "",
                     })

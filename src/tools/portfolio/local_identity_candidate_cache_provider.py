@@ -32,6 +32,7 @@ from pathlib import Path
 from typing import Any
 
 from src.tools.portfolio.fund_identity_candidate_discovery import (
+    EXACT_LOCAL_CACHE_NAME_MATCH,
     FundIdentityCandidate,
     FundIdentitySearchProvider,
     normalize_fund_name_for_search,
@@ -122,6 +123,8 @@ class LocalIdentityCandidateCacheProvider:
                 fund_type=row.get("fund_type", "").strip(),
                 share_class=row.get("share_class", "").strip(),
                 source="local_identity_candidate_cache",
+                match_reasons=[EXACT_LOCAL_CACHE_NAME_MATCH],
+                match_score=1.0,
             )
 
             self._cache.setdefault(norm_name, []).append(candidate)
@@ -180,6 +183,8 @@ class LocalIdentityCandidateCacheProvider:
                 fund_type=fund_type,
                 share_class=share_class,
                 source="local_identity_candidate_cache",
+                match_reasons=[EXACT_LOCAL_CACHE_NAME_MATCH],
+                match_score=1.0,
             )
 
             self._cache.setdefault(norm_name, []).append(candidate)
@@ -209,6 +214,8 @@ class LocalIdentityCandidateCacheProvider:
                 fund_type=entry.get("fund_type", "").strip(),
                 share_class=entry.get("share_class", "").strip(),
                 source="local_identity_candidate_cache",
+                match_reasons=[EXACT_LOCAL_CACHE_NAME_MATCH],
+                match_score=1.0,
             )
 
             self._cache.setdefault(norm_name, []).append(candidate)

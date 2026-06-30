@@ -296,12 +296,24 @@ def build_agent_context(
             name_search_diag["providers_succeeded"] = ns_provider.get("providers_succeeded", [])
             name_search_diag["providers_failed"] = ns_provider.get("providers_failed", [])
             name_search_diag["fallback_used"] = ns_provider.get("fallback_used", False)
+        # M7.16: Exact lookup diagnostics
+        if ns_provider.get("fund_universe_size") is not None:
+            name_search_diag["fund_universe_size"] = ns_provider.get("fund_universe_size", 0)
+            name_search_diag["exact_full_name_match_count"] = ns_provider.get("exact_full_name_match_count", 0)
+            name_search_diag["exact_without_punctuation_match_count"] = ns_provider.get("exact_without_punctuation_match_count", 0)
+            name_search_diag["core_share_class_match_count"] = ns_provider.get("core_share_class_match_count", 0)
+            name_search_diag["fuzzy_fallback_count"] = ns_provider.get("fuzzy_fallback_count", 0)
+            name_search_diag["search_strategy_used"] = ns_provider.get("search_strategy_used", "")
     # Also extract from identity resolution summary
     id_summary = _as_dict(summary.get("identity_resolution"))
     if id_summary:
         name_search_diag["name_search_enabled"] = id_summary.get("name_search_enabled", False)
         name_search_diag["name_search_auto_verified_count"] = id_summary.get("name_search_auto_verified_count", 0)
         name_search_diag["name_search_candidate_unverified_count"] = id_summary.get("name_search_candidate_unverified_count", 0)
+        # M7.16: Exact lookup summary from identity resolution
+        name_search_diag["exact_lookup_failed_count"] = id_summary.get("exact_lookup_failed_count", 0)
+        name_search_diag["fuzzy_candidate_count"] = id_summary.get("fuzzy_candidate_count", 0)
+        name_search_diag["hard_rejected_candidate_count"] = id_summary.get("hard_rejected_candidate_count", 0)
     # M7.13: Local cache diagnostics
     local_cache_diag = _as_dict(summary.get("local_cache_diagnostics"))
     if local_cache_diag:
@@ -416,6 +428,29 @@ def render_agent_context_markdown(context: Mapping[str, Any]) -> str:
     for c in context.get("safety_constraints", []):
         lines.append(f"- {c}")
     lines.append("")
+
+    # ── M7.16: Exact lookup diagnostics ──────────────────────────────
+    ns_diag = _as_dict(context.get("name_search_diagnostics"))
+    if ns_diag and ns_diag.get("fund_universe_size") is not None:
+        lines.append("## Exact Lookup Diagnostics")
+        lines.append("")
+        lines.append(f"- **Fund universe size:** {ns_diag.get('fund_universe_size', 0)}")
+        lines.append(f"- **Exact full name match count:** {ns_diag.get('exact_full_name_match_count', 0)}")
+        lines.append(f"- **Exact without punctuation match count:** {ns_diag.get('exact_without_punctuation_match_count', 0)}")
+        lines.append(f"- **Core share class match count:** {ns_diag.get('core_share_class_match_count', 0)}")
+        lines.append(f"- **Fuzzy fallback count:** {ns_diag.get('fuzzy_fallback_count', 0)}")
+        lines.append(f"- **Exact lookup failed count:** {ns_diag.get('exact_lookup_failed_count', 0)}")
+        lines.append(f"- **Fuzzy candidate count:** {ns_diag.get('fuzzy_candidate_count', 0)}")
+        lines.append(f"- **Hard rejected candidate count:** {ns_diag.get('hard_rejected_candidate_count', 0)}")
+        lines.append(f"- **Last search strategy:** {ns_diag.get('search_strategy_used', '')}")
+        lines.append("")
+        # M7.16: Non-exact candidate codes are NOT displayed in public output
+        fuzzy_count = ns_diag.get('fuzzy_candidate_count', 0)
+        exact_failed = ns_diag.get('exact_lookup_failed_count', 0)
+        if fuzzy_count > 0 or exact_failed > 0:
+            lines.append("> **M7.16:** Non-exact candidate codes are not displayed in public output.")
+            lines.append("> Please check fixit/identity_candidates.private.csv for candidate details.")
+            lines.append("")
 
     return "\n".join(lines)
 
