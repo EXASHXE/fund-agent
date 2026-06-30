@@ -71,6 +71,10 @@ bin/fund-agent-personal-run \
   Equivalent to `--no-skip-akshare`. Do NOT pass `--skip-akshare` with real_analysis.
 - `--skip-news` remains on — news requires explicit user request.
 - `--generate-fixit-package` creates data completion templates.
+- `--enable-name-search` and `--enable-transaction-derived-valuation` are
+  **auto-enabled** for `real_analysis` mode when `private_data/` exists.
+  The user does NOT need to pass these explicitly — they are core capabilities
+  for the only-Alipay scenario (no holdings snapshot, no fund codes).
 - If the user specifies a different data directory, replace `--private-data-dir`.
 - If the user does not specify a directory, try `private_data` first; if it does not
   exist, ask the user.

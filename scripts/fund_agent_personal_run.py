@@ -166,6 +166,7 @@ def _build_run_manifest(
     health: dict[str, Any],
     execution_mode: str = "real_analysis",
     enable_name_search: bool = False,
+    enable_transaction_derived_valuation: bool = False,
     e2e_summary: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     # M7.12+M7.13: Extract name search diagnostics from e2e_summary
@@ -238,6 +239,7 @@ def _build_run_manifest(
             "skip_news": skip_news,
             "transaction_source": transaction_source,
             "enable_name_search": enable_name_search,
+                "enable_transaction_derived_valuation": enable_transaction_derived_valuation,
         },
         "name_search_diagnostics": name_search_diag,
         "canonical_entrypoint": True,
@@ -341,6 +343,17 @@ def run_personal(args: argparse.Namespace) -> int:
     run_id = args.run_id or _generate_run_id()
     private_data = Path(args.private_data_dir) if args.private_data_dir else REPO_ROOT / "private_data"
     output_dir = Path(args.output_dir) if args.output_dir else REPO_ROOT / "local_reports"
+
+    # ── M7.14: Auto-enable name search and transaction-derived valuation ──
+    # For real_analysis with Alipay CSV data, these are core capabilities
+    # that should not require the user to know about them.
+    if execution_mode == "real_analysis" and private_data.is_dir():
+        # Auto-enable name search if not explicitly disabled
+        if not getattr(args, "enable_name_search", False):
+            args.enable_name_search = True
+        # Auto-enable transaction-derived valuation if not explicitly disabled
+        if not getattr(args, "enable_transaction_derived_valuation", False):
+            args.enable_transaction_derived_valuation = True
     run_dir = output_dir / run_id
 
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -537,6 +550,7 @@ def run_personal(args: argparse.Namespace) -> int:
         health=health,
         execution_mode=execution_mode,
         enable_name_search=getattr(args, "enable_name_search", False),
+        enable_transaction_derived_valuation=getattr(args, "enable_transaction_derived_valuation", False),
         e2e_summary=e2e_summary,
     )
     _write_json(run_dir / "run_manifest.json", manifest)

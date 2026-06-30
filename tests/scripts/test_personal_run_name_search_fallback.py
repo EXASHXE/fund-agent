@@ -8,6 +8,7 @@ Validates:
 5. local cache diagnostics in e2e_summary
 6. M7.14: minimal cache template generated alongside full template
 7. M7.14: minimal template contains raw_fund_name and blank fund_code
+8. M7.14: short prompt auto-enables name search and transaction-derived valuation
 """
 from __future__ import annotations
 
@@ -367,3 +368,58 @@ class TestM714MinimalCacheTemplate:
 
         minimal_path = fixit_dir / "identity_candidate_cache_minimal.private.csv"
         assert not minimal_path.exists()
+
+
+class TestM714ShortPromptAutoEnables:
+    """M7.14: Short prompt must auto-enable name search and transaction-derived valuation."""
+
+    def test_short_prompt_auto_enables_name_search(self):
+        """When real_analysis + private_data exists, name search must be auto-enabled."""
+        from scripts.fund_agent_personal_run import _build_run_manifest
+
+        e2e_summary = {
+            "name_search_provider_diagnostics": {
+                "provider_chain_enabled": True,
+                "providers_attempted": ["akshare"],
+                "providers_succeeded": [],
+                "providers_failed": ["akshare"],
+            },
+        }
+        manifest = _build_run_manifest(
+            run_id="test",
+            doctor_ok=True,
+            e2e_status="failed",
+            artifacts={},
+            skip_akshare=False,
+            skip_news=True,
+            transaction_source="auto",
+            private_data_configured=True,
+            health={"overall_status": "needs_data", "confidence_level": "unavailable", "reason_codes": []},
+            execution_mode="real_analysis",
+            enable_name_search=True,
+            enable_transaction_derived_valuation=True,
+            e2e_summary=e2e_summary,
+        )
+        assert manifest["flags"]["enable_name_search"] is True
+        assert manifest["flags"]["enable_transaction_derived_valuation"] is True
+
+    def test_run_manifest_includes_transaction_derived_valuation_flag(self):
+        """run_manifest must record enable_transaction_derived_valuation flag."""
+        from scripts.fund_agent_personal_run import _build_run_manifest
+
+        manifest = _build_run_manifest(
+            run_id="test",
+            doctor_ok=True,
+            e2e_status="ok",
+            artifacts={},
+            skip_akshare=False,
+            skip_news=True,
+            transaction_source="auto",
+            private_data_configured=True,
+            health={"overall_status": "ok", "confidence_level": "high", "reason_codes": []},
+            execution_mode="real_analysis",
+            enable_name_search=True,
+            enable_transaction_derived_valuation=True,
+        )
+        assert "enable_transaction_derived_valuation" in manifest["flags"]
+        assert manifest["flags"]["enable_transaction_derived_valuation"] is True
