@@ -495,6 +495,10 @@ def resolve_fund_identities(
         },
     }
 
+    # M7.17: Exact lookup audit (desensitized)
+    from src.tools.portfolio.fund_identity_candidate_discovery import compute_exact_lookup_audit
+    summary["identity_exact_lookup_audit"] = compute_exact_lookup_audit(resolutions)
+
     return {
         "schema_version": "fund_identity_resolution.v2",
         "generated_at": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
