@@ -1,10 +1,13 @@
-"""Tests for M7.13/M7.14/M7.15 agent context identity discovery contract.
+"""Tests for M7.13/M7.14/M7.15/M7.17 agent context identity discovery contract.
 
 Validates that agent_context correctly includes provider chain diagnostics,
 local cache info, new reason codes, and M7.14 minimal cache template guidance.
 
 M7.15: Validates FundIdentityCandidate M7.15 fields, discovery pipeline
 contract shape, and should_auto_verify hard-reject/token-overlap gates.
+
+M7.17: Validates exact lookup audit summary contract, normalization
+equivalence, and tiered identity_token_overlap requirements.
 """
 from __future__ import annotations
 
@@ -19,15 +22,20 @@ from src.tools.portfolio.agent_context import (
     build_agent_context,
 )
 from src.tools.portfolio.fund_identity_candidate_discovery import (
+    BUCKET_EXACT,
+    BUCKET_MISMATCH,
+    EXACT_CORE_NAME_AND_SHARE_CLASS_MATCH,
+    EXACT_FUND_UNIVERSE_NAME_MATCH,
+    EXACT_FUND_UNIVERSE_NAME_WITHOUT_PUNCTUATION_MATCH,
+    EXACT_LOCAL_CACHE_NAME_MATCH,
     FundIdentityCandidate,
     NullFundIdentitySearchProvider,
     apply_hard_reject,
     compute_discovery_summary,
+    compute_exact_lookup_audit,
     discover_candidates,
     score_candidate,
     should_auto_verify,
-    BUCKET_MISMATCH,
-    EXACT_FUND_UNIVERSE_NAME_MATCH,
 )
 
 
@@ -328,6 +336,7 @@ class TestM715ShouldAutoVerifyContract:
             hard_reject=False,
             critical_token_mismatch=[],
             identity_token_overlap=0.0,
+            match_reasons=[EXACT_CORE_NAME_AND_SHARE_CLASS_MATCH],
         )
         can_verify, reason = should_auto_verify([c])
         assert can_verify is False
@@ -465,3 +474,151 @@ class TestM716ExactLookupContract:
         # Verify no fund codes leak into safe-to-analyze or other public fields
         context_str = str(context.get("safe_to_analyze", []))
         assert "000001" not in context_str
+
+
+# ── M7.17: Exact lookup audit contract ─────────────────────────────────────
+
+
+class TestM717ExactLookupAuditContract:
+    """M7.17: compute_exact_lookup_audit must return correct contract shape."""
+
+    def test_audit_has_required_keys(self):
+        resolutions = [
+            {
+                "resolved_fund_code": "110011",
+                "resolution_source": "name_search_auto_verified",
+                "identity_verification_status": "provider_verified",
+                "name_search_candidates": [
+                    {
+                        "fund_code": "110011",
+                        "fund_name": "Test",
+                        "match_score": 1.0,
+                        "match_bucket": BUCKET_EXACT,
+                        "match_reasons": [EXACT_FUND_UNIVERSE_NAME_MATCH],
+                        "source": "akshare_fund_universe_exact",
+                        "hard_reject": False,
+                        "critical_token_mismatch": [],
+                        "identity_token_overlap": 0.9,
+                        "risk_flags": [],
+                    },
+                ],
+            },
+        ]
+        audit = compute_exact_lookup_audit(resolutions)
+        required_keys = {
+            "auto_verified_total",
+            "auto_verified_by_match_reason",
+            "blocked_by_reason",
+            "candidate_source_counts",
+            "non_exact_auto_verified_count",
+            "fuzzy_auto_verified_count",
+            "public_candidate_code_leak_count",
+        }
+        assert required_keys.issubset(set(audit.keys()))
+
+    def test_non_exact_auto_verified_count_always_zero(self):
+        """non_exact_auto_verified_count must be 0 for any valid input."""
+        resolutions = [
+            {
+                "resolved_fund_code": "110011",
+                "resolution_source": "name_search_auto_verified",
+                "identity_verification_status": "provider_verified",
+                "name_search_candidates": [
+                    {
+                        "fund_code": "110011",
+                        "fund_name": "Test",
+                        "match_score": 1.0,
+                        "match_bucket": BUCKET_EXACT,
+                        "match_reasons": [EXACT_FUND_UNIVERSE_NAME_MATCH],
+                        "source": "akshare_fund_universe_exact",
+                        "hard_reject": False,
+                        "critical_token_mismatch": [],
+                        "identity_token_overlap": 0.9,
+                        "risk_flags": [],
+                    },
+                ],
+            },
+        ]
+        audit = compute_exact_lookup_audit(resolutions)
+        assert audit["non_exact_auto_verified_count"] == 0
+        assert audit["fuzzy_auto_verified_count"] == 0
+
+
+class TestM717TieredIdentityTokenOverlapContract:
+    """M7.17: should_auto_verify must apply tiered identity_token_overlap requirements."""
+
+    def test_exact_full_name_no_tokens_auto_verifies(self):
+        c = FundIdentityCandidate(
+            fund_code="000001", fund_name="Test Fund",
+            match_score=1.0, match_bucket=BUCKET_EXACT,
+            hard_reject=False, identity_token_overlap=0.0,
+            match_reasons=[EXACT_FUND_UNIVERSE_NAME_MATCH],
+        )
+        ok, reason = should_auto_verify([c])
+        assert ok
+        assert reason == "auto_verified"
+
+    def test_exact_without_punctuation_no_tokens_auto_verifies(self):
+        c = FundIdentityCandidate(
+            fund_code="000001", fund_name="Test Fund",
+            match_score=0.98, match_bucket=BUCKET_EXACT,
+            hard_reject=False, identity_token_overlap=0.0,
+            match_reasons=[EXACT_FUND_UNIVERSE_NAME_WITHOUT_PUNCTUATION_MATCH],
+        )
+        ok, reason = should_auto_verify([c])
+        assert ok
+        assert reason == "auto_verified"
+
+    def test_core_share_class_no_tokens_does_not_auto_verify(self):
+        c = FundIdentityCandidate(
+            fund_code="000001", fund_name="Test Fund",
+            match_score=0.96, match_bucket=BUCKET_EXACT,
+            hard_reject=False, identity_token_overlap=0.0,
+            match_reasons=[EXACT_CORE_NAME_AND_SHARE_CLASS_MATCH],
+        )
+        ok, reason = should_auto_verify([c])
+        assert not ok
+        assert "no_identity_token_overlap" in reason
+
+    def test_local_cache_no_tokens_does_not_auto_verify(self):
+        c = FundIdentityCandidate(
+            fund_code="000001", fund_name="Test Fund",
+            match_score=1.0, match_bucket=BUCKET_EXACT,
+            hard_reject=False, identity_token_overlap=0.0,
+            match_reasons=[EXACT_LOCAL_CACHE_NAME_MATCH],
+        )
+        ok, reason = should_auto_verify([c])
+        assert not ok
+        assert "no_identity_token_overlap" in reason
+
+    def test_fuzzy_high_score_stays_unverified(self):
+        c = FundIdentityCandidate(
+            fund_code="000001", fund_name="Test Fund",
+            match_score=0.95, match_bucket=BUCKET_EXACT,
+            hard_reject=False, identity_token_overlap=0.9,
+            match_reasons=["fuzzy_fallback"],
+        )
+        ok, reason = should_auto_verify([c])
+        assert not ok
+        assert "no_exact_universe_match_reason" in reason
+
+
+class TestM717NormalizationEquivalenceContract:
+    """M7.17: Query-side and universe-side normalization must be equivalent."""
+
+    def test_normalization_functions_produce_same_result(self):
+        from src.tools.portfolio.fund_identity_candidate_discovery import (
+            normalize_fund_name_for_search,
+        )
+        from src.tools.portfolio.fund_universe_identity_lookup import (
+            normalize_fund_name_for_universe_index,
+        )
+        test_names = [
+            "易方达蓝筹精选混合A",
+            "华夏沪深300ETF联接C",
+            "交银中证海外中国互联网指数（QDII-FOF）A",
+        ]
+        for name in test_names:
+            q = normalize_fund_name_for_search(name)
+            u = normalize_fund_name_for_universe_index(name)
+            assert q == u, f"Normalization mismatch for '{name}': query='{q}' vs universe='{u}'"

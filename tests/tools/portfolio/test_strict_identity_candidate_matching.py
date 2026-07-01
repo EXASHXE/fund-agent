@@ -182,6 +182,7 @@ class TestHardRejectBlocksAutoVerify:
         assert "critical_token_mismatch" in reason
 
     def test_no_identity_token_overlap_prevents_auto_verify(self):
+        from src.tools.portfolio.fund_identity_candidate_discovery import EXACT_CORE_NAME_AND_SHARE_CLASS_MATCH
         c = FundIdentityCandidate(
             fund_code="000217",
             fund_name="华安黄金ETF联接C",
@@ -190,6 +191,7 @@ class TestHardRejectBlocksAutoVerify:
             hard_reject=False,
             critical_token_mismatch=[],
             identity_token_overlap=0.0,
+            match_reasons=[EXACT_CORE_NAME_AND_SHARE_CLASS_MATCH],
         )
         can_verify, reason = should_auto_verify([c])
         assert can_verify is False

@@ -1,12 +1,18 @@
-"""Tests for M7.16 name search auto-verify gate.
+"""Tests for M7.16/M7.17 name search auto-verify gate.
 
 Validates:
 1. Exact universe match auto-verifies
 2. Exact without punctuation auto-verifies
-3. Core share class exact auto-verifies
+3. Core share class exact auto-verifies (with identity_token_overlap)
 4. Fuzzy high score does NOT auto-verify
 5. LCS high score does NOT auto-verify
 6. Substring match does NOT auto-verify
+
+M7.17 additions:
+7. exact_full_name can auto-verify WITHOUT identity_token_overlap
+8. exact_without_punctuation can auto-verify WITHOUT identity_token_overlap
+9. core_share_class REQUIRES identity_token_overlap > 0
+10. local_cache REQUIRES identity_token_overlap > 0
 """
 from __future__ import annotations
 
@@ -16,10 +22,11 @@ from src.tools.portfolio.fund_identity_candidate_discovery import (
     BUCKET_EXACT,
     BUCKET_HIGH,
     BUCKET_MEDIUM,
-    FundIdentityCandidate,
     EXACT_CORE_NAME_AND_SHARE_CLASS_MATCH,
     EXACT_FUND_UNIVERSE_NAME_MATCH,
     EXACT_FUND_UNIVERSE_NAME_WITHOUT_PUNCTUATION_MATCH,
+    EXACT_LOCAL_CACHE_NAME_MATCH,
+    FundIdentityCandidate,
     should_auto_verify,
 )
 
@@ -163,11 +170,74 @@ class TestAutoVerifyStillRequiresOtherChecks:
         assert not ok
         assert "risk_flag:share_class_mismatch" in reason
 
-    def test_no_identity_token_overlap_blocks_even_with_exact_reason(self):
+
+class TestM717IdentityTokenOverlapRequirements:
+    """M7.17: Different exact match levels have different identity_token_overlap requirements."""
+
+    def test_exact_full_name_no_tokens_still_auto_verifies(self):
+        """exact_fund_universe_name_match can auto-verify WITHOUT identity_token_overlap."""
         cands = [_make_candidate(
             match_reasons=[EXACT_FUND_UNIVERSE_NAME_MATCH],
             identity_token_overlap=0.0,
         )]
         ok, reason = should_auto_verify(cands)
+        assert ok, f"Expected auto-verify for exact_full_name without tokens, got: {reason}"
+
+    def test_exact_without_punctuation_no_tokens_still_auto_verifies(self):
+        """exact_without_punctuation can auto-verify WITHOUT identity_token_overlap."""
+        cands = [_make_candidate(
+            match_reasons=[EXACT_FUND_UNIVERSE_NAME_WITHOUT_PUNCTUATION_MATCH],
+            identity_token_overlap=0.0,
+        )]
+        ok, reason = should_auto_verify(cands)
+        assert ok, f"Expected auto-verify for exact_without_punctuation without tokens, got: {reason}"
+
+    def test_core_share_class_no_tokens_does_not_auto_verify(self):
+        """core_share_class REQUIRES identity_token_overlap > 0."""
+        cands = [_make_candidate(
+            match_reasons=[EXACT_CORE_NAME_AND_SHARE_CLASS_MATCH],
+            identity_token_overlap=0.0,
+        )]
+        ok, reason = should_auto_verify(cands)
         assert not ok
         assert "no_identity_token_overlap" in reason
+
+    def test_local_cache_no_tokens_does_not_auto_verify(self):
+        """local_cache REQUIRES identity_token_overlap > 0."""
+        cands = [_make_candidate(
+            match_reasons=[EXACT_LOCAL_CACHE_NAME_MATCH],
+            identity_token_overlap=0.0,
+        )]
+        ok, reason = should_auto_verify(cands)
+        assert not ok
+        assert "no_identity_token_overlap" in reason
+
+    def test_core_share_class_with_tokens_auto_verifies(self):
+        """core_share_class WITH identity_token_overlap > 0 auto-verifies."""
+        cands = [_make_candidate(
+            match_reasons=[EXACT_CORE_NAME_AND_SHARE_CLASS_MATCH],
+            identity_token_overlap=0.8,
+        )]
+        ok, reason = should_auto_verify(cands)
+        assert ok, f"Expected auto-verify for core_share_class with tokens, got: {reason}"
+
+    def test_local_cache_with_tokens_auto_verifies(self):
+        """local_cache WITH identity_token_overlap > 0 auto-verifies."""
+        cands = [_make_candidate(
+            match_reasons=[EXACT_LOCAL_CACHE_NAME_MATCH],
+            identity_token_overlap=0.8,
+        )]
+        ok, reason = should_auto_verify(cands)
+        assert ok, f"Expected auto-verify for local_cache with tokens, got: {reason}"
+
+    def test_fuzzy_high_score_stays_unverified(self):
+        """Fuzzy high score with tokens still does NOT auto-verify."""
+        cands = [_make_candidate(
+            match_reasons=["fuzzy_fallback"],
+            match_score=0.95,
+            match_bucket=BUCKET_HIGH,
+            identity_token_overlap=0.9,
+        )]
+        ok, reason = should_auto_verify(cands)
+        assert not ok
+        assert "no_exact_universe_match_reason" in reason
