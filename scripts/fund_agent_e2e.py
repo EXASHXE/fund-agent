@@ -263,6 +263,14 @@ def _resolve_identities_with_name_search(
     # M7.13: Build provider chain
     providers = []
 
+    # M7.18: Load expected oracle entries (diagnostic only)
+    expected_oracle_entries = None
+    if private_data_dir and private_data_dir.is_dir():
+        oracle_path = private_data_dir / "expected_fund_identity_map.private.csv"
+        if oracle_path.exists():
+            from src.tools.portfolio.identity_oracle_diagnostics import load_expected_identity_map
+            expected_oracle_entries = load_expected_identity_map(oracle_path)
+
     # 1. Local cache provider (if cache file exists)
     local_cache_provider = None
     local_cache_path = None
@@ -295,6 +303,7 @@ def _resolve_identities_with_name_search(
             override_lookup=override_lookup,
             name_search_provider=name_search_provider,
             enable_name_search=enable_name_search,
+            expected_oracle_entries=expected_oracle_entries,
         )
     except Exception as exc:
         print(f"  ERROR: Identity resolution failed: {exc}", file=sys.stderr)

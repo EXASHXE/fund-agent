@@ -795,6 +795,29 @@ def _generate_fixit_package(
                 pass
     _generate_identity_candidates_csv(fixit_dir, e2e_summary)
 
+    # 7. M7.18: Oracle diff CSV — private diagnostic comparison
+    if run_dir is not None:
+        id_file = run_dir / "fund_identity_resolution.json"
+        if id_file.exists():
+            try:
+                id_data = json.loads(id_file.read_text(encoding="utf-8"))
+                oracle_diff_entries = id_data.get("oracle_diff_entries")
+                if oracle_diff_entries:
+                    from src.tools.portfolio.identity_oracle_diagnostics import (
+                        OracleDiffEntry,
+                        write_oracle_diff_csv,
+                    )
+                    entries = []
+                    for d in oracle_diff_entries:
+                        if isinstance(d, dict):
+                            entries.append(OracleDiffEntry(**d))
+                        elif isinstance(d, OracleDiffEntry):
+                            entries.append(d)
+                    if entries:
+                        write_oracle_diff_csv(entries, fixit_dir / "identity_oracle_diff.private.csv")
+            except (OSError, json.JSONDecodeError):
+                pass
+
     print(f"  Fix-it package generated: {fixit_dir}")
 
 

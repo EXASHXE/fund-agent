@@ -185,6 +185,18 @@ def generate_fixit_package(
         _write_csv(path, identity_candidate_rows)
         files_written["identity_candidates"] = str(path)
 
+    # M7.18: Oracle diff CSV (if oracle diff entries provided)
+    if identity_resolutions:
+        from src.tools.portfolio.identity_oracle_diagnostics import (
+            OracleDiffEntry,
+            write_oracle_diff_csv,
+        )
+        oracle_entries = [r for r in identity_resolutions if isinstance(r, OracleDiffEntry)]
+        if oracle_entries:
+            path = output_dir / "identity_oracle_diff.private.csv"
+            write_oracle_diff_csv(oracle_entries, path)
+            files_written["identity_oracle_diff"] = str(path)
+
     # Write quality summary JSON
     path = output_dir / "reconstruction_quality_summary.json"
     path.write_text(

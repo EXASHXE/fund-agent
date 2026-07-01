@@ -1,4 +1,4 @@
-"""Tests for M7.13/M7.14/M7.15/M7.17 agent context identity discovery contract.
+"""Tests for M7.13/M7.14/M7.15/M7.17/M7.18 agent context identity discovery contract.
 
 Validates that agent_context correctly includes provider chain diagnostics,
 local cache info, new reason codes, and M7.14 minimal cache template guidance.
@@ -8,6 +8,9 @@ contract shape, and should_auto_verify hard-reject/token-overlap gates.
 
 M7.17: Validates exact lookup audit summary contract, normalization
 equivalence, and tiered identity_token_overlap requirements.
+
+M7.18: Validates oracle diagnostics contract — oracle never used for runtime
+resolution, wrong_code blocks valuation, public summary is desensitized.
 """
 from __future__ import annotations
 
@@ -622,3 +625,78 @@ class TestM717NormalizationEquivalenceContract:
             q = normalize_fund_name_for_search(name)
             u = normalize_fund_name_for_universe_index(name)
             assert q == u, f"Normalization mismatch for '{name}': query='{q}' vs universe='{u}'"
+
+
+class TestM718OracleDiagnosticsContract:
+    """M7.18: Oracle diagnostics contract — diagnostic only, never runtime."""
+
+    def test_oracle_never_modifies_resolved_code(self):
+        """Oracle must never write to resolved_fund_code."""
+        from src.tools.portfolio.identity_oracle_diagnostics import (
+            compute_oracle_diagnostics,
+        )
+        resolutions = [{
+            "resolved_fund_code": None,
+            "raw_fund_name": "某基金A",
+            "fund_name": "某基金A",
+            "resolution_source": "name_only",
+            "identity_verification_status": "name_search_candidate_unverified",
+            "name_search_candidates": [],
+        }]
+        expected = [
+            {"raw_fund_name": "某基金A", "expected_fund_code": "110011", "expected_provider_name": "某基金A"},
+        ]
+        compute_oracle_diagnostics(expected, resolutions)
+        assert resolutions[0]["resolved_fund_code"] is None
+
+    def test_oracle_never_sets_provider_verified(self):
+        """Oracle must never change identity_verification_status."""
+        from src.tools.portfolio.identity_oracle_diagnostics import (
+            compute_oracle_diagnostics,
+        )
+        resolutions = [{
+            "resolved_fund_code": None,
+            "raw_fund_name": "某基金B",
+            "fund_name": "某基金B",
+            "resolution_source": "name_only",
+            "identity_verification_status": "name_search_candidate_unverified",
+            "name_search_candidates": [],
+        }]
+        expected = [
+            {"raw_fund_name": "某基金B", "expected_fund_code": "000002", "expected_provider_name": "某基金B"},
+        ]
+        compute_oracle_diagnostics(expected, resolutions)
+        assert resolutions[0]["identity_verification_status"] == "name_search_candidate_unverified"
+
+    def test_oracle_wrong_code_blocks_valuation(self):
+        """wrong_code > 0 must block transaction-derived valuation."""
+        from src.tools.portfolio.identity_oracle_diagnostics import (
+            OraclePublicSummary,
+            oracle_wrong_code_blocks_valuation,
+        )
+        summary = OraclePublicSummary(oracle_wrong_code_count=1)
+        assert oracle_wrong_code_blocks_valuation(summary) is True
+
+    def test_oracle_public_summary_has_no_codes_or_names(self):
+        """Public summary must contain only desensitized counts."""
+        from src.tools.portfolio.identity_oracle_diagnostics import (
+            OraclePublicSummary,
+        )
+        import json
+        summary = OraclePublicSummary(
+            oracle_total=3,
+            oracle_exact_correct_count=2,
+            oracle_wrong_code_count=1,
+        )
+        d = summary.to_dict()
+        s = json.dumps(d, ensure_ascii=False)
+        # No 6-digit codes
+        assert not any(c.isdigit() and len(c) == 6 for c in s.split() if c.isdigit())
+        # Only count keys
+        allowed = {
+            "oracle_total", "oracle_exact_correct_count", "oracle_exact_missed_count",
+            "oracle_wrong_code_count", "oracle_unresolved_count", "oracle_name_variant_count",
+            "oracle_provider_universe_missing_count", "non_exact_auto_verified_count",
+            "fuzzy_auto_verified_count",
+        }
+        assert set(d.keys()) == allowed

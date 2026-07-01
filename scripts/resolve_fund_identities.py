@@ -237,6 +237,7 @@ def resolve_fund_identities(
     override_lookup: dict[str, dict[str, Any]] | None = None,
     name_search_provider: Any | None = None,
     enable_name_search: bool = False,
+    expected_oracle_entries: list[dict[str, str]] | None = None,
 ) -> dict[str, Any]:
     """Resolve fund identities from available sources.
 
@@ -252,6 +253,10 @@ def resolve_fund_identities(
     Only unique high-confidence matches auto-promote to provider_verified.
     Ambiguous/low-confidence candidates stay as name_search_candidate_unverified.
 
+    M7.18: When expected_oracle_entries is provided, oracle diagnostics are
+    computed and attached to the summary. Oracle data is NEVER used for
+    runtime resolution — only for diagnostic comparison.
+
     Args:
         ledger_data: Transaction ledger with fund_code fields.
         plan_data: Investment plan with known fund_codes.
@@ -259,6 +264,7 @@ def resolve_fund_identities(
         override_lookup: Pre-processed override lookup from YAML file.
         name_search_provider: FundIdentitySearchProvider instance (M7.11).
         enable_name_search: Whether to enable name search discovery (M7.11).
+        expected_oracle_entries: M7.18 expected identity map entries (diagnostic only).
 
     Returns:
         Fund identity resolution with audit trail.
@@ -499,11 +505,42 @@ def resolve_fund_identities(
     from src.tools.portfolio.fund_identity_candidate_discovery import compute_exact_lookup_audit
     summary["identity_exact_lookup_audit"] = compute_exact_lookup_audit(resolutions)
 
+    # M7.18: Oracle diagnostics (if expected map available)
+    oracle_diff_entries = None
+    oracle_public_summary = None
+    if expected_oracle_entries:
+        from src.tools.portfolio.identity_oracle_diagnostics import (
+            compute_oracle_diagnostics,
+            oracle_wrong_code_blocks_valuation,
+        )
+        oracle_diff_entries, oracle_public_summary = compute_oracle_diagnostics(
+            expected_oracle_entries, resolutions,
+        )
+        summary["identity_oracle_audit"] = oracle_public_summary.to_dict()
+        # If wrong_code > 0, block valuation
+        if oracle_wrong_code_blocks_valuation(oracle_public_summary):
+            summary["valuation_blocked_by_oracle"] = True
+
     return {
         "schema_version": "fund_identity_resolution.v2",
         "generated_at": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
         "summary": summary,
         "resolutions": resolutions,
+        "oracle_diff_entries": [
+            {
+                "raw_fund_name": e.raw_fund_name,
+                "expected_fund_code": e.expected_fund_code,
+                "expected_provider_name": e.expected_provider_name,
+                "agent_resolved_code": e.agent_resolved_code,
+                "agent_resolution_source": e.agent_resolution_source,
+                "agent_identity_status": e.agent_identity_status,
+                "agent_match_reason": e.agent_match_reason,
+                "oracle_match_result": e.oracle_match_result,
+                "likely_root_cause": e.likely_root_cause,
+                "recommended_fix": e.recommended_fix,
+            }
+            for e in (oracle_diff_entries or [])
+        ],
     }
 
 
@@ -514,6 +551,8 @@ def main():
     parser.add_argument("--overrides", default=None, help="Path to fund identity overrides YAML")
     parser.add_argument("--enable-name-search", action="store_true", default=False,
                         help="Enable M7.11 name-based fund identity candidate discovery")
+    parser.add_argument("--oracle", default=None,
+                        help="Path to M7.18 expected identity oracle CSV (diagnostic only)")
     parser.add_argument("--output", required=True, help="Output path for fund identity resolution JSON")
     args = parser.parse_args()
 
@@ -537,12 +576,19 @@ def main():
         for w in override_warnings:
             print(f"Warning: {w}", file=__import__("sys").stderr)
 
+    # M7.18: Load expected oracle entries (diagnostic only)
+    expected_oracle_entries = None
+    if args.oracle:
+        from src.tools.portfolio.identity_oracle_diagnostics import load_expected_identity_map
+        expected_oracle_entries = load_expected_identity_map(Path(args.oracle))
+
     result = resolve_fund_identities(
         ledger_data=ledger_data,
         plan_data=plan_data,
         override_lookup=override_lookup,
         name_search_provider=None,  # CLI does not inject provider; use programmatically
         enable_name_search=args.enable_name_search,
+        expected_oracle_entries=expected_oracle_entries,
     )
 
     # Include override validation warnings in summary
