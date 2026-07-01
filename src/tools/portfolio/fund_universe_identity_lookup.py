@@ -217,15 +217,18 @@ def build_fund_universe_index(
 # ── Internal helpers ────────────────────────────────────────────────────
 
 
-def _normalize_for_index(name: str) -> str:
-    """Normalize a fund name for index key construction.
+def normalize_fund_name_for_universe_index(name: str) -> str:
+    """Normalize a fund name for universe index key construction.
+
+    This is the canonical normalization for both query-side and universe-side.
+    Must be used consistently to avoid exact-match misses.
 
     Applies:
     - Fullwidth → halfwidth
-    - Chinese/English parentheses unification → remove
+    - Chinese/English parentheses unification
     - Whitespace normalization
     - QDII/ETF联接 token normalization
-    - Lowercase for case-insensitive matching
+    - Case-insensitive matching via casefold
     """
     if not name:
         return ""
@@ -236,18 +239,27 @@ def _normalize_for_index(name: str) -> str:
     result = result.replace("（", "(").replace("）", ")")
     result = result.replace("Ａ", "A").replace("Ｃ", "C").replace("Ｅ", "E").replace("Ｉ", "I")
 
-    # Normalize QDII tokens
+    # Normalize QDII tokens (case-insensitive)
     result = re.sub(r"(?i)qdii[\s-]*fof", "QDII-FOF", result)
     result = re.sub(r"(?i)qdii[\s-]*lof", "QDII-LOF", result)
     result = re.sub(r"(?i)qdii", "QDII", result)
 
     # Normalize ETF联接 tokens
     result = re.sub(r"ETF\s+联接", "ETF联接", result)
+    result = re.sub(r"etf\s+联接", "ETF联接", result, flags=re.IGNORECASE)
 
     # Normalize whitespace
     result = re.sub(r"\s+", " ", result).strip()
 
     return result
+
+
+def _normalize_for_index(name: str) -> str:
+    """Normalize a fund name for index key construction (universe side).
+
+    Delegates to normalize_fund_name_for_universe_index for consistency.
+    """
+    return normalize_fund_name_for_universe_index(name)
 
 
 def _strip_punctuation(name: str) -> str:

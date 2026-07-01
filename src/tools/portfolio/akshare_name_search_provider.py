@@ -41,6 +41,7 @@ from src.tools.portfolio.fund_universe_identity_lookup import (
     FundUniverseEntry,
     FundUniverseIndex,
     build_fund_universe_index,
+    normalize_fund_name_for_universe_index,
 )
 from src.tools.portfolio.provider_identity_cross_check import compute_name_similarity
 
@@ -185,7 +186,7 @@ class AkShareNameSearchProvider:
 
     def _search_exact_first(self, normalized_name: str) -> list[FundIdentityCandidate]:
         """Exact-first search strategy using FundUniverseIndex."""
-        query_norm = normalize_fund_name_for_search(normalized_name)
+        query_norm = normalize_fund_name_for_universe_index(normalized_name)
         if not query_norm:
             return []
 
@@ -303,7 +304,7 @@ class AkShareNameSearchProvider:
             source="akshare_fund_name_em",
         )
         # Compute similarity
-        name_norm = normalize_fund_name_for_search(entry.fund_name)
+        name_norm = normalize_fund_name_for_universe_index(entry.fund_name)
         sim = compute_name_similarity(query_norm, name_norm)
 
         cand.match_score = round(sim, 4)
@@ -334,7 +335,7 @@ class AkShareNameSearchProvider:
         query_lower = query_norm.lower()
 
         for entry in self._universe_index._entries:
-            name_norm = normalize_fund_name_for_search(entry.fund_name).lower()
+            name_norm = normalize_fund_name_for_universe_index(entry.fund_name).lower()
             if not name_norm:
                 continue
 

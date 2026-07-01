@@ -1,4 +1,4 @@
-"""Tests for M7.16 fund universe exact identity lookup.
+"""Tests for M7.16/M7.17 fund universe exact identity lookup.
 
 Validates:
 1. Exact full name unique match → exact_match
@@ -9,11 +9,21 @@ Validates:
 6. QDII parentheses normalized exact match
 7. Full lookup chain A → B → C
 8. build_fund_universe_index from dict entries
+
+M7.17 additions:
+9. Query and universe normalization are equivalent
+10. QDII parentheses match exact
+11. ETF联接 spacing match exact
+12. Fullwidth share class match exact
+13. Punctuation variants match exact
 """
 from __future__ import annotations
 
 import pytest
 
+from src.tools.portfolio.fund_identity_candidate_discovery import (
+    normalize_fund_name_for_search,
+)
 from src.tools.portfolio.fund_universe_identity_lookup import (
     AMBIGUOUS_EXACT_MATCH,
     EXACT_MATCH,
@@ -22,6 +32,7 @@ from src.tools.portfolio.fund_universe_identity_lookup import (
     FundUniverseIndex,
     FundUniverseLookupResult,
     build_fund_universe_index,
+    normalize_fund_name_for_universe_index,
 )
 
 
@@ -195,3 +206,56 @@ class TestBuildFundUniverseIndex:
         ]
         idx = build_fund_universe_index(entries, code_key="code", name_key="name")
         assert idx.size == 1
+
+
+# ── M7.17: Normalization equivalence tests ────────────────────────────────
+
+
+class TestM717NormalizationEquivalence:
+    """Query-side and universe-side normalization must produce equivalent keys."""
+
+    def test_query_and_universe_normalization_are_equivalent(self):
+        """normalize_fund_name_for_search and normalize_fund_name_for_universe_index
+        must produce the same result for the same input."""
+        names = [
+            "易方达蓝筹精选混合A",
+            "华夏沪深300ETF联接C",
+            "交银中证海外中国互联网指数（QDII-FOF）A",
+            "华安黄金ETF联接C",
+        ]
+        for name in names:
+            q = normalize_fund_name_for_search(name)
+            u = normalize_fund_name_for_universe_index(name)
+            assert q == u, (
+                f"Normalization mismatch for '{name}': "
+                f"query='{q}' vs universe='{u}'"
+            )
+
+    def test_qdii_parentheses_match_exact(self):
+        """QDII with Chinese parentheses must match after normalization."""
+        idx = _build_sample_index()
+        # Query with Chinese parentheses
+        result = idx.lookup("交银中证海外中国互联网指数（QDII-FOF）A")
+        assert result.lookup_status in (EXACT_MATCH, AMBIGUOUS_EXACT_MATCH)
+
+    def test_etf_link_spacing_match_exact(self):
+        """ETF联接 with extra space must match after normalization."""
+        idx = _build_sample_index()
+        # Query with space between ETF and 联接
+        result = idx.lookup("华夏沪深300ETF 联接C")
+        assert result.lookup_status == EXACT_MATCH
+
+    def test_fullwidth_share_class_match_exact(self):
+        """Fullwidth A/C share class must match after normalization."""
+        idx = _build_sample_index()
+        # Query with fullwidth Ａ — must normalize before lookup
+        query = normalize_fund_name_for_universe_index("易方达蓝筹精选混合Ａ")
+        result = idx.lookup(query)
+        assert result.lookup_status == EXACT_MATCH
+
+    def test_punctuation_variants_match_exact(self):
+        """Names with different punctuation must match at no-punct level."""
+        idx = _build_sample_index()
+        # Query with English parentheses instead of Chinese
+        result = idx.lookup_exact_name_without_punctuation("交银中证海外中国互联网指数(QDII-FOF)A")
+        assert result.lookup_status == EXACT_MATCH
