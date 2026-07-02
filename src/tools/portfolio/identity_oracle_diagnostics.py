@@ -109,6 +109,14 @@ def _classify_oracle_match(
     # Agent has no resolved code
     if not agent_resolved_code:
         if agent_identity_status == "name_search_candidate_unverified":
+            # If raw name matches expected provider name exactly, the fund is
+            # missing from the provider universe — not a name variant
+            if raw_fund_name == expected_provider_name:
+                return (
+                    ORACLE_PROVIDER_UNIVERSE_MISSING,
+                    "provider_universe_missing: fund name matches oracle but not in provider universe",
+                    "add_to_local_universe_cache: add fund to local public fund universe cache or use multi-source universe provider",
+                )
             # Check if it's a name variant
             if _is_likely_name_variant(raw_fund_name, expected_provider_name):
                 return (
@@ -122,6 +130,12 @@ def _classify_oracle_match(
                 "check_provider_universe: verify fund exists in akshare fund universe",
             )
         # name_only or code_unverified
+        if raw_fund_name == expected_provider_name:
+            return (
+                ORACLE_PROVIDER_UNIVERSE_MISSING,
+                "provider_universe_missing: fund name matches oracle but not in provider universe",
+                "add_to_local_universe_cache: add fund to local public fund universe cache or use multi-source universe provider",
+            )
         if _is_likely_name_variant(raw_fund_name, expected_provider_name):
             return (
                 ORACLE_NAME_VARIANT,

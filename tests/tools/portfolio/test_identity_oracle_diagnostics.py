@@ -22,6 +22,7 @@ from src.tools.portfolio.identity_oracle_diagnostics import (
     ORACLE_EXACT_CORRECT,
     ORACLE_EXACT_MISSED,
     ORACLE_NAME_VARIANT,
+    ORACLE_PROVIDER_UNIVERSE_MISSING,
     ORACLE_UNRESOLVED,
     ORACLE_WRONG_CODE,
     OracleDiffEntry,
@@ -148,16 +149,18 @@ class TestOracleDiffDetectsExactCorrect:
 
 
 class TestOracleDiffDetectsExactMissed:
-    """Agent did not resolve a code that exists in oracle."""
+    """Agent did not resolve a code that exists in oracle, and names differ."""
 
     def test_exact_missed(self):
+        """When raw_name != expected_provider_name and not a variant → exact_missed."""
         resolutions = [
             _make_resolution("某基金D", resolved_code=None,
                              ivs="name_search_candidate_unverified",
                              match_reasons=["high_name_similarity"]),
         ]
         expected = [
-            {"raw_fund_name": "某基金D", "expected_fund_code": "000004", "expected_provider_name": "某基金D"},
+            {"raw_fund_name": "某基金D", "expected_fund_code": "000004",
+             "expected_provider_name": "完全不同的基金E"},
         ]
         diff_entries, summary = compute_oracle_diagnostics(expected, resolutions)
 
@@ -345,6 +348,22 @@ class TestOracleNameVariantDetection:
         assert diff_entries[0].oracle_match_result == ORACLE_EXACT_MISSED
         assert summary.oracle_exact_missed_count == 1
 
+    def test_same_name_unresolved_is_provider_universe_missing(self):
+        """Unresolved fund where raw name == expected provider name → provider_universe_missing."""
+        resolutions = [
+            _make_resolution("某基金Z", resolved_code=None,
+                             ivs="name_search_candidate_unverified",
+                             match_reasons=["high_name_similarity"]),
+        ]
+        expected = [
+            {"raw_fund_name": "某基金Z", "expected_fund_code": "000012",
+             "expected_provider_name": "某基金Z"},
+        ]
+        diff_entries, summary = compute_oracle_diagnostics(expected, resolutions)
+
+        assert diff_entries[0].oracle_match_result == ORACLE_PROVIDER_UNIVERSE_MISSING
+        assert summary.oracle_provider_universe_missing_count == 1
+
 
 class TestLoadExpectedIdentityMap:
     """Test CSV loading."""
@@ -383,21 +402,24 @@ class TestOracleDiagnosticsMixedScenario:
         resolutions = [
             _make_resolution("基金A", resolved_code="110011"),  # exact_correct
             _make_resolution("基金B", resolved_code=None, ivs="name_search_candidate_unverified",
-                             match_reasons=["high_name_similarity"]),  # exact_missed
+                             match_reasons=["high_name_similarity"]),  # provider_universe_missing (same name)
             _make_resolution("基金C", resolved_code="999999"),  # wrong_code (auto-verified but wrong)
             _make_resolution("基金D", resolved_code=None, ivs="name_only",
-                             resolution_source="name_only"),  # unresolved
+                             resolution_source="name_only"),  # provider_universe_missing (same name)
+            _make_resolution("基金E", resolved_code=None, ivs="name_search_candidate_unverified",
+                             match_reasons=["medium_name_similarity"]),  # exact_missed (different name)
         ]
         expected = [
             {"raw_fund_name": "基金A", "expected_fund_code": "110011", "expected_provider_name": "基金A"},
             {"raw_fund_name": "基金B", "expected_fund_code": "000002", "expected_provider_name": "基金B"},
             {"raw_fund_name": "基金C", "expected_fund_code": "000003", "expected_provider_name": "基金C"},
             {"raw_fund_name": "基金D", "expected_fund_code": "000004", "expected_provider_name": "基金D"},
+            {"raw_fund_name": "基金E", "expected_fund_code": "000005", "expected_provider_name": "完全不同的基金F"},
         ]
         diff_entries, summary = compute_oracle_diagnostics(expected, resolutions)
 
-        assert summary.oracle_total == 4
+        assert summary.oracle_total == 5
         assert summary.oracle_exact_correct_count == 1
         assert summary.oracle_exact_missed_count == 1
         assert summary.oracle_wrong_code_count == 1
-        assert summary.oracle_unresolved_count == 1
+        assert summary.oracle_provider_universe_missing_count == 2
