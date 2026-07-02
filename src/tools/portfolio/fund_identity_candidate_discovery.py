@@ -38,6 +38,8 @@ class FundIdentityCandidate:
     critical_token_mismatch: list[str] = field(default_factory=list)
     identity_token_overlap: float = 0.0
     candidate_status: str = "accepted_candidate"
+    # M7.19: Supplement confidence level
+    universe_confidence: str = "high"
 
 
 # ── Match buckets ──────────────────────────────────────────────────────
@@ -59,18 +61,25 @@ ALL_BUCKETS = frozenset({
 AUTO_VERIFY_MIN_SCORE = 0.85
 AUTO_VERIFY_MIN_MARGIN = 0.20
 
-# ── M7.16 Exact match reasons (must match akshare_name_search_provider) ──
+# ── M7.16/M7.19 Exact match reasons (must match akshare_name_search_provider) ──
 
 EXACT_FUND_UNIVERSE_NAME_MATCH = "exact_fund_universe_name_match"
 EXACT_FUND_UNIVERSE_NAME_WITHOUT_PUNCTUATION_MATCH = "exact_fund_universe_name_without_punctuation_match"
 EXACT_CORE_NAME_AND_SHARE_CLASS_MATCH = "exact_core_name_and_share_class_match"
 EXACT_LOCAL_CACHE_NAME_MATCH = "exact_local_cache_name_match"
+# M7.19: Supplement exact match reasons
+EXACT_FUND_UNIVERSE_FULL_NAME_MATCH = "exact_fund_universe_full_name_match"
+EXACT_FUND_UNIVERSE_SHORT_NAME_MATCH = "exact_fund_universe_short_name_match"
+EXACT_FUND_UNIVERSE_SUPPLEMENT_MATCH = "exact_fund_universe_supplement_match"
 
 _EXACT_MATCH_REASONS = frozenset({
     EXACT_FUND_UNIVERSE_NAME_MATCH,
     EXACT_FUND_UNIVERSE_NAME_WITHOUT_PUNCTUATION_MATCH,
     EXACT_CORE_NAME_AND_SHARE_CLASS_MATCH,
     EXACT_LOCAL_CACHE_NAME_MATCH,
+    EXACT_FUND_UNIVERSE_FULL_NAME_MATCH,
+    EXACT_FUND_UNIVERSE_SHORT_NAME_MATCH,
+    EXACT_FUND_UNIVERSE_SUPPLEMENT_MATCH,
 })
 
 
@@ -697,10 +706,17 @@ def should_auto_verify(
     if not has_exact_reason:
         return False, "no_exact_universe_match_reason"
 
-    # M7.17: identity_token_overlap requirement varies by exact match level
+    # M7.19: Low confidence supplement entries must not auto-verify
+    if top.universe_confidence == "low":
+        return False, "low_universe_confidence"
+
+    # M7.17/M7.19: identity_token_overlap requirement varies by exact match level
     _FULL_NAME_EXACT_REASONS = frozenset({
         EXACT_FUND_UNIVERSE_NAME_MATCH,
         EXACT_FUND_UNIVERSE_NAME_WITHOUT_PUNCTUATION_MATCH,
+        EXACT_FUND_UNIVERSE_FULL_NAME_MATCH,
+        EXACT_FUND_UNIVERSE_SHORT_NAME_MATCH,
+        EXACT_FUND_UNIVERSE_SUPPLEMENT_MATCH,
     })
     is_full_name_exact = bool(top_exact_reasons & _FULL_NAME_EXACT_REASONS)
 

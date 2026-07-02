@@ -37,6 +37,11 @@ class FundUniverseEntry:
     normalized_name_no_punct: str = ""
     core_name: str = ""
     share_class: str = ""
+    # M7.19: Additional name fields for supplement entries
+    fund_full_name: str = ""
+    fund_short_name: str = ""
+    entry_source: str = ""
+    entry_confidence: str = "high"
 
 
 @dataclass
@@ -177,6 +182,7 @@ def build_fund_universe_index(
 
     Args:
         entries: List of dicts with at least fund_code and fund_name.
+            M7.19: Also supports fund_full_name, fund_short_name, _source, _confidence.
         code_key: Key for fund code in each dict.
         name_key: Key for fund name in each dict.
 
@@ -201,6 +207,12 @@ def build_fund_universe_index(
         core_name = _extract_core_name(normalized)
         share_class = _extract_share_class_from_name(normalized)
 
+        # M7.19: Additional fields
+        fund_full_name = str(entry_dict.get("fund_full_name", "")).strip()
+        fund_short_name = str(entry_dict.get("fund_short_name", "")).strip()
+        entry_source = str(entry_dict.get("_source", "")).strip()
+        entry_confidence = str(entry_dict.get("_confidence", "high")).strip()
+
         entry = FundUniverseEntry(
             fund_code=fund_code,
             fund_name=fund_name,
@@ -208,8 +220,62 @@ def build_fund_universe_index(
             normalized_name_no_punct=no_punct,
             core_name=core_name,
             share_class=share_class,
+            fund_full_name=fund_full_name,
+            fund_short_name=fund_short_name,
+            entry_source=entry_source,
+            entry_confidence=entry_confidence,
         )
         index.add_entry(entry)
+
+        # M7.19: Also index full_name and short_name as additional lookup keys
+        if fund_full_name and fund_full_name != fund_name:
+            fn_normalized = _normalize_for_index(fund_full_name)
+            fn_no_punct = _strip_punctuation(fn_normalized)
+            fn_core = _extract_core_name(fn_normalized)
+            fn_share = _extract_share_class_from_name(fn_normalized)
+            alt_entry = FundUniverseEntry(
+                fund_code=fund_code,
+                fund_name=fund_name,  # Keep primary name for display
+                normalized_full_name=fn_normalized,
+                normalized_name_no_punct=fn_no_punct,
+                core_name=fn_core,
+                share_class=fn_share,
+                fund_full_name=fund_full_name,
+                fund_short_name=fund_short_name,
+                entry_source=entry_source,
+                entry_confidence=entry_confidence,
+            )
+            # Add to full_name index only (not _entries to avoid double-counting)
+            if fn_normalized not in index._full_name_index:
+                index._full_name_index[fn_normalized] = []
+            index._full_name_index[fn_normalized].append(alt_entry)
+            if fn_no_punct not in index._no_punct_index:
+                index._no_punct_index[fn_no_punct] = []
+            index._no_punct_index[fn_no_punct].append(alt_entry)
+
+        if fund_short_name and fund_short_name != fund_name and fund_short_name != fund_full_name:
+            sn_normalized = _normalize_for_index(fund_short_name)
+            sn_no_punct = _strip_punctuation(sn_normalized)
+            sn_core = _extract_core_name(sn_normalized)
+            sn_share = _extract_share_class_from_name(sn_normalized)
+            alt_entry = FundUniverseEntry(
+                fund_code=fund_code,
+                fund_name=fund_name,
+                normalized_full_name=sn_normalized,
+                normalized_name_no_punct=sn_no_punct,
+                core_name=sn_core,
+                share_class=sn_share,
+                fund_full_name=fund_full_name,
+                fund_short_name=fund_short_name,
+                entry_source=entry_source,
+                entry_confidence=entry_confidence,
+            )
+            if sn_normalized not in index._full_name_index:
+                index._full_name_index[sn_normalized] = []
+            index._full_name_index[sn_normalized].append(alt_entry)
+            if sn_no_punct not in index._no_punct_index:
+                index._no_punct_index[sn_no_punct] = []
+            index._no_punct_index[sn_no_punct].append(alt_entry)
 
     return index
 

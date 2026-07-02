@@ -1,4 +1,4 @@
-"""Tests for M7.16/M7.17 name search auto-verify gate.
+"""Tests for M7.16/M7.17/M7.19 name search auto-verify gate.
 
 Validates:
 1. Exact universe match auto-verifies
@@ -13,6 +13,12 @@ M7.17 additions:
 8. exact_without_punctuation can auto-verify WITHOUT identity_token_overlap
 9. core_share_class REQUIRES identity_token_overlap > 0
 10. local_cache REQUIRES identity_token_overlap > 0
+
+M7.19 additions:
+11. Supplement exact match auto-verifies when high confidence
+12. Supplement exact match blocks when low confidence
+13. Supplement exact match blocks when ambiguous
+14. Supplement match reason recorded
 """
 from __future__ import annotations
 
@@ -25,6 +31,7 @@ from src.tools.portfolio.fund_identity_candidate_discovery import (
     EXACT_CORE_NAME_AND_SHARE_CLASS_MATCH,
     EXACT_FUND_UNIVERSE_NAME_MATCH,
     EXACT_FUND_UNIVERSE_NAME_WITHOUT_PUNCTUATION_MATCH,
+    EXACT_FUND_UNIVERSE_SUPPLEMENT_MATCH,
     EXACT_LOCAL_CACHE_NAME_MATCH,
     FundIdentityCandidate,
     should_auto_verify,
@@ -40,6 +47,8 @@ def _make_candidate(
     hard_reject: bool = False,
     critical_token_mismatch: list[str] | None = None,
     reject_reasons: list[str] | None = None,
+    source: str = "",
+    universe_confidence: str = "high",
 ) -> FundIdentityCandidate:
     """Helper to create a candidate with common defaults."""
     return FundIdentityCandidate(
@@ -53,6 +62,8 @@ def _make_candidate(
         hard_reject=hard_reject,
         critical_token_mismatch=critical_token_mismatch or [],
         reject_reasons=reject_reasons or [],
+        source=source,
+        universe_confidence=universe_confidence,
     )
 
 
@@ -241,3 +252,67 @@ class TestM717IdentityTokenOverlapRequirements:
         ok, reason = should_auto_verify(cands)
         assert not ok
         assert "no_exact_universe_match_reason" in reason
+
+
+class TestM719SupplementAutoVerifyGate:
+    """M7.19: Supplement exact match auto-verify gates."""
+
+    def test_supplement_exact_match_auto_verifies_when_high_confidence(self):
+        """Supplement exact match with high confidence auto-verifies."""
+        cands = [_make_candidate(
+            match_reasons=[EXACT_FUND_UNIVERSE_NAME_MATCH, EXACT_FUND_UNIVERSE_SUPPLEMENT_MATCH],
+            source="local_public_fund_universe_supplement",
+            universe_confidence="high",
+        )]
+        ok, reason = should_auto_verify(cands)
+        assert ok, f"Expected auto-verify for high-confidence supplement, got: {reason}"
+
+    def test_supplement_exact_match_blocks_when_low_confidence(self):
+        """Supplement exact match with low confidence does NOT auto-verify."""
+        cands = [_make_candidate(
+            match_reasons=[EXACT_FUND_UNIVERSE_NAME_MATCH, EXACT_FUND_UNIVERSE_SUPPLEMENT_MATCH],
+            source="local_public_fund_universe_supplement",
+            universe_confidence="low",
+        )]
+        ok, reason = should_auto_verify(cands)
+        assert not ok
+        assert "low_universe_confidence" in reason
+
+    def test_supplement_exact_match_blocks_when_ambiguous(self):
+        """Supplement exact match with ambiguous candidates does NOT auto-verify."""
+        cands = [
+            _make_candidate(
+                match_reasons=[EXACT_FUND_UNIVERSE_NAME_MATCH, EXACT_FUND_UNIVERSE_SUPPLEMENT_MATCH],
+                match_score=0.95,
+                source="local_public_fund_universe_supplement",
+                universe_confidence="high",
+            ),
+            _make_candidate(
+                match_reasons=["high_name_similarity"],
+                match_score=0.90,
+                source="local_public_fund_universe_supplement",
+            ),
+        ]
+        ok, reason = should_auto_verify(cands)
+        assert not ok
+        assert "insufficient_margin" in reason
+
+    def test_supplement_match_reason_recorded(self):
+        """Supplement match reason is preserved in candidate."""
+        cands = [_make_candidate(
+            match_reasons=[EXACT_FUND_UNIVERSE_NAME_MATCH, EXACT_FUND_UNIVERSE_SUPPLEMENT_MATCH],
+            source="local_public_fund_universe_supplement",
+            universe_confidence="high",
+        )]
+        assert EXACT_FUND_UNIVERSE_SUPPLEMENT_MATCH in cands[0].match_reasons
+        assert cands[0].source == "local_public_fund_universe_supplement"
+
+    def test_medium_confidence_supplement_auto_verifies(self):
+        """Medium confidence supplement CAN auto-verify (only low is blocked)."""
+        cands = [_make_candidate(
+            match_reasons=[EXACT_FUND_UNIVERSE_NAME_MATCH, EXACT_FUND_UNIVERSE_SUPPLEMENT_MATCH],
+            source="local_public_fund_universe_supplement",
+            universe_confidence="medium",
+        )]
+        ok, reason = should_auto_verify(cands)
+        assert ok, f"Expected auto-verify for medium-confidence supplement, got: {reason}"

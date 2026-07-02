@@ -32,6 +32,7 @@ from src.tools.portfolio.fund_identity_candidate_discovery import (
     BUCKET_HIGH,
     BUCKET_LOW,
     BUCKET_MEDIUM,
+    EXACT_FUND_UNIVERSE_SUPPLEMENT_MATCH,
     FundIdentityCandidate,
     FundIdentitySearchProvider,
     normalize_fund_name_for_search,
@@ -62,6 +63,10 @@ class AkShareNameSearchProvider:
     M7.16: Uses FundUniverseIndex for exact-first lookup instead of
     fuzzy character-overlap search.
 
+    M7.19: Supports public supplemental universe entries for funds
+    missing from akshare. Supplement entries are merged into the
+    universe index with additional name fields (full_name, short_name).
+
     Diagnostics:
     - _last_error: str — last error message (empty if healthy)
     - _provider_status: str — "available" | "import_failed" | "network_error" | "unknown_error"
@@ -69,7 +74,10 @@ class AkShareNameSearchProvider:
     - _result_count: int — total candidates returned
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        supplement_entries: list[dict[str, str]] | None = None,
+    ) -> None:
         self._akshare: Any = None
         self._fund_name_df: Any = None  # Cached DataFrame
         self._universe_index: FundUniverseIndex | None = None
@@ -84,6 +92,11 @@ class AkShareNameSearchProvider:
         self._core_share_class_match_count: int = 0
         self._fuzzy_fallback_count: int = 0
         self._last_search_strategy: str = ""
+        # M7.19: Supplement diagnostics
+        self._supplement_entries: list[dict[str, str]] = supplement_entries or []
+        self._supplement_exact_match_count: int = 0
+        self._public_supplement_loaded: bool = False
+        self._public_supplement_entry_count: int = 0
 
     def _ensure_akshare(self) -> Any:
         """Lazy-import akshare. Returns None on ImportError."""
@@ -101,31 +114,38 @@ class AkShareNameSearchProvider:
     def _load_fund_name_cache(self) -> bool:
         """Load the full fund name list from akshare and build universe index.
 
+        M7.19: Even if akshare fails, supplement entries are still loaded
+        into the index, providing partial coverage.
+
         Returns True if cache loaded successfully, False otherwise.
         """
         if self._cache_loaded:
             return self._universe_index is not None
 
         ak = self._ensure_akshare()
-        if ak is None:
-            return False
+        df = None
+        if ak is not None:
+            try:
+                df = ak.fund_name_em()
+                self._fund_name_df = df
+            except Exception as exc:
+                self._provider_status = "network_error"
+                self._last_error = f"akshare fund_name_em failed: {type(exc).__name__}: {exc}"
 
-        try:
-            df = ak.fund_name_em()
-            self._fund_name_df = df
-            self._cache_loaded = True
+        self._cache_loaded = True
 
-            # Build universe index from DataFrame
+        if df is not None:
             self._build_universe_index(df)
             return True
-        except Exception as exc:
-            self._provider_status = "network_error"
-            self._last_error = f"akshare fund_name_em failed: {type(exc).__name__}: {exc}"
-            self._cache_loaded = True  # Don't retry
+        elif self._supplement_entries:
+            # M7.19: Build index from supplement only when akshare unavailable
+            self._build_universe_index_from_supplement_only()
+            return self._universe_index is not None
+        else:
             return False
 
     def _build_universe_index(self, df: Any) -> None:
-        """Build FundUniverseIndex from akshare DataFrame."""
+        """Build FundUniverseIndex from akshare DataFrame + supplement entries."""
         code_col = None
         name_col = None
 
@@ -145,12 +165,194 @@ class AkShareNameSearchProvider:
                 return
 
         entries = []
+        seen_codes: set[str] = set()
         for _, row in df.iterrows():
             fund_code = str(row[code_col]).strip()
             fund_name = str(row[name_col]).strip()
             if fund_code and fund_name:
                 entries.append({"fund_code": fund_code, "fund_name": fund_name})
+                seen_codes.add(fund_code)
 
+        # M7.19: Add supplement entries
+        # For codes already in akshare: add as alternate name entries (not new entries)
+        # For codes NOT in akshare: add as new entries
+        supplement_count = 0
+        supplement_alt_names: list[dict[str, str]] = []  # Alt name entries for existing codes
+        for sup in self._supplement_entries:
+            code = sup.get("fund_code", "").strip()
+            name = sup.get("fund_name", "").strip()
+            full_name = sup.get("fund_full_name", "").strip()
+            short_name = sup.get("fund_short_name", "").strip()
+            confidence = sup.get("confidence", "high").strip()
+            source = sup.get("source", "").strip()
+            primary_name = name or full_name or short_name
+            if not primary_name:
+                continue
+
+            if code in seen_codes:
+                # Code exists in akshare but with a different name — add as alternate name
+                alt_entry: dict[str, str] = {
+                    "fund_code": code,
+                    "fund_name": primary_name,
+                    "_source": source or "local_public_fund_universe_supplement",
+                    "_confidence": confidence,
+                }
+                if full_name and full_name != primary_name:
+                    alt_entry["fund_full_name"] = full_name
+                if short_name and short_name != primary_name:
+                    alt_entry["fund_short_name"] = short_name
+                supplement_alt_names.append(alt_entry)
+                supplement_count += 1
+            else:
+                # New code not in akshare
+                entry_dict: dict[str, str] = {
+                    "fund_code": code,
+                    "fund_name": primary_name,
+                }
+                if full_name and full_name != primary_name:
+                    entry_dict["fund_full_name"] = full_name
+                if short_name and short_name != primary_name:
+                    entry_dict["fund_short_name"] = short_name
+                entry_dict["_source"] = source or "local_public_fund_universe_supplement"
+                entry_dict["_confidence"] = confidence
+                entries.append(entry_dict)
+                seen_codes.add(code)
+                supplement_count += 1
+
+        self._public_supplement_loaded = supplement_count > 0
+        self._public_supplement_entry_count = supplement_count
+
+        self._universe_index = build_fund_universe_index(entries)
+
+        # M7.19: Add alternate name entries for existing codes
+        # These add additional lookup keys to the index without creating new entries
+        if supplement_alt_names:
+            from src.tools.portfolio.fund_universe_identity_lookup import (
+                FundUniverseEntry,
+                _normalize_for_index,
+                _strip_punctuation,
+                _extract_core_name,
+                _extract_share_class_from_name,
+            )
+            for alt in supplement_alt_names:
+                code = alt["fund_code"]
+                name = alt["fund_name"]
+                full_name = alt.get("fund_full_name", "")
+                short_name = alt.get("fund_short_name", "")
+                source = alt.get("_source", "")
+                confidence = alt.get("_confidence", "high")
+
+                # Find existing entry to get its fund_name for display
+                display_name = name
+                for existing in self._universe_index._entries:
+                    if existing.fund_code == code:
+                        display_name = existing.fund_name
+                        break
+
+                # Add primary name as alternate lookup key
+                norm = _normalize_for_index(name)
+                no_punct = _strip_punctuation(norm)
+                core = _extract_core_name(norm)
+                share = _extract_share_class_from_name(norm)
+                alt_entry = FundUniverseEntry(
+                    fund_code=code,
+                    fund_name=display_name,
+                    normalized_full_name=norm,
+                    normalized_name_no_punct=no_punct,
+                    core_name=core,
+                    share_class=share,
+                    fund_full_name=full_name,
+                    fund_short_name=short_name,
+                    entry_source=source,
+                    entry_confidence=confidence,
+                )
+                if norm not in self._universe_index._full_name_index:
+                    self._universe_index._full_name_index[norm] = []
+                self._universe_index._full_name_index[norm].append(alt_entry)
+                if no_punct not in self._universe_index._no_punct_index:
+                    self._universe_index._no_punct_index[no_punct] = []
+                self._universe_index._no_punct_index[no_punct].append(alt_entry)
+
+                # Add full_name as alternate lookup key
+                if full_name and full_name != name:
+                    fn_norm = _normalize_for_index(full_name)
+                    fn_no_punct = _strip_punctuation(fn_norm)
+                    fn_core = _extract_core_name(fn_norm)
+                    fn_share = _extract_share_class_from_name(fn_norm)
+                    fn_entry = FundUniverseEntry(
+                        fund_code=code,
+                        fund_name=display_name,
+                        normalized_full_name=fn_norm,
+                        normalized_name_no_punct=fn_no_punct,
+                        core_name=fn_core,
+                        share_class=fn_share,
+                        fund_full_name=full_name,
+                        fund_short_name=short_name,
+                        entry_source=source,
+                        entry_confidence=confidence,
+                    )
+                    if fn_norm not in self._universe_index._full_name_index:
+                        self._universe_index._full_name_index[fn_norm] = []
+                    self._universe_index._full_name_index[fn_norm].append(fn_entry)
+                    if fn_no_punct not in self._universe_index._no_punct_index:
+                        self._universe_index._no_punct_index[fn_no_punct] = []
+                    self._universe_index._no_punct_index[fn_no_punct].append(fn_entry)
+
+                # Add short_name as alternate lookup key
+                if short_name and short_name != name and short_name != full_name:
+                    sn_norm = _normalize_for_index(short_name)
+                    sn_no_punct = _strip_punctuation(sn_norm)
+                    sn_core = _extract_core_name(sn_norm)
+                    sn_share = _extract_share_class_from_name(sn_norm)
+                    sn_entry = FundUniverseEntry(
+                        fund_code=code,
+                        fund_name=display_name,
+                        normalized_full_name=sn_norm,
+                        normalized_name_no_punct=sn_no_punct,
+                        core_name=sn_core,
+                        share_class=sn_share,
+                        fund_full_name=full_name,
+                        fund_short_name=short_name,
+                        entry_source=source,
+                        entry_confidence=confidence,
+                    )
+                    if sn_norm not in self._universe_index._full_name_index:
+                        self._universe_index._full_name_index[sn_norm] = []
+                    self._universe_index._full_name_index[sn_norm].append(sn_entry)
+                    if sn_no_punct not in self._universe_index._no_punct_index:
+                        self._universe_index._no_punct_index[sn_no_punct] = []
+                    self._universe_index._no_punct_index[sn_no_punct].append(sn_entry)
+
+    def _build_universe_index_from_supplement_only(self) -> None:
+        """M7.19: Build universe index from supplement entries only.
+
+        Used when akshare is unavailable but supplement data exists.
+        """
+        entries = []
+        for sup in self._supplement_entries:
+            code = sup.get("fund_code", "").strip()
+            name = sup.get("fund_name", "").strip()
+            full_name = sup.get("fund_full_name", "").strip()
+            short_name = sup.get("fund_short_name", "").strip()
+            confidence = sup.get("confidence", "high").strip()
+            source = sup.get("source", "").strip()
+            primary_name = name or full_name or short_name
+            if not primary_name:
+                continue
+            entry_dict: dict[str, str] = {
+                "fund_code": code,
+                "fund_name": primary_name,
+            }
+            if full_name and full_name != primary_name:
+                entry_dict["fund_full_name"] = full_name
+            if short_name and short_name != primary_name:
+                entry_dict["fund_short_name"] = short_name
+            entry_dict["_source"] = source or "local_public_fund_universe_supplement"
+            entry_dict["_confidence"] = confidence
+            entries.append(entry_dict)
+
+        self._public_supplement_loaded = len(entries) > 0
+        self._public_supplement_entry_count = len(entries)
         self._universe_index = build_fund_universe_index(entries)
 
     def search_by_name(self, normalized_name: str) -> list[FundIdentityCandidate]:
@@ -281,14 +483,28 @@ class AkShareNameSearchProvider:
         score: float,
     ) -> FundIdentityCandidate:
         """Create a candidate from an exact universe match."""
+        # M7.19: Determine source based on entry_source
+        is_supplement = bool(entry.entry_source and entry.entry_source != "akshare_fund_universe")
+        source = (
+            "local_public_fund_universe_supplement"
+            if is_supplement
+            else "akshare_fund_universe_exact"
+        )
+        # M7.19: Add supplement match reason if from supplement
+        reasons = [match_reason]
+        if is_supplement:
+            reasons.append(EXACT_FUND_UNIVERSE_SUPPLEMENT_MATCH)
+            self._supplement_exact_match_count += 1
+
         return FundIdentityCandidate(
             fund_code=entry.fund_code,
             fund_name=entry.fund_name,
-            source="akshare_fund_universe_exact",
+            source=source,
             match_score=score,
             match_bucket=BUCKET_EXACT,
-            match_reasons=[match_reason],
+            match_reasons=reasons,
             risk_flags=[],
+            universe_confidence=entry.entry_confidence or "high",
         )
 
     def _make_fuzzy_candidate(
@@ -377,4 +593,8 @@ class AkShareNameSearchProvider:
         diag["core_share_class_match_count"] = self._core_share_class_match_count
         diag["fuzzy_fallback_count"] = self._fuzzy_fallback_count
         diag["search_strategy_used"] = self._last_search_strategy
+        # M7.19: Supplement diagnostics
+        diag["public_supplement_loaded"] = self._public_supplement_loaded
+        diag["public_supplement_entry_count"] = self._public_supplement_entry_count
+        diag["public_supplement_exact_match_count"] = self._supplement_exact_match_count
         return diag

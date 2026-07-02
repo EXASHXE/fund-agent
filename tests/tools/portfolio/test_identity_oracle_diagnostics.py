@@ -228,6 +228,8 @@ class TestOraclePublicSummaryHasNoCodesOrNames:
             "oracle_provider_universe_missing_count",
             "non_exact_auto_verified_count",
             "fuzzy_auto_verified_count",
+            "oracle_coverage_gap_count",
+            "oracle_total_vs_raw_fund_names_count",
         }
         assert set(d.keys()) == allowed_keys
 

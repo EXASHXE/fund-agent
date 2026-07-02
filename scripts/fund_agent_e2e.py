@@ -289,8 +289,26 @@ def _resolve_identities_with_name_search(
         providers.append(local_cache_provider)
         print(f"  Local identity candidate cache found: {local_cache_path.name}")
 
-    # 2. AkShare network provider
-    akshare_provider = AkShareNameSearchProvider()
+    # 2. AkShare network provider (with public supplement if available)
+    supplement_entries: list[dict[str, str]] = []
+    supplement_csv = Path("local_data/provider_cache/fund_universe_supplement.public.csv")
+    if supplement_csv.exists():
+        from src.tools.portfolio.fund_universe_provider import LocalPublicFundUniverseSupplementProvider
+        sup_provider = LocalPublicFundUniverseSupplementProvider(supplement_csv)
+        sup_entries = sup_provider.load_entries()
+        for e in sup_entries:
+            supplement_entries.append({
+                "fund_code": e.fund_code,
+                "fund_name": e.fund_name,
+                "fund_full_name": e.fund_full_name,
+                "fund_short_name": e.fund_short_name,
+                "source": e.source,
+                "confidence": e.confidence,
+            })
+        if supplement_entries:
+            print(f"  Public supplement universe: {len(supplement_entries)} entries loaded")
+
+    akshare_provider = AkShareNameSearchProvider(supplement_entries=supplement_entries)
     providers.append(akshare_provider)
 
     # Build chain (always use chain for consistent diagnostics)

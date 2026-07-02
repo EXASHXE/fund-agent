@@ -58,6 +58,9 @@ class OraclePublicSummary:
     oracle_provider_universe_missing_count: int = 0
     non_exact_auto_verified_count: int = 0
     fuzzy_auto_verified_count: int = 0
+    # M7.19: Coverage gap and supplement diagnostics
+    oracle_coverage_gap_count: int = 0
+    raw_fund_names_count: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -70,6 +73,8 @@ class OraclePublicSummary:
             "oracle_provider_universe_missing_count": self.oracle_provider_universe_missing_count,
             "non_exact_auto_verified_count": self.non_exact_auto_verified_count,
             "fuzzy_auto_verified_count": self.fuzzy_auto_verified_count,
+            "oracle_coverage_gap_count": self.oracle_coverage_gap_count,
+            "oracle_total_vs_raw_fund_names_count": f"{self.oracle_total}/{self.raw_fund_names_count}",
         }
 
 
@@ -230,6 +235,10 @@ def compute_oracle_diagnostics(
 
     diff_entries: list[OracleDiffEntry] = []
     summary = OraclePublicSummary()
+
+    # M7.19: Coverage gap calculation
+    summary.raw_fund_names_count = len(resolutions)
+    summary.oracle_coverage_gap_count = max(0, len(resolutions) - len(expected_entries))
 
     # Track non-exact auto-verified and fuzzy auto-verified from resolutions
     for res in resolutions:
