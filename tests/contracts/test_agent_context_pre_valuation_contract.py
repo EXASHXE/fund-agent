@@ -9,6 +9,7 @@ import pytest
 
 from src.tools.portfolio.pre_valuation_readiness import (
     VALUATION_SCOPE_CURRENT_HOLDINGS_SNAPSHOT_ONLY,
+    VALUATION_SCOPE_CURRENT_HOLDINGS_SNAPSHOT_RECONCILED,
     VALUATION_SCOPE_NONE,
     VALUATION_SCOPE_TRANSACTION_DERIVED_FULL,
     VALUATION_SCOPE_TRANSACTION_DERIVED_PARTIAL,
@@ -29,6 +30,11 @@ class TestPreValuationReadinessContractFields:
             "current_position_probable_count",
             "closed_position_probable_count",
             "holdings_snapshot_loaded",
+            "holdings_snapshot_reconciled",
+            "valuation_ready_position_count",
+            "probable_not_in_snapshot_count",
+            "snapshot_not_in_probable_count",
+            "snapshot_reconciliation_status",
             "transaction_chain_complete",
             "nav_provider_available",
             "valuation_allowed",
@@ -42,6 +48,7 @@ class TestPreValuationReadinessContractFields:
         valid_scopes = {
             VALUATION_SCOPE_NONE,
             VALUATION_SCOPE_CURRENT_HOLDINGS_SNAPSHOT_ONLY,
+            VALUATION_SCOPE_CURRENT_HOLDINGS_SNAPSHOT_RECONCILED,
             VALUATION_SCOPE_TRANSACTION_DERIVED_PARTIAL,
             VALUATION_SCOPE_TRANSACTION_DERIVED_FULL,
         }

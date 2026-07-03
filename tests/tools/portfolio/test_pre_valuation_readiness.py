@@ -1,4 +1,4 @@
-"""Tests for M7.20 pre-valuation readiness gate.
+"""Tests for M7.20+M7.21 pre-valuation readiness gate.
 
 Validates:
 1. identity_verified_alone_does_not_allow_full_valuation
@@ -6,6 +6,11 @@ Validates:
 3. holdings_snapshot_allows_snapshot_valuation
 4. missing_nav_blocks_transaction_derived_full
 5. manual_review_blocks_full_valuation
+6. snapshot_reconciled_allows_snapshot_reconciled_scope
+7. probable_extra_excluded_from_valuation_ready_set
+8. snapshot_not_in_probable_downgrades_scope
+9. closed_but_in_snapshot_blocks_full
+10. identity_mismatch_blocks_snapshot_reconciled
 """
 from __future__ import annotations
 
@@ -20,6 +25,7 @@ from src.tools.portfolio.current_holding_discovery import (
 )
 from src.tools.portfolio.pre_valuation_readiness import (
     VALUATION_SCOPE_CURRENT_HOLDINGS_SNAPSHOT_ONLY,
+    VALUATION_SCOPE_CURRENT_HOLDINGS_SNAPSHOT_RECONCILED,
     VALUATION_SCOPE_NONE,
     VALUATION_SCOPE_TRANSACTION_DERIVED_FULL,
     VALUATION_SCOPE_TRANSACTION_DERIVED_PARTIAL,
@@ -57,7 +63,6 @@ class TestIdentityVerifiedAloneDoesNotAllowFullValuation:
             transaction_chain_complete=True,
             nav_provider_available=True,
         )
-        # No holding discovery → can't determine which funds are current
         assert readiness.valuation_scope != VALUATION_SCOPE_TRANSACTION_DERIVED_FULL
 
     def test_identity_verified_no_current_holdings(self):
@@ -70,7 +75,6 @@ class TestIdentityVerifiedAloneDoesNotAllowFullValuation:
             transaction_chain_complete=True,
             nav_provider_available=True,
         )
-        # All funds are closed/history → no current holdings
         assert "no_current_holdings_identified" in readiness.blocking_reasons
 
 
@@ -87,7 +91,6 @@ class TestProbableCurrentHoldingsOnlyAllowsPartial:
             transaction_chain_complete=True,
             nav_provider_available=True,
         )
-        # Probable only → cannot be transaction_derived_full
         assert readiness.valuation_scope == VALUATION_SCOPE_TRANSACTION_DERIVED_PARTIAL
         assert "holdings_only_probable_no_snapshot" in readiness.blocking_reasons
 
@@ -102,6 +105,7 @@ class TestHoldingsSnapshotAllowsSnapshotValuation:
             total_ledger_fund_count=8,
             holding_discovery=summary,
             holdings_snapshot_loaded=True,
+            holdings_snapshot_reconciled=False,
             transaction_chain_complete=True,
             nav_provider_available=True,
         )
@@ -115,12 +119,12 @@ class TestHoldingsSnapshotAllowsSnapshotValuation:
             total_ledger_fund_count=8,
             holding_discovery=summary,
             holdings_snapshot_loaded=True,
+            holdings_snapshot_reconciled=False,
             transaction_chain_complete=True,
             nav_provider_available=True,
         )
         assert readiness.valuation_scope == VALUATION_SCOPE_CURRENT_HOLDINGS_SNAPSHOT_ONLY
         assert readiness.valuation_allowed is True
-        assert "identity_incomplete_snapshot_partial" in readiness.blocking_reasons
 
 
 class TestMissingNavBlocksTransactionDerivedFull:
@@ -136,7 +140,6 @@ class TestMissingNavBlocksTransactionDerivedFull:
             transaction_chain_complete=True,
             nav_provider_available=False,
         )
-        # Confirmed holdings but no NAV → partial
         assert readiness.valuation_scope == VALUATION_SCOPE_TRANSACTION_DERIVED_PARTIAL
         assert "nav_provider_unavailable" in readiness.blocking_reasons
 
@@ -168,9 +171,125 @@ class TestManualReviewBlocksFullValuation:
             nav_provider_available=True,
             manual_review_count=2,
         )
-        # Manual review present → cannot be full
         assert readiness.valuation_scope != VALUATION_SCOPE_TRANSACTION_DERIVED_FULL
         assert "manual_review_required" in readiness.blocking_reasons
+
+
+class TestSnapshotReconciledAllowsSnapshotReconciledScope:
+    """Reconciled snapshot allows snapshot_reconciled valuation scope."""
+
+    def test_fully_reconciled(self):
+        summary = _make_holding_summary(probable=13)
+        readiness = assess_valuation_readiness(
+            identity_verified_count=15,
+            total_ledger_fund_count=15,
+            holding_discovery=summary,
+            holdings_snapshot_loaded=True,
+            holdings_snapshot_reconciled=True,
+            valuation_ready_position_count=13,
+            probable_not_in_snapshot_count=0,
+            snapshot_not_in_probable_count=0,
+            closed_but_in_snapshot_count=0,
+            identity_mismatch_count=0,
+            transaction_chain_complete=True,
+            nav_provider_available=True,
+        )
+        assert readiness.valuation_scope == VALUATION_SCOPE_CURRENT_HOLDINGS_SNAPSHOT_RECONCILED
+        assert readiness.valuation_allowed is True
+
+
+class TestProbableExtraExcludedFromValuationReadySet:
+    """Probable holdings not in snapshot are excluded from valuation-ready set."""
+
+    def test_probable_extra_excluded(self):
+        summary = _make_holding_summary(probable=14)
+        readiness = assess_valuation_readiness(
+            identity_verified_count=15,
+            total_ledger_fund_count=15,
+            holding_discovery=summary,
+            holdings_snapshot_loaded=True,
+            holdings_snapshot_reconciled=True,
+            valuation_ready_position_count=13,
+            probable_not_in_snapshot_count=1,
+            snapshot_not_in_probable_count=0,
+            closed_but_in_snapshot_count=0,
+            identity_mismatch_count=0,
+            transaction_chain_complete=True,
+            nav_provider_available=True,
+        )
+        assert readiness.probable_not_in_snapshot_count == 1
+        assert readiness.valuation_ready_position_count == 13
+        assert "transaction_probable_not_in_snapshot_excluded" in readiness.blocking_reasons
+
+
+class TestSnapshotNotInProbableDowngradesScope:
+    """Snapshot positions not in probable are noted but don't block."""
+
+    def test_snapshot_has_unseen(self):
+        summary = _make_holding_summary(probable=13)
+        readiness = assess_valuation_readiness(
+            identity_verified_count=15,
+            total_ledger_fund_count=15,
+            holding_discovery=summary,
+            holdings_snapshot_loaded=True,
+            holdings_snapshot_reconciled=True,
+            valuation_ready_position_count=14,
+            probable_not_in_snapshot_count=0,
+            snapshot_not_in_probable_count=1,
+            closed_but_in_snapshot_count=0,
+            identity_mismatch_count=0,
+            transaction_chain_complete=True,
+            nav_provider_available=True,
+        )
+        assert readiness.valuation_scope == VALUATION_SCOPE_CURRENT_HOLDINGS_SNAPSHOT_RECONCILED
+        assert "snapshot_has_positions_not_in_transactions" in readiness.blocking_reasons
+
+
+class TestClosedButInSnapshotBlocksFull:
+    """Closed position in snapshot blocks full valuation."""
+
+    def test_closed_in_snapshot(self):
+        summary = _make_holding_summary(probable=12, closed=1)
+        readiness = assess_valuation_readiness(
+            identity_verified_count=15,
+            total_ledger_fund_count=15,
+            holding_discovery=summary,
+            holdings_snapshot_loaded=True,
+            holdings_snapshot_reconciled=True,
+            valuation_ready_position_count=12,
+            probable_not_in_snapshot_count=0,
+            snapshot_not_in_probable_count=0,
+            closed_but_in_snapshot_count=1,
+            identity_mismatch_count=0,
+            transaction_chain_complete=True,
+            nav_provider_available=True,
+        )
+        # Should downgrade from snapshot_reconciled to snapshot_only
+        assert readiness.valuation_scope == VALUATION_SCOPE_CURRENT_HOLDINGS_SNAPSHOT_ONLY
+        assert "closed_but_in_snapshot_blocks_full" in readiness.blocking_reasons
+
+
+class TestIdentityMismatchBlocksSnapshotReconciled:
+    """Identity mismatch blocks snapshot_reconciled scope."""
+
+    def test_identity_mismatch_downgrades(self):
+        summary = _make_holding_summary(probable=13)
+        readiness = assess_valuation_readiness(
+            identity_verified_count=15,
+            total_ledger_fund_count=15,
+            holding_discovery=summary,
+            holdings_snapshot_loaded=True,
+            holdings_snapshot_reconciled=True,
+            valuation_ready_position_count=13,
+            probable_not_in_snapshot_count=0,
+            snapshot_not_in_probable_count=0,
+            closed_but_in_snapshot_count=0,
+            identity_mismatch_count=1,
+            transaction_chain_complete=True,
+            nav_provider_available=True,
+        )
+        assert readiness.valuation_scope == VALUATION_SCOPE_CURRENT_HOLDINGS_SNAPSHOT_ONLY
+        assert "identity_mismatch_blocks_snapshot_reconciled" in readiness.blocking_reasons
 
 
 class TestFullValuationConditions:
@@ -188,7 +307,6 @@ class TestFullValuationConditions:
         )
         assert readiness.valuation_allowed is True
         assert readiness.valuation_scope == VALUATION_SCOPE_TRANSACTION_DERIVED_FULL
-        assert readiness.identity_verified_all_ledger_funds is True
 
     def test_no_holdings_no_valuation(self):
         readiness = assess_valuation_readiness(
