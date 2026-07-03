@@ -40,6 +40,13 @@ class TestPreValuationReadinessContractFields:
             "valuation_allowed",
             "valuation_scope",
             "blocking_reasons",
+            "snapshot_valuation_reconciled",
+            "snapshot_valuation_status",
+            "valued_position_count",
+            "missing_nav_count",
+            "nav_date_mismatch_count",
+            "amount_mismatch_count",
+            "full_portfolio_metrics_allowed",
         }
         assert set(d.keys()) == required_fields
 

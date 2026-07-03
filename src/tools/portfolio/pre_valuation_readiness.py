@@ -67,6 +67,14 @@ class PreValuationReadiness:
     valuation_allowed: bool = False
     valuation_scope: str = VALUATION_SCOPE_NONE
     blocking_reasons: list[str] = field(default_factory=list)
+    # M7.22 snapshot valuation fields
+    snapshot_valuation_reconciled: bool = False
+    snapshot_valuation_status: str = ""
+    valued_position_count: int = 0
+    missing_nav_count: int = 0
+    nav_date_mismatch_count: int = 0
+    amount_mismatch_count: int = 0
+    full_portfolio_metrics_allowed: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -86,6 +94,13 @@ class PreValuationReadiness:
             "valuation_allowed": self.valuation_allowed,
             "valuation_scope": self.valuation_scope,
             "blocking_reasons": self.blocking_reasons,
+            "snapshot_valuation_reconciled": self.snapshot_valuation_reconciled,
+            "snapshot_valuation_status": self.snapshot_valuation_status,
+            "valued_position_count": self.valued_position_count,
+            "missing_nav_count": self.missing_nav_count,
+            "nav_date_mismatch_count": self.nav_date_mismatch_count,
+            "amount_mismatch_count": self.amount_mismatch_count,
+            "full_portfolio_metrics_allowed": self.full_portfolio_metrics_allowed,
         }
 
 
@@ -105,6 +120,14 @@ def assess_valuation_readiness(
     transaction_chain_complete: bool = False,
     nav_provider_available: bool = False,
     manual_review_count: int = 0,
+    # M7.22 snapshot valuation fields
+    snapshot_valuation_reconciled: bool = False,
+    snapshot_valuation_status: str = "",
+    valued_position_count: int = 0,
+    sv_missing_nav_count: int = 0,
+    sv_nav_date_mismatch_count: int = 0,
+    sv_amount_mismatch_count: int = 0,
+    sv_full_portfolio_metrics_allowed: bool = False,
 ) -> PreValuationReadiness:
     """Assess whether the portfolio is ready for valuation.
 
@@ -123,6 +146,13 @@ def assess_valuation_readiness(
         transaction_chain_complete: Whether all transaction chains are complete.
         nav_provider_available: Whether NAV data is available.
         manual_review_count: Number of funds requiring manual review.
+        snapshot_valuation_reconciled: Whether snapshot valuation was reconciled with provider NAV.
+        snapshot_valuation_status: Snapshot valuation reconciliation status string.
+        valued_position_count: Positions with valuation data.
+        sv_missing_nav_count: Positions missing provider NAV.
+        sv_nav_date_mismatch_count: Positions with NAV date mismatch.
+        sv_amount_mismatch_count: Positions with amount mismatch above threshold.
+        sv_full_portfolio_metrics_allowed: Whether full portfolio metrics are allowed.
 
     Returns:
         PreValuationReadiness with valuation_allowed and valuation_scope.
@@ -248,6 +278,35 @@ def assess_valuation_readiness(
     if manual_review_count > 0 and readiness.valuation_scope == VALUATION_SCOPE_TRANSACTION_DERIVED_FULL:
         readiness.valuation_scope = VALUATION_SCOPE_TRANSACTION_DERIVED_PARTIAL
         blocking_reasons.append("manual_review_downgraded_to_partial")
+
+    # ── M7.22 Snapshot valuation gate ───────────────────────────────────
+
+    readiness.snapshot_valuation_reconciled = snapshot_valuation_reconciled
+    readiness.snapshot_valuation_status = snapshot_valuation_status
+    readiness.valued_position_count = valued_position_count
+    readiness.missing_nav_count = sv_missing_nav_count
+    readiness.nav_date_mismatch_count = sv_nav_date_mismatch_count
+    readiness.amount_mismatch_count = sv_amount_mismatch_count
+
+    # full_portfolio_metrics_allowed rules:
+    # 1. valuation_ready_position_count == snapshot_position_count (all positions valued)
+    # 2. No missing NAV
+    # 3. No amount mismatch
+    # 4. No identity mismatch in snapshot
+    # 5. Even if true, no formal investment decision allowed
+    if sv_full_portfolio_metrics_allowed and readiness.valuation_allowed:
+        readiness.full_portfolio_metrics_allowed = True
+    else:
+        readiness.full_portfolio_metrics_allowed = False
+
+    # Missing NAV or nav_date_mismatch blocks "provider NAV fully reconciled"
+    if sv_missing_nav_count > 0 and holdings_snapshot_loaded:
+        blocking_reasons.append("snapshot_valuation_missing_nav")
+    if sv_nav_date_mismatch_count > 0 and holdings_snapshot_loaded:
+        blocking_reasons.append("snapshot_valuation_nav_date_mismatch")
+    # Amount mismatch blocks final valuation confidence=high
+    if sv_amount_mismatch_count > 0 and holdings_snapshot_loaded:
+        blocking_reasons.append("snapshot_valuation_amount_mismatch")
 
     readiness.blocking_reasons = blocking_reasons
 
